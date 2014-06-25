@@ -1,0 +1,3 @@
+"Station_Name","Coord_Sys(PROJCS,GEOGCS)","Datum(WGS84,NAD83,NAD27)","Lat/YCoord","Lon/XCoord","Height","Height_Units(meters,feet)","Speed","Speed_Units(mph,kph,mps)","Direction(degrees)","Temperature","Temperature_Units(F,C)","Cloud_Cover(%)","Radius_of_Influence","Radius_of_Influence_Units(miles,feet,meters,km)"
+"Station 1","GEOGCS","WGS84",43.94,-113.68,20,"feet",10,"mph",270,70,"F",0,-1,"miles"
+"Station 2","GEOGCS","WGS84",43.95,-113.53,20,"feet",20,"mph",180,80,"F",0,-1,"miles"
