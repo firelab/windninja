@@ -129,6 +129,7 @@ ENDIF(FRICTION_VELOCITY)
 OPTION(EMISSIONS "Enable emissions model" OFF)
 IF(EMISSIONS)
     ADD_DEFINITIONS(-DEMISSIONS)
+    SET(FRICTION_VELOCITY ON CACHE BOOL "Enable friction velocity calculations" FORCE)
 ENDIF(EMISSIONS)
 
 OPTION(STABILITY "Enable atmospheric stability model" OFF)

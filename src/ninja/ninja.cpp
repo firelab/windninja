@@ -7,8 +7,7 @@
  * Author:   Jason Forthofer <jforthofer@gmail.com>
  *
  ******************************************************************************
- *
- * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
+ * * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
  * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
  * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
  * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
@@ -113,6 +112,8 @@ ninja::ninja(const ninja &rhs)
 , CloudGrid(rhs.CloudGrid)
 #ifdef EMISSIONS
 , DustGrid(rhs.DustGrid)
+#endif
+#ifdef FRICTION_VELOCITY
 , UstarGrid(rhs.UstarGrid)
 #endif 
 , u(rhs.u)
@@ -194,6 +195,8 @@ ninja &ninja::operator=(const ninja &rhs)
         CloudGrid = rhs.CloudGrid;
         #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
+        #endif 
+        #ifdef FRICTION_VELOCITY
         UstarGrid = rhs.UstarGrid;
         #endif
         u = rhs.u;
@@ -5384,6 +5387,8 @@ const std::string ninja::get_DustFileName() const
 {
     return input.dustFile;
 }
+#endif
+#ifdef FRICTION_VELOCITY
 const std::string ninja::get_UstarFileName() const
 {
     return input.ustarFile;

@@ -114,7 +114,7 @@
 
 #ifdef EMISSIONS
 #include "dust.h"
-#endif
+#endif 
 
 #ifdef SCALAR
 #include "scalarTransport.h"
@@ -270,6 +270,7 @@ public:
     void set_frictionVelocityFlag(bool flag);
     void set_frictionVelocityCalculationMethod(std::string calcMethod);
     void computeFrictionVelocity();
+    const std::string get_UstarFileName() const; //returns the name of the ustar file name
 #endif
 #ifdef EMISSIONS
     void set_dustFilename(std::string filename);    //set the dust emissions input fire perimeter filename
@@ -277,7 +278,6 @@ public:
     void set_dustFlag(bool flag);
     void computeDustEmissions();
     const std::string get_DustFileName() const; //returns the name of the dust file name
-    const std::string get_UstarFileName() const; //returns the name of the ustar file name
 #endif
 #ifdef SCALAR
     void set_scalarTransportFlag(bool flag);
