@@ -129,72 +129,45 @@ static const char *apszNomadsKeys[][10] =
     /*
     ** HIRES Alaska
     */
-    { /* Name key of the model */
+    {
       "hires_alaska",
-      /* name of the perl script for the grib filter */
       "filter_hiresak.pl",
-      /* File naming format */
       "akarw.t%02dz.awpregf%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "hiresw.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "6:6:0",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:48:1",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "HIRES Alaska, 4-5km" },
     /*
     ** HIRES CONUS
     ** Check on what this is.
     */
-    { /* Name key of the model */
+    {
       "hires_conus",
-      /* name of the perl script for the grib filter */
       "filter_hiresconus.pl",
-      /* File naming format */
       "conusarw.t%02dz.awp5kmf%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "hiresw.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "0:12:12",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:48:1",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "HIRES CONUS, 5km" },
     /*
     ** HIRES CONUS NMM
     */
-    { /* Name key of the model */
+    {
       "hires_conus_nmm",
-      /* name of the perl script for the grib filter */
       "filter_hiresconus.pl",
-      /* File naming format */
       "conusnmmb.t%02dz.awp5kmf%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "hiresw.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "0:12:12",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:48:1",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "HIRES CONUS NMM, 5km" },
     /* XXX: HIRES Guam */
     /* XXX: HIRES Hawaii */
@@ -202,71 +175,44 @@ static const char *apszNomadsKeys[][10] =
     /*
     ** NAM ALASKA
     */
-    { /* Name key of the model */
+    {
       "nam_alaska",
-      /* name of the perl script for the grib filter */
       "filter_nam_ak.pl",
-      /* File naming format */
       "nam.t%02dz.awak3d%02d.grb2.tm00",
-      /* Directory formats, string is date formatted as folowing */
       NOMADS_GENERIC_NAM_DIR,
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       NOMADS_GENERIC_NAM_FCST_HOURS,
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       NOMADS_GENERIC_NAM_RUN_HOURS,
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "NAM Alaska, 11.25km" },
     /*
     ** NAM CONUS
     */
-    { /* Name key of the model */
+    {
       "nam_conus",
-      /* name of the perl script for the grib filter */
       "filter_nam.pl",
-      /* File naming format */
       "nam.t%02dz.awphys%02d.grb2.tm00",
-      /* Directory formats, string is date formatted as folowing */
       NOMADS_GENERIC_NAM_DIR,
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       NOMADS_GENERIC_NAM_FCST_HOURS,
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:36:1,39:86:3",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "NAM CONUS, 12km" },
     /*
     ** NAM North America
     */
-    { /* Name key of the model */
+    {
       "nam_north_america",
-      /* name of the perl script for the grib filter */
       "filter_nam_na.pl",
-      /* File naming format */
       "nam.t%02dz.awip32%02d.tm00.grib2",
-      /* Directory formats, string is date formatted as folowing */
       NOMADS_GENERIC_NAM_DIR,
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       NOMADS_GENERIC_NAM_FCST_HOURS,
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       NOMADS_GENERIC_NAM_RUN_HOURS,
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "NAM North America, 32km" },
     /* XXX: NAM Caribbean/Central America */
     /* XXX: NAM Pacific */
@@ -274,25 +220,16 @@ static const char *apszNomadsKeys[][10] =
     /*
     ** NAM CONUS NEST
     */
-    { /* Name key of the model */
+    {
       "nam_conus_nest",
-      /* name of the perl script for the grib filter */
       "filter_nam_conusnest.pl",
-      /* File naming format */
       "nam.t%02dz.conusnest.hiresf%02d.t00.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "hiresw.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "0:12:12",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:48:1",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "NAM CONUS NEST, 5km" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
@@ -301,25 +238,16 @@ static const char *apszNomadsKeys[][10] =
     /*
     ** CONUS RTMA
     */
-    { /* Name key of the model */
+    {
       "rtma_conus",
-      /* name of the perl script for the grib filter */
       "filter_rtma2p5.pl",
-      /* File naming format */
       "rtma2p5.t%02dz.2dvaranl_ndfd.grb2",
-      /* Directory formats, string is date formatted as folowing */
       "rtma2p5.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "0:23:1",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:0:1",
-      /* Variable list */
       "TMP,UGRD,VGRD",
-      /* Levels list */
       "10_m_above_ground,2_m_above_ground",
-      /* Human readable name */
       "RTMA CONUS, 2.5km" },
     /* XXX: Guam RTMA */
     /* XXX: Hawaii RTMA */
@@ -328,50 +256,32 @@ static const char *apszNomadsKeys[][10] =
     /*
     ** RAP
     */
-    { /* Name key of the model */
+    {
       "rap",
-      /* name of the perl script for the grib filter */
       "filter_rap.pl",
-      /* File naming format */
       "rap.t%02dz.awp130pgrbf%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "rap.%s",
-      /* Date format for directory */
       NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
       "0:23:1",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:18:1",
-      /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
       NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
       "Rapid Update, 13km" },
     /* XXX: RAP North America */
 #ifdef NOMADS_EXPER_FORECASTS
     /*
     ** NARRE
     */
-    { /* Name key of the model */
+    {
       "narre",
-      /* name of the perl script for the grib filter */
       "filter_narre.pl",
-      /* File naming format */
       "narre.t%02dz.mean.grd130.f%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
       "narre.%s/ensprod",
-      /* Date format for directory */
       "%Y%m%d",
-      /* Forecast hours, start:stop:stride */
       "0:24:1",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "1:12:1",
-      /* Variable list */
       "UGRD,VGRD",
-      /* Levels list */
       "10_m_above_ground",
-      /* Human readable name */
       "North American Reanalysis" },
 #endif /* NOMADS_EXPER_FORECASTS */
     { NULL, NULL, NULL }
