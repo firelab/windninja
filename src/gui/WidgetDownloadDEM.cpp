@@ -462,6 +462,8 @@ void WidgetDownloadDEM::plotUserPoint()
         {
             latlngError = new QMessageBox(this);
             latlngError->setText("An Error Occured: Please Check Your Latitude and Longitude");
+            progressBar->setRange(0,1);
+            progressBar->setValue( 0 );
             latlngError->setIcon(QMessageBox::Warning);
             if(latlngError->exec())
             {
@@ -550,6 +552,8 @@ void WidgetDownloadDEM::plotSettings()
         {
             bufferError = new QMessageBox(this);
             bufferError->setText("An Error Occured: Please Check Your Bounds, Latitude and Longitude");
+            progressBar->setRange(0,1);
+            progressBar->setValue( 0 );
             bufferError->setIcon(QMessageBox::Warning);
             if(bufferError->exec())
             {
@@ -629,6 +633,8 @@ void WidgetDownloadDEM::plotBox()
         {
             boundsError = new QMessageBox(this);
             boundsError->setText("An Error Occured: Please Check Your Bounds");
+            progressBar->setRange(0,1);
+            progressBar->setValue( 0 );
             boundsError->setIcon(QMessageBox::Warning);
             if(boundsError->exec())
             {
@@ -1227,6 +1233,8 @@ void WidgetDownloadDEM::updateProgress()
         if(result < 0)
         {
             progressBar->setLabelText("An Error Occured: Please Try Again");
+            progressBar->setRange(0,1);
+            progressBar->setValue( 0 );
             progressBar->setCancelButtonText("Close");
             VSIUnlink(demFile);                
         }
