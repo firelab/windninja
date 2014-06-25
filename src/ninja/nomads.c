@@ -143,8 +143,11 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int nFilesToGet = 0;
     const char *pszOutFilename = NULL;
     int bAlreadyWentBack = FALSE;
-    CPLHTTPResult *psResult;
+#ifdef NOMADS_USE_VSI_READ
     VSILFILE *fin = NULL;
+#else
+    CPLHTTPResult *psResult;
+#endif
     VSILFILE *fout = NULL;
     vsi_l_offset nOffset = 0;
     char pabyBuffer[1024];
@@ -183,9 +186,16 @@ try_again:
     NomadsUtcCopy( fcst, now );
     NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
 
-    nFilesToGet = NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
-                                               &panRunHours );
-
+    if( EQUAL( pszModelKey, "rtma_conus" ) )
+    {
+        panRunHours = (int*)CPLMalloc( sizeof( int ) );
+        nFilesToGet = 1;
+    }
+    else
+    {
+        nFilesToGet = NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
+                                                   &panRunHours );
+    }
     /* Open our output file */
     for( i = 0; i < nFilesToGet; i++ )
     {
@@ -209,10 +219,14 @@ try_again:
         pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
                              padfBbox[2], padfBbox[3] );
 
+#ifdef NOMADS_USE_VSI_READ
+        pszUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
+        fin = VSIFOpenL( pszUrl, "rb" );
+        if( !fin )
+#else /* NOMADS_USE_VSI */
         psResult = CPLHTTPFetch( pszUrl, NULL );
-        //fin = VSIFOpenL( pszUrl, "rb" );
-        //if( !fin )
         if( !psResult || psResult->nStatus != 0 )
+#endif /* NOMADS_USE_VSI */
         {
             if( !bAlreadyWentBack )
             {
@@ -230,7 +244,10 @@ try_again:
                 i--;
                 CPLFree( (void*)pszGribFile );
                 CPLFree( (void*)pszGribDir );
+                CPLFree( (void*)panRunHours );
+#ifndef NOMADS_USE_VSI_READ
                 CPLHTTPDestroyResult( psResult );
+#endif
                 goto try_again;
             }
             else
@@ -244,7 +261,11 @@ try_again:
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
                 NomadsUtcFree( fcst );
+#ifdef NOMADS_USE_VSI_READ
+                VSIFCloseL( fin );
+#else
                 CPLHTTPDestroyResult( psResult );
+#endif
                 return NOMADS_ERR;
             }
         }
@@ -265,23 +286,27 @@ try_again:
             NomadsUtcFree( end );
             NomadsUtcFree( tmp );
             NomadsUtcFree( fcst );
+#ifdef NOMADS_USE_VSI_READ
             VSIFCloseL( fin );
+#else
             CPLHTTPDestroyResult( psResult );
+#endif
             return NOMADS_ERR;
         }
-        /*
+#ifdef NOMADS_USE_VSI_READ
         do
         {
             nOffset = VSIFReadL( pabyBuffer, 1, 1024, fin );
             VSIFWriteL( pabyBuffer, 1, nOffset, fout );
         } while ( nOffset != 0 );
-        */
+        VSIFCloseL( fin );
+#else
         VSIFWriteL( psResult->pabyData, psResult->nDataLen, 1, fout );
-        //VSIFCloseL( fin );
+        CPLHTTPDestroyResult( psResult );
+#endif
         VSIFCloseL( fout );
         CPLFree( (void*)pszGribFile );
         CPLFree( (void*)pszGribDir );
-        CPLHTTPDestroyResult( psResult );
     }
     NomadsUtcFree( now );
     NomadsUtcFree( end );

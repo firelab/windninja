@@ -90,12 +90,12 @@ static int CheckBands( const char *pszVsiPath )
         {
             CSLDestroy( papszFiles );
             CPLFree( (void*)pszVsiPath );
-            return 1;
+            return k;
         }
     }
     CSLDestroy( papszFiles );
     CPLFree( (void*)pszVsiPath );
-    return 0;
+    return k;
 }
 
 static int CheckZip( const char *pszVsiPath )
@@ -198,6 +198,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
         VSIMkdir( NOMADS_PATH, 0777 );
         pszVsiPath = NOMADS_PATH;
     }
+    else
+        BOOST_REQUIRE( 0 );
     rc = NomadsFetch( pszKey, hours, pdfBbox, pszVsiPath );
     BOOST_REQUIRE_EQUAL( rc, erc );
     if( rc == 0 )
@@ -205,7 +207,13 @@ BOOST_AUTO_TEST_CASE( download_1 )
         rc = CheckZip( pszVsiPath );
         BOOST_CHECK_EQUAL( rc, n );
         rc = CheckBands( pszVsiPath );
-        BOOST_CHECK_EQUAL( rc, 0 );
+        if( EQUAL( pszKey, "rtma_conus" ) )
+            BOOST_CHECK_EQUAL( rc, 3 );
+        else if EQUAL( pszKey, "narre" )
+            BOOST_CHECK_EQUAL( rc, 2 );
+        else
+            /* Sometimes we get double variables */
+            BOOST_CHECK( rc >= 4 );
     }
     CPLUnlinkTree( pszVsiPath );
 }

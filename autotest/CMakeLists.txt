@@ -267,65 +267,71 @@ IF(RUN_SLOW_TESTS)
    ENDIF(WITH_NOMADS_SUPPORT)
 ENDIF(RUN_SLOW_TESTS)
 IF(WITH_NOMADS_SUPPORT)
-   # Nomads simple
-   ADD_TEST(nomads_nam_conus_0_hour_zip
+    # Nomads simple
+    ADD_TEST(nomads_nam_conus_0_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 0 1 0 zip)
-   ADD_TEST(nomads_nam_conus_0_hour_path
+    ADD_TEST(nomads_nam_conus_0_hour_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 0 1 0 path)
-   ADD_TEST(nomads_nam_conus_3_hour_zip
+    ADD_TEST(nomads_nam_conus_3_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 3 4 0 zip)
-   ADD_TEST(nomads_nam_conus_3_hour_path
+    ADD_TEST(nomads_nam_conus_3_hour_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 3 4 0 path)
-   IF(RUN_SLOW_TESTS)
-       ADD_TEST(nomads_nam_conus_39_hour_zip
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 zip)
-       ADD_TEST(nomads_nam_conus_39_hour_path
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 path)
-       ADD_TEST(nomads_nam_north_america_39_hour_zip
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 zip)
-       ADD_TEST(nomads_nam_north_america_39_hour_zip
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 path)
-       ADD_TEST(nomads_gfs_mackay_39_hour_zip
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 zip)
-       ADD_TEST(nomads_gfs_mackay_39_hour_path
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 path)
-   ENDIF(RUN_SLOW_TESTS)
-   ADD_TEST(nomads_nam_north_america_1_hour_zip
+    IF(RUN_SLOW_TESTS)
+        ADD_TEST(nomads_nam_conus_39_hour_zip
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 zip)
+        ADD_TEST(nomads_nam_conus_39_hour_path
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 path)
+        ADD_TEST(nomads_nam_north_america_39_hour_zip
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 zip)
+        ADD_TEST(nomads_nam_north_america_39_hour_zip
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 path)
+        ADD_TEST(nomads_gfs_mackay_39_hour_zip
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 zip)
+        ADD_TEST(nomads_gfs_mackay_39_hour_path
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 path)
+    ENDIF(RUN_SLOW_TESTS)
+    ADD_TEST(nomads_nam_north_america_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 1 1 0 zip)
-   ADD_TEST(nomads_nam_north_america_1_hour_zip
+    ADD_TEST(nomads_nam_north_america_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 1 1 0 path)
-   ADD_TEST(nomads_rap_1_hour_zip
-       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 1 1 0 zip)
-   ADD_TEST(nomads_rap_1_hour_path
-       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 1 1 0 path)
-   ADD_TEST(nomads_rtma_conus_1_hour_zip
-       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rtma_conus 1 1 0 zip)
-   ADD_TEST(nomads_rtma_conus_1_hour_path
-       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rtma_conus 1 1 0 path)
-   ADD_TEST(nomads_gfs_mackay_zip
+    ADD_TEST(nomads_rap_1_hour_zip
+       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 1 2 0 zip)
+    ADD_TEST(nomads_rap_1_hour_path
+       ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 1 2 0 path)
+    ADD_TEST(nomads_gfs_mackay_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 1 1 0 zip)
-   ADD_TEST(nomads_gfs_mackay_path
+    ADD_TEST(nomads_gfs_mackay_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 1 1 0 path)
-   ADD_TEST(nomads_gfs_alaska_zip
+    ADD_TEST(nomads_gfs_alaska_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska gfs 1 1 0 zip)
-   ADD_TEST(nomads_gfs_alaska_path
+    ADD_TEST(nomads_gfs_alaska_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska gfs 1 1 0 path)
-   ADD_TEST(nomads_gfs_africa_zip
+    ADD_TEST(nomads_gfs_africa_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 africa gfs 1 1 0 zip)
-   ADD_TEST(nomads_gfs_africa_path
+    ADD_TEST(nomads_gfs_africa_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 africa gfs 1 1 0 path)
-   ADD_TEST(nomads_gfs_south_america_zip
+    ADD_TEST(nomads_gfs_south_america_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 south_america gfs 1 1 0 zip)
-   ADD_TEST(nomads_gfs_south_america_path
+    ADD_TEST(nomads_gfs_south_america_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 south_america gfs 1 1 0 path)
-   ADD_TEST(nomads_gfs_mackay_large_zip
+    ADD_TEST(nomads_gfs_mackay_large_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay_large gfs 12 5 0 zip)
-   ADD_TEST(nomads_gfs_mackay_large_path
+    ADD_TEST(nomads_gfs_mackay_large_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay_large gfs 12 5 0 path)
-   ADD_TEST(nomads_nam_alaska_1_hour_zip
+    ADD_TEST(nomads_nam_alaska_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska nam_alaska 1 1 0 zip)
-   ADD_TEST(nomads_nam_alaska_1_hour_path
+    ADD_TEST(nomads_nam_alaska_1_hour_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska nam_alaska 1 1 0 path)
+    IF(NOMADS_EXPER_FORECASTS)
+        ADD_TEST(nomads_nam_narre_1_hour_zip
+           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay narre 1 2 0 zip)
+        ADD_TEST(nomads_nam_narre_1_hour_path
+           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay narre 1 2 0 path)
+        ADD_TEST(nomads_rtma_conus_1_hour_zip
+           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rtma_conus 1 1 0 zip)
+        ADD_TEST(nomads_rtma_conus_1_hour_path
+           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rtma_conus 1 1 0 path)
+    ENDIF(NOMADS_EXPER_FORECASTS)
 ENDIF(WITH_NOMADS_SUPPORT)
 
 # *****************************************************************************

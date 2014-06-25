@@ -255,29 +255,6 @@ static const char *apszNomadsKeys[][10] =
       /* Human readable name */
       "Rapid Update, 13km" },
     /*
-    ** CONUS RTMA
-    */
-    { /* Name key of the model */
-      "rtma_conus",
-      /* name of the perl script for the grib filter */
-      "filter_rtma2p5.pl",
-      /* File naming format */
-      "rtma2p5.t%02dz.2dvaranl_ndfd.grb2",
-      /* Directory formats, string is date formatted as folowing */
-      "rtma2p5.%s",
-      /* Date format for directory */
-      NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
-      "0:23:1",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      "0:1:1",
-      /* Variable list */
-      "TMP,UGRD,VGRD",
-      /* Levels list */
-      "10_m_above_ground,2_m_above_ground",
-      /* Human readable name */
-      "RTMA CONUS, 2.5km" },
-    /*
     ** GFS
     */
     { /* Name key of the model */
@@ -300,6 +277,54 @@ static const char *apszNomadsKeys[][10] =
       "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
       /* Human readable name */
       "Global Forecast System, 0.5deg" },
+#ifdef NOMADS_EXPER_FORECASTS
+    /*
+    ** CONUS RTMA
+    */
+    { /* Name key of the model */
+      "rtma_conus",
+      /* name of the perl script for the grib filter */
+      "filter_rtma2p5.pl",
+      /* File naming format */
+      "rtma2p5.t%02dz.2dvaranl_ndfd.grb2",
+      /* Directory formats, string is date formatted as folowing */
+      "rtma2p5.%s",
+      /* Date format for directory */
+      NOMADS_GENERIC_NAM_DATE,
+      /* Forecast hours, start:stop:stride */
+      "0:23:1",
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      "0:0:1",
+      /* Variable list */
+      "TMP,UGRD,VGRD",
+      /* Levels list */
+      "10_m_above_ground,2_m_above_ground",
+      /* Human readable name */
+      "RTMA CONUS, 2.5km" },
+    /*
+    ** NARRE
+    */
+    { /* Name key of the model */
+      "narre",
+      /* name of the perl script for the grib filter */
+      "filter_narre.pl",
+      /* File naming format */
+      "narre.t%02dz.mean.grd130.f%02d.grib2",
+      /* Directory formats, string is date formatted as folowing */
+      "narre.%s/ensprod",
+      /* Date format for directory */
+      "%Y%m%d",
+      /* Forecast hours, start:stop:stride */
+      "0:24:1",
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      "1:12:1",
+      /* Variable list */
+      "UGRD,VGRD",
+      /* Levels list */
+      "10_m_above_ground",
+      /* Human readable name */
+      "North American Reanalysis" },
+#endif /* NOMADS_EXPER_FORECASTS */
     { NULL, NULL, NULL }
 };
 
