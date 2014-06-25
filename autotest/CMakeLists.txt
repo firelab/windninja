@@ -30,6 +30,7 @@
 # set it.  Also set all sub CMakeLists.txt
 # *****************************************************************************
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
 # *****************************************************************************
 # Includes
 # *****************************************************************************
@@ -283,7 +284,7 @@ IF(WITH_NOMADS_SUPPORT)
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 path)
         ADD_TEST(nomads_nam_north_america_39_hour_zip
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 zip)
-        ADD_TEST(nomads_nam_north_america_39_hour_zip
+        ADD_TEST(nomads_nam_north_america_39_hour_path
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 39 14 0 path)
         ADD_TEST(nomads_gfs_mackay_39_hour_zip
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 zip)
@@ -292,7 +293,7 @@ IF(WITH_NOMADS_SUPPORT)
     ENDIF(RUN_SLOW_TESTS)
     ADD_TEST(nomads_nam_north_america_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 1 1 0 zip)
-    ADD_TEST(nomads_nam_north_america_1_hour_zip
+    ADD_TEST(nomads_nam_north_america_1_hour_path
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 1 1 0 path)
     ADD_TEST(nomads_rap_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 1 2 0 zip)
@@ -359,3 +360,4 @@ IF(RUN_CLI_TESTS)
            
     ENDIF(PYTHONINTERP_FOUND)
 ENDIF(RUN_CLI_TESTS)
+

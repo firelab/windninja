@@ -67,77 +67,65 @@ extern "C" {
 #define NOMADS_GENERIC_NAM_FCST_HOURS  "0:18:6"
 #define NOMADS_GENERIC_NAM_RUN_HOURS   "0:36:3,39:86:6"
 
+/*
+** The following list of metadata is for models residing at
+** http://nomads.ncep.noaa.gov.  The indices contain the following info
+** (documented in GFS as well):
+**
+** Convenience index      Index   Description
+** NOMADS_NAME            0       Name key of the model
+** NOMADS_FILTER_BIN      1       name of the perl script for the grib filter
+** NOMADS_FILE_NAME_FRMT  2       File naming format
+** NOMADS_DIR_FRMT        3       Directory formats, string is date formatted 
+**                                as folowing
+** NOMADS_DIR_DATE_FRMT   4       Date format for directory
+** NOMADS_FCST_HOURS      5       Forecast hours, start:stop:stride
+** NOMADS_FCST_RUN_HOURS  6       Forecast run hours, in the format of 
+**                                start:stop:stride,start:stop:stride,...
+** NOMADS_VARIABLES       7       Variable list
+** NOMADS_LEVELS          8       Levels list
+** NOMADS_HUMAN_READABLE  9       Human readable name
+**
+** The models are listed in the same order as found on the web page.  Models
+** not yet implemented (or may never be) are marked with XXX.
+*/
+
+#define NOMADS_NAME                 0
+#define NOMADS_FILTER_BIN           1
+#define NOMADS_FILE_NAME_FRMT       2
+#define NOMADS_DIR_FRMT             3
+#define NOMADS_DIR_DATE_FRMT        4
+#define NOMADS_FCST_HOURS           5
+#define NOMADS_FCST_RUN_HOURS       6
+#define NOMADS_VARIABLES            7
+#define NOMADS_LEVELS               8
+#define NOMADS_HUMAN_READABLE       9
+
 static const char *apszNomadsKeys[][10] =
 {
     /*
-    ** NAM CONUS
+    ** GFS
     */
     { /* Name key of the model */
-      "nam_conus",
+      "gfs",
       /* name of the perl script for the grib filter */
-      "filter_nam.pl",
+      "filter_gfs_hd.pl",
       /* File naming format */
-      "nam.t%02dz.awphys%02d.grb2.tm00",
+      "gfs.t%02dz.mastergrb2f%02d",
       /* Directory formats, string is date formatted as folowing */
-      NOMADS_GENERIC_NAM_DIR,
+      "gfs.%s%02d/master",
       /* Date format for directory */
-      NOMADS_GENERIC_NAM_DATE,
+      "%Y%m%d",
       /* Forecast hours, start:stop:stride */
-      NOMADS_GENERIC_NAM_FCST_HOURS,
+      "0:12:12",
       /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      "0:36:1,39:86:3",
+      "0:192:3",
       /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
       /* Levels list */
-      NOMADS_GENERIC_LEVELS_LIST,
+      "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
       /* Human readable name */
-      "NAM CONUS, 12km" },
-    /*
-    ** NAM ALASKA
-    */
-    { /* Name key of the model */
-      "nam_alaska",
-      /* name of the perl script for the grib filter */
-      "filter_nam_ak.pl",
-      /* File naming format */
-      "nam.t%02dz.awak3d%02d.grb2.tm00",
-      /* Directory formats, string is date formatted as folowing */
-      NOMADS_GENERIC_NAM_DIR,
-      /* Date format for directory */
-      NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
-      NOMADS_GENERIC_NAM_FCST_HOURS,
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      NOMADS_GENERIC_NAM_RUN_HOURS,
-      /* Variable list */
-      NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
-      NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
-      "NAM Alaska, 11.25km" },
-    /*
-    ** NAM North America
-    */
-    { /* Name key of the model */
-      "nam_north_america",
-      /* name of the perl script for the grib filter */
-      "filter_nam_na.pl",
-      /* File naming format */
-      "nam.t%02dz.awip32%02d.tm00.grib2",
-      /* Directory formats, string is date formatted as folowing */
-      NOMADS_GENERIC_NAM_DIR,
-      /* Date format for directory */
-      NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
-      NOMADS_GENERIC_NAM_FCST_HOURS,
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      NOMADS_GENERIC_NAM_RUN_HOURS,
-      /* Variable list */
-      NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
-      NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
-      "NAM North America, 32km" },
+      "Global Forecast System, 0.5deg" },
     /*
     ** HIRES Alaska
     */
@@ -208,6 +196,81 @@ static const char *apszNomadsKeys[][10] =
       NOMADS_GENERIC_LEVELS_LIST,
       /* Human readable name */
       "HIRES CONUS NMM, 5km" },
+    /* XXX: HIRES Guam */
+    /* XXX: HIRES Hawaii */
+    /* XXX: HIRES Puerto Rico */
+    /*
+    ** NAM ALASKA
+    */
+    { /* Name key of the model */
+      "nam_alaska",
+      /* name of the perl script for the grib filter */
+      "filter_nam_ak.pl",
+      /* File naming format */
+      "nam.t%02dz.awak3d%02d.grb2.tm00",
+      /* Directory formats, string is date formatted as folowing */
+      NOMADS_GENERIC_NAM_DIR,
+      /* Date format for directory */
+      NOMADS_GENERIC_NAM_DATE,
+      /* Forecast hours, start:stop:stride */
+      NOMADS_GENERIC_NAM_FCST_HOURS,
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      NOMADS_GENERIC_NAM_RUN_HOURS,
+      /* Variable list */
+      NOMADS_GENERIC_VAR_LIST,
+      /* Levels list */
+      NOMADS_GENERIC_LEVELS_LIST,
+      /* Human readable name */
+      "NAM Alaska, 11.25km" },
+    /*
+    ** NAM CONUS
+    */
+    { /* Name key of the model */
+      "nam_conus",
+      /* name of the perl script for the grib filter */
+      "filter_nam.pl",
+      /* File naming format */
+      "nam.t%02dz.awphys%02d.grb2.tm00",
+      /* Directory formats, string is date formatted as folowing */
+      NOMADS_GENERIC_NAM_DIR,
+      /* Date format for directory */
+      NOMADS_GENERIC_NAM_DATE,
+      /* Forecast hours, start:stop:stride */
+      NOMADS_GENERIC_NAM_FCST_HOURS,
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      "0:36:1,39:86:3",
+      /* Variable list */
+      NOMADS_GENERIC_VAR_LIST,
+      /* Levels list */
+      NOMADS_GENERIC_LEVELS_LIST,
+      /* Human readable name */
+      "NAM CONUS, 12km" },
+    /*
+    ** NAM North America
+    */
+    { /* Name key of the model */
+      "nam_north_america",
+      /* name of the perl script for the grib filter */
+      "filter_nam_na.pl",
+      /* File naming format */
+      "nam.t%02dz.awip32%02d.tm00.grib2",
+      /* Directory formats, string is date formatted as folowing */
+      NOMADS_GENERIC_NAM_DIR,
+      /* Date format for directory */
+      NOMADS_GENERIC_NAM_DATE,
+      /* Forecast hours, start:stop:stride */
+      NOMADS_GENERIC_NAM_FCST_HOURS,
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      NOMADS_GENERIC_NAM_RUN_HOURS,
+      /* Variable list */
+      NOMADS_GENERIC_VAR_LIST,
+      /* Levels list */
+      NOMADS_GENERIC_LEVELS_LIST,
+      /* Human readable name */
+      "NAM North America, 32km" },
+    /* XXX: NAM Caribbean/Central America */
+    /* XXX: NAM Pacific */
+    /* XXX: NAM Alaska NEST */
     /*
     ** NAM CONUS NEST
     */
@@ -231,53 +294,10 @@ static const char *apszNomadsKeys[][10] =
       NOMADS_GENERIC_LEVELS_LIST,
       /* Human readable name */
       "NAM CONUS NEST, 5km" },
-    /*
-    ** RAP
-    */
-    { /* Name key of the model */
-      "rap",
-      /* name of the perl script for the grib filter */
-      "filter_rap.pl",
-      /* File naming format */
-      "rap.t%02dz.awp130pgrbf%02d.grib2",
-      /* Directory formats, string is date formatted as folowing */
-      "rap.%s",
-      /* Date format for directory */
-      NOMADS_GENERIC_NAM_DATE,
-      /* Forecast hours, start:stop:stride */
-      "0:23:1",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      "0:18:1",
-      /* Variable list */
-      NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
-      NOMADS_GENERIC_LEVELS_LIST,
-      /* Human readable name */
-      "Rapid Update, 13km" },
-    /*
-    ** GFS
-    */
-    { /* Name key of the model */
-      "gfs",
-      /* name of the perl script for the grib filter */
-      "filter_gfs_hd.pl",
-      /* File naming format */
-      "gfs.t%02dz.mastergrb2f%02d",
-      /* Directory formats, string is date formatted as folowing */
-      "gfs.%s%02d/master",
-      /* Date format for directory */
-      "%Y%m%d",
-      /* Forecast hours, start:stop:stride */
-      "0:12:12",
-      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      "0:192:3",
-      /* Variable list */
-      NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
-      "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
-      /* Human readable name */
-      "Global Forecast System, 0.5deg" },
+    /* XXX: NAM Hawaii NEST */
+    /* XXX: NAM Puerto Rico NEST */
 #ifdef NOMADS_EXPER_FORECASTS
+    /* XXX: Alaska RTMA */
     /*
     ** CONUS RTMA
     */
@@ -301,6 +321,35 @@ static const char *apszNomadsKeys[][10] =
       "10_m_above_ground,2_m_above_ground",
       /* Human readable name */
       "RTMA CONUS, 2.5km" },
+    /* XXX: Guam RTMA */
+    /* XXX: Hawaii RTMA */
+    /* XXX: Puerto Rico RTMA */
+#endif
+    /*
+    ** RAP
+    */
+    { /* Name key of the model */
+      "rap",
+      /* name of the perl script for the grib filter */
+      "filter_rap.pl",
+      /* File naming format */
+      "rap.t%02dz.awp130pgrbf%02d.grib2",
+      /* Directory formats, string is date formatted as folowing */
+      "rap.%s",
+      /* Date format for directory */
+      NOMADS_GENERIC_NAM_DATE,
+      /* Forecast hours, start:stop:stride */
+      "0:23:1",
+      /* Forecast run hours, start:stop:stride,start:stop:stride,... */
+      "0:18:1",
+      /* Variable list */
+      NOMADS_GENERIC_VAR_LIST,
+      /* Levels list */
+      NOMADS_GENERIC_LEVELS_LIST,
+      /* Human readable name */
+      "Rapid Update, 13km" },
+    /* XXX: RAP North America */
+#ifdef NOMADS_EXPER_FORECASTS
     /*
     ** NARRE
     */
@@ -328,16 +377,6 @@ static const char *apszNomadsKeys[][10] =
     { NULL, NULL, NULL }
 };
 
-#define NOMADS_NAME                 0
-#define NOMADS_FILTER_BIN           1
-#define NOMADS_FILE_NAME_FRMT       2
-#define NOMADS_DIR_FRMT             3
-#define NOMADS_DIR_DATE_FRMT        4
-#define NOMADS_FCST_HOURS           5
-#define NOMADS_FCST_RUN_HOURS       6
-#define NOMADS_VARIABLES            7
-#define NOMADS_LEVELS               8
-#define NOMADS_HUMAN_READABLE       9
 
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                  const char *pszDstVsiPath );
