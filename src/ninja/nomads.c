@@ -57,7 +57,7 @@ static int NomadsFindLatestForecastHour( const char **ppszKey, nomads_utc *now )
     int nFcstHour;
     int i;
 
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ":", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ":", 0 );
     nStart = atoi( papszHours[0] );
     nStop = atoi( papszHours[1] );
     nStride = atoi( papszHours[2] );
@@ -86,7 +86,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     NomadsUtcCreate( &tmp );
     NomadsUtcCopy( tmp, now );
 
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ",", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ",", 0 );
     nTokenCount = CSLCount( papszHours );
     CPLAssert( nTokenCount > 0 );
     papszRunHours = CSLTokenizeString2( papszHours[nTokenCount - 1], ":", 0);
@@ -96,7 +96,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     papszRunHours = NULL;
     CSLDestroy( papszHours );
     papszHours = NULL;
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ",", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ",", 0 );
     k = 0;
     for( i = 0; i < nTokenCount; i++ )
     {
@@ -230,7 +230,7 @@ try_again:
         {
             if( !bAlreadyWentBack )
             {
-                papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS],
+                papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS],
                                                  ":", 0 );
                 nStart = atoi( papszHours[0] );
                 nStop = atoi( papszHours[1] );
