@@ -40,7 +40,6 @@
 #include "ninjaArmy.h"
 #include "cli.h"
 #include "ninjaException.h"
-#include "core_run.h"
 #include "ninja_conv.h"
 #include "ninja_init.h"
 

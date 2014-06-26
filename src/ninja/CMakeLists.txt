@@ -39,7 +39,6 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp
-                  core_run.cpp
                   dbfopen.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
