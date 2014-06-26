@@ -100,6 +100,7 @@ class wxModelInitialization : public initialize
     virtual bool identify( std::string fileName ) = 0;
     virtual std::vector<std::string> getVariableList() = 0;
     virtual std::string getForecastIdentifier() = 0;
+    virtual std::string getForecastReadable(){return getForecastIdentifier();}
     virtual std::string getPath();
     virtual int getStartHour() = 0;
     virtual int getEndHour() = 0;
@@ -126,6 +127,7 @@ class wxModelInitialization : public initialize
     std::vector<double> w_wxList;
 
     void SetProgressFunc( GDALProgressFunc );
+    void SetProgressArg( void *p );
 
  protected:
     int LoadFromCsv();

@@ -56,6 +56,8 @@ public:
     virtual bool identify( std::string fileName );
     virtual std::vector<std::string> getVariableList();
     virtual std::string getForecastIdentifier();
+    virtual std::string getForecastReadable();
+    virtual int getStartHour();
     virtual int getEndHour();
     virtual void checkForValidData();
     virtual double Get_Wind_Height() { return 10; }

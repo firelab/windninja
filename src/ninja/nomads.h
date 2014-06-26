@@ -99,8 +99,8 @@ extern "C" {
 #define NOMADS_FILE_NAME_FRMT       2
 #define NOMADS_DIR_FRMT             3
 #define NOMADS_DIR_DATE_FRMT        4
-#define NOMADS_FCST_RUN_HOURS       5
-#define NOMADS_FCST_HOURS           6
+#define NOMADS_FCST_HOURS           5
+#define NOMADS_FCST_RUN_HOURS       6
 #define NOMADS_VARIABLES            7
 #define NOMADS_LEVELS               8
 #define NOMADS_GRID_RES             9
@@ -112,7 +112,7 @@ static const char *apszNomadsKeys[][11] =
     ** GFS
     */
     { /* Name key of the model */
-      "gfs",
+      "nomads-gfs",
       /* name of the perl script for the grib filter */
       "filter_gfs_hd.pl",
       /* File naming format */
@@ -132,7 +132,7 @@ static const char *apszNomadsKeys[][11] =
       /* Horizontal grid resolution */
       "0.5 deg",
       /* Human readable name */
-      "Global Forecast System, 0.5deg" },
+      "Global Forecast System" },
     /*
     ** HIRES Alaska
     */

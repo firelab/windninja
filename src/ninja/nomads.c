@@ -57,7 +57,7 @@ static int NomadsFindLatestForecastHour( const char **ppszKey, nomads_utc *now )
     int nFcstHour;
     int i;
 
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ":", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ":", 0 );
     nStart = atoi( papszHours[0] );
     nStop = atoi( papszHours[1] );
     nStride = atoi( papszHours[2] );
@@ -86,7 +86,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     NomadsUtcCreate( &tmp );
     NomadsUtcCopy( tmp, now );
 
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ",", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ",", 0 );
     nTokenCount = CSLCount( papszHours );
     CPLAssert( nTokenCount > 0 );
     papszRunHours = CSLTokenizeString2( papszHours[nTokenCount - 1], ":", 0);
@@ -96,7 +96,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     papszRunHours = NULL;
     CSLDestroy( papszHours );
     papszHours = NULL;
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ",", 0 );
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ",", 0 );
     k = 0;
     for( i = 0; i < nTokenCount; i++ )
     {
@@ -200,12 +200,30 @@ try_again:
     /* Open our output file */
     if( pfnProgress )
     {
-        pfnProgress( 0.0, NULL, NULL );
+        pfnProgress( 0.0, "Starting download...", NULL );
     }
+    char szMessage[512];
+    szMessage[0] = '\0';
     for( i = 0; i < nFilesToGet; i++ )
     {
         pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
                                              nFcstHour, panRunHours[i] ) );
+        if( pfnProgress )
+        {
+            sprintf( szMessage, "Downloading %s...", pszGribFile );
+            if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt,
+                          "Cancelled by user." );
+                CPLFree( (void*)pszGribFile );
+                NomadsUtcFree( now );
+                NomadsUtcFree( end );
+                NomadsUtcFree( tmp );
+                NomadsUtcFree( fcst );
+                return NOMADS_OK;
+            }
+        }
+
         NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
         /* Special case for gfs */
         if( EQUAL( pszModelKey, "gfs" ) )
@@ -271,7 +289,7 @@ try_again:
 #else
                 CPLHTTPDestroyResult( psResult );
 #endif
-                return NOMADS_ERR;
+                return NOMADS_OK;
             }
         }
         /* Write to zip file or folder */
@@ -303,6 +321,26 @@ try_again:
         {
             nOffset = VSIFReadL( pabyBuffer, 1, 1024, fin );
             VSIFWriteL( pabyBuffer, 1, nOffset, fout );
+            if( pfnProgress )
+            {
+                if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
+                              "Cancelled by user." );
+                    CPLFree( (void*)pszGribFile );
+                    CPLFree( (void*)pszGribDir );
+                    CPLFree( (void*)panRunHours );
+                    NomadsUtcFree( now );
+                    NomadsUtcFree( end );
+                    NomadsUtcFree( tmp );
+                    NomadsUtcFree( fcst );
+                    VSIFCloseL( fin );
+#ifndef NOMADS_USE_VSI_READ
+                    CPLHTTPDestroyResult( psResult );
+#endif
+                    return NOMADS_OK;
+                }
+            }
         } while ( nOffset != 0 );
         VSIFCloseL( fin );
 #else
@@ -312,10 +350,6 @@ try_again:
         VSIFCloseL( fout );
         CPLFree( (void*)pszGribFile );
         CPLFree( (void*)pszGribDir );
-        if( pfnProgress )
-        {
-            pfnProgress( i / (double)nFilesToGet, NULL, NULL );
-        }
     }
     NomadsUtcFree( now );
     NomadsUtcFree( end );

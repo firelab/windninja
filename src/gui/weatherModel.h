@@ -30,6 +30,7 @@
 #ifndef WEATHER_MODEL_H
 #define WEATHER_MODEL_H
 
+#include <QCoreApplication>
 #include <QComboBox>
 #include <QGroupBox>
 #include <QToolButton>
@@ -56,10 +57,14 @@
 
 #include "ninjaException.h"
 #include "wxModelInitializationFactory.h"
+#include "nomads_wx_init.h"
 
 #include "gdal_util.h"
 #include "netcdf.h"
 #include "ninja_conv.h"
+
+static QProgressDialog *pGlobProg;
+static void *pCancel;
 
 class httpGetThread : public QThread
 {
@@ -98,6 +103,7 @@ class weatherModel : public QWidget
     QString inputFile;
 
     QProgressDialog *progressDialog;
+    QLabel *progressLabel;
 
     QHBoxLayout *downloadLayout;
     QHBoxLayout *treeLayout;
@@ -118,6 +124,9 @@ class weatherModel : public QWidget
     ncepDgexSurfInitialization dgex;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
+
+    int nNomadsCount;
+    NomadsWxModel **papoNomads;
 
  private slots:
     void getData();

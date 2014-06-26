@@ -141,6 +141,23 @@ int NomadsWxModel::getEndHour()
     return nHour;
 }
 
+int NomadsWxModel::getStartHour()
+{
+    if( !ppszModelData )
+    {
+        return 0;
+    }
+    char **papszTokens = NULL;
+    int nHour = 0;
+    int nCount = 0;
+    papszTokens = CSLTokenizeString2( ppszModelData[NOMADS_FCST_RUN_HOURS],
+                                      ":,", 0 );
+    nCount = CSLCount( papszTokens );
+    nHour = atoi( papszTokens[0] );
+    CSLDestroy( papszTokens );
+    return nHour;
+}
+
 std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
 {
     if( !ppszModelData )
@@ -204,6 +221,20 @@ std::string NomadsWxModel::getForecastIdentifier()
     }
     return std::string( ppszModelData[NOMADS_NAME] );
 }
+
+std::string NomadsWxModel::getForecastReadable()
+{
+    if( !ppszModelData )
+    {
+        throw badForecastFile( "Invalid Model" );
+    }
+    std::string s = "NOMADS ";
+    s += ppszModelData[NOMADS_HUMAN_READABLE];
+    s += " ";
+    s += ppszModelData[NOMADS_GRID_RES];
+    return s;
+}
+
 std::vector<blt::local_date_time>
 NomadsWxModel::getTimeList( std::string timeZoneString )
 {

@@ -81,12 +81,6 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     modelComboBox = new QComboBox(this);
     modelComboBox->setDuplicatesEnabled(false);
 
-    progressDialog = new QProgressDialog;
-    progressDialog->setModal(true);
-    progressDialog->setMinimumDuration(1);
-    progressDialog->setAutoClose(true);
-    progressDialog->setAutoReset(true);
-
     hourSpinBox =  new QSpinBox(this);
     hourSpinBox->setRange(3, 84);
     hourSpinBox->setSingleStep(1);
@@ -170,6 +164,25 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     layout->addWidget( weatherGroupBox );
     setLayout(layout);
 
+    nNomadsCount = 0;
+    while( apszNomadsKeys[nNomadsCount][0] != NULL )
+        nNomadsCount++;
+    papoNomads = new NomadsWxModel*[nNomadsCount];
+    int i = 0;
+    while( apszNomadsKeys[i][0] != NULL )
+    {
+        papoNomads[i] = new NomadsWxModel( apszNomadsKeys[i][0] );
+        i++;
+    }
+    CPLDebug( "WINDNINJA", "Loaded %d NOMADS models", nNomadsCount );
+
+    progressDialog = new QProgressDialog( this );
+    progressDialog->setAutoClose( false );
+    progressDialog->setAutoReset( false );
+    progressDialog->setModal( true );
+
+    pGlobProg = progressDialog;
+
     loadModelComboBox();
 
     checkForModelData();
@@ -181,6 +194,9 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
  */
 weatherModel::~weatherModel()
 {
+    for( int i = 0; i < nNomadsCount; i++ )
+        delete papoNomads[i];
+    delete [] papoNomads;
 }
 
 /**
@@ -196,6 +212,15 @@ void weatherModel::loadModelComboBox()
     //modelComboBox->addItem( QString::fromStdString(dgex.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
+    /* Nomads */
+    QString s;
+    for( int i = 0; i < nNomadsCount; i++ )
+    {
+        s = QString::fromStdString( papoNomads[i]->getForecastReadable() );
+        s = s.toUpper();
+        s.replace( " ", "-" );
+        modelComboBox->addItem( s );
+    }
 }
 
 void weatherModel::setTimeLimits( int index )
@@ -210,6 +235,25 @@ void weatherModel::setTimeLimits( int index )
         hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
     else if( index == 4 )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
+    else
+    {
+        int n = index - 5;
+        hourSpinBox->setRange( papoNomads[n]->getStartHour(),
+                               papoNomads[n]->getEndHour() );
+    }
+}
+
+static int UpdateProgress( double dfProgress, const char *pszMessage,
+                           void *pProgressArg )
+{
+    (void*)pProgressArg;
+    if( pszMessage )
+        pGlobProg->setLabelText( pszMessage );
+    pGlobProg->setValue( dfProgress * 100 );
+    QCoreApplication::processEvents();
+    if( pGlobProg->wasCanceled() )
+        return 1;
+    return 0;
 }
 
 /**
@@ -245,10 +289,20 @@ void weatherModel::getData()
         model = new ncepNamAlaskaSurfInitialization( namAk );
     else if( modelChoice == 4 )
         model = new ncepGfsSurfInitialization( gfs );
+    else
+    {
+        model = papoNomads[modelChoice - 5];
+        progressDialog->reset();
+        progressDialog->setRange( 0, 100 );
+        model->SetProgressFunc( &UpdateProgress );
+        progressDialog->show();
+        progressDialog->setCancelButtonText( "Cancel" );
+    }
 
     /* use a separate thread for the download? */
     //http.start();
     //http.run( model, inputFile, days * 24 );
+
 
     try {
         model->fetchForecast( inputFile.toStdString(), hours );
@@ -263,6 +317,13 @@ void weatherModel::getData()
                               QString::fromStdString( e.what() ),
                               QMessageBox::Ok );
         checkForModelData();
+    }
+
+    if( modelChoice > 4 )
+    {
+        progressDialog->setValue( 100 );
+        progressDialog->setLabelText( "Done" );
+        progressDialog->setCancelButtonText( "Close" );
     }
 
     checkForModelData();
