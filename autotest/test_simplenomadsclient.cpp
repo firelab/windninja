@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
     }
     else
         BOOST_REQUIRE( 0 );
-    rc = NomadsFetch( pszKey, hours, pdfBbox, pszVsiPath );
+    rc = NomadsFetch( pszKey, hours, pdfBbox, pszVsiPath, NULL, NULL );
     BOOST_REQUIRE_EQUAL( rc, erc );
     if( rc == 0 )
     {

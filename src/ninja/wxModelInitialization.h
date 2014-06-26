@@ -41,6 +41,7 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "cpl_port.h"
+#include "cpl_progress.h"
 #include "cpl_http.h"
 #include "cpl_string.h"
 /* omp */
@@ -110,7 +111,7 @@ class wxModelInitialization : public initialize
 
     std::string generateUrl( double north, double west, double east,
                              double south, int hours);
-    std::string fetchForecast( std::string demFile, int nHours );
+    virtual std::string fetchForecast( std::string demFile, int nHours );
     std::string generateForecastName();
     
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
@@ -124,6 +125,7 @@ class wxModelInitialization : public initialize
     std::vector<double> v_wxList;
     std::vector<double> w_wxList;
 
+    void SetProgressFunc( GDALProgressFunc );
 
  protected:
     int LoadFromCsv();
@@ -172,6 +174,8 @@ class wxModelInitialization : public initialize
     wn_3dScalarField wxW3d;
     wn_3dScalarField wxAir3d;
     wn_3dScalarField wxCloud3d;
+
+    GDALProgressFunc pfnProgress;
 };
 
 #endif /* WX_MODEL_INITIALIZATION_H */

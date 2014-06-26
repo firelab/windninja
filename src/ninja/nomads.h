@@ -33,9 +33,10 @@
 #include "nomads_utc.h"
 
 #include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "cpl_http.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,10 +63,10 @@ extern "C" {
 
 #define NOMADS_SUBREGION             "&subregion=&leftlon=%lf&rightlon=%lf&toplat=%lf&bottomlat=%lf"
 
-#define NOMADS_GENERIC_NAM_DIR         "nam.%s"
-#define NOMADS_GENERIC_NAM_DATE        "%Y%m%d"
-#define NOMADS_GENERIC_NAM_FCST_HOURS  "0:18:6"
-#define NOMADS_GENERIC_NAM_RUN_HOURS   "0:36:3,39:86:6"
+#define NOMADS_GENERIC_DIR         "nam.%s"
+#define NOMADS_GENERIC_DATE        "%Y%m%d"
+#define NOMADS_GENERIC_FCST_HOURS  "0:18:6"
+#define NOMADS_GENERIC_RUN_HOURS   "0:36:3,39:86:6"
 
 /*
 ** The following list of metadata is for models residing at
@@ -84,7 +85,10 @@ extern "C" {
 **                                start:stop:stride,start:stop:stride,...
 ** NOMADS_VARIABLES       7       Variable list
 ** NOMADS_LEVELS          8       Levels list
-** NOMADS_HUMAN_READABLE  9       Human readable name
+** NOMADS_GRID_RES        9       Horizontal resolution, as "value unit"
+**                                ("0.5 deg" or "12 km")
+** NOMADS_GRID            10      NWS Grid used for the model
+** NOMADS_HUMAN_READABLE  11      Human readable name
 **
 ** The models are listed in the same order as found on the web page.  Models
 ** not yet implemented (or may never be) are marked with XXX.
@@ -99,9 +103,10 @@ extern "C" {
 #define NOMADS_FCST_HOURS           6
 #define NOMADS_VARIABLES            7
 #define NOMADS_LEVELS               8
-#define NOMADS_HUMAN_READABLE       9
+#define NOMADS_GRID_RES             9
+#define NOMADS_HUMAN_READABLE       10
 
-static const char *apszNomadsKeys[][10] =
+static const char *apszNomadsKeys[][11] =
 {
     /*
     ** GFS
@@ -124,6 +129,8 @@ static const char *apszNomadsKeys[][10] =
       NOMADS_GENERIC_VAR_LIST,
       /* Levels list */
       "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
+      /* Horizontal grid resolution */
+      "0.5 deg",
       /* Human readable name */
       "Global Forecast System, 0.5deg" },
     /*
@@ -134,12 +141,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_hiresak.pl",
       "akarw.t%02dz.awpregf%02d.grib2",
       "hiresw.%s",
-      NOMADS_GENERIC_NAM_DATE,
-      "6:6:0",
+      NOMADS_GENERIC_DATE,
+      "18:18:0",
       "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "HIRES Alaska, 4-5km" },
+      "5 km",
+      "HIRES Alaska" },
     /*
     ** HIRES CONUS
     ** Check on what this is.
@@ -149,12 +157,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_hiresconus.pl",
       "conusarw.t%02dz.awp5kmf%02d.grib2",
       "hiresw.%s",
-      NOMADS_GENERIC_NAM_DATE,
+      NOMADS_GENERIC_DATE,
       "0:12:12",
       "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "HIRES CONUS, 5km" },
+      "5 km",
+      "HIRES CONUS" },
     /*
     ** HIRES CONUS NMM
     */
@@ -163,12 +172,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_hiresconus.pl",
       "conusnmmb.t%02dz.awp5kmf%02d.grib2",
       "hiresw.%s",
-      NOMADS_GENERIC_NAM_DATE,
+      NOMADS_GENERIC_DATE,
       "0:12:12",
       "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "HIRES CONUS NMM, 5km" },
+      "5 km",
+      "HIRES CONUS NMM" },
     /* XXX: HIRES Guam */
     /* XXX: HIRES Hawaii */
     /* XXX: HIRES Puerto Rico */
@@ -179,13 +189,14 @@ static const char *apszNomadsKeys[][10] =
       "nam_alaska",
       "filter_nam_ak.pl",
       "nam.t%02dz.awak3d%02d.grb2.tm00",
-      NOMADS_GENERIC_NAM_DIR,
-      NOMADS_GENERIC_NAM_DATE,
-      NOMADS_GENERIC_NAM_FCST_HOURS,
-      NOMADS_GENERIC_NAM_RUN_HOURS,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_GENERIC_RUN_HOURS,
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "NAM Alaska, 11.25km" },
+      "11.25 km",
+      "NAM Alaska" },
     /*
     ** NAM CONUS
     */
@@ -193,13 +204,14 @@ static const char *apszNomadsKeys[][10] =
       "nam_conus",
       "filter_nam.pl",
       "nam.t%02dz.awphys%02d.grb2.tm00",
-      NOMADS_GENERIC_NAM_DIR,
-      NOMADS_GENERIC_NAM_DATE,
-      NOMADS_GENERIC_NAM_FCST_HOURS,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
       "0:36:1,39:86:3",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "NAM CONUS, 12km" },
+      "12 km",
+      "NAM CONUS" },
     /*
     ** NAM North America
     */
@@ -207,13 +219,14 @@ static const char *apszNomadsKeys[][10] =
       "nam_north_america",
       "filter_nam_na.pl",
       "nam.t%02dz.awip32%02d.tm00.grib2",
-      NOMADS_GENERIC_NAM_DIR,
-      NOMADS_GENERIC_NAM_DATE,
-      NOMADS_GENERIC_NAM_FCST_HOURS,
-      NOMADS_GENERIC_NAM_RUN_HOURS,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_GENERIC_RUN_HOURS,
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "NAM North America, 32km" },
+      "32 km",
+      "NAM North America" },
     /* XXX: NAM Caribbean/Central America */
     /* XXX: NAM Pacific */
     /* XXX: NAM Alaska NEST */
@@ -225,12 +238,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_nam_conusnest.pl",
       "nam.t%02dz.conusnest.hiresf%02d.t00.grib2",
       "hiresw.%s",
-      NOMADS_GENERIC_NAM_DATE,
+      NOMADS_GENERIC_DATE,
       "0:12:12",
       "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "NAM CONUS NEST, 5km" },
+      "5 km",
+      "NAM CONUS NEST" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
 #ifdef NOMADS_EXPER_FORECASTS
@@ -243,12 +257,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_rtma2p5.pl",
       "rtma2p5.t%02dz.2dvaranl_ndfd.grb2",
       "rtma2p5.%s",
-      NOMADS_GENERIC_NAM_DATE,
+      NOMADS_GENERIC_DATE,
       "0:23:1",
       "0:0:1",
       "TMP,UGRD,VGRD",
       "10_m_above_ground,2_m_above_ground",
-      "RTMA CONUS, 2.5km" },
+      "2.5 km",
+      "RTMA CONUS" },
     /* XXX: Guam RTMA */
     /* XXX: Hawaii RTMA */
     /* XXX: Puerto Rico RTMA */
@@ -261,12 +276,13 @@ static const char *apszNomadsKeys[][10] =
       "filter_rap.pl",
       "rap.t%02dz.awp130pgrbf%02d.grib2",
       "rap.%s",
-      NOMADS_GENERIC_NAM_DATE,
+      NOMADS_GENERIC_DATE,
       "0:23:1",
       "0:18:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "Rapid Update, 13km" },
+      "13 km",
+      "Rapid Update" },
     /* XXX: RAP North America */
 #ifdef NOMADS_EXPER_FORECASTS
     /*
@@ -282,6 +298,7 @@ static const char *apszNomadsKeys[][10] =
       "1:12:1",
       "UGRD,VGRD",
       "10_m_above_ground",
+      "11 km",
       "North American Reanalysis" },
 #endif /* NOMADS_EXPER_FORECASTS */
     { NULL, NULL, NULL }
@@ -289,7 +306,8 @@ static const char *apszNomadsKeys[][10] =
 
 
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
-                 const char *pszDstVsiPath );
+                 const char *pszDstVsiPath, char ** papszOptions,
+                 GDALProgressFunc pfnProgress );
 
 #ifdef __cplusplus
 }

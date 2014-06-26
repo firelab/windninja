@@ -92,6 +92,7 @@ wxModelInitialization::wxModelInitialization() : initialize()
 {
     wxModelFileName = "";
     host = "thredds.ucar.edu";
+    pfnProgress = NULL;
 }
 
 /**
@@ -104,6 +105,7 @@ wxModelInitialization::wxModelInitialization(const wxModelInitialization& A) : i
     host = A.host;
     heightVarName = A.heightVarName;
     path = A.path;
+    pfnProgress = A.pfnProgress;
 }
 
 /**
@@ -126,6 +128,7 @@ wxModelInitialization& wxModelInitialization::operator= (wxModelInitialization c
     host = A.host;
     heightVarName = A.heightVarName;
     path = A.path;
+    pfnProgress = A.pfnProgress;
     }
     return *this;
 }
@@ -1805,3 +1808,9 @@ int wxModelInitialization::LoadFromCsv()
     CSLDestroy( papszLines );
     return 0;
 }
+
+void wxModelInitialization::SetProgressFunc( GDALProgressFunc pfnNew )
+{
+    pfnProgress = pfnNew;
+}
+

@@ -125,7 +125,8 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
 }
 
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
-                 const char *pszDstVsiPath )
+                 const char *pszDstVsiPath, char ** papszOptions,
+                 GDALProgressFunc pfnProgress )
 {
     const char **ppszKey = NULL;
     const char *pszUrl = NULL;
