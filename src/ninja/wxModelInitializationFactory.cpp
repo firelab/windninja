@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * $Id: wxModelInitializationFactory.h 
+ * $Id$
  *
  * Project:  WindNinja
  * Purpose:  Implementation file for wxModelInitialization Factory Class
