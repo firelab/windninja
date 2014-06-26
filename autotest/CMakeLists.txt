@@ -38,8 +38,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src/ninja
                     ${NETCDF_INCLUDES}
                     ${GDAL_INCLUDE_DIR}
                     ${CURL_INCLUDE_DIRS}
-                    ${Boost_INCLUDE_DIRS}
-                    ${PROJECT_SOURCE_DIR}/src/nomads)
+                    ${Boost_INCLUDE_DIRS})
 
 SET(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${GDAL_LIBRARY}
@@ -84,9 +83,7 @@ ENDIF(ENABLE_GMTED)
 
 IF(WITH_NOMADS_SUPPORT)
     SET(TEST_SOURCES ${TEST_SOURCES}
-                     test_nomadsclient.cpp
-                     test_simplenomadsclient.cpp
-                     test_utctime.cpp)
+                     test_simplenomadsclient.cpp)
 ENDIF(WITH_NOMADS_SUPPORT)
 
 ADD_EXECUTABLE(test_main ${TEST_SOURCES})
@@ -155,39 +152,6 @@ IF(WITH_LCP_CLIENT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=landfireclient/unzip)
 ENDIF(WITH_LCP_CLIENT)
 
-# nomads Test Suite - still experimental
-IF(WITH_NOMADS_SUPPORT)
-    ADD_TEST(test_nomadsclient_file_list
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/generate_time_list)
-    ADD_TEST(test_nomads_nam
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_creation)
-    ADD_TEST(test_nomads_addhours
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/addhours)
-
-ADD_TEST(test_utc_create_1
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/create_1)
-ADD_TEST(test_utc_add_hours_1
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_1)
-ADD_TEST(test_utc_add_hours_2
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_2)
-ADD_TEST(test_utc_add_hours_3
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_3)
-ADD_TEST(test_utc_add_hours_4
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_4)
-ADD_TEST(test_utc_add_hours_5
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_5)
-ADD_TEST(test_utc_add_hours_6
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_6)
-ADD_TEST(test_utc_add_hours_7
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_7)
-ADD_TEST(test_utc_add_hours_8
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_8)
-ADD_TEST(test_utc_strftime_1
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/strftime_1)
-ADD_TEST(test_utc_now_1
-         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
-ENDIF(WITH_NOMADS_SUPPORT)
-
 # input_points Test Suite
 IF(NOT NINJA_QTGUI)
     ADD_TEST(test_input_points_mackay         
@@ -228,44 +192,6 @@ IF(RUN_SLOW_TESTS)
         ADD_TEST(test_landfireclient_download_hawaii
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=landfireclient/hawaii )
     ENDIF(WITH_LCP_CLIENT)
-    IF(WITH_NOMADS_SUPPORT)
-        ADD_TEST(nam_awphys_update_times
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_awphys_update_times)
-        ADD_TEST(rap_update_times
-            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/rap_update_times)
-        ADD_TEST(gfs_update_times
-            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/gfs_update_times)
-       ADD_TEST(rtma_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/rtma_update_times)
-       ADD_TEST(westarw_awp4km_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/westarw_awp4km_update_times)
-       ADD_TEST(nam_awip12_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_awip12_update_times)
-       ADD_TEST(westarw_awpreg_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/westarw_awpreg_update_times)
-       ADD_TEST(westnmm_awpreg_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/westnmm_awpreg_update_times)
-       ADD_TEST(nam_conusnest_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_conusnest_update_times)
-       ADD_TEST(nam_alaskanest_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_alaskanest_update_times)
-       ADD_TEST(nam_hawaiinest_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_hawaiinest_update_times)
-       ADD_TEST(nam_priconest_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_priconest_update_times)
-       ADD_TEST(nam_firewxnest_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_firewxnest_update_times)
-       ADD_TEST(nam_smartconus_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_smartconus_update_times)
-       ADD_TEST(nam_smartak_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_smartak_update_times)
-       ADD_TEST(nam_smarthi_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_smartprico_update_times)
-       ADD_TEST(nam_smartpr_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_smartpr_update_times)
-       ADD_TEST(nam_smartconus2p5_update_times
-           ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=nomadsclient/nam_smartconus2p5_update_times)
-   ENDIF(WITH_NOMADS_SUPPORT)
 ENDIF(RUN_SLOW_TESTS)
 IF(WITH_NOMADS_SUPPORT)
     # Nomads simple

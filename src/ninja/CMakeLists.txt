@@ -59,7 +59,6 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   LineStyle.cpp
                   mesh.cpp
                   landfireclient.cpp
-                  nomads_model_def.cpp
                   ncepDgexSurfInitialization.cpp
                   ncepGfsSurfInitialization.cpp
                   ncepNamAlaskaSurfInitialization.cpp
@@ -68,7 +67,6 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   ncepHrrrSurfInitialization.cpp
                   ncepNdfdInitialization.cpp
                   ncepRapSurfInitialization.cpp
-                  nomads_wxmodel.cpp
                   wrfSurfInitialization.cpp
                   wrf3dInitialization.cpp
                   ninja_conv.cpp
@@ -112,10 +110,9 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
 
 IF(WITH_NOMADS_SUPPORT)
     SET(NINJA_SOURCES ${NINJA_SOURCES}
-                      nomads_wxmodel.cpp
+                      nomads_wx_init.cpp
                       nomads.c
-                      nomads_utc.c
-                      utc_time.cpp)
+                      nomads_utc.c)
     IF(NOT HAVE_TIMEGM)
         MESSAGE("Using internal timegm")
         SET(NINJA_SOURCES ${NINJA_SOURCES} timegm.c)

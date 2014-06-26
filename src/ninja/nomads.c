@@ -198,6 +198,10 @@ try_again:
                                                    &panRunHours );
     }
     /* Open our output file */
+    if( pfnProgress )
+    {
+        pfnProgress( 0.0, NULL, NULL );
+    }
     for( i = 0; i < nFilesToGet; i++ )
     {
         pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
@@ -308,12 +312,20 @@ try_again:
         VSIFCloseL( fout );
         CPLFree( (void*)pszGribFile );
         CPLFree( (void*)pszGribDir );
+        if( pfnProgress )
+        {
+            pfnProgress( i / (double)nFilesToGet, NULL, NULL );
+        }
     }
     NomadsUtcFree( now );
     NomadsUtcFree( end );
     NomadsUtcFree( tmp );
     NomadsUtcFree( fcst );
     CPLFree( (void*)panRunHours );
+    if( pfnProgress )
+    {
+        pfnProgress( 1.0, NULL, NULL );
+    }
 
     return NOMADS_OK;
 }

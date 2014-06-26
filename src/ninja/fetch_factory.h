@@ -33,7 +33,7 @@
 #include "surface_fetch.h"
 #include "gdal_fetch.h"
 #include "landfireclient.h"
-#include "nomads_model_def.h"
+#include "nomads_wx_init.h"
 #include <string>
 
 class FetchFactory
@@ -59,8 +59,7 @@ class FetchFactory
         static SurfaceFetch* GetSurfaceFetch( std::string type, std::string path="" );
 
 #ifdef WITH_NOMADS_SUPPORT
-        static NomadsWxModel* GetNomadsModel( std::string model,
-                                              std::string submodel );
+        static NomadsWxModel* GetNomadsModel( std::string key );
 #endif /* WITH_NOMADS_SUPPORT */
 };
 

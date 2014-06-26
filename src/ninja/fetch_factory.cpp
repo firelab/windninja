@@ -90,20 +90,11 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch( std::string type, std::string path 
 }
 
 #ifdef WITH_NOMADS_SUPPORT
-NomadsWxModel* GetNomadsModel( std::string model, std::string submodel )
+NomadsWxModel* GetNomadsModel( std::string key )
 {
     try
     {
-        if( model.find( "nam" ) != std::string::npos )
-            return new NamWxModel( submodel );
-        else if( model.find( "rap" ) != std::string::npos )
-            return new RapWxModel( submodel );
-        else if( model.find( "gfs" ) != std::string::npos )
-            return new GfsWxModel( submodel );
-        else if( model.find( "rtma" ) != std::string::npos )
-            return new RtmaWxModel( submodel );
-        else if( model.find( "hiresw" ) != std::string::npos )
-            return new HiResWWxModel( submodel );
+        return NULL;
     }
     catch( ... )
     {
