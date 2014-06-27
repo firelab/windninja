@@ -92,7 +92,7 @@ int NinjaInitialize()
     /* Try to update our thredds file */
     CPLDebug( "NINJA", "Attempting to download the thredds.csv file" );
     int rc;
-    //NinjaCheckThreddsData( (void*) &rc );
+    NinjaCheckThreddsData( (void*) &rc );
     //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
 
     return 0;
