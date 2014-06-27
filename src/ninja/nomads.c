@@ -155,7 +155,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #endif
     VSILFILE *fout = NULL;
     vsi_l_offset nOffset = 0;
-    char pabyBuffer[1024];
+    char *pabyBuffer;
     nomads_utc *now, *end, *tmp, *fcst;
     int nVsiBlockSize;
     nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
@@ -211,6 +211,7 @@ try_again:
     }
     char szMessage[512];
     szMessage[0] = '\0';
+    pabyBuffer = CPLMalloc( sizeof( char ) * nVsiBlockSize );
     for( i = 0; i < nFilesToGet; i++ )
     {
         pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
@@ -225,6 +226,7 @@ try_again:
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                           "Cancelled by user." );
                 CPLFree( (void*)pszGribFile );
+                CPLFree( (void*)pabyBuffer );
                 NomadsUtcFree( now );
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
@@ -287,6 +289,7 @@ try_again:
                 CPLFree( (void*)pszGribFile );
                 CPLFree( (void*)pszGribDir );
                 CPLFree( (void*)panRunHours );
+                CPLFree( (void*)pabyBuffer );
 #ifndef NOMADS_USE_VSI_READ
                 CPLHTTPDestroyResult( psResult );
 #endif
@@ -299,6 +302,7 @@ try_again:
                 CPLFree( (void*)pszGribFile );
                 CPLFree( (void*)pszGribDir );
                 CPLFree( (void*)panRunHours );
+                CPLFree( (void*)pabyBuffer );
                 NomadsUtcFree( now );
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
@@ -323,6 +327,7 @@ try_again:
             CPLFree( (void*)pszGribFile );
             CPLFree( (void*)pszGribDir );
             CPLFree( (void*)panRunHours );
+            CPLFree( (void*)pabyBuffer );
             NomadsUtcFree( now );
             NomadsUtcFree( end );
             NomadsUtcFree( tmp );
@@ -348,6 +353,7 @@ try_again:
                     CPLFree( (void*)pszGribFile );
                     CPLFree( (void*)pszGribDir );
                     CPLFree( (void*)panRunHours );
+                    CPLFree( (void*)pabyBuffer );
                     NomadsUtcFree( now );
                     NomadsUtcFree( end );
                     NomadsUtcFree( tmp );
@@ -374,6 +380,7 @@ try_again:
     NomadsUtcFree( tmp );
     NomadsUtcFree( fcst );
     CPLFree( (void*)panRunHours );
+    CPLFree( (void*)pabyBuffer );
     if( pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
