@@ -148,8 +148,6 @@ struct setup
     }
     ~setup()
     {
-        CPLUnlinkTree( NOMADS_ZIP );
-        CPLUnlinkTree( NOMADS_PATH );
     }
 
     double adfMackay[4];
@@ -219,7 +217,6 @@ BOOST_AUTO_TEST_CASE( download_1 )
             /* Sometimes we get double variables */
             BOOST_CHECK( rc >= 4 );
     }
-    CPLUnlinkTree( pszVsiPath );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

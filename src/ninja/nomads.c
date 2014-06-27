@@ -61,7 +61,7 @@ static int NomadsFindLatestForecastHour( const char **ppszKey, nomads_utc *now )
     nStart = atoi( papszHours[0] );
     nStop = atoi( papszHours[1] );
     nStride = atoi( papszHours[2] );
-    for( i = nStart; i < nStop; i += nStride )
+    for( i = nStart; i <= nStop; i += nStride )
     {
         if( i > now->ts->tm_hour )
             break;
@@ -81,6 +81,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     int nStart, nStop, nStride;
     int nTokenCount;
     int i, j, k;
+    int nSize;
 
     nomads_utc *tmp;
     NomadsUtcCreate( &tmp );
@@ -91,7 +92,9 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     CPLAssert( nTokenCount > 0 );
     papszRunHours = CSLTokenizeString2( papszHours[nTokenCount - 1], ":", 0);
 
-    (*panRunHours) = (int*)CPLMalloc( sizeof( int ) * atoi( papszRunHours[1] ) );
+    /* We usually have a 0 hour, add one to the max. */
+    nSize = atoi( papszRunHours[1] ) + 1;
+    (*panRunHours) = (int*)CPLMalloc( sizeof( int ) * nSize );
     CSLDestroy( papszRunHours );
     papszRunHours = NULL;
     CSLDestroy( papszHours );
@@ -102,7 +105,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     {
         papszRunHours = CSLTokenizeString2( papszHours[i], ":", 0 );
         nStart = atoi( papszRunHours[0] );
-        nStop = atoi( papszRunHours[1] );
+        nStop = atoi( papszRunHours[1] ) + 1;
         nStride = atoi( papszRunHours[2] );
         for( j = nStart; j <= nStop; j += nStride )
         {
@@ -156,6 +159,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     nomads_utc *now, *end, *tmp, *fcst;
     int nVsiBlockSize;
     nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "10" );
 
     while( apszNomadsKeys[i][0] != NULL )
     {
@@ -237,6 +241,8 @@ try_again:
         else
             pszGribDir = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s ) );
 
+        CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
+                  pszGribDir );
         pszUrl =
             //CPLSPrintf( "/vsicurl/%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
             CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
@@ -246,6 +252,8 @@ try_again:
                         NOMADS_SUBREGION, pszGribFile, pszGribDir );
         pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
                              padfBbox[2], padfBbox[3] );
+        CPLDebug( "WINDNINJA", "NOMADS generated url: %s",
+                  pszUrl );
 
 #ifdef NOMADS_USE_VSI_READ
         pszUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
@@ -263,7 +271,7 @@ try_again:
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
-                papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS],
+                papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS],
                                                  ":", 0 );
                 nStart = atoi( papszHours[0] );
                 nStop = atoi( papszHours[1] );

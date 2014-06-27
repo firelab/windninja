@@ -216,6 +216,10 @@ IF(WITH_NOMADS_SUPPORT)
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 zip)
         ADD_TEST(nomads_gfs_mackay_39_hour_path
             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs 39 14 0 path)
+        ADD_TEST(nomads_rap_mackay_18_limit_zip
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 18 19 0 zip)
+        ADD_TEST(nomads_rap_mackay_18_limit_path
+            ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rap 18 19 0 path)
     ENDIF(RUN_SLOW_TESTS)
     ADD_TEST(nomads_nam_north_america_1_hour_zip
        ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_north_america 1 1 0 zip)
