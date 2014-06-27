@@ -191,8 +191,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
     int rc = 0;
     if( EQUAL( pszVsiType, "zip" ) )
     {
-        VSIUnlink( pszVsiPath );
         pszVsiPath = NOMADS_ZIP;
+        VSIUnlink( pszVsiPath );
     }
     else if( EQUAL( pszVsiType, "path" ) )
     {
