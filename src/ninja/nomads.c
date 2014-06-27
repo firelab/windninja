@@ -144,6 +144,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int nFilesToGet = 0;
     const char *pszOutFilename = NULL;
     int bAlreadyWentBack = FALSE;
+    int bFirstFile = TRUE;
 #ifdef NOMADS_USE_VSI_READ
     VSILFILE *fin = NULL;
 #else
@@ -153,6 +154,8 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     vsi_l_offset nOffset = 0;
     char pabyBuffer[1024];
     nomads_utc *now, *end, *tmp, *fcst;
+    int nVsiBlockSize;
+    nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
 
     while( apszNomadsKeys[i][0] != NULL )
     {
@@ -208,6 +211,8 @@ try_again:
     {
         pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
                                              nFcstHour, panRunHours[i] ) );
+        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
+                  pszGribFile );
         if( pfnProgress )
         {
             sprintf( szMessage, "Downloading %s...", pszGribFile );
@@ -248,11 +253,16 @@ try_again:
         if( !fin )
 #else /* NOMADS_USE_VSI */
         psResult = CPLHTTPFetch( pszUrl, NULL );
-        if( !psResult || psResult->nStatus != 0 )
+        if( !psResult || psResult->nStatus != 0 ||
+            strstr( psResult->pabyData, "HTTP error code : 404" ) ||
+            strstr( psResult->pabyData, "data file is not present" ) )
 #endif /* NOMADS_USE_VSI */
         {
-            if( !bAlreadyWentBack )
+            if( !bAlreadyWentBack && bFirstFile )
             {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                          "Failed to download forecast, " \
+                          "stepping back one forecast run time step." );
                 papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS],
                                                  ":", 0 );
                 nStart = atoi( papszHours[0] );
@@ -263,6 +273,7 @@ try_again:
                 else
                     nFcstHour -= nStride;
                 bAlreadyWentBack = TRUE;
+                bFirstFile = FALSE;
                 CSLDestroy( papszHours );
                 i--;
                 CPLFree( (void*)pszGribFile );
@@ -284,14 +295,13 @@ try_again:
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
                 NomadsUtcFree( fcst );
-#ifdef NOMADS_USE_VSI_READ
-                VSIFCloseL( fin );
-#else
+#ifndef NOMADS_USE_VSI_READ
                 CPLHTTPDestroyResult( psResult );
 #endif
-                return NOMADS_OK;
+                return NOMADS_ERR;
             }
         }
+        bFirstFile = FALSE;
         /* Write to zip file or folder */
         pszOutFilename = CPLSPrintf( "%s/%s", pszDstVsiPath, pszGribFile );
         if( strstr( pszDstVsiPath, ".zip" ) )
@@ -319,7 +329,7 @@ try_again:
 #ifdef NOMADS_USE_VSI_READ
         do
         {
-            nOffset = VSIFReadL( pabyBuffer, 1, 1024, fin );
+            nOffset = VSIFReadL( pabyBuffer, 1, nVsiBlockSize, fin );
             VSIFWriteL( pabyBuffer, 1, nOffset, fout );
             if( pfnProgress )
             {

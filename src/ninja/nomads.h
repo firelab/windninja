@@ -112,7 +112,7 @@ static const char *apszNomadsKeys[][11] =
     ** GFS
     */
     { /* Name key of the model */
-      "nomads-gfs",
+      "gfs",
       /* name of the perl script for the grib filter */
       "filter_gfs_hd.pl",
       /* File naming format */
@@ -236,11 +236,11 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_conus_nest",
       "filter_nam_conusnest.pl",
-      "nam.t%02dz.conusnest.hiresf%02d.t00.grib2",
-      "hiresw.%s",
+      "nam.t%02dz.conusnest.hiresf%02d.tm00.grib2",
+      NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       "0:12:12",
-      "0:48:1",
+      "0:36:1,39:60:3",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",

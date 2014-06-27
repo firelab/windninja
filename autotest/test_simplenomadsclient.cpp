@@ -192,11 +192,15 @@ BOOST_AUTO_TEST_CASE( download_1 )
         BOOST_REQUIRE( 0 );
     int rc = 0;
     if( EQUAL( pszVsiType, "zip" ) )
+    {
+        VSIUnlink( pszVsiPath );
         pszVsiPath = NOMADS_ZIP;
+    }
     else if( EQUAL( pszVsiType, "path" ) )
     {
-        VSIMkdir( NOMADS_PATH, 0777 );
         pszVsiPath = NOMADS_PATH;
+        CPLUnlinkTree( pszVsiPath );
+        VSIMkdir( NOMADS_PATH, 0777 );
     }
     else
         BOOST_REQUIRE( 0 );

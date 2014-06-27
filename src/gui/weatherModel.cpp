@@ -308,15 +308,21 @@ void weatherModel::getData()
         model->fetchForecast( inputFile.toStdString(), hours );
     }
     catch( badForecastFile &e ) {
+        progressDialog->close();
         QMessageBox::warning( this, "WindNinja",
                               QString::fromStdString( e.what() ),
                               QMessageBox::Ok );
+        setCursor(Qt::ArrowCursor);
+        return;
     }
     catch( std::runtime_error &e ) {
+        progressDialog->close();
         QMessageBox::warning( this, "WindNinja",
                               QString::fromStdString( e.what() ),
                               QMessageBox::Ok );
+        setCursor(Qt::ArrowCursor);
         checkForModelData();
+        return;
     }
 
     if( modelChoice > 4 )
@@ -330,7 +336,8 @@ void weatherModel::getData()
     setCursor(Qt::ArrowCursor);
 
     //connect with thread::finished()?
-    delete model;
+    if( modelChoice < 5 )
+        delete model;
 }
 
 /**
