@@ -74,7 +74,6 @@ SET(TEST_SOURCES test_main.cpp
                  test_buffer_grid.cpp
                  test_stl)
 IF(WITH_LCP_CLIENT)
-                     test_utctime.cpp)
     SET(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
 ENDIF(WITH_LCP_CLIENT)
 
