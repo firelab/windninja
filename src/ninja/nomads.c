@@ -105,7 +105,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     {
         papszRunHours = CSLTokenizeString2( papszHours[i], ":", 0 );
         nStart = atoi( papszRunHours[0] );
-        nStop = atoi( papszRunHours[1] ) + 1;
+        nStop = atoi( papszRunHours[1] );
         nStride = atoi( papszRunHours[2] );
         for( j = nStart; j <= nStop; j += nStride )
         {

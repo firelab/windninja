@@ -29,7 +29,7 @@
 
 #include "nomads_wx_init.h"
 
-static int NomadsCompareFileName( const char *pszFile, const char *pszFormat )
+static int NomadsCheckFileName( const char *pszFile, const char *pszFormat )
 {
     const char *a, *b;
     a = pszFile;
@@ -52,12 +52,14 @@ NomadsWxModel::NomadsWxModel()
     pszKey = NULL;
     ppszModelData = NULL;
     pfnProgress = NULL;
+    NomadsUtcCreate( &u );
 }
 
 NomadsWxModel::NomadsWxModel( const char *pszModelKey )
 {
     ppszModelData = NULL;
     pfnProgress = NULL;
+    NomadsUtcCreate( &u );
 
     int i = 0;
     while( apszNomadsKeys[i][0] != NULL )
@@ -85,12 +87,13 @@ NomadsWxModel::NomadsWxModel( const char *pszModelKey )
 
 NomadsWxModel::~NomadsWxModel()
 {
+    NomadsUtcFree( u );
     CPLFree( (void*)pszKey );
 }
 
 bool NomadsWxModel::identify( std::string fileName )
 {
-    const char *pszVsiDir = fileName.c_str();
+    const char *pszVsiDir = CPLGetPath( fileName.c_str() );
     char **papszFileList = NULL;
     int nCount;
     papszFileList = VSIReadDir( pszVsiDir );
@@ -112,8 +115,8 @@ bool NomadsWxModel::identify( std::string fileName )
             {
                 continue;
             }
-            if( NomadsCompareFileName( papszFileList[j],
-                                       apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
+            if( NomadsCheckFileName( papszFileList[j],
+                                     apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
             {
                 bFound = TRUE;
                 break;
@@ -238,6 +241,7 @@ std::string NomadsWxModel::getForecastReadable()
 std::vector<blt::local_date_time>
 NomadsWxModel::getTimeList( std::string timeZoneString )
 {
+
     return std::vector<blt::local_date_time>();
 }
 std::vector<blt::local_date_time>
@@ -271,3 +275,5 @@ void NomadsWxModel::checkForValidData()
 {
     return;
 }
+
+

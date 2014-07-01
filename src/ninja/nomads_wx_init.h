@@ -72,6 +72,9 @@ private:
     const char *pszKey;
     const char **ppszModelData;
 
+    int InitializeForecastTimes();
+
+    nomads_utc *u;
 };
 
 #endif /* NOMADS_WX_MODEL_H_ */

@@ -31,6 +31,21 @@
 
 #include <boost/test/unit_test.hpp>
 
+#ifdef LINUX
+#include <unistd.h>
+#endif
+#ifdef WINDOWS
+#inlcude <windows.h>
+#endif
+
+static void sleep( int ms )
+{
+#ifdef WIN32
+    Sleep( ms );
+#else
+    usleep( ms * 1000 );   // usleep takes sleep time in us
+#endif
+}
 /******************************************************************************
 *                        Test utc time class
 ******************************************************************************/
@@ -94,6 +109,16 @@ BOOST_AUTO_TEST_CASE( now_1 )
 {
     NomadsUtcNow( u );
     BOOST_CHECK( u->ts->tm_year >= 2014 - 1900 );
+}
+
+BOOST_AUTO_TEST_CASE( compare_1 )
+{
+    NomadsUtcNow( u );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    sleep( 1000 );
+    NomadsUtcNow( v );
+    BOOST_CHECK( NomadsUtcCompare( u, v ) == -1 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
