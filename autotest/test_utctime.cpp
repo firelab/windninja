@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "utc_time.h"
+#include "nomads_utc.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -35,131 +35,65 @@
 *                        Test utc time class
 ******************************************************************************/
 
-BOOST_AUTO_TEST_SUITE( utc )
+struct UtcData
+{
+    UtcData()
+    {
+        NomadsUtcCreate( &u );
+    }
+    ~UtcData()
+    {
+        NomadsUtcFree( u );
+    }
+    nomads_utc *u;
+};
+
+BOOST_FIXTURE_TEST_SUITE( utc, UtcData )
 
 BOOST_AUTO_TEST_CASE( create_1 )
 {
-    NinjaUtcTime t( 2014, 6, 11, 10, 17, 58 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 6 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 11 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 10 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
+    BOOST_CHECK( u );
 }
 
 BOOST_AUTO_TEST_CASE( add_hours_1 )
 {
-    NinjaUtcTime t( 2014, 6, 11, 10, 17, 58 );
-    t.AddHours( 1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 6 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 11 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 11 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
+    NomadsUtcNow( u );
+    int h = u->ts->tm_hour;
+    NomadsUtcAddHours( u, 1 );
+    BOOST_CHECK_EQUAL( (h + 1) % 24, u->ts->tm_hour );
 }
 
 BOOST_AUTO_TEST_CASE( add_hours_2 )
 {
-    NinjaUtcTime t( 2014, 6, 11, 23, 17, 58 );
-    t.AddHours( 1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 6 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 12 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 0 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
+    NomadsUtcNow( u );
+    int h = u->ts->tm_hour;
+    NomadsUtcAddHours( u, 2 );
+    BOOST_CHECK_EQUAL( (h + 2) % 24, u->ts->tm_hour );
 }
 
 BOOST_AUTO_TEST_CASE( add_hours_3 )
 {
-    NinjaUtcTime t( 2014, 6, 30, 23, 17, 58 );
-    t.AddHours( 1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 7 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 1 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 0 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
+    NomadsUtcNow( u );
+    int h = u->ts->tm_hour;
+    NomadsUtcAddHours( u, 25 );
+    BOOST_CHECK_EQUAL( (h + 25) % 24, u->ts->tm_hour );
 }
 
-BOOST_AUTO_TEST_CASE( add_hours_4 )
+BOOST_AUTO_TEST_CASE( strptime_1 )
 {
-    NinjaUtcTime t( 2014, 12, 31, 23, 17, 58 );
-    t.AddHours( 1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2015 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 1 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 1 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 0 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
-}
-
-BOOST_AUTO_TEST_CASE( add_hours_5 )
-{
-    NinjaUtcTime t( 2014, 6, 11, 10, 17, 58 );
-    t.AddHours( -1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 6 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 11 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 9 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
-}
-
-BOOST_AUTO_TEST_CASE( add_hours_6 )
-{
-    NinjaUtcTime t( 2014, 6, 11, 0, 17, 58 );
-    t.AddHours( -1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 6 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 10 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 23 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
-}
-
-BOOST_AUTO_TEST_CASE( add_hours_7 )
-{
-    NinjaUtcTime t( 2014, 6, 1, 0, 17, 58 );
-    t.AddHours( -1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2014 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 5 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 31 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 23 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
-}
-
-BOOST_AUTO_TEST_CASE( add_hours_8 )
-{
-    NinjaUtcTime t( 2014, 1, 1, 0, 17, 58 );
-    t.AddHours( -1 );
-    BOOST_CHECK_EQUAL( t.GetYear(), 2013 );
-    BOOST_CHECK_EQUAL( t.GetMonth(), 12 );
-    BOOST_CHECK_EQUAL( t.GetDay(), 31 );
-    BOOST_CHECK_EQUAL( t.GetHour(), 23 );
-    BOOST_CHECK_EQUAL( t.GetMinute(), 17 );
-    BOOST_CHECK_EQUAL( t.GetSecond(), 58 );
-}
-
-BOOST_AUTO_TEST_CASE( strftime_1 )
-{
-    NinjaUtcTime t( 2014, 6, 11, 10, 17, 58 );
-    const char *expected = "20140611T10:17:58";
-    const char *s = t.StrFTime( "%Y%m%dT%H:%M:%S" );
-    int rc;
-    rc = strcmp( expected, s );
-    BOOST_CHECK_EQUAL( rc, 0 );
+    NomadsUtcStrpTime( u, "20140611T10:17:58", "%Y%m%dT%H:%M:%S" );
+    BOOST_CHECK_EQUAL( u->ts->tm_year, 2014 - 1900 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mon, 5 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mday, 11 );
+    BOOST_CHECK_EQUAL( u->ts->tm_hour, 10 );
+    BOOST_CHECK_EQUAL( u->ts->tm_min, 17 );
+    BOOST_CHECK_EQUAL( u->ts->tm_sec, 58 );
 }
 
 BOOST_AUTO_TEST_CASE( now_1 )
 {
-    NinjaUtcTime t;
-    BOOST_CHECK( t.GetYear() >= 2014 );
-    BOOST_CHECK( t.GetMonth() >= 6 );
-    BOOST_CHECK( t.GetDay() >= 17 );
+    NomadsUtcNow( u );
+    BOOST_CHECK( u->ts->tm_year >= 2014 - 1900 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

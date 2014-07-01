@@ -34,15 +34,26 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef USE_INTERNAL_TIME_GM
 time_t timegm( const struct tm *tm );
 #endif
+#ifdef USE_INTERNAL_STRPTIME
+char * strptime( const char * __restrict,
+                 const char * __restrict,
+                 struct tm * __restrict);
+#endif
+
+#define NOMADS_UTC_STRFTIME_SIZE 4096
 
 typedef struct nomads_utc
 {
     time_t t;
     struct tm *ts;
-    char s[8192];
+    char s[NOMADS_UTC_STRFTIME_SIZE];
 } nomads_utc;
 
 void NomadsUtcCreate( nomads_utc **u );
@@ -52,6 +63,11 @@ void NomadsUtcAddHours( nomads_utc *u, int nHours );
 void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src );
 int NomadsUtcCompare( const void *a, const void *b );
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt );
+void NomadsUtcStrpTime( nomads_utc *u, const char *s, const char *frmt );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NOMADS_UTC_INCLUDED_ */
 

@@ -65,6 +65,7 @@ void NomadsUtcCreate( nomads_utc **u )
 {
     (*u) = (nomads_utc*)malloc( sizeof( nomads_utc ) );
     (*u)->ts = (struct tm*)malloc( sizeof( struct tm ) );
+    NomadsUtcNow( *u );
 }
 
 void NomadsUtcFree( nomads_utc *u )
@@ -100,11 +101,22 @@ void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src )
         return;
     dst->t = src->t;
     memcpy( dst->ts, src->ts, sizeof( struct tm ) );
+    if( src->s )
+        strncpy( dst->s, src->s, NOMADS_UTC_STRFTIME_SIZE );
 }
 
+/*
+** Return an internal handle to a static buffer that represents a time as
+** defined by frmt.  Not to be free'd or modified in any way by the caller.
+*/
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt )
 {
-    strftime( u->s, 8192, frmt, u->ts );
+    strftime( u->s, NOMADS_UTC_STRFTIME_SIZE, frmt, u->ts );
     return u->s;
+}
+
+void NomadsUtcStrpTime( nomads_utc *u, const char *s, const char *frmt )
+{
+    strptime( s, frmt, u->ts );
 }
 
