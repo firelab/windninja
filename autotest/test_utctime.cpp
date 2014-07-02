@@ -121,5 +121,23 @@ BOOST_AUTO_TEST_CASE( compare_1 )
     BOOST_CHECK( NomadsUtcCompare( u, v ) == -1 );
 }
 
+BOOST_AUTO_TEST_CASE( from_timet_1 )
+{
+    NomadsUtcFromTimeT( u, 0 );
+    BOOST_CHECK_EQUAL( u->ts->tm_year, 1970 - 1900 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mon, 0 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mday, 1 );
+    BOOST_CHECK_EQUAL( u->ts->tm_hour, 0 );
+    BOOST_CHECK_EQUAL( u->ts->tm_min, 0 );
+    BOOST_CHECK_EQUAL( u->ts->tm_sec, 0 );
+}
+
+BOOST_AUTO_TEST_CASE( strftime_1 )
+{
+    NomadsUtcFromTimeT( u, 0 );
+    const char *s = NomadsUtcStrfTime( u, "%Y%m%dT%H:%M:%S" );
+    BOOST_CHECK_EQUAL( strcmp( "19700101T00:00:00", s ), 0 );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 

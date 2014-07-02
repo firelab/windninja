@@ -34,26 +34,24 @@
 
 #include "nomads.h"
 
+#define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
+
 class NomadsWxModel : public wxModelInitialization
 {
 
 public:
     NomadsWxModel();
+    NomadsWxModel( std::string filename );
     NomadsWxModel( const char *pszModelKey );
     virtual ~NomadsWxModel();
 
     virtual std::string fetchForecast( std::string demFile, int nHours );
 
     virtual std::vector<blt::local_date_time>
-        getTimeList(std::string timeZoneString = "Africa/Timbuktu");
-    virtual std::vector<blt::local_date_time>
-        getTimeList(const char *pszVariable, std::string timeZoneString = "Africa/Timbuktu");
-    virtual std::vector<blt::local_date_time>
-        getTimeList(blt::time_zone_ptr timeZonePtr);
-    virtual std::vector<blt::local_date_time>
         getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
     virtual bool identify( std::string fileName );
+    const char ** FindModelKey( const char *pszFilename );
     virtual std::vector<std::string> getVariableList();
     virtual std::string getForecastIdentifier();
     virtual std::string getForecastReadable();
@@ -73,6 +71,7 @@ private:
     const char **ppszModelData;
 
     int InitializeForecastTimes();
+    const char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
 
     nomads_utc *u;
 };

@@ -283,6 +283,10 @@ ENDIF(RUN_NOMADS_ZIP_TESTS)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
     ADD_TEST(utc_compare_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/compare_1)
+    ADD_TEST(utc_timet_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_timet_1)
+    ADD_TEST(utc_strftime_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/strftime_1)
 ENDIF(WITH_NOMADS_SUPPORT)
 
 # *****************************************************************************

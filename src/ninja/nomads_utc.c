@@ -29,6 +29,16 @@
 
 #include "nomads_utc.h"
 
+static void NomadsUpdateTimeStruct( nomads_utc *u )
+{
+    struct tm *tmp;
+    if( !u )
+        return;
+    tmp = gmtime( &(u->t) );
+    memcpy( u->ts, tmp, sizeof( struct tm ) );
+    u->t = timegm( u->ts );
+}
+
 int NomadsUtcCompare( const void *a, const void *b )
 {
     nomads_utc *aa = (nomads_utc*)a;
@@ -81,19 +91,28 @@ void NomadsUtcNow( nomads_utc *u )
     if( !u )
         return;
     time( &(u->t) );
-    tmp = gmtime( &(u->t) );
-    memcpy( u->ts, tmp, sizeof( struct tm ) );
-    u->t = timegm( u->ts );
+    NomadsUpdateTimeStruct( u );
+}
+
+void NomadsUtcFromTimeT( nomads_utc *u, time_t t )
+{
+    u->t = t;
+    NomadsUpdateTimeStruct( u );
 }
 
 void NomadsUtcAddHours( nomads_utc *u, int nHours )
 {
-    struct tm *tmp;
     if( !u )
         return;
-    u->t += nHours * 3600;
-    tmp = gmtime( &(u->t) );
-    memcpy( u->ts, tmp, sizeof( struct tm ) );
+    NomadsUtcAddSeconds( u, (time_t)(nHours * 3600) );
+}
+
+void NomadsUtcAddSeconds( nomads_utc *u, time_t nSeconds )
+{
+    if( !u )
+        return;
+    u->t += nSeconds;
+    NomadsUpdateTimeStruct( u );
 }
 
 void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src )

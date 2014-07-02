@@ -54,6 +54,8 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
 
+    NomadsWxModel nomad;
+
     //Determine what type of weather model the file came from
     //Check netcdf first, otherwise grib_api spews out crap
     if(ncepNdfd.identify(fileName)) {
@@ -104,6 +106,19 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         genericSurf.setModelFileName( fileName );
         return new genericSurfInitialization(genericSurf);
 
+    }
+    else if(nomad.identify(fileName))
+    {
+        const char **ppszKey = nomad.FindModelKey( fileName.c_str() );
+        if( ppszKey )
+            return new NomadsWxModel( fileName );
+        else
+        {
+            std::ostringstream outString;
+            outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
+                    "identified as a valid weather model initialization file.";
+            throw std::runtime_error(outString.str());
+        }
     }
     else {
         std::ostringstream outString;

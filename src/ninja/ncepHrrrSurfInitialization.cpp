@@ -158,6 +158,13 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
                 "Bad forecast file" );
     }
 
+    if( srcDS->GetRasterCount() < 8 )
+    {
+        /* Short circuit */
+        GDALClose( (GDALDatasetH)srcDS );
+        identified = false;
+        return identified;
+    }
     GDALRasterBand *poBand = srcDS->GetRasterBand( 33 ); //2010 structure
     const char *gc;
     gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
@@ -177,6 +184,7 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
         }
 
     }
+    GDALClose( (GDALDatasetH)srcDS );
 
     return identified;
 }

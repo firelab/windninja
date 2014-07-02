@@ -59,7 +59,9 @@ typedef struct nomads_utc
 void NomadsUtcCreate( nomads_utc **u );
 void NomadsUtcFree( nomads_utc *u );
 void NomadsUtcNow( nomads_utc *u );
+void NomadsUtcFromTimeT( nomads_utc *u, time_t t );
 void NomadsUtcAddHours( nomads_utc *u, int nHours );
+void NomadsUtcAddSeconds( nomads_utc *u, time_t nSeconds );
 void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src );
 int NomadsUtcCompare( const void *a, const void *b );
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt );

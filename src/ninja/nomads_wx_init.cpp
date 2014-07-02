@@ -55,6 +55,18 @@ NomadsWxModel::NomadsWxModel()
     NomadsUtcCreate( &u );
 }
 
+NomadsWxModel::NomadsWxModel( std::string filename )
+{
+    wxModelFileName = filename;
+    ppszModelData = FindModelKey( filename.c_str() );
+    if( ppszModelData )
+        pszKey = CPLStrdup( ppszModelData[NOMADS_NAME] );
+    else
+        pszKey = NULL;
+    pfnProgress = NULL;
+    NomadsUtcCreate( &u );
+}
+
 NomadsWxModel::NomadsWxModel( const char *pszModelKey )
 {
     ppszModelData = NULL;
@@ -91,9 +103,9 @@ NomadsWxModel::~NomadsWxModel()
     CPLFree( (void*)pszKey );
 }
 
-bool NomadsWxModel::identify( std::string fileName )
+const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
 {
-    const char *pszVsiDir = CPLGetPath( fileName.c_str() );
+    const char *pszVsiDir = CPLGetPath( pszFilename );
     char **papszFileList = NULL;
     int nCount;
     papszFileList = VSIReadDir( pszVsiDir );
@@ -105,7 +117,7 @@ bool NomadsWxModel::identify( std::string fileName )
     /* Must match one file name format */
     int i = 0;
     int j = 0;
-    int bFound = FALSE;
+    const char **ppszKey = NULL;
     while( apszNomadsKeys[i][0] != NULL )
     {
         for( j = 0; j < nCount; j++ )
@@ -118,13 +130,18 @@ bool NomadsWxModel::identify( std::string fileName )
             if( NomadsCheckFileName( papszFileList[j],
                                      apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
             {
-                bFound = TRUE;
+                ppszKey = apszNomadsKeys[i];
                 break;
             }
         }
         i++;
     }
-    return bFound;
+    return ppszKey;
+}
+
+bool NomadsWxModel::identify( std::string fileName )
+{
+    return NomadsWxModel::FindModelKey( fileName.c_str() ) ? TRUE : FALSE;
 }
 
 int NomadsWxModel::getEndHour()
@@ -156,6 +173,8 @@ int NomadsWxModel::getStartHour()
     papszTokens = CSLTokenizeString2( ppszModelData[NOMADS_FCST_RUN_HOURS],
                                       ":,", 0 );
     nCount = CSLCount( papszTokens );
+    if( nCount == 0 )
+        return 0;
     nHour = atoi( papszTokens[0] );
     CSLDestroy( papszTokens );
     return nHour;
@@ -238,29 +257,137 @@ std::string NomadsWxModel::getForecastReadable()
     return s;
 }
 
-std::vector<blt::local_date_time>
-NomadsWxModel::getTimeList( std::string timeZoneString )
+static int NomadsCompareStrings( const void *a, const void *b )
 {
+    int n = strcmp( *(const char **)a, *(const char **)b );
+    return n;
+}
 
-    return std::vector<blt::local_date_time>();
-}
-std::vector<blt::local_date_time>
-NomadsWxModel::getTimeList( const char *pszVariable,
-                            std::string timeZoneString )
-{
-    return std::vector<blt::local_date_time>();
-}
-std::vector<blt::local_date_time>
-NomadsWxModel::getTimeList( blt::time_zone_ptr timeZonePtr )
-{
-    return std::vector<blt::local_date_time>();
-}
 std::vector<blt::local_date_time>
 NomadsWxModel::getTimeList( const char *pszVariable, 
                             blt::time_zone_ptr timeZonePtr )
 {
-    return std::vector<blt::local_date_time>();
+    (void)pszVariable;
+    if( wxModelFileName == "" )
+    {
+        throw badForecastFile( "Invalid forecast file name" );
+    }
+
+    int i;
+    char **papszFileList = NULL;
+    const char *pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
+    const char *pszFullPath = NULL;
+    papszFileList = VSIReadDir( pszPath );
+    int nCount = CSLCount( papszFileList );
+    if( !nCount )
+    {
+        throw badForecastFile( "Could not open forecast path" );
+    }
+    qsort( (void*)papszFileList, nCount, sizeof( char * ), NomadsCompareStrings );
+           //(int (*)(const void*, const void*))strcmp );
+    time_t nValidTime;
+    const char *pszValidTime;
+    GDALDatasetH hDS;
+    GDALDatasetH hBand;
+    std::vector<blt::local_date_time>aoTimeList;
+    for( i = 0; i < nCount; i++ )
+    {
+        SKIP_DOT_AND_DOTDOT( papszFileList[i] );
+        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        if( !NomadsCheckFileName( papszFileList[i],
+                                  ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
+        {
+            continue;
+        }
+        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        if( !hDS )
+        {
+            CSLDestroy( papszFileList );
+            CPLFree( (void*)pszPath );
+            throw badForecastFile( "Could not open forecast file with GDAL" );
+        }
+        hBand = GDALGetRasterBand( hDS, 1 );
+        pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
+        GDALClose( hDS );
+        if( !pszValidTime )
+        {
+            CSLDestroy( papszFileList );
+            CPLFree( (void*)pszPath );
+            throw badForecastFile( "Could not fetch ref time or forecast time " \
+                                   "from GRIB file" );
+        }
+        nValidTime = (time_t)atoi( pszValidTime );
+
+        bpt::ptime time_t_epoch( boost::gregorian::date( 1970,1,1 ) );
+
+        bpt::time_duration duration( 0, 0, nValidTime );
+
+        bpt::ptime first_pt( time_t_epoch + duration );
+        blt::local_date_time first_pt_local( first_pt, timeZonePtr );
+        aoTimeList.push_back( first_pt_local );
+    }
+    CSLDestroy( papszFileList );
+    CPLFree( (void*)pszPath );
+    return aoTimeList;
 }
+
+const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
+                                                time_t nTime )
+{
+    int i;
+    char **papszFileList = NULL;
+    const char *pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
+    const char *pszFullPath = NULL;
+    papszFileList = VSIReadDir( pszPath );
+    int nCount = CSLCount( papszFileList );
+    if( !nCount )
+    {
+        CPLFree( (void*)pszPath );
+        return NULL;
+    }
+    time_t nValidTime;
+    const char *pszValidTime;
+    GDALDatasetH hDS;
+    GDALDatasetH hBand;
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+    for( i = 0; i < nCount; i++ )
+    {
+        SKIP_DOT_AND_DOTDOT( papszFileList[i] );
+        if( !NomadsCheckFileName( papszFileList[i],
+                                  ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
+        {
+            continue;
+        }
+        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        if( !hDS )
+        {
+            continue;
+        }
+        hBand = GDALGetRasterBand( hDS, 1 );
+        pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
+        if( !pszValidTime )
+        {
+            GDALClose( hDS );
+            continue;
+        }
+        nValidTime = (time_t)atoi( pszValidTime );
+        if( nValidTime == nTime )
+        {
+            CPLFree( (void*)pszPath );
+            CSLDestroy( papszFileList );
+            CPLPopErrorHandler();
+            GDALClose( hDS );
+            return CPLStrdup( pszFullPath );
+        }
+        GDALClose( hDS );
+    }
+    CPLFree( (void*)pszPath );
+    CSLDestroy( papszFileList );
+    CPLPopErrorHandler();
+    return NULL;
+}
+
 void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                      AsciiGrid<double> &airGrid,
                                      AsciiGrid<double> &cloudGrid,
@@ -268,7 +395,126 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                      AsciiGrid<double> &vGrid,
                                      AsciiGrid<double> &wGrid )
 {
-    return;
+    std::vector<blt::local_date_time> timeList( getTimeList( NULL, input.ninjaTimeZone ) );
+    int i;
+    GDALDatasetH hSrcDS, hVrtDS;
+    GDALDatasetH hBand;
+    const char *pszSrcWkt, *pszDstWkt;
+    GDALWarpOptions *psWarpOptions;
+    int bSuccess;
+    double dfNoData;
+    int nBandCount;
+    /*
+    ** We need to find the correct file in the directory.  It may not be the
+    ** filename.
+    */
+    const char *pszForecastFile = NULL;
+    for( i = 0; i < (int)timeList.size(); i++ )
+    {
+        if( timeList[i] == input.ninjaTime )
+        {
+            bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
+            bpt::time_duration::sec_type t;
+            t = (input.ninjaTime.utc_time() - epoch).total_seconds();
+            pszForecastFile =
+                NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
+            break;
+        }
+    }
+    if( !pszForecastFile )
+    {
+        throw badForecastFile( "Could not find forecast associated with " \
+                               "requested time step" );
+    }
+
+    hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    nBandCount = GDALGetRasterCount( hSrcDS );
+    hBand = GDALGetRasterBand( hSrcDS, 1 );
+    dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
+    if( bSuccess == FALSE )
+    {
+        dfNoData = -9999.0;
+    }
+
+    psWarpOptions = GDALCreateWarpOptions();
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    for( i = 0; i < nBandCount; i++ )
+    {
+        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+    }
+
+    pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+    pszDstWkt = input.dem.prjString.c_str();
+    hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+
+    const char *pszElement;
+    int bHaveTemp, bHaveCloud;
+    bHaveTemp = FALSE;
+    bHaveCloud = FALSE;
+    for( i = 0; i < (nBandCount > 4 ? 4 : nBandCount); i++ )
+    {
+        hBand = GDALGetRasterBand( hVrtDS, i + 1 );
+        pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
+        if( !pszElement )
+        {
+            throw badForecastFile( "Could not fetch proper band" );
+        }
+        if( EQUAL( pszElement, "TMP" ) )
+        {
+            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
+            if( CPLIsNan( dfNoData ) )
+            {
+                airGrid.set_noDataValue( -9999.0 );
+                airGrid.replaceNan( -9999.0 );
+            }
+            bHaveTemp = TRUE;
+        }
+        else if( EQUAL( pszElement, "UGRD" ) )
+        {
+            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, uGrid );
+            if( CPLIsNan( dfNoData ) )
+            {
+                uGrid.set_noDataValue( -9999.0 );
+                uGrid.replaceNan( -9999.0 );
+            }
+        }
+        else if( EQUAL( pszElement, "VGRD" ) )
+        {
+            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, vGrid );
+            if( CPLIsNan( dfNoData ) )
+            {
+                vGrid.set_noDataValue( -9999.0 );
+                vGrid.replaceNan( -9999.0 );
+            }
+        }
+        else if( EQUAL( pszElement, "TCDC" ) )
+        {
+            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, cloudGrid );
+            if( CPLIsNan( dfNoData ) )
+            {
+                cloudGrid.set_noDataValue( -9999.0 );
+                cloudGrid.replaceNan( -9999.0 );
+            }
+            bHaveCloud = TRUE;
+        }
+    }
+    if( !bHaveCloud )
+        cloudGrid = 0.0;
+    cloudGrid /= 100.0;
+    airGrid += 273.15;
+
+    wGrid.set_headerData( uGrid );
+    wGrid = 0.0;
+
+    GDALDestroyWarpOptions( psWarpOptions );
+    GDALClose( hSrcDS );
+    GDALClose( hVrtDS );
 }
 
 void NomadsWxModel::checkForValidData()

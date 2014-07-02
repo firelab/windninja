@@ -294,7 +294,7 @@ void weatherModel::getData()
         model = papoNomads[modelChoice - 5];
         progressDialog->reset();
         progressDialog->setRange( 0, 100 );
-        //model->SetProgressFunc( &UpdateProgress );
+        model->SetProgressFunc( &UpdateProgress );
         progressDialog->show();
         progressDialog->setCancelButtonText( "Cancel" );
     }
