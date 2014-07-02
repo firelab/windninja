@@ -66,6 +66,7 @@ void NomadsUtcCreate( nomads_utc **u )
     (*u) = (nomads_utc*)malloc( sizeof( nomads_utc ) );
     (*u)->ts = (struct tm*)malloc( sizeof( struct tm ) );
     NomadsUtcNow( *u );
+    memset( (*u)->s, 0, NOMADS_UTC_STRFTIME_SIZE );
 }
 
 void NomadsUtcFree( nomads_utc *u )
