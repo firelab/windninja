@@ -277,8 +277,6 @@ ENDIF(RUN_NOMADS_ZIP_TESTS)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_2)
     ADD_TEST(utc_add_hours_3
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_3)
-    ADD_TEST(utc_strptime_1
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/strptime_1)
     ADD_TEST(utc_now_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
     ADD_TEST(utc_compare_1

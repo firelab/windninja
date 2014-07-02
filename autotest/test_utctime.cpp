@@ -94,17 +94,6 @@ BOOST_AUTO_TEST_CASE( add_hours_3 )
     BOOST_CHECK_EQUAL( (h + 25) % 24, u->ts->tm_hour );
 }
 
-BOOST_AUTO_TEST_CASE( strptime_1 )
-{
-    NomadsUtcStrpTime( u, "20140611T10:17:58", "%Y%m%dT%H:%M:%S" );
-    BOOST_CHECK_EQUAL( u->ts->tm_year, 2014 - 1900 );
-    BOOST_CHECK_EQUAL( u->ts->tm_mon, 5 );
-    BOOST_CHECK_EQUAL( u->ts->tm_mday, 11 );
-    BOOST_CHECK_EQUAL( u->ts->tm_hour, 10 );
-    BOOST_CHECK_EQUAL( u->ts->tm_min, 17 );
-    BOOST_CHECK_EQUAL( u->ts->tm_sec, 58 );
-}
-
 BOOST_AUTO_TEST_CASE( now_1 )
 {
     NomadsUtcNow( u );

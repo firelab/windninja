@@ -135,8 +135,3 @@ const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt )
     return u->s;
 }
 
-void NomadsUtcStrpTime( nomads_utc *u, const char *s, const char *frmt )
-{
-    strptime( s, frmt, u->ts );
-}
-

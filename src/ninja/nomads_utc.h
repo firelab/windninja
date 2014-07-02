@@ -65,7 +65,6 @@ void NomadsUtcAddSeconds( nomads_utc *u, time_t nSeconds );
 void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src );
 int NomadsUtcCompare( const void *a, const void *b );
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt );
-void NomadsUtcStrpTime( nomads_utc *u, const char *s, const char *frmt );
 
 #ifdef __cplusplus
 }
