@@ -127,7 +127,9 @@ BOOST_AUTO_TEST_CASE( alaska_out )
     adfBbox[2] = 56.6964;
     adfBbox[3] = -157.5511;
 
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     int rc = lfcFetcher.FetchBoundingBox( adfBbox, 0.0, osLcpFile.c_str() , NULL );
+    CPLPopErrorHandler();
     BOOST_CHECK( rc == SURF_FETCH_E_BAD_INPUT );
 }
 

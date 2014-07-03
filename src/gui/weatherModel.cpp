@@ -368,6 +368,14 @@ void weatherModel::checkForModelData()
     filters << QString::fromStdString( gfs.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
 
+    int i;
+    for( i = 0; i < nNomadsCount; i++ )
+    {
+        filters << 
+            QString::fromStdString(papoNomads[i]->getForecastIdentifier() )
+                    + "-" + QFileInfo( inputFile ).fileName();
+    }
+
     //filter to see the folder in utc time
     filters << "20*T*";
     filters << "*.nc";
