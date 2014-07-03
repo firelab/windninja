@@ -193,6 +193,8 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 try_again:
     NomadsUtcCopy( fcst, now );
     NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
+    CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
+              NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
 
     if( EQUAL( pszModelKey, "rtma_conus" ) )
     {
