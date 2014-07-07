@@ -34,8 +34,8 @@
 #ifdef LINUX
 #include <unistd.h>
 #endif
-#ifdef WINDOWS
-#inlcude <windows.h>
+#ifdef WIN32
+#include <windows.h>
 #endif
 
 static void sleep( int ms )
