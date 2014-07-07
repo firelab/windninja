@@ -90,8 +90,35 @@ BOOST_AUTO_TEST_CASE( add_hours_3 )
 {
     NomadsUtcNow( u );
     int h = u->ts->tm_hour;
+    int d = u->ts->tm_mday;
     NomadsUtcAddHours( u, 25 );
     BOOST_CHECK_EQUAL( (h + 25) % 24, u->ts->tm_hour );
+    BOOST_CHECK( (d + 1) % 28 == u->ts->tm_mday ||
+                 (d + 1) % 29 == u->ts->tm_mday ||
+                 (d + 1) % 30 == u->ts->tm_mday ||
+                 (d + 1) % 31 == u->ts->tm_mday );
+}
+
+BOOST_AUTO_TEST_CASE( add_hours_4 )
+{
+    NomadsUtcNow( u );
+    int h = u->ts->tm_hour;
+    NomadsUtcAddHours( u, - 1 );
+    if( h - 1 < 0 )
+        BOOST_CHECK_EQUAL( 24 - h - 1, u->ts->tm_hour );
+    else
+        BOOST_CHECK_EQUAL( h - 1, u->ts->tm_hour );
+}
+
+BOOST_AUTO_TEST_CASE( add_hours_5 )
+{
+    NomadsUtcNow( u );
+    int h = u->ts->tm_hour;
+    NomadsUtcAddHours( u, - 2 );
+    if( h - 2 < 0 )
+        BOOST_CHECK_EQUAL( 24 - h - 2, u->ts->tm_hour );
+    else
+        BOOST_CHECK_EQUAL( h - 2, u->ts->tm_hour );
 }
 
 BOOST_AUTO_TEST_CASE( now_1 )
@@ -108,6 +135,28 @@ BOOST_AUTO_TEST_CASE( compare_1 )
     sleep( 1000 );
     NomadsUtcNow( v );
     BOOST_CHECK( NomadsUtcCompare( u, v ) == -1 );
+    BOOST_CHECK( NomadsUtcCompare( v, u ) == 1 );
+    NomadsUtcCopy( v, u );
+    BOOST_CHECK( NomadsUtcCompare( v, u ) == 0 );
+}
+
+BOOST_AUTO_TEST_CASE( compare_2 )
+{
+    NomadsUtcNow( u );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    sleep( 1000 );
+    NomadsUtcNow( v );
+    BOOST_CHECK( NomadsUtcCompare( v, u ) == 1 );
+}
+
+BOOST_AUTO_TEST_CASE( compare_3 )
+{
+    NomadsUtcNow( u );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    NomadsUtcCopy( v, u );
+    BOOST_CHECK( NomadsUtcCompare( v, u ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( from_timet_1 )

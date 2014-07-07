@@ -41,11 +41,6 @@ extern "C" {
 #ifdef USE_INTERNAL_TIME_GM
 time_t timegm( const struct tm *tm );
 #endif
-#ifdef USE_INTERNAL_STRPTIME
-char * strptime( const char * __restrict,
-                 const char * __restrict,
-                 struct tm * __restrict);
-#endif
 
 #define NOMADS_UTC_STRFTIME_SIZE 4096
 

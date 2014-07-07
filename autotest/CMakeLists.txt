@@ -277,10 +277,18 @@ ENDIF(RUN_NOMADS_ZIP_TESTS)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_2)
     ADD_TEST(utc_add_hours_3
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_3)
+    ADD_TEST(utc_add_hours_4
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_4)
+    ADD_TEST(utc_add_hours_5
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_5)
     ADD_TEST(utc_now_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
     ADD_TEST(utc_compare_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/compare_1)
+    ADD_TEST(utc_compare_2
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/compare_2)
+    ADD_TEST(utc_compare_3
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/compare_3)
     ADD_TEST(utc_timet_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_timet_1)
     ADD_TEST(utc_strftime_1
