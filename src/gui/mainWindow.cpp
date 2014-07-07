@@ -2056,9 +2056,9 @@ int mainWindow::checkWeatherItem()
         fi = tree->weather->model->fileInfo( mi );
         std::string filename = fi.absoluteFilePath().toStdString();
         char *p, *q;
+        int n = 0;
         p = strdup( filename.c_str() );
         q = strrchr( p, '/' );
-        int n = 0;
         if( !q )
             q = strrchr( p, '\\' );
         if( q )
@@ -2067,9 +2067,8 @@ int mainWindow::checkWeatherItem()
                 q++;
             if( strlen( q ) > 5 )
                 *(q + 4) = '\0';
-        }
-        if( q )
             n = atoi( q );
+        }
         else
             n = atoi( p );
         free( p );
