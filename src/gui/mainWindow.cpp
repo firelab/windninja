@@ -2058,6 +2058,7 @@ int mainWindow::checkWeatherItem()
         char *p, *q;
         p = strdup( filename.c_str() );
         q = strrchr( p, '/' );
+        int n = 0;
         if( !q )
             q = strrchr( p, '\\' );
         if( q )
