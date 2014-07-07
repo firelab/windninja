@@ -92,6 +92,8 @@ extern "C" {
 **
 ** The models are listed in the same order as found on the web page.  Models
 ** not yet implemented (or may never be) are marked with XXX.
+**
+** XXX: Do not forget commas after the constants defined above!!!
 */
 
 #define NOMADS_NAME                 0
@@ -122,7 +124,7 @@ static const char *apszNomadsKeys[][11] =
       /* Date format for directory */
       "%Y%m%d",
       /* Forecast hours, start:stop:stride */
-      "0:12:12",
+      NOMADS_GENERIC_FCST_HOURS,
       /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:192:3",
       /* Variable list */

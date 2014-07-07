@@ -105,7 +105,13 @@ NomadsWxModel::~NomadsWxModel()
 
 const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
 {
-    const char *pszVsiDir = CPLGetPath( pszFilename );
+    const char *pszVsiDir;
+    VSIStatBufL sStat;
+    VSIStatL( pszFilename, &sStat );
+    if( VSI_ISDIR( sStat.st_mode ) )
+        pszVsiDir = CPLStrdup( pszFilename );
+    else
+        pszVsiDir = CPLStrdup( CPLGetPath( pszFilename ) );
     char **papszFileList = NULL;
     int nCount;
     papszFileList = VSIReadDir( pszVsiDir );
@@ -201,18 +207,33 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     std::string path( CPLGetDirname( demFile.c_str() ) );
     std::string fileName( CPLGetFilename( demFile.c_str() ) );
     std::string newPath( path + "/" + getForecastIdentifier()
-             + "-" + fileName + "/" + 
-             std::string(CPLGetBasename(generateForecastName().c_str())) + "/" );
-
-    VSIMkdir( newPath.c_str(), 0777 );
-
+             + "-" + fileName + "/" );
     int rc;
-    rc = NomadsFetch( pszKey, nHours, adfWENS, newPath.c_str(), NULL,
+    VSIStatBufL sStat;
+    VSIStatL( newPath.c_str(), &sStat );
+    if( !VSI_ISDIR( sStat.st_mode ) )
+        rc = VSIMkdir( newPath.c_str(), 0777 );
+    std::string tmpPath;
+    tmpPath = newPath + std::string( CPLGenerateTempFilename( NULL ) ).erase( 0, 2 );
+
+    rc = VSIMkdir( tmpPath.c_str(), 0777 );
+
+    rc = NomadsFetch( pszKey, nHours, adfWENS, tmpPath.c_str(), NULL,
                       pfnProgress );
     if( rc )
     {
         throw badForecastFile( "Could not download from nomads server!" );
     }
+    wxModelFileName = tmpPath;
+    std::vector<blt::local_date_time> oTimes;
+    oTimes = wxModelInitialization::getTimeList();
+    std::string filename;
+    filename =  bpt::to_iso_string(oTimes[0].utc_time());
+    //remove trailing seconds
+    filename = filename.erase( filename.size() - 2 );
+    newPath += "/" + filename;
+    VSIRename( tmpPath.c_str(), newPath.c_str() );
+    wxModelFileName = newPath;
     return newPath;
 }
 
@@ -275,7 +296,13 @@ NomadsWxModel::getTimeList( const char *pszVariable,
 
     int i;
     char **papszFileList = NULL;
-    const char *pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
+    const char *pszPath;
+    VSIStatBufL sStat;
+    VSIStatL( wxModelFileName.c_str(), &sStat );
+    if( VSI_ISDIR( sStat.st_mode ) )
+        pszPath = CPLStrdup( wxModelFileName.c_str() );
+    else
+        pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
     const char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );
@@ -336,7 +363,13 @@ const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
 {
     int i;
     char **papszFileList = NULL;
-    const char *pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
+    VSIStatBufL sStat;
+    VSIStatL( pszFilePath, &sStat );
+    const char *pszPath;
+    if( VSI_ISDIR( sStat.st_mode ) )
+        pszPath = CPLStrdup( pszFilePath );
+    else
+        pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
     const char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );

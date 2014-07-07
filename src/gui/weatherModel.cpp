@@ -413,7 +413,7 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
 {
     QFileInfo fi( model->fileInfo( index ) );
 
-    if( fi.isDir() || !fi.isFile() || !fi.exists() ) {
+    if( !fi.exists() ) {
         statusLabel->setText( "" );
         return;
     }
@@ -422,16 +422,8 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
     }
-    catch( badForecastFile &e ) {
-        QMessageBox::warning( this, "WindNinja",
-                              QString::fromStdString( e.what() ),
-                              QMessageBox::Ok );
-        return;
-    }
-    catch( std::runtime_error &e ) {
-        QMessageBox::warning( this, "WindNinja",
-                              QString::fromStdString( e.what() ),
-                              QMessageBox::Ok );
+    catch( ... ) {
+        statusLabel->setText( "" );
         return;
     }
 

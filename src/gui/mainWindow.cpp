@@ -2053,15 +2053,32 @@ int mainWindow::checkWeatherItem()
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
     if( mi.isValid() ) {
         fi = tree->weather->model->fileInfo( mi );
-        if( fi.isDir() ) {
-        status = red;
-        tree->modelItem->setIcon( 0, tree->cross );
-        tree->modelItem->setToolTip( 0, "You must select a forecast file (*.nc)" );
+        /*
+        ** TODO: use wx model init factory to try and id the wx model.
+        */
+        std::string filename = fi.absoluteFilePath().toStdString();
+        if( fi.isDir() && atoi( fi.baseName().toStdString().c_str() ) < 2000 )
+        {
+            status = red;
+            tree->modelItem->setIcon( 0, tree->cross );
+            tree->modelItem->setToolTip( 0, "Forecast is invalid" );
+            return status;
         }
-        else if( !fi.exists() ) {
+        wxModelInitialization* model;
+        try {
+            model = wxModelInitializationFactory::makeWxInitialization(filename);
+        }
+        catch( ... ) {
+            status = red;
+            tree->modelItem->setIcon( 0, tree->cross );
+            tree->modelItem->setToolTip( 0, "Forecast is invalid" );
+            return status;
+        }
+
+        if( !fi.exists() ) {
         status = red;
         tree->modelItem->setIcon( 0, tree->cross );
-        tree->modelItem->setToolTip( 0, "Forecast File does not exist" );
+        tree->modelItem->setToolTip( 0, "Forecast does not exist" );
         }
         else {
         status = green;
@@ -2072,7 +2089,7 @@ int mainWindow::checkWeatherItem()
     else {
         status = red;
         tree->modelItem->setIcon( 0, tree->cross );
-        tree->modelItem->setToolTip( 0, "You must select a forecast file (*.nc)" );
+        tree->modelItem->setToolTip( 0, "You must select a valid forecast file or path" );
     }
     }
     else {

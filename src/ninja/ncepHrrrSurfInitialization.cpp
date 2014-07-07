@@ -156,6 +156,7 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
     if( srcDS == NULL ) {
         CPLDebug( "ncepHRRRSurfaceInitialization::identify()",
                 "Bad forecast file" );
+        return false;
     }
 
     if( srcDS->GetRasterCount() < 8 )

@@ -149,7 +149,7 @@ bool ncepNamGrib2SurfInitialization::identify( std::string fileName )
         identified = false;
     }
     GDALDatasetH hDS = GDALOpenShared( fileName.c_str(), GA_ReadOnly );
-    if( GDALGetRasterCount( hDS ) < 8 )
+    if( !hDS || GDALGetRasterCount( hDS ) < 8 )
         identified = false;
     GDALClose( hDS );
     return identified;

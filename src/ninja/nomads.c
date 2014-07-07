@@ -158,6 +158,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     char *pabyBuffer;
     nomads_utc *now, *end, *tmp, *fcst;
     int nVsiBlockSize;
+    int nBytesWritten;
     nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "10" );
 
@@ -270,6 +271,7 @@ try_again:
             strstr( psResult->pabyData, "data file is not present" ) )
 #endif /* NOMADS_USE_VSI */
         {
+short_circuit:
             if( !bAlreadyWentBack && bFirstFile )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
@@ -342,9 +344,11 @@ try_again:
             return NOMADS_ERR;
         }
 #ifdef NOMADS_USE_VSI_READ
+        nBytesWritten = 0;
         do
         {
             nOffset = VSIFReadL( pabyBuffer, 1, nVsiBlockSize, fin );
+            nBytesWritten += nOffset;
             VSIFWriteL( pabyBuffer, 1, nOffset, fout );
             if( pfnProgress )
             {
@@ -361,17 +365,39 @@ try_again:
                     NomadsUtcFree( tmp );
                     NomadsUtcFree( fcst );
                     VSIFCloseL( fin );
-#ifndef NOMADS_USE_VSI_READ
-                    CPLHTTPDestroyResult( psResult );
-#endif
                     return NOMADS_OK;
                 }
             }
         } while ( nOffset != 0 );
         VSIFCloseL( fin );
+        if( nBytesWritten == 0 )
+        {
+            bFirstFile = TRUE;
+            VSIUnlink( pszOutFilename );
+            goto short_circuit;
+        }
 #else
         VSIFWriteL( psResult->pabyData, psResult->nDataLen, 1, fout );
         CPLHTTPDestroyResult( psResult );
+        if( pfnProgress )
+        {
+            if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt,
+                          "Cancelled by user." );
+                CPLFree( (void*)pszGribFile );
+                CPLFree( (void*)pszGribDir );
+                CPLFree( (void*)panRunHours );
+                CPLFree( (void*)pabyBuffer );
+                NomadsUtcFree( now );
+                NomadsUtcFree( end );
+                NomadsUtcFree( tmp );
+                NomadsUtcFree( fcst );
+                CPLHTTPDestroyResult( psResult );
+                return NOMADS_OK;
+            }
+        }
+
 #endif
         VSIFCloseL( fout );
         CPLFree( (void*)pszGribFile );
@@ -390,3 +416,4 @@ try_again:
 
     return NOMADS_OK;
 }
+
