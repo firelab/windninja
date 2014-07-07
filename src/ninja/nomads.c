@@ -148,7 +148,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     const char *pszOutFilename = NULL;
     int bAlreadyWentBack = FALSE;
     int bFirstFile = TRUE;
-    char szMessage[512];
 #ifdef NOMADS_USE_VSI_READ
     VSILFILE *fin = NULL;
 #else
@@ -213,6 +212,7 @@ try_again:
     {
         pfnProgress( 0.0, "Starting download...", NULL );
     }
+    char szMessage[512];
     szMessage[0] = '\0';
     pabyBuffer = CPLMalloc( sizeof( char ) * nVsiBlockSize );
     for( i = 0; i < nFilesToGet; i++ )
