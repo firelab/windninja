@@ -270,8 +270,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     if(bandList.size() < 4)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
 
-    GDALDataset* poDS;
-
     std::string dstWkt;
     dstWkt = input.dem.prjString;
 

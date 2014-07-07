@@ -465,6 +465,8 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
  */
 std::vector<blt::local_date_time> wxModelInitialization::getTimeList(std::string timeZoneString)
 {
+    if( aoCachedTimes.size() > 0 )
+        return aoCachedTimes;
     blt::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     blt::time_zone_ptr timeZonePtr;
@@ -476,7 +478,8 @@ std::vector<blt::local_date_time> wxModelInitialization::getTimeList(std::string
        << "the time zone database file: date_time_zonespec.csv.";
         throw std::runtime_error( os.str() );
     }
-    return getTimeList( blt::time_zone_ptr ( timeZonePtr ) );
+    aoCachedTimes = getTimeList( blt::time_zone_ptr ( timeZonePtr ) );
+    return aoCachedTimes;
 }
 /**
  * Fetch a list of times that the forecast holds for the dataset, given
@@ -491,6 +494,8 @@ std::vector<blt::local_date_time>
 wxModelInitialization::getTimeList(const char *pszVariable,
                                    std::string timeZoneString)
 {
+    if( aoCachedTimes.size() > 0 )
+        return aoCachedTimes;
     blt::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     blt::time_zone_ptr timeZonePtr;
@@ -502,7 +507,8 @@ wxModelInitialization::getTimeList(const char *pszVariable,
        << "the time zone database file: date_time_zonespec.csv.";
         throw std::runtime_error( os.str() );
     }
-    return getTimeList(pszVariable, blt::time_zone_ptr(timeZonePtr));
+    aoCachedTimes = getTimeList(pszVariable, blt::time_zone_ptr(timeZonePtr));
+    return aoCachedTimes;
 }
 
 /**
@@ -523,7 +529,10 @@ wxModelInitialization::getTimeList(const char *pszVariable,
  */
 std::vector<blt::local_date_time> wxModelInitialization::getTimeList(blt::time_zone_ptr timeZonePtr)
 {
-    return getTimeList(NULL, timeZonePtr);
+    if( aoCachedTimes.size() > 0 )
+        return aoCachedTimes;
+    aoCachedTimes = getTimeList(NULL, timeZonePtr);
+    return aoCachedTimes;
 }
 
 /**
@@ -1784,7 +1793,16 @@ int wxModelInitialization::LoadFromCsv()
     if( p == "" )
         return 1;
 
-    papszLines = CSLLoad2( p.c_str(), 10, 512, NULL );
+    if( !papszThreddsCsv )
+    {
+        papszLines = CSLLoad2( p.c_str(), 10, 512, NULL );
+        papszThreddsCsv = CSLDuplicate( papszLines );
+    }
+    else
+    {
+        CPLDebug( "WINDNINJA", "Using cached thredds csv values" );
+        papszLines = CSLDuplicate( papszThreddsCsv );
+    }
     int nRecords = CSLCount( papszLines );
     if( nRecords < 2 )
     {

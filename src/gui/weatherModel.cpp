@@ -418,12 +418,13 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
         return;
     }
     std::string filename = fi.absoluteFilePath().toStdString();
-    wxModelInitialization* model;
+    wxModelInitialization* model = NULL;
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
     }
     catch( ... ) {
         statusLabel->setText( "" );
+        delete model;
         return;
     }
 

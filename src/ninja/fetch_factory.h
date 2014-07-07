@@ -58,9 +58,6 @@ class FetchFactory
         static SurfaceFetch* GetSurfaceFetch( FetchType, std::string path="" );
         static SurfaceFetch* GetSurfaceFetch( std::string type, std::string path="" );
 
-#ifdef WITH_NOMADS_SUPPORT
-        static NomadsWxModel* GetNomadsModel( std::string key );
-#endif /* WITH_NOMADS_SUPPORT */
 };
 
 #endif //FETCH_FACTORY_H

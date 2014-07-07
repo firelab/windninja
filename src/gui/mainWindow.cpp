@@ -2048,23 +2048,20 @@ int mainWindow::checkPointItem()
 int mainWindow::checkWeatherItem()
 {
     eInputStatus status = blue;
+    wxModelInitialization* model = NULL;
     if( tree->weather->weatherGroupBox->isChecked() ) {
     QFileInfo fi;
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
     if( mi.isValid() ) {
         fi = tree->weather->model->fileInfo( mi );
-        /*
-        ** TODO: use wx model init factory to try and id the wx model.
-        */
         std::string filename = fi.absoluteFilePath().toStdString();
-        if( fi.isDir() && atoi( fi.baseName().toStdString().c_str() ) < 2000 )
+        if( fi.isDir() && atoi( fi.baseName().toStdString().c_str() ) > 2000 )
         {
             status = red;
             tree->modelItem->setIcon( 0, tree->cross );
             tree->modelItem->setToolTip( 0, "Forecast is invalid" );
             return status;
         }
-        wxModelInitialization* model;
         try {
             model = wxModelInitializationFactory::makeWxInitialization(filename);
         }
@@ -2072,6 +2069,7 @@ int mainWindow::checkWeatherItem()
             status = red;
             tree->modelItem->setIcon( 0, tree->cross );
             tree->modelItem->setToolTip( 0, "Forecast is invalid" );
+            delete model;
             return status;
         }
 
@@ -2096,6 +2094,7 @@ int mainWindow::checkWeatherItem()
     tree->modelItem->setIcon( 0, tree->radio );
     tree->modelItem->setToolTip( 0, "Not used" );
     }
+    delete model;
     return status;
 }
 
@@ -2492,6 +2491,8 @@ QString mainWindow::checkForNoData( QString inputFile )
             }
         }
     }
+    else
+        GDALClose( (GDALDatasetH)poDS );
     return newFile;
 }
 

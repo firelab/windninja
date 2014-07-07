@@ -72,28 +72,31 @@ NomadsWxModel::NomadsWxModel( const char *pszModelKey )
     ppszModelData = NULL;
     pfnProgress = NULL;
     NomadsUtcCreate( &u );
-
-    int i = 0;
-    while( apszNomadsKeys[i][0] != NULL )
+    pszKey = NULL;
+    if( pszModelKey )
     {
-        if( EQUAL( pszModelKey, apszNomadsKeys[i][0] ) )
+        int i = 0;
+        while( apszNomadsKeys[i][0] != NULL )
         {
-            ppszModelData = apszNomadsKeys[i];
-            CPLDebug( "NOMADS", "Found model key: %s",
-                      ppszModelData[NOMADS_NAME] );
-            break;
+            if( EQUAL( pszModelKey, apszNomadsKeys[i][0] ) )
+            {
+                ppszModelData = apszNomadsKeys[i];
+                CPLDebug( "NOMADS", "Found model key: %s",
+                          ppszModelData[NOMADS_NAME] );
+                break;
+            }
+            i++;
         }
-        i++;
-    }
-    if( ppszModelData == NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not find model key in nomads data" );
-        pszKey = NULL;
-    }
-    else
-    {
-        pszKey = CPLStrdup( pszModelKey );
+        if( ppszModelData == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Could not find model key in nomads data" );
+            pszKey = NULL;
+        }
+        else
+        {
+            pszKey = CPLStrdup( pszModelKey );
+        }
     }
 }
 
@@ -128,11 +131,7 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
     {
         for( j = 0; j < nCount; j++ )
         {
-            if( EQUAL( papszFileList[j], ".." ) ||
-                EQUAL( papszFileList[j], "." ) )
-            {
-                continue;
-            }
+            SKIP_DOT_AND_DOTDOT( papszFileList[j] );
             if( NomadsCheckFileName( papszFileList[j],
                                      apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
             {
@@ -142,6 +141,7 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
         }
         i++;
     }
+    CSLDestroy( papszFileList );
     return ppszKey;
 }
 
@@ -210,6 +210,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
              + "-" + fileName + "/" );
     int rc;
     VSIStatBufL sStat;
+    memset( &sStat, 0, sizeof( VSIStatBufL ) );
     VSIStatL( newPath.c_str(), &sStat );
     if( !VSI_ISDIR( sStat.st_mode ) )
         rc = VSIMkdir( newPath.c_str(), 0777 );
@@ -288,6 +289,8 @@ std::vector<blt::local_date_time>
 NomadsWxModel::getTimeList( const char *pszVariable, 
                             blt::time_zone_ptr timeZonePtr )
 {
+    if( aoCachedTimes.size() > 0 )
+        return aoCachedTimes;
     (void)pszVariable;
     if( wxModelFileName == "" )
     {
@@ -335,7 +338,6 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         }
         hBand = GDALGetRasterBand( hDS, 1 );
         pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
-        GDALClose( hDS );
         if( !pszValidTime )
         {
             CSLDestroy( papszFileList );
@@ -343,7 +345,9 @@ NomadsWxModel::getTimeList( const char *pszVariable,
             throw badForecastFile( "Could not fetch ref time or forecast time " \
                                    "from GRIB file" );
         }
+        CPLDebug( "WINDNINJA", "Found valid time in grib: %s", pszValidTime );
         nValidTime = (time_t)atoi( pszValidTime );
+        GDALClose( hDS );
 
         bpt::ptime time_t_epoch( boost::gregorian::date( 1970,1,1 ) );
 
@@ -355,7 +359,8 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     }
     CSLDestroy( papszFileList );
     CPLFree( (void*)pszPath );
-    return aoTimeList;
+    aoCachedTimes = aoTimeList;
+    return aoCachedTimes;
 }
 
 const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,

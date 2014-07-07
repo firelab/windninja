@@ -61,6 +61,8 @@ namespace bpt = boost::posix_time;
 
 extern omp_lock_t netCDF_lock;
 
+static char **papszThreddsCsv = NULL;
+
 /**
  * Class used for coarse weather model initialization.
  * Inherits from initialize.  Mostly contains virtual functions defined by
@@ -136,6 +138,8 @@ class wxModelInitialization : public initialize
 
     std::string heightVarName;
     std::string host, path;
+
+    std::vector<blt::local_date_time> aoCachedTimes;
 
     virtual void setSurfaceGrids( WindNinjaInputs &input,
                                   AsciiGrid<double> &airGrid,

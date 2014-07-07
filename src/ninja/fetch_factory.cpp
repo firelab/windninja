@@ -89,18 +89,3 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch( std::string type, std::string path 
     }
 }
 
-#ifdef WITH_NOMADS_SUPPORT
-NomadsWxModel* GetNomadsModel( std::string key )
-{
-    try
-    {
-        return NULL;
-    }
-    catch( ... )
-    {
-    }
-    return NULL;
-}
-
-#endif /* WITH_NOMADS_SUPPORT */
-

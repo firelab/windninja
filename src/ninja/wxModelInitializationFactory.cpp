@@ -56,77 +56,89 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
 
     NomadsWxModel nomad;
 
-    //Determine what type of weather model the file came from
-    //Check netcdf first, otherwise grib_api spews out crap
-    if(ncepNdfd.identify(fileName)) {
-        ncepNdfd.setModelFileName( fileName );
-        return new ncepNdfdInitialization(ncepNdfd);
-    }
-    else if(ncepNamSurf.identify(fileName)) {
-        ncepNamSurf.setModelFileName( fileName );
-        return new ncepNamSurfInitialization(ncepNamSurf);
-    }
-    else if(ncepRapSurf.identify(fileName)) {
-        ncepRapSurf.setModelFileName( fileName );
-        return new ncepRapSurfInitialization(ncepRapSurf);
-    }
-    else if(ncepDgexSurf.identify(fileName)) {
-        ncepDgexSurf.setModelFileName( fileName );
-        return new ncepDgexSurfInitialization(ncepDgexSurf);
-    }
-    else if(ncepNamAlaskaSurf.identify(fileName)) {
-        ncepNamAlaskaSurf.setModelFileName( fileName );
-        return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);
-    }
-    else if(ncepGfsSurf.identify(fileName)) {
-        ncepGfsSurf.setModelFileName( fileName );
-        return new ncepGfsSurfInitialization(ncepGfsSurf);
-    }
-    else if(wrfSurf.identify(fileName)) {
-        wrfSurf.setModelFileName( fileName );
-        CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.identify(fileName) = %i\n", wrfSurf.identify(fileName));
-        return new wrfSurfInitialization(wrfSurf);
-    }
-    #ifdef STABILITY
-    else if(wrf3d.identify(fileName)) {    //fix this later to read either wrf3d or wrfSurf
-        wrf3d.setModelFileName( fileName );
-        CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.identify(fileName) = %i\n", wrf3d.identify(fileName));
-        return new wrf3dInitialization(wrf3d);
-    }
-    #endif
-    else if(ncepNamGrib2Surf.identify(fileName)) {
-        ncepNamGrib2Surf.setModelFileName( fileName );
-        return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
-    }
-    else if(ncepHrrrSurf.identify(fileName)) {
-        ncepHrrrSurf.setModelFileName( fileName );
-        return new ncepHrrrSurfInitialization(ncepHrrrSurf);
-    }
-    else if(genericSurf.identify(fileName)) {
-        genericSurf.setModelFileName( fileName );
-        return new genericSurfInitialization(genericSurf);
-
-    }
-    else if(nomad.identify(fileName))
+    VSIStatBufL sStat;
+    VSIStatL( fileName.c_str(), &sStat );
+    if( !VSI_ISDIR( sStat.st_mode ) && !strstr( fileName.c_str(), ".zip" ) )
     {
-        const char **ppszKey = nomad.FindModelKey( fileName.c_str() );
-        if( ppszKey )
-            return new NomadsWxModel( fileName );
-        else
-        {
+        //Determine what type of weather model the file came from
+        //Check netcdf first, otherwise grib_api spews out crap
+        if(ncepNdfd.identify(fileName)) {
+            ncepNdfd.setModelFileName( fileName );
+            return new ncepNdfdInitialization(ncepNdfd);
+        }
+        else if(ncepNamSurf.identify(fileName)) {
+            ncepNamSurf.setModelFileName( fileName );
+            return new ncepNamSurfInitialization(ncepNamSurf);
+        }
+        else if(ncepRapSurf.identify(fileName)) {
+            ncepRapSurf.setModelFileName( fileName );
+            return new ncepRapSurfInitialization(ncepRapSurf);
+        }
+        else if(ncepDgexSurf.identify(fileName)) {
+            ncepDgexSurf.setModelFileName( fileName );
+            return new ncepDgexSurfInitialization(ncepDgexSurf);
+        }
+        else if(ncepNamAlaskaSurf.identify(fileName)) {
+            ncepNamAlaskaSurf.setModelFileName( fileName );
+            return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);
+        }
+        else if(ncepGfsSurf.identify(fileName)) {
+            ncepGfsSurf.setModelFileName( fileName );
+            return new ncepGfsSurfInitialization(ncepGfsSurf);
+        }
+        else if(wrfSurf.identify(fileName)) {
+            wrfSurf.setModelFileName( fileName );
+            CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.identify(fileName) = %i\n", wrfSurf.identify(fileName));
+            return new wrfSurfInitialization(wrfSurf);
+        }
+        #ifdef STABILITY
+        else if(wrf3d.identify(fileName)) {    //fix this later to read either wrf3d or wrfSurf
+            wrf3d.setModelFileName( fileName );
+            CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.identify(fileName) = %i\n", wrf3d.identify(fileName));
+            return new wrf3dInitialization(wrf3d);
+        }
+        #endif
+        else if(ncepNamGrib2Surf.identify(fileName)) {
+            ncepNamGrib2Surf.setModelFileName( fileName );
+            return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
+        }
+        else if(ncepHrrrSurf.identify(fileName)) {
+            ncepHrrrSurf.setModelFileName( fileName );
+            return new ncepHrrrSurfInitialization(ncepHrrrSurf);
+        }
+        else if(genericSurf.identify(fileName)) {
+            genericSurf.setModelFileName( fileName );
+            return new genericSurfInitialization(genericSurf);
+        }
+        else {
             std::ostringstream outString;
             outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
                     "identified as a valid weather model initialization file.";
             throw std::runtime_error(outString.str());
         }
     }
-    else {
-        std::ostringstream outString;
+    else
+    {
+        if(nomad.identify(fileName))
+        {
+            const char **ppszKey = nomad.FindModelKey( fileName.c_str() );
+            if( ppszKey )
+                return new NomadsWxModel( fileName );
+            else
+            {
+                std::ostringstream outString;
+                outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
+                        "identified as a valid weather model initialization file.";
+                throw std::runtime_error(outString.str());
+            }
+        }
+        else {
+            std::ostringstream outString;
         outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
                 "identified as a valid weather model initialization file.";
         throw std::runtime_error(outString.str());
+        }
     }
-
 }
 
 
