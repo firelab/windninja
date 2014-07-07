@@ -2055,7 +2055,25 @@ int mainWindow::checkWeatherItem()
     if( mi.isValid() ) {
         fi = tree->weather->model->fileInfo( mi );
         std::string filename = fi.absoluteFilePath().toStdString();
-        if( fi.isDir() && atoi( fi.baseName().toStdString().c_str() ) > 2000 )
+        char *p, *q;
+        p = strdup( filename.c_str() );
+        q = strrchr( p, '/' );
+        if( !q )
+            q = strrchr( p, '\\' );
+        if( q )
+        {
+            if( strlen( q ) > 1 )
+                q++;
+            if( strlen( q ) > 5 )
+                *(q + 4) = '\0';
+            int n = 0;
+        }
+        if( q )
+            n = atoi( q );
+        else
+            n = atoi( p );
+        free( p );
+        if( fi.isDir() && n < 2000 )
         {
             status = red;
             tree->modelItem->setIcon( 0, tree->cross );
