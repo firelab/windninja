@@ -2067,7 +2067,6 @@ int mainWindow::checkWeatherItem()
                 q++;
             if( strlen( q ) > 5 )
                 *(q + 4) = '\0';
-            int n = 0;
         }
         if( q )
             n = atoi( q );
