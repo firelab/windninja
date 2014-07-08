@@ -324,6 +324,7 @@ try_again:
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
                 NomadsUtcFree( fcst );
+                CPLFree( (void*)pThreads );
                 CPLFree( (void*)pasData );
                 return NOMADS_OK;
             }
@@ -356,6 +357,8 @@ try_again:
         pasData[i].pszUrl = CPLStrdup( pszUrl );
         pasData[i].pszFilename = CPLStrdup( pszOutFilename );
         pThreads[i] = CPLCreateJoinableThread( NomadsFetchAsync, &pasData[i] );
+        CPLFree( (void*)pszGribFile );
+        CPLFree( (void*)pszGribDir );
         continue;
 #endif
 
@@ -366,7 +369,6 @@ try_again:
 #endif /* NOMADS_USE_VSI_READ */
         if( rc )
         {
-short_circuit:
             if( !bAlreadyWentBack && bFirstFile )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
@@ -422,6 +424,7 @@ short_circuit:
     NomadsUtcFree( end );
     NomadsUtcFree( tmp );
     NomadsUtcFree( fcst );
+    CPLFree( (void*)panRunHours );
     if( pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
