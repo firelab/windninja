@@ -164,6 +164,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     layout->addWidget( weatherGroupBox );
     setLayout(layout);
 
+#ifdef WITH_NOMADS_SUPPORT
     nNomadsCount = 0;
     while( apszNomadsKeys[nNomadsCount][0] != NULL )
         nNomadsCount++;
@@ -175,7 +176,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
         i++;
     }
     CPLDebug( "WINDNINJA", "Loaded %d NOMADS models", nNomadsCount );
-
+#endif
     progressDialog = new QProgressDialog( this );
     progressDialog->setAutoClose( false );
     progressDialog->setAutoReset( false );
@@ -194,9 +195,11 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
  */
 weatherModel::~weatherModel()
 {
+#ifdef WITH_NOMADS_SUPPORT
     for( int i = 0; i < nNomadsCount; i++ )
         delete papoNomads[i];
     delete [] papoNomads;
+#endif
 }
 
 /**
@@ -212,6 +215,7 @@ void weatherModel::loadModelComboBox()
     //modelComboBox->addItem( QString::fromStdString(dgex.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
+#ifdef WITH_NOMADS_SUPPORT
     /* Nomads */
     QString s;
     for( int i = 0; i < nNomadsCount; i++ )
@@ -221,6 +225,7 @@ void weatherModel::loadModelComboBox()
         s.replace( " ", "-" );
         modelComboBox->addItem( s );
     }
+#endif
 }
 
 void weatherModel::setTimeLimits( int index )
@@ -237,9 +242,12 @@ void weatherModel::setTimeLimits( int index )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
     else
     {
+#ifdef WITH_NOMADS_SUPPORT
         int n = index - 5;
         hourSpinBox->setRange( papoNomads[n]->getStartHour(),
                                papoNomads[n]->getEndHour() );
+#endif
+        return;
     }
 }
 
@@ -291,12 +299,14 @@ void weatherModel::getData()
         model = new ncepGfsSurfInitialization( gfs );
     else
     {
+#ifdef WITH_NOMADS_SUPPORT
         model = papoNomads[modelChoice - 5];
         progressDialog->reset();
         progressDialog->setRange( 0, 100 );
         model->SetProgressFunc( &UpdateProgress );
         progressDialog->show();
         progressDialog->setCancelButtonText( "Cancel" );
+#endif
     }
 
     /* use a separate thread for the download? */
@@ -368,6 +378,7 @@ void weatherModel::checkForModelData()
     filters << QString::fromStdString( gfs.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
 
+#ifdef WITH_NOMADS_SUPPORT
     int i;
     for( i = 0; i < nNomadsCount; i++ )
     {
@@ -375,7 +386,7 @@ void weatherModel::checkForModelData()
             QString::fromStdString(papoNomads[i]->getForecastIdentifier() )
                     + "-" + QFileInfo( inputFile ).fileName();
     }
-
+#endif
     //filter to see the folder in utc time
     filters << "20*T*";
     filters << "*.nc";

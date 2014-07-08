@@ -34,8 +34,6 @@
 
 #include "nomads.h"
 
-#define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
-
 class NomadsWxModel : public wxModelInitialization
 {
 

@@ -159,7 +159,7 @@ IF(NOT NINJA_QTGUI)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=input_points/mackay )
 ENDIF(NOT NINJA_QTGUI)
 
-ADD_TEST(stl_1 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=stl/stl_1)
+
 
 # ******************************************************************************
 # Slow test section

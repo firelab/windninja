@@ -125,8 +125,10 @@ class weatherModel : public QWidget
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
 
+#ifdef WITH_NOMADS_SUPPORT
     int nNomadsCount;
     NomadsWxModel **papoNomads;
+#endif
 
  private slots:
     void getData();

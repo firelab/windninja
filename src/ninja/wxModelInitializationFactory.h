@@ -42,7 +42,9 @@
 #include "genericSurfInitialization.h"
 #include "wrfSurfInitialization.h"
 #include "wrf3dInitialization.h"
+#ifdef WITH_NOMADS_SUPPORT
 #include "nomads_wx_init.h"
+#endif
 
 
 /*

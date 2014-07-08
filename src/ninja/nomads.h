@@ -46,16 +46,13 @@ extern "C" {
 #define NOMADS_OK  0
 #define NOMADS_ERR 1
 
+#define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
+
 /*
 ** XXX: Document me.
 */
-#define NOMADS_URL_FILTER_TMPLT      "file=%s&lev_10_m_above_ground=on&" \
-                                     "lev_2_m_above_ground=on&" \
-                                     "lev_entire_atmosphere_(considered_as_a_single_layer)=on" \
-                                     "&var_TCDC=on&var_TMP=on&var_UGRD=on&var_VGRD=on&" \
-                                     "subregion=&leftlon=%lf&rightlon=%lf&toplat=%lf&bottomlat=%lf" \
-                                     "&dir=/%s"
-#define NOMADS_URL_CGI        "http://nomads.ncep.noaa.gov/cgi-bin/"
+
+#define NOMADS_URL_CGI               "http://nomads.ncep.noaa.gov/cgi-bin/"
 
 #define NOMADS_GENERIC_VAR_LIST      "TCDC,TMP,UGRD,VGRD"
 

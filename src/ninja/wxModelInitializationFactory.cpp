@@ -54,7 +54,9 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
 
+#ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel nomad;
+#endif
 
     VSIStatBufL sStat;
     VSIStatL( fileName.c_str(), &sStat );
@@ -117,6 +119,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
             throw std::runtime_error(outString.str());
         }
     }
+#ifdef WITH_NOMADS_SUPPORT
     else
     {
         if(nomad.identify(fileName))
@@ -139,6 +142,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         throw std::runtime_error(outString.str());
         }
     }
+#endif
 }
 
 
