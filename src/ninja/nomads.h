@@ -34,6 +34,7 @@
 
 #include "cpl_error.h"
 #include "cpl_http.h"
+#include "cpl_multiproc.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
@@ -306,6 +307,13 @@ static const char *apszNomadsKeys[][11] =
     { NULL, NULL, NULL }
 };
 
+typedef struct NomadsThreadData
+{
+    const char *pszUrl;
+    const char *pszFilename;
+    int nErr;
+    const char *pszErrMsg;
+} NomadsThreadData;
 
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,

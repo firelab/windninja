@@ -127,6 +127,95 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     return k;
 }
 
+static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
+{
+    int rc;
+    const char *pszVsiUrl;
+    VSILFILE *fin, *fout;
+    vsi_l_offset nOffset, nBytesWritten, nVsiBlockSize;
+    char *pabyBuffer;
+    nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
+
+    if( !EQUALN( pszUrl, "/vsicurl/", 9 ) )
+        pszVsiUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
+    fin = VSIFOpenL( pszVsiUrl, "rb" );
+    if( !fin )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to download file." );
+        return NOMADS_ERR;
+    }
+    fout = VSIFOpenL( pszFilename, "wb" );
+    if( !fout )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to open file for writing." );
+        VSIFCloseL( fin );
+        return NOMADS_ERR;
+    }
+    nBytesWritten = 0;
+    pabyBuffer = CPLMalloc( sizeof( char ) * nVsiBlockSize );
+    rc = 0;
+    do
+    {
+        nOffset = VSIFReadL( pabyBuffer, 1, nVsiBlockSize, fin );
+        nBytesWritten += nOffset;
+        VSIFWriteL( pabyBuffer, 1, nOffset, fout );
+    } while ( nOffset != 0 );
+    VSIFCloseL( fin );
+    VSIFCloseL( fout );
+    if( nBytesWritten == 0 )
+    {
+        VSIUnlink( pszFilename );
+        rc = NOMADS_ERR;
+    }
+    CPLFree( (void*)pabyBuffer );
+    return rc;
+}
+
+static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
+{
+    CPLHTTPResult *psResult;
+    VSILFILE *fout;
+    psResult = NULL;
+    psResult = CPLHTTPFetch( pszUrl, NULL );
+    if( !psResult || psResult->nStatus != 0 ||
+        strstr( psResult->pabyData, "HTTP error code : 404" ) ||
+        strstr( psResult->pabyData, "data file is not present" ) )
+    {
+        if( psResult )
+            CPLHTTPDestroyResult( psResult );
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to download file." );
+        return NOMADS_ERR;
+    }
+    fout = VSIFOpenL( pszFilename, "wb" );
+    if( !fout )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to open file for writing." );
+        CPLHTTPDestroyResult( psResult );
+        return NOMADS_ERR;
+    }
+    VSIFWriteL( psResult->pabyData, psResult->nDataLen, 1, fout );
+    VSIFCloseL( fout );
+    CPLHTTPDestroyResult( psResult );
+    return NOMADS_OK;
+}
+
+static void NomadsFetchAsync( void *pData )
+{
+    int rc;
+    NomadsThreadData *psData;
+    psData = (NomadsThreadData*)pData;
+#ifdef NOMADS_USE_VSI_READ
+    rc = NomadsFetchVsi( psData->pszUrl, psData->pszFilename );
+#else
+    rc = NomadsFetchHttp( psData->pszUrl, psData->pszFilename );
+#endif
+    psData->nErr = rc;
+}
+
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,
                  GDALProgressFunc pfnProgress )
@@ -140,6 +229,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int nFcstHour = 0;
     int *panRunHours = NULL;
     int i = 0;
+    int j = 0;
     int nStart = 0;
     int nStop = 0;
     int nStride = 0;
@@ -149,19 +239,13 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int bAlreadyWentBack = FALSE;
     int bFirstFile = TRUE;
     char szMessage[512];
-#ifdef NOMADS_USE_VSI_READ
-    VSILFILE *fin = NULL;
-#else
-    CPLHTTPResult *psResult;
-#endif
-    VSILFILE *fout = NULL;
-    vsi_l_offset nOffset = 0;
-    char *pabyBuffer;
+    int rc;
+    void **pThreads;
+    int nThreads;
+    NomadsThreadData *pasData;
     nomads_utc *now, *end, *tmp, *fcst;
-    int nVsiBlockSize;
-    int nBytesWritten;
-    nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
-    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "10" );
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "20" );
+    nThreads = atoi( CPLGetConfigOption( "NOMADS_THREAD_COUNT", "4" ) );
 
     while( apszNomadsKeys[i][0] != NULL )
     {
@@ -214,7 +298,14 @@ try_again:
         pfnProgress( 0.0, "Starting download...", NULL );
     }
     szMessage[0] = '\0';
-    pabyBuffer = CPLMalloc( sizeof( char ) * nVsiBlockSize );
+#define NOMADS_ENABLE_ASYNC
+#ifdef NOMADS_ENABLE_ASYNC
+    pThreads = CPLMalloc( sizeof( void * ) * nFilesToGet );
+    pasData = CPLMalloc( sizeof( NomadsThreadData ) * nFilesToGet );
+#else
+    pThreads = NULL;
+    pasData = NULL;
+#endif
     for( i = 0; i < nFilesToGet; i++ )
     {
         pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
@@ -229,11 +320,11 @@ try_again:
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                           "Cancelled by user." );
                 CPLFree( (void*)pszGribFile );
-                CPLFree( (void*)pabyBuffer );
                 NomadsUtcFree( now );
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
                 NomadsUtcFree( fcst );
+                CPLFree( (void*)pasData );
                 return NOMADS_OK;
             }
         }
@@ -249,7 +340,6 @@ try_again:
         CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
                   pszGribDir );
         pszUrl =
-            //CPLSPrintf( "/vsicurl/%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
             CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
                         ppszKey[NOMADS_FILTER_BIN],
                         NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" ),
@@ -259,17 +349,22 @@ try_again:
                              padfBbox[2], padfBbox[3] );
         CPLDebug( "WINDNINJA", "NOMADS generated url: %s",
                   pszUrl );
+        pszOutFilename = CPLSPrintf( "%s/%s", pszDstVsiPath, pszGribFile );
+        if( strstr( pszDstVsiPath, ".zip" ) )
+            pszOutFilename = CPLSPrintf( "/vsizip/%s", pszOutFilename );
+#ifdef NOMADS_ENABLE_ASYNC
+        pasData[i].pszUrl = CPLStrdup( pszUrl );
+        pasData[i].pszFilename = CPLStrdup( pszOutFilename );
+        pThreads[i] = CPLCreateJoinableThread( NomadsFetchAsync, &pasData[i] );
+        continue;
+#endif
 
 #ifdef NOMADS_USE_VSI_READ
-        pszUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
-        fin = VSIFOpenL( pszUrl, "rb" );
-        if( !fin )
-#else /* NOMADS_USE_VSI */
-        psResult = CPLHTTPFetch( pszUrl, NULL );
-        if( !psResult || psResult->nStatus != 0 ||
-            strstr( psResult->pabyData, "HTTP error code : 404" ) ||
-            strstr( psResult->pabyData, "data file is not present" ) )
-#endif /* NOMADS_USE_VSI */
+        rc = NomadsFetchVsi( pszUrl, pszOutFilename );
+#else
+        rc = NomadsFetchHttp( pszUrl, pszOutFilename );
+#endif /* NOMADS_USE_VSI_READ */
+        if( rc )
         {
 short_circuit:
             if( !bAlreadyWentBack && bFirstFile )
@@ -293,10 +388,6 @@ short_circuit:
                 CPLFree( (void*)pszGribFile );
                 CPLFree( (void*)pszGribDir );
                 CPLFree( (void*)panRunHours );
-                CPLFree( (void*)pabyBuffer );
-#ifndef NOMADS_USE_VSI_READ
-                CPLHTTPDestroyResult( psResult );
-#endif
                 goto try_again;
             }
             else
@@ -306,114 +397,35 @@ short_circuit:
                 CPLFree( (void*)pszGribFile );
                 CPLFree( (void*)pszGribDir );
                 CPLFree( (void*)panRunHours );
-                CPLFree( (void*)pabyBuffer );
                 NomadsUtcFree( now );
                 NomadsUtcFree( end );
                 NomadsUtcFree( tmp );
                 NomadsUtcFree( fcst );
-#ifndef NOMADS_USE_VSI_READ
-                CPLHTTPDestroyResult( psResult );
-#endif
                 return NOMADS_ERR;
             }
         }
         bFirstFile = FALSE;
-        /* Write to zip file or folder */
-        pszOutFilename = CPLSPrintf( "%s/%s", pszDstVsiPath, pszGribFile );
-        if( strstr( pszDstVsiPath, ".zip" ) )
-            pszOutFilename = CPLSPrintf( "/vsizip/%s", pszOutFilename );
-
-        fout = VSIFOpenL( pszOutFilename, "wb" );
-        if( !fout )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Could not open zip file for writing" );
-            CPLFree( (void*)pszGribFile );
-            CPLFree( (void*)pszGribDir );
-            CPLFree( (void*)panRunHours );
-            CPLFree( (void*)pabyBuffer );
-            NomadsUtcFree( now );
-            NomadsUtcFree( end );
-            NomadsUtcFree( tmp );
-            NomadsUtcFree( fcst );
-#ifdef NOMADS_USE_VSI_READ
-            VSIFCloseL( fin );
-#else
-            CPLHTTPDestroyResult( psResult );
-#endif
-            return NOMADS_ERR;
-        }
-#ifdef NOMADS_USE_VSI_READ
-        nBytesWritten = 0;
-        do
-        {
-            nOffset = VSIFReadL( pabyBuffer, 1, nVsiBlockSize, fin );
-            nBytesWritten += nOffset;
-            VSIFWriteL( pabyBuffer, 1, nOffset, fout );
-            if( pfnProgress )
-            {
-                if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
-                {
-                    CPLError( CE_Failure, CPLE_UserInterrupt,
-                              "Cancelled by user." );
-                    CPLFree( (void*)pszGribFile );
-                    CPLFree( (void*)pszGribDir );
-                    CPLFree( (void*)panRunHours );
-                    CPLFree( (void*)pabyBuffer );
-                    NomadsUtcFree( now );
-                    NomadsUtcFree( end );
-                    NomadsUtcFree( tmp );
-                    NomadsUtcFree( fcst );
-                    VSIFCloseL( fin );
-                    return NOMADS_OK;
-                }
-            }
-        } while ( nOffset != 0 );
-        VSIFCloseL( fin );
-        if( nBytesWritten == 0 )
-        {
-            bFirstFile = TRUE;
-            VSIUnlink( pszOutFilename );
-            goto short_circuit;
-        }
-#else
-        VSIFWriteL( psResult->pabyData, psResult->nDataLen, 1, fout );
-        CPLHTTPDestroyResult( psResult );
-        if( pfnProgress )
-        {
-            if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
-            {
-                CPLError( CE_Failure, CPLE_UserInterrupt,
-                          "Cancelled by user." );
-                CPLFree( (void*)pszGribFile );
-                CPLFree( (void*)pszGribDir );
-                CPLFree( (void*)panRunHours );
-                CPLFree( (void*)pabyBuffer );
-                NomadsUtcFree( now );
-                NomadsUtcFree( end );
-                NomadsUtcFree( tmp );
-                NomadsUtcFree( fcst );
-                CPLHTTPDestroyResult( psResult );
-                return NOMADS_OK;
-            }
-        }
-
-#endif
-        VSIFCloseL( fout );
         CPLFree( (void*)pszGribFile );
         CPLFree( (void*)pszGribDir );
     }
+#ifdef NOMADS_ENABLE_ASYNC
+    for( i = 0; i < nFilesToGet; i++ )
+    {
+        CPLJoinThread( pThreads[i] );
+        CPLFree( (void*)pasData[i].pszUrl );
+        CPLFree( (void*)pasData[i].pszFilename );
+    }
+    CPLFree( (void*)pasData );
+    CPLFree( pThreads );
+#endif /* NOMADS_ENABLE_ASYNC */
     NomadsUtcFree( now );
     NomadsUtcFree( end );
     NomadsUtcFree( tmp );
     NomadsUtcFree( fcst );
-    CPLFree( (void*)panRunHours );
-    CPLFree( (void*)pabyBuffer );
     if( pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
     }
-
     return NOMADS_OK;
 }
 
