@@ -32,6 +32,7 @@
 
 #include "nomads_utc.h"
 
+#include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
@@ -315,6 +316,9 @@ typedef struct NomadsThreadData
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,
                  GDALProgressFunc pfnProgress );
+const char ** NomadsFindModel( const char *pszKey );
+
+static void * hNomadsMutex;
 
 #ifdef __cplusplus
 }

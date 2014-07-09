@@ -113,6 +113,8 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
     VSIStatL( pszFilename, &sStat );
     if( VSI_ISDIR( sStat.st_mode ) )
         pszVsiDir = CPLStrdup( pszFilename );
+    else if( strstr( pszFilename, ".zip" ) )
+        pszVsiDir = CPLStrdup( CPLSPrintf( "/vsizip/%s", pszFilename ) );
     else
         pszVsiDir = CPLStrdup( CPLGetPath( pszFilename ) );
     char **papszFileList = NULL;
@@ -136,11 +138,12 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
                                      apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
             {
                 ppszKey = apszNomadsKeys[i];
-                break;
+                goto found;
             }
         }
         i++;
     }
+found:
     CSLDestroy( papszFileList );
     return ppszKey;
 }
@@ -214,27 +217,41 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     VSIStatL( newPath.c_str(), &sStat );
     if( !VSI_ISDIR( sStat.st_mode ) )
         rc = VSIMkdir( newPath.c_str(), 0777 );
-    std::string tmpPath;
-    tmpPath = newPath + std::string( CPLGenerateTempFilename( NULL ) ).erase( 0, 2 );
+    const char *pszTmpFile = CPLGenerateTempFilename( "NINJA_FCST" );
+    pszTmpFile = CPLStrdup (CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
 
-    rc = VSIMkdir( tmpPath.c_str(), 0777 );
+    char *p = strchr( pszTmpFile, '/' );
+    if( !p )
+        p = strchr( pszTmpFile, '\\' );
+    if( !p )
+        p = pszTmpFile;
+    pszTmpFile = CPLStrdup( p );
+    VSIMkdir( p, 0777 );
 
-    rc = NomadsFetch( pszKey, nHours, adfWENS, tmpPath.c_str(), NULL,
+    rc = NomadsFetch( pszKey, nHours, adfWENS, pszTmpFile, NULL,
                       pfnProgress );
     if( rc )
     {
+        CPLFree( (void*)pszTmpFile );
         throw badForecastFile( "Could not download from nomads server!" );
     }
-    wxModelFileName = tmpPath;
+    wxModelFileName = pszTmpFile;
     std::vector<blt::local_date_time> oTimes;
     oTimes = wxModelInitialization::getTimeList();
+    if( oTimes.size() < 1 )
+    {
+        throw badForecastFile( "Could not open forecast from nomads server" );
+    }
     std::string filename;
-    filename =  bpt::to_iso_string(oTimes[0].utc_time());
+    filename = bpt::to_iso_string(oTimes[0].utc_time());
     //remove trailing seconds
     filename = filename.erase( filename.size() - 2 );
-    newPath += "/" + filename;
-    VSIRename( tmpPath.c_str(), newPath.c_str() );
+    newPath += filename;
+    VSIMkdir( newPath.c_str(), 0777 );
+    newPath += "/" + filename + ".zip";
+    CPLMoveFile( newPath.c_str(), pszTmpFile );
     wxModelFileName = newPath;
+    CPLFree( (void*)pszTmpFile );
     return newPath;
 }
 
@@ -304,6 +321,8 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     VSIStatL( wxModelFileName.c_str(), &sStat );
     if( VSI_ISDIR( sStat.st_mode ) )
         pszPath = CPLStrdup( wxModelFileName.c_str() );
+    else if( strstr( wxModelFileName.c_str(), ".zip" ) )
+        pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
     const char *pszFullPath = NULL;
@@ -373,6 +392,8 @@ const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
     const char *pszPath;
     if( VSI_ISDIR( sStat.st_mode ) )
         pszPath = CPLStrdup( pszFilePath );
+    else if( strstr( wxModelFileName.c_str(), ".zip" ) )
+        pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
     const char *pszFullPath = NULL;

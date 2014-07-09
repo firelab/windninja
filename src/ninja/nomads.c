@@ -29,6 +29,24 @@
 
 #include "nomads.h"
 
+const char ** NomadsFindModel( const char *pszKey )
+{
+    int i = 0;
+    const char **ppszKey = NULL;
+    while( apszNomadsKeys[i][0] != NULL )
+    {
+        if( EQUAL( pszKey, apszNomadsKeys[i][0] ) )
+        {
+            ppszKey = apszNomadsKeys[i];
+            CPLDebug( "NOMADS", "Found model key: %s",
+                      ppszKey[NOMADS_NAME] );
+            return ppszKey;
+        }
+        i++;
+    }
+    return ppszKey;
+}
+
 static const char * NomadsBuildArgList( const char *pszVars,
                                         const char *pszPrefix )
 {
@@ -47,28 +65,35 @@ static const char * NomadsBuildArgList( const char *pszVars,
     return pszList;
 }
 /*
-** Find that last possible forecast time for a model.
+** Find the forecast time for a model that is n runs back.
 */
-static int NomadsFindLatestForecastHour( const char **ppszKey, nomads_utc *now )
+static int NomadsFindForecastHour( const char **ppszKey, nomads_utc *now, int n )
 {
 
     char **papszHours;
     int nStart, nStop, nStride;
     int nFcstHour;
     int i;
+    nomads_utc *u;
+    NomadsUtcCreate( &u );
+    NomadsUtcCopy( u, now );
+
+    n = -abs(n);
 
     papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ":", 0 );
     nStart = atoi( papszHours[0] );
     nStop = atoi( papszHours[1] );
     nStride = atoi( papszHours[2] );
+    NomadsUtcAddHours( u, nStride * n );
     for( i = nStart; i <= nStop; i += nStride )
     {
-        if( i > now->ts->tm_hour )
+        if( i > u->ts->tm_hour )
             break;
     }
     nFcstHour = i - nStride;
     CSLDestroy( papszHours );
     papszHours = NULL;
+    NomadsUtcFree( u );
     return nFcstHour;
 }
 
@@ -127,6 +152,118 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
     return k;
 }
 
+static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
+                                            const int *panRunHours, int nHours,
+                                            nomads_utc *fcst,
+                                            double *padfBbox )
+{
+    const char **ppszKey;
+    const char *pszGribFile;
+    const char *pszGribDir;
+    const char *pszUrl;
+    char **papszFileList = NULL;
+
+    int i;
+
+    ppszKey = NomadsFindModel( pszKey );
+    if( !ppszKey )
+    {
+        return NULL;
+    }
+
+    for( i = 0; i < nHours; i++ )
+    {
+        pszGribFile = CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT], nFcstHour,
+                                  panRunHours[i] );
+        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
+                  pszGribFile );
+        NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
+        /* Special case for gfs */
+        if( EQUAL( pszKey, "gfs" ) )
+        {
+            pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s, nFcstHour );
+        }
+        else
+        {
+            pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s );
+        }
+        CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
+                  pszGribDir );
+        pszUrl =
+            CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
+                        ppszKey[NOMADS_FILTER_BIN],
+                        NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" ),
+                        NomadsBuildArgList( ppszKey[NOMADS_LEVELS], "lev" ),
+                        NOMADS_SUBREGION, pszGribFile, pszGribDir );
+        pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
+                             padfBbox[2], padfBbox[3] );
+        CPLDebug( "WINDNINJA", "NOMADS generated url: %s", pszUrl );
+        papszFileList = CSLAddString( papszFileList, pszUrl );
+    }
+    return papszFileList;
+}
+
+static char ** NomadsBuildOutputFileList( const char *pszKey, int nFcstHour,
+                                          int *panRunHours, int nHours, 
+                                          const char *pszPath, int bVsiZip )
+{
+    const char **ppszKey;
+    const char *pszGribFile;
+    char **papszFileList = NULL;
+
+    int i;
+
+    ppszKey = NomadsFindModel( pszKey );
+    if( !ppszKey )
+    {
+        return NULL;
+    }
+
+    for( i = 0; i < nHours; i++ )
+    {
+        pszGribFile = CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT], nFcstHour,
+                                  panRunHours[i] );
+        if( pszPath )
+        {
+            pszGribFile = CPLSPrintf( "%s/%s", pszPath, pszGribFile );
+        }
+        if( bVsiZip )
+        {
+            pszGribFile = CPLSPrintf( "/vsizip/%s", pszGribFile );
+        }
+        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
+                  pszGribFile );
+        papszFileList = CSLAddString( papszFileList, pszGribFile );
+    }
+    return papszFileList;
+}
+
+static int NomadsZipFiles( char **papszIn, char **papszOut )
+{
+    int i, n, c, rc;
+    VSILFILE *fin, *fout;
+    char *pabyBuffer;
+    n = CSLCount( papszIn );
+    if( n != CSLCount( papszOut ) )
+        return NOMADS_ERR;
+    for( i = 0; i < n; i++ )
+    {
+        //VSIRename( papszIn[i], papszOut[i] );
+        fin = VSIFOpenL( papszIn[i], "rb" );
+        fout = VSIFOpenL( papszOut[i], "wb" );
+        rc = VSIFSeekL( fin, 0, SEEK_END );
+        c = VSIFTellL( fin );
+        rc = VSIFSeekL( fin, 0, SEEK_SET );
+        pabyBuffer = CPLMalloc( sizeof( char ) * c );
+        rc = VSIFReadL( pabyBuffer, c, 1, fin );
+        rc = VSIFWriteL( pabyBuffer, c, 1, fout );
+        CPLFree( (void*)pabyBuffer );
+        rc = VSIFCloseL( fin );
+        rc = VSIFCloseL( fout );
+    }
+    return NOMADS_OK;
+}
+
 static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
 {
     int rc;
@@ -137,7 +274,9 @@ static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
     nVsiBlockSize = atoi( CPLGetConfigOption( "NOMADS_VSI_BLOCK_SIZE", "512" ) );
 
     if( !EQUALN( pszUrl, "/vsicurl/", 9 ) )
+    {
         pszVsiUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
+    }
     fin = VSIFOpenL( pszVsiUrl, "rb" );
     if( !fin )
     {
@@ -220,48 +359,34 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                  GDALProgressFunc pfnProgress )
 {
     const char **ppszKey = NULL;
-    const char *pszUrl = NULL;
-    const char *pszGribFile = NULL;
-    const char *pszGribDir = NULL;
-    const char *pszLevels = NULL;
-    const char *pszVars = NULL;
-    const char *pszTmp = NULL;
     int nFcstHour = 0;
     int *panRunHours = NULL;
     int i = 0;
     int j = 0;
+    int k = 0;
     int t = 0;
     int rc = 0;
-    int nStart = 0;
-    int nStop = 0;
-    int nStride = 0;
-    char **papszHours = NULL;
-    char **papszFileList = NULL;
+    char **papszDownloadUrls = NULL;
+    char **papszOutputFiles = NULL;
+    char **papszFinalFiles = NULL;
     int nFilesToGet = 0;
-    const char *pszOutFilename = NULL;
     int bAlreadyWentBack = FALSE;
     int bFirstFile = TRUE;
     char szMessage[512];
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
+    const char *pszTmpDir;
+    VSIStatBuf sStat;
+
+    int nrc;
 
     NomadsThreadData *pasData;
     nomads_utc *now, *end, *tmp, *fcst;
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
-    pszThreadCount = CPLGetConfigOption( "NOMADS_THREAD_COUNT", "4" );
+    nrc = NOMADS_OK;
 
-    while( apszNomadsKeys[i][0] != NULL )
-    {
-        if( EQUAL( pszModelKey, apszNomadsKeys[i][0] ) )
-        {
-            ppszKey = apszNomadsKeys[i];
-            CPLDebug( "NOMADS", "Found model key: %s",
-                      ppszKey[NOMADS_NAME] );
-            break;
-        }
-        i++;
-    }
+    ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -278,8 +403,18 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     NomadsUtcAddHours( end, nHours );
     NomadsUtcCopy( tmp, now );
 
-    /* Forecast hours, only one token */
-    nFcstHour = NomadsFindLatestForecastHour( ppszKey, now );
+#ifdef NOMADS_ENABLE_ASYNC
+    pszThreadCount = CPLGetConfigOption( "NOMADS_THREAD_COUNT", "4" );
+    nThreads = atoi( pszThreadCount );
+    nThreads = nThreads < 1 ? 4 : nThreads;
+    pThreads = CPLMalloc( sizeof( void * ) * nThreads );
+    pasData = CPLMalloc( sizeof( NomadsThreadData ) * nThreads );
+#else
+    pThreads = NULL;
+    pasData = NULL;
+#endif
+
+    nFcstHour = NomadsFindForecastHour( ppszKey, now, 0 );
 try_again:
     NomadsUtcCopy( fcst, now );
     NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
@@ -297,84 +432,82 @@ try_again:
                                                    &panRunHours );
     }
 
-    if( EQUAL( pszThreadCount, "FILE_COUNT" ) )
+    papszDownloadUrls =
+        NomadsBuildForecastFileList( pszModelKey, nFcstHour, panRunHours,
+                                     nFilesToGet, fcst, padfBbox );
+    pszTmpDir = CPLStrdup( CPLGenerateTempFilename( NULL ) );
+    CPLDebug( "WINDNINJA", "Creating Temp directory: %s", pszTmpDir );
+    VSIMkdir( pszTmpDir, 0777 );
+    papszOutputFiles =
+        NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
+                                   nFilesToGet, pszTmpDir, FALSE );
+                                                //pszDstVsiPath,
+                                   //strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
+    if( !papszDownloadUrls || !papszOutputFiles )
     {
-        nThreads = nFilesToGet;
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not generate list of URLs to download, invalid data" );
+        nrc = NOMADS_ERR;
+        goto cleanup;
     }
-    else
-    {
-        nThreads = atoi( pszThreadCount );
-    }
-    nThreads = nThreads < 1 ? 4 : nThreads;
+
+    CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
+    CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
 
     if( pfnProgress )
     {
         pfnProgress( 0.0, "Starting download...", NULL );
     }
     szMessage[0] = '\0';
-#ifdef NOMADS_ENABLE_ASYNC
-    pThreads = CPLMalloc( sizeof( void * ) * nThreads );
-    pasData = CPLMalloc( sizeof( NomadsThreadData ) * nThreads );
-#else
-    pThreads = NULL;
-    pasData = NULL;
-#endif
-    for( i = 0; i < nFilesToGet; i++ )
+
+    /* Download one file and start over if it's not there. */
+#ifdef NOMADS_USE_VSI_READ
+    rc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
+#else /* NOMADS_USE_VSI_READ */
+    rc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
+#endif /* NOMADS_USE_VSI_READ */
+    if( rc )
     {
-        pszGribFile = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT],
-                                             nFcstHour, panRunHours[i] ) );
-        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
-                  pszGribFile );
+        CPLError( CE_Warning, CPLE_AppDefined,
+                  "Failed to download forecast, " \
+                  "stepping back one forecast run time step." );
+        nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
+        bAlreadyWentBack = TRUE;
+        bFirstFile = FALSE;
+        CPLUnlinkTree( pszTmpDir );
+        CPLFree( (void*)panRunHours );
+        CPLFree( (void*)pszTmpDir );
+        CSLDestroy( papszDownloadUrls );
+        CSLDestroy( papszOutputFiles );
+        goto try_again;
+    }
+    /* Get the rest */
+    for( i = 1; i < nFilesToGet; i++ )
+    {
         if( pfnProgress )
         {
-            sprintf( szMessage, "Downloading %s...", pszGribFile );
+            char *p;
+            p = strrchr( papszOutputFiles[i], '/' );
+            if( !p )
+                p = strrchr( papszOutputFiles[i], '\\' );
+            if( !p )
+                p = papszOutputFiles[i];
+            else if( strlen( p ) > 1 )
+                p++;
+            sprintf( szMessage, "Downloading %s...", p );
             if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                           "Cancelled by user." );
-                CPLFree( (void*)pszGribFile );
-                NomadsUtcFree( now );
-                NomadsUtcFree( end );
-                NomadsUtcFree( tmp );
-                NomadsUtcFree( fcst );
-                CPLFree( (void*)pThreads );
-                CPLFree( (void*)pasData );
-                return NOMADS_OK;
+                nrc = NOMADS_OK;
+                break;
             }
         }
 
-        NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
-        /* Special case for gfs */
-        if( EQUAL( pszModelKey, "gfs" ) )
-        {
-            pszGribDir = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_DIR_FRMT],
-                                                fcst->s, nFcstHour ) );
-        }
-        else
-        {
-            pszGribDir = CPLStrdup( CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s ) );
-        }
-
-        CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
-                  pszGribDir );
-        pszUrl =
-            CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s", NOMADS_URL_CGI,
-                        ppszKey[NOMADS_FILTER_BIN],
-                        NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" ),
-                        NomadsBuildArgList( ppszKey[NOMADS_LEVELS], "lev" ),
-                        NOMADS_SUBREGION, pszGribFile, pszGribDir );
-        pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
-                             padfBbox[2], padfBbox[3] );
-        CPLDebug( "WINDNINJA", "NOMADS generated url: %s",
-                  pszUrl );
-        pszOutFilename = CPLSPrintf( "%s/%s", pszDstVsiPath, pszGribFile );
-        if( strstr( pszDstVsiPath, ".zip" ) )
-        {
-            pszOutFilename = CPLSPrintf( "/vsizip/%s", pszOutFilename );
-        }
 #ifdef NOMADS_ENABLE_ASYNC
-        j = i < nThreads ? i : i % nThreads;
-        if( j == 0 && i != 0 )
+        k = i - 1;
+        j = k < nThreads ? k : k % nThreads;
+        if( j == 0 && i != 1 )
         {
             for( t = 0; t < nThreads; t++ )
             {
@@ -382,8 +515,6 @@ try_again:
             }
             for( t = 0; t < nThreads; t++ )
             {
-                CPLFree( (void*)pasData[t].pszUrl );
-                CPLFree( (void*)pasData[t].pszFilename );
                 if( pasData[t].nErr )
                 {
                     rc = NOMADS_ERR;
@@ -392,14 +523,10 @@ try_again:
         }
         if( rc == 0 )
         {
-            pasData[j].pszUrl = CPLStrdup( pszUrl );
-            pasData[j].pszFilename = CPLStrdup( pszOutFilename );
+            pasData[j].pszUrl = papszDownloadUrls[i];
+            pasData[j].pszFilename = papszOutputFiles[i];
             pThreads[j] =
                 CPLCreateJoinableThread( NomadsFetchAsync, &pasData[j] );
-            CPLFree( (void*)pszGribFile );
-            pszGribFile = NULL;
-            CPLFree( (void*)pszGribDir );
-            pszGribDir = NULL;
             if( i == nFilesToGet - 1 && j != 0 )
             {
                 rc = NOMADS_OK;
@@ -409,8 +536,6 @@ try_again:
                 }
                 for( t = 0; t < j; t++ )
                 {
-                    CPLFree( (void*)pasData[t].pszUrl );
-                    CPLFree( (void*)pasData[t].pszFilename );
                     if( pasData[t].nErr )
                     {
                         rc = NOMADS_ERR;
@@ -422,9 +547,9 @@ try_again:
         }
 #else /* NOMADS_ENABLE_ASYNC */
 #ifdef NOMADS_USE_VSI_READ
-        rc = NomadsFetchVsi( pszUrl, pszOutFilename );
+        rc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
 #else /* NOMADS_USE_VSI_READ */
-        rc = NomadsFetchHttp( pszUrl, pszOutFilename );
+        rc = NomadsFetchHttp( papszDownloadUrls,[i] papszOutputFiles[i] );
 #endif /* NOMADS_USE_VSI_READ */
 #endif /* NOMADS_ENABLE_ASYNC */
         if( rc )
@@ -434,77 +559,57 @@ try_again:
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
-                papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS],
-                                                 ":", 0 );
-                nStart = atoi( papszHours[0] );
-                nStop = atoi( papszHours[1] );
-                nStride = atoi( papszHours[2] );
-                if( nFcstHour - nStride < nStart )
-                    nFcstHour = nStop;
-                else
-                    nFcstHour -= nStride;
+                nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
                 bAlreadyWentBack = TRUE;
-                if( !bFirstFile )
-                {
-                    papszFileList = VSIReadDir( CPLGetPath( pszOutFilename ) );
-                    for( t = 0; t < CSLCount( papszFileList ); t++ )
-                    {
-                        SKIP_DOT_AND_DOTDOT( papszFileList[t] );
-                        if( strstr( pszOutFilename, ".zip" ) &&
-                            !EQUALN( pszOutFilename, "/vsizip/", 8 ) )
-                        {
-                            pszTmp = CPLSPrintf( "/vsizip/%s/%s",
-                                                 CPLGetPath( pszOutFilename ),
-                                                 papszFileList[t] );
-                        }
-                        else
-                        {
-                            pszTmp = CPLSPrintf( "%s/%s",
-                                                 CPLGetPath( pszOutFilename ),
-                                                 papszFileList[t] );
-                        }
-                        VSIUnlink( pszTmp );
-                    }
-                }
                 bFirstFile = FALSE;
-                CSLDestroy( papszHours );
                 i = 0;
-                CPLFree( (void*)pszGribFile );
-                CPLFree( (void*)pszGribDir );
+                CPLUnlinkTree( pszTmpDir );
                 CPLFree( (void*)panRunHours );
+                CPLFree( (void*)pszTmpDir );
+                CSLDestroy( papszDownloadUrls );
+                CSLDestroy( papszOutputFiles );
                 goto try_again;
             }
             else
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Could not open url for reading" );
-                CPLFree( (void*)pszGribFile );
-                CPLFree( (void*)pszGribDir );
-                CPLFree( (void*)panRunHours );
-                NomadsUtcFree( now );
-                NomadsUtcFree( end );
-                NomadsUtcFree( tmp );
-                NomadsUtcFree( fcst );
-                return NOMADS_ERR;
+                nrc = NOMADS_ERR;
+                break;
             }
         }
         bFirstFile = FALSE;
-        CPLFree( (void*)pszGribFile );
-        CPLFree( (void*)pszGribDir );
     }
+    if( !nrc )
+    {
+        papszFinalFiles =
+            NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
+                                       nFilesToGet, pszDstVsiPath,
+                                       strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
+
+        VSIStat( pszDstVsiPath, &sStat );
+        if( VSI_ISDIR( sStat.st_mode ) || VSI_ISREG( sStat.st_mode ) )
+            CPLUnlinkTree( pszDstVsiPath );
+        rc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
+    }
+cleanup:
 #ifdef NOMADS_ENABLE_ASYNC
-    //CPLFree( (void*)pasData );
-    //CPLFree( pThreads );
+    CPLFree( (void*)pasData );
+    CPLFree( (void**)pThreads );
 #endif /* NOMADS_ENABLE_ASYNC */
     NomadsUtcFree( now );
     NomadsUtcFree( end );
     NomadsUtcFree( tmp );
     NomadsUtcFree( fcst );
+    CPLUnlinkTree( pszTmpDir );
     CPLFree( (void*)panRunHours );
-    if( pfnProgress )
+    CPLFree( (void*)pszTmpDir );
+    CSLDestroy( papszDownloadUrls );
+    CSLDestroy( papszOutputFiles );
+    if( !nrc && pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
     }
-    return NOMADS_OK;
+    return nrc;
 }
 

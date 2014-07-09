@@ -386,6 +386,7 @@ void weatherModel::checkForModelData()
             QString::fromStdString(papoNomads[i]->getForecastIdentifier() )
                     + "-" + QFileInfo( inputFile ).fileName();
     }
+    filters << "20*.zip";
 #endif
     //filter to see the folder in utc time
     filters << "20*T*";
