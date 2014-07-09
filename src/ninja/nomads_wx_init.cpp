@@ -220,7 +220,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     const char *pszTmpFile = CPLGenerateTempFilename( "NINJA_FCST" );
     pszTmpFile = CPLStrdup (CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
 
-    char *p = strchr( pszTmpFile, '/' );
+    const char *p = strchr( pszTmpFile, '/' );
     if( !p )
         p = strchr( pszTmpFile, '\\' );
     if( !p )

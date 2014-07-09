@@ -251,6 +251,8 @@ static int NomadsZipFiles( char **papszIn, char **papszOut )
         //VSIRename( papszIn[i], papszOut[i] );
         fin = VSIFOpenL( papszIn[i], "rb" );
         fout = VSIFOpenL( papszOut[i], "wb" );
+        if( !fin || !fout )
+            return NOMADS_ERR;
         rc = VSIFSeekL( fin, 0, SEEK_END );
         c = VSIFTellL( fin );
         rc = VSIFSeekL( fin, 0, SEEK_SET );
@@ -582,14 +584,17 @@ try_again:
     }
     if( !nrc )
     {
+        int bZip = strstr( pszDstVsiPath, ".zip" ) ? TRUE : FALSE;
         papszFinalFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszDstVsiPath,
-                                       strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
+                                       bZip );
 
         VSIStat( pszDstVsiPath, &sStat );
         if( VSI_ISDIR( sStat.st_mode ) || VSI_ISREG( sStat.st_mode ) )
             CPLUnlinkTree( pszDstVsiPath );
+        if( !bZip )
+            VSIMkdir( pszDstVsiPath, 0777 );
         rc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
     }
 cleanup:
