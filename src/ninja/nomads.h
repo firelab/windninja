@@ -312,7 +312,6 @@ typedef struct NomadsThreadData
     const char *pszUrl;
     const char *pszFilename;
     int nErr;
-    const char *pszErrMsg;
 } NomadsThreadData;
 
 int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,

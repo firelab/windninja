@@ -380,7 +380,9 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     const char *pszTmpDir;
     VSIStatBuf sStat;
 
-    int nrc;
+    int nFcstTries;
+
+    int nrc, trc;
 
     NomadsThreadData *pasData;
     nomads_utc *now, *end, *tmp, *fcst;
@@ -416,146 +418,144 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #endif
 
     nFcstHour = NomadsFindForecastHour( ppszKey, now, 0 );
-try_again:
-    NomadsUtcCopy( fcst, now );
-    NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
-    CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
-              NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
+    nFcstTries = 0;
+    while( nFcstTries < 2 )
+    {
+        NomadsUtcCopy( fcst, now );
+        NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
+        CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
+                  NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
 
-    if( EQUAL( pszModelKey, "rtma_conus" ) )
-    {
-        panRunHours = (int*)CPLMalloc( sizeof( int ) );
-        nFilesToGet = 1;
-    }
-    else
-    {
-        nFilesToGet =
-            NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
-                                         &panRunHours );
-    }
+        if( EQUAL( pszModelKey, "rtma_conus" ) )
+        {
+            panRunHours = (int*)CPLMalloc( sizeof( int ) );
+            nFilesToGet = 1;
+        }
+        else
+        {
+            nFilesToGet =
+                NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
+                                             &panRunHours );
+        }
 
-    papszDownloadUrls =
-        NomadsBuildForecastFileList( pszModelKey, nFcstHour, panRunHours,
-                                     nFilesToGet, fcst, padfBbox );
-    pszTmpDir = CPLStrdup( CPLGenerateTempFilename( NULL ) );
-    CPLDebug( "WINDNINJA", "Creating Temp directory: %s", pszTmpDir );
-    VSIMkdir( pszTmpDir, 0777 );
-    papszOutputFiles =
-        NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
-                                   nFilesToGet, pszTmpDir, FALSE );
-                                                //pszDstVsiPath,
-                                   //strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
-    if( !papszDownloadUrls || !papszOutputFiles )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not generate list of URLs to download, invalid data" );
-        nrc = NOMADS_ERR;
-        goto cleanup;
-    }
+        papszDownloadUrls =
+            NomadsBuildForecastFileList( pszModelKey, nFcstHour, panRunHours,
+                                         nFilesToGet, fcst, padfBbox );
+        pszTmpDir = CPLStrdup( CPLGenerateTempFilename( NULL ) );
+        CPLDebug( "WINDNINJA", "Creating Temp directory: %s", pszTmpDir );
+        VSIMkdir( pszTmpDir, 0777 );
+        papszOutputFiles =
+            NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
+                                       nFilesToGet, pszTmpDir, FALSE );
+                                                    //pszDstVsiPath,
+                                       //strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
+        if( !papszDownloadUrls || !papszOutputFiles )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Could not generate list of URLs to download, invalid data" );
+            nrc = NOMADS_ERR;
+            goto cleanup;
+        }
 
-    CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
-    CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
+        CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
+        CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
 
-    if( pfnProgress )
-    {
-        pfnProgress( 0.0, "Starting download...", NULL );
-    }
-
-    /* Download one file and start over if it's not there. */
-#ifdef NOMADS_USE_VSI_READ
-    rc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
-#else /* NOMADS_USE_VSI_READ */
-    rc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
-#endif /* NOMADS_USE_VSI_READ */
-    if( rc )
-    {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Failed to download forecast, " \
-                  "stepping back one forecast run time step." );
-        nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
-        bAlreadyWentBack = TRUE;
-        bFirstFile = FALSE;
-        CPLUnlinkTree( pszTmpDir );
-        CPLFree( (void*)panRunHours );
-        CPLFree( (void*)pszTmpDir );
-        CSLDestroy( papszDownloadUrls );
-        CSLDestroy( papszOutputFiles );
-        goto try_again;
-    }
-    /* Get the rest */
-    for( i = 1; i < nFilesToGet; i++ )
-    {
         if( pfnProgress )
         {
-            if( pfnProgress( (double)i / nFilesToGet, 
-                             CPLSPrintf( "Downloading %s...",
-                                         CPLGetFilename( papszOutputFiles[i] ) ),
-                             NULL ) )
-            {
-                CPLError( CE_Failure, CPLE_UserInterrupt,
-                          "Cancelled by user." );
-                nrc = NOMADS_OK;
-                break;
-            }
+            pfnProgress( 0.0, "Starting download...", NULL );
         }
 
-#ifdef NOMADS_ENABLE_ASYNC
-        k = i - 1;
-        j = k < nThreads ? k : k % nThreads;
-        if( j == 0 && i != 1 )
-        {
-            for( t = 0; t < nThreads; t++ )
-            {
-                CPLJoinThread( pThreads[t] );
-            }
-            for( t = 0; t < nThreads; t++ )
-            {
-                if( pasData[t].nErr )
-                {
-                    rc = NOMADS_ERR;
-                }
-            }
-        }
-        if( rc == 0 )
-        {
-            pasData[j].pszUrl = papszDownloadUrls[i];
-            pasData[j].pszFilename = papszOutputFiles[i];
-            pThreads[j] =
-                CPLCreateJoinableThread( NomadsFetchAsync, &pasData[j] );
-            if( i == nFilesToGet - 1 && j != 0 )
-            {
-                rc = NOMADS_OK;
-                for( t = 0; t < j; t++ )
-                {
-                    CPLJoinThread( pThreads[t] );
-                }
-                for( t = 0; t < j; t++ )
-                {
-                    if( pasData[t].nErr )
-                    {
-                        rc = NOMADS_ERR;
-                    }
-                }
-            }
-            if( rc == 0 )
-                continue;
-        }
-#else /* NOMADS_ENABLE_ASYNC */
+        /* Download one file and start over if it's not there. */
 #ifdef NOMADS_USE_VSI_READ
-        rc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
+        rc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
 #else /* NOMADS_USE_VSI_READ */
-        rc = NomadsFetchHttp( papszDownloadUrls,[i] papszOutputFiles[i] );
+        rc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
 #endif /* NOMADS_USE_VSI_READ */
-#endif /* NOMADS_ENABLE_ASYNC */
         if( rc )
         {
-            if( !bAlreadyWentBack )
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Failed to download forecast, " \
+                      "stepping back one forecast run time step." );
+            nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
+            bAlreadyWentBack = TRUE;
+            bFirstFile = FALSE;
+            CPLUnlinkTree( pszTmpDir );
+            CPLFree( (void*)panRunHours );
+            CPLFree( (void*)pszTmpDir );
+            CSLDestroy( papszDownloadUrls );
+            CSLDestroy( papszOutputFiles );
+            nFcstTries++;
+            continue;
+        }
+        /* Get the rest */
+        for( i = 1; i < nFilesToGet; i++ )
+        {
+            if( pfnProgress )
+            {
+                if( pfnProgress( (double)i / nFilesToGet, 
+                                 CPLSPrintf( "Downloading %s...",
+                                             CPLGetFilename( papszOutputFiles[i] ) ),
+                                 NULL ) )
+                {
+                    CPLError( CE_Failure, CPLE_UserInterrupt,
+                              "Cancelled by user." );
+                    nrc = NOMADS_OK;
+                    goto cleanup;
+                }
+            }
+#ifdef NOMADS_ENABLE_ASYNC
+            trc = NOMADS_OK;
+            j = i;
+            k = i > nFilesToGet - nThreads ? nFilesToGet % nThreads : nThreads;
+            for( t = 0; t < k; t++ )
+            {
+                pasData[t].pszUrl = papszDownloadUrls[j];
+                pasData[t].pszFilename = papszOutputFiles[j];
+                pThreads[t] =
+                    CPLCreateJoinableThread( NomadsFetchAsync, &pasData[t] );
+                j++;
+            }
+            for( t = 0; t < k; t++ )
+            {
+                CPLJoinThread( pThreads[t] );
+                if( pasData[t].nErr )
+                {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                  "Threaded download failed, attempting " \
+                                  "serial download for %s",
+                                  CPLGetFilename( pasData[t].pszFilename ) );
+                        /* Try again, serially though */
+                        if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) );
+                        {
+                            VSIUnlink( pasData[t].pszFilename );
+                        }
+#ifdef NOMADS_USE_VSI_READ
+                        rc = NomadsFetchVsi( pasData[t].pszUrl,
+                                             pasData[t].pszFilename );
+#else /* NOMADS_USE_VSI_READ */
+                        rc = NomadsFetchHttp( pasData[t].pszUrl,
+                                              pasData[t].pszFilename );
+#endif /* NOMADS_USE_VSI_READ */
+                        if( rc )
+                            trc = rc;
+                }
+                i++;
+            }
+            rc = trc;
+#else /* NOMADS_ENABLE_ASYNC */
+#ifdef NOMADS_USE_VSI_READ
+            rc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
+#else /* NOMADS_USE_VSI_READ */
+            rc = NomadsFetchHttp( papszDownloadUrls,[i] papszOutputFiles[i] );
+#endif /* NOMADS_USE_VSI_READ */
+#endif /* NOMADS_ENABLE_ASYNC */
+            if( rc )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
                 nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
-                bAlreadyWentBack = TRUE;
+                nFcstTries++;
                 bFirstFile = FALSE;
                 i = 0;
                 CPLUnlinkTree( pszTmpDir );
@@ -563,17 +563,12 @@ try_again:
                 CPLFree( (void*)pszTmpDir );
                 CSLDestroy( papszDownloadUrls );
                 CSLDestroy( papszOutputFiles );
-                goto try_again;
-            }
-            else
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "Could not open url for reading" );
-                nrc = NOMADS_ERR;
+                nrc = rc;
                 break;
             }
         }
-        bFirstFile = FALSE;
+        if( !nrc )
+            break;
     }
     if( !nrc )
     {
@@ -588,7 +583,13 @@ try_again:
             CPLUnlinkTree( pszDstVsiPath );
         if( !bZip )
             VSIMkdir( pszDstVsiPath, 0777 );
-        rc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
+        nrc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
+        if( nrc )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "Could not copy files into path, unknown i/o failure" );
+            CPLUnlinkTree( pszDstVsiPath );
+        }
     }
 cleanup:
 #ifdef NOMADS_ENABLE_ASYNC
