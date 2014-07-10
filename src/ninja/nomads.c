@@ -484,7 +484,8 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
             continue;
         }
         /* Get the rest */
-        for( i = 1; i < nFilesToGet; i++ )
+        i = 1;
+        while( i < nFilesToGet )
         {
             if( pfnProgress )
             {
@@ -500,20 +501,22 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                 }
             }
 #ifdef NOMADS_ENABLE_ASYNC
-            trc = NOMADS_OK;
-            j = i;
-            k = i > nFilesToGet - nThreads ? nFilesToGet % nThreads : nThreads;
+            k = i > nFilesToGet - nThreads ? (nFilesToGet - 1) % nThreads : nThreads;
             for( t = 0; t < k; t++ )
             {
-                pasData[t].pszUrl = papszDownloadUrls[j];
-                pasData[t].pszFilename = papszOutputFiles[j];
+                pasData[t].pszUrl = papszDownloadUrls[i];
+                pasData[t].pszFilename = papszOutputFiles[i];
                 pThreads[t] =
                     CPLCreateJoinableThread( NomadsFetchAsync, &pasData[t] );
-                j++;
+                i++;
             }
             for( t = 0; t < k; t++ )
             {
                 CPLJoinThread( pThreads[t] );
+            }
+            trc = NOMADS_OK;
+            for( t = 0; t < k; t++ )
+            {
                 if( pasData[t].nErr )
                 {
                         CPLError( CE_Warning, CPLE_AppDefined,
@@ -535,7 +538,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                         if( rc )
                             trc = rc;
                 }
-                i++;
             }
             rc = trc;
 #else /* NOMADS_ENABLE_ASYNC */
@@ -544,6 +546,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #else /* NOMADS_USE_VSI_READ */
             rc = NomadsFetchHttp( papszDownloadUrls,[i] papszOutputFiles[i] );
 #endif /* NOMADS_USE_VSI_READ */
+            i++;
 #endif /* NOMADS_ENABLE_ASYNC */
             if( rc )
             {
