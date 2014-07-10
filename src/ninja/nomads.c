@@ -372,19 +372,20 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     char **papszOutputFiles = NULL;
     char **papszFinalFiles = NULL;
     int nFilesToGet = 0;
+    const char *pszTmpDir;
+    VSIStatBuf sStat;
+    int nFcstTries;
+    int nMaxFcstRewind;
+    int nrc;
+#ifdef NOMADS_ENABLE_ASYNC
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
-    const char *pszTmpDir;
-    VSIStatBuf sStat;
-
-    int nFcstTries;
-
-    int nrc, trc;
+    int trc;
+#endif
 
     NomadsThreadData *pasData;
     nomads_utc *now, *end, *tmp, *fcst;
-    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     nrc = NOMADS_OK;
 
     ppszKey = NomadsFindModel( pszModelKey );
@@ -404,20 +405,26 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     NomadsUtcAddHours( end, nHours );
     NomadsUtcCopy( tmp, now );
 
+    nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
+    if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
+    {
+        nMaxFcstRewind = 2;
+    }
+
 #ifdef NOMADS_ENABLE_ASYNC
     pszThreadCount = CPLGetConfigOption( "NOMADS_THREAD_COUNT", "4" );
     nThreads = atoi( pszThreadCount );
-    nThreads = nThreads < 1 ? 4 : nThreads;
+    if( nThreads < 1 || nThreads > 96 )
+    {
+        nThreads = 4;
+    }
     pThreads = CPLMalloc( sizeof( void * ) * nThreads );
     pasData = CPLMalloc( sizeof( NomadsThreadData ) * nThreads );
-#else
-    pThreads = NULL;
-    pasData = NULL;
 #endif
 
     nFcstHour = NomadsFindForecastHour( ppszKey, now, 0 );
     nFcstTries = 0;
-    while( nFcstTries < 2 )
+    while( nFcstTries < nMaxFcstRewind )
     {
         NomadsUtcCopy( fcst, now );
         NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
