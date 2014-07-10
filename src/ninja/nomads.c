@@ -544,7 +544,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #ifdef NOMADS_USE_VSI_READ
             rc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
 #else /* NOMADS_USE_VSI_READ */
-            rc = NomadsFetchHttp( papszDownloadUrls[i] papszOutputFiles[i] );
+            rc = NomadsFetchHttp( papszDownloadUrls[i], papszOutputFiles[i] );
 #endif /* NOMADS_USE_VSI_READ */
             i++;
 #endif /* NOMADS_ENABLE_ASYNC */
