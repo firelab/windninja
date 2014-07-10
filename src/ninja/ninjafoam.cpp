@@ -113,7 +113,7 @@ int NinjaFoam::WriteJson()
 int NinjaFoam::GenerateTempDirectory()
 {
     pszTempPath = CPLStrdup( CPLGenerateTempFilename( NULL ) );
-    VSIMkdir( pszTempPath );
+    VSIMkdir( pszTempPath, 0777 );
     pszOgrBase = NULL;
 
     return NINJA_SUCCESS;
