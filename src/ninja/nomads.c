@@ -372,8 +372,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     char **papszOutputFiles = NULL;
     char **papszFinalFiles = NULL;
     int nFilesToGet = 0;
-    int bAlreadyWentBack = FALSE;
-    int bFirstFile = TRUE;
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
@@ -477,8 +475,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                       "Failed to download forecast, " \
                       "stepping back one forecast run time step." );
             nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
-            bAlreadyWentBack = TRUE;
-            bFirstFile = FALSE;
             CPLUnlinkTree( pszTmpDir );
             CPLFree( (void*)panRunHours );
             CPLFree( (void*)pszTmpDir );
@@ -556,7 +552,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                           "stepping back one forecast run time step." );
                 nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
                 nFcstTries++;
-                bFirstFile = FALSE;
                 i = 0;
                 CPLUnlinkTree( pszTmpDir );
                 CPLFree( (void*)panRunHours );
