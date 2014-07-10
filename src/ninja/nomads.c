@@ -374,7 +374,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int nFilesToGet = 0;
     int bAlreadyWentBack = FALSE;
     int bFirstFile = TRUE;
-    char szMessage[512];
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
@@ -430,8 +429,9 @@ try_again:
     }
     else
     {
-        nFilesToGet = NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
-                                                   &panRunHours );
+        nFilesToGet =
+            NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
+                                         &panRunHours );
     }
 
     papszDownloadUrls =
@@ -460,7 +460,6 @@ try_again:
     {
         pfnProgress( 0.0, "Starting download...", NULL );
     }
-    szMessage[0] = '\0';
 
     /* Download one file and start over if it's not there. */
 #ifdef NOMADS_USE_VSI_READ
@@ -488,16 +487,10 @@ try_again:
     {
         if( pfnProgress )
         {
-            char *p;
-            p = strrchr( papszOutputFiles[i], '/' );
-            if( !p )
-                p = strrchr( papszOutputFiles[i], '\\' );
-            if( !p )
-                p = papszOutputFiles[i];
-            else if( strlen( p ) > 1 )
-                p++;
-            sprintf( szMessage, "Downloading %s...", p );
-            if( pfnProgress( (double)i / nFilesToGet, szMessage, NULL ) )
+            if( pfnProgress( (double)i / nFilesToGet, 
+                             CPLSPrintf( "Downloading %s...",
+                                         CPLGetFilename( papszOutputFiles[i] ) ),
+                             NULL ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt,
                           "Cancelled by user." );

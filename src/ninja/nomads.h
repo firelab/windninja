@@ -302,7 +302,9 @@ static const char *apszNomadsKeys[][11] =
       "11 km",
       "North American Reanalysis" },
 #endif /* NOMADS_EXPER_FORECASTS */
-    { NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL,
+      NULL, NULL, NULL, NULL, NULL,
+      NULL }
 };
 
 typedef struct NomadsThreadData
