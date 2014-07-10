@@ -84,13 +84,20 @@ static int NomadsFindForecastHour( const char **ppszKey, nomads_utc *now, int n 
     nStart = atoi( papszHours[0] );
     nStop = atoi( papszHours[1] );
     nStride = atoi( papszHours[2] );
-    NomadsUtcAddHours( u, nStride * n );
-    for( i = nStart; i <= nStop; i += nStride )
+    /* Special case for one forecast per day */
+    if( nStart == nStop && nStride == 0 )
     {
-        if( i > u->ts->tm_hour )
-            break;
+        nFcstHour = nStart;
     }
-    nFcstHour = i - nStride;
+    else
+    {
+        for( i = nStart; i <= nStop; i += nStride )
+        {
+            if( i > u->ts->tm_hour )
+                break;
+        }
+        nFcstHour = i - nStride;
+    }
     CSLDestroy( papszHours );
     papszHours = NULL;
     NomadsUtcFree( u );

@@ -143,7 +143,7 @@ static const char *apszNomadsKeys[][11] =
       "akarw.t%02dz.awpregf%02d.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
-      "18:18:0",
+      "6:6:0",
       "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
