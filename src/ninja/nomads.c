@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include "nomads.h"
+#include "curl/curl.h"
 
 const char ** NomadsFindModel( const char *pszKey )
 {
@@ -396,8 +397,19 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #endif
 
     NomadsThreadData *pasData;
-    nomads_utc *now, *end, *tmp, *fcst;
+    nomads_utc *now, *end, *fcst;
     nrc = NOMADS_OK;
+
+#ifdef CURLOPT_NOSIGNAL
+    printf("CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n"
+           "CURLOPT_NOSIGNAL\n");
+#endif
 
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
@@ -409,11 +421,9 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 
     NomadsUtcCreate( &now );
     NomadsUtcCreate( &end );
-    NomadsUtcCreate( &tmp );
     NomadsUtcNow( now );
     NomadsUtcCopy( end, now );
     NomadsUtcAddHours( end, nHours );
-    NomadsUtcCopy( tmp, now );
 
     nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
@@ -441,6 +451,8 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     nFcstTries = 0;
     while( nFcstTries < nMaxFcstRewind )
     {
+        
+        rc = NOMADS_OK;
         fcst = NomadsSetForecastTime( ppszKey, now, nFcstTries );
         nFcstHour = fcst->ts->tm_hour;
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
@@ -461,7 +473,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         papszDownloadUrls =
             NomadsBuildForecastFileList( pszModelKey, nFcstHour, panRunHours,
                                          nFilesToGet, fcst, padfBbox );
-        if( !papszDownloadUrls )
+        if( papszDownloadUrls == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Could not generate list of URLs to download, invalid data" );
@@ -477,11 +489,12 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         papszOutputFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszTmpDir, FALSE );
-        if( !papszOutputFiles )
+        if( papszOutputFiles == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Could not generate list of URLs to download, invalid data" );
             nFcstTries++;
+            CSLDestroy( papszDownloadUrls );
             NomadsUtcFree( fcst );
             fcst = NULL;
             nrc = NOMADS_ERR;
@@ -498,34 +511,20 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 
         /* Download one file and start over if it's not there. */
 #ifdef NOMADS_USE_VSI_READ
-        rc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
-#else /* NOMADS_USE_VSI_READ */
-        rc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
-#endif /* NOMADS_USE_VSI_READ */
-        if( rc )
+        nrc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
+#else
+        nrc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
+#endif
+        if( nrc != NOMADS_OK )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Failed to download forecast, " \
                       "stepping back one forecast run time step." );
-            CPLUnlinkTree( pszTmpDir );
-            CPLFree( (void*)panRunHours );
-            panRunHours = NULL;
-            CPLFree( (void*)pszTmpDir );
-            pszTmpDir = NULL;
-            CSLDestroy( papszDownloadUrls );
-            papszDownloadUrls = NULL;
-            CSLDestroy( papszOutputFiles );
-            papszOutputFiles = NULL;
-            NomadsUtcFree( fcst );
-            fcst = NULL;
-
             nFcstTries++;
-            nrc = rc;
-            continue;
         }
         /* Get the rest */
         i = 1;
-        while( i < nFilesToGet )
+        while( i < nFilesToGet && nrc == NOMADS_OK )
         {
             if( pfnProgress )
             {
@@ -536,8 +535,9 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                 {
                     CPLError( CE_Failure, CPLE_UserInterrupt,
                               "Cancelled by user." );
-                    nrc = NOMADS_OK;
-                    goto cleanup;
+                    nrc = NOMADS_ERR;
+                    nFcstTries = nMaxFcstRewind;
+                    break;
                 }
             }
 #ifdef NOMADS_ENABLE_ASYNC
@@ -571,88 +571,90 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #ifdef NOMADS_USE_VSI_READ
                         rc = NomadsFetchVsi( pasData[t].pszUrl,
                                              pasData[t].pszFilename );
-#else /* NOMADS_USE_VSI_READ */
+#else
                         rc = NomadsFetchHttp( pasData[t].pszUrl,
                                               pasData[t].pszFilename );
-#endif /* NOMADS_USE_VSI_READ */
-                        if( rc )
+#endif
+                        if( rc != NOMADS_OK )
                             trc = rc;
                 }
             }
-            nrc = rc = trc;
+            nrc = trc;
 #else /* NOMADS_ENABLE_ASYNC */
 #ifdef NOMADS_USE_VSI_READ
-            rc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
-#else /* NOMADS_USE_VSI_READ */
-            rc = NomadsFetchHttp( papszDownloadUrls[i], papszOutputFiles[i] );
-#endif /* NOMADS_USE_VSI_READ */
+            nrc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
+#else
+            nrc = NomadsFetchHttp( papszDownloadUrls[i], papszOutputFiles[i] );
+#endif
             i++;
 #endif /* NOMADS_ENABLE_ASYNC */
-            nrc = rc;
-            if( rc )
+            if( nrc != NOMADS_OK )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
                 nFcstTries++;
-                i = 0;
-                CPLUnlinkTree( pszTmpDir );
-                CPLFree( (void*)panRunHours );
-                panRunHours = NULL;
-                CPLFree( (void*)pszTmpDir );
-                pszTmpDir = NULL;
-                CSLDestroy( papszDownloadUrls );
-                papszDownloadUrls = NULL;
-                CSLDestroy( papszOutputFiles );
-                papszOutputFiles = NULL;
-                NomadsUtcFree( fcst );
-                fcst = NULL;
-                nrc = rc;
                 break;
             }
         }
-        if( !nrc )
+        /*
+        ** XXX Cleanup XXX
+        ** After each loop we can get rid of the urls, but we can only get rid
+        ** of the others if they are to be reallocated in the next loop.  Any
+        ** cleanup in the else nrc == NOMADS_OK clause should be cleaned up in 
+        ** the nrc == NOMADS_OK outside the loop.  Those are held so we can
+        ** process the output files and zip them into an archive.
+        */
+        CSLDestroy( papszDownloadUrls );
+        NomadsUtcFree( fcst );
+        if( nrc == NOMADS_OK )
+        {
             break;
+        }
+        else
+        {
+            CPLFree( (void*)panRunHours );
+            CSLDestroy( papszOutputFiles );
+            CPLUnlinkTree( pszTmpDir );
+            CPLFree( (void*)pszTmpDir );
+        }
     }
-    if( !nrc )
+    if( nrc == NOMADS_OK )
     {
         int bZip = strstr( pszDstVsiPath, ".zip" ) ? TRUE : FALSE;
         papszFinalFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszDstVsiPath,
                                        bZip );
-
+        CPLFree( (void*)panRunHours );
         if( CPLCheckForFile( (char*)pszDstVsiPath, NULL ) )
+        {
             CPLUnlinkTree( pszDstVsiPath );
+        }
         if( !bZip )
+        {
             VSIMkdir( pszDstVsiPath, 0777 );
+        }
         nrc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
+        CSLDestroy( papszOutputFiles );
         CSLDestroy( papszFinalFiles );
-        if( nrc )
+        if( nrc != NOMADS_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Could not copy files into path, unknown i/o failure" );
             CPLUnlinkTree( pszDstVsiPath );
         }
+        CPLUnlinkTree( pszTmpDir );
+        CPLFree( (void*)pszTmpDir );
     }
-cleanup:
 #ifdef NOMADS_ENABLE_ASYNC
     CPLFree( (void*)pasData );
     CPLFree( (void**)pThreads );
-#endif /* NOMADS_ENABLE_ASYNC */
-
-    if( pszTmpDir )
-        CPLUnlinkTree( pszTmpDir );
-    CPLFree( (void*)panRunHours );
-    CPLFree( (void*)pszTmpDir );
-    CSLDestroy( papszDownloadUrls );
-    CSLDestroy( papszOutputFiles );
-    NomadsUtcFree( fcst );
+#endif
 
     NomadsUtcFree( now );
     NomadsUtcFree( end );
-    NomadsUtcFree( tmp );
-    if( !nrc && pfnProgress )
+    if( nrc == NOMADS_OK && pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
     }
