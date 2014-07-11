@@ -103,46 +103,6 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
     return fcst;
 }
 
-/*
-** Find the forecast time for a model that is n runs back.
-*/
-static int NomadsFindForecastHour( const char **ppszKey, nomads_utc *now, int n )
-{
-
-    char **papszHours;
-    int nStart, nStop, nStride;
-    int nFcstHour;
-    int i;
-    nomads_utc *u;
-    NomadsUtcCreate( &u );
-    NomadsUtcCopy( u, now );
-
-    n = -abs(n);
-
-    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ":", 0 );
-    nStart = atoi( papszHours[0] );
-    nStop = atoi( papszHours[1] );
-    nStride = atoi( papszHours[2] );
-    /* Special case for one forecast per day */
-    if( nStart == nStop && nStride == 0 )
-    {
-        nFcstHour = nStart;
-    }
-    else
-    {
-        for( i = nStart; i <= nStop; i += nStride )
-        {
-            if( i > u->ts->tm_hour )
-                break;
-        }
-        nFcstHour = i - nStride;
-    }
-    CSLDestroy( papszHours );
-    papszHours = NULL;
-    NomadsUtcFree( u );
-    return nFcstHour;
-}
-
 static int NomadsBuildForecastRunHours( const char **ppszKey,
                                         const nomads_utc *now,
                                         const nomads_utc *end,
