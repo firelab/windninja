@@ -380,7 +380,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     char **papszFinalFiles = NULL;
     int nFilesToGet = 0;
     const char *pszTmpDir;
-    VSIStatBuf sStat;
     int nFcstTries;
     int nMaxFcstRewind;
     int nrc;
@@ -415,6 +414,11 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
     {
         nMaxFcstRewind = 2;
+    }
+    /* Go back at least 3 for rap, as it may not get updated all the time. */
+    if( EQUAL( pszModelKey, "rap" ) )
+    {
+        nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
     }
 
 #ifdef NOMADS_ENABLE_ASYNC
@@ -588,8 +592,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                                        nFilesToGet, pszDstVsiPath,
                                        bZip );
 
-        VSIStat( pszDstVsiPath, &sStat );
-        if( VSI_ISDIR( sStat.st_mode ) || VSI_ISREG( sStat.st_mode ) )
+        if( CPLCheckForFile( (char*)pszDstVsiPath, NULL ) )
             CPLUnlinkTree( pszDstVsiPath );
         if( !bZip )
             VSIMkdir( pszDstVsiPath, 0777 );
