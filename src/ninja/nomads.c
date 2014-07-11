@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "nomads.h"
-#include "curl/curl.h"
 
 const char ** NomadsFindModel( const char *pszKey )
 {
@@ -399,17 +398,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     NomadsThreadData *pasData;
     nomads_utc *now, *end, *fcst;
     nrc = NOMADS_OK;
-
-#ifdef CURLOPT_NOSIGNAL
-    printf("CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n"
-           "CURLOPT_NOSIGNAL\n");
-#endif
 
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
