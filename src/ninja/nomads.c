@@ -99,7 +99,7 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
         if( !bFound )
             NomadsUtcAddHours( fcst, -1 );
     }
-    NomadsAddHours( fcst, -abs( n ) * nStride );
+    NomadsUtcAddHours( fcst, -abs( n ) * nStride );
     return fcst;
 }
 
@@ -445,7 +445,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     NomadsUtcCreate( &now );
     NomadsUtcCreate( &end );
     NomadsUtcCreate( &tmp );
-    NomadsUtcCreate( &fcst );
     NomadsUtcNow( now );
     NomadsUtcCopy( end, now );
     NomadsUtcAddHours( end, nHours );
@@ -468,12 +467,13 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     pasData = CPLMalloc( sizeof( NomadsThreadData ) * nThreads );
 #endif
 
-    nFcstHour = NomadsFindForecastHour( ppszKey, now, 0 );
+    fcst = NULL;
     nFcstTries = 0;
     while( nFcstTries < nMaxFcstRewind )
     {
-        NomadsUtcCopy( fcst, now );
-        NomadsUtcAddHours( fcst, nFcstHour - fcst->ts->tm_hour );
+        NomadsUtcFree( fcst );
+        fcst = NomadsSetForecastTime( ppszKey, now, nFcstTries );
+        nFcstHour = fcst->ts->tm_hour;
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
                   NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
 
@@ -527,7 +527,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
             CPLError( CE_Warning, CPLE_AppDefined,
                       "Failed to download forecast, " \
                       "stepping back one forecast run time step." );
-            nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
             CPLUnlinkTree( pszTmpDir );
             CPLFree( (void*)panRunHours );
             CPLFree( (void*)pszTmpDir );

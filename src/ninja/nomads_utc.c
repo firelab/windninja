@@ -81,6 +81,8 @@ void NomadsUtcCreate( nomads_utc **u )
 
 void NomadsUtcFree( nomads_utc *u )
 {
+    if( !u )
+        return;
     free( u->ts );
     free( u );
 }
