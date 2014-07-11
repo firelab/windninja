@@ -53,6 +53,12 @@ extern "C" {
 ** XXX: Document me.
 */
 
+#define NOMADS_IP                    "140.90.101.62"
+#define NOMADS_HOST                  "nomads.ncep.noaa.gov"
+
+#define NOMADS_URL_CGI_HOST         "http://" NOMADS_HOST "/cgi-bin/"
+#define NOMADS_URL_CGI_IP           "http://" NOMADS_IP "/cgi-bin/"
+
 #define NOMADS_URL_CGI               "http://nomads.ncep.noaa.gov/cgi-bin/"
 
 #define NOMADS_GENERIC_VAR_LIST      "TCDC,TMP,UGRD,VGRD"
@@ -62,10 +68,10 @@ extern "C" {
 
 #define NOMADS_SUBREGION             "&subregion=&leftlon=%lf&rightlon=%lf&toplat=%lf&bottomlat=%lf"
 
-#define NOMADS_GENERIC_DIR         "nam.%s"
-#define NOMADS_GENERIC_DATE        "%Y%m%d"
-#define NOMADS_GENERIC_FCST_HOURS  "0:18:6"
-#define NOMADS_GENERIC_RUN_HOURS   "0:36:3,39:86:6"
+#define NOMADS_GENERIC_DIR           "nam.%s"
+#define NOMADS_GENERIC_DATE          "%Y%m%d"
+#define NOMADS_GENERIC_FCST_HOURS    "0:18:6"
+#define NOMADS_GENERIC_RUN_HOURS     "0:36:3,39:86:6"
 
 /*
 ** The following list of metadata is for models residing at
