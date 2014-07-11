@@ -236,7 +236,21 @@ static const char *apszNomadsKeys[][11] =
       "NAM North America" },
     /* XXX: NAM Caribbean/Central America */
     /* XXX: NAM Pacific */
-    /* XXX: NAM Alaska NEST */
+    /* 
+    ** NAM Alaska NEST
+    */
+    {
+      "nam_alaska_nest",
+      "filter_nam_alaskanest.pl",
+      "nam.t%02dz.alaskanest.hiresf%02d.tm00.grib2",
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      "0:36:1,39:60:3",
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "6 km",
+      "NAM Alaska NEST" },
     /*
     ** NAM CONUS NEST
     */
@@ -250,7 +264,7 @@ static const char *apszNomadsKeys[][11] =
       "0:36:1,39:60:3",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "5 km",
+      "4 km",
       "NAM CONUS NEST" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
@@ -289,8 +303,22 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "13 km",
-      "RAP" },
-    /* XXX: RAP North America */
+      "RAP CONUS" },
+    /*
+    ** RAP North America
+    */
+    {
+      "rap_north_america",
+      "filter_rap32.pl",
+      "rap.t%02dz.awipf%02d.grib2",
+      "rap.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "32 km",
+      "RAP North America" },
 #ifdef NOMADS_EXPER_FORECASTS
     /*
     ** NARRE
