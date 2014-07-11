@@ -82,7 +82,7 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
     nStride = atoi( papszHours[2] );
     CSLDestroy( papszHours );
     papszHours = NULL;
-    if( nStart == nStop && (nStride == 0 || nStride == 24) )
+    if( nStart == nStop )
     {
         nStride = 24;
     }
