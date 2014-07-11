@@ -310,7 +310,7 @@ static const char *apszNomadsKeys[][11] =
     {
       "rap_north_america",
       "filter_rap32.pl",
-      "rap.t%02dz.awipf%02d.grib2",
+      "rap.t%02dz.awip32f%02d.grib2",
       "rap.%s",
       NOMADS_GENERIC_DATE,
       "0:23:1",

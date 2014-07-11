@@ -514,7 +514,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         {
             if( pfnProgress )
             {
-                if( pfnProgress( (double)i / nFilesToGet, 
+                if( pfnProgress( (double)i / nFilesToGet,
                                  CPLSPrintf( "Downloading %s...",
                                              CPLGetFilename( papszOutputFiles[i] ) ),
                                  NULL ) )
