@@ -605,7 +605,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
-                nFcstHour = NomadsFindForecastHour( ppszKey, now, 1 );
                 nFcstTries++;
                 i = 0;
                 CPLUnlinkTree( pszTmpDir );
