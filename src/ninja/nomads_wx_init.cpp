@@ -73,30 +73,16 @@ NomadsWxModel::NomadsWxModel( const char *pszModelKey )
     pfnProgress = NULL;
     NomadsUtcCreate( &u );
     pszKey = NULL;
-    if( pszModelKey )
+    ppszModelData = NomadsFindModel( pszModelKey );
+    if( ppszModelData == NULL )
     {
-        int i = 0;
-        while( apszNomadsKeys[i][0] != NULL )
-        {
-            if( EQUAL( pszModelKey, apszNomadsKeys[i][0] ) )
-            {
-                ppszModelData = apszNomadsKeys[i];
-                CPLDebug( "NOMADS", "Found model key: %s",
-                          ppszModelData[NOMADS_NAME] );
-                break;
-            }
-            i++;
-        }
-        if( ppszModelData == NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Could not find model key in nomads data" );
-            pszKey = NULL;
-        }
-        else
-        {
-            pszKey = CPLStrdup( pszModelKey );
-        }
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Could not find model key in nomads data" );
+        pszKey = NULL;
+    }
+    else
+    {
+        pszKey = CPLStrdup( pszModelKey );
     }
 }
 

@@ -139,7 +139,7 @@ static const char *apszNomadsKeys[][11] =
       /* Horizontal grid resolution */
       "0.5 deg",
       /* Human readable name */
-      "Global Forecast System" },
+      "GFS" },
     /*
     ** HIRES Alaska
     */
@@ -289,7 +289,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "13 km",
-      "Rapid Update" },
+      "RAP" },
     /* XXX: RAP North America */
 #ifdef NOMADS_EXPER_FORECASTS
     /*
@@ -306,7 +306,7 @@ static const char *apszNomadsKeys[][11] =
       "UGRD,VGRD",
       "10_m_above_ground",
       "11 km",
-      "North American Reanalysis" },
+      "NARR" },
 #endif /* NOMADS_EXPER_FORECASTS */
     { NULL, NULL, NULL, NULL, NULL,
       NULL, NULL, NULL, NULL, NULL,
