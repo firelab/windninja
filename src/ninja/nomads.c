@@ -463,8 +463,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         papszOutputFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszTmpDir, FALSE );
-                                                    //pszDstVsiPath,
-                                       //strstr( pszDstVsiPath, ".zip" ) ? 1 : 0 );
         if( !papszDownloadUrls || !papszOutputFiles )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -597,6 +595,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         if( !bZip )
             VSIMkdir( pszDstVsiPath, 0777 );
         nrc = NomadsZipFiles( papszOutputFiles, papszFinalFiles );
+        CSLDestroy( papszFinalFiles );
         if( nrc )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
