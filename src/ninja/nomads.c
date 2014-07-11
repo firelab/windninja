@@ -64,6 +64,45 @@ static const char * NomadsBuildArgList( const char *pszVars,
     CSLDestroy( papszArgs );
     return pszList;
 }
+nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
+                                    int n )
+{
+    char **papszHours;
+    int nStart, nStop, nStride;
+    int i;
+    nomads_utc *fcst;
+    int bFound;
+
+    NomadsUtcCreate( &fcst );
+    NomadsUtcCopy( fcst, ref );
+
+    papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_HOURS], ":", 0 );
+    nStart = atoi( papszHours[0] );
+    nStop = atoi( papszHours[1] );
+    nStride = atoi( papszHours[2] );
+    CSLDestroy( papszHours );
+    papszHours = NULL;
+    if( nStart == nStop && (nStride == 0 || nStride == 24) )
+    {
+        nStride = 24;
+    }
+    while( !bFound )
+    {
+        for( i = nStart; i < nStop; i += nStride )
+        {
+            if( fcst->ts->tm_hour == i )
+            {
+                bFound = TRUE;
+                break;
+            }
+        }
+        if( !bFound )
+            NomadsUtcAddHours( fcst, -1 );
+    }
+    NomadsAddHours( fcst, -abs( n ) * nStride );
+    return fcst;
+}
+
 /*
 ** Find the forecast time for a model that is n runs back.
 */
