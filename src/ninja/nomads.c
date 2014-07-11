@@ -88,7 +88,7 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
     }
     while( !bFound )
     {
-        for( i = nStart; i < nStop; i += nStride )
+        for( i = nStart; i <= nStop; i += nStride )
         {
             if( fcst->ts->tm_hour == i )
             {
