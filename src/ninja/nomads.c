@@ -392,7 +392,6 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
-    int trc;
 #endif
 
     NomadsThreadData *pasData;
@@ -439,8 +438,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     nFcstTries = 0;
     while( nFcstTries < nMaxFcstRewind )
     {
-        
-        rc = NOMADS_OK;
+        nrc = NOMADS_OK;
         fcst = NomadsSetForecastTime( ppszKey, now, nFcstTries );
         nFcstHour = fcst->ts->tm_hour;
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
@@ -542,32 +540,32 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
             {
                 CPLJoinThread( pThreads[t] );
             }
-            trc = NOMADS_OK;
             for( t = 0; t < k; t++ )
             {
                 if( pasData[t].nErr )
                 {
-                        CPLError( CE_Warning, CPLE_AppDefined,
-                                  "Threaded download failed, attempting " \
-                                  "serial download for %s",
-                                  CPLGetFilename( pasData[t].pszFilename ) );
-                        /* Try again, serially though */
-                        if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) );
-                        {
-                            VSIUnlink( pasData[t].pszFilename );
-                        }
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                              "Threaded download failed, attempting " \
+                              "serial download for %s",
+                              CPLGetFilename( pasData[t].pszFilename ) );
+                    /* Try again, serially though */
+                    if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) );
+                    {
+                        VSIUnlink( pasData[t].pszFilename );
+                    }
 #ifdef NOMADS_USE_VSI_READ
-                        rc = NomadsFetchVsi( pasData[t].pszUrl,
-                                             pasData[t].pszFilename );
+                    rc = NomadsFetchVsi( pasData[t].pszUrl,
+                                         pasData[t].pszFilename );
 #else
-                        rc = NomadsFetchHttp( pasData[t].pszUrl,
-                                              pasData[t].pszFilename );
+                    rc = NomadsFetchHttp( pasData[t].pszUrl,
+                                          pasData[t].pszFilename );
 #endif
-                        if( rc != NOMADS_OK )
-                            trc = rc;
+                    if( rc != NOMADS_OK )
+                    {
+                        nrc = rc;
+                    }
                 }
             }
-            nrc = trc;
 #else /* NOMADS_ENABLE_ASYNC */
 #ifdef NOMADS_USE_VSI_READ
             nrc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
