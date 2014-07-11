@@ -86,6 +86,7 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
     {
         nStride = 24;
     }
+    bFound = FALSE;
     while( !bFound )
     {
         for( i = nStart; i <= nStop; i += nStride )
