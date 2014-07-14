@@ -135,6 +135,7 @@ BOOST_AUTO_TEST_CASE( compare_1 )
     sleep( 1000 );
     NomadsUtcNow( v );
     BOOST_CHECK( NomadsUtcCompare( u, v ) == -1 );
+    NomadsUtcFree( v );
 }
 
 BOOST_AUTO_TEST_CASE( compare_2 )
@@ -145,6 +146,7 @@ BOOST_AUTO_TEST_CASE( compare_2 )
     sleep( 1000 );
     NomadsUtcNow( v );
     BOOST_CHECK( NomadsUtcCompare( v, u ) == 1 );
+    NomadsUtcFree( v );
 }
 
 BOOST_AUTO_TEST_CASE( compare_3 )
@@ -154,6 +156,7 @@ BOOST_AUTO_TEST_CASE( compare_3 )
     NomadsUtcCreate( &v );
     NomadsUtcCopy( v, u );
     BOOST_CHECK( NomadsUtcCompare( v, u ) == 0 );
+    NomadsUtcFree( v );
 }
 
 BOOST_AUTO_TEST_CASE( from_timet_1 )
