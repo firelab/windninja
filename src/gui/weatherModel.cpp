@@ -431,10 +431,10 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     }
     std::string filename = fi.absoluteFilePath().toStdString();
     wxModelInitialization* model = NULL;
+    std::vector<blt::local_date_time> timelist;
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
-        std::vector<blt::local_date_time> timelist =
-            model->getTimeList(tzString.toStdString());
+        timelist = model->getTimeList(tzString.toStdString());
     }
     catch( ... ) {
         statusLabel->setText( "" );
