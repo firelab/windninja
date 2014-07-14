@@ -280,6 +280,14 @@ IF(WITH_NOMADS_SUPPORT)
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus_nest 1 2 0 path)
         ADD_TEST(nomads_nest_alaska_1_hour_path
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_alaska_nest 1 2 0 path)
+        ADD_TEST(nomads_nam_conus_past_path
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_past)
+        ADD_TEST(stride_valid_1
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/stride_valid_1)
+        ADD_TEST(stride_valid_2
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/stride_valid_2)
+        ADD_TEST(stride_invalid_1
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/stride_invalid_1)
         IF(NOMADS_EXPER_FORECASTS)
             ADD_TEST(nomads_nam_narre_1_hour_path
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay narre 1 2 0 path)
@@ -310,6 +318,10 @@ IF(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/compare_3)
     ADD_TEST(utc_timet_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_timet_1)
+    ADD_TEST(utc_iso_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_iso_1)
+    ADD_TEST(utc_iso_invalid_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_iso_invalid_1)
     ADD_TEST(utc_strftime_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/strftime_1)
 ENDIF(WITH_NOMADS_SUPPORT)

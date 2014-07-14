@@ -55,6 +55,7 @@ void NomadsUtcCreate( nomads_utc **u );
 void NomadsUtcFree( nomads_utc *u );
 void NomadsUtcNow( nomads_utc *u );
 void NomadsUtcFromTimeT( nomads_utc *u, time_t t );
+int NomadsUtcFromIsoFrmt( nomads_utc *u, const char *s );
 void NomadsUtcAddHours( nomads_utc *u, int nHours );
 void NomadsUtcAddSeconds( nomads_utc *u, time_t nSeconds );
 void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src );

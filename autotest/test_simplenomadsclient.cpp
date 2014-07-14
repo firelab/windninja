@@ -55,8 +55,7 @@ static int CheckBands( const char *pszVsiPath )
     nFiles = CSLCount( papszFiles );
     for( i = 0; i < nFiles; i++ )
     {
-        if( EQUAL( papszFiles[i], "." ) || EQUAL( papszFiles[i], ".." ) )
-            continue;
+        SKIP_DOT_AND_DOTDOT( papszFiles[i] );
         pszVsiFilename = CPLSPrintf( "%s/%s", pszVsiPath, papszFiles[i] );
         hDS = GDALOpen( pszVsiFilename, GA_ReadOnly );
         if( !hDS )
@@ -202,7 +201,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
     }
     else
         BOOST_REQUIRE( 0 );
-    rc = NomadsFetch( pszKey, hours, pdfBbox, pszVsiPath, NULL, NULL );
+    CPLSetConfigOption( "NOMADS_MAX_FCST_REWIND", "3" );
+    rc = NomadsFetch( pszKey, NULL, hours, 1, pdfBbox, pszVsiPath, NULL, NULL );
     BOOST_REQUIRE_EQUAL( rc, erc );
     if( rc == 0 )
     {
@@ -217,6 +217,64 @@ BOOST_AUTO_TEST_CASE( download_1 )
             /* Sometimes we get double variables */
             BOOST_CHECK( rc >= 4 );
     }
+}
+
+BOOST_AUTO_TEST_CASE( download_past )
+{
+    int rc = 0;
+    nomads_utc *u;
+    NomadsUtcCreate( &u );
+    NomadsUtcNow( u );
+    NomadsUtcAddHours( u, -96 );
+    CPLUnlinkTree( NOMADS_PATH );
+    VSIMkdir( NOMADS_PATH, 0777 );
+    NomadsUtcStrfTime( u, "%Y%m%dT%H:%M:%S" );
+    rc = NomadsFetch( "nam_conus", u->s, 6, 1, adfMackay, NOMADS_PATH, NULL, NULL );
+    NomadsUtcFree( u );
+    BOOST_REQUIRE_EQUAL( rc, 0 );
+    rc = CheckZip( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 7 );
+    rc = CheckBands( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 4 );
+}
+
+BOOST_AUTO_TEST_CASE( stride_valid_1 )
+{
+    int rc = 0;
+    CPLUnlinkTree( NOMADS_PATH );
+    VSIMkdir( NOMADS_PATH, 0777 );
+    rc = NomadsFetch( "nam_conus", NULL, 6, 2, adfMackay, NOMADS_PATH, NULL, NULL );
+    BOOST_REQUIRE_EQUAL( rc, 0 );
+    rc = CheckZip( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 4 );
+    rc = CheckBands( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 4 );
+}
+
+BOOST_AUTO_TEST_CASE( stride_valid_2 )
+{
+    int rc = 0;
+    CPLUnlinkTree( NOMADS_PATH );
+    VSIMkdir( NOMADS_PATH, 0777 );
+    rc = NomadsFetch( "nam_conus", NULL, 49, 6, adfMackay, NOMADS_PATH, NULL, NULL );
+    BOOST_REQUIRE_EQUAL( rc, 0 );
+    rc = CheckZip( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 8 );
+    rc = CheckBands( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 4 );
+}
+
+BOOST_AUTO_TEST_CASE( stride_invalid_1 )
+{
+    int rc = 0;
+    CPLUnlinkTree( NOMADS_PATH );
+    VSIMkdir( NOMADS_PATH, 0777 );
+    rc = NomadsFetch( "nam_conus", NULL, 2, 6, adfMackay, NOMADS_PATH, NULL, NULL );
+    BOOST_REQUIRE_EQUAL( rc, 0 );
+    rc = CheckZip( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = CheckBands( NOMADS_PATH );
+    BOOST_CHECK_EQUAL( rc, 4 );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

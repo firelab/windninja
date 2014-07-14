@@ -167,6 +167,36 @@ BOOST_AUTO_TEST_CASE( from_timet_1 )
     BOOST_CHECK_EQUAL( u->ts->tm_sec, 0 );
 }
 
+BOOST_AUTO_TEST_CASE( from_iso_1 )
+{
+    int rc = 0;
+    rc = NomadsUtcFromIsoFrmt( u, "20140714T09:55:31" );
+    BOOST_REQUIRE_EQUAL( rc, 0 );
+    BOOST_CHECK_EQUAL( u->ts->tm_year, 2014 - 1900 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mon, 6 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mday, 14 );
+    BOOST_CHECK_EQUAL( u->ts->tm_hour, 9 );
+    BOOST_CHECK_EQUAL( u->ts->tm_min, 55 );
+    BOOST_CHECK_EQUAL( u->ts->tm_sec, 31 );
+}
+
+BOOST_AUTO_TEST_CASE( from_iso_invalid_1 )
+{
+    int rc = 0;
+    rc = NomadsUtcFromIsoFrmt( u, "KYLE" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = NomadsUtcFromIsoFrmt( u, "2014071409:55:31" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = NomadsUtcFromIsoFrmt( u, "20140714T09:55" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = NomadsUtcFromIsoFrmt( u, "20140714T09:55:" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = NomadsUtcFromIsoFrmt( u, "140714T09:55:31" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+    rc = NomadsUtcFromIsoFrmt( u, "KYLE120140714T09:" );
+    BOOST_CHECK_EQUAL( rc, 1 );
+}
+
 BOOST_AUTO_TEST_CASE( strftime_1 )
 {
     NomadsUtcFromTimeT( u, 0 );

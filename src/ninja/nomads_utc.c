@@ -102,6 +102,109 @@ void NomadsUtcFromTimeT( nomads_utc *u, time_t t )
     NomadsUpdateTimeStruct( u );
 }
 
+int NomadsUtcFromIsoFrmt( nomads_utc *u, const char *s )
+{
+    char *p, *t;
+    int i, rc;
+    int dt[3];
+    if( !u || !s )
+        return 1;
+    if( strlen( s ) != strlen( "YYYYmmddTHH:MM:SS" ) )
+    {
+        return 1;
+    }
+    rc = 0;
+    t = strdup( s );
+    /*
+    ** Start from the rear, check for seconds, minutes, hours, 'T', day, month,
+    ** year.  If anything is missing, fail.  This has to be a full ISO string,
+    ** minus the timezone and daylight qualifiers, as this is UTC only.
+    **
+    ** YYYYmmddTHH:MM:SS
+    **
+    */
+
+    /* Time half */
+    memset( dt, 0, sizeof( int ) * 3 );
+    p = strrchr( t, ':' );
+    i = 0;
+    while( p && i < 3 )
+    {
+        if( strlen( p ) > 2 )
+        {
+            dt[i] = atoi( p + 1 );
+        }
+        else
+        {
+            rc = 1;
+            goto cleanup;
+        }
+        *p = '\0';
+        p = strrchr( t, ':' );
+        i++;
+    }
+    if( i < 2 )
+    {
+        rc = 1;
+        goto cleanup;
+    }
+    p = strrchr( t, 'T' );
+    if( !p )
+    {
+        rc = 1;
+        goto cleanup;
+    }
+    if( strlen( p ) > 2 )
+    {
+        dt[i++] = atoi( p + 1 );
+    }
+    else
+    {
+        rc = 1;
+        goto cleanup;
+    }
+    *p = '\0';
+    u->ts->tm_sec = dt[0];
+    u->ts->tm_min = dt[1];
+    u->ts->tm_hour = dt[2];
+
+    memset( dt, 0, sizeof( int ) * 3 );
+    if( strlen( t ) != strlen( "YYYYmmdd" ) )
+    {
+        rc = 1;
+        goto cleanup;
+    }
+    p -= 2;
+    i = 0;
+    while( i < 2 && p != t)
+    {
+        dt[i] = atoi( p );
+        *p = '\0';
+        p -= 2;
+        i++;
+    }
+    dt[2] = atoi( t );
+
+    u->ts->tm_mday = dt[0];
+    u->ts->tm_mon = dt[1] - 1;
+    u->ts->tm_year = dt[2] - 1900;
+
+    /* Simple sanity check */
+    if( u->ts->tm_sec < 0 || u->ts->tm_sec > 61 ||
+        u->ts->tm_min < 0 || u->ts->tm_min > 59 ||
+        u->ts->tm_hour < 0 || u->ts->tm_hour > 23 ||
+        u->ts->tm_mday < 1 || u->ts->tm_mday > 31 ||
+        u->ts->tm_mon < 0 || u->ts->tm_mon > 11 ||
+        u->ts->tm_year < 0 )
+    {
+        rc = 1;
+    }
+
+cleanup:
+    free( t );
+    return rc;
+}
+
 void NomadsUtcAddHours( nomads_utc *u, int nHours )
 {
     if( !u )

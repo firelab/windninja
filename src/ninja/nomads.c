@@ -105,19 +105,20 @@ nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
 }
 
 static int NomadsBuildForecastRunHours( const char **ppszKey,
-                                        const nomads_utc *now,
+                                        const nomads_utc *ref,
                                         const nomads_utc *end,
-                                        int nHours, int **panRunHours )
+                                        int nHours, int nFcstStride, 
+                                        int **panRunHours )
 {
     char **papszHours, **papszRunHours;
     int nStart, nStop, nStride;
     int nTokenCount;
-    int i, j, k;
+    int i, j, k, l;
     int nSize;
 
     nomads_utc *tmp;
     NomadsUtcCreate( &tmp );
-    NomadsUtcCopy( tmp, now );
+    NomadsUtcCopy( tmp, ref );
 
     papszHours = CSLTokenizeString2( ppszKey[NOMADS_FCST_RUN_HOURS], ",", 0 );
     nTokenCount = CSLCount( papszHours );
@@ -139,9 +140,13 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
         nStart = atoi( papszRunHours[0] );
         nStop = atoi( papszRunHours[1] );
         nStride = atoi( papszRunHours[2] );
+        l = 0;
         for( j = nStart; j <= nStop; j += nStride )
         {
-            (*panRunHours)[k++] = j;
+            if( l++ % nFcstStride == 0 )
+            {
+                (*panRunHours)[k++] = j;
+            }
             NomadsUtcAddHours( tmp, nStride );
             if( NomadsUtcCompare( tmp, end ) > 0 )
             {
@@ -368,7 +373,76 @@ static void NomadsFetchAsync( void *pData )
     psData->nErr = rc;
 }
 
-int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
+/*
+** Fetch a nomads forecast from the NWS servers.  The forecasts consist of grib
+** files, one forecast for each forecast hour.  The time starts and the nearest
+** forecast hour *before* the reference time passed.  If no reference time is
+** passed, or it is not valid, now() is used.
+**
+** The forecasts are downloaded into a temporary directory.  If the entire
+** download succeeds, then the files are copied into the path specified.  If
+** the path specified is a zip file (ends in *.zip), then the forecast files
+** are zipped.
+**
+** Available compile time configuration options:
+**        NOMADS_USE_IP: Use the ip address instead of the hostname.  It
+**                       possibly goes around dns lookup, but it's doubtfull.
+**        NOMADS_ENABLE_ASYNC: Allow for asynchronous connections to the
+**                             server.
+**        NOMADS_EXPER_FORECASTS: Compile in forecasts that may not work with
+**                                the current configuration, essentially
+**                                unsupported (ie NARRE, RTMA).
+**        NOMADS_USE_VSI_READ: Use the VSI*L api for downloading.  This will
+**                             allow definition of chunk sizes for download,
+**                             although it is probably unnecessary.  See
+**                             NOMADS_VSI_BLOCK_SIZE below.  If not enabled, a
+**                             single fetch is made for each file, which is
+**                             faster.
+** Available runtime configuration options:
+**        NOMADS_THREAD_COUNT: Number of threads to use for downloads if
+**                             NOMADS_ENABLE_ASYNC is set to ON during
+**                             compilation.  Default is 4.
+**        NOMADS_VSI_BLOCK_SIZE: Number of bytes to request at a time when
+**                               downloading files if NOMADS_USE_VSI_READ is
+**                               set to ON during compilation. Default is 512.
+**        NOMADS_MAX_FCST_REWIND: Number of forecast run time steps to go back
+**                                to attempt to get a full time frame.
+**        GDAL_HTTP_TIMEOUT: Timeout for HTTP requests in seconds.  We should
+**                           be able to set this reasonably low.
+**
+** \param pszModelKey The name key of the model to use, ie "nam_conus".  For a
+**                    listing of models, see nomads.ncep.gov or /see nomads.h
+**
+** \param pszRefTime The reference time to begin searching for forecasts from.
+**                   The search starts at refrence time, then goes back until
+**                   it hits a valid forecast time.  If the download cannot be
+**                   complete, it will step back NOMADS_MAX_FCST_REWIND
+**                   foreacst times to attempt to get a full forecast.
+**
+** \param nHours The extent of hours to download forecasts from the reference
+**               time.  If we step back, we will still grab all forecasts up
+**               until nHours from the reference time, not the forecast time.
+**
+** \param nStride The number of forecasts to skip in time steps.  For example,
+**                if 12 hours of gfs is requested (normally 5 files/steps (0,
+**                3, 6, 9, 12) with a stride of 2, you'd get 0, 6, 12 forecast
+**                hours.
+**
+** \param padfBbox The bounding box of the request in WGS84 decimal degrees.
+**                 Order is xmin, xmax, ymax, ymin.
+**
+** \param pszDstVsiPath The location to write the files.  If the location
+**                      has an extension of ".zip", then the output files are
+**                      written as a zip archive, otherwise to a path.
+**
+** \param papszOptions List of key=value options, unused.
+**
+** \param pfnProgress Optional progress function.
+**
+** \return NOMADS_OK(0) on success, NOMADS_ERR(1) otherwise.
+*/
+int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
+                 int nHours, int nStride, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,
                  GDALProgressFunc pfnProgress )
 {
@@ -388,6 +462,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     int nFcstTries;
     int nMaxFcstRewind;
     int nrc;
+    int bZip;
 #ifdef NOMADS_ENABLE_ASYNC
     void **pThreads;
     int nThreads;
@@ -395,7 +470,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
 #endif
 
     NomadsThreadData *pasData;
-    nomads_utc *now, *end, *fcst;
+    nomads_utc *ref, *end, *fcst;
     nrc = NOMADS_OK;
 
     ppszKey = NomadsFindModel( pszModelKey );
@@ -406,10 +481,18 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         return NOMADS_ERR;
     }
 
-    NomadsUtcCreate( &now );
+    NomadsUtcCreate( &ref );
     NomadsUtcCreate( &end );
-    NomadsUtcNow( now );
-    NomadsUtcCopy( end, now );
+    rc = NOMADS_OK;
+    if( pszRefTime )
+    {
+        rc = NomadsUtcFromIsoFrmt( ref, pszRefTime );
+    }
+    if( rc != NOMADS_OK || pszRefTime == NULL )
+    {
+        NomadsUtcNow( ref );
+    }
+    NomadsUtcCopy( end, ref );
     NomadsUtcAddHours( end, nHours );
 
     nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
@@ -439,7 +522,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     while( nFcstTries < nMaxFcstRewind )
     {
         nrc = NOMADS_OK;
-        fcst = NomadsSetForecastTime( ppszKey, now, nFcstTries );
+        fcst = NomadsSetForecastTime( ppszKey, ref, nFcstTries );
         nFcstHour = fcst->ts->tm_hour;
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
                   NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
@@ -452,8 +535,8 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
         else
         {
             nFilesToGet =
-                NomadsBuildForecastRunHours( ppszKey, now, end, nHours,
-                                             &panRunHours );
+                NomadsBuildForecastRunHours( ppszKey, ref, end, nHours,
+                                             nStride, &panRunHours );
         }
 
         papszDownloadUrls =
@@ -607,7 +690,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     }
     if( nrc == NOMADS_OK )
     {
-        int bZip = strstr( pszDstVsiPath, ".zip" ) ? TRUE : FALSE;
+        bZip = EQUAL( CPLGetExtension( pszDstVsiPath ), "zip" ) ? TRUE : FALSE;
         papszFinalFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszDstVsiPath,
@@ -638,7 +721,7 @@ int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
     CPLFree( (void**)pThreads );
 #endif
 
-    NomadsUtcFree( now );
+    NomadsUtcFree( ref );
     NomadsUtcFree( end );
     if( nrc == NOMADS_OK && pfnProgress )
     {

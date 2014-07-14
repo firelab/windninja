@@ -348,7 +348,8 @@ typedef struct NomadsThreadData
     int nErr;
 } NomadsThreadData;
 
-int NomadsFetch( const char *pszModelKey, int nHours, double *padfBbox,
+int NomadsFetch( const char *pszModelKey,  const char *pszRefTime, 
+                 int nHours, int nStride, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,
                  GDALProgressFunc pfnProgress );
 const char ** NomadsFindModel( const char *pszKey );
