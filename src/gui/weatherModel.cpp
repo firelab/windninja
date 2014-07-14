@@ -433,15 +433,14 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     wxModelInitialization* model = NULL;
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
+        std::vector<blt::local_date_time> timelist =
+            model->getTimeList(tzString.toStdString());
     }
     catch( ... ) {
         statusLabel->setText( "" );
         delete model;
         return;
     }
-
-    std::vector<blt::local_date_time> timelist =
-            model->getTimeList(tzString.toStdString());
 
     delete model;
 
