@@ -260,7 +260,7 @@ static const char *apszNomadsKeys[][11] =
       "nam.t%02dz.conusnest.hiresf%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
-      "0:12:12",
+      NOMADS_GENERIC_FCST_HOURS,
       "0:36:1,39:60:3",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
