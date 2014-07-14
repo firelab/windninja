@@ -119,7 +119,7 @@ static const char *apszNomadsKeys[][11] =
     ** GFS
     */
     { /* Name key of the model */
-      "gfs",
+      "gfs_global",
       /* name of the perl script for the grib filter */
       "filter_gfs_hd.pl",
       /* File naming format */
@@ -139,7 +139,7 @@ static const char *apszNomadsKeys[][11] =
       /* Horizontal grid resolution */
       "0.5 deg",
       /* Human readable name */
-      "GFS" },
+      "GFS Global" },
     /*
     ** HIRES Alaska
     */
@@ -160,7 +160,7 @@ static const char *apszNomadsKeys[][11] =
     ** Check on what this is.
     */
     {
-      "hires_conus",
+      "hires_arw_conus",
       "filter_hiresconus.pl",
       "conusarw.t%02dz.awp5kmf%02d.grib2",
       "hiresw.%s",
@@ -170,12 +170,12 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES CONUS" },
+      "HIRES ARW CONUS" },
     /*
     ** HIRES CONUS NMM
     */
     {
-      "hires_conus_nmm",
+      "hires_nmm_conus",
       "filter_hiresconus.pl",
       "conusnmmb.t%02dz.awp5kmf%02d.grib2",
       "hiresw.%s",
@@ -185,7 +185,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES CONUS NMM" },
+      "HIRES NMM CONUS" },
     /* XXX: HIRES Guam */
     /* XXX: HIRES Hawaii */
     /* XXX: HIRES Puerto Rico */
@@ -240,7 +240,7 @@ static const char *apszNomadsKeys[][11] =
     ** NAM Alaska NEST
     */
     {
-      "nam_alaska_nest",
+      "nam_nest_alaska",
       "filter_nam_alaskanest.pl",
       "nam.t%02dz.alaskanest.hiresf%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
@@ -250,12 +250,12 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "6 km",
-      "NAM Alaska NEST" },
+      "NAM NEST Alaska" },
     /*
     ** NAM CONUS NEST
     */
     {
-      "nam_conus_nest",
+      "nam_nest_conus",
       "filter_nam_conusnest.pl",
       "nam.t%02dz.conusnest.hiresf%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
@@ -265,7 +265,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "4 km",
-      "NAM CONUS NEST" },
+      "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
 #ifdef NOMADS_EXPER_FORECASTS
@@ -293,7 +293,7 @@ static const char *apszNomadsKeys[][11] =
     ** RAP
     */
     {
-      "rap",
+      "rap_conus",
       "filter_rap.pl",
       "rap.t%02dz.awp130pgrbf%02d.grib2",
       "rap.%s",
@@ -324,7 +324,7 @@ static const char *apszNomadsKeys[][11] =
     ** NARRE
     */
     {
-      "narre",
+      "narr",
       "filter_narre.pl",
       "narre.t%02dz.mean.grd130.f%02d.grib2",
       "narre.%s/ensprod",

@@ -98,7 +98,7 @@ std::vector<std::string> ncepDgexSurfInitialization::getVariableList()
 */
 std::string ncepDgexSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "NCEP-DGEX-12km-SURFACE" );
+    return std::string( "NCAR-DGEX-12-KM" );
 }
 
 /**

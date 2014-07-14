@@ -101,7 +101,7 @@ std::vector<std::string> ncepNamAlaskaSurfInitialization::getVariableList()
 */
 std::string ncepNamAlaskaSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "NCEP-NAM-Alaska-11km-SURFACE" );
+    return std::string( "NCAR-NAM-Alaska-11-KM" );
 }
 
 int ncepNamAlaskaSurfInitialization::getStartHour()

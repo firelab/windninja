@@ -111,7 +111,7 @@ std::vector<std::string> ncepGfsSurfInitialization::getVariableList()
 */
 std::string ncepGfsSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "NCEP-GFS-GLOBAL-0_5deg-SURFACE" );
+    return std::string( "NCAR-GFS-GLOBAL-0.5-DEG" );
 }
 
 int ncepGfsSurfInitialization::getStartHour()

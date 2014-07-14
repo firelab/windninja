@@ -129,7 +129,7 @@ void initializeOptions()
                 ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "Source for downloading elevation data (us_srtm, world_srtm, gmted)")
                 ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; all choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (NCEP-NAM-12km-SURFACE, NCEP-NAM-Alaska-11km-SURFACE, NCEP-NDFD-5km, NCEP-RAP-13km-SURFACE)")
+                ("wx_model_type", po::value<std::string>(), "type of wx model to download (NCAR-NAM-12-KM, NCAR-NAM-Alaska-11-KM, NCAR-NDFD-5-KM, NCAR-RAP-13-KM)")
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
@@ -280,7 +280,7 @@ int windNinjaCLI(int argc, char* argv[])
 #endif
                 ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (NCEP-NAM-12km-SURFACE, NCEP-NAM-Alaska-11km-SURFACE, NCEP-NDFD-5km, NCEP-RAP-13km-SURFACE, NCEP-GFS-GLOBAL-0_5deg-SURFACE)")
+                ("wx_model_type", po::value<std::string>(), "type of wx model to download (NCAR-NAM-12-KM, NCAR-NAM-Alaska-11-KM, NCAR-NDFD-5-KM, NCAR-RAP-13-KM, NCAR-GFS-GLOBAL-0.5-deg, )")
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
@@ -726,15 +726,15 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
-                if(vm["wx_model_type"].as<std::string>() == std::string("NCEP-NAM-12km-SURFACE"))
+                if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NAM-12-KM"))
                     windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNamSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCEP-NAM-Alaska-11km-SURFACE"))
+                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NAM-Alaska-11-KM"))
                     windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNamAlaskaSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCEP-NDFD-5km"))
+                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NDFD-5-KM"))
                     windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNdfd, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCEP-RAP-13km-SURFACE"))
+                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-RAP-13-KM"))
                     windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepRapSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCEP-GFS-GLOBAL-0_5deg-SURFACE"))
+                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-GFS-GLOBAL-0.5-deg"))
                     windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepGfsSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
                 else
                 {

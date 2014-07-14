@@ -191,7 +191,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
                   pszGribFile );
         NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
         /* Special case for gfs */
-        if( EQUAL( pszKey, "gfs" ) )
+        if( EQUAL( pszKey, "gfs_global" ) )
         {
             pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s, nFcstHour );
         }
@@ -501,7 +501,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         nMaxFcstRewind = 2;
     }
     /* Go back at least 3 for rap, as it may not get updated all the time. */
-    if( EQUAL( pszModelKey, "rap" ) )
+    if( EQUALN( pszModelKey, "rap", 3 ) )
     {
         nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
     }

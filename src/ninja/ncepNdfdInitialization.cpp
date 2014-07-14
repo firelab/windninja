@@ -124,7 +124,7 @@ std::vector<std::string> ncepNdfdInitialization::getVariableList()
 */
 std::string ncepNdfdInitialization::getForecastIdentifier()
 {
-    return std::string( "NCEP-NDFD-5km" );
+    return std::string( "NCAR-NDFD-CONUS-5-KM" );
 }
 
 int ncepNdfdInitialization::getStartHour()
