@@ -726,22 +726,21 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
-                if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NAM-12-KM"))
-                    windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNamSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NAM-Alaska-11-KM"))
-                    windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNamAlaskaSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-NDFD-5-KM"))
-                    windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepNdfd, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-RAP-13-KM"))
-                    windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepRapSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else if(vm["wx_model_type"].as<std::string>() == std::string("NCAR-GFS-GLOBAL-0.5-deg"))
-                    windsim.makeArmy(windsim.fetch_wxForecast(ninjaArmy::ncepGfsSurf, vm["forecast_duration"].as<int>(), vm["elevation_file"].as<std::string>()), osTimeZone);
-                else
+                std::string model_type = vm["wx_model_type"].as<std::string>();
+                wxModelInitialization *model;
+                try
+                {
+                    model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                                                            vm["forecast_duration"].as<int>() ),
+                                                            osTimeZone );
+                }
+                catch(... )
                 {
                     cout << "'wx_model_type' is not valid" << "\n";
                     return -1;
                 }
-
+                delete model;
             }
             option_dependency(vm, "forecast_filename", "time_zone");
             if(vm.count("forecast_filename"))   //if a forecast file already exists

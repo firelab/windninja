@@ -735,17 +735,34 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 ** source, model name, sub model if any, domain, resolution.  It should be
 ** free'd by the caller using NomadsFree();
 */
-char * NomadsFormName( const char *pszKey )
+char * NomadsFormName( const char *pszKey, char pszSpacer )
 {
     const char **ppszKey = NomadsFindModel( pszKey );
+    const char *s;
+    char *t, *p;
     if( ppszKey == NULL )
     {
         return NULL;
     }
-    const char *s;
     s = CPLSPrintf( "NOMADS %s %s", ppszKey[NOMADS_HUMAN_READABLE],
                     ppszKey[NOMADS_GRID_RES] );
-    return CPLStrdup( s );
+    t = CPLStrdup( s );
+    if( pszSpacer != ' ' )
+    {
+        p = strchr( t, ' ');
+        while( p )
+        {
+            *p = pszSpacer;
+            p = strchr( t, ' ' );
+        }
+    }
+    p = t;
+    while( *p != '\0' )
+    {
+        *p = toupper( *p );
+        p++;
+    }
+    return t;
 }
 
 void NomadsFree( void *p )

@@ -212,13 +212,14 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
         const char *s;
         while( apszNomadsKeys[i][0] != NULL )
         {
-            s = NomadsFormName( apszNomadsKeys[i][NOMADS_NAME] );
+            s = NomadsFormName( apszNomadsKeys[i][NOMADS_NAME], '-' );
             if( EQUAL( s, identifier.c_str() ) )
             {
                 NomadsFree( (void*)s );
                 return new NomadsWxModel( apszNomadsKeys[i][NOMADS_NAME] );
             }
             NomadsFree( (void*)s );
+            i++;
         }
 #endif
         std::ostringstream outString;

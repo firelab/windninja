@@ -354,7 +354,7 @@ int NomadsFetch( const char *pszModelKey,  const char *pszRefTime,
                  GDALProgressFunc pfnProgress );
 const char ** NomadsFindModel( const char *pszKey );
 
-char * NomadsFormName( const char *pszKey );
+char * NomadsFormName( const char *pszKey, char pszSpacer );
 
 void NomadsFree( void *p );
 

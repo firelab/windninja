@@ -279,17 +279,8 @@ std::string NomadsWxModel::getForecastReadable( char bySwapWithSpace )
     char *p = NULL;
     char *s = NULL;
     int i;
-    s = NomadsFormName( pszKey );
+    s = NomadsFormName( pszKey, bySwapWithSpace );
     CPLAssert( s );
-    if( bySwapWithSpace != ' ' )
-    {
-        p = strchr( s, ' ' );
-        while( p )
-        {
-            *p = bySwapWithSpace;
-            p = strchr( s, ' ' );
-        }
-    }
     std::string os = s;
     NomadsFree( s );
     return os;

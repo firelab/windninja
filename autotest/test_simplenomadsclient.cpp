@@ -280,11 +280,13 @@ BOOST_AUTO_TEST_CASE( stride_invalid_1 )
 BOOST_AUTO_TEST_CASE( form_name_1 )
 {
     char *s;
-    s = NomadsFormName( "gfs_global" );
+    s = NomadsFormName( "gfs_global", ' ' );
     BOOST_REQUIRE( s );
+    BOOST_CHECK( EQUAL( s, "GFS GLOBAL 0.5 deg" ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
 
 #endif /* WITH_NOMADS_SUPPORT */
 
