@@ -1832,3 +1832,18 @@ void wxModelInitialization::SetProgressFunc( GDALProgressFunc pfnNew )
     pfnProgress = pfnNew;
 }
 
+std::string wxModelInitialization::getForecastReadable( const char bySwapWithSpace )
+{
+    char *s, *p;
+    s = strdup( getForecastIdentifier().c_str() );
+    p = strchr( s, bySwapWithSpace );
+    while( p )
+    {
+        *p = bySwapWithSpace;
+        p = strchr( s, bySwapWithSpace );
+    }
+    std::string os = s;
+    free( s );
+    return os;
+}
+

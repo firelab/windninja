@@ -730,3 +730,25 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     return nrc;
 }
 
+/*
+** Almalgamate the data for a model into a readable represetnation including
+** source, model name, sub model if any, domain, resolution.  It should be
+** free'd by the caller using NomadsFree();
+*/
+char * NomadsFormName( const char *pszKey )
+{
+    const char **ppszKey = NomadsFindModel( pszKey );
+    if( ppszKey == NULL )
+    {
+        return NULL;
+    }
+    const char *s;
+    s = CPLSPrintf( "NOMADS %s %s", ppszKey[NOMADS_HUMAN_READABLE],
+                    ppszKey[NOMADS_GRID_RES] );
+    return CPLStrdup( s );
+}
+
+void NomadsFree( void *p )
+{
+    return CPLFree( p );
+}

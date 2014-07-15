@@ -145,4 +145,86 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
 #endif
 }
 
+/*
+** Return a wxModelInit by using the identifier.
+*/
+wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId( std::string identifier )
+{
+    if(identifier.empty())
+    throw std::runtime_error("The weather model initialization filename has not been set.");
+
+    ncepNdfdInitialization ncepNdfd;
+    ncepNamSurfInitialization ncepNamSurf;
+    ncepRapSurfInitialization ncepRapSurf;
+    ncepDgexSurfInitialization ncepDgexSurf;
+    ncepNamAlaskaSurfInitialization ncepNamAlaskaSurf;
+    ncepGfsSurfInitialization ncepGfsSurf;
+    genericSurfInitialization genericSurf;
+    wrfSurfInitialization wrfSurf;
+    wrf3dInitialization wrf3d;
+    ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
+    ncepHrrrSurfInitialization ncepHrrrSurf;
+
+
+//Determine what type of weather model the file came from
+    //Check netcdf first, otherwise grib_api spews out crap
+    if(ncepNdfd.getForecastReadable() == identifier) {
+        return new ncepNdfdInitialization(ncepNdfd);
+    }
+    else if(ncepNamSurf.getForecastReadable() == identifier) {
+        return new ncepNamSurfInitialization(ncepNamSurf);
+    }
+    else if(ncepRapSurf.getForecastReadable() == identifier) {
+        return new ncepRapSurfInitialization(ncepRapSurf);
+    }
+    else if(ncepDgexSurf.getForecastReadable() == identifier) {
+        return new ncepDgexSurfInitialization(ncepDgexSurf);
+    }
+    else if(ncepNamAlaskaSurf.getForecastReadable() == identifier) {
+        return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);
+    }
+    else if(ncepGfsSurf.getForecastReadable() == identifier) {
+        return new ncepGfsSurfInitialization(ncepGfsSurf);
+    }
+    else if(wrfSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.getForecastReadable() == identifier = %i\n", wrfSurf.getForecastReadable() == identifier);
+        return new wrfSurfInitialization(wrfSurf);
+    }
+    #ifdef STABILITY
+    else if(wrf3d.getForecastReadable() == identifier) {    //fix this later to read either wrf3d or wrfSurf
+        CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.getForecastReadable() == identifier = %i\n", wrf3d.getForecastReadable() == identifier);
+        return new wrf3dInitialization(wrf3d);
+    }
+    #endif
+    else if(ncepNamGrib2Surf.getForecastReadable() == identifier) {
+        return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
+    }
+    else if(ncepHrrrSurf.getForecastReadable() == identifier) {
+        return new ncepHrrrSurfInitialization(ncepHrrrSurf);
+    }
+    else if(genericSurf.getForecastReadable() == identifier) {
+        return new genericSurfInitialization(genericSurf);
+    }
+#ifdef WITH_NOMADS_SUPPORT
+    else {
+        int i = 0;
+        int bFound = FALSE;
+        const char *s;
+        while( apszNomadsKeys[i][0] != NULL )
+        {
+            s = NomadsFormName( apszNomadsKeys[i][NOMADS_NAME] );
+            if( EQUAL( s, identifier.c_str() ) )
+            {
+                NomadsFree( (void*)s );
+                return new NomadsWxModel( apszNomadsKeys[i][NOMADS_NAME] );
+            }
+            NomadsFree( (void*)s );
+        }
+#endif
+        std::ostringstream outString;
+        outString << "The weather model initialization identifier:\n  " << identifier << "\nCannot be " \
+                "identified as a valid weather model initialization key.";
+        throw std::runtime_error(outString.str());
+    }
+}
 

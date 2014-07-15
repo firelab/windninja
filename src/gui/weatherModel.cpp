@@ -136,6 +136,8 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     //change time for given model
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(setTimeLimits(int)));
+    connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
+        this, SLOT(setComboToolTip(int)));
 
     //layout
     downloadLayout = new QHBoxLayout;
@@ -209,7 +211,7 @@ weatherModel::~weatherModel()
  */
 void weatherModel::loadModelComboBox()
 {
-    modelComboBox->addItem( QString::fromStdString(ndfd.getForecastIdentifier() ) );
+    modelComboBox->addItem(  QString::fromStdString(ndfd.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(nam.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(rap.getForecastIdentifier() ) );
     //modelComboBox->addItem( QString::fromStdString(dgex.getForecastIdentifier() ) );
@@ -220,9 +222,8 @@ void weatherModel::loadModelComboBox()
     QString s;
     for( int i = 0; i < nNomadsCount; i++ )
     {
-        s = QString::fromStdString( papoNomads[i]->getForecastReadable() );
+        s = QString::fromStdString( papoNomads[i]->getForecastReadable( '-' ) );
         s = s.toUpper();
-        s.replace( " ", "-" );
         modelComboBox->addItem( s );
     }
 #endif
@@ -383,8 +384,8 @@ void weatherModel::checkForModelData()
     for( i = 0; i < nNomadsCount; i++ )
     {
         filters << 
-            QString::fromStdString(papoNomads[i]->getForecastIdentifier() )
-                    + "-" + QFileInfo( inputFile ).fileName();
+            (QString::fromStdString(papoNomads[i]->getForecastReadable('-') )
+                    + "-" + QFileInfo( inputFile ).fileName()).toUpper();
     }
     filters << "20*.zip";
 #endif
@@ -479,4 +480,37 @@ void weatherModel::unselectForecast( bool checked )
     return;
     else
     treeView->selectionModel()->clear();
+}
+const char * weatherModel::ExpandDescription( const char *pszReadable )
+{
+    if( pszReadable == NULL )
+        return NULL;
+    const char *pszDesc = NULL;
+    const char *pszTmp =  NULL;
+    int i;
+    char **papszKeys = NULL;
+    papszKeys = CSLTokenizeString2( pszReadable, "- ", 0 );
+    i = 0;
+    while( papszKeys[i] != NULL )
+    {
+        {
+            pszTmp = CSLFetchNameValue( (char**)apszWxModelGlossary, papszKeys[i] );
+            if( pszTmp != NULL )
+            {
+                if( pszDesc == NULL )
+                    pszDesc = CPLSPrintf( pszTmp );
+                else
+                    pszDesc = CPLSPrintf( "%s, %s", pszDesc, pszTmp );
+            }
+        }
+        i++;
+    }
+    return pszDesc;
+}
+
+void weatherModel::setComboToolTip(int)
+{
+    QString s = modelComboBox->currentText();
+    s = ExpandDescription( s.toLocal8Bit().data() );
+    modelComboBox->setToolTip( s );
 }

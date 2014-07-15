@@ -66,6 +66,21 @@
 static QProgressDialog *pGlobProg;
 static void *pCancel;
 
+static const char *apszWxModelGlossary[] =
+{
+    "NCAR=National Center for Atomosperhic Research",
+    "NOMADS=NOAA Operational Model Archive and Distribution System",
+    "NDFD=National Digital Forecast Database",
+    "NAM=North American Mesoscale",
+    "RAP=Rapid Refresh",
+    "GFS=Global Forecast System",
+    "HIRES=High Resolution",
+    "NEST=Nested",
+    "ARW=Advanced Research WRF",
+    "NMM=Non-hydrostatic Mesoscale model",
+    NULL
+};
+
 class httpGetThread : public QThread
 {
  Q_OBJECT
@@ -118,6 +133,8 @@ class weatherModel : public QWidget
  private:
     void loadModelComboBox();
 
+    const char * ExpandDescription( const char *pszReadable );
+
     ncepNamSurfInitialization nam;
     ncepNdfdInitialization ndfd;
     ncepRapSurfInitialization rap;
@@ -136,6 +153,7 @@ class weatherModel : public QWidget
     void setInputFile(QString newFile);
     void unselectForecast( bool checked );
     void setTimeLimits( int index );
+    void setComboToolTip( int index );
  public slots:
     void checkForModelData();
     void updateTz( QString tz );

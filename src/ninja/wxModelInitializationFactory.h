@@ -59,6 +59,7 @@ class wxModelInitializationFactory
     public:
 
         static wxModelInitialization* makeWxInitialization( std::string fileName );
+        static wxModelInitialization* makeWxInitializationFromId( std::string identifier );
 
 }; 
 /* -----  end of class WxModelInitializationFactory  ----- */

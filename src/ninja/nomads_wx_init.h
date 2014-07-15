@@ -52,7 +52,7 @@ public:
     const char ** FindModelKey( const char *pszFilename );
     virtual std::vector<std::string> getVariableList();
     virtual std::string getForecastIdentifier();
-    virtual std::string getForecastReadable();
+    virtual std::string getForecastReadable( char bySwapWithSpace=' ' );
     virtual int getStartHour();
     virtual int getEndHour();
     virtual void checkForValidData();

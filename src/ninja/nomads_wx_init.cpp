@@ -58,12 +58,12 @@ NomadsWxModel::NomadsWxModel()
 NomadsWxModel::NomadsWxModel( std::string filename )
 {
     wxModelFileName = filename;
+    pfnProgress = NULL;
     ppszModelData = FindModelKey( filename.c_str() );
     if( ppszModelData )
         pszKey = CPLStrdup( ppszModelData[NOMADS_NAME] );
     else
         pszKey = NULL;
-    pfnProgress = NULL;
     NomadsUtcCreate( &u );
 }
 
@@ -195,7 +195,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
 
     std::string path( CPLGetDirname( demFile.c_str() ) );
     std::string fileName( CPLGetFilename( demFile.c_str() ) );
-    std::string newPath( path + "/" + getForecastIdentifier()
+    std::string newPath( path + "/" + getForecastReadable('-')
              + "-" + fileName + "/" );
     int rc;
     VSIStatBufL sStat;
@@ -269,17 +269,30 @@ std::string NomadsWxModel::getForecastIdentifier()
     return std::string( ppszModelData[NOMADS_NAME] );
 }
 
-std::string NomadsWxModel::getForecastReadable()
+std::string NomadsWxModel::getForecastReadable( char bySwapWithSpace )
 {
     if( !ppszModelData )
     {
         throw badForecastFile( "Invalid Model" );
     }
-    std::string s = "NOMADS ";
-    s += ppszModelData[NOMADS_HUMAN_READABLE];
-    s += " ";
-    s += ppszModelData[NOMADS_GRID_RES];
-    return s;
+
+    char *p = NULL;
+    char *s = NULL;
+    int i;
+    s = NomadsFormName( pszKey );
+    CPLAssert( s );
+    if( bySwapWithSpace != ' ' )
+    {
+        p = strchr( s, ' ' );
+        while( p )
+        {
+            *p = bySwapWithSpace;
+            p = strchr( s, ' ' );
+        }
+    }
+    std::string os = s;
+    NomadsFree( s );
+    return os;
 }
 
 static int NomadsCompareStrings( const void *a, const void *b )
