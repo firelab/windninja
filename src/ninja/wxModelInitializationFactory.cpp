@@ -205,8 +205,8 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     else if(genericSurf.getForecastReadable() == identifier) {
         return new genericSurfInitialization(genericSurf);
     }
-#ifdef WITH_NOMADS_SUPPORT
     else {
+#ifdef WITH_NOMADS_SUPPORT
         int i = 0;
         int bFound = FALSE;
         const char *s;

@@ -498,7 +498,7 @@ const char * weatherModel::ExpandDescription( const char *pszReadable )
             if( pszTmp != NULL )
             {
                 if( pszDesc == NULL )
-                    pszDesc = CPLSPrintf( pszTmp );
+                    pszDesc = CPLSPrintf( "%s", pszTmp );
                 else
                     pszDesc = CPLSPrintf( "%s, %s", pszDesc, pszTmp );
             }
