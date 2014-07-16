@@ -4,17 +4,17 @@
  *
  * Project:  WindNinja
  * Purpose:  C API
- * Author:   Levi Malott <lmnn3@mst.edu> 
+ * Author:   Levi Malott <lmnn3@mst.edu>
  *
  ******************************************************************************
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
- * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT 
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105 
- * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT 
- * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES 
- * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER 
- * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
+ * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+ * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+ * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+ * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+ * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+ * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
  * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -75,8 +75,14 @@ typedef int   NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
+    #ifndef NINJAFOAM
     NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
         ( unsigned int numNinjas, char ** papszOptions  );
+    #endif
+    #ifdef NINJAFOAM
+    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+        ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
+    #endif
     NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
         ( NinjaH * ninja );
 
@@ -128,8 +134,8 @@ typedef int   NinjaErr;
         ( NinjaH * ninja, const int nIndex, const double cloud_cover,
           const char * units );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
-        ( NinjaH * ninja, const int nIndex, const int yr, const int mo, 
-          const int day, const int hr, const int min, const int sec, 
+        ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
+          const int day, const int hr, const int min, const int sec,
           const char * timeZoneString );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
         ( NinjaH * ninja, const int nIndex, const char * station_filename );
@@ -187,7 +193,7 @@ typedef int   NinjaErr;
         ( NinjaH * ninja, const int nIndex, const char * choice );
 
 	NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
-        (NinjaH * ninja, const int nIndex, const double resolution, 
+        (NinjaH * ninja, const int nIndex, const double resolution,
          const char * units );
 
 	NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
@@ -213,7 +219,7 @@ typedef int   NinjaErr;
         ( NinjaH * ninja, const int nIndex, const int flag );
 
     NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogResolution
-        ( NinjaH * ninja, const int nIndex, const double resolution, 
+        ( NinjaH * ninja, const int nIndex, const double resolution,
           const char * units );
 
     NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogSpeedScaling
@@ -226,7 +232,7 @@ typedef int   NinjaErr;
         ( NinjaH * ninja, const int nIndex, const int flag );
 
     NinjaErr WINDNINJADLL_EXPORT NinjaSetShpResolution
-        ( NinjaH * ninja, const int nIndex, const double resolution, 
+        ( NinjaH * ninja, const int nIndex, const double resolution,
           const char * units );
 
     NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiOutFlag

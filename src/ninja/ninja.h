@@ -114,7 +114,7 @@
 
 #ifdef EMISSIONS
 #include "dust.h"
-#endif 
+#endif
 
 #ifdef SCALAR
 #include "scalarTransport.h"
@@ -138,7 +138,7 @@ class WINDNINJA_API ninja
 {
 public:
     ninja();
-    ~ninja();
+    virtual ~ninja();
 
     ninja(const ninja &rhs);
     ninja &operator=(const ninja &rhs);
@@ -339,6 +339,14 @@ public:
 
     WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
 
+
+    /*-----------------------------------------------------------------------------
+     *  Protected Access
+     *-----------------------------------------------------------------------------*/
+
+protected:
+    void checkCancel();
+
     /*-----------------------------------------------------------------------------
      *  Private Access
      *-----------------------------------------------------------------------------*/
@@ -477,7 +485,6 @@ private:
     bool matched(int iter);
     void writeOutputFiles(bool scalarTransportSimulation); //if true it's a scalar run, if false it's a wind run
     void deleteDynamicMemory();
-    void checkCancel();
 };
 
 #endif	//NINJA_HEADER

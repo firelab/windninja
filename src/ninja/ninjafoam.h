@@ -30,6 +30,8 @@
 #ifndef NINJA_FOAM_INCLUDED_
 #define NINJA_FOAM_INCLUDED_
 
+#include "ninja.h"
+
 #include "assert.h"
 
 #include "stl_create.h"
@@ -84,20 +86,17 @@
  * \brief Main interface to OpenFOAM solver runs.
  *
  */
-class NinjaFoam
+class NinjaFoam : public ninja
 {
 
 public:
     NinjaFoam();
-    ~NinjaFoam();
+    virtual ~NinjaFoam();
 
-    int SetTerrainFile( const char * );
-    int SetNumCpus( int );
-    int SetSpeed( double );
-    int SetDirection( double );
-    int SetRoughD( double );
-    int SetRoughness( double );
-    int SetInputHeight( double );
+    NinjaFoam( NinjaFoam const& A );
+    NinjaFoam& operator= ( NinjaFoam const& A );
+
+    virtual bool simulate_wind();
 
     GDALDatasetH GetRasterOutputHandle();
 
@@ -106,11 +105,6 @@ private:
 
     int nCpus;
     const char *pszTerrainFile;
-    double dfRoughD;
-    double dfRoughness;
-    double dfDirection;
-    double dfSpeed;
-    double dfInputHeight;
 
     int nFaces;
 

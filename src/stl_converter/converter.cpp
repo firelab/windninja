@@ -40,9 +40,9 @@ Position computeNorm( const Position& v1, const Position& v2 )
 }
 
 
-void writeStlFromGdal(  float ** data, const unsigned int nrows, 
+void writeStlFromGdal(  float ** data, const unsigned int nrows,
                 const unsigned int ncols,
-                const float xllcorner, const float yllcorner, 
+                const float xllcorner, const float yllcorner,
                 const float dx, const float dy,
                 const string output )
 {
@@ -75,13 +75,13 @@ void writeStlFromGdal(  float ** data, const unsigned int nrows,
             c.z = data[row + 1][col];
 
             d.x = b.x;
-            d.y = c.y; 
+            d.y = c.y;
             d.z = data[row + 1][col + 1];
 
             /*  compute normal for first triangle */
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;
-            v1.z = c.z - a.z; 
+            v1.z = c.z - a.z;
 
             v2.x = b.x - a.x;
             v2.y = b.y - a.y;
@@ -90,14 +90,14 @@ void writeStlFromGdal(  float ** data, const unsigned int nrows,
             norm = computeNorm( v1, v2 );
 
             /*  write the output  */
-            out_file << "facet normal " << norm.x << " " << norm.y << " " 
+            out_file << "facet normal " << norm.x << " " << norm.y << " "
                      << norm.z << endl;
             out_file << "\touter loop" << endl;
-            out_file << "\t\tvertex " << a.x << " " << a.y << " " 
+            out_file << "\t\tvertex " << a.x << " " << a.y << " "
                      << a.z << " " << endl;
-            out_file << "\t\tvertex " << b.x << " " << b.y << " " 
+            out_file << "\t\tvertex " << b.x << " " << b.y << " "
                      << b.z << " " << endl;
-            out_file << "\t\tvertex " << c.x << " " << c.y << " " 
+            out_file << "\t\tvertex " << c.x << " " << c.y << " "
                      << c.z << " " << endl;
             out_file << "\tendloop" << endl;
             out_file << "endfacet" << endl;
@@ -117,11 +117,11 @@ void writeStlFromGdal(  float ** data, const unsigned int nrows,
             out_file << "facet normal " << norm.x << " " << norm.y << " "
                      << norm.z << endl;
             out_file << "\touter loop" << endl;
-            out_file << "\t\tvertex " << d.x << " " << d.y << " " 
+            out_file << "\t\tvertex " << d.x << " " << d.y << " "
                      << d.z << " " << endl;
-            out_file << "\t\tvertex " << b.x << " " << b.y << " " 
+            out_file << "\t\tvertex " << b.x << " " << b.y << " "
                      << b.z << " " << endl;
-            out_file << "\t\tvertex " << c.x << " " << c.y << " " 
+            out_file << "\t\tvertex " << c.x << " " << c.y << " "
                      << c.z << " " << endl;
             out_file << "\tendloop" << endl;
             out_file << "endfacet" << endl;
@@ -130,9 +130,9 @@ void writeStlFromGdal(  float ** data, const unsigned int nrows,
     out_file.close();
 }
 
-void writeBinaryStlFromGdal(  float ** data, const unsigned int nrows, 
+void writeBinaryStlFromGdal(  float ** data, const unsigned int nrows,
                 const unsigned int ncols,
-                const float xllcorner, const float yllcorner, 
+                const float xllcorner, const float yllcorner,
                 const float dx, const float dy,
                 const string output )
 {
@@ -175,13 +175,13 @@ void writeBinaryStlFromGdal(  float ** data, const unsigned int nrows,
             c.z = data[row + 1][col];
 
             d.x = b.x;
-            d.y = c.y; 
+            d.y = c.y;
             d.z = data[row + 1][col + 1];
 
             /*  compute normal for first triangle */
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;
-            v1.z = c.z - a.z; 
+            v1.z = c.z - a.z;
 
             v2.x = b.x - a.x;
             v2.y = b.y - a.y;
@@ -205,7 +205,7 @@ void writeBinaryStlFromGdal(  float ** data, const unsigned int nrows,
             out_file.write( (char*) &c.x, sizeof(float) );
             out_file.write( (char*) &c.y, sizeof(float) );
             out_file.write( (char*) &c.z, sizeof(float) );
-            out_file.write( (char*) &nattributes, sizeof(unsigned short) ); 
+            out_file.write( (char*) &nattributes, sizeof(unsigned short) );
 
 
             /*  compute normal for second triangle */
@@ -236,7 +236,7 @@ void writeBinaryStlFromGdal(  float ** data, const unsigned int nrows,
             out_file.write( (char*) &c.y, sizeof(float) );
             out_file.write( (char*) &c.z, sizeof(float) );
 
-            out_file.write( (char*) &nattributes, sizeof(unsigned short) ); 
+            out_file.write( (char*) &nattributes, sizeof(unsigned short) );
         }
     }
     out_file.close();
@@ -257,7 +257,7 @@ void fromGdalToStl( const string input, const string output )
     GDALDataset *poDataset;
 
     GDALAllRegister();
-    
+
     poDataset = ( GDALDataset * ) GDALOpen( input.c_str(), GA_ReadOnly );
     if( NULL == poDataset )
     {
@@ -273,10 +273,10 @@ void fromGdalToStl( const string input, const string output )
 
     float ** data;
     data = new float*[nrows];
-    
+
     GDALRasterBand * poBand;
     poBand = poDataset->GetRasterBand( 1 );
-    
+
     float * padfScanline;
     padfScanline = new float[ ncols ];
 
@@ -300,11 +300,11 @@ void fromGdalToStl( const string input, const string output )
     delete [] padfScanline;
 
 
-    writeBinaryStlFromGdal( 
-                data, 
-                poDataset->GetRasterYSize(),  
+    writeBinaryStlFromGdal(
+                data,
+                poDataset->GetRasterYSize(),
                 poDataset->GetRasterXSize(),
-                adfGeoTransform[0], adfGeoTransform[3], 
+                adfGeoTransform[0], adfGeoTransform[3],
                 adfGeoTransform[1], adfGeoTransform[5],
                 output );
     GDALClose( poDataset );
@@ -395,13 +395,13 @@ void fromAscToStl( const string input, const string output )
             c.z = data[row + 1][col];
 
             d.x = b.x;
-            d.y = c.y; 
+            d.y = c.y;
             d.z = data[row + 1][col + 1];
 
             /*  compute normal for first triangle */
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;
-            v1.z = c.z - a.z; 
+            v1.z = c.z - a.z;
 
             v2.x = b.x - a.x;
             v2.y = b.y - a.y;
@@ -410,14 +410,14 @@ void fromAscToStl( const string input, const string output )
             norm = computeNorm( v1, v2 );
 
             /*  write the output  */
-            out_file << "facet normal " << norm.x << " " << norm.y << " " 
+            out_file << "facet normal " << norm.x << " " << norm.y << " "
                      << norm.z << endl;
             out_file << "\touter loop" << endl;
-            out_file << "\t\tvertex " << a.x << " " << a.y << " " 
+            out_file << "\t\tvertex " << a.x << " " << a.y << " "
                      << a.z << " " << endl;
-            out_file << "\t\tvertex " << b.x << " " << b.y << " " 
+            out_file << "\t\tvertex " << b.x << " " << b.y << " "
                      << b.z << " " << endl;
-            out_file << "\t\tvertex " << c.x << " " << c.y << " " 
+            out_file << "\t\tvertex " << c.x << " " << c.y << " "
                      << c.z << " " << endl;
             out_file << "\tendloop" << endl;
             out_file << "endfacet" << endl;
@@ -437,11 +437,11 @@ void fromAscToStl( const string input, const string output )
             out_file << "facet normal " << norm.x << " " << norm.y << " "
                      << norm.z << endl;
             out_file << "\touter loop" << endl;
-            out_file << "\t\tvertex " << d.x << " " << d.y << " " 
+            out_file << "\t\tvertex " << d.x << " " << d.y << " "
                      << d.z << " " << endl;
-            out_file << "\t\tvertex " << b.x << " " << b.y << " " 
+            out_file << "\t\tvertex " << b.x << " " << b.y << " "
                      << b.z << " " << endl;
-            out_file << "\t\tvertex " << c.x << " " << c.y << " " 
+            out_file << "\t\tvertex " << c.x << " " << c.y << " "
                      << c.z << " " << endl;
             out_file << "\tendloop" << endl;
             out_file << "endfacet" << endl;
@@ -449,8 +449,8 @@ void fromAscToStl( const string input, const string output )
     }
     out_file.close();
 
-    /* free all dynamically allocated data */ 
-    for (int i=0; i<nrows; ++i) 
+    /* free all dynamically allocated data */
+    for (int i=0; i<nrows; ++i)
     {  //delete data row by row
         delete[] data[i];
     }

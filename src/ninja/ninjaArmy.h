@@ -34,6 +34,10 @@
 #include "omp.h"
 #endif
 
+#ifdef NINJAFOAM
+#include "ninjafoam.h"
+#endif
+
 #include "ninja.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
@@ -55,11 +59,11 @@
  * Macro IF_VALID_INDEX completes simple range checking for iterables
  * */
 #define IF_VALID_INDEX( i, iterable ) \
-   if( i >= 0 && i < iterable.size() ) 
-/* * 
+   if( i >= 0 && i < iterable.size() )
+/* *
  * Macro IF_VALID_INDEX_DO is a boiler plate for most of the ninjaArmy functions.
  * First, a range check is done on iterable to determine if 'i' is a valid index.
- * If 'i' is a valid index, then the function call 'func' is executed. 
+ * If 'i' is a valid index, then the function call 'func' is executed.
  * 'func' is located inside a try-catch statement block so upon a thrown exception
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
@@ -87,7 +91,12 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
+    #ifdef NINJAFOAM
+    ninjaArmy(int numNinjas, bool momentumFlag);
+    #endif
+    #ifndef NINJAFOAM
     ninjaArmy(int numNinjas);
+    #endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
@@ -115,16 +124,19 @@ public:
     *
     * \return num_ninjas the number of ninjas in the army
     */
-    int getSize() const { return ninjas.size(); }
+    //int getSize() const { return ninjas.size(); }
+
+    int getSize();
+
     /**
     * \brief Set the number of ninja in the army
     *
     * \param nRuns number of ninjas to create
-    * \return 
+    * \return
     */
-    void setSize( int nRuns ); 
+    void setSize( int nRuns );
     /*-----------------------------------------------------------------------------
-     *  Ninja Communication Methods 
+     *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
     /**
     * \brief Initialize the ninja communication of a ninja
@@ -134,7 +146,7 @@ public:
     * \param comType type of communication
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setNinjaCommunication( const int nIndex, const int RunNumber, 
+    int setNinjaCommunication( const int nIndex, const int RunNumber,
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
@@ -170,7 +182,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setFrictionVelocityFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set method for friction velocity calculations for a ninja
     *
@@ -260,18 +272,18 @@ public:
     * \brief Set the latitude/longitude position of a ninja
     *
     * \param nIndex index of a ninja
-    * \param lat_degrees position latitude in degrees 
+    * \param lat_degrees position latitude in degrees
     * \param lon_degrees position longitude in degrees
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setPosition( const int nIndex, const double lat_degrees, 
+    int setPosition( const int nIndex, const double lat_degrees,
                      const double lon_degrees,
                      char ** papszOptions=NULL );
     int setPosition( const int nIndex, char ** papszOptions=NULL );
     /**
     * \brief Set the input points filename for a ninja
     *
-    * \param nIndex index of a ninja 
+    * \param nIndex index of a ninja
     * \param filename path of the input points file
     * \return errval Returns NINJA_SUCCESS upon success
     */
@@ -317,12 +329,12 @@ public:
     *
     * \param nIndex index of a ninja
     * \param method intialization method type
-    * \param matchPoints 
+    * \param matchPoints
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setInitializationMethod( const int nIndex,
                                  const WindNinjaInputs::eInitializationMethod method,
-                                 const bool matchPoints=false, 
+                                 const bool matchPoints=false,
                                  char ** papszOptions=NULL );
     /**
     * \brief Set the initialization method for a ninja
@@ -332,28 +344,28 @@ public:
     * _Valid initialization method strings:_
     * - "noInitializationFlag" = WindNinjaInputs::noInitializationFlag
     * - "domainAverageInitializationFlag" = WindNinjaInputs::domainAverageInitializationFlag
-    * - "pointInitializationFlag" = WindNinjaInputs::pointInitializationFlag 
+    * - "pointInitializationFlag" = WindNinjaInputs::pointInitializationFlag
     * - "wxModelInitializationFlag" = WindNinjaInputs::wxModelInitializationFlag
     *
     * \param nIndex index of a ninja
     * \param method string-formatted initialization method
-    * \param matchPoints 
-    * \return errval Returns NINJA_SUCCESS upon success 
+    * \param matchPoints
+    * \return errval Returns NINJA_SUCCESS upon success
     */
     int setInitializationMethod( const int nIndex,
                                  std::string method,
-                                 const bool matchPoints=false, 
+                                 const bool matchPoints=false,
                                  char ** papszOptions=NULL );
     /**
     * \brief Set the input speed with units of a ninja
     *
-    * \param nIndex index of a ninja 
+    * \param nIndex index of a ninja
     * \param speed input speed value
     * \param units units of the input speed
-    * \return errval Returns NINJA_SUCCESS upon success 
+    * \return errval Returns NINJA_SUCCESS upon success
     */
     int setInputSpeed( const int nIndex, const double speed,
-                       const velocityUnits::eVelocityUnits units, 
+                       const velocityUnits::eVelocityUnits units,
                        char ** papszOptions=NULL );
     /**
     * \brief Set the input speed with units of a ninja
@@ -370,7 +382,7 @@ public:
     * \param units string-formatted velocity units
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setInputSpeed( const int nIndex, const double speed, 
+    int setInputSpeed( const int nIndex, const double speed,
                        std::string units, char ** papszOptions=NULL );
     /**
     * \brief Set the input direction for a ninja
@@ -390,8 +402,8 @@ public:
     * \param units wind height units
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setInputWindHeight( const int nIndex, const double height, 
-                            const lengthUnits::eLengthUnits units, 
+    int setInputWindHeight( const int nIndex, const double height,
+                            const lengthUnits::eLengthUnits units,
                             char ** papszOptions=NULL );
     /**
     * \brief Set the input wind height of a ninja
@@ -414,7 +426,7 @@ public:
     int setInputWindHeight( const int nIndex, const double height,
                             std::string units, char ** papszOptions=NULL );
 
-    int setInputWindHeight( const int nIndex, const double height, 
+    int setInputWindHeight( const int nIndex, const double height,
                             char ** papszOptions=NULL );
     /**
     * \brief Set the output wind height for a ninja
@@ -424,9 +436,9 @@ public:
     * \param units wind height units
     * \return
     */
-    int setOutputWindHeight( const int nIndex, const double height, 
-                             const lengthUnits::eLengthUnits units, 
-                             char ** papszOptions=NULL ); 
+    int setOutputWindHeight( const int nIndex, const double height,
+                             const lengthUnits::eLengthUnits units,
+                             char ** papszOptions=NULL );
     /**
     * \brief Set the wind height for the output of a ninja
     * Set the wind height for the output of a ninja given the
@@ -445,7 +457,7 @@ public:
     * \param units string-formatted length units
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setOutputWindHeight( const int nIndex, const double height, 
+    int setOutputWindHeight( const int nIndex, const double height,
                              std::string units, char ** papszOptions=NULL );
     /**
     * \brief Set the speed units for the output of a ninja
@@ -454,7 +466,7 @@ public:
     * \param units the speed units
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setOutputSpeedUnits( const int nIndex, 
+    int setOutputSpeedUnits( const int nIndex,
                              const velocityUnits::eVelocityUnits units,
                              char ** papszOptions=NULL );
     /**
@@ -476,7 +488,7 @@ public:
     /**
     * \brief Enable/disable diurnal winds for a ninja
     *
-    * \param nIndex index of a ninja 
+    * \param nIndex index of a ninja
     * \param flag Enables diurnal winds if true, disables if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
@@ -489,8 +501,8 @@ public:
     * \param units air temperature units
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setUniAirTemp( const int nIndex, const double temp, 
-                       const temperatureUnits::eTempUnits units, 
+    int setUniAirTemp( const int nIndex, const double temp,
+                       const temperatureUnits::eTempUnits units,
                        char ** papszOptions=NULL );
     /**
     * \brief Set the air temperature and units for a ninja
@@ -518,7 +530,7 @@ public:
     * \param units units of the cloud coverage value
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setUniCloudCover( const int nIndex, const double cloud_cover, 
+    int setUniCloudCover( const int nIndex, const double cloud_cover,
                           const coverUnits::eCoverUnits units, char ** papszOptions=NULL );
     /**
     * \brief Set the cloud coverage and units for a ninja
@@ -552,7 +564,7 @@ public:
     * \return
     */
     int setDateTime( const int nIndex, int const &yr, int const &mo, int const &day,
-                     int const &hr, int const &min, int const &sec, 
+                     int const &hr, int const &min, int const &sec,
                      std::string const &timeZoneString, char ** papszOptions=NULL );
     /**
     * \brief Set the wxStation filename for a ninja
@@ -561,7 +573,7 @@ public:
     * \param station_filename name of the wxStation file
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setWxStationFilename( const int nIndex, const std::string station_filename, 
+    int setWxStationFilename( const int nIndex, const std::string station_filename,
                               char ** papszOptions=NULL );
     /**
     * \brief Set the vegetation parameter for a ninja
@@ -570,7 +582,7 @@ public:
     * \param vegetation_ the vegetation type
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setUniVegetation( const int nIndex, 
+    int setUniVegetation( const int nIndex,
                           const WindNinjaInputs::eVegetation vegetation_,
                           char ** papszOptions=NULL );
     /**
@@ -590,7 +602,7 @@ public:
     * \return
     */
     int setUniVegetation( const int nIndex, std::string vegetation, char ** papszOptions=NULL );
-    
+
     int setUniVegetation( const int nIndex, char ** papszOptions=NULL );
     /**
     * \brief Set the mesh resolution choice from a string for a ninja
@@ -625,7 +637,7 @@ public:
     * \param units units of the resolution value
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setMeshResolution( const int nIndex, const double resolution, 
+    int setMeshResolution( const int nIndex, const double resolution,
                            const lengthUnits::eLengthUnits units,
                            char ** papszOptions=NULL );
     /**
@@ -723,7 +735,7 @@ public:
     * \param percent percent of the output buffer to clip
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setOutputBufferClipping( const int nIndex, const double percent, 
+    int setOutputBufferClipping( const int nIndex, const double percent,
                                  char ** papszOptions=NULL );
     /**
     * \brief Enable/disable the wxModel Google KML output for a ninja
@@ -818,14 +830,14 @@ public:
     * \param nIndex index of a ninja
     * \param width value of desired line width
     * \return errval Returns NINJA_SUCCESS upon success
-    */ 
+    */
     int setGoogLineWidth( const int nIndex, const double width, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable SHP output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   enable if true, disable if false
-    * \return errval Returns NINJA_SUCCESS upon success 
+    * \return errval Returns NINJA_SUCCESS upon success
     */
     int setShpOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
@@ -865,7 +877,7 @@ public:
     *
     * \param nIndex index of a ninja
     * \param flag   enable if true, disable if false
-    * \return errval Returns NINJA_SUCCESS upon success 
+    * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
@@ -878,7 +890,7 @@ public:
     * \param units units of the resolution
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setAsciiResolution( const int nIndex, const double resolution, 
+    int setAsciiResolution( const int nIndex, const double resolution,
                             const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
     /**
     * \brief Set the resolution of ASCII output for a ninja
@@ -909,7 +921,7 @@ public:
     */
     int setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Enable/disable txt output for a ninja 
+    * \brief Enable/disable txt output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   determines if txt output is enabled or not
@@ -927,11 +939,19 @@ public:
     /*-----------------------------------------------------------------------------
      *  Termination Section
      *-----------------------------------------------------------------------------*/
-    void reset(); 
+    void reset();
     void cancel();
     void cancelAndReset();
 protected:
-    std::vector<ninja> ninjas; ///< Vector of ninja objects for executing simulations with different configuration
+    #ifndef NINJAFOAM
+    //std::vector<ninja> ninjas; ///< Vector of ninja objects for executing simulations with different configuration
+    std::vector<ninja*> ninjas;
+    #endif
+    #ifdef NINJAFOAM
+    std::vector<NinjaFoam*> ninjas;
+    //std::vector<ninja> ninjas;
+    //std::vector<NinjaFoam> ninjas; ///< Vector of NinjaFoam objects for executing simulations with different configuration
+    #endif
 
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();

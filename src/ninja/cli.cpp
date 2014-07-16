@@ -225,7 +225,7 @@ void initializeOptions()
 int windNinjaCLI(int argc, char* argv[])
 {
     setbuf(stdout, NULL);
-    
+
     try
     {
         WindNinjaInputs inputs;
@@ -344,6 +344,9 @@ int windNinjaCLI(int argc, char* argv[])
                 #endif
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
+                #ifdef NINJAFOAM
+                ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
+                #endif
                 ;
 
         // Hidden options, will be allowed both on command line and
@@ -536,11 +539,16 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
+        #ifdef NINJAFOAM
+        ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
+        #endif
 
-       ninjaArmy windsim(1); //-Moved to header file
+        #ifndef NINJAFOAM
+        ninjaArmy windsim(1); //-Moved to header file
+        #endif
 
         /* Do we have to fetch an elevation file */
-        
+
         if(vm.count("north") || vm.count("south") ||
                vm.count("east") || vm.count("west"))
         {
@@ -549,7 +557,7 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "south", "fetch_elevation");
             option_dependency(vm, "west", "fetch_elevation");
         }
-        
+
         if(vm.count("fetch_elevation"))
         {
             std::cout << "Downloading elevation file..." << std::endl;
@@ -561,12 +569,12 @@ int windNinjaCLI(int argc, char* argv[])
             std::string source = vm["elevation_source"].as<std::string>();
 
             SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( source );
-            if( NULL == fetch ) 
+            if( NULL == fetch )
             {
                 fprintf(stderr, "Invalid DEM Source\n");
                 exit(1);
             }
-            
+
             if(vm.count("north") || vm.count("south") ||
                vm.count("east") || vm.count("west"))
             {
@@ -772,21 +780,21 @@ int windNinjaCLI(int argc, char* argv[])
             //stuff for requested output locations
             if( vm.count("input_points_file") )
             { //optional name for input file
-                windsim.setInputPointsFilename( i_, 
+                windsim.setInputPointsFilename( i_,
                         vm["input_points_file"].as<std::string>() );
             }
-            if( vm.count("output_points_file") ) 
+            if( vm.count("output_points_file") )
             { //optional name for output file
                 windsim.setOutputPointsFilename( i_,
                         vm["output_points_file"].as<std::string>() );
             }
-            
+
             #ifdef FRICTION_VELOCITY
             if(vm["compute_friction_velocity"].as<bool>())
             {
                 windsim.setFrictionVelocityFlag( i_, true );
             }
-            else 
+            else
             {
                 windsim.setFrictionVelocityFlag( i_, false );
             }
@@ -805,14 +813,14 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 //verify_option_set(vm, "compute_friction_velocity");
                 //verify_option_set(vm, "fire_perimeter_file");
-                
+
                 option_dependency(vm, "compute_emissions", "compute_friction_velocity");
                 option_dependency(vm, "compute_emissions", "fire_perimeter_file");
-                
+
                 windsim.setDustFlag( i_, true );
                 windsim.setDustFilename( i_, vm["fire_perimeter_file"].as<std::string>() );
             }
-            else 
+            else
             {
                 windsim.setDustFlag( i_, false );  //default false doensn't work ??
             }
@@ -858,11 +866,11 @@ int windNinjaCLI(int argc, char* argv[])
                     windsim.setDiurnalWinds( i_, true);
                     windsim.setUniAirTemp( i_, vm["uni_air_temp"].as<double>(),
                             temperatureUnits::getUnit(vm["air_temp_units"].as<std::string>())); //for average speed and direction initialization
-                    windsim.setUniCloudCover( i_, vm["uni_cloud_cover"].as<double>(), 
+                    windsim.setUniCloudCover( i_, vm["uni_cloud_cover"].as<double>(),
                             coverUnits::getUnit(vm["cloud_cover_units"].as<std::string>()));
-                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(), 
-                                        vm["day"].as<int>(), vm["hour"].as<int>(), 
-                                        vm["minute"].as<int>(), 0.0, 
+                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                        vm["day"].as<int>(), vm["hour"].as<int>(),
+                                        vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
                 #ifdef SCALAR
@@ -875,7 +883,7 @@ int windNinjaCLI(int argc, char* argv[])
                     windsim.setScalarYcoord(i_, vm["scalar_source_ylocation"].as<double>());
                 }
                 #endif //SCALAR
-                
+
                 #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
@@ -922,8 +930,8 @@ int windNinjaCLI(int argc, char* argv[])
                 verify_option_set(vm, "wx_station_filename");
                 option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-                windsim.setInitializationMethod( i_, 
-                        WindNinjaInputs::pointInitializationFlag, 
+                windsim.setInitializationMethod( i_,
+                        WindNinjaInputs::pointInitializationFlag,
                         vm["match_points"].as<bool>() );
                 windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
                 if(vm["write_wx_station_kml"].as<bool>() == true)
@@ -1060,7 +1068,7 @@ int windNinjaCLI(int argc, char* argv[])
                     cout << "Choices are: grass, brush, or trees.\n";
                     return -1;
                 }
-                windsim.setUniVegetation( i_, 
+                windsim.setUniVegetation( i_,
                         ninja::get_eVegetationType(vm["vegetation"].as<std::string>()));
             }
 
@@ -1068,9 +1076,9 @@ int windNinjaCLI(int argc, char* argv[])
             conflicting_options(vm, "mesh_choice", "mesh_resolution");
             if(vm.count("mesh_choice"))
             {
-                if( windsim.setMeshResolutionChoice( i_, 
+                if( windsim.setMeshResolutionChoice( i_,
                             vm["mesh_choice"].as<std::string>() ) != 0 )
-                { 
+                {
                     cout << "'mesh_choice' of " << vm["mesh_choice"].as<std::string>()
                          << " is not valid.\n" \
                          << "Choices are: coarse, medium, or fine.\n";
@@ -1102,7 +1110,7 @@ int windNinjaCLI(int argc, char* argv[])
                 return -1;
             }
 
-            windsim.setOutputSpeedUnits( i_, 
+            windsim.setOutputSpeedUnits( i_,
                     velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
 
             windsim.setWxModelGoogOutFlag( i_, vm["write_wx_model_goog_output"].as<bool>());
@@ -1357,5 +1365,5 @@ void Ninja_WriteWXASCIIOutput(bool choice)
 }
   */
 
-	
+
 

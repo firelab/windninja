@@ -9,12 +9,12 @@
  ******************************************************************************
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
- * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT 
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105 
- * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT 
- * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES 
- * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER 
- * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
+ * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+ * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+ * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+ * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+ * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+ * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
  * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -82,6 +82,7 @@ extern "C"
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
+#ifndef NINJAFOAM
 NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
     ( unsigned int numNinjas, char ** papszOptions  )
 {
@@ -94,6 +95,22 @@ NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
         return NULL;
     }
 }
+#endif
+
+#ifdef NINJAFOAM
+NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+    ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  )
+{
+    try
+    {
+        return reinterpret_cast<NinjaH*>( new ninjaArmy( numNinjas, momentumFlag ) );
+    }
+    catch( bad_alloc& )
+    {
+        return NULL;
+    }
+}
+#endif
 
 /**
  * \brief Destroy a suite of windninja runs.
@@ -384,8 +401,8 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetUniCloudCover
 }
 
 NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
-    ( NinjaH * ninja, const int nIndex, const int yr, const int mo, 
-      const int day, const int hr, const int min, const int sec, 
+    ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
+      const int day, const int hr, const int min, const int sec,
       const char * timeZoneString )
 {
     if( NULL != ninja )
@@ -682,7 +699,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogOutFlag
 }
 
 NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogResolution
-    ( NinjaH * ninja, const int nIndex, const double resolution, 
+    ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
 {
     if( NULL != ninja && NULL != units )
@@ -738,7 +755,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetShpOutFlag
 }
 
 NinjaErr WINDNINJADLL_EXPORT NinjaSetShpResolution
-    ( NinjaH * ninja, const int nIndex, const double resolution, 
+    ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
 {
     if( NULL != ninja && NULL != units )

@@ -4,7 +4,7 @@
  *
  * Project:  WindNinja
  * Purpose:  Implementation file for wxModelInitialization Factory Class
- * Author:   Levi Malott <lmnn3@mst.edu> 
+ * Author:   Levi Malott <lmnn3@mst.edu>
  *
  ******************************************************************************
  *

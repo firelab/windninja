@@ -29,13 +29,37 @@
 
 #include "ninjafoam.h"
 
-NinjaFoam::NinjaFoam()
+NinjaFoam::NinjaFoam() : ninja()
 {
     pszTerrainFile = NULL;
     pszTempPath = NULL;
     pszOgrBase = NULL;
     hGriddedDS = NULL;
     nFaces = 0;
+}
+
+/**
+ * Copy constructor.
+ * @param A Copied value.
+ */
+
+NinjaFoam::NinjaFoam(NinjaFoam const& A ) : ninja(A)
+{
+
+}
+
+/**
+ * Equals operator.
+ * @param A Value to set equal to.
+ * @return a copy of an object
+ */
+
+NinjaFoam& NinjaFoam::operator= (NinjaFoam const& A)
+{
+    if(&A != this) {
+        ninja::operator=(A);
+    }
+    return *this;
 }
 
 NinjaFoam::~NinjaFoam()
@@ -46,69 +70,58 @@ NinjaFoam::~NinjaFoam()
     GDALClose( hGriddedDS );
 }
 
-int NinjaFoam::SetTerrainFile( const char * pszInputFile )
+bool NinjaFoam::simulate_wind()
 {
-    pszTerrainFile = strdup( pszInputFile );
-    return NINJA_SUCCESS;
+    checkCancel();
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
+
+    readInputFile();
+    set_position();
+    set_uniVegetation();
+
+    checkInputs();
+
+    #ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
+    #endif
+
+    /*  ----------------------------------------*/
+    /*  convert DEM to STL format               */
+    /*  ----------------------------------------*/
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
+
+    std::string stlFileName = input.dem.fileName;
+    stlFileName = stlFileName.replace(stlFileName.end()-3, stlFileName.end(), "stl");
+
+    int pos;
+    pos = stlFileName.find_last_of("/");
+    stlFileName = stlFileName.substr(pos+1);
+
+    int nBand = 1;
+    const char * inFile = input.dem.fileName.c_str();
+    const char * outFile = stlFileName.c_str();
+
+    CPLErr eErr;
+
+    eErr = NinjaElevationToStl(inFile,
+                        outFile,
+                        NinjaStlBinary,
+                        nBand,
+                        NULL);
+
+    if(eErr != 0){
+        //do something
+    }
+
+    /*  ----------------------------------------*/
+    /*  write OpenFOAM files                    */
+    /*  ----------------------------------------*/
+
+    return true;
 }
 
-int NinjaFoam::SetNumCpus( int nCpus )
-{
-    this->nCpus = nCpus;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SetSpeed( double dfSpeed )
-{
-    this->dfSpeed = dfSpeed;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SetDirection( double dfDirection )
-{
-    assert( dfDirection >= 0.0 && dfDirection <= 360.0 );
-    this->dfDirection = dfDirection;
-    if( dfDirection == 360.0 || dfDirection == 0.0 )
-        nFaces = nFaces | NINJA_FOAM_NORTH;
-    else if( dfDirection > 0.0 && dfDirection < 90.0 )
-        nFaces = nFaces | NINJA_FOAM_NORTH | NINJA_FOAM_EAST;
-    else if( dfDirection == 90.0 )
-        nFaces = nFaces | NINJA_FOAM_EAST;
-    else if( dfDirection > 90.0 && dfDirection < 180.0 )
-        nFaces = nFaces | NINJA_FOAM_EAST | NINJA_FOAM_SOUTH;
-    else if( dfDirection == 180.0 )
-        nFaces = nFaces | NINJA_FOAM_SOUTH;
-    else if( dfDirection > 180.0 && dfDirection < 270.0 )
-        nFaces = nFaces | NINJA_FOAM_SOUTH | NINJA_FOAM_WEST;
-    else if( dfDirection ==270.0 )
-        nFaces = nFaces | NINJA_FOAM_WEST;
-    else if( dfDirection > 270.0 )
-        nFaces = nFaces | NINJA_FOAM_WEST | NINJA_FOAM_NORTH;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SetRoughD( double dfRoughD )
-{
-    this->dfRoughD = dfRoughD;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SetRoughness( double dfRoughness )
-{
-    this->dfRoughness = dfRoughness;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SetInputHeight( double dfInputHeight )
-{
-    this->dfInputHeight = dfInputHeight;
-    return NINJA_SUCCESS;
-}
-
-int NinjaFoam::WriteJson()
-{
-    return NINJA_SUCCESS;
-}
 
 int NinjaFoam::GenerateTempDirectory()
 {

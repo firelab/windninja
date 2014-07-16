@@ -192,12 +192,12 @@ CPLErr NinjaElevationToStl( const char *pszInput,
             c.z = pafScanline[j + nXSize];
 
             d.x = b.x;
-            d.y = c.y; 
+            d.y = c.y;
             d.z = pafScanline[j + nXSize + 1];
 
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;
-            v1.z = c.z - a.z; 
+            v1.z = c.z - a.z;
 
             v2.x = b.x - a.x;
             v2.y = b.y - a.y;
@@ -285,9 +285,11 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     {
         pfnProgress( 1.0, NULL, NULL );
     }
+
     VSIFree( pafScanline );
     GDALClose( hDS );
     VSIFCloseL( fout );
+
     return eErr;
 }
 

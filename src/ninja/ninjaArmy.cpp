@@ -35,22 +35,49 @@
 */
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
-, ninjas(1)
 {
-
+    ninjas[0] = new ninja();
 }
+
+/**
+* @brief Constructor that allocates numNinjas of ninjas or ninjafoams.
+*
+* @param numNinjas Number of ninjas to allocate.
+* @param momentumFlag flag inidicating if it is a NinjaFoam run
+*/
+#ifdef NINJAFOAM
+ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
+: writeFarsiteAtmFile(false)
+{
+    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
+    for(unsigned int i = 0; i < ninjas.size(); i++)
+    {
+        if(momentumFlag == true){
+            ninjas[i] = new NinjaFoam();
+        }
+        else{
+             ninjas[i] = new ninja();
+        }
+   }
+}
+#endif
 
 /**
 * @brief Constructor that allocates numNinjas of ninjas.
 *
 * @param numNinjas Number of ninjas to allocate.
 */
+#ifndef NINJAFOAM
 ninjaArmy::ninjaArmy(int numNinjas)
 : writeFarsiteAtmFile(false)
-, ninjas(numNinjas)
 {
-
+    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
+    for(unsigned int i = 0; i < ninjas.size(); i++)
+    {
+        ninjas[i] = new ninja();
+    }
 }
+#endif
 
 /**
 * @brief Copy constructor.
@@ -69,7 +96,10 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-
+    for(unsigned int i = 0; i < ninjas.size(); i++)
+    {
+       delete ninjas[i];
+    }
 }
 
 /**
@@ -86,6 +116,16 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
         ninjas = A.ninjas;
     }
     return *this;
+}
+
+/**
+ * \brief Return the number of ninjas in the army
+ *
+ * \return num_ninjas the number of ninjas in the army
+ */
+int ninjaArmy::getSize()
+{
+    return ninjas.size();
 }
 
 /**
@@ -142,33 +182,33 @@ std::string ninjaArmy::fetch_wxForecast(eWxModelType modelType, int nHours, std:
 void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
 {
     //Factory function that identifies the type of forecast file and makes appropriate class.
-    wxModelInitialization* model = 
+    wxModelInitialization* model =
             wxModelInitializationFactory::makeWxInitialization(forecastFilename);
     try
     {
         model->checkForValidData();
-    } 
-    catch(armyException &e) 
+    }
+    catch(armyException &e)
     {
         std::cout << "Bad forecast file, exiting" << endl;
         throw;
     }
     std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
     ninjas.resize(timeList.size());
-   // for(unsigned int i = 0; i < timeList.size(); i++)
-    int i = 0;
-    FOR_EVERY( iter_ninja, ninjas )
-    { /*
-        ninjas[i].set_date_time(timeList[i]);
-        ninjas[i].set_wxModelFilename(forecastFilename);
-        ninjas[i].set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-        ninjas[i].set_inputWindHeight( (*model).Get_Wind_Height() );
-        */
-        iter_ninja->set_date_time( timeList[i] );
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    //int i = 0;
+    //FOR_EVERY( iter_ninja, ninjas )
+    {
+        ninjas[i]->set_date_time(timeList[i]);
+        ninjas[i]->set_wxModelFilename(forecastFilename);
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+        ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+
+        /*iter_ninja->set_date_time( timeList[i] );
         iter_ninja->set_wxModelFilename( forecastFilename );
         iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
         iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-        i++;
+        i++;*/
     }
     delete model;
 }
@@ -203,12 +243,12 @@ bool ninjaArmy::startRuns(int numProcessors)
     if(ninjas.size() == 1)
     {
         //set number of threads for the run
-        ninjas[0].set_numberCPUs(numProcessors);
+        ninjas[0]->set_numberCPUs(numProcessors);
         try{
             //start the run
-            if(!ninjas[0].simulate_wind())
+            if(!ninjas[0]->simulate_wind())
                 printf("Return of false from simulate_wind()");
-            
+
             #ifdef SCALAR
             if(ninjas[0].input.scalarTransportFlag == true){
                 //start the scalar run
@@ -248,10 +288,15 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
     else
     {
-      FOR_EVERY(iter_ninja, ninjas)
-      {
-          iter_ninja->set_numberCPUs(1);
-      }
+        for(unsigned int i = 0; i < ninjas.size(); i++)
+        {
+            ninjas[i]->set_numberCPUs(1);
+        }
+
+        /*FOR_EVERY(iter_ninja, ninjas)
+        {
+            iter_ninja->set_numberCPUs(1);
+        }*/
 #ifdef _OPENMP
         omp_set_num_threads(numProcessors);
 #endif
@@ -265,7 +310,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             try
             {
                 //start the run
-               ninjas[i].simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+               ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
 
             }catch (bad_alloc& e)
             {
@@ -384,11 +429,11 @@ bool ninjaArmy::startFirstRun()
     setAtmFlags();
 
     //set number of threads for the run
-    ninjas[0].set_numberCPUs(1);
+    ninjas[0]->set_numberCPUs(1);
     try
     {
         //start the run
-        if(!ninjas[0].simulate_wind())
+        if(!ninjas[0]->simulate_wind())
             printf("Return of false from simulate_wind()");
 
         //write farsite atmosphere file
@@ -435,18 +480,20 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
     {
         //If wxModelInitialization, make one .atm with all runs (times) listed, else the setAtmFlags() function
         //  has already set each ninja to write their own atm file, so don't do it here!
-        if(ninjas[0].get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag)
+        if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag)
         {
             //Set directory path from first ninja's velocity file
-            std::string filePath = CPLGetPath( ninjas[0].get_VelFileName().c_str() );
+            std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
             std::string tempStr;
 
             //Check that all files have that same directory path, if not throw()
             //  Also check that they all have the same outputSpeedUnits and outputWindHeight
-            FOR_EVERY( ninja, ninjas )
+            //FOR_EVERY( ninja, ninjas )
+            for(unsigned int i = 0; i < ninjas.size(); i++)
             {
                 //Check vel file
-                tempStr = CPLGetPath(ninja->get_VelFileName().c_str());
+                //tempStr = CPLGetPath(ninja->get_VelFileName().c_str());
+                tempStr = CPLGetPath(ninjas[i]->get_VelFileName().c_str());
                 if(tempStr != filePath)
                 {
                     throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
@@ -454,7 +501,8 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
                 }
 
                 //Check ang file
-                tempStr = CPLGetPath(ninja->get_AngFileName().c_str());
+                //tempStr = CPLGetPath(ninja->get_AngFileName().c_str());
+                tempStr = CPLGetPath(ninjas[i]->get_AngFileName().c_str());
                 if(tempStr != filePath)
                 {
                     throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
@@ -462,7 +510,8 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
                 }
 
                 //Check cld file
-                tempStr = CPLGetPath(ninja->get_CldFileName().c_str());
+                //tempStr = CPLGetPath(ninja->get_CldFileName().c_str());
+                tempStr = CPLGetPath(ninjas[i]->get_CldFileName().c_str());
                 if(tempStr != filePath)
                 {
                     throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
@@ -470,25 +519,28 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
                 }
 
                 //Check outputSpeedUnits
-                if(ninja->get_outputSpeedUnits() != ninjas[0].get_outputSpeedUnits())
+                //if(ninja->get_outputSpeedUnits() != ninjas[0].get_outputSpeedUnits())
+                if(ninjas[i]->get_outputSpeedUnits() != ninjas[0]->get_outputSpeedUnits())
                     throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja speed " \
                             "units are not equal.");
 
                 //Check outputWindHeight
-                if(ninja->get_outputWindHeight() != ninjas[0].get_outputWindHeight() )
+                //if(ninja->get_outputWindHeight() != ninjas[0].get_outputWindHeight() )
+                if(ninjas[i]->get_outputWindHeight() != ninjas[0]->get_outputWindHeight() )
                     throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja " \
                             "outputWindHeights are not equal.");
             }
 
             farsiteAtm atmosphere;
-            FOR_EVERY( ninja, ninjas )
+            //FOR_EVERY( ninja, ninjas )
+            for(unsigned int i = 0; i < ninjas.size(); i++)
             {
-                atmosphere.push( ninja->get_date_time(),   ninja->get_VelFileName(),
-                                 ninja->get_AngFileName(), ninja->get_CldFileName() );
+                atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
+                                 ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
             }
 
             //Get filename from first ninja's velFile
-            std::string fileroot( CPLGetBasename(ninjas[0].get_VelFileName().c_str()) );
+            std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
             int stringPos = fileroot.find_last_of('_');
             if(stringPos > 0)
                 fileroot.erase(stringPos);
@@ -499,8 +551,8 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
             std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );
 
             //Write atm file
-            atmosphere.writeAtmFile(filename, ninjas[0].get_outputSpeedUnits(),
-                                              ninjas[0].get_outputWindHeight() );
+            atmosphere.writeAtmFile(filename, ninjas[0]->get_outputSpeedUnits(),
+                                              ninjas[0]->get_outputWindHeight() );
         }
     }
 }
@@ -516,11 +568,12 @@ void ninjaArmy::setAtmFlags()
     if(writeFarsiteAtmFile)
     {
         //if it's not a weather model run, set all ninja's atm write flags
-        if(!(ninjas[0].get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag))
+        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag))
         {
-            FOR_EVERY( ninja, ninjas )
+            //FOR_EVERY( ninja, ninjas )
+            for(unsigned int i = 0; i < ninjas.size(); i++)
             {
-                ninja->set_writeAtmFile(true);
+                ninjas[i]->set_writeAtmFile(true);
             }
         }
     }
@@ -531,15 +584,15 @@ void ninjaArmy::setSize( int nSize )
     ninjas.resize( nSize );
 }
 /*-----------------------------------------------------------------------------
- *  Ninja Communication Methods 
+ *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber, 
+int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
                            const ninjaComClass::eNinjaCom comType,
                            char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_ninjaCommunication( RunNumber, comType ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
 }
 
 #ifdef NINJA_GUI
@@ -547,14 +600,14 @@ int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
                                    char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_ComNumRuns( RunNumber ) );
+            ninjas[ nIndex ]->set_ComNumRuns( RunNumber ) );
 }
 
 ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ].get_Com();
+        return ninjas[ nIndex ]->get_Com();
     }
     return NULL; //if not valid index
 }
@@ -567,14 +620,14 @@ ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
 int ninjaArmy::setFrictionVelocityFlag( const int nIndex, const bool flag,
                             char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_frictionVelocityFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_frictionVelocityFlag( flag ) );
 }
 
-int ninjaArmy::setFrictionVelocityCalculationMethod( const int nIndex, 
+int ninjaArmy::setFrictionVelocityCalculationMethod( const int nIndex,
                                                     const std::string calcMethod,
                                                     char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_frictionVelocityCalculationMethod( calcMethod ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_frictionVelocityCalculationMethod( calcMethod ) );
 }
 #endif //FRICTION_VELOCITY
 
@@ -582,16 +635,16 @@ int ninjaArmy::setFrictionVelocityCalculationMethod( const int nIndex,
  *  Dust Methods
  *-----------------------------------------------------------------------------*/
 #ifdef EMISSIONS
-int ninjaArmy::setDustFilename( const int nIndex, const std::string filename, 
+int ninjaArmy::setDustFilename( const int nIndex, const std::string filename,
                                 char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_dustFilename( filename ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFilename( filename ) );
 }
 
 int ninjaArmy::setDustFlag    ( const int nIndex, const bool flag,
                                 char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_dustFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFlag( flag ) );
 }
 #endif //EMISSIONS
 
@@ -599,25 +652,25 @@ int ninjaArmy::setDustFlag    ( const int nIndex, const bool flag,
  *  Scalar Methods
  *-----------------------------------------------------------------------------*/
 #ifdef SCALAR
-int ninjaArmy::setScalarTransportFlag( const int nIndex, const bool flag, 
+int ninjaArmy::setScalarTransportFlag( const int nIndex, const bool flag,
                                         char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_scalarTransportFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarTransportFlag( flag ) );
 }
-int ninjaArmy::setScalarSourceStrength( const int nIndex, const double source, 
+int ninjaArmy::setScalarSourceStrength( const int nIndex, const double source,
                                         char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_scalarSourceStrength( source ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceStrength( source ) );
 }
-int ninjaArmy::setScalarXcoord( const int nIndex, const double coord, 
+int ninjaArmy::setScalarXcoord( const int nIndex, const double coord,
                                  char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_scalarSourceXcoord( coord ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceXcoord( coord ) );
 }
-int ninjaArmy::setScalarYcoord( const int nIndex, const double coord, 
+int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
                                  char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_scalarSourceYcoord( coord ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceYcoord( coord ) );
 }
 
 #endif //SCALAR
@@ -627,27 +680,27 @@ int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
  *-----------------------------------------------------------------------------*/
 int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_DEM( dem_filename ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
 }
 
 int ninjaArmy::setPosition( const int nIndex, const double lat_degrees, const double lon_degrees,
                  char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_position( lat_degrees, lon_degrees ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_position( lat_degrees, lon_degrees ) );
 }
 int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_position() );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
 }
 int ninjaArmy::setInputPointsFilename( const int nIndex, const std::string filename, char ** papszOptions)
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_inputPointsFilename( filename ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputPointsFilename( filename ) );
 }
 
 int ninjaArmy::setOutputPointsFilename( const int nIndex, const std::string filename, char **papszOptions)
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_outputPointsFilename( filename ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputPointsFilename( filename ) );
 }
 /*  couldn't find equivalent in ninja.cpp, maybe still in windninjainputs?? */
 int ninjaArmy::setOutputPointsFlag( const int nIndex, const bool flag, char ** papszOptions )
@@ -658,27 +711,27 @@ int ninjaArmy::setOutputPointsFlag( const int nIndex, const bool flag, char ** p
 int ninjaArmy::readInputFile( const int nIndex, const std::string filename, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].readInputFile( filename ) ) ;
+            ninjas[ nIndex ]->readInputFile( filename ) ) ;
 }
 
 int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].readInputFile() );
+            ninjas[ nIndex ]->readInputFile() );
 }
 /*-----------------------------------------------------------------------------
  *  Simulation Parameter Methods
  *-----------------------------------------------------------------------------*/
 int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_numberCPUs( nCPUs ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
 }
 int ninjaArmy::setInitializationMethod( const int nIndex,
-                                        const WindNinjaInputs::eInitializationMethod  method, 
+                                        const WindNinjaInputs::eInitializationMethod  method,
                                         const bool matchPoints, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_initializationMethod( method, matchPoints ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_initializationMethod( method, matchPoints ) );
 }
 
 int ninjaArmy::setInitializationMethod( const int nIndex,
@@ -692,20 +745,20 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
         if( method == "domain_average" || method == "domainAverage" ||
             method == "domainaverageinitializationflag" || method == "domain" )
         {
-            ninjas[ nIndex ].set_initializationMethod
+            ninjas[ nIndex ]->set_initializationMethod
                 ( WindNinjaInputs::domainAverageInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
         }
         else if( method == "point" || method == "pointinitializationflag" )
         {
-            ninjas[ nIndex ].set_initializationMethod
+            ninjas[ nIndex ]->set_initializationMethod
                 ( WindNinjaInputs::pointInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
 
         }
         else if( method == "wxmodel" || method == "wxmodelinitializationflag" )
         {
-            ninjas[ nIndex ].set_initializationMethod
+            ninjas[ nIndex ]->set_initializationMethod
                 ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
         }
@@ -714,15 +767,15 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
             retval = NINJA_E_INVALID;
         }
     }
-    return retval; 
+    return retval;
 }
 int ninjaArmy::setInputSpeed( const int nIndex, const double speed,
                               const velocityUnits::eVelocityUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_inputSpeed( speed, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputSpeed( speed, units ) );
 }
 
-int ninjaArmy::setInputSpeed( const int nIndex, const double speed, 
+int ninjaArmy::setInputSpeed( const int nIndex, const double speed,
                               std::string units, char ** papszOptions )
 {
    int retval = NINJA_E_INVALID;
@@ -730,10 +783,10 @@ int ninjaArmy::setInputSpeed( const int nIndex, const double speed,
    {
        try
        {
-           ninjas[ nIndex ].set_inputSpeed( speed, velocityUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_inputSpeed( speed, velocityUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -743,12 +796,12 @@ int ninjaArmy::setInputSpeed( const int nIndex, const double speed,
 
 int ninjaArmy::setInputDirection( const int nIndex, const double direction, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_inputDirection( direction ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputDirection( direction ) );
 }
-int ninjaArmy::setInputWindHeight( const int nIndex, const double height, 
+int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_inputWindHeight( height, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputWindHeight( height, units ) );
 }
 
 int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
@@ -761,10 +814,10 @@ int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_inputWindHeight( height, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_inputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -774,13 +827,13 @@ int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
 
 int ninjaArmy::setInputWindHeight( const int nIndex, const double height, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_inputWindHeight( height ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputWindHeight( height ) );
 }
 
-int ninjaArmy::setOutputWindHeight( const int nIndex, const double height, 
+int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
                          const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_outputWindHeight( height, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputWindHeight( height, units ) );
 }
 
 int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
@@ -793,10 +846,10 @@ int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_outputWindHeight( height, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_outputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -807,7 +860,7 @@ int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
 int ninjaArmy::setOutputSpeedUnits( const int nIndex, const velocityUnits::eVelocityUnits units,
                              char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_outputSpeedUnits( units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputSpeedUnits( units ) );
 }
 
 int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char ** papszOptions )
@@ -819,10 +872,10 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_outputSpeedUnits( velocityUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_outputSpeedUnits( velocityUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -832,13 +885,13 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
 
 int ninjaArmy::setDiurnalWinds( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_diurnalWinds( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_diurnalWinds( flag ) );
 }
 
-int ninjaArmy::setUniAirTemp( const int nIndex, const double temp, 
+int ninjaArmy::setUniAirTemp( const int nIndex, const double temp,
                    const temperatureUnits::eTempUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_uniAirTemp( temp, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_uniAirTemp( temp, units ) );
 }
 
 int ninjaArmy::setUniAirTemp( const int nIndex, const double temp,
@@ -849,10 +902,10 @@ int ninjaArmy::setUniAirTemp( const int nIndex, const double temp,
    {
        try
        {
-           ninjas[ nIndex ].set_uniAirTemp( temp, temperatureUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_uniAirTemp( temp, temperatureUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -860,11 +913,11 @@ int ninjaArmy::setUniAirTemp( const int nIndex, const double temp,
    return retval;
 }
 
-int ninjaArmy::setUniCloudCover( const int nIndex, const double cloud_cover, 
+int ninjaArmy::setUniCloudCover( const int nIndex, const double cloud_cover,
                       const coverUnits::eCoverUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_uniCloudCover( cloud_cover, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_uniCloudCover( cloud_cover, units ) );
 }
 
 int ninjaArmy::setUniCloudCover( const int nIndex, const double cloud_cover,
@@ -876,10 +929,10 @@ int ninjaArmy::setUniCloudCover( const int nIndex, const double cloud_cover,
        //Parse units so it contains only lowercase letters
        try
        {
-           ninjas[ nIndex ].set_uniCloudCover( cloud_cover, coverUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_uniCloudCover( cloud_cover, coverUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -892,34 +945,34 @@ int ninjaArmy::setUniCloudCover( const int nIndex, const double cloud_cover,
 }
 
 int ninjaArmy::setDateTime( const int nIndex, int const &yr, int const &mo, int const &day,
-                 int const &hr, int const &min, int const &sec, 
+                 int const &hr, int const &min, int const &sec,
                  std::string const &timeZoneString, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_date_time( yr, mo, day, hr, min, sec, timeZoneString ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_date_time( yr, mo, day, hr, min, sec, timeZoneString ) );
 }
-int ninjaArmy::setWxStationFilename( const int nIndex, const std::string station_filename, 
+int ninjaArmy::setWxStationFilename( const int nIndex, const std::string station_filename,
                           char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_wxStationFilename( station_filename ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_wxStationFilename( station_filename ) );
 }
 
 std::vector<wxStation> ninjaArmy::getWxStations( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ].get_wxStations();
+        return ninjas[ nIndex ]->get_wxStations();
     }
     std::vector<wxStation> none;
     return none; //if invalid index
 }
 
-int ninjaArmy::setUniVegetation( const int nIndex, 
+int ninjaArmy::setUniVegetation( const int nIndex,
                                  const WindNinjaInputs::eVegetation vegetation_,
                                  char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_uniVegetation( vegetation_ ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_uniVegetation( vegetation_ ) );
 }
 
 int ninjaArmy::setUniVegetation( const int nIndex, std::string vegetation,
@@ -931,17 +984,17 @@ int ninjaArmy::setUniVegetation( const int nIndex, std::string vegetation,
         std::transform( vegetation.begin(), vegetation.end(), vegetation.begin(), ::tolower );
         if( vegetation == "grass" || vegetation == "g" )
         {
-            ninjas[ nIndex ].set_uniVegetation( WindNinjaInputs::grass );
+            ninjas[ nIndex ]->set_uniVegetation( WindNinjaInputs::grass );
             retval = NINJA_SUCCESS;
         }
         else if( vegetation == "brush" || vegetation == "b" )
         {
-            ninjas[ nIndex ].set_uniVegetation( WindNinjaInputs::brush );
+            ninjas[ nIndex ]->set_uniVegetation( WindNinjaInputs::brush );
             retval = NINJA_SUCCESS;
         }
         else if( vegetation == "trees" || vegetation == "t" )
         {
-            ninjas[ nIndex ].set_uniVegetation( WindNinjaInputs::trees );
+            ninjas[ nIndex ]->set_uniVegetation( WindNinjaInputs::trees );
             retval = NINJA_SUCCESS;
         }
         else
@@ -949,33 +1002,33 @@ int ninjaArmy::setUniVegetation( const int nIndex, std::string vegetation,
             retval = NINJA_E_INVALID;
         }
     }
-    return retval; 
+    return retval;
 
 }
 
 int ninjaArmy::setUniVegetation( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_uniVegetation() );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_uniVegetation() );
 }
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const std::string choice,
                                         char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_meshResChoice( choice ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_meshResChoice( choice ) );
 }
 
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const Mesh::eMeshChoice choice,
                                         char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_meshResChoice( choice ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_meshResChoice( choice ) );
 }
 
-int ninjaArmy::setMeshResolution( const int nIndex, const double resolution, 
+int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
                                    const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_meshResolution( resolution, units ) ); 
+            ninjas[ nIndex ]->set_meshResolution( resolution, units ) );
 }
 
 int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
@@ -988,10 +1041,10 @@ int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_meshResolution( resolution, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_meshResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -1001,7 +1054,7 @@ int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
 
 int ninjaArmy::setNumVertLayers( const int nIndex, const int nLayers, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_numVertLayers( nLayers ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numVertLayers( nLayers ) );
 }
 /*  Accesors  */
 
@@ -1009,7 +1062,7 @@ bool ninjaArmy::getDiurnalWindFlag( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ].get_diurnalWindFlag();
+        return ninjas[ nIndex ]->get_diurnalWindFlag();
     }
     return false; //if not a valid index
 }
@@ -1019,7 +1072,7 @@ WindNinjaInputs::eInitializationMethod ninjaArmy::getInitializationMethod
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ].get_initializationMethod();
+        return ninjas[ nIndex ]->get_initializationMethod();
     }
     return WindNinjaInputs::noInitializationFlag; //if not a valid index
 }
@@ -1030,19 +1083,19 @@ std::string ninjaArmy::getInitializationMethodString( const int nIndex,
     std::string retstr = "";
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        WindNinjaInputs::eInitializationMethod method = 
-            ninjas[ nIndex ].get_initializationMethod();
+        WindNinjaInputs::eInitializationMethod method =
+            ninjas[ nIndex ]->get_initializationMethod();
         if( method == WindNinjaInputs::noInitializationFlag )
         {
-           retstr = "noInitializationFlag"; 
+           retstr = "noInitializationFlag";
         }
         else if( method == WindNinjaInputs::domainAverageInitializationFlag )
         {
-           retstr = "domainAverageInitializationFlag"; 
+           retstr = "domainAverageInitializationFlag";
         }
         else if( method == WindNinjaInputs::pointInitializationFlag )
         {
-           retstr = "pointInitializationFlag"; 
+           retstr = "pointInitializationFlag";
         }
         else if( method == WindNinjaInputs::wxModelInitializationFlag )
         {
@@ -1058,48 +1111,48 @@ std::string ninjaArmy::getInitializationMethodString( const int nIndex,
 #ifdef STABILITY
 int ninjaArmy::setStabilityFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_stabilityFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_stabilityFlag( flag ) );
 }
 int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
                                   char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ].set_alphaStability( stability_ ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_alphaStability( stability_ ) );
 }
 #endif //STABILITY
 /*-----------------------------------------------------------------------------
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/
-int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent, 
+int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_outputBufferClipping( percent ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputBufferClipping( percent ) );
 }
 int ninjaArmy::setWxModelGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_wxModelGoogOutFlag( flag ) );
+            ninjas[ nIndex ]->set_wxModelGoogOutFlag( flag ) );
 }
 int ninjaArmy::setWxModelShpOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_wxModelShpOutFlag( flag ) );
+            ninjas[ nIndex ]->set_wxModelShpOutFlag( flag ) );
 }
 int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_wxModelAsciiOutFlag( flag ) );
+            ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
 int ninjaArmy::setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_googOutFlag( flag ) );
+            ninjas[ nIndex ]->set_googOutFlag( flag ) );
 }
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                        const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_googResolution( resolution, units ) );
+            ninjas[ nIndex ]->set_googResolution( resolution, units ) );
 }
 
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
@@ -1112,10 +1165,10 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_googResolution( resolution, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_googResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -1128,7 +1181,7 @@ int ninjaArmy::setGoogSpeedScaling
       char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_googSpeedScaling( scaling ) );
+            ninjas[ nIndex ]->set_googSpeedScaling( scaling ) );
 }
 
 int ninjaArmy::setGoogSpeedScaling
@@ -1139,12 +1192,12 @@ int ninjaArmy::setGoogSpeedScaling
     {
        if( scaling == "equal_color" || scaling == "color" )
        {
-           ninjas[ nIndex ].set_googSpeedScaling( KmlVector::equal_color );
+           ninjas[ nIndex ]->set_googSpeedScaling( KmlVector::equal_color );
            retval = NINJA_SUCCESS;
        }
        else if( scaling == "equal_interval" || scaling == "interval" )
        {
-           ninjas[ nIndex ].set_googSpeedScaling( KmlVector::equal_interval );
+           ninjas[ nIndex ]->set_googSpeedScaling( KmlVector::equal_interval );
            retval = NINJA_SUCCESS;
        }
        else
@@ -1160,20 +1213,20 @@ int ninjaArmy::setGoogLineWidth( const int nIndex, const double width,
                                  char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_googLineWidth( width ) );
+            ninjas[ nIndex ]->set_googLineWidth( width ) );
 }
 
 
 int ninjaArmy::setShpOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_shpOutFlag( flag ) );
+            ninjas[ nIndex ]->set_shpOutFlag( flag ) );
 }
 int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
                       const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_shpResolution( resolution, units ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_shpResolution( resolution, units ) );
 }
 
 int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
@@ -1186,10 +1239,10 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_shpResolution( resolution, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_shpResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -1200,16 +1253,16 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
 int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_asciiOutFlag( flag ) );
+            ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
 }
-int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution, 
+int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_asciiResolution( resolution, units ) );
+            ninjas[ nIndex ]->set_asciiResolution( resolution, units ) );
 }
 
-int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution, 
+int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                                    std::string units, char ** papszOptions )
 {
    int retval = NINJA_E_INVALID;
@@ -1219,10 +1272,10 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           ninjas[ nIndex ].set_asciiResolution( resolution, lengthUnits::getUnit( units ) );
+           ninjas[ nIndex ]->set_asciiResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            retval = NINJA_E_INVALID;
        }
@@ -1232,20 +1285,20 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_vtkOutFlag( flag ) );
+            ninjas[ nIndex ]->set_vtkOutFlag( flag ) );
 }
 
 int ninjaArmy::setTxtOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ].set_txtOutFlag( flag ) );
+            ninjas[ nIndex ]->set_txtOutFlag( flag ) );
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ].get_outputPath();
+        return ninjas[ nIndex ]->get_outputPath();
     }
     return std::string("");
 }
@@ -1261,9 +1314,10 @@ void ninjaArmy::reset()
 
 void ninjaArmy::cancel()
 {
-    FOR_EVERY( iter_ninja, ninjas )
+    //FOR_EVERY( iter_ninja, ninjas )
+    for(unsigned int i = 0; i < ninjas.size(); i++)
     {
-        iter_ninja->cancel = true;
+        ninjas[i]->cancel = true;
     }
 }
 
