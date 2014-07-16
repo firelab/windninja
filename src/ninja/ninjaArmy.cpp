@@ -58,7 +58,7 @@ ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
         else{
              ninjas[i] = new ninja();
         }
-   }
+    }
 }
 #endif
 
@@ -195,6 +195,12 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
     }
     std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
     ninjas.resize(timeList.size());
+    //reallocate ninjas after resizing
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
+        ninjas[i] = new ninja();  //wxModelInitializations only for ninjas now (not ninjafoams)
+    }
+
     for(unsigned int i = 0; i < timeList.size(); i++)
     //int i = 0;
     //FOR_EVERY( iter_ninja, ninjas )
