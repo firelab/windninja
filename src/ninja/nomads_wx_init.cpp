@@ -269,7 +269,7 @@ std::string NomadsWxModel::getForecastIdentifier()
     return std::string( ppszModelData[NOMADS_NAME] );
 }
 
-std::string NomadsWxModel::getForecastReadable( char bySwapWithSpace )
+std::string NomadsWxModel::getForecastReadable( const char bySwapWithSpace )
 {
     if( !ppszModelData )
     {
