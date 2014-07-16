@@ -72,7 +72,6 @@ NinjaFoam::~NinjaFoam()
 
 bool NinjaFoam::simulate_wind()
 {
-    checkCancel();
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
@@ -119,9 +118,52 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*  ----------------------------------------*/
 
+
+    int status;
+
+    status = GenerateTempDirectory();
+
+    if(status != 0){
+        //do something
+    }
+
+    std::string dst_path;
+    std::string src_path;
+
+    src_path = "/home/natalie/src/windninja_foam/trunk/data/ninjafoam/0/epsilon";
+    dst_path = std::string(pszTempPath) + "/epsilon";
+
+    WriteFoamFile(src_path, dst_path);
+
+
     return true;
 }
 
+int NinjaFoam::WriteFoamFile(std::string src_path, std::string dst_path)
+{
+    VSILFILE *fin;
+    VSILFILE *fout;
+
+    const char * pszInput = src_path.c_str();
+    const char * pszOutput = dst_path.c_str();
+
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    char *data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin);
+
+    VSIFWriteL(data, offset, 1, fout);
+
+    VSIFCloseL( fin );
+    VSIFCloseL( fout );
+    CPLFree(data);
+}
 
 int NinjaFoam::GenerateTempDirectory()
 {
