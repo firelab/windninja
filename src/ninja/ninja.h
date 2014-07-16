@@ -143,7 +143,7 @@ public:
     ninja(const ninja &rhs);
     ninja &operator=(const ninja &rhs);
 
-    bool simulate_wind();
+    virtual bool simulate_wind();
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
 

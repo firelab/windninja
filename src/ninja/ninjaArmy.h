@@ -943,15 +943,7 @@ public:
     void cancel();
     void cancelAndReset();
 protected:
-    #ifndef NINJAFOAM
-    //std::vector<ninja> ninjas; ///< Vector of ninja objects for executing simulations with different configuration
     std::vector<ninja*> ninjas;
-    #endif
-    #ifdef NINJAFOAM
-    std::vector<NinjaFoam*> ninjas;
-    //std::vector<ninja> ninjas;
-    //std::vector<NinjaFoam> ninjas; ///< Vector of NinjaFoam objects for executing simulations with different configuration
-    #endif
 
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
