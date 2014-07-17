@@ -47,23 +47,37 @@ const char ** NomadsFindModel( const char *pszKey )
     return ppszKey;
 }
 
+/*
+** Results must be free'd.  We can't use CPLSPrintf on large lists fo arguments
+** because we overrun the ring buffer.
+*/
 static const char * NomadsBuildArgList( const char *pszVars,
                                         const char *pszPrefix )
 {
-    int i, n;
-    const char *pszList;
+    int i, n, m;
+    char *pszList;
     char **papszArgs = CSLTokenizeString2( pszVars, ",", 0 );
     n = CSLCount( papszArgs );
     if( !n )
         return NULL;
-    pszList = CPLSPrintf( "%s_%s=on", pszPrefix, papszArgs[0] );
+    /* var_##=on& */
+    /* variable names -n-1 for commas */
+    m = strlen( pszVars ) - (n - 1);
+    m += (strlen( pszPrefix ) + strlen( "_" )) * n;
+    m += strlen( "&" ) * (n - 1);
+    m += (strlen( "=on" ) * n);
+    m += 1; /* terminate */
+    pszList = CPLMalloc( sizeof( char ) * m );
+    memset( pszList, 0, m );
+    sprintf( pszList, "%s_%s=on", pszPrefix, papszArgs[0] );
     for( i = 1; i < n; i++ )
     {
-        pszList = CPLSPrintf( "%s&%s_%s=on", pszList, pszPrefix, papszArgs[i] );
+        sprintf( pszList, "%s&%s_%s=on", pszList, pszPrefix, papszArgs[i] );
     }
     CSLDestroy( papszArgs );
-    return pszList;
+    return (const char*)pszList;
 }
+
 nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
                                     int n )
 {
@@ -172,6 +186,8 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     const char **ppszKey;
     const char *pszGribFile;
     const char *pszGribDir;
+    const char *pszLevels;
+    const char *pszVars;
     const char *pszUrl;
     char **papszFileList = NULL;
 
@@ -182,7 +198,8 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     {
         return NULL;
     }
-
+    pszVars = NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" );
+    pszLevels = NomadsBuildArgList( ppszKey[NOMADS_LEVELS], "lev" );
     for( i = 0; i < nHours; i++ )
     {
         pszGribFile = CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT], nFcstHour,
@@ -201,6 +218,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
         }
         CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
                   pszGribDir );
+
         pszUrl =
             CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s",
 #ifdef NOMADS_USE_IP
@@ -208,15 +226,15 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
 #else
                         NOMADS_URL_CGI_HOST,
 #endif
-                        ppszKey[NOMADS_FILTER_BIN],
-                        NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" ),
-                        NomadsBuildArgList( ppszKey[NOMADS_LEVELS], "lev" ),
+                        ppszKey[NOMADS_FILTER_BIN], pszVars, pszLevels,
                         NOMADS_SUBREGION, pszGribFile, pszGribDir );
         pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
                              padfBbox[2], padfBbox[3] );
         CPLDebug( "WINDNINJA", "NOMADS generated url: %s", pszUrl );
         papszFileList = CSLAddString( papszFileList, pszUrl );
     }
+    CPLFree( (void*)pszVars );
+    CPLFree( (void*)pszLevels );
     return papszFileList;
 }
 

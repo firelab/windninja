@@ -336,6 +336,27 @@ static const char *apszNomadsKeys[][11] =
       "11 km",
       "NARR" },
 #endif /* NOMADS_EXPER_FORECASTS */
+    /*
+    ** Experimental 3d nomads NAM CONUS, don't use.
+    */
+    {
+      "nam_conus_3d",
+      "filter_nam.pl",
+      "nam.t%02dz.awphys%02d.grb2.tm00",
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      "0:36:1,39:86:3",
+      "HGT," NOMADS_GENERIC_VAR_LIST,
+      "1000_mb,100_mb,10_m_above_ground,10_mb,125_mb,150_mb,175_mb," \
+      "200_mb,20_mb,225_mb,250_mb,275_mb,2_m_above_ground,300_mb," \
+      "325_mb,350_mb,375_mb,4000_m_above_ground,400_mb,425_mb,450_mb," \
+      "475_mb,500_mb,50_mb,525_mb,550_mb,575_mb,5_mb,600_mb,625_mb," \
+      "650_mb,675_mb,700_mb,725_mb,750_mb,75_mb,775_mb,800_mb," \
+      "80_m_above_ground,825_mb,850_mb,875_mb,900_mb,925_mb,950_mb,975_mb",
+      "12 km",
+      "NAM CONUS 3D" },
+
     { NULL, NULL, NULL, NULL, NULL,
       NULL, NULL, NULL, NULL, NULL,
       NULL }
