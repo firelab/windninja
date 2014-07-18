@@ -36,7 +36,7 @@
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
-    ninjas[0] = new ninja();
+    ninjas.push_back(new ninja());
 }
 
 /**
