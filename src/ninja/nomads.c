@@ -608,6 +608,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                       "Failed to download forecast, " \
                       "stepping back one forecast run time step." );
             nFcstTries++;
+            CPLSleep( 1 );
         }
         /* Get the rest */
         i = 1;
@@ -681,6 +682,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                           "Failed to download forecast, " \
                           "stepping back one forecast run time step." );
                 nFcstTries++;
+                CPLSleep( 1 );
                 break;
             }
         }
