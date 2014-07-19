@@ -40,10 +40,6 @@
 
 #include "gdal_alg.h"
 
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-
 #define NINJA_FOAM_OGR_VRT "<OGRVRTDataSource>" \
                            "  <OGRVRTLayer name=\"%s\">" \
                            "    <SrcDataSource>%s</SrcDataSource>" \
@@ -122,7 +118,7 @@ private:
     int WriteOgrVrt( const char *pszSrsWkt );
     int RunGridSampling();
     int WriteJson();
-    int WriteFoamFile(std::string src_path, std::string dst_path);
+    int WriteFoamFiles();
 
 };
 

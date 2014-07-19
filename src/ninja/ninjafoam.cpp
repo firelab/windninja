@@ -85,9 +85,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
     #endif
 
-    /*  ----------------------------------------*/
+    /*------------------------------------------*/
     /*  convert DEM to STL format               */
-    /*  ----------------------------------------*/
+    /*------------------------------------------*/
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
@@ -106,63 +106,93 @@ bool NinjaFoam::simulate_wind()
 
     eErr = NinjaElevationToStl(inFile,
                         outFile,
-                        NinjaStlBinary,
                         nBand,
+                        NinjaStlBinary,
                         NULL);
 
     if(eErr != 0){
         //do something
     }
 
-    /*  ----------------------------------------*/
+    /*------------------------------------------*/
     /*  write OpenFOAM files                    */
-    /*  ----------------------------------------*/
+    /*------------------------------------------*/
 
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
     int status;
 
     status = GenerateTempDirectory();
-
     if(status != 0){
         //do something
     }
 
-    std::string dst_path;
-    std::string src_path;
-
-    src_path = "/home/natalie/src/windninja_foam/trunk/data/ninjafoam/0/epsilon";
-    dst_path = std::string(pszTempPath) + "/epsilon";
-
-    WriteFoamFile(src_path, dst_path);
-
+    status = WriteFoamFiles();
+    if(status != 0){
+        //do something
+    }
 
     return true;
 }
 
-int NinjaFoam::WriteFoamFile(std::string src_path, std::string dst_path)
+int NinjaFoam::WriteFoamFiles()
 {
+    const char *pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    const char *pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
+
+    char **papszFileList = VSIReadDirRecursive( pszArchive );
+    const char *osFullPath;
+    const char *pszFilename;
+    const char *pszOutput;
+    const char *pszInput;
+    char *data;
+
+    const char *pszTempFoamPath;
+
+    //write temporary OpenFOAM directories
+    for(int i = 0; i < CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename(papszFileList[i]);
+        osFullPath = papszFileList[i];
+        if(std::string(pszFilename) == ""){
+            pszTempFoamPath = CPLFormFilename(pszTempPath, osFullPath, "");
+            VSIMkdir(pszTempFoamPath, 0777);
+        }
+    }
+
+    //write temporary OpenFOAM files
     VSILFILE *fin;
     VSILFILE *fout;
+    for(int i = 0; i < CSLCount( papszFileList ); i++){
+        osFullPath = papszFileList[i];
+        pszFilename = CPLGetFilename(papszFileList[i]);
+        if(std::string(pszFilename) != ""){
+            pszInput = CPLFormFilename(pszArchive, osFullPath, "");
+            pszOutput = CPLFormFilename(pszTempPath, osFullPath, "");
 
-    const char * pszInput = src_path.c_str();
-    const char * pszOutput = dst_path.c_str();
+            fin = VSIFOpenL( pszInput, "r" );
+            fout = VSIFOpenL( pszOutput, "w" );
 
-    fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
+            vsi_l_offset offset;
+            VSIFSeekL(fin, 0, SEEK_END);
+            offset = VSIFTellL(fin);
 
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
+            VSIRewindL(fin);
+            data = (char*)CPLMalloc(offset * sizeof(char));
+            VSIFReadL(data, offset, 1, fin);
 
-    VSIRewindL(fin);
-    char *data = (char*)CPLMalloc(offset * sizeof(char));
-    VSIFReadL(data, offset, 1, fin);
+            //check user input and update OpenFOAM files
 
-    VSIFWriteL(data, offset, 1, fout);
+            VSIFWriteL(data, offset, 1, fout);
+        }
+    }
+
+    CSLDestroy( papszFileList );
 
     VSIFCloseL( fin );
     VSIFCloseL( fout );
     CPLFree(data);
+
+    return NINJA_SUCCESS;
 }
 
 int NinjaFoam::GenerateTempDirectory()
