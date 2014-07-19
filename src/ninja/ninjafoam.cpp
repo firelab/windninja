@@ -86,35 +86,6 @@ bool NinjaFoam::simulate_wind()
     #endif
 
     /*------------------------------------------*/
-    /*  convert DEM to STL format               */
-    /*------------------------------------------*/
-
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
-
-    std::string stlFileName = input.dem.fileName;
-    stlFileName = stlFileName.replace(stlFileName.end()-3, stlFileName.end(), "stl");
-
-    int pos;
-    pos = stlFileName.find_last_of("/");
-    stlFileName = stlFileName.substr(pos+1);
-
-    int nBand = 1;
-    const char * inFile = input.dem.fileName.c_str();
-    const char * outFile = stlFileName.c_str();
-
-    CPLErr eErr;
-
-    eErr = NinjaElevationToStl(inFile,
-                        outFile,
-                        nBand,
-                        NinjaStlBinary,
-                        NULL);
-
-    if(eErr != 0){
-        //do something
-    }
-
-    /*------------------------------------------*/
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
@@ -129,6 +100,33 @@ bool NinjaFoam::simulate_wind()
 
     status = WriteFoamFiles();
     if(status != 0){
+        //do something
+    }
+
+
+    /*-------------------------------------------------------------------*/
+    /*  convert DEM to STL format and write to constant/triSurface       */
+    /*-------------------------------------------------------------------*/
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
+
+    const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
+    const char *pszStlPath = CPLSPrintf("%s/constant/triSurface/", pszTempPath);
+    const char *pszStlFileName = CPLFormFilename(pszStlPath, pszShortName, ".stl");
+
+    int nBand = 1;
+    const char * inFile = input.dem.fileName.c_str();
+    const char * outFile = pszStlFileName;
+
+    CPLErr eErr;
+
+    eErr = NinjaElevationToStl(inFile,
+                        outFile,
+                        nBand,
+                        NinjaStlBinary,
+                        NULL);
+
+    if(eErr != 0){
         //do something
     }
 
