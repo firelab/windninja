@@ -90,11 +90,14 @@ int NinjaInitialize()
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
 #endif
     /* Try to update our thredds file */
-    CPLDebug( "NINJA", "Attempting to download the thredds.csv file" );
-    int rc;
-    NinjaCheckThreddsData( (void*) &rc );
-    //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
-
+    int rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
+                                                 "NO" ) );
+    if( rc == FALSE )
+    {
+        CPLDebug( "WINDNINJA", "Attempting to download the thredds.csv file" );
+        NinjaCheckThreddsData( (void*) &rc );
+        //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
+    }
     return 0;
 }
 
