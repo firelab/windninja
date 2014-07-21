@@ -103,10 +103,19 @@ public:
 private:
     NinjaFoam( NinjaFoam &rhs ) {}
 
-    int nCpus;
+    int nCpus; //input.numberCPUs
     const char *pszTerrainFile;
 
-    int nFaces;
+    double Rd; //SurfProperties.Rough_d -- zero-plane displacement height
+    std::vector<double> direction; //input.inputDirection converted to unit vector notation
+    double speed; //input.inputSpeed;
+    double inputWindHeight; //input.inputWindHeight
+    double z0; //SurfProperties.Roughness -- roughness parameter
+    
+    std::vector<std::string> inlets; // e.g., north_face
+    
+    int meshCount; //
+    
 
     OGRDataSourceH hOFOutput;
     GDALDatasetH hGriddedDS;
@@ -119,6 +128,9 @@ private:
     int RunGridSampling();
     int WriteJson();
     int WriteFoamFiles();
+    void ComputeDirection(); //converts direction from degrees to unit vector notation
+    void SetInlets(); 
+
 
 };
 

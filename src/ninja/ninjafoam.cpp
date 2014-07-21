@@ -35,7 +35,6 @@ NinjaFoam::NinjaFoam() : ninja()
     pszTempPath = NULL;
     pszOgrBase = NULL;
     hGriddedDS = NULL;
-    nFaces = 0;
 }
 
 /**
@@ -80,6 +79,9 @@ bool NinjaFoam::simulate_wind()
     set_uniVegetation();
 
     checkInputs();
+    
+    ComputeDirection(); //convert wind direction to unit vector notation 
+    SetInlets();
 
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -102,7 +104,6 @@ bool NinjaFoam::simulate_wind()
     if(status != 0){
         //do something
     }
-
 
     /*-------------------------------------------------------------------*/
     /*  convert DEM to STL format and write to constant/triSurface       */
@@ -129,6 +130,8 @@ bool NinjaFoam::simulate_wind()
     if(eErr != 0){
         //do something
     }
+    
+    //system call: surfaceTransformPoints, surfaceCheck
 
     return true;
 }
@@ -200,6 +203,97 @@ int NinjaFoam::GenerateTempDirectory()
     pszOgrBase = NULL;
 
     return NINJA_SUCCESS;
+}
+
+void NinjaFoam::SetInlets()
+{
+    double d = input.inputDirection;
+    if(d == 0 || d == 360){
+        inlets.push_back("north_face");
+    }
+    else if(d == 90){
+        inlets.push_back("east_face");
+    }
+    else if(d == 180){
+        inlets.push_back("south_face");
+    }
+    else if(d == 270){
+        inlets.push_back("west_face");
+    }
+    else if(d > 0 && d < 90){
+        inlets.push_back("north_face");
+        inlets.push_back("east_face");
+    }
+    else if(d > 90 && d < 180){
+        inlets.push_back("east_face");
+        inlets.push_back("south_face");
+    }
+    else if(d > 180 && d < 270){
+        inlets.push_back("south_face");
+        inlets.push_back("west_face");
+    }
+    else if(d > 270 && d < 360){
+        inlets.push_back("west_face");
+        inlets.push_back("north_face");
+    }
+}
+
+void NinjaFoam::ComputeDirection()
+{
+    double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
+    
+    d = input.inputDirection - 180; //convert wind direction from --> wind direction to
+    if(d < 0){
+        d += 360;
+    }
+    
+    if(d > 0 && d < 90){ //quadrant 1
+        d1 = d;
+        d2 = 90 - d;
+        dx = sin(d1 * PI/180);
+        dy = sin(d2 * PI/180);
+    }
+    else if(d > 90 && d < 180){ //quadrant 2
+        d -= 90;
+        d1 = d;
+        d2 = 90 - d;
+        dx = sin(d2 * PI/180);
+        dy = -sin(d1 * PI/180);
+    }
+    else if(d > 180 && d < 270){ //quadrant 3
+        d -= 180;
+        d1 = d;
+        d2 = 90 - d;
+        dx = -sin(d1 * PI/180);
+        dy = -sin(d2 * PI/180);
+    }
+    else if(d > 270 && d < 360){ //quadrant 4
+        d -= 270;
+        d1 = d;
+        d2 = 90 - d;
+        dx = -sin(d2 * PI/180);
+        dy = sin(d1 * PI/180);
+    }
+    else if(d == 0 || d == 360){
+        dx = 0;
+        dy = 1;
+    }
+    else if(d == 90){
+        dx = 1;
+        dy = 0;
+    }
+    else if(d == 180){
+        dx = 0;
+        dy = -1;
+    }
+    else if(d == 270){
+        dx = -1;
+        dy = 0;
+    }
+    
+    direction.push_back(dx);
+    direction.push_back(dy);
+    direction.push_back(0); 
 }
 
 int NinjaFoam::WriteOgrVrt( const char *pszSrsWkt )
