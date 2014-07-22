@@ -119,9 +119,9 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
             throw std::runtime_error(outString.str());
         }
     }
-#ifdef WITH_NOMADS_SUPPORT
     else
     {
+#ifdef WITH_NOMADS_SUPPORT
         if(nomad.identify(fileName))
         {
             const char **ppszKey = nomad.FindModelKey( fileName.c_str() );
@@ -137,12 +137,17 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         }
         else {
             std::ostringstream outString;
+            outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
+                "identified as a valid weather model initialization file.";
+            throw std::runtime_error(outString.str());
+        }
+#else
+        std::ostringstream outString;
         outString << "The weather model initialization file:\n  " << fileName << "\nCannot be " \
                 "identified as a valid weather model initialization file.";
         throw std::runtime_error(outString.str());
-        }
-    }
 #endif
+    }
 }
 
 /*
