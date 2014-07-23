@@ -513,6 +513,8 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsUtcCopy( end, ref );
     NomadsUtcAddHours( end, nHours );
 
+    //CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", CPLGetConfigOption( "NOMADS_HTTP_TIMEOUT" ) )
+
     nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
     {
@@ -760,12 +762,31 @@ char * NomadsFormName( const char *pszKey, char pszSpacer )
     const char **ppszKey = NomadsFindModel( pszKey );
     const char *s;
     char *t, *p;
+    int n;
     if( ppszKey == NULL )
     {
         return NULL;
     }
-    s = CPLSPrintf( "NOMADS %s %s", ppszKey[NOMADS_HUMAN_READABLE],
-                    ppszKey[NOMADS_GRID_RES] );
+    /* Count the levels to check on 3D */
+    n = 0;
+    s = ppszKey[NOMADS_LEVELS];
+    while( *s != '\0' )
+    {
+        if( *s++ == ',' )
+        {
+            n++;
+        }
+    }
+    if( n > 3 )
+    {
+        s = CPLSPrintf( "NOMADS %s 3D %s", ppszKey[NOMADS_HUMAN_READABLE],
+                        ppszKey[NOMADS_GRID_RES] );
+    }
+    else
+    {
+        s = CPLSPrintf( "NOMADS %s %s", ppszKey[NOMADS_HUMAN_READABLE],
+                        ppszKey[NOMADS_GRID_RES] );
+    }
     t = CPLStrdup( s );
     if( pszSpacer != ' ' )
     {

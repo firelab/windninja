@@ -144,6 +144,7 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
 {
 
     bool identified = true;
+    return false;
 
     if( fileName.find("nam") != fileName.npos ) {
         identified = false;
@@ -188,6 +189,7 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
     GDALClose( (GDALDatasetH)srcDS );
 
     return identified;
+
 }
 
 /**

@@ -195,21 +195,22 @@ void Mesh::buildFrom3dWeatherModel(const WindNinjaInputs &input,
     }
 	
 	// testing
-	/*std::string filename;
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
+        /*
+	std::string filename;
+    AsciiGrid<double> testGrid(input.dem);
 	
 	for(int k = 0; k<nlayers; k++){
         for(int i = 0; i<testGrid.get_nRows(); i++){
             for(int j = 0; j<testGrid.get_nCols(); j++ ){
                 testGrid(i,j) = ZORD(i,j,k);
-                filename = "elevation" + boost::lexical_cast<std::string>(k);
+                filename = "elevation" + boost::lexical_cast<std::string>(k) + ".asc";
                 
             }
         }
         testGrid.write_Grid(filename.c_str(), 2);
     }
-    testGrid.deallocate();*/
+    testGrid.deallocate();
+    */
 
 	domainHeight = 0;
     for(int i = 0; i < nrows; i++){

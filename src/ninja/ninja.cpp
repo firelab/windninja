@@ -416,7 +416,7 @@ do
 		    //wxInit = wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
 
 		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
-            wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
 		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
 		{

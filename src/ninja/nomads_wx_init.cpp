@@ -503,12 +503,22 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                       psWarpOptions );
 
     const char *pszElement;
+    const char *pszShortName;
     int bHaveTemp, bHaveCloud;
     bHaveTemp = FALSE;
     bHaveCloud = FALSE;
-    for( i = 0; i < (nBandCount > 4 ? 4 : nBandCount); i++ )
+    for( i = 0; i < nBandCount; i++ )
     {
         hBand = GDALGetRasterBand( hVrtDS, i + 1 );
+
+        pszShortName = GDALGetMetadataItem( hBand, "GRIB_SHORT_NAME", NULL );
+        if( !EQUAL( "10-HTGL", pszShortName ) &&
+            !EQUAL( "2-HTGL", pszShortName ) &&
+            !EQUAL( "0-EATM", pszShortName ) )
+        {
+            continue;
+        }
+
         pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
         if( !pszElement )
         {
@@ -571,4 +581,285 @@ void NomadsWxModel::checkForValidData()
     return;
 }
 
+static int NomadsClipNoData( GDALRasterBandH hBand, double dfNoData,
+                             int *pnRowsToCull, int *pnColsToCull )
+{
+    int i, j, k;
+    double *padfData;
+    int nXSize, nYSize;
+    nXSize = GDALGetRasterBandXSize( hBand );
+    nYSize = GDALGetRasterBandYSize( hBand );
+    padfData = (double*)CPLMalloc( sizeof( double ) * nXSize );
+    GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, 1,
+                  padfData, nXSize, 1, GDT_Float64, 0, 0 );
+    i = k = j = 0;
+    while( padfData[i] == dfNoData && i < nXSize )
+        i++;
+    j = i;
+    i = nXSize - 1;
+    while( padfData[i] == dfNoData && i >= 0 )
+        i--;
+    k = nXSize - i;
+    if( pnColsToCull )
+        *pnColsToCull = j < k ? j : k;
+    padfData = (double*)CPLRealloc( padfData, sizeof( double ) * nYSize );
+    GDALRasterIO( hBand, GF_Read, 0, 0, 1, nYSize,
+                  padfData, 1, nYSize, GDT_Float64, 0, 0 );
+    i = k = j = 0;
+    while( padfData[i] == dfNoData && i < nYSize )
+        i++;
+    j = i;
+    i = nYSize - 1;
+    while( padfData[i] == dfNoData && i >= 0 )
+        i--;
+    k = nYSize - i;
+    if( pnRowsToCull )
+        *pnRowsToCull = j < k ? j : k;
+    CPLFree( (void*)padfData );
+    return 0;
+}
+
+static GDALRasterBandH NomadsWxFindBand( GDALDatasetH hDS, const char *pszVar,
+                                         const char *pszHeight )
+{
+    int i;
+    int n = GDALGetRasterCount( hDS );
+    const char *pszElement, *pszShortName, *pszNeedle;
+    int nMillibars, nPascals;
+    GDALRasterBandH hBand;
+    nMillibars = atoi( pszHeight );
+    nPascals = nMillibars * 100;
+    pszNeedle = CPLSPrintf( "%d-ISBL", nPascals );
+    for( i = 0; i < n; i++ )
+    {
+        hBand = GDALGetRasterBand( hDS, i + 1 );
+        pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
+        if( !EQUAL( pszVar, pszElement ) )
+            continue;
+        pszShortName = GDALGetMetadataItem( hBand, "GRIB_SHORT_NAME", NULL );
+        if( EQUAL( pszNeedle, pszShortName ) )
+            return hBand;
+    }
+    return NULL;
+}
+
+#define NOMADS_NON_PRES 4
+
+void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
+{
+#ifdef NOMADS_ENABLE_3D
+    if( ppszModelData == NULL )
+        return;
+    int g, h, i, j, k, n;
+    GDALDatasetH hDS, hVrtDS;
+    GDALRasterBandH hBand;
+    const char *pszSrcWkt, *pszDstWkt;
+    GDALWarpOptions *psWarpOptions;
+    int nLayerCount;
+
+    char **papszLevels =
+        CSLTokenizeString2( ppszModelData[NOMADS_LEVELS], ",", 0 );
+    nLayerCount = CSLCount( papszLevels );
+    if( nLayerCount < 4 )
+    {
+        CSLDestroy( papszLevels );
+        return;
+    }
+    std::vector<blt::local_date_time> timeList( getTimeList( NULL, input.ninjaTimeZone ) );
+    /*
+    ** We need to find the correct file in the directory.  It may not be the
+    ** filename.
+    */
+    const char *pszForecastFile = NULL;
+    for( i = 0; i < (int)timeList.size(); i++ )
+    {
+        if( timeList[i] == input.ninjaTime )
+        {
+            bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
+            bpt::time_duration::sec_type t;
+            t = (input.ninjaTime.utc_time() - epoch).total_seconds();
+            pszForecastFile =
+                NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
+            break;
+        }
+    }
+    if( !pszForecastFile )
+    {
+        throw badForecastFile( "Could not find forecast associated with " \
+                               "requested time step" );
+    }
+
+    hDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    int nBandCount = GDALGetRasterCount( hDS );
+    hBand = GDALGetRasterBand( hDS, 1 );
+    int bSuccess;
+    double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
+    if( !bSuccess )
+        dfNoData = -9999.0;
+    psWarpOptions = GDALCreateWarpOptions();
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    for( i = 0; i < nBandCount; i++ )
+    {
+        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+    }
+    psWarpOptions->papszWarpOptions =
+            CSLSetNameValue( psWarpOptions->papszWarpOptions,
+                             "INIT_DEST", "-9999.0" );
+
+    pszSrcWkt = GDALGetProjectionRef( hDS );
+    pszDstWkt = input.dem.prjString.c_str();
+    hVrtDS = GDALAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+
+    int nSkipRows, nSkipCols;
+    hBand = GDALGetRasterBand( hVrtDS, 1 );
+    NomadsClipNoData( hBand, dfNoData, &nSkipRows, &nSkipCols );
+    nSkipRows++;
+    nSkipCols++;
+
+    int nXSize, nYSize;
+    double dfXOrigin, dfYOrigin;
+    double dfDeltaX, dfDeltaY;
+    double adfGeoTransform[6];
+    GDALGetGeoTransform( hVrtDS, adfGeoTransform );
+    dfXOrigin = adfGeoTransform[0];
+    dfYOrigin = adfGeoTransform[3];
+    dfDeltaX = adfGeoTransform[1];
+    dfDeltaY = adfGeoTransform[5];
+    nXSize = GDALGetRasterXSize( hVrtDS );
+    nYSize = GDALGetRasterYSize( hVrtDS );
+    int nXSubSize ,nYSubSize;
+    nXSubSize = nXSize - nSkipCols * 2;
+    nYSubSize = nYSize - nSkipRows * 2;
+    double *padfData = (double*)CPLMalloc( sizeof( double ) * nXSubSize );
+    /* Subtract the surface layers */
+    nLayerCount -= NOMADS_NON_PRES;
+    oArray.allocate( nYSubSize, nXSubSize, nLayerCount );
+    /* We assume our levels are in order from the groud up in the level list */
+    int rc;
+    i = 0;
+    h = 0;
+    while( h < nLayerCount && i < nLayerCount + NOMADS_NON_PRES )
+    {
+        if( strstr( papszLevels[i], "_m_above_ground" ) ||
+            strstr( papszLevels[i], "surface" ) ||
+            strstr( papszLevels[i], "entire_atmosphere" ) )
+        {
+            i++;
+            continue;
+        }
+
+        hBand = NomadsWxFindBand( hVrtDS, "HGT", papszLevels[i] );
+        if( hBand == NULL )
+        {
+            i++;
+            continue;
+        }
+        n = 0;
+        for( j = nYSize - nSkipRows - 1; j >= nSkipRows; j-- )
+        {
+            rc = GDALRasterIO( hBand, GF_Read, nSkipCols, j, nXSubSize, 1, 
+                               padfData, nXSubSize, 1, GDT_Float64, 0, 0 );
+            for( k = 0; k < nXSubSize; k++ )
+            {
+                oArray( n, k, h ) = padfData[k];
+            }
+            n++;
+        }
+        h++;
+        i++;
+    }
+    double xOffset, yOffset;
+    double xllNinja, yllNinja, xllWxModel, yllWxModel;
+    input.dem.get_cellPosition( 0, 0, &xllNinja, &yllNinja );
+    xllWxModel = dfXOrigin + nSkipCols * dfDeltaX;
+    yllWxModel = dfYOrigin + ((nYSize - nSkipRows) * dfDeltaY);
+
+    xllWxModel += dfDeltaX / 2;
+    yllWxModel += dfDeltaY / 2;
+
+    xOffset = xllWxModel - xllNinja;
+    yOffset = yllWxModel - yllNinja;
+
+    wxMesh.buildFrom3dWeatherModel( input, oArray, dfDeltaX,
+                                    nYSubSize, nXSubSize, nLayerCount,
+                                    xOffset, yOffset );
+    volVTK vtk;
+    vtk.writeMeshVolVTK(wxMesh.XORD, wxMesh.YORD, wxMesh.ZORD,
+                        wxMesh.ncols, wxMesh.nrows, wxMesh.nlayers,
+                        "wxMesh.vtk");
+    Mesh m2 = mesh;
+    vtk.writeMeshVolVTK(m2.XORD, m2.YORD, m2.ZORD, 
+                        m2.ncols, m2.nrows, m2.nlayers,
+                        "mackay.vtk");
+
+    /* u,v,w,t */
+    wxFields[0] = &wxU3d;
+    wxFields[1] = &wxV3d;
+    wxFields[2] = &wxW3d;
+    wxFields[3] = &wxAir3d;
+    wxFields[4] = &wxCloud3d;
+    fields[0] = &u3d;
+    fields[1] = &v3d;
+    fields[2] = &w3d;
+    fields[3] = &air3d;
+    h = 0;
+
+    static const char *apszVarList[] = { "UGRD", "VGRD", "DZDT", "TMP", NULL };
+    while( apszVarList[h] != NULL )
+    {
+        wxFields[h]->allocate( &wxMesh );
+        i = 0;
+        g = 0;
+        while( g < nLayerCount  && i < nLayerCount + NOMADS_NON_PRES )
+        {
+            if( strstr( papszLevels[i], "_m_above_ground" ) ||
+                strstr( papszLevels[i], "surface" ) ||
+                strstr( papszLevels[i], "entire_atmosphere" ) )
+            {
+                i++;
+                continue;
+            }
+            hBand = NomadsWxFindBand( hVrtDS, apszVarList[h], papszLevels[i] );
+            if( hBand == NULL )
+            {
+                i++;
+                continue;
+            }
+            n = 0;
+            for( j = nYSize - nSkipRows - 1; j >= nSkipRows; j-- )
+            {
+                rc = GDALRasterIO( hBand, GF_Read, nSkipCols, j, nXSubSize, 1, 
+                                   padfData, nXSubSize, 1, GDT_Float64, 0, 0 );
+                for( k = 0; k < nXSubSize; k++ )
+                {
+                    (*(wxFields[h]))( n, k, g ) = padfData[k];
+                }
+                n++;
+            }
+            g++;
+            i++;
+        }
+        h++;
+    }
+    wxCloud3d.allocate( &wxMesh );
+
+    CPLFree( (void*)padfData );
+    CSLDestroy( papszLevels );
+    GDALClose( hDS );
+    GDALClose( hVrtDS );
+
+    for( i = 0; i < 4; i++ )
+    {
+        fields[i]->allocate( &mesh );
+        wxFields[i]->interpolateScalarData((*(fields[i])), mesh, input);
+    }
+#endif /* NOMADS_ENABLE_3D */
+    return;
+}
 

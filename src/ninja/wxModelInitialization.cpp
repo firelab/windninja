@@ -1437,7 +1437,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     int kk;
     double tempGradient;
     #ifdef STABILITY
-    if(this->getForecastIdentifier() == "WRF-3D"){
+    if(this->getForecastReadable().find("3D") != std::string::npos){
         wxModel3d = true;
     }
     #endif
@@ -1840,7 +1840,7 @@ std::string wxModelInitialization::getForecastReadable( const char bySwapWithSpa
     while( p )
     {
         *p = bySwapWithSpace;
-        p = strchr( s, bySwapWithSpace );
+        p = strchr( s, ' ' );
     }
     std::string os = s;
     free( s );

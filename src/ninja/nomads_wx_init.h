@@ -48,6 +48,7 @@ public:
     virtual std::vector<blt::local_date_time>
         getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
+    virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
     virtual bool identify( std::string fileName );
     const char ** FindModelKey( const char *pszFilename );
     virtual std::vector<std::string> getVariableList();
@@ -72,6 +73,12 @@ private:
     const char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
 
     nomads_utc *u;
+
+    wn_3dArray oArray;
+    Mesh wxMesh;
+    wn_3dScalarField *wxFields[4];
+    wn_3dScalarField *fields[4];
+
 };
 
 #endif /* NOMADS_WX_MODEL_H_ */
