@@ -814,5 +814,5 @@ char * NomadsFormName( const char *pszKey, char pszSpacer )
 
 void NomadsFree( void *p )
 {
-    return CPLFree( p );
+    CPLFree( p );
 }
