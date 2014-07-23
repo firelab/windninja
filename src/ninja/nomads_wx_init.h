@@ -79,6 +79,13 @@ private:
     wn_3dScalarField *wxFields[4];
     wn_3dScalarField *fields[4];
 
+    int CheckFileName( const char *pszFile, const char *pszFormat );
+    int ClipNoData( GDALRasterBandH hBand, double dfNoData, int *pnRowsToCull,
+                    int *pnColsToCull );
+    GDALRasterBandH FindBand( GDALDatasetH hDS, const char *pszVar,
+                              const char *pszHeight );
+
+
 };
 
 #endif /* NOMADS_WX_MODEL_H_ */

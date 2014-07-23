@@ -29,7 +29,7 @@
 
 #include "nomads_wx_init.h"
 
-static int NomadsCheckFileName( const char *pszFile, const char *pszFormat )
+int NomadsWxModel::CheckFileName( const char *pszFile, const char *pszFormat )
 {
     const char *a, *b;
     a = pszFile;
@@ -120,8 +120,8 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
         for( j = 0; j < nCount; j++ )
         {
             SKIP_DOT_AND_DOTDOT( papszFileList[j] );
-            if( NomadsCheckFileName( papszFileList[j],
-                                     apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
+            if( CheckFileName( papszFileList[j],
+                               apszNomadsKeys[i][NOMADS_FILE_NAME_FRMT] ) )
             {
                 ppszKey = apszNomadsKeys[i];
                 goto found;
@@ -333,8 +333,8 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     {
         SKIP_DOT_AND_DOTDOT( papszFileList[i] );
         pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
-        if( !NomadsCheckFileName( papszFileList[i],
-                                  ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
+        if( !CheckFileName( papszFileList[i],
+                            ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
         {
             continue;
         }
@@ -402,8 +402,8 @@ const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
     for( i = 0; i < nCount; i++ )
     {
         SKIP_DOT_AND_DOTDOT( papszFileList[i] );
-        if( !NomadsCheckFileName( papszFileList[i],
-                                  ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
+        if( !CheckFileName( papszFileList[i],
+                            ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
         {
             continue;
         }
@@ -581,8 +581,8 @@ void NomadsWxModel::checkForValidData()
     return;
 }
 
-static int NomadsClipNoData( GDALRasterBandH hBand, double dfNoData,
-                             int *pnRowsToCull, int *pnColsToCull )
+int NomadsWxModel::ClipNoData( GDALRasterBandH hBand, double dfNoData,
+                               int *pnRowsToCull, int *pnColsToCull )
 {
     int i, j, k;
     double *padfData;
@@ -619,7 +619,7 @@ static int NomadsClipNoData( GDALRasterBandH hBand, double dfNoData,
     return 0;
 }
 
-static GDALRasterBandH NomadsWxFindBand( GDALDatasetH hDS, const char *pszVar,
+GDALRasterBandH NomadsWxModel::FindBand( GDALDatasetH hDS, const char *pszVar,
                                          const char *pszHeight )
 {
     int i;
@@ -718,7 +718,7 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
     int nSkipRows, nSkipCols;
     hBand = GDALGetRasterBand( hVrtDS, 1 );
-    NomadsClipNoData( hBand, dfNoData, &nSkipRows, &nSkipCols );
+    ClipNoData( hBand, dfNoData, &nSkipRows, &nSkipCols );
     nSkipRows++;
     nSkipCols++;
 
@@ -754,7 +754,7 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
             continue;
         }
 
-        hBand = NomadsWxFindBand( hVrtDS, "HGT", papszLevels[i] );
+        hBand = FindBand( hVrtDS, "HGT", papszLevels[i] );
         if( hBand == NULL )
         {
             i++;
@@ -825,7 +825,7 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                 i++;
                 continue;
             }
-            hBand = NomadsWxFindBand( hVrtDS, apszVarList[h], papszLevels[i] );
+            hBand = FindBand( hVrtDS, apszVarList[h], papszLevels[i] );
             if( hBand == NULL )
             {
                 i++;
