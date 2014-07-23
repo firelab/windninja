@@ -477,6 +477,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     char **papszFinalFiles = NULL;
     int nFilesToGet = 0;
     const char *pszTmpDir;
+    const char *pszConfigOpt;
     int nFcstTries;
     int nMaxFcstRewind;
     int nrc;
@@ -513,7 +514,11 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsUtcCopy( end, ref );
     NomadsUtcAddHours( end, nHours );
 
-    //CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", CPLGetConfigOption( "NOMADS_HTTP_TIMEOUT" ) )
+    pszConfigOpt = CPLGetConfigOption( "NOMADS_HTTP_TIMEOUT", "20" );
+    if( pszConfigOpt != NULL )
+    {
+        CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", pszConfigOpt );
+    }
 
     nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
@@ -745,6 +750,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 
     NomadsUtcFree( ref );
     NomadsUtcFree( end );
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( nrc == NOMADS_OK && pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
