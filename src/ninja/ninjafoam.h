@@ -113,6 +113,7 @@ private:
     double z0; //SurfProperties.Roughness -- roughness parameter
     
     std::vector<std::string> inlets; // e.g., north_face
+    std::vector<std::string> bcs;
     
     int meshCount; //
     
@@ -127,10 +128,22 @@ private:
     int WriteOgrVrt( const char *pszSrsWkt );
     int RunGridSampling();
     int WriteJson();
+    
     int WriteFoamFiles();
+    int WriteZeroFiles(VSILFILE *fin, FILE *fout, const char *pszFilename);
+    int AddBcBlock(std::string &dataString);
+    
     void ComputeDirection(); //converts direction from degrees to unit vector notation
-    void SetInlets(); 
-
+    void SetInlets();
+    void SetBcs();
+    
+    std::string boundary_name;
+    std::string terrainName;
+    std::string type;
+    std::string value;
+    std::string gammavalue;
+    std::string pvalue;
+    std::string inletoutletvalue;
 
 };
 

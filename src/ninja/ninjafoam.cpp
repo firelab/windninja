@@ -35,6 +35,14 @@ NinjaFoam::NinjaFoam() : ninja()
     pszTempPath = NULL;
     pszOgrBase = NULL;
     hGriddedDS = NULL;
+    
+    boundary_name = "";
+    terrainName = "NAME";
+    type = "";
+    value = "";
+    gammavalue = "";
+    pvalue = "";
+    inletoutletvalue = "";
 }
 
 /**
@@ -82,6 +90,7 @@ bool NinjaFoam::simulate_wind()
     
     ComputeDirection(); //convert wind direction to unit vector notation 
     SetInlets();
+    SetBcs();
 
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -136,17 +145,161 @@ bool NinjaFoam::simulate_wind()
     return true;
 }
 
+int NinjaFoam::AddBcBlock(std::string &dataString)
+{
+    const char *pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    const char *pszTemplateFile;
+    const char *pszPathToFile;
+    char *pszTemplate;
+    
+    if(gammavalue != ""){
+        pszTemplate = CPLStrdup("genericTypeVal.tmp");
+    }
+    else if(inletoutletvalue != ""){
+        pszTemplate = CPLStrdup("genericType.tmp");
+    }
+    else{
+        pszTemplate = CPLStrdup("genericType-kep.tmp");
+    }
+
+    pszPathToFile = CPLSPrintf("ninjafoam.zip/ninjafoam/0/%s", pszTemplate); 
+    pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
+    
+    char *data;
+    VSILFILE *fin;
+    fin = VSIFOpenL( pszTemplateFile, "r" );
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin); //read in the template file
+    
+    //cout<<"data in new block = \n"<<data<<endl;
+    
+    std::string s(data);
+    int pos = s.find("$boundary_name$");
+    int len = std::string("$boundary_name$").length();
+    s.replace(pos, len, boundary_name);
+    
+    pos = s.find("$type$");
+    len = std::string("$type$").length();
+    s.replace(pos, len, type);
+    
+    pos = s.find("$value$");
+    len = std::string("$value$").length();
+    s.replace(pos, len, value);
+    
+    pos = s.find("$gammavalue$");
+    len = std::string("$gammavalue$").length();
+    s.replace(pos, len, gammavalue);
+    
+    pos = s.find("$pvalue$");
+    len = std::string("$pvalue$").length();
+    s.replace(pos, len, pvalue);
+    
+    dataString.append(s);
+    
+    CPLFree(data);
+    CPLFree(pszTemplate);
+    VSIFCloseL(fin);
+    
+    return NINJA_SUCCESS;
+    
+}
+
+int NinjaFoam::WriteZeroFiles(VSILFILE *fin, FILE *fout, const char *pszFilename)
+{
+    /* 
+     * write the p file
+     */
+    if(std::string(pszFilename) == "p"){
+    
+        int pos;
+        char *data;
+
+        vsi_l_offset offset;
+        VSIFSeekL(fin, 0, SEEK_END);
+        offset = VSIFTellL(fin);
+
+        VSIRewindL(fin);
+        data = (char*)CPLMalloc(offset * sizeof(char));
+        VSIFReadL(data, offset, 1, fin); //read in full p template file
+        
+        // write to first dictionary value, then append from template file
+        std::string dataString;
+        std::string s(data);
+        pos = s.find("$boundaryField$");
+        s.erase(pos);
+        dataString.append(s);
+
+        for(int i = 0; i < bcs.size(); i++){
+            boundary_name = bcs[i];
+            //check if boundary_name is an inlet
+            if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
+                type = "zeroGradient";
+            }
+            else{
+                type = "totalPressure";
+                value = "0";
+                gammavalue = "1";
+                pvalue = "0";
+            }
+            AddBcBlock(dataString);
+        }
+        
+        s = data;
+        pos = s.find("$boundaryField$");
+        int len = std::string("$boundaryField$").length();
+        s.erase(0, pos+len);
+        
+        pos = s.find("$terrainName$");
+        len = std::string("$terrainName$").length();
+        s.replace(pos, len, terrainName);
+        
+        dataString.append(s);
+        
+        //cout<<"dataString = \n"<<dataString<<endl;
+        
+        fprintf(fout, dataString.c_str());
+        
+        CPLFree(data);
+        VSIFCloseL(fin);
+        fclose(fout);
+    }
+    
+    
+    /* 
+     * write the U file
+     */
+     
+     /* 
+      * write the k file
+      */
+      
+    /* 
+     * write the epsilon file
+     */
+      
+    /* 
+     * write the nut file
+     */
+
+    return NINJA_SUCCESS;
+}
+
 int NinjaFoam::WriteFoamFiles()
 {
     const char *pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
     const char *pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
 
     char **papszFileList = VSIReadDirRecursive( pszArchive );
-    const char *osFullPath;
+    std::string osFullPath;
     const char *pszFilename;
     const char *pszOutput;
     const char *pszInput;
-    char *data;
 
     const char *pszTempFoamPath;
 
@@ -155,43 +308,38 @@ int NinjaFoam::WriteFoamFiles()
         pszFilename = CPLGetFilename(papszFileList[i]);
         osFullPath = papszFileList[i];
         if(std::string(pszFilename) == ""){
-            pszTempFoamPath = CPLFormFilename(pszTempPath, osFullPath, "");
+            pszTempFoamPath = CPLFormFilename(pszTempPath, osFullPath.c_str(), "");
             VSIMkdir(pszTempFoamPath, 0777);
         }
     }
 
     //write temporary OpenFOAM files
     VSILFILE *fin;
-    VSILFILE *fout;
+    FILE *fout;
+    
     for(int i = 0; i < CSLCount( papszFileList ); i++){
         osFullPath = papszFileList[i];
         pszFilename = CPLGetFilename(papszFileList[i]);
-        if(std::string(pszFilename) != ""){
-            pszInput = CPLFormFilename(pszArchive, osFullPath, "");
-            pszOutput = CPLFormFilename(pszTempPath, osFullPath, "");
+        if(std::string(pszFilename) != "" && std::string(CPLGetExtension(pszFilename)) != "tmp"){
+            pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
+            pszOutput = CPLFormFilename(pszTempPath, osFullPath.c_str(), "");
 
             fin = VSIFOpenL( pszInput, "r" );
-            fout = VSIFOpenL( pszOutput, "w" );
-
-            vsi_l_offset offset;
-            VSIFSeekL(fin, 0, SEEK_END);
-            offset = VSIFTellL(fin);
-
-            VSIRewindL(fin);
-            data = (char*)CPLMalloc(offset * sizeof(char));
-            VSIFReadL(data, offset, 1, fin);
-
-            //check user input and update OpenFOAM files
-
-            VSIFWriteL(data, offset, 1, fout);
+            fout = fopen( pszOutput, "w" );
+            
+            if( osFullPath.find("0") == 0){ //zero files
+                WriteZeroFiles(fin, fout, pszFilename);
+            }
+            else if( osFullPath.find("system") == 0 ){ //system files
+                //WriteSystemFiles(fin, fout);
+            }
+            else if( osFullPath.find("constant") == 0 ){ //constant files
+                //WriteConstantFiles(fin, fout);
+            }
         }
     }
 
     CSLDestroy( papszFileList );
-
-    VSIFCloseL( fin );
-    VSIFCloseL( fout );
-    CPLFree(data);
 
     return NINJA_SUCCESS;
 }
@@ -203,6 +351,15 @@ int NinjaFoam::GenerateTempDirectory()
     pszOgrBase = NULL;
 
     return NINJA_SUCCESS;
+}
+
+void NinjaFoam::SetBcs()
+{
+    bcs.push_back("east_face");
+    bcs.push_back("west_face");
+    bcs.push_back("north_face");
+    bcs.push_back("south_face");
+    
 }
 
 void NinjaFoam::SetInlets()
