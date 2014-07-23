@@ -147,8 +147,6 @@ bool ncepNamGrib2SurfInitialization::identify( std::string fileName )
     if( fileName.find("nam") == fileName.npos ) {
         identified = false;
     }
-    /* testing */
-    return false;
     GDALDatasetH hDS = GDALOpenShared( fileName.c_str(), GA_ReadOnly );
     if( !hDS || GDALGetRasterCount( hDS ) < 8 )
         identified = false;
