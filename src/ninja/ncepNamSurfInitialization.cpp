@@ -328,8 +328,8 @@ bool ncepNamSurfInitialization::identify( std::string fileName )
         }
         delete [] location;
     }
-    status = nc_close( ncid );
     */
+    status = nc_close( ncid );
 
     return identified;
 }
