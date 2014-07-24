@@ -106,18 +106,15 @@ private:
     int nCpus; //input.numberCPUs
     const char *pszTerrainFile;
 
-    double Rd; //SurfProperties.Rough_d -- zero-plane displacement height
+    //double Rd; //input.surface.Rough_d -- zero-plane displacement height
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
-    double speed; //input.inputSpeed;
-    double inputWindHeight; //input.inputWindHeight
-    double z0; //SurfProperties.Roughness -- roughness parameter
+    //double speed; //input.inputSpeed;
+    //double inputWindHeight; //input.inputWindHeight
+    //double z0; //input.surface.Roughness(i,j); -- roughness parameter
     
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs;
     
-    int meshCount; //
-    
-
     OGRDataSourceH hOFOutput;
     GDALDatasetH hGriddedDS;
 
@@ -133,6 +130,7 @@ private:
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int AddBcBlock(std::string &dataString);
     int WritePFile(VSILFILE *fin, VSILFILE *fout);
+    int WriteUFile(VSILFILE *fin, VSILFILE *fout);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
@@ -145,6 +143,7 @@ private:
     std::string gammavalue;
     std::string pvalue;
     std::string inletoutletvalue;
+    std::string template_;
 
 };
 
