@@ -130,8 +130,9 @@ private:
     int WriteJson();
     
     int WriteFoamFiles();
-    int WriteZeroFiles(VSILFILE *fin, FILE *fout, const char *pszFilename);
+    int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int AddBcBlock(std::string &dataString);
+    int WritePFile(VSILFILE *fin, VSILFILE *fout);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();

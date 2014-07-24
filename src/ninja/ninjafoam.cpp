@@ -150,7 +150,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     const char *pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
     const char *pszTemplateFile;
     const char *pszPathToFile;
-    char *pszTemplate;
+    const char *pszTemplate;
     
     if(gammavalue != ""){
         pszTemplate = CPLStrdup("genericTypeVal.tmp");
@@ -164,7 +164,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
 
     pszPathToFile = CPLSPrintf("ninjafoam.zip/ninjafoam/0/%s", pszTemplate); 
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
-    
+
     char *data;
     VSILFILE *fin;
     fin = VSIFOpenL( pszTemplateFile, "r" );
@@ -180,94 +180,55 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     //cout<<"data in new block = \n"<<data<<endl;
     
     std::string s(data);
-    int pos = s.find("$boundary_name$");
-    int len = std::string("$boundary_name$").length();
-    s.replace(pos, len, boundary_name);
+    int pos; 
+    int len; 
+    pos = s.find("$boundary_name$");
+    len = std::string("$boundary_name$").length();
+    if(pos != s.npos){
+        s.replace(pos, len, boundary_name);
+    }
     
     pos = s.find("$type$");
     len = std::string("$type$").length();
-    s.replace(pos, len, type);
+    if(pos != s.npos){
+        s.replace(pos, len, type);
+    }
     
     pos = s.find("$value$");
     len = std::string("$value$").length();
-    s.replace(pos, len, value);
+    if(pos != s.npos){
+        s.replace(pos, len, value);
+    }
     
     pos = s.find("$gammavalue$");
     len = std::string("$gammavalue$").length();
-    s.replace(pos, len, gammavalue);
+    if(pos != s.npos){
+        s.replace(pos, len, gammavalue);
+    }
     
     pos = s.find("$pvalue$");
     len = std::string("$pvalue$").length();
-    s.replace(pos, len, pvalue);
+    if(pos != s.npos){
+        s.replace(pos, len, pvalue);
+    }
     
     dataString.append(s);
     
     CPLFree(data);
-    CPLFree(pszTemplate);
     VSIFCloseL(fin);
     
     return NINJA_SUCCESS;
     
 }
 
-int NinjaFoam::WriteZeroFiles(VSILFILE *fin, FILE *fout, const char *pszFilename)
+int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
     /* 
      * write the p file
      */
+         
     if(std::string(pszFilename) == "p"){
-    
-        int pos;
-        char *data;
-
-        vsi_l_offset offset;
-        VSIFSeekL(fin, 0, SEEK_END);
-        offset = VSIFTellL(fin);
-
-        VSIRewindL(fin);
-        data = (char*)CPLMalloc(offset * sizeof(char));
-        VSIFReadL(data, offset, 1, fin); //read in full p template file
-        
-        // write to first dictionary value, then append from template file
-        std::string dataString;
-        std::string s(data);
-        pos = s.find("$boundaryField$");
-        s.erase(pos);
-        dataString.append(s);
-
-        for(int i = 0; i < bcs.size(); i++){
-            boundary_name = bcs[i];
-            //check if boundary_name is an inlet
-            if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
-                type = "zeroGradient";
-            }
-            else{
-                type = "totalPressure";
-                value = "0";
-                gammavalue = "1";
-                pvalue = "0";
-            }
-            AddBcBlock(dataString);
-        }
-        
-        s = data;
-        pos = s.find("$boundaryField$");
-        int len = std::string("$boundaryField$").length();
-        s.erase(0, pos+len);
-        
-        pos = s.find("$terrainName$");
-        len = std::string("$terrainName$").length();
-        s.replace(pos, len, terrainName);
-        
-        dataString.append(s);
-        
-        //cout<<"dataString = \n"<<dataString<<endl;
-        
-        fprintf(fout, dataString.c_str());
-        
-        CPLFree(data);
-        VSIFCloseL(fin);
-        fclose(fout);
+        WritePFile(fin, fout);
     }
     
     
@@ -325,7 +286,7 @@ int NinjaFoam::WriteFoamFiles()
             pszOutput = CPLFormFilename(pszTempPath, osFullPath.c_str(), "");
 
             fin = VSIFOpenL( pszInput, "r" );
-            fout = fopen( pszOutput, "w" );
+            fout = VSIFOpenL( pszOutput, "w" );
             
             if( osFullPath.find("0") == 0){ //zero files
                 WriteZeroFiles(fin, fout, pszFilename);
@@ -484,4 +445,76 @@ int NinjaFoam::RunGridSampling()
 GDALDatasetH NinjaFoam::GetRasterOutputHandle()
 {
     return hGriddedDS;
+}
+
+int NinjaFoam::WritePFile(VSILFILE *fin, VSILFILE *fout)
+{
+        int pos;
+        char *data;
+        
+        vsi_l_offset offset;
+        VSIFSeekL(fin, 0, SEEK_END);
+        offset = VSIFTellL(fin);
+
+        VSIRewindL(fin);
+        data = (char*)CPLMalloc(offset * sizeof(char));
+        VSIFReadL(data, offset, 1, fin); //read in full p template file
+        VSIFCloseL(fin);
+        
+        // write to first dictionary value
+        std::string dataString;
+        std::string s(data);
+        pos = s.find("$boundaryField$");
+        if(pos != s.npos){
+            s.erase(pos);
+            dataString.append(s);
+        }
+        
+        //append BC blocks from template files
+        for(int i = 0; i < bcs.size(); i++){
+            boundary_name = bcs[i];
+            //check if boundary_name is an inlet
+            if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
+                type = "zeroGradient";
+            }
+            else{
+                type = "totalPressure";
+                value = "0";
+                gammavalue = "1";
+                pvalue = "0";
+            }
+            int status;
+            //append BC block for current face
+            status = AddBcBlock(dataString);
+            if(status != 0){
+                //do something
+            }
+        }
+        
+        s = data;
+        pos = s.find("$boundaryField$");
+        int len = std::string("$boundaryField$").length();
+        if(pos != s.npos){
+            s.erase(0, pos+len);
+        }
+        
+        pos = s.find("$terrainName$");
+        len = std::string("$terrainName$").length();
+        if(pos != s.npos){
+            s.replace(pos, len, terrainName);
+        }
+        
+        dataString.append(s);
+        
+        //cout<<"dataString = \n"<<dataString<<endl;
+        
+        const char * d = dataString.c_str();
+        int nSize = strlen(d);
+        
+        VSIFWriteL( d, nSize, 1, fout );
+        
+        VSIFCloseL( fout );
+        CPLFree(data);
+        
+        return NINJA_SUCCESS;
 }
