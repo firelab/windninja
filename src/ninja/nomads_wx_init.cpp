@@ -351,6 +351,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
+            GDALClose( hDS );
             throw badForecastFile( "Could not fetch ref time or forecast time " \
                                    "from GRIB file" );
         }
