@@ -131,6 +131,9 @@ private:
     int AddBcBlock(std::string &dataString);
     int WritePFile(VSILFILE *fin, VSILFILE *fout);
     int WriteUFile(VSILFILE *fin, VSILFILE *fout);
+    int WriteKFile(VSILFILE *fin, VSILFILE *fout);
+    int WriteEpsilonFile(VSILFILE *fin, VSILFILE *fout);
+    int WriteNutFile(VSILFILE *fin, VSILFILE *fout);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
