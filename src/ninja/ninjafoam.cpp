@@ -289,7 +289,7 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
 
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
-    VSIFReadL(data, offset, 1, fin); //read in full U,p,k,epsilon,nut template file
+    VSIFReadL(data, offset, 1, fin); //read in full template file
         
     // write to first dictionary value
     std::string dataString;
@@ -299,46 +299,25 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(pos);
         dataString.append(s);
     }
-    
-    /* 
-     * write boundary field for the p file
-     */
          
+    // add boundary field values from .tmp files
     if(std::string(pszFilename) == "p"){
         WritePBoundaryField(dataString);
     }
     
-    
-    /* 
-     * write boundary field for the U file
-     */
-     
     if(std::string(pszFilename) == "U"){
         WriteUBoundaryField(dataString);
     }
-
-     
-     /* 
-      * write boundary field for the k file
-      */
       
     if(std::string(pszFilename) == "k"){
         WriteKBoundaryField(dataString);
     }
       
-      
-    /* 
-     * write boundary field for the epsilon file
-     */
-     
     if(std::string(pszFilename) == "epsilon"){
         WriteEpsilonBoundaryField(dataString);
     }
-      
-    /* 
-     * nut file doesn't get a boundary field block
-     */
-     
+    
+    // writing remaining fields from template file 
     s = data;
     pos = s.find("$boundaryField$");
     int len = std::string("$boundaryField$").length();
@@ -360,12 +339,96 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     VSIFWriteL( d, nSize, 1, fout );
         
     CPLFree(data);
-        
+    
     VSIFCloseL( fin ); // reopened for each file in writeFoamFiles()
     VSIFCloseL( fout ); // reopened for each file in writeFoamFiles()
-    
+        
     return NINJA_SUCCESS;
 }
+
+int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
+{
+    int pos;
+    char *data;
+        
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin); //read in full template file
+    
+    if(std::string(pszFilename) == "decomposeParDict"){
+        std::string s(data);
+        int pos; 
+        int len; 
+        pos = s.find("$nProc$");
+        len = std::string("$nProc$").length();
+        if(pos != s.npos){
+            std::string t = boost::lexical_cast<std::string>(input.numberCPUs);
+            s.replace(pos, len, t);
+        }
+        pos = s.find("$nProc$");
+        len = std::string("$nProc$").length();
+        if(pos != s.npos){
+            std::string t = boost::lexical_cast<std::string>(input.numberCPUs);
+            s.replace(pos, len, t);
+        }
+        const char * d = s.c_str();
+        int nSize = strlen(d);
+        VSIFWriteL(d, nSize, 1, fout);
+    }
+    else if(std::string(pszFilename) == "sampleDict"){
+        std::string s(data);
+        int pos; 
+        int len; 
+        pos = s.find("$stlFileName$");
+        len = std::string("$stlFileName$").length();
+        if(pos != s.npos){
+            std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+            t += "_out.stl";
+            s.replace(pos, len, t);
+        }
+        const char * d = s.c_str();
+        int nSize = strlen(d);
+        VSIFWriteL(d, nSize, 1, fout);
+    }
+    else{
+        VSIFWriteL(data, offset, 1, fout);
+    }
+        
+    CPLFree(data);
+    
+    VSIFCloseL(fin); // reopened for each file in writeFoamFiles()
+    VSIFCloseL(fout); // reopened for each file in writeFoamFiles()
+        
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
+{
+    int pos;
+    char *data;
+        
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin); //read in full template file
+    
+    VSIFWriteL(data, offset, 1, fout);
+        
+    CPLFree(data);
+    
+    VSIFCloseL(fin); // reopened for each file in writeFoamFiles()
+    VSIFCloseL(fout); // reopened for each file in writeFoamFiles()
+        
+    return NINJA_SUCCESS;
+}
+
 
 int NinjaFoam::WriteFoamFiles()
 {
@@ -407,14 +470,14 @@ int NinjaFoam::WriteFoamFiles()
             fin = VSIFOpenL( pszInput, "r" );
             fout = VSIFOpenL( pszOutput, "w" );
             
-            if( osFullPath.find("0") == 0){ //zero files
+            if( osFullPath.find("0") == 0){
                 WriteZeroFiles(fin, fout, pszFilename);
             }
-            else if( osFullPath.find("system") == 0 ){ //system files
-                //WriteSystemFiles(fin, fout);
+            else if( osFullPath.find("system") == 0 ){
+                WriteSystemFiles(fin, fout, pszFilename);
             }
-            else if( osFullPath.find("constant") == 0 ){ //constant files
-                //WriteConstantFiles(fin, fout);
+            else if( osFullPath.find("constant") == 0 ){
+                WriteConstantFiles(fin, fout, pszFilename);
             }
         }
     }

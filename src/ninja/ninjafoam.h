@@ -103,15 +103,9 @@ public:
 private:
     NinjaFoam( NinjaFoam &rhs ) {}
 
-    int nCpus; //input.numberCPUs
     const char *pszTerrainFile;
 
-    //double Rd; //input.surface.Rough_d -- zero-plane displacement height
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
-    //double speed; //input.inputSpeed;
-    //double inputWindHeight; //input.inputWindHeight
-    //double z0; //input.surface.Roughness(i,j); -- roughness parameter
-    
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs;
     
@@ -128,6 +122,8 @@ private:
     
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
+    int WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
+    int WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int AddBcBlock(std::string &dataString);
     int WritePBoundaryField(std::string &dataString);
     int WriteUBoundaryField(std::string &dataString);
