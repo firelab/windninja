@@ -725,6 +725,14 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "Choices are domainAverageInitialization, pointInitialization, or wxModelInitialization.\n";
             return -1;
         }
+        
+        // currently only domain average runs are possible with momentum solver
+        if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") && 
+           vm["momentum_flag"].as<bool>())
+        {
+            cout << "'initialization_method' must be 'domainAverageInitialization' if the momentum solver is enabled.\n";
+            return -1;
+        }
 
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
@@ -766,6 +774,7 @@ int windNinjaCLI(int argc, char* argv[])
         */
 
         //For loop over all ninjas (just 1 ninja unless it's a weather model run)--------------------
+
         for(int i_ = 0; i_ < windsim.getSize(); i_++)
         {
             //Set ninja communication----------------------------------------------------------
