@@ -129,11 +129,10 @@ private:
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int AddBcBlock(std::string &dataString);
-    int WritePFile(VSILFILE *fin, VSILFILE *fout);
-    int WriteUFile(VSILFILE *fin, VSILFILE *fout);
-    int WriteKFile(VSILFILE *fin, VSILFILE *fout);
-    int WriteEpsilonFile(VSILFILE *fin, VSILFILE *fout);
-    int WriteNutFile(VSILFILE *fin, VSILFILE *fout);
+    int WritePBoundaryField(std::string &dataString);
+    int WriteUBoundaryField(std::string &dataString);
+    int WriteKBoundaryField(std::string &dataString);
+    int WriteEpsilonBoundaryField(std::string &dataString);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
