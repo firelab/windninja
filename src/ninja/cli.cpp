@@ -726,14 +726,55 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
         
-        // currently only domain average runs are possible with momentum solver
+        //---------------------------------------------------------------------
+        //  only some options are possible with momentum solver
+        //---------------------------------------------------------------------
+         
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") && 
            vm["momentum_flag"].as<bool>())
         {
             cout << "'initialization_method' must be 'domainAverageInitialization' if the momentum solver is enabled.\n";
             return -1;
         }
-
+        if(vm["momentum_flag"].as<bool>() && vm["diurnal_winds"].as<bool>())
+        {
+            cout << "Dirunal slope winds option not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        #ifdef STABILITY
+        if(vm["momentum_flag"].as<bool>() && vm["non_neutral_stability"].as<bool>())
+        {
+            cout << "Non-neutral stability option not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        #endif
+        #ifdef FRICTION_VELOCITY
+        if(vm["momentum_flag"].as<bool>() && vm["compute_friction_velocity"].as<bool>())
+        {
+            cout << "Friction velocity calculations not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        #endif
+        #ifdef EMISSIONS
+        if(vm["momentum_flag"].as<bool>() && vm["compute_emissions"].as<bool>())
+        {
+            cout << "Emission calculations not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        #endif
+        #ifdef SCALAR
+        if(vm["momentum_flag"].as<bool>() && vm["compute_scalar_transport"].as<bool>())
+        {
+            cout << "Scalar transport calculations not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        #endif
+        if(vm["momentum_flag"].as<bool>() && vm.count("input_points_file"))
+        {
+            cout << "Scalar transport calculations not supported if the momentum solver is enabled.\n";
+            return -1;
+        }
+        
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
