@@ -115,7 +115,7 @@ ninja::ninja(const ninja &rhs)
 #endif
 #ifdef FRICTION_VELOCITY
 , UstarGrid(rhs.UstarGrid)
-#endif 
+#endif
 , u(rhs.u)
 , v(rhs.v)
 , w(rhs.w)
@@ -195,7 +195,7 @@ ninja &ninja::operator=(const ninja &rhs)
         CloudGrid = rhs.CloudGrid;
         #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
-        #endif 
+        #endif
         #ifdef FRICTION_VELOCITY
         UstarGrid = rhs.UstarGrid;
         #endif
@@ -1543,7 +1543,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
         {
             break;
         }
-        
+
         //cout<<"resid = "<<resid<<endl;
 
         rho_1 = rho;
@@ -4201,23 +4201,23 @@ bool ninja::matched(int iter)
 void ninja::computeFrictionVelocity()
 {
     FrictionVelocity fv;
-    
+
     fv.ComputeVertexNormals(mesh, input);
-    
+
     UstarGrid.set_headerData(input.dem.get_nCols(),
                             input.dem.get_nRows(),
-                            input.dem.get_xllCorner(), 
-                            input.dem.get_yllCorner(), 
-                            input.dem.get_cellSize(), 
-                            -9999.0, 
-                            -9999.0, 
+                            input.dem.get_xllCorner(),
+                            input.dem.get_yllCorner(),
+                            input.dem.get_cellSize(),
+                            -9999.0,
+                            -9999.0,
                             input.dem.prjString);
     UstarGrid = 0;
-    
+
     //fv.ComputeUstar(input, UstarGrid, u, v, w, mesh, "shearStress"); // options are "logProfile" and "shearStress"
-    fv.ComputeUstar(input, UstarGrid, u, v, w, mesh, input.frictionVelocityCalculationMethod); 
+    fv.ComputeUstar(input, UstarGrid, u, v, w, mesh, input.frictionVelocityCalculationMethod);
     //UstarGrid.write_Grid("ustar", 2);
-    
+
 }
 #endif
 
@@ -4228,40 +4228,40 @@ void ninja::computeFrictionVelocity()
 void ninja::computeDustEmissions()
 {
     CPLDebug("DUST", "dust flag = %i\n", input.dustFlag);
-    
+
     Dust dust;
 
     DustGrid.set_headerData(input.dem.get_nCols(),
                             input.dem.get_nRows(),
-                            input.dem.get_xllCorner(), 
-                            input.dem.get_yllCorner(), 
-                            input.dem.get_cellSize(), 
-                            -9999.0, 
-                            -9999.0, 
+                            input.dem.get_xllCorner(),
+                            input.dem.get_yllCorner(),
+                            input.dem.get_cellSize(),
+                            -9999.0,
+                            -9999.0,
                             input.dem.prjString);
-    
+
 
     dust.MakeGrid(input, DustGrid);    //burn the fire perimeter .shp into a raster
-    
+
     dust.ComputePM10(UstarGrid, DustGrid);
-    
+
     //DustGrid.ascii2png("dust_out_shear.png", "pm10", "ug/m3", "legend", false);
-    
-        
+
+
    /*char *dstWKT = NULL;
     OGRSpatialReference oSRS;
     oSRS.importFromEPSG(4326);
     oSRS.exportToWkt(&dstWKT);
-    
+
     GDALDataset *srcDS, *wrpDS;
     srcDS = (GDALDataset*)GDALOpenShared( "final_dustgrid", GA_ReadOnly );
-    
+
     char *srcWKT = NULL;
     oSRS = srcDS->GetProjectionRef();
     oSRS.exportToWkt(&srcWKT);
-    
+
     GDALWarpOptions* psWarpOptions;
-    
+
     GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
     int pbSuccess;
     double dfNoData = poBand->GetNoDataValue( &pbSuccess );
@@ -4269,7 +4269,7 @@ void ninja::computeDustEmissions()
     psWarpOptions = GDALCreateWarpOptions();
 
     int nBandCount = srcDS->GetRasterCount();
-        
+
     psWarpOptions->nBandCount = nBandCount;
 
     psWarpOptions->padfDstNoDataReal =
@@ -4294,18 +4294,18 @@ void ninja::computeDustEmissions()
                                                     dstWKT,
                                                     GRA_NearestNeighbour,
                                                     1.0, psWarpOptions );
-    
+
     CPLFree(srcWKT);
     CPLFree(dstWKT);
-    
+
     AsciiGrid<double> dustGridWgs;
     GDAL2AsciiGrid( wrpDS, 1, dustGridWgs );
     dustGridWgs.write_Grid("dust_wgs", 2);
-    
+
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );
     GDALClose((GDALDatasetH) wrpDS );*/
-    
+
 
 
     //=======PM10 testing=============
@@ -4429,16 +4429,16 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
 			velTempGrid->write_Grid(input.velFile.c_str(), 2);
-			
+
 			#ifdef FRICTION_VELOCITY
 			if(input.frictionVelocityFlag == 1){
                 AsciiGrid<double> *ustarTempGrid;
                 ustarTempGrid=NULL;
-                
+
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
                 ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
-                
+
                 if(ustarTempGrid)
                 {
                     delete ustarTempGrid;
@@ -4446,16 +4446,16 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
                 }
 			}
 			#endif
-			
+
 			#ifdef EMISSIONS
 			if(input.dustFlag == 1){
                 AsciiGrid<double> *dustTempGrid;
                 dustTempGrid=NULL;
-                
+
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
-			
+
                 dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
-                
+
                 if(dustTempGrid)
                 {
                     delete dustTempGrid;
@@ -4474,7 +4474,7 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 				delete velTempGrid;
 				velTempGrid=NULL;
 			}
-			
+
 			//Write .atm file for this run.  Only has one time value in file.
 			if(input.writeAtmFile)
 			{
@@ -4567,18 +4567,18 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 
 			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-			
+
 			#ifdef FRICTION_VELOCITY
 			if(input.frictionVelocityFlag == 1){
 			    AsciiGrid<double> *ustarTempGrid;
-			    
+
 			    ustarTempGrid=NULL;
-			    
+
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-                
+
                 ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
                 ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
-                
+
                 if(ustarTempGrid)
                 {
                     delete ustarTempGrid;
@@ -4586,18 +4586,18 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
                 }
 			}
             #endif //FRICTION_VELOCITY
-			
+
 			#ifdef EMISSIONS
 			if(input.dustFlag == 1){
 			    AsciiGrid<double> *dustTempGrid;
-			    
+
                 dustTempGrid=NULL;
-                
+
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-                
+
                 ninjaKmlFiles.setDustFlag(input.dustFlag);
                 ninjaKmlFiles.setDustGrid(*dustTempGrid);
-                
+
                 if(dustTempGrid)
                 {
                     delete dustTempGrid;
@@ -4609,8 +4609,8 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
 			ninjaKmlFiles.setKmzFile(input.kmzFile);
 			ninjaKmlFiles.setDemFile(input.dem.fileName);
-			
-			
+
+
 			ninjaKmlFiles.setLegendFile(input.legFile);
 			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
@@ -4780,7 +4780,7 @@ void ninja::set_inputPointsFilename(std::string filename)
 
     char datum [6];
     fscanf(points, "%5s\n.", datum);
-    
+
     if(!EQUAL(datum, "WGS84") && !EQUAL(datum, "NAD83") && !EQUAL(datum, "NAD27")){
         throw std::runtime_error(std::string("The datum must be specified as either WGS84, NAD83, or NAD27 in ninja::set_inputPointsFilename")
                                         + input.inputPointsFilename + ".");
@@ -4851,7 +4851,7 @@ void ninja::set_inputPointsFilename(std::string filename)
 
         input.projYList.push_back(projY);
         input.projXList.push_back(projX);
-        
+
     }
     fclose(points);
     GDALClose((GDALDatasetH) poDS );
@@ -5066,6 +5066,13 @@ void ninja::set_scalarSourceYcoord(double yCoord)
     input.scalarSourceYcoord = yCoord;
 }
 #endif //SCALAR
+
+#ifdef NINJAFOAM
+void ninja::set_NumberOfIterations(int nIterations)
+{
+    input.nIterations = nIterations;
+}
+#endif
 
 
 void ninja::computeSurfPropForCell
@@ -6109,11 +6116,11 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
-            
+
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";
     #endif
-    
+
     #ifdef EMISSIONS
     input.dustFile = rootFile + ascii_fileAppend + "_dust.asc";
     #endif //EMISSIONS

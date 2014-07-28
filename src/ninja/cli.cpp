@@ -346,6 +346,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
+                ("number_of_iterations", po::value<int>(), "number of iterations for momentum solver (must be a multiple of 10)") 
                 #endif
                 ;
 
@@ -729,7 +730,7 @@ int windNinjaCLI(int argc, char* argv[])
         //---------------------------------------------------------------------
         //  only some options are possible with momentum solver
         //---------------------------------------------------------------------
-         
+        #ifdef NINJAFOAM 
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") && 
            vm["momentum_flag"].as<bool>())
         {
@@ -774,6 +775,7 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "Scalar transport calculations not supported if the momentum solver is enabled.\n";
             return -1;
         }
+        #endif //NINJAFOAM
         
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
@@ -875,7 +877,15 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setDustFlag( i_, false );  //default false doensn't work ??
             }
             #endif
-
+                    
+            #ifdef NINJAFOAM
+            if(vm["momentum_flag"].as<bool>()){
+                if(vm.count("number_of_iterations")){
+                    windsim.setNumberOfIterations( i_,
+                        vm["number_of_iterations"].as<int>() );
+                }
+            }
+            #endif
 
             if(vm["initialization_method"].as<std::string>() == string("domainAverageInitialization"))
             {

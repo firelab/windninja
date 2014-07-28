@@ -290,6 +290,10 @@ public:
     double scalarSourceYORD; // y location of scalar source in WN mesh coords
 #endif //SCALAR
 
+#ifdef NINJAFOAM
+    void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
+#endif
+
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
 
     void set_outputPointsFlag(bool flag);

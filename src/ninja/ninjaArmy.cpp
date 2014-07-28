@@ -681,6 +681,17 @@ int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
 
 #endif //SCALAR
 
+#ifdef NINJAFOAM
+/*-----------------------------------------------------------------------------
+ *  NinjaFOAM Methods
+ *-----------------------------------------------------------------------------*/
+int ninjaArmy::setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NumberOfIterations( nIterations ) );
+}
+
+#endif
+
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
  *-----------------------------------------------------------------------------*/

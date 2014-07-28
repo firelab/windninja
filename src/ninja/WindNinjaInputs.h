@@ -249,6 +249,13 @@ public:
     std::vector<double> heightList;
     std::vector<double> projYList; //vectors of input point locations in proj coords
     std::vector<double> projXList;
+
+    /*-----------------------------------------------------------------------------
+     *  NinjaFOAM section
+     *-----------------------------------------------------------------------------*/
+#ifdef NINJAFOAM
+    int nIterations; //number of iterations for a ninjafoam simulation
+#endif
 };
 
 #endif	/* WINDNINJAINPUTS_H */

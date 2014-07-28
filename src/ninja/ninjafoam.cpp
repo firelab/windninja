@@ -109,7 +109,7 @@ bool NinjaFoam::simulate_wind()
     if(status != 0){
         //do something
     }
-
+    
     status = WriteFoamFiles();
     if(status != 0){
         //do something
@@ -141,7 +141,13 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
+    /*-------------------------------------------------------------------*/
+    /*  write output surface file to constant/triSurface                 */
+    /*-------------------------------------------------------------------*/
+    
     //system call: surfaceTransformPoints, surfaceCheck
+    
+    
 
     return true;
 }
@@ -388,6 +394,20 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         if(pos != s.npos){
             std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
             t += "_out.stl";
+            s.replace(pos, len, t);
+        }
+        const char * d = s.c_str();
+        int nSize = strlen(d);
+        VSIFWriteL(d, nSize, 1, fout);
+    }
+    else if(std::string(pszFilename) == "controlDict"){
+        std::string s(data);
+        int pos; 
+        int len; 
+        pos = s.find("$finaltime$");
+        len = std::string("$finaltime$").length();
+        if(pos != s.npos){
+            std::string t = boost::lexical_cast<std::string>(input.nIterations);
             s.replace(pos, len, t);
         }
         const char * d = s.c_str();

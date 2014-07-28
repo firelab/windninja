@@ -257,6 +257,20 @@ public:
 
 #endif //SCALAR
 
+#ifdef NINJAFOAM
+    /*-----------------------------------------------------------------------------
+     *  NinjaFOAM Methods
+     *-----------------------------------------------------------------------------*/
+    /**
+    * \brief Set the number of iterations for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param nIterations Number of iterations
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL );
+#endif
+
     /*-----------------------------------------------------------------------------
      *  Forecast Model Methods
      *-----------------------------------------------------------------------------*/

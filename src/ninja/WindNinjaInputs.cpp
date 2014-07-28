@@ -111,6 +111,9 @@ WindNinjaInputs::WindNinjaInputs()
     #ifdef SCALAR
     scalarTransportFlag = false;
     #endif
+    #ifdef NINJAFOAM
+    nIterations = 2000;
+    #endif
     
     outputPointsFilename = "!set";
     inputPointsFilename = "!set";
