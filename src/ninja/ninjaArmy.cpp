@@ -689,6 +689,10 @@ int ninjaArmy::setNumberOfIterations( const int nIndex, const int nIterations, c
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NumberOfIterations( nIterations ) );
 }
+int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
+}
 
 #endif
 

@@ -133,6 +133,8 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
+    int writeBlockMesh();
+    int readLogFile(std::vector<double> &bbox, std::vector<int> &nCells, int &ratio);
     
     std::string boundary_name;
     std::string terrainName;

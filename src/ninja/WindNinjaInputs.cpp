@@ -113,6 +113,7 @@ WindNinjaInputs::WindNinjaInputs()
     #endif
     #ifdef NINJAFOAM
     nIterations = 2000;
+    meshCount = 1000000;
     #endif
     
     outputPointsFilename = "!set";

@@ -5072,6 +5072,10 @@ void ninja::set_NumberOfIterations(int nIterations)
 {
     input.nIterations = nIterations;
 }
+void ninja::set_MeshCount(int meshCount)
+{
+    input.meshCount = meshCount;
+}
 #endif
 
 

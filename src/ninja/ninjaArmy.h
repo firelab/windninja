@@ -269,6 +269,15 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the mesh count for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param nMeshCount Mesh count
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL );
 #endif
 
     /*-----------------------------------------------------------------------------

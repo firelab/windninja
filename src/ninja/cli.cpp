@@ -347,6 +347,7 @@ int windNinjaCLI(int argc, char* argv[])
                 #ifdef NINJAFOAM
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>(), "number of iterations for momentum solver (must be a multiple of 10)") 
+                ("mesh_count", po::value<int>(), "number of cells in the mesh (default is 1000000") 
                 #endif
                 ;
 
@@ -883,6 +884,10 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_,
                         vm["number_of_iterations"].as<int>() );
+                }
+                if(vm.count("mesh_count")){
+                    windsim.setMeshCount( i_,
+                        vm["mesh_count"].as<int>() );
                 }
             }
             #endif

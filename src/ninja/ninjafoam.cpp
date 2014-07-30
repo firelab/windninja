@@ -142,10 +142,33 @@ bool NinjaFoam::simulate_wind()
     }
     
     /*-------------------------------------------------------------------*/
-    /*  write output surface file to constant/triSurface                 */
+    /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
     
-    //system call: surfaceTransformPoints, surfaceCheck
+    //system calls: 
+    //  surfaceTransformPoints - create output surface stl in constant/triSurface
+    //  surfaceCheck - write log.json meshing steps below
+    
+    
+    /*-------------------------------------------------------------------*/
+    /*  write contstant/polyMesh/blockMeshDict                           */
+    /*-------------------------------------------------------------------*/
+    
+    //reads from log.json created from surfaceCheck
+    writeBlockMesh();
+    
+    
+    /*-------------------------------------------------------------------*/
+    /*  write system/snappyHexMeshDict_cast|layer                        */
+    /*-------------------------------------------------------------------*/
+    
+    
+    
+    /*-------------------------------------------------------------------*/
+    /* execute commands in run.sh                                        */
+    /*-------------------------------------------------------------------*/
+    
+    //system call: renumberMesh, decomposePar, potentialFoam, simpleFoam, reconstructPar
     
     
 
@@ -753,4 +776,204 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     }
         
     return NINJA_SUCCESS;
+}
+
+int NinjaFoam::readLogFile(std::vector<double> &bbox, std::vector<int> &nCells, int &ratio)
+{
+    const char *pszInput;
+    
+    pszInput = CPLFormFilename(CPLGetCurrentDir(), "log", "json");
+    
+    VSILFILE *fin;
+    fin = VSIFOpenL( pszInput, "r" );
+    
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin);
+    
+    std::string s(data);
+    std:string ss;
+    int pos, pos2, pos3, pos4, pos5; 
+    int found; 
+    pos = s.find("Bounding Box");
+    if(pos != s.npos){
+        pos2 = s.find("(", pos);
+        pos3 = s.find(")", pos2);
+        ss = s.substr(pos2+1, pos3-pos2-1); // xmin ymin zmin
+        pos4 = s.find("(", pos3);
+        pos5 = s.find(")", pos4);
+        ss.append(" ");
+        ss.append(s.substr(pos4+1, pos5-pos4-1));// xmin ymin zmin xmax ymax zmax
+        found = ss.find(" ");
+        if(found != ss.npos){
+            bbox.push_back(atof(ss.substr(0, found).c_str())); // xmin
+            bbox.push_back(atof(ss.substr(found).c_str())); // ymin
+        }
+        found = ss.find(" ", found+1);
+        if(found != ss.npos){
+            bbox.push_back(atof(ss.substr(found).c_str())); // zmin
+        }
+        found = ss.find(" ", found+1);
+        if(found != ss.npos){
+            bbox.push_back(atof(ss.substr(found).c_str())); // xmax
+        }
+        found = ss.find(" ", found+1);
+        if(found != ss.npos){
+            bbox.push_back(atof(ss.substr(found).c_str())); // ymax
+        }
+        found = ss.find(" ", found+1);
+        if(found != ss.npos){
+            bbox.push_back(atof(ss.substr(found).c_str()) + 3000); // zmax
+            bbox.push_back(atof(ss.substr(found).c_str()) + 1000); // zmid
+        }
+    }
+    else{
+        cout<<"Bounding Box not found in log.json!"<<endl;
+        return NINJA_E_FILE_IO;
+    }
+    
+    double volume1, volume2;
+    double cellCount1, cellCount2;
+    double cellVolume1, cellVolume2;
+    double side1, side2;
+    double firstCellHeight2;
+    double expansionRatio;
+    
+    volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
+    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // volume away from terrain
+    
+    cellCount1 = input.meshCount * 0.5; // cell count in volume 1
+    cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
+    
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
+    cellVolume2 = volume2/cellCount2; // volume of 1 cell in zone2
+    
+    side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    side2 = std::pow(cellVolume2, (1.0/3.0)); // length of side of regular hex cell in zone2
+    
+    nCells.push_back(int( (bbox[3] - bbox[0]) / side1)); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / side1)); // Ny1
+    nCells.push_back(int( (bbox[6] - bbox[2]) / side1)); // Nz1
+    
+    nCells.push_back(nCells[0]); // Nx2 = Nx1;
+    nCells.push_back(nCells[1]); // Ny2 = Ny1;
+    
+    expansionRatio = 1.13; // expansion ratio in zone2
+    
+    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio;
+    nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
+    ratio = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
+    expansionRatio = std::pow(ratio, (1.0 / (nCells[5] - 1)));
+    
+    CPLFree(data);
+    VSIFCloseL(fin);
+    
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::writeBlockMesh()
+{
+    const char *pszInput;
+    const char *pszOutput;
+    const char *pszPath;
+    const char *pszArchive;
+    std::vector<double> bbox;
+    std::vector<int> nCells;
+    int ratio;
+    
+    int status;
+    status = readLogFile(bbox, nCells, ratio);
+    if(status != 0){
+        //do something
+    }
+    
+    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
+    
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/constant/polyMesh/blockMeshDict", "");
+    pszOutput = CPLFormFilename(pszTempPath, "constant/polyMesh/blockMeshDict", "");
+    
+    VSILFILE *fin;
+    VSILFILE *fout;
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin);
+    
+    std::string s(data);
+    std::vector<std::string> bboxField;
+    std::vector<std::string> cellField;
+    int pos; 
+    int len;
+    
+    bboxField.push_back("$xmin$");
+    bboxField.push_back("$ymin$");
+    bboxField.push_back("$zmin$");
+    bboxField.push_back("$xmax$");
+    bboxField.push_back("$ymax$");
+    bboxField.push_back("$zmax$");
+    bboxField.push_back("$zmid$");
+    
+    cellField.push_back("$Nx1$");
+    cellField.push_back("$Ny1$");
+    cellField.push_back("$Nz1$");
+    cellField.push_back("$Nx2$");
+    cellField.push_back("$Ny2$");
+    cellField.push_back("$Nz2$");
+    
+    for(int i = 0; i<bbox.size(); i++){
+        pos = s.find(bboxField[i]);
+        len = std::string(bboxField[i]).length();
+        while(pos != s.npos){
+            std::string t = boost::lexical_cast<std::string>(bbox[i]);
+            s.replace(pos, len, t);
+            pos = s.find(bboxField[i], pos);
+            len = std::string(bboxField[i]).length();
+        }
+    }
+    for(int i = 0; i<nCells.size(); i++){
+        pos = s.find(cellField[i]);
+        len = std::string(cellField[i]).length();
+        while(pos != s.npos){
+            std::string t = boost::lexical_cast<std::string>(nCells[i]);
+            s.replace(pos, len, t);
+            pos = s.find(cellField[i], pos);
+            len = std::string(cellField[i]).length();
+        }
+    }
+    pos = s.find("$Ratio$");
+    len = std::string("$Ratio$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(ratio);
+        s.replace(pos, len, t);
+        pos = s.find("$Ratio$", pos);
+        len = std::string("$Ratio$").length();
+    }
+    
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+        
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout); 
+    
+    return NINJA_SUCCESS;
+     
+    
 }
