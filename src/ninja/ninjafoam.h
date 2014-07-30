@@ -134,7 +134,8 @@ private:
     void SetInlets();
     void SetBcs();
     int writeBlockMesh();
-    int readLogFile(std::vector<double> &bbox, std::vector<int> &nCells, int &ratio);
+    int readLogFile(int &ratio);
+    int writeSnappyMesh();
     
     std::string boundary_name;
     std::string terrainName;
@@ -144,6 +145,12 @@ private:
     std::string pvalue;
     std::string inletoutletvalue;
     std::string template_;
+    
+    std::vector<std::string> bboxField;
+    std::vector<std::string> cellField;
+    std::vector<double> bbox;
+    std::vector<int> nCells;
+    double side1; // length of side of regular hex cell in zone1
 
 };
 

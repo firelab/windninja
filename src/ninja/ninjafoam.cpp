@@ -155,13 +155,20 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     
     //reads from log.json created from surfaceCheck
-    writeBlockMesh();
+    status = writeBlockMesh();
+    if(status != 0){
+        //do something
+    }
     
     
     /*-------------------------------------------------------------------*/
     /*  write system/snappyHexMeshDict_cast|layer                        */
     /*-------------------------------------------------------------------*/
     
+    status = writeSnappyMesh();
+    if(status != 0){
+        //do something
+    }
     
     
     /*-------------------------------------------------------------------*/
@@ -778,7 +785,7 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readLogFile(std::vector<double> &bbox, std::vector<int> &nCells, int &ratio)
+int NinjaFoam::readLogFile(int &ratio)
 {
     const char *pszInput;
     
@@ -841,7 +848,7 @@ int NinjaFoam::readLogFile(std::vector<double> &bbox, std::vector<int> &nCells, 
     double volume1, volume2;
     double cellCount1, cellCount2;
     double cellVolume1, cellVolume2;
-    double side1, side2;
+    double side2;
     double firstCellHeight2;
     double expansionRatio;
     
@@ -883,12 +890,10 @@ int NinjaFoam::writeBlockMesh()
     const char *pszOutput;
     const char *pszPath;
     const char *pszArchive;
-    std::vector<double> bbox;
-    std::vector<int> nCells;
     int ratio;
     
     int status;
-    status = readLogFile(bbox, nCells, ratio);
+    status = readLogFile(ratio);
     if(status != 0){
         //do something
     }
@@ -916,8 +921,6 @@ int NinjaFoam::writeBlockMesh()
     VSIFReadL(data, offset, 1, fin);
     
     std::string s(data);
-    std::vector<std::string> bboxField;
-    std::vector<std::string> cellField;
     int pos; 
     int len;
     
@@ -974,6 +977,222 @@ int NinjaFoam::writeBlockMesh()
     VSIFCloseL(fout); 
     
     return NINJA_SUCCESS;
-     
+}
+
+int NinjaFoam::writeSnappyMesh()
+{
+    int lx, ly, lz;
+    double expansionRatio;
+    double final;
+    double first;
+    int nLayers;
     
+    lx = int((bbox[0] + bbox[3]) * 0.5);
+    ly = int((bbox[1] + bbox[4]) * 0.5);
+    lz = int((bbox[6]));
+    expansionRatio = 1.4;
+    final = side1/expansionRatio;
+    nLayers = int((log(final/first) / log(expansionRatio)) + 1 + 1);
+    
+    const char *pszInput;
+    const char *pszOutput;
+    const char *pszPath;
+    const char *pszArchive;
+    
+    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
+    
+    //-----------------------------
+    //  write snappyHexMeshDict
+    //-----------------------------
+    
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/snappyHexMeshDict_cast", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/snappyHexMeshDict", "");
+    
+    VSILFILE *fin;
+    VSILFILE *fout;
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin);
+    
+    std::string s(data);
+    int pos; 
+    int len;
+    
+    pos = s.find("$stlName$");
+    len = std::string("$stlName$").length();
+    while(pos != s.npos){
+        std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+        s.replace(pos, len, t);
+        pos = s.find("$stlName$", pos);
+        len = std::string("$stlName$").length();
+    }
+    pos = s.find("$stlRegionName$");
+    len = std::string("$stlRegionName$").length();
+    while(pos != s.npos){
+        std::string t = "NAME";
+        s.replace(pos, len, t);
+        pos = s.find("$stlRegionName$", pos);
+        len = std::string("$stlRegionName$").length();
+    }
+    pos = s.find("$lx$");
+    len = std::string("$lx$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(lx);
+        s.replace(pos, len, t);
+        pos = s.find("$lx$", pos);
+        len = std::string("$lx$").length();
+    }
+    pos = s.find("$ly$");
+    len = std::string("$ly$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(ly);
+        s.replace(pos, len, t);
+        pos = s.find("$ly$", pos);
+        len = std::string("$ly$").length();
+    }
+    pos = s.find("$lz$");
+    len = std::string("$lz$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(lz);
+        s.replace(pos, len, t);
+        pos = s.find("$lz$", pos);
+        len = std::string("$lz$").length();
+    }
+    pos = s.find("$Nolayers$");
+    len = std::string("$Nolayers$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(nLayers);
+        s.replace(pos, len, t);
+        pos = s.find("$Nolayers$", pos);
+        len = std::string("$Nolayers$").length();
+    }
+    pos = s.find("$expansion_ratio$");
+    len = std::string("$expansion_ratio$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(expansionRatio);
+        s.replace(pos, len, t);
+        pos = s.find("$expansion_ratio$", pos);
+        len = std::string("$expansion_ratio$").length();
+    }
+    pos = s.find("$final$");
+    len = std::string("$final$").length();
+    while(pos != s.npos){
+        std::string t = boost::lexical_cast<std::string>(final);
+        s.replace(pos, len, t);
+        pos = s.find("$final$", pos);
+        len = std::string("$final$").length();
+    }
+    
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+        
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout); 
+    
+    //-----------------------------
+    //  write snappyHexMeshDict1
+    //-----------------------------
+    
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/snappyHexMeshDict_layer", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/snappyHexMeshDict1", "");
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+    
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, fin);
+    
+    std::string ss(data);
+    
+    pos = ss.find("$stlName$");
+    len = std::string("$stlName$").length();
+    while(pos != ss.npos){
+        std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+        ss.replace(pos, len, t);
+        pos = ss.find("$stlName$", pos);
+        len = std::string("$stlName$").length();
+    }
+    pos = ss.find("$stlRegionName$");
+    len = std::string("$stlRegionName$").length();
+    while(pos != ss.npos){
+        std::string t = "NAME";
+        ss.replace(pos, len, t);
+        pos = ss.find("$stlRegionName$", pos);
+        len = std::string("$stlRegionName$").length();
+    }
+    pos = ss.find("$lx$");
+    len = std::string("$lx$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(lx);
+        ss.replace(pos, len, t);
+        pos = ss.find("$lx$", pos);
+        len = std::string("$lx$").length();
+    }
+    pos = ss.find("$ly$");
+    len = std::string("$ly$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(ly);
+        ss.replace(pos, len, t);
+        pos = ss.find("$ly$", pos);
+        len = std::string("$ly$").length();
+    }
+    pos = ss.find("$lz$");
+    len = std::string("$lz$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(lz);
+        ss.replace(pos, len, t);
+        pos = ss.find("$lz$", pos);
+        len = std::string("$lz$").length();
+    }
+    pos = ss.find("$Nolayers$");
+    len = std::string("$Nolayers$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(nLayers);
+        ss.replace(pos, len, t);
+        pos = ss.find("$Nolayers$", pos);
+        len = std::string("$Nolayers$").length();
+    }
+    pos = ss.find("$expansion_ratio$");
+    len = std::string("$expansion_ratio$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(expansionRatio);
+        ss.replace(pos, len, t);
+        pos = ss.find("$expansion_ratio$", pos);
+        len = std::string("$expansion_ratio$").length();
+    }
+    pos = ss.find("$final$");
+    len = std::string("$final$").length();
+    while(pos != ss.npos){
+        std::string t = boost::lexical_cast<std::string>(final);
+        ss.replace(pos, len, t);
+        pos = ss.find("$final$", pos);
+        len = std::string("$final$").length();
+    }
+    
+    d = s.c_str();
+    nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+        
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout); 
+    
+    return NINJA_SUCCESS;
 }
