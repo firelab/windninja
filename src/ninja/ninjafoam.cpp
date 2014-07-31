@@ -511,7 +511,10 @@ int NinjaFoam::WriteFoamFiles()
     for(int i = 0; i < CSLCount( papszFileList ); i++){
         osFullPath = papszFileList[i];
         pszFilename = CPLGetFilename(papszFileList[i]);
-        if(std::string(pszFilename) != "" && std::string(CPLGetExtension(pszFilename)) != "tmp"){
+        if(std::string(pszFilename) != "" && 
+           std::string(CPLGetExtension(pszFilename)) != "tmp" &&
+           std::string(pszFilename) != "snappyHexMeshDict_cast" &&
+           std::string(pszFilename) != "snappyHexMeshDict_layer"){
             pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
             pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
@@ -1119,70 +1122,70 @@ int NinjaFoam::writeSnappyMesh()
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
     
-    std::string ss(data);
+    s.assign(data);
     
-    pos = ss.find("$stlName$");
+    pos = s.find("$stlName$");
     len = std::string("$stlName$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-        ss.replace(pos, len, t);
-        pos = ss.find("$stlName$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$stlName$", pos);
         len = std::string("$stlName$").length();
     }
-    pos = ss.find("$stlRegionName$");
+    pos = s.find("$stlRegionName$");
     len = std::string("$stlRegionName$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = "NAME";
-        ss.replace(pos, len, t);
-        pos = ss.find("$stlRegionName$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$stlRegionName$", pos);
         len = std::string("$stlRegionName$").length();
     }
-    pos = ss.find("$lx$");
+    pos = s.find("$lx$");
     len = std::string("$lx$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(lx);
-        ss.replace(pos, len, t);
-        pos = ss.find("$lx$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$lx$", pos);
         len = std::string("$lx$").length();
     }
-    pos = ss.find("$ly$");
+    pos = s.find("$ly$");
     len = std::string("$ly$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(ly);
-        ss.replace(pos, len, t);
-        pos = ss.find("$ly$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$ly$", pos);
         len = std::string("$ly$").length();
     }
-    pos = ss.find("$lz$");
+    pos = s.find("$lz$");
     len = std::string("$lz$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(lz);
-        ss.replace(pos, len, t);
-        pos = ss.find("$lz$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$lz$", pos);
         len = std::string("$lz$").length();
     }
-    pos = ss.find("$Nolayers$");
+    pos = s.find("$Nolayers$");
     len = std::string("$Nolayers$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(nLayers);
-        ss.replace(pos, len, t);
-        pos = ss.find("$Nolayers$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$Nolayers$", pos);
         len = std::string("$Nolayers$").length();
     }
-    pos = ss.find("$expansion_ratio$");
+    pos = s.find("$expansion_ratio$");
     len = std::string("$expansion_ratio$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(expansionRatio);
-        ss.replace(pos, len, t);
-        pos = ss.find("$expansion_ratio$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$expansion_ratio$", pos);
         len = std::string("$expansion_ratio$").length();
     }
-    pos = ss.find("$final$");
+    pos = s.find("$final$");
     len = std::string("$final$").length();
-    while(pos != ss.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(final);
-        ss.replace(pos, len, t);
-        pos = ss.find("$final$", pos);
+        s.replace(pos, len, t);
+        pos = s.find("$final$", pos);
         len = std::string("$final$").length();
     }
     
