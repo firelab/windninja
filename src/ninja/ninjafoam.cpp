@@ -175,9 +175,7 @@ bool NinjaFoam::simulate_wind()
     /* execute commands in run.sh                                        */
     /*-------------------------------------------------------------------*/
     
-    //system call: renumberMesh, decomposePar, potentialFoam, simpleFoam, reconstructPar
-    
-    
+    //system call: renumberMesh, decomposePar, potentialFoam, simpleFoam, reconstructPar   
 
     return true;
 }
@@ -223,86 +221,100 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     
     std::string s(data);
     int pos; 
-    int len; 
+    int len;
+    
     pos = s.find("$boundary_name$");
     len = std::string("$boundary_name$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, boundary_name);
+        pos = s.find("$boundary_name$", pos);
+        len = std::string("$boundary_name$").length();
     }
-    
     pos = s.find("$type$");
     len = std::string("$type$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, type);
+        pos = s.find("$type$", pos);
+        len = std::string("$type$").length();
     }
-    
     pos = s.find("$value$");
     len = std::string("$value$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, value);
+        pos = s.find("$value$");
+        len = std::string("$value$").length();
     }
-    
     pos = s.find("$gammavalue$");
     len = std::string("$gammavalue$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, gammavalue);
+        pos = s.find("$gammavalue$");
+        len = std::string("$gammavalue$").length();
     }
-    
     pos = s.find("$pvalue$");
     len = std::string("$pvalue$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, pvalue);
+        pos = s.find("$pvalue$");
+        len = std::string("$pvalue$").length();
     }
-    
     pos = s.find("$U_freestream$");
     len = std::string("$U_freestream$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(input.inputSpeed);
         s.replace(pos, len, t);
+        pos = s.find("$U_freestream$");
+        len = std::string("$U_freestream$").length();
     }
-    
     pos = s.find("$direction$");
     len = std::string("$direction$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         std::string t, t1, t2, t3;
         t1 = boost::lexical_cast<std::string>(direction[0]);
         t2 = boost::lexical_cast<std::string>(direction[1]);
         t3 = boost::lexical_cast<std::string>(direction[2]);
         t = "(" + t1 + " " + t2 + " " + t3 + ")";
         s.replace(pos, len, t);
+        pos = s.find("$direction$");
+        len = std::string("$direction$").length();
     }
-    
     pos = s.find("$InputWindHeight$");
     len = std::string("$InputWindHeight$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(input.inputWindHeight);
         s.replace(pos, len, t);
+        pos = s.find("$InputWindHeight$");
+        len = std::string("$InputWindHeight$").length();
     }
-    
     pos = s.find("$z0$");
     len = std::string("$z0$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(input.surface.Roughness(0,0));
         s.replace(pos, len, t);
+        pos = s.find("$z0$");
+        len = std::string("$z0$").length();
     }
-    
     pos = s.find("$Rd$");
     len = std::string("$Rd$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         std::string t = boost::lexical_cast<std::string>(input.surface.Rough_d(0,0));
         s.replace(pos, len, t);
+        pos = s.find("$Rd$");
+        len = std::string("$Rd$").length();
     }
-    
     pos = s.find("$inletoutletvalue$");
     len = std::string("$inletoutletvalue$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, inletoutletvalue);
+        pos = s.find("$inletoutletvalue$");
+        len = std::string("$inletoutletvalue$").length();
     }
-    
     pos = s.find("$inletoutletvalue$");
     len = std::string("$inletoutletvalue$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, inletoutletvalue);
+        pos = s.find("$inletoutletvalue$");
+        len = std::string("$inletoutletvalue$").length();
     }
     
     dataString.append(s);
@@ -360,11 +372,36 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     if(pos != s.npos){
         s.erase(0, pos+len);
     }
-        
+    
     pos = s.find("$terrainName$");
     len = std::string("$terrainName$").length();
-    if(pos != s.npos){
+    while(pos != s.npos){
         s.replace(pos, len, terrainName);
+        pos = s.find("$terrainName$", pos);
+        len = std::string("$terrainName$").length();
+    }
+    
+    pos = s.find("$wallFunction$");
+    len = std::string("$wallFunction$").length();
+    while(pos != s.npos){
+        if(input.nonEqBc == 0){
+            if(std::string(pszFilename) == "epsilon"){
+                s.replace(pos, len, "epsilonWallFunction");
+            }
+            else if(std::string(pszFilename) == "nut"){
+                s.replace(pos, len, "nutWallFunction");
+            }
+        }
+        else{
+            if(std::string(pszFilename) == "epsilon"){
+                s.replace(pos, len, "epsilonNonEquiWallFunction");
+            }
+            else if(std::string(pszFilename) == "nut"){
+                s.replace(pos, len, "nutNonEquiWallFunction");
+            }
+        }
+        pos = s.find("$wallFunction$", pos);
+        len = std::string("$wallFunction$").length();
     }
         
     dataString.append(s);
@@ -385,6 +422,7 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
 int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
     int pos;
+    int len; 
     char *data;
         
     vsi_l_offset offset;
@@ -395,50 +433,43 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin); //read in full template file
     
+    std::string s(data);
+    
     if(std::string(pszFilename) == "decomposeParDict"){
-        std::string s(data);
-        int pos; 
-        int len; 
         pos = s.find("$nProc$");
         len = std::string("$nProc$").length();
-        if(pos != s.npos){
+        while(pos != s.npos){
             std::string t = boost::lexical_cast<std::string>(input.numberCPUs);
             s.replace(pos, len, t);
-        }
-        pos = s.find("$nProc$");
-        len = std::string("$nProc$").length();
-        if(pos != s.npos){
-            std::string t = boost::lexical_cast<std::string>(input.numberCPUs);
-            s.replace(pos, len, t);
+            pos = s.find("$nProc$");
+            len = std::string("$nProc$").length();
         }
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "sampleDict"){
-        std::string s(data);
-        int pos; 
-        int len; 
         pos = s.find("$stlFileName$");
         len = std::string("$stlFileName$").length();
-        if(pos != s.npos){
+        while(pos != s.npos){
             std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
             t += "_out.stl";
             s.replace(pos, len, t);
+            pos = s.find("$stlFileName$");
+            len = std::string("$stlFileName$").length();
         }
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "controlDict"){
-        std::string s(data);
-        int pos; 
-        int len; 
         pos = s.find("$finaltime$");
         len = std::string("$finaltime$").length();
-        if(pos != s.npos){
+        while(pos != s.npos){
             std::string t = boost::lexical_cast<std::string>(input.nIterations);
             s.replace(pos, len, t);
+            pos = s.find("$finaltime$");
+            len = std::string("$finaltime$").length();
         }
         const char * d = s.c_str();
         int nSize = strlen(d);
@@ -1122,7 +1153,7 @@ int NinjaFoam::writeSnappyMesh()
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
     
-    s.assign(data);
+    s = data;
     
     pos = s.find("$stlName$");
     len = std::string("$stlName$").length();
