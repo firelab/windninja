@@ -256,6 +256,7 @@ public:
 #ifdef NINJAFOAM
     int nIterations; //number of iterations for a ninjafoam simulation
     int meshCount; //mesh count for a ninjafoam simulation
+    bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
 
 #endif
 };

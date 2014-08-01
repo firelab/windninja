@@ -693,7 +693,10 @@ int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** paps
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-
+int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
+}
 #endif
 
 /*-----------------------------------------------------------------------------

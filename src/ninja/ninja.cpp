@@ -5076,6 +5076,10 @@ void ninja::set_MeshCount(int meshCount)
 {
     input.meshCount = meshCount;
 }
+void ninja::set_NonEqBc(bool flag)
+{
+    input.nonEqBc = flag;
+}
 #endif
 
 
