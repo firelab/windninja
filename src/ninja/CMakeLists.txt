@@ -74,7 +74,6 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   ninjaCom.cpp
                   ninja.cpp
                   ninjaException.cpp
-                  ninjafoam.cpp
                   ninja_init.cpp
                   ninjaMathUtility.cpp
                   ninjaUnits.cpp
@@ -107,6 +106,9 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
                   windninja.cpp)
+IF(NINJAFOAM)
+    SET(NINJA_SOURCES ${NINJA_SOURCES} ninjafoam.cpp)
+ENDIF(NINJAFOAM)
 
 IF(WITH_NOMADS_SUPPORT)
     SET(NINJA_SOURCES ${NINJA_SOURCES}
