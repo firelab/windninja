@@ -218,7 +218,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     VSIFReadL(data, offset, 1, fin); //read in the template file
     data[offset] = '\0';
     
-    cout<<"data in new block = \n"<<data<<endl;
+    //cout<<"data in new block = \n"<<data<<endl;
     
     std::string s(data);
     
@@ -237,7 +237,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
     
     dataString.append(s);
-    cout<<"data in new block = \n"<<s<<endl;
+    //cout<<"data in new block = \n"<<s<<endl;
     
     CPLFree(data);
     VSIFCloseL(fin);
