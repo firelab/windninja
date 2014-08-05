@@ -214,11 +214,11 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in the template file
     data[offset] = '\0';
     
-    //cout<<"data in new block = \n"<<data<<endl;
+    cout<<"data in new block = \n"<<data<<endl;
     
     std::string s(data);
     
@@ -237,6 +237,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
     
     dataString.append(s);
+    cout<<"data in new block = \n"<<s<<endl;
     
     CPLFree(data);
     VSIFCloseL(fin);
@@ -255,7 +256,7 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
         
@@ -338,7 +339,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
     
@@ -386,7 +387,7 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
     
@@ -749,7 +750,7 @@ int NinjaFoam::readLogFile(int &ratio)
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
     
@@ -866,7 +867,7 @@ int NinjaFoam::writeBlockMesh()
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
     
@@ -967,7 +968,7 @@ int NinjaFoam::writeSnappyMesh()
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
     
@@ -1007,7 +1008,7 @@ int NinjaFoam::writeSnappyMesh()
     offset = VSIFTellL(fin);
 
     VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
     
