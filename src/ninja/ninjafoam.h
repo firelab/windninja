@@ -151,6 +151,9 @@ private:
     std::vector<double> bbox;
     std::vector<int> nCells;
     double side1; // length of side of regular hex cell in zone1
+    
+    int ReplaceKey(std::string &s, std::string k, std::string v);
+    int ReplaceKeys(std::string &s, std::string k, std::string v);
 
 };
 

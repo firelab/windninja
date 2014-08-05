@@ -685,15 +685,15 @@ int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
 /*-----------------------------------------------------------------------------
  *  NinjaFOAM Methods
  *-----------------------------------------------------------------------------*/
-int ninjaArmy::setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL )
+int ninjaArmy::setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NumberOfIterations( nIterations ) );
 }
-int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL )
+int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL )
+int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
 }

@@ -96,6 +96,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
     #endif
+    
 
     /*------------------------------------------*/
     /*  write OpenFOAM files                    */
@@ -220,102 +221,20 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     //cout<<"data in new block = \n"<<data<<endl;
     
     std::string s(data);
-    int pos; 
-    int len;
     
-    pos = s.find("$boundary_name$");
-    len = std::string("$boundary_name$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, boundary_name);
-        pos = s.find("$boundary_name$", pos);
-        len = std::string("$boundary_name$").length();
-    }
-    pos = s.find("$type$");
-    len = std::string("$type$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, type);
-        pos = s.find("$type$", pos);
-        len = std::string("$type$").length();
-    }
-    pos = s.find("$value$");
-    len = std::string("$value$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, value);
-        pos = s.find("$value$");
-        len = std::string("$value$").length();
-    }
-    pos = s.find("$gammavalue$");
-    len = std::string("$gammavalue$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, gammavalue);
-        pos = s.find("$gammavalue$");
-        len = std::string("$gammavalue$").length();
-    }
-    pos = s.find("$pvalue$");
-    len = std::string("$pvalue$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, pvalue);
-        pos = s.find("$pvalue$");
-        len = std::string("$pvalue$").length();
-    }
-    pos = s.find("$U_freestream$");
-    len = std::string("$U_freestream$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(input.inputSpeed);
-        s.replace(pos, len, t);
-        pos = s.find("$U_freestream$");
-        len = std::string("$U_freestream$").length();
-    }
-    pos = s.find("$direction$");
-    len = std::string("$direction$").length();
-    while(pos != s.npos){
-        std::string t, t1, t2, t3;
-        t1 = boost::lexical_cast<std::string>(direction[0]);
-        t2 = boost::lexical_cast<std::string>(direction[1]);
-        t3 = boost::lexical_cast<std::string>(direction[2]);
-        t = "(" + t1 + " " + t2 + " " + t3 + ")";
-        s.replace(pos, len, t);
-        pos = s.find("$direction$");
-        len = std::string("$direction$").length();
-    }
-    pos = s.find("$InputWindHeight$");
-    len = std::string("$InputWindHeight$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(input.inputWindHeight);
-        s.replace(pos, len, t);
-        pos = s.find("$InputWindHeight$");
-        len = std::string("$InputWindHeight$").length();
-    }
-    pos = s.find("$z0$");
-    len = std::string("$z0$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(input.surface.Roughness(0,0));
-        s.replace(pos, len, t);
-        pos = s.find("$z0$");
-        len = std::string("$z0$").length();
-    }
-    pos = s.find("$Rd$");
-    len = std::string("$Rd$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(input.surface.Rough_d(0,0));
-        s.replace(pos, len, t);
-        pos = s.find("$Rd$");
-        len = std::string("$Rd$").length();
-    }
-    pos = s.find("$inletoutletvalue$");
-    len = std::string("$inletoutletvalue$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, inletoutletvalue);
-        pos = s.find("$inletoutletvalue$");
-        len = std::string("$inletoutletvalue$").length();
-    }
-    pos = s.find("$inletoutletvalue$");
-    len = std::string("$inletoutletvalue$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, inletoutletvalue);
-        pos = s.find("$inletoutletvalue$");
-        len = std::string("$inletoutletvalue$").length();
-    }
+    ReplaceKeys(s, "$boundary_name$", boundary_name);
+    ReplaceKeys(s, "$type$", type);
+    ReplaceKeys(s, "$value$", value);
+    ReplaceKeys(s, "$gammavalue$", gammavalue);
+    ReplaceKeys(s, "$pvalue$", pvalue);
+    ReplaceKeys(s, "$U_freestream$", boost::lexical_cast<std::string>(input.inputSpeed));
+    ReplaceKeys(s, "$direction$", CPLSPrintf("(%.0lf %.0lf %.0lf)", direction[0],
+                                                              direction[1],
+                                                              direction[2]));
+    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
+    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)));
+    ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)));
+    ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
     
     dataString.append(s);
     
@@ -373,35 +292,23 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(0, pos+len);
     }
     
-    pos = s.find("$terrainName$");
-    len = std::string("$terrainName$").length();
-    while(pos != s.npos){
-        s.replace(pos, len, terrainName);
-        pos = s.find("$terrainName$", pos);
-        len = std::string("$terrainName$").length();
-    }
+    ReplaceKeys(s, "$terrainName$", terrainName);
     
-    pos = s.find("$wallFunction$");
-    len = std::string("$wallFunction$").length();
-    while(pos != s.npos){
-        if(input.nonEqBc == 0){
-            if(std::string(pszFilename) == "epsilon"){
-                s.replace(pos, len, "epsilonWallFunction");
-            }
-            else if(std::string(pszFilename) == "nut"){
-                s.replace(pos, len, "nutWallFunction");
-            }
+    if(input.nonEqBc == 0){
+        if(std::string(pszFilename) == "epsilon"){
+            ReplaceKeys(s, "$wallFunction$", "epsilonWallFunction");
         }
-        else{
-            if(std::string(pszFilename) == "epsilon"){
-                s.replace(pos, len, "epsilonNonEquiWallFunction");
-            }
-            else if(std::string(pszFilename) == "nut"){
-                s.replace(pos, len, "nutNonEquiWallFunction");
-            }
+        else if(std::string(pszFilename) == "nut"){
+            ReplaceKeys(s, "$wallFunction$", "nutWallFunction");
         }
-        pos = s.find("$wallFunction$", pos);
-        len = std::string("$wallFunction$").length();
+    }
+    else{
+        if(std::string(pszFilename) == "epsilon"){
+            ReplaceKeys(s, "$wallFunction$", "epsilonNonEquiWallFunction");
+        }
+        else if(std::string(pszFilename) == "nut"){
+            ReplaceKeys(s, "$wallFunction$", "nutNonEquiWallFunction");
+        }
     }
         
     dataString.append(s);
@@ -436,41 +343,21 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     std::string s(data);
     
     if(std::string(pszFilename) == "decomposeParDict"){
-        pos = s.find("$nProc$");
-        len = std::string("$nProc$").length();
-        while(pos != s.npos){
-            std::string t = boost::lexical_cast<std::string>(input.numberCPUs);
-            s.replace(pos, len, t);
-            pos = s.find("$nProc$");
-            len = std::string("$nProc$").length();
-        }
+        ReplaceKeys(s, "$nProc$", boost::lexical_cast<std::string>(input.numberCPUs));
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "sampleDict"){
-        pos = s.find("$stlFileName$");
-        len = std::string("$stlFileName$").length();
-        while(pos != s.npos){
-            std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-            t += "_out.stl";
-            s.replace(pos, len, t);
-            pos = s.find("$stlFileName$");
-            len = std::string("$stlFileName$").length();
-        }
+        std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+        t += "_out.stl";
+        ReplaceKeys(s, "$stlFileName$", t);
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "controlDict"){
-        pos = s.find("$finaltime$");
-        len = std::string("$finaltime$").length();
-        while(pos != s.npos){
-            std::string t = boost::lexical_cast<std::string>(input.nIterations);
-            s.replace(pos, len, t);
-            pos = s.find("$finaltime$");
-            len = std::string("$finaltime$").length();
-        }
+        ReplaceKeys(s, "$finaltime$",boost::lexical_cast<std::string>(input.nIterations));
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
@@ -509,7 +396,6 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
         
     return NINJA_SUCCESS;
 }
-
 
 int NinjaFoam::WriteFoamFiles()
 {
@@ -721,10 +607,18 @@ int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
         if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
             template_ = "inlet.tmp";
             type = "logProfileDissipationRateInlet";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
         }
         else{
             template_ = "";
             type = "zeroGradient";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
         }
         int status;
         //append BC block for current face
@@ -747,10 +641,18 @@ int NinjaFoam::WriteKBoundaryField(std::string &dataString)
         if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
             template_ = "inlet.tmp";
             type = "logProfileTurbulentKineticEnergyInlet";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
         }
         else{
             template_ = "";
             type = "zeroGradient";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue ="";
         }
         int status;
         //append BC block for current face
@@ -775,6 +677,7 @@ int NinjaFoam::WritePBoundaryField(std::string &dataString)
             value = "";
             gammavalue = "";
             pvalue = "";
+            inletoutletvalue = "";
         }
         else{
             template_ = "";
@@ -782,6 +685,7 @@ int NinjaFoam::WritePBoundaryField(std::string &dataString)
             value = "0";
             gammavalue = "1";
             pvalue = "0";
+            inletoutletvalue = "";
         }
         int status;
         //append BC block for current face
@@ -803,11 +707,18 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
         if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
             template_ = "inlet.tmp";
             type = "logProfileVelocityInlet";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
         }
         else{
             template_ = "";
             type = "pressureInletOutletVelocity";
             inletoutletvalue = "(0 0 0)";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
         }
         int status;
         status = AddBcBlock(dataString);
@@ -993,14 +904,8 @@ int NinjaFoam::writeBlockMesh()
             len = std::string(cellField[i]).length();
         }
     }
-    pos = s.find("$Ratio$");
-    len = std::string("$Ratio$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(ratio);
-        s.replace(pos, len, t);
-        pos = s.find("$Ratio$", pos);
-        len = std::string("$Ratio$").length();
-    }
+    
+    ReplaceKeys(s, "$Ratio$", boost::lexical_cast<std::string>(ratio));
     
     const char * d = s.c_str();
     int nSize = strlen(d);
@@ -1063,70 +968,14 @@ int NinjaFoam::writeSnappyMesh()
     int pos; 
     int len;
     
-    pos = s.find("$stlName$");
-    len = std::string("$stlName$").length();
-    while(pos != s.npos){
-        std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-        s.replace(pos, len, t);
-        pos = s.find("$stlName$", pos);
-        len = std::string("$stlName$").length();
-    }
-    pos = s.find("$stlRegionName$");
-    len = std::string("$stlRegionName$").length();
-    while(pos != s.npos){
-        std::string t = "NAME";
-        s.replace(pos, len, t);
-        pos = s.find("$stlRegionName$", pos);
-        len = std::string("$stlRegionName$").length();
-    }
-    pos = s.find("$lx$");
-    len = std::string("$lx$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(lx);
-        s.replace(pos, len, t);
-        pos = s.find("$lx$", pos);
-        len = std::string("$lx$").length();
-    }
-    pos = s.find("$ly$");
-    len = std::string("$ly$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(ly);
-        s.replace(pos, len, t);
-        pos = s.find("$ly$", pos);
-        len = std::string("$ly$").length();
-    }
-    pos = s.find("$lz$");
-    len = std::string("$lz$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(lz);
-        s.replace(pos, len, t);
-        pos = s.find("$lz$", pos);
-        len = std::string("$lz$").length();
-    }
-    pos = s.find("$Nolayers$");
-    len = std::string("$Nolayers$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(nLayers);
-        s.replace(pos, len, t);
-        pos = s.find("$Nolayers$", pos);
-        len = std::string("$Nolayers$").length();
-    }
-    pos = s.find("$expansion_ratio$");
-    len = std::string("$expansion_ratio$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(expansionRatio);
-        s.replace(pos, len, t);
-        pos = s.find("$expansion_ratio$", pos);
-        len = std::string("$expansion_ratio$").length();
-    }
-    pos = s.find("$final$");
-    len = std::string("$final$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(final);
-        s.replace(pos, len, t);
-        pos = s.find("$final$", pos);
-        len = std::string("$final$").length();
-    }
+    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    ReplaceKeys(s, "$stlRegionName$", "NAME");
+    ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
+    ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
+    ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
+    ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
+    ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
+    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
     
     const char * d = s.c_str();
     int nSize = strlen(d);
@@ -1155,70 +1004,14 @@ int NinjaFoam::writeSnappyMesh()
     
     s = data;
     
-    pos = s.find("$stlName$");
-    len = std::string("$stlName$").length();
-    while(pos != s.npos){
-        std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-        s.replace(pos, len, t);
-        pos = s.find("$stlName$", pos);
-        len = std::string("$stlName$").length();
-    }
-    pos = s.find("$stlRegionName$");
-    len = std::string("$stlRegionName$").length();
-    while(pos != s.npos){
-        std::string t = "NAME";
-        s.replace(pos, len, t);
-        pos = s.find("$stlRegionName$", pos);
-        len = std::string("$stlRegionName$").length();
-    }
-    pos = s.find("$lx$");
-    len = std::string("$lx$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(lx);
-        s.replace(pos, len, t);
-        pos = s.find("$lx$", pos);
-        len = std::string("$lx$").length();
-    }
-    pos = s.find("$ly$");
-    len = std::string("$ly$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(ly);
-        s.replace(pos, len, t);
-        pos = s.find("$ly$", pos);
-        len = std::string("$ly$").length();
-    }
-    pos = s.find("$lz$");
-    len = std::string("$lz$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(lz);
-        s.replace(pos, len, t);
-        pos = s.find("$lz$", pos);
-        len = std::string("$lz$").length();
-    }
-    pos = s.find("$Nolayers$");
-    len = std::string("$Nolayers$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(nLayers);
-        s.replace(pos, len, t);
-        pos = s.find("$Nolayers$", pos);
-        len = std::string("$Nolayers$").length();
-    }
-    pos = s.find("$expansion_ratio$");
-    len = std::string("$expansion_ratio$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(expansionRatio);
-        s.replace(pos, len, t);
-        pos = s.find("$expansion_ratio$", pos);
-        len = std::string("$expansion_ratio$").length();
-    }
-    pos = s.find("$final$");
-    len = std::string("$final$").length();
-    while(pos != s.npos){
-        std::string t = boost::lexical_cast<std::string>(final);
-        s.replace(pos, len, t);
-        pos = s.find("$final$", pos);
-        len = std::string("$final$").length();
-    }
+    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    ReplaceKeys(s, "$stlRegionName$", "NAME");
+    ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
+    ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
+    ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
+    ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
+    ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
+    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
     
     d = s.c_str();
     nSize = strlen(d);
@@ -1230,3 +1023,31 @@ int NinjaFoam::writeSnappyMesh()
     
     return NINJA_SUCCESS;
 }
+
+/*
+ * Replace key k with value v in string s.  Return 1 if value was replaced, 0
+ * if the key was not found
+ */
+int NinjaFoam::ReplaceKey(std::string &s, std::string k, std::string v)
+{
+    int i, n;
+    i = s.find(k);
+    if( i != std::string::npos )
+    {
+        n = k.length();
+        s.replace(i, n, v);
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v)
+{
+    int rc = TRUE;
+    do
+    {
+        rc = ReplaceKey(s, k, v);
+    } while(rc);
+}
+
