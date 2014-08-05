@@ -95,8 +95,7 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
-    #endif
-    
+    #endif  
 
     /*------------------------------------------*/
     /*  write OpenFOAM files                    */
@@ -217,6 +216,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin); //read in the template file
+    data[offset] = '\0';
     
     //cout<<"data in new block = \n"<<data<<endl;
     
@@ -257,6 +257,7 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin); //read in full template file
+    data[offset] = '\0';
         
     // write to first dictionary value
     std::string dataString;
@@ -339,6 +340,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin); //read in full template file
+    data[offset] = '\0';
     
     std::string s(data);
     
@@ -386,6 +388,7 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin); //read in full template file
+    data[offset] = '\0';
     
     VSIFWriteL(data, offset, 1, fout);
         
@@ -748,6 +751,7 @@ int NinjaFoam::readLogFile(int &ratio)
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
     
     std::string s(data);
     std:string ss;
@@ -864,6 +868,7 @@ int NinjaFoam::writeBlockMesh()
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
     
     std::string s(data);
     int pos; 
@@ -931,6 +936,7 @@ int NinjaFoam::writeSnappyMesh()
     lz = int((bbox[6]));
     expansionRatio = 1.4;
     final = side1/expansionRatio;
+    first = 4.0;
     nLayers = int((log(final/first) / log(expansionRatio)) + 1 + 1);
     
     const char *pszInput;
@@ -963,6 +969,7 @@ int NinjaFoam::writeSnappyMesh()
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
     
     std::string s(data);
     int pos; 
@@ -974,7 +981,8 @@ int NinjaFoam::writeSnappyMesh()
     ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
     ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
-    ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
+    ReplaceKeys(s, "$expansion_ratio$", CPLSPrintf("%.1lf", expansionRatio));
+    //ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
     ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
     
     const char * d = s.c_str();
@@ -1001,6 +1009,7 @@ int NinjaFoam::writeSnappyMesh()
     VSIRewindL(fin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
     
     s = data;
     
