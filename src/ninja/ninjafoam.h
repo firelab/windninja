@@ -39,6 +39,7 @@
 #include "ninja_errors.h"
 
 #include "gdal_alg.h"
+#include "cpl_spawn.h"
 
 #define NINJA_FOAM_OGR_VRT "<OGRVRTDataSource>" \
                            "  <OGRVRTLayer name=\"%s\">" \

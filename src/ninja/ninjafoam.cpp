@@ -145,9 +145,42 @@ bool NinjaFoam::simulate_wind()
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
     
-    //system calls: 
-    //  surfaceTransformPoints - create output surface stl in constant/triSurface
-    //  surfaceCheck - write log.json meshing steps below
+    int nRet;
+    
+    const char *const papszArgvSurfTransform[] = { "surfaceTransformPoints", 
+                                      "-translate", 
+                                      CPLSPrintf("(0 0 %.0f)", input.outputWindHeight), 
+                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())), 
+                                      CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())),
+                                      NULL };
+    
+    VSILFILE *fout = VSIFOpenL(CPLSPrintf("%s/surfaceTransformPoints.log", pszTempPath), "w");
+    
+    #ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
+    #endif 
+    
+    nRet = CPLSpawn(papszArgvSurfTransform, NULL, fout, TRUE); //create output surface stl in pszTemppath/constant/triSurface
+    if(nRet != 0){
+        //do something
+    }
+    VSIFCloseL(fout);
+    
+    const char *const papszArgvSurfCheck[] = { "surfaceCheck", 
+                                    CPLSPrintf("%s/constant/triSurface/%s.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())), 
+                                    NULL };
+    fout = VSIFOpenL(CPLSPrintf("%s/log.json", pszTempPath), "w");
+    
+    #ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in orignal terrain file...");
+    #endif
+    
+    nRet = CPLSpawn(papszArgvSurfCheck, NULL, fout, TRUE); //writes log.json used in mesh file writing
+    if(nRet != 0){
+        //do something
+    }
+    VSIFCloseL(fout);
+    
     
     
     /*-------------------------------------------------------------------*/
@@ -175,7 +208,13 @@ bool NinjaFoam::simulate_wind()
     /* execute commands in run.sh                                        */
     /*-------------------------------------------------------------------*/
     
-    //system call: renumberMesh, decomposePar, potentialFoam, simpleFoam, reconstructPar   
+    //system call: renumberMesh, decomposePar, potentialFoam, simpleFoam, reconstructPar
+    
+    
+    /*-------------------------------------------------------------------*/
+    /* convert output files                                              */
+    /*-------------------------------------------------------------------*/
+       
 
     return true;
 }
@@ -217,8 +256,6 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in the template file
     data[offset] = '\0';
-    
-    //cout<<"data in new block = \n"<<data<<endl;
     
     std::string s(data);
     
@@ -983,7 +1020,6 @@ int NinjaFoam::writeSnappyMesh()
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
     ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
     ReplaceKeys(s, "$expansion_ratio$", CPLSPrintf("%.1lf", expansionRatio));
-    //ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
     ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
     
     const char * d = s.c_str();
