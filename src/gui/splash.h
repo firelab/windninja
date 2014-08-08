@@ -67,6 +67,8 @@ public:
 
     Qt::Alignment alignment;
 
+    QString pad;
+
 signals:
     void done();
 

@@ -50,10 +50,14 @@ splashScreen::splashScreen(const QPixmap &pixmap, QStringList list, int time)
     i = 0;
     j = 0;
     messageTimer = new QTimer;
-    alignment = Qt::AlignLeft | Qt::AlignTop;
+    alignment = Qt::AlignLeft | Qt::AlignBottom;
     setFocus(Qt::OtherFocusReason);
     orig_map = pixmap;
     bDone = 0;
+
+    int padding = 21;
+    for(int p = 0; p < padding; p++)
+        pad += " ";
 }
 
 /**
@@ -105,7 +109,7 @@ void splashScreen::update()
     {
         if(i < nMessages)
         {
-            showMessage(stringList[i]);
+            showMessage(pad + stringList[i], alignment, Qt::gray);
             i++;
         }
         else
