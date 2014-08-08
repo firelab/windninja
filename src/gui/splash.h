@@ -35,6 +35,10 @@
 #include <QSplashScreen>
 #include <QStringList>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QDebug>
+
+#define FRAMES_PER_MESSAGE 20
 
 /**
   * \brief Class to display an image and an array of string messages
@@ -53,7 +57,13 @@ public:
     QTimer *messageTimer;
     int messageTime;
     int nMessages;
-    int i;
+    int nFrames;
+    int i, j;
+    float fade_interval;
+    int bDone;
+
+    QPixmap map;
+    QPixmap orig_map;
 
     Qt::Alignment alignment;
 

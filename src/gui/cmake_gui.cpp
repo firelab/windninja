@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         mbox.exec();
         return 1;
     }
-    splashScreen *splash = new splashScreen(smallSplashPixmap, list, 200);
+    splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
     splash->display();
 
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));

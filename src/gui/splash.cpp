@@ -41,15 +41,19 @@
  * \param time to display each message in milliseconds
  */
 splashScreen::splashScreen(const QPixmap &pixmap, QStringList list, int time)
-    : QSplashScreen(pixmap)
 {
     stringList = list;
     messageTime = time;
+    fade_interval = (float)time / FRAMES_PER_MESSAGE;
     nMessages = stringList.size();
+    nFrames = time * FRAMES_PER_MESSAGE;
     i = 0;
+    j = 0;
     messageTimer = new QTimer;
     alignment = Qt::AlignLeft | Qt::AlignTop;
     setFocus(Qt::OtherFocusReason);
+    orig_map = pixmap;
+    bDone = 0;
 }
 
 /**
@@ -60,8 +64,18 @@ splashScreen::splashScreen(const QPixmap &pixmap, QStringList list, int time)
 void splashScreen::display()
 {
     show();
-    messageTimer->start(messageTime);
+    messageTimer->start(fade_interval);
     connect(messageTimer, SIGNAL(timeout()), this, SLOT(update()));
+}
+
+static QPixmap &setAlpha( QPixmap &px, int val )
+{
+    QPixmap alpha = px;
+    QPainter p(&alpha);
+    p.fillRect(alpha.rect(), QColor(val, val, val));
+    p.end();
+    px.setAlphaChannel(alpha);
+    return px;
 }
 
 /**
@@ -71,17 +85,39 @@ void splashScreen::display()
  */
 void splashScreen::update()
 {
-    if(i < nMessages)
+    if(bDone)
+        return;
+    map = orig_map;
+    /* temp vars */
+    float f;
+    int k;
+    int alpha = 255;
+    if(i <= 1)
     {
-        showMessage(stringList[i]);
-        i++;
-        }
-    else
-    {
-        messageTimer->stop();
-        emit done();
-        finish(this);
+        alpha = (float)255 / FRAMES_PER_MESSAGE * j;
     }
+    if(i > nMessages - 1)
+    {
+        k = nMessages * FRAMES_PER_MESSAGE;
+        alpha = 255 - (int)((1 - ((float)k - j) / FRAMES_PER_MESSAGE) * 255);
+    }
+    if(j % FRAMES_PER_MESSAGE == 0)
+    {
+        if(i < nMessages)
+        {
+            showMessage(stringList[i]);
+            i++;
+        }
+        else
+        {
+            messageTimer->stop();
+            emit done();
+            finish(this);
+        }
+    }
+    map = setAlpha(map, alpha);
+    setPixmap(map);
+    j++;
 }
 
 /**
@@ -93,6 +129,7 @@ void splashScreen::mousePressEvent(QMouseEvent *event)
 {
     if(event->buttons() & Qt::LeftButton)
     {
+        bDone = 1;
         emit done();
         finish(this);
     }
