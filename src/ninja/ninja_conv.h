@@ -30,7 +30,9 @@
 #ifndef NINJA_CONV_H
 #define NINJA_CONV_H
 
-#define MAX_PATH 8191
+#ifndef MAX_PATH
+#define MAX_PATH 8192
+#endif
 
 #include <stdlib.h>
 #include <string>
