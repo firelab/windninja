@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
     QPixmap bigSplashPixmap(":wn-splash.png");
     //resampled one
-    QSize splashSize(800, 320);
+    QSize splashSize(1200, 320);
     QPixmap smallSplashPixmap;
     smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
                          Qt::KeepAspectRatioByExpanding);
