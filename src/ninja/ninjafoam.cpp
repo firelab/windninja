@@ -1090,10 +1090,11 @@ int NinjaFoam::ReplaceKey(std::string &s, std::string k, std::string v)
 
 int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v)
 {
-    int rc = TRUE;
+    int rc = FALSE;
     do
     {
         rc = ReplaceKey(s, k, v);
     } while(rc);
+    return rc;
 }
 

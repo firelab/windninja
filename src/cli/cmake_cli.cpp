@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#include "ninjaArmy.h"
 #include "cli.h"
+#include "ninjaArmy.h"
 #include "ninjaException.h"
 #include "ninja_init.h"
 

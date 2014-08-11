@@ -166,20 +166,23 @@ ENDIF(NOT NINJA_QTGUI)
 # ******************************************************************************
 IF(RUN_SLOW_TESTS)
     # strm Test Suite
-    ADD_TEST(test_srtm_us_box       
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/us_box )
-    ADD_TEST(test_srtm_world_pt     
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/world_point )
-    #ADD_TEST(test_srtm_gdal         
-    #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/gdal )
+    # FIXME: Disable due to compilation issues.
+    IF(NOT WIN32)
+        ADD_TEST(test_srtm_us_box       
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/us_box )
+        ADD_TEST(test_srtm_world_pt     
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/world_point )
+        #ADD_TEST(test_srtm_gdal         
+        #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=srtm/gdal )
 
-    #gmted Test Suite
-    IF(ENABLE_GMTED)
-        ADD_TEST(test_gmted_us      
-                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gmted/us )
-        ADD_TEST(test_gmted_world   
-                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gmted/world )
-    ENDIF(ENABLE_GMTED)
+        #gmted Test Suite
+        IF(ENABLE_GMTED)
+            ADD_TEST(test_gmted_us      
+                     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gmted/us )
+            ADD_TEST(test_gmted_world   
+                     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gmted/world )
+        ENDIF(ENABLE_GMTED)
+    ENDIF(NOT WIN32)
 
     IF(WITH_LCP_CLIENT)
         ADD_TEST(test_landfireclient_download_conus

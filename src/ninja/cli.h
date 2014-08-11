@@ -29,16 +29,16 @@
 
 #ifndef CLI_H
 #define CLI_H
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/program_options.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/token_functions.hpp>
 
 #include "ninjaArmy.h"
 #include "ninja.h"
 #include "version.h"
 #include "gdal_util.h"
 #include "ninjaUnits.h"
-#include "boost/date_time/local_time/local_time.hpp"
-#include <boost/program_options.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/token_functions.hpp>
 #include "version.h"
 #include "gdal_util.h"
 #include "fetch_factory.h"

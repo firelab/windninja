@@ -30,10 +30,10 @@
 #ifndef FETCH_FACTORY_H
 #define FETCH_FACTORY_H
 
+#include "nomads_wx_init.h"
 #include "surface_fetch.h"
 #include "gdal_fetch.h"
 #include "landfireclient.h"
-#include "nomads_wx_init.h"
 #include <string>
 
 class FetchFactory
