@@ -89,6 +89,18 @@ int NinjaInitialize()
     }
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
 #endif
+    /*
+    ** Set windninja data if it isn't set.
+    */
+    if( !CSLTestBoolean( CPLGetConfigOption( "WINDNINJA_DATA", NULL ) ) )
+    {
+        std::string osDataPath;
+        osDataPath = FindDataPath( "tz_world.zip" );
+        if( osDataPath != "" )
+        {
+            CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
+        }
+    }
     /* Try to update our thredds file */
     int rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
                                                  "NO" ) );
