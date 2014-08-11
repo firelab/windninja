@@ -155,6 +155,18 @@ private:
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v);
+    
+    int SurfaceTransformPoints();
+    int SurfaceCheck();
+    int BlockMesh();
+    int DecomposePar(VSILFILE *fout);
+    int SnappyHexMesh();
+    int ReconstructPar(const char *const arg, VSILFILE *fout);
+    int RenumberMesh();
+    int CheckMesh();
+    int ApplyInit();
+    int SimpleFoam();
+    int Sample();
 
 };
 
