@@ -467,12 +467,11 @@ IF(USE_OSGEO4W AND OSGEO4W_HOME)
     SET(FIRELAB_DEPEND_ROOT ${OSGEO4W_HOME})
     SET(FIRELAB_DEPEND_ROOT_QT ${OSGEO4W_HOME})
 ENDIF(USE_OSGEO4W AND OSGEO4W_HOME)
-# OSGEO4W doesn't have our plugins.  Will go away after no more google maps
-# window.
-SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "c:/qt/4.8.5/plugins/imageformats")
+#OSGeo4w has plugins in apps/Qt4/plugins/imageformats
+SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${OSGEO4W_HOME}/apps/qt4/plugins/imageformats")
 
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
-    INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/share/gdal" DESTINATION share/windninja)
+    INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/share/gdal/" DESTINATION share/windninja/gdal-data/data)
 ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 
 IF(BUILD_TYPE MATCHES "debug")
@@ -564,7 +563,7 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 # *****************************************************************************
 IF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/gdal110.dll" DESTINATION bin COMPONENT apps)
+    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/gdal111.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/proj.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/netcdf.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geos_c.dll" DESTINATION bin COMPONENT apps)
