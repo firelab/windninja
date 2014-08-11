@@ -560,7 +560,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         else
         {
             nFilesToGet =
-                NomadsBuildForecastRunHours( ppszKey, ref, end, nHours,
+                NomadsBuildForecastRunHours( ppszKey, fcst, end, nHours,
                                              nStride, &panRunHours );
         }
 
@@ -616,6 +616,11 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                       "stepping back one forecast run time step." );
             nFcstTries++;
             CPLSleep( 1 );
+            /*
+            ** Don't explicitly break here.  We'll skip the while loop because
+            ** nrc != NOMADS_OK, and we can clean up memory and shift times in
+            ** one spot to avoid duplicate code.
+            */
         }
         /* Get the rest */
         i = 1;
