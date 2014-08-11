@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE( stride_valid_1 )
     rc = NomadsFetch( "nam_conus", NULL, 6, 2, adfMackay, NOMADS_PATH, NULL, NULL );
     BOOST_REQUIRE_EQUAL( rc, 0 );
     rc = CheckZip( NOMADS_PATH );
-    BOOST_CHECK_EQUAL( rc, 4 );
+    BOOST_CHECK( rc >= 4 );
     rc = CheckBands( NOMADS_PATH );
     BOOST_CHECK( rc <= 4 );
 }
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE( stride_valid_2 )
     rc = NomadsFetch( "nam_conus", NULL, 49, 6, adfMackay, NOMADS_PATH, NULL, NULL );
     BOOST_REQUIRE_EQUAL( rc, 0 );
     rc = CheckZip( NOMADS_PATH );
-    BOOST_CHECK_EQUAL( rc, 8 );
+    BOOST_CHECK( rc >= 8 );
     rc = CheckBands( NOMADS_PATH );
     BOOST_CHECK( rc <= 4 );
 }
