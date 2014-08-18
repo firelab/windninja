@@ -102,8 +102,6 @@ public:
     GDALDatasetH GetRasterOutputHandle();
 
 private:
-    NinjaFoam( NinjaFoam &rhs ) {}
-
     const char *pszTerrainFile;
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
