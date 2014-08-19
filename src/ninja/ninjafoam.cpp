@@ -137,7 +137,7 @@ bool NinjaFoam::simulate_wind()
     eErr = NinjaElevationToStl(inFile,
                         outFile,
                         nBand,
-                        NinjaStlBinary,
+                        NinjaStlAscii,
                         NULL);
 
     if(eErr != 0){
@@ -215,14 +215,14 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calcuations...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calcuations...");
     fout = VSIFOpenL("logMesh", "w");
     status = DecomposePar(fout);
     if(status != 0){
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
+    /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
     status = SnappyHexMesh();
     if(status != 0){
         //do something

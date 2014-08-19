@@ -167,7 +167,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     }
     else
     {
-        VSIFPrintfL( fout, "solid %s\n", CPLGetBasename( pszInput ) );
+        VSIFPrintfL( fout, "solid NAME\n" );
     }
     if( pfnProgress )
     {
