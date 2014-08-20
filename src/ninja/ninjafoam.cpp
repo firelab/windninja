@@ -483,10 +483,10 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "controlDict"){
-        #ifndef WIN32
-        ReplaceKeys(s, "$lib$", "libWindNinja.so");
-        #else
+        #ifdef WIN32
         ReplaceKeys(s, "$lib$", "libWindNinja");
+        #else
+        ReplaceKeys(s, "$lib$", "libWindNinja.so");
         #endif
         ReplaceKeys(s, "$finaltime$",boost::lexical_cast<std::string>(input.nIterations));
         const char * d = s.c_str();
