@@ -230,7 +230,7 @@ bool NinjaFoam::simulate_wind()
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
     fout = VSIFOpenL("logMesh", "w");
-    status = ReconstructPar("-constant", fout);
+    status = ReconstructParMesh("-constant", fout);
     if(status != 0){
         //do something
     }
@@ -1335,6 +1335,19 @@ int NinjaFoam::SnappyHexMesh()
     
         VSIFCloseL(fout);
     }
+    
+    return nRet;
+}
+
+int NinjaFoam::ReconstructParMesh(const char *const arg, VSILFILE *fout)
+{
+    int nRet = -1;
+    
+    const char *const papszArgv[] = { "reconstructParMesh", arg, NULL };
+    
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    
+    VSIFCloseL(fout);
     
     return nRet;
 }

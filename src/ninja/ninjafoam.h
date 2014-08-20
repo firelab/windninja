@@ -159,6 +159,7 @@ private:
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
     int SnappyHexMesh();
+    int ReconstructParMesh(const char *const arg, VSILFILE *fout);
     int ReconstructPar(const char *const arg, VSILFILE *fout);
     int RenumberMesh();
     int CheckMesh();
