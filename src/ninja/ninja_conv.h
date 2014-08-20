@@ -30,10 +30,6 @@
 #ifndef NINJA_CONV_H
 #define NINJA_CONV_H
 
-#ifndef MAX_PATH
-#define MAX_PATH 8192
-#endif
-
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -43,6 +39,11 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+
+#ifndef MAX_PATH
+#define MAX_PATH 8192
+#endif
+
 typedef struct
 {
     char **papszFiles;
