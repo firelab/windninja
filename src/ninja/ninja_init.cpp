@@ -92,7 +92,7 @@ int NinjaInitialize()
     /*
     ** Set windninja data if it isn't set.
     */
-    if( !CSLTestBoolean( CPLGetConfigOption( "WINDNINJA_DATA", NULL ) ) )
+    if( !CSLTestBoolean( CPLGetConfigOption( "WINDNINJA_DATA", "FALSE" ) ) )
     {
         std::string osDataPath;
         osDataPath = FindDataPath( "tz_world.zip" );
