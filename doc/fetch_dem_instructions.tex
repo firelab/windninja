@@ -36,11 +36,6 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 
-% We may or may not have geocode stuff.  This is due to 1.9 vs 1.10 
-\newif\ifgeocode
-%\geocodetrue
-\geocodefalse
-
 \begin{document}
 
 \maketitle
@@ -63,18 +58,13 @@ A list of the available options should be shown and look similar to
 this:
 \begin{figure}[ht!]
     \centering
-    \ifgeocode
     \includegraphics[width=5in]{images/fetch_dem_1.png}
-    \else
-    \includegraphics[width=5in]{images/fetch_dem_2.png}
-    \fi
     \caption{fetch\_dem help message}
     %\label{overflow}
 \end{figure}
 \section{Required arguments}
-There are
-\ifgeocode three \else two \fi
-different ways to specify the area to download.  They are: \medskip
+There are three two different ways to specify the area to download.  They are:
+\medskip
 \begin{center}
 \begin{tabular}{| l | p{4.0in} |}
     \hline
@@ -83,10 +73,8 @@ different ways to specify the area to download.  They are: \medskip
                        in north, east, south, west order.\\ \hline
     \texttt{--point} & a user specified point with a user specified buffer \\
                        \hline
-    \ifgeocode
     \texttt{--geocode} & a user specified placename with a user specified
                          buffer \\ \hline
-    \fi
 \end{tabular}
 \end{center}
 Examples of each are below.\\
@@ -106,14 +94,12 @@ always specified in (x, y), so it would be longitude, latitude, east-west buffer
 size, north-south buffer size:\\
 \texttt{fetch\_dem --point -113.5 47.0 5 7 --buf\_units km --src world my\_dem.tif}\\
 
-\ifgeocode
 \noindent
 This example will download a 20x20 mile DEM with the center at Mackay, ID. It also
 uses the ``buffer'' convention:\\
 \texttt{fetch\_dem --geocode ``Mackay, ID'' 10 10 --buf\_units miles --src us
 new\_mackay.tif}\\
 Note the quoted placename.\\
-\fi
 
 \noindent
 Other arguments are listed below:
@@ -124,10 +110,8 @@ Other arguments are listed below:
     \hline
     Command & Valid options & Default & Notes \\ \hline
     \texttt{--buf\_units} & miles, kilometers & None & needed for point 
-                                                       \ifgeocode and
-                                                      geocode methods.
-                                                      \else method.\fi
-                                                      \\ \hline
+                                                       and geocode methods.
+                                                       \\ \hline
     \texttt{--out\_res} & positive integer & 30 & desired output resolution in
                                                   meters \\ \hline
     \texttt{--r} & near, bilinear & near & Method used to resample the original
