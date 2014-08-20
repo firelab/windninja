@@ -36,11 +36,11 @@
 #include "ninja_init.h"
 
 #ifdef GDAL_COMPUTE_VERSION
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) && !defined(WIN32)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0)
 #include "ogr_api.h"
 #include "ogr_geocoding.h"
 #define FETCH_DEM_GEOCODE 1
-#endif /* GDAL_VERSION_NUM >= && !defined(WIN32)*/
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
 #define SOURCE_BEST  0
