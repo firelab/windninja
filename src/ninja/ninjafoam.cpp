@@ -222,7 +222,7 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
     status = SnappyHexMesh();
     if(status != 0){
         //do something
@@ -247,7 +247,7 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
+    /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
     if(status != 0){
         //do something
@@ -473,6 +473,12 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "controlDict"){
+        #ifndef WIN32
+        ReplaceKeys(s, "$lib$", "libWindNinja.so");
+        #endif
+        #ifdef WIN32
+        ReplaceKeys(s, "$lib$", "libWindNinja");
+        #endif
         ReplaceKeys(s, "$finaltime$",boost::lexical_cast<std::string>(input.nIterations));
         const char * d = s.c_str();
         int nSize = strlen(d);
@@ -1244,16 +1250,30 @@ int NinjaFoam::SnappyHexMesh()
 {
     int nRet = -1;
     
+    #ifdef WIN32
     const char *const papszArgv[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
                                       "-n",
-                                      "2",
+                                      CPLSPrintf("%d", input.numberCPUs),
                                       "snappyHexMesh",
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
+    #endif
+    
+    #ifndef WIN32
+    CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+    const char *const papszArgv[] = { "mpiexec", 
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      "snappyHexMesh",
+                                      "-overwrite",
+                                      "-parallel",
+                                       NULL };
+    #endif
+    
     
     VSILFILE *fout = VSIFOpenL("logMesh", "w");
     
@@ -1285,16 +1305,29 @@ int NinjaFoam::SnappyHexMesh()
         VSIFCloseL(fin);
         VSIFCloseL(fout);
         
+        #ifdef WIN32
         const char *const papszArgv2[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
                                       "-n",
-                                      "2",
+                                      CPLSPrintf("%d", input.numberCPUs), 
                                       "snappyHexMesh",
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
+        #endif
+        
+        #ifndef WIN32
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv2[] = { "mpiexec", 
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      "snappyHexMesh",
+                                      "-overwrite",
+                                      "-parallel",
+                                       NULL };
+        #endif
     
         fout = VSIFOpenL("logMesh", "w");
     
@@ -1368,15 +1401,27 @@ int NinjaFoam::SimpleFoam()
 {
     int nRet = -1;
     
+    #ifdef WIN32
     const char *const papszArgv[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
                                       "-n",
-                                      "2",
+                                      CPLSPrintf("%d", input.numberCPUs), 
                                       "simpleFoam",
                                       "-parallel",
                                        NULL };
+    #endif
+    
+    #ifndef WIN32
+    CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+    const char *const papszArgv[] = { "mpiexec", 
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      "simpleFoam",
+                                      "-parallel",
+                                       NULL };
+    #endif
     
     VSILFILE *fout = VSIFOpenL("log", "w");
     
