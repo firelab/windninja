@@ -215,11 +215,13 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calcuations...");
-    fout = VSIFOpenL("logMesh", "w");
-    status = DecomposePar(fout);
-    if(status != 0){
-        //do something
+    if(input.numberCPUs > 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calcuations...");
+        fout = VSIFOpenL("logMesh", "w");
+        status = DecomposePar(fout);
+        if(status != 0){
+            //do something
+        }
     }
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
@@ -228,17 +230,21 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-    fout = VSIFOpenL("logMesh", "w");
-    status = ReconstructParMesh("-constant", fout);
-    if(status != 0){
-        //do something
+    if(input.numberCPUs > 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+        fout = VSIFOpenL("logMesh", "w");
+        status = ReconstructParMesh("-constant", fout);
+        if(status != 0){
+            //do something
+        }
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
-    status = RenumberMesh();
-    if(status != 0){
-        //do something
+    if(input.numberCPUs > 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
+        status = RenumberMesh();
+        if(status != 0){
+            //do something
+        }
     }
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
@@ -251,13 +257,15 @@ bool NinjaFoam::simulate_wind()
     status = ApplyInit();
     if(status != 0){
         //do something
-    }
+    }*/
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calcuations...");
-    fout = VSIFOpenL("log", "w" );
-    status = DecomposePar(fout);
-    if(status != 0){
-        //do something
+    if(input.numberCPUs > 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calcuations...");
+        fout = VSIFOpenL("log", "w" );
+        status = DecomposePar(fout);
+        if(status != 0){
+            //do something
+        }
     }
     
     checkCancel();
@@ -268,18 +276,20 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-    fout = VSIFOpenL("log", "w");
-    status = ReconstructPar("-latestTime", fout);
-    if(status != 0){
-        //do something
+    if(input.numberCPUs > 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+        fout = VSIFOpenL("log", "w");
+        status = ReconstructPar("-latestTime", fout);
+        if(status != 0){
+            //do something
+        }
     }
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
     status = Sample();
     if(status != 0){
         //do something
-    }*/
+    }
     
     //move back to ninja working directory
     status = chdir("../");
@@ -475,8 +485,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     else if(std::string(pszFilename) == "controlDict"){
         #ifndef WIN32
         ReplaceKeys(s, "$lib$", "libWindNinja.so");
-        #endif
-        #ifdef WIN32
+        #else
         ReplaceKeys(s, "$lib$", "libWindNinja");
         #endif
         ReplaceKeys(s, "$finaltime$",boost::lexical_cast<std::string>(input.nIterations));
@@ -1250,8 +1259,11 @@ int NinjaFoam::SnappyHexMesh()
 {
     int nRet = -1;
     
-    #ifdef WIN32
-    const char *const papszArgv[] = { "mpiexec", 
+    VSILFILE *fout = VSIFOpenL("logMesh", "w");
+    
+    if(input.numberCPUs > 1){
+        #ifdef WIN32
+        const char *const papszArgv[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
@@ -1261,23 +1273,25 @@ int NinjaFoam::SnappyHexMesh()
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-    #endif
-    
-    #ifndef WIN32
-    CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-    const char *const papszArgv[] = { "mpiexec", 
+        #else
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv[] = { "mpiexec", 
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs), 
                                       "snappyHexMesh",
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-    #endif
+        #endif
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else{
+        const char *const papszArgv[] = { "snappyHexMesh",
+                                      "-overwrite",
+                                       NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
     
-    
-    VSILFILE *fout = VSIFOpenL("logMesh", "w");
-    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
     
     VSIFCloseL(fout);
     
@@ -1305,8 +1319,11 @@ int NinjaFoam::SnappyHexMesh()
         VSIFCloseL(fin);
         VSIFCloseL(fout);
         
-        #ifdef WIN32
-        const char *const papszArgv2[] = { "mpiexec", 
+        fout = VSIFOpenL("logMesh", "w");
+        
+        if(input.numberCPUs > 1){
+            #ifdef WIN32
+            const char *const papszArgv2[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
@@ -1316,23 +1333,25 @@ int NinjaFoam::SnappyHexMesh()
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-        #endif
-        
-        #ifndef WIN32
-        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-        const char *const papszArgv2[] = { "mpiexec", 
+            #else
+            CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+            const char *const papszArgv2[] = { "mpiexec", 
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs), 
                                       "snappyHexMesh",
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-        #endif
-    
-        fout = VSIFOpenL("logMesh", "w");
-    
-        nRet = CPLSpawn(papszArgv2, NULL, fout, TRUE);
-    
+            #endif
+            nRet = CPLSpawn(papszArgv2, NULL, fout, TRUE);
+        }
+        else{
+            const char *const papszArgv2[] = { "snappyHexMesh",
+                                            "-overwrite",
+                                            NULL };
+            nRet = CPLSpawn(papszArgv2, NULL, fout, TRUE);
+        }
+
         VSIFCloseL(fout);
     }
     
@@ -1414,8 +1433,11 @@ int NinjaFoam::SimpleFoam()
 {
     int nRet = -1;
     
-    #ifdef WIN32
-    const char *const papszArgv[] = { "mpiexec", 
+    VSILFILE *fout = VSIFOpenL("log", "w");
+    
+    if(input.numberCPUs > 1){    
+        #ifdef WIN32
+        const char *const papszArgv[] = { "mpiexec", 
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
@@ -1424,21 +1446,22 @@ int NinjaFoam::SimpleFoam()
                                       "simpleFoam",
                                       "-parallel",
                                        NULL };
-    #endif
-    
-    #ifndef WIN32
-    CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-    const char *const papszArgv[] = { "mpiexec", 
+        #else
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv[] = { "mpiexec", 
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs), 
                                       "simpleFoam",
                                       "-parallel",
                                        NULL };
-    #endif
-    
-    VSILFILE *fout = VSIFOpenL("log", "w");
-    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        #endif
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else{
+        const char *const papszArgv[] = { "simpleFoam",
+                                       NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
     
     VSIFCloseL(fout);
     
