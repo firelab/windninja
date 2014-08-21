@@ -212,6 +212,14 @@ IF(SCALAR)
 ENDIF(SCALAR)
 
 # *****************************************************************************
+# Allow to permanently disable thredds updating in the build
+# *****************************************************************************
+OPTION(DISABLE_THREDDS_UPDATE "Don't connect to server for thredds updates" OFF)
+IF(DISABLE_THREDDS_UPDATE)
+    ADD_DEFINITIONS(-DDISABLE_THREDDS_UPDATE)
+ENDIF(DISABLE_THREDDS_UPDATE)
+
+# *****************************************************************************
 # If the gui is to be built, check for Qt.  Add the definition to force 
 # ninjaCom to compile with Qt support
 # *****************************************************************************

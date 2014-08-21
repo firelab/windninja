@@ -101,6 +101,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
+#ifndef DISABLE_THREDDS_UPDATE
     /* Try to update our thredds file */
     int rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
                                                  "NO" ) );
@@ -110,6 +111,7 @@ int NinjaInitialize()
         NinjaCheckThreddsData( (void*) &rc );
         //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
     }
+#endif /* DISABLE_THREDDS_UPDATE */
     return 0;
 }
 
