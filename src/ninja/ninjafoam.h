@@ -51,38 +51,6 @@
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
 
-#define NINJA_FOAM_JSON    "{ " \
-                           "   \"MeshInput\": { " \
-                           "     \"terrain\": \"%s\", " \
-                           "     \"Available Terrains\" : \"hellscanyon,crazyhorse,bigbutte,salmonriver\" " \
-                           "   }," \
-                           "   \"General\": { " \
-                           "     \"DataPath\": \"%s\"," \
-                           "     \"nProcs\":\"4\"" \
-                           "   }, " \
-                           "   \"SolverInputs\": { " \
-                           "     \"Rd\": 15, " \
-                           "     \"direction\": \"(0 1 0)\", " \
-                           "     \"U_freestream\": \"9\", " \
-                           "     \"InputWindHeight\": \"35\", " \
-                           "     \"z0\": \"10\", " \
-                           "     \"inlets\": " \
-                           "         [ \"%s\"], " \
-                           "     \"BCs\": [ " \
-                           "       \"east_face\", " \
-                           "       \"west_face\", " \
-                           "       \"north_face\", " \
-                           "       \"south_face\" " \
-                           "     ] " \
-                           "    }, " \
-                           "    \"PostInputs\": {\"ter\": \"crazyhorse_up.stl\"} " \
-                           "}"
-
-#define NINJA_FOAM_NORTH    0x01
-#define NINJA_FOAM_EAST     0x02
-#define NINJA_FOAM_SOUTH    0x04
-#define NINJA_FOAM_WEST     0x08
-
 /**
  * \brief Main interface to OpenFOAM solver runs.
  *

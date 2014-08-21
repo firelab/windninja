@@ -35,7 +35,7 @@ NinjaFoam::NinjaFoam() : ninja()
     pszTempPath = NULL;
     pszOgrBase = NULL;
     hGriddedDS = NULL;
-    
+
     boundary_name = "";
     terrainName = "NAME";
     type = "";
