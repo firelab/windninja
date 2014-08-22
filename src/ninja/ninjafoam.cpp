@@ -142,7 +142,8 @@ bool NinjaFoam::simulate_wind()
     eErr = NinjaElevationToStl(inFile,
                         outFile,
                         nBand,
-                        NinjaStlAscii,
+                        NinjaStlBinary,
+                        //NinjaStlAscii,
                         NULL);
 
     if(eErr != 0){
@@ -167,7 +168,7 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in orignal terrain file...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
     status = SurfaceCheck();
     if(status != 0){
         //do something
@@ -422,7 +423,8 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(0, pos+len);
     }
     
-    ReplaceKeys(s, "$terrainName$", terrainName);
+    ReplaceKeys(s, "$terrainName$", "patch0"); //binary stl file
+    //ReplaceKeys(s, "$terrainName$", terrainName); //ascii stl file
     
     if(input.nonEqBc == 0){
         if(std::string(pszFilename) == "epsilon"){
@@ -1111,7 +1113,8 @@ int NinjaFoam::writeSnappyMesh()
     int len;
     
     ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
-    ReplaceKeys(s, "$stlRegionName$", "NAME");
+    ReplaceKeys(s, "$stlRegionName$", "patch0"); //binary stl files
+    //ReplaceKeys(s, "$stlRegionName$", "NAME"); //ascii stl files
     ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
     ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
@@ -1148,7 +1151,8 @@ int NinjaFoam::writeSnappyMesh()
     s = data;
     
     ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
-    ReplaceKeys(s, "$stlRegionName$", "NAME");
+    ReplaceKeys(s, "$stlRegionName$", "patch0"); //binary stl files
+    //ReplaceKeys(s, "$stlRegionName$", "NAME"); //ascii stl files
     ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
     ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
