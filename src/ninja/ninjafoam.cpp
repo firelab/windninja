@@ -44,6 +44,9 @@ NinjaFoam::NinjaFoam() : ninja()
     pvalue = "";
     inletoutletvalue = "";
     template_ = "";
+
+    pszMem = CPLStrdup( "/vsimem/output.raw" );
+    pszVrtMem = CPLStrdup( "/vsimem/output.vrt" );
 }
 
 /**
@@ -75,6 +78,8 @@ NinjaFoam::~NinjaFoam()
     free( (void*)pszTerrainFile );
     free( (void*)pszTempPath );
     free( (void*)pszOgrBase );
+    free( (void*)pszVrtMem );
+    free( (void*)pszMem );
     GDALClose( hGriddedDS );
 }
 
@@ -1180,13 +1185,15 @@ int NinjaFoam::ReplaceKey(std::string &s, std::string k, std::string v)
         return FALSE;
 }
 
-int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v)
+int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v, int n)
 {
     int rc = FALSE;
+    int c = 0;
     do
     {
         rc = ReplaceKey(s, k, v);
-    } while(rc);
+        c++;
+    } while(rc && c < n);
     return rc;
 }
 
@@ -1481,4 +1488,69 @@ int NinjaFoam::Sample()
     VSIFCloseL(fout);
     
     return nRet;
+}
+
+int NinjaFoam::SanitizeOutput()
+{
+    /*
+    ** Open raw output.
+    ** Remove 1st header line.
+    ** Remove leading # on next line
+    ** Remove leading '  '
+    ** Change 5 '  ' to ','
+    ** Remove trailing '  '
+    */
+    /*
+    ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
+    ** the VSIFGets functions.
+    */
+    FILE *fin;
+    VSILFILE *fout, *fvrt;
+    char buf[512];
+    int rc;
+    const char *pszVrtFile;
+    const char *pszVrt;
+    std::string s;
+    fin = VSIFOpen( "U_triSurfaceSampling.raw", "r" );
+    fout = VSIFOpenL( pszMem, "w" );
+    fvrt = VSIFOpenL( pszVrtMem, "w" );
+    pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
+    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
+                         "EPSG:32612" );
+    VSIFWriteL(pszVrt, strlen( pszVrt ), 1, fvrt );
+    VSIFCloseL( fvrt );
+    buf[0] = '\0';
+    /* eat the first line */
+    VSIFGets( buf, 512, fin );
+    VSIFGets( buf, 512, fin );
+    s = buf;
+    ReplaceKeys( s, "#", "", 1 );
+    ReplaceKeys( s, "  ", "", 1 );
+    ReplaceKeys( s, "  ", ",", 5 );
+    ReplaceKeys( s, "  ", "", 1 );
+    /*
+    ReplaceToken( buf, "#", "", 1 );
+    ReplaceToken( buf, "  ", "", 1 );
+    ReplaceToken( buf, "  ", ",", 5 );
+    ReplaceToken( buf, "  ", "", 1 );
+    */
+    VSIFWriteL( s.c_str(), s.size(), 1, fout );
+    while( VSIFGets( buf, 512, fin ) != NULL )
+    {
+        s = buf;
+        ReplaceKeys( s, " ", ",", 5 );
+        //ReplaceToken( buf, " ", ",", 5 );
+        VSIFWriteL( s.c_str(), s.size(), 1, fout );
+    }
+    VSIFClose( fin );
+    VSIFCloseL( fout );
+    return 0;
+}
+int NinjaFoam::SampleCloud()
+{
+    return 0;
+}
+int NinjaFoam::CreateGrids()
+{
+    return 0;
 }

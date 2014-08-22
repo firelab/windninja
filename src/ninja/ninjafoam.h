@@ -120,7 +120,7 @@ private:
     double side1; // length of side of regular hex cell in zone1
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
-    int ReplaceKeys(std::string &s, std::string k, std::string v);
+    int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     
     int SurfaceTransformPoints();
     int SurfaceCheck();
@@ -134,6 +134,13 @@ private:
     int ApplyInit();
     int SimpleFoam();
     int Sample();
+
+    /* GDAL/OGR output */
+    const char *pszVrtMem;
+    const char *pszMem;
+    int SanitizeOutput();
+    int SampleCloud();
+    int CreateGrids();
 
 };
 
