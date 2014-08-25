@@ -41,6 +41,8 @@
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
 
+#define PIPE_BUFFER_SIZE 4096
+
 #define NINJA_FOAM_OGR_VRT "<OGRVRTDataSource>" \
                            "  <OGRVRTLayer name=\"%s\">" \
                            "    <SrcDataSource>%s</SrcDataSource>" \
