@@ -759,7 +759,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsUtcFree( ref );
     NomadsUtcFree( end );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
-    CPLSetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "FALSE" );
+    CPLSetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", NULL );
     if( nrc == NOMADS_OK && pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
