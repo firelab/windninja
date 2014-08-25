@@ -72,7 +72,7 @@ private:
 	bool CreateShape();
 	void OpenShape();
 
-	void WriteShapePoint(double xpt, double ypt, double spd, long dir, long view_dir, long map_dir, long qgis_dir);
+	void WriteShapePoint(double xpt, double ypt, double spd, long dir, long map_dir, long qgis_dir);
 
 	void CloseShape();
 };

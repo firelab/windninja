@@ -67,8 +67,8 @@ bool ShapeVector::makeShapeFiles()
 {
 	double xC, yC;
 	xC = yC = 0;
-	double mapDir, viewDir, qgisDir;
-	mapDir = viewDir = qgisDir = 0;
+	double mapDir, qgisDir;
+	mapDir = qgisDir = 0;
 	if(CreateShape())
 		OpenShape();
 	else
@@ -80,7 +80,6 @@ bool ShapeVector::makeShapeFiles()
 		{
 			spd.get_cellPosition(i, j, &xC, &yC);
 			mapDir = dir(i,j) + 180.0;
-			viewDir = dir(i,j) + 180.0;
 			qgisDir = dir(i,j) + 180.0;
 
 			if(qgisDir > 360.0)
@@ -88,15 +87,12 @@ bool ShapeVector::makeShapeFiles()
 
 			if(mapDir > 360.0)
 				mapDir -= 360.0;
-			if(viewDir > 360.0)
-				viewDir -= 360.0;
 
-			viewDir = 360.0 - viewDir;
 			mapDir -= 90.0;
 			if(mapDir < 0.0)
 				mapDir += 360.0;
 
-			WriteShapePoint(xC, yC, spd(i,j), (long) (dir(i,j)+0.5), (long) (viewDir+0.5), (long) (mapDir+0.5), (long) (qgisDir+0.5));
+			WriteShapePoint(xC, yC, spd(i,j), (long) (dir(i,j)+0.5), (long) (mapDir+0.5), (long) (qgisDir+0.5));
 		}
 	}
 	CloseShape();
@@ -139,8 +135,6 @@ bool ShapeVector::CreateShape()
     	DBFAddField(hDBF, DataBaseID, FTDouble, 16, 6 );
      sprintf(DataBaseID, "%s", "dir");
     	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0);
-     sprintf(DataBaseID, "%s", "AV_dir");
-    	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0 );
      sprintf(DataBaseID, "%s", "AM_dir");
     	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0 );
      sprintf(DataBaseID, "%s", "QGIS_dir");
@@ -172,7 +166,7 @@ void ShapeVector::CloseShape()
 }
 
 
-void ShapeVector::WriteShapePoint(double xpt, double ypt, double spd, long dir, long view_dir, long map_dir, long qgis_dir)
+void ShapeVector::WriteShapePoint(double xpt, double ypt, double spd, long dir, long map_dir, long qgis_dir)
 {
 	long NumRecord;
 	double zpt=0;
@@ -192,7 +186,6 @@ void ShapeVector::WriteShapePoint(double xpt, double ypt, double spd, long dir, 
 	//DBFWriteIntegerAttribute(hDBF, NumRecord, 3, dir);
 	DBFWriteDoubleAttribute(hDBF, NumRecord, 0, spd);
 	DBFWriteIntegerAttribute(hDBF, NumRecord, 1, dir);
-	DBFWriteIntegerAttribute(hDBF, NumRecord, 2, view_dir);
-	DBFWriteIntegerAttribute(hDBF, NumRecord, 3, map_dir);
-	DBFWriteIntegerAttribute(hDBF, NumRecord, 4, qgis_dir);
+	DBFWriteIntegerAttribute(hDBF, NumRecord, 2, map_dir);
+	DBFWriteIntegerAttribute(hDBF, NumRecord, 3, qgis_dir);
 }
