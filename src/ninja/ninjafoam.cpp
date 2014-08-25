@@ -1266,9 +1266,10 @@ int NinjaFoam::DecomposePar(VSILFILE *fout)
     return nRet;
 }
 
-/* check error pipe for errors from simplFoam */
 int NinjaFoam::SnappyHexMesh()
 {    
+    int nRet = -1;
+    
     if(input.numberCPUs > 1){
         #ifdef WIN32
         const char *const papszArgv[] = { "mpiexec", 
@@ -1297,6 +1298,9 @@ int NinjaFoam::SnappyHexMesh()
         char data[PIPE_BUFFER_SIZE];
         int pos;
         
+        
+        /* find a better way to determine % complete. Are the number of morph iterations fixed? */
+        /* also, this won't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
             std::string s(data);
             if(s.find("Determining initial surface intersections") != s.npos){
@@ -1321,7 +1325,7 @@ int NinjaFoam::SnappyHexMesh()
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
             }
         }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
     else{
         const char *const papszArgv[] = { "snappyHexMesh",
@@ -1334,6 +1338,8 @@ int NinjaFoam::SnappyHexMesh()
         char data[PIPE_BUFFER_SIZE];
         int pos;
         
+        /* find a better way to determine % complete. Are the number of morph iterations fixed? */
+        /* also, this won't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
             std::string s(data);
             if(s.find("Determining initial surface intersections") != s.npos){
@@ -1359,33 +1365,36 @@ int NinjaFoam::SnappyHexMesh()
             }
             
         }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
     
-    
-    VSIUnlink(CPLFormFilename("system", "snappyHexMeshDict", ""));
+    if(nRet != 0){
+        return nRet;
+    }
+    else{
+        VSIUnlink(CPLFormFilename("system", "snappyHexMeshDict", ""));
       
-    VSILFILE *fin = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict1", ""), "r" );
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict", ""), "w" );
+        VSILFILE *fin = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict1", ""), "r" );
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict", ""), "w" );
     
-    char *data;
+        char *data;
     
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
+        vsi_l_offset offset;
+        VSIFSeekL(fin, 0, SEEK_END);
+        offset = VSIFTellL(fin);
 
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
-    VSIFReadL(data, offset, 1, fin);
-    VSIFWriteL(data, offset, 1, fout);
+        VSIRewindL(fin);
+        data = (char*)CPLMalloc(offset * sizeof(char));
+        VSIFReadL(data, offset, 1, fin);
+        VSIFWriteL(data, offset, 1, fout);
         
-    CPLFree(data);
-    VSIFCloseL(fin);
-    VSIFCloseL(fout);
+        CPLFree(data);
+        VSIFCloseL(fin);
+        VSIFCloseL(fout);
         
-    if(input.numberCPUs > 1){
-        #ifdef WIN32
-        const char *const papszArgv2[] = { "mpiexec", 
+        if(input.numberCPUs > 1){
+            #ifdef WIN32
+            const char *const papszArgv2[] = { "mpiexec", 
                                      "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
@@ -1395,60 +1404,61 @@ int NinjaFoam::SnappyHexMesh()
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-        #else
-        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-        const char *const papszArgv2[] = { "mpiexec", 
+            #else
+            CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+            const char *const papszArgv2[] = { "mpiexec", 
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs), 
                                       "snappyHexMesh",
                                       "-overwrite",
                                       "-parallel",
                                        NULL };
-        #endif
+            #endif
         
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
-        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+            CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
+            CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        char data[PIPE_BUFFER_SIZE];
+            char data[PIPE_BUFFER_SIZE];
         
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
-            if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
-            }
-            if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
-            }
+            while(CPLPipeRead(out_child, &data, sizeof(data))){
+                std::string s(data);
+                if(s.find("Determining initial surface intersections") != s.npos){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
+                }
+                if(s.find("Checking initial mesh") != s.npos){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
+                }
             
-        }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+            }
+            nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         
-        }
-    else{
-        const char *const papszArgv2[] = { "snappyHexMesh",
+            }
+        else{
+            const char *const papszArgv2[] = { "snappyHexMesh",
                                            "-overwrite",
                                             NULL };
         
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
-        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+            CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
+            CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        char data[PIPE_BUFFER_SIZE];
+            char data[PIPE_BUFFER_SIZE];
         
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
-            if(s.find("Determining initial surface intersections") != s.npos){
+            while(CPLPipeRead(out_child, &data, sizeof(data))){
+                std::string s(data);
+                if(s.find("Determining initial surface intersections") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
+                }
+                if(s.find("Checking initial mesh") != s.npos){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
+                }
             }
-            if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
-            }
+            nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 100%% complete...");
     
-    return 0;
+    return nRet;
 }
 
 int NinjaFoam::ReconstructParMesh(const char *const arg, VSILFILE *fout)
@@ -1522,9 +1532,10 @@ int NinjaFoam::ApplyInit()
     return nRet;
 }
 
-/* check error pipe for errors from simplFoam */
 int NinjaFoam::SimpleFoam()
 {
+    int nRet = -1;
+    
     char data[PIPE_BUFFER_SIZE];
     int pos;
     std::string t;
@@ -1555,16 +1566,17 @@ int NinjaFoam::SimpleFoam()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
+        /* Doesn't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
             std::string s(data);
             pos = s.rfind("Time = ");
             if(pos != s.npos){
                 t = s.substr(pos+7, s.find("\n", pos));
                 p = atof(t.c_str()) / input.nIterations * 100;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
             }
         }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -1582,10 +1594,10 @@ int NinjaFoam::SimpleFoam()
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
             }
         }
-        CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
     
-    return 0;
+    return nRet;
 }
 
 int NinjaFoam::Sample()
