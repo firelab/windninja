@@ -514,6 +514,9 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsUtcCopy( end, ref );
     NomadsUtcAddHours( end, nHours );
 
+    /* Disable unneeded reading of entire directories, good speedup */
+    CPLSetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "TRUE" );
+
     pszConfigOpt = CPLGetConfigOption( "NOMADS_HTTP_TIMEOUT", "20" );
     if( pszConfigOpt != NULL )
     {
@@ -756,6 +759,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsUtcFree( ref );
     NomadsUtcFree( end );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+    CPLSetConfigOption( "GDAL_DISABLE_READDIR_ON_OPEN", "FALSE" );
     if( nrc == NOMADS_OK && pfnProgress )
     {
         pfnProgress( 1.0, NULL, NULL );
