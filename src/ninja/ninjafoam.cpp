@@ -1539,7 +1539,7 @@ int NinjaFoam::SimpleFoam()
 {
     int nRet = -1;
     
-    char data[PIPE_BUFFER_SIZE];
+    char data[PIPE_BUFFER_SIZE + 1];
     int pos;
     std::string s, t;
     double p;
@@ -1569,10 +1569,11 @@ int NinjaFoam::SimpleFoam()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
             s.append(data);
             pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) ){
+            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
                 t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                 p = atof(t.c_str()) / input.nIterations * 100;
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
@@ -1587,10 +1588,11 @@ int NinjaFoam::SimpleFoam()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
             s.append(data);
             pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) ){
+            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
                 t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                 p = atof(t.c_str()) / input.nIterations * 100;
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
