@@ -276,7 +276,7 @@ bool NinjaFoam::simulate_wind()
     
     checkCancel();
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for flow field...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     status = SimpleFoam();
     if(status != 0){
         //do something
@@ -1297,33 +1297,33 @@ int NinjaFoam::SnappyHexMesh()
         
         char data[PIPE_BUFFER_SIZE];
         int pos;
-        
+        std::string s;
         
         /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        /* also, this won't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
-            if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
-            }
-            if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
-            }
-            if(s.find("Morph iteration 0") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
-            }
-            if(s.find("Morph iteration 2") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
-            }
-            if(s.find("Morph iteration 4") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
-            }
-            if(s.find("Morph iteration 6") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
-            }
+            s.append(data);
             if(s.find("Morph iteration 8") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
+                break;
             }
+            else if(s.find("Morph iteration 6") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
+            }
+            else if(s.find("Morph iteration 4") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
+            }
+            else if(s.find("Morph iteration 2") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
+            }
+            else if(s.find("Morph iteration 0") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
+            }
+            else if(s.find("Checking initial mesh") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
+            }
+            else if(s.find("Determining initial surface intersections") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
+            }       
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
@@ -1337,33 +1337,33 @@ int NinjaFoam::SnappyHexMesh()
         
         char data[PIPE_BUFFER_SIZE];
         int pos;
+        std::string s;
         
         /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        /* also, this won't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
-            if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
-            }
-            if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
-            }
-            if(s.find("Morph iteration 0") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
-            }
-            if(s.find("Morph iteration 2") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
-            }
-            if(s.find("Morph iteration 4") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
-            }
-            if(s.find("Morph iteration 6") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
-            }
+            s.append(data);
             if(s.find("Morph iteration 8") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
+                break;
             }
-            
+            else if(s.find("Morph iteration 6") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
+            }
+            else if(s.find("Morph iteration 4") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
+            }
+            else if(s.find("Morph iteration 2") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
+            }
+            else if(s.find("Morph iteration 0") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
+            }
+            else if(s.find("Checking initial mesh") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
+            }
+            else if(s.find("Determining initial surface intersections") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
+            }         
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
@@ -1391,6 +1391,7 @@ int NinjaFoam::SnappyHexMesh()
         CPLFree(data);
         VSIFCloseL(fin);
         VSIFCloseL(fout);
+        VSIUnlink(CPLFormFilename("system", "snappyHexMeshDict1", ""));
         
         if(input.numberCPUs > 1){
             #ifdef WIN32
@@ -1417,22 +1418,22 @@ int NinjaFoam::SnappyHexMesh()
         
             CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
             CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
+            
             char data[PIPE_BUFFER_SIZE];
+            int pos;
+            std::string s;
         
             while(CPLPipeRead(out_child, &data, sizeof(data))){
-                std::string s(data);
-                if(s.find("Determining initial surface intersections") != s.npos){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
-                }
+                s.append(data);
                 if(s.find("Checking initial mesh") != s.npos){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
                 }
-            
+                else if(s.find("Determining initial surface intersections") != s.npos){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
+                }
             }
             nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
-        
-            }
+        }
         else{
             const char *const papszArgv2[] = { "snappyHexMesh",
                                            "-overwrite",
@@ -1440,16 +1441,18 @@ int NinjaFoam::SnappyHexMesh()
         
             CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
             CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
+            
             char data[PIPE_BUFFER_SIZE];
-        
+            int pos;
+            std::string s;
+            
             while(CPLPipeRead(out_child, &data, sizeof(data))){
-                std::string s(data);
-                if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
-                }
+                s.append(data);
                 if(s.find("Checking initial mesh") != s.npos){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
+                }
+                else if(s.find("Determining initial surface intersections") != s.npos){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
                 }
             }
             nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
@@ -1538,7 +1541,7 @@ int NinjaFoam::SimpleFoam()
     
     char data[PIPE_BUFFER_SIZE];
     int pos;
-    std::string t;
+    std::string s, t;
     double p;
     
     
@@ -1566,14 +1569,13 @@ int NinjaFoam::SimpleFoam()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        /* Doesn't work if the search phrase is truncated in the buffer. */ 
         while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
+            s.append(data);
             pos = s.rfind("Time = ");
-            if(pos != s.npos){
-                t = s.substr(pos+7, s.find("\n", pos));
+            if(pos != s.npos && s.npos > (pos + 12) ){
+                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                 p = atof(t.c_str()) / input.nIterations * 100;
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
@@ -1586,10 +1588,10 @@ int NinjaFoam::SimpleFoam()
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
         while(CPLPipeRead(out_child, &data, sizeof(data))){
-            std::string s(data);
+            s.append(data);
             pos = s.rfind("Time = ");
-            if(pos != s.npos){
-                t = s.substr(pos+7, s.find("\n", pos));
+            if(pos != s.npos && s.npos > (pos + 12) ){
+                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                 p = atof(t.c_str()) / input.nIterations * 100;
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
             }
