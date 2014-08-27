@@ -324,6 +324,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
+                ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
+                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
+                ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
+                ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
+ 
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
@@ -1211,6 +1216,15 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["write_vtk_output"].as<bool>())
             {
                 windsim.setVtkOutFlag( i_, true );
+            }
+            if(vm["write_pdf_output"].as<bool>())
+            {
+                windsim.setPDFOutFlag( i_, true );
+                option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
+                windsim.setPDFDEM( i_, vm["pdf_dem_filename"].as<std::string>());
+                option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
+                windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
+                        lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
             }
 
         }   //end for loop over ninjas

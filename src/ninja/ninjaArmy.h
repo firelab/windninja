@@ -962,7 +962,49 @@ public:
     * \return errval Returns NINJA_SUCCESS if successful
     */
     int setTxtOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable PDF output for a ninja 
+    *
+    * \param nIndex index of a ninja
+    * \param flag   determines if pdf output is enabled or not
+    * \return errval Returns NINJA_SUCCESS if successful
+    */
+    int setPDFOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resoultion of PDF output for a ninja
+    * Set the resolution of PDF output for a ninja given the resolution
+    * and units.
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units units of the resolution
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setPDFResolution( const int nIndex, const double resolution,
+                                     const lengthUnits::eLengthUnits units, 
+                                     char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of PDF output for a ninja
+    * Set the resolution of PDF output of a ninja given the resolution
+    * and string formatted units.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setPDFResolution( const int nIndex, const double resolution,
+                                     std::string units, char ** papszOptions=NULL );
 
+    int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
     /**
     * \brief Returns the output path of a ninja
     *

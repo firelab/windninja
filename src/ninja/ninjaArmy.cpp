@@ -1317,6 +1317,45 @@ int ninjaArmy::setTxtOutFlag( const int nIndex, const bool flag, char ** papszOp
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_txtOutFlag( flag ) );
 }
+//PDF
+int ninjaArmy::setPDFOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_pdfOutFlag( flag ) );
+}
+int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
+                       const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_pdfResolution( resolution, units ) );
+}
+
+int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_pdfResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       } 
+       catch( std::logic_error &e ) 
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setPDFDEM
+( const int nIndex, const std::string dem_filename, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_pdfDEM( dem_filename ) );
+}
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 {

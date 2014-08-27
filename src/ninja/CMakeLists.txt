@@ -79,6 +79,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   ninjaUnits.cpp
                   ninja_threaded_exception.cpp
                   omp_guard.cpp
+                  OutputWriter.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
                   readInputFile.cpp
@@ -89,7 +90,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   Slope.cpp
                   solar.cpp
                   solpos.cpp
-		  stability.cpp
+                  stability.cpp
                   startRuns.cpp
                   stl_create.cpp
                   Style.cpp
@@ -117,7 +118,7 @@ IF(WITH_NOMADS_SUPPORT)
                       nomads_utc.c)
     IF(NOT HAVE_TIMEGM)
         MESSAGE("Using internal timegm")
-        SET(NINJA_SOURCES ${NINJA_SOURCES} timegm.c)
+        SET(NINJA_SOURCES ${NINJA_SOURCES} timegm.cpp)
     ENDIF(NOT HAVE_TIMEGM)
 ENDIF(WITH_NOMADS_SUPPORT)
 

@@ -1,0 +1,145 @@
+/******************************************************************************
+*
+* Filename: OutputWriter.h
+*
+* Project:  WindNinja 
+* Purpose:  Class to handle output of WindNinja simulations to various GDAL
+*           formats
+* Author:   Levi Malott, lmnn3@mst.edu 
+*
+******************************************************************************
+*
+* THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
+* MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+* IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+* OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+* PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+* LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+* PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
+* RELIABILITY, OR ANY OTHER CHARACTERISTIC.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*
+*****************************************************************************/
+
+#ifndef OUTPUTWRITER_H
+#define OUTPUTWRITER_H 
+
+#include "ascii_grid.h"
+#include "EasyBMP.h"
+#include "EasyBMP_Font.h"
+#include "EasyBMP_DataStructures.h"
+#include "EasyBMP_Geometry.h"
+#include "ninjaUnits.h"
+#include "ninjaMathUtility.h"
+
+#include "ogr_spatialref.h"
+#include "ogr_core.h"
+#include "gdal_version.h"
+#include "cpl_port.h"
+#include "cpl_error.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdalwarper.h"
+#include "gdal_priv.h"
+#include "gdal.h"
+
+#include "gdal_util.h" //nsw
+
+#include "boost/date_time/local_time/local_time.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+#include "ninjaException.h"
+
+
+#include "Style.h"
+
+//#include <process.h>
+#include <stdio.h>
+#include <fstream>
+
+
+
+/*
+ * =====================================================================================
+ *        Class:  OutputWriter
+ *  Description:  Handles writing the output of simulations to supported GDAL formats
+ * =====================================================================================
+ */
+class OutputWriter
+{
+    public:
+        /* ====================  LIFECYCLE     ======================================= */
+        OutputWriter ();                             /* constructor */
+        ~OutputWriter();
+
+        /* ====================  ACCESSORS     ======================================= */
+
+        /* ====================  MUTATORS      ======================================= */
+        void setSpeedGrid(AsciiGrid<double> &s);
+        void setDirGrid(AsciiGrid<double> &d);
+        void setDEMfile(std::string fname) {demFile=fname;}
+
+        /* ====================  OPERATORS     ======================================= */
+        bool write(std::string outputFilename, std::string driver);
+
+    protected:
+        /* ====================  METHODS       ======================================= */
+
+        /* ====================  DATA MEMBERS  ======================================= */
+
+    private:
+        /* ====================  METHODS       ======================================= */
+        void _createOGRFileWithFields();
+        bool _writePDF(std::string filename);
+        
+        /* ====================  DATA MEMBERS  ======================================= */
+        AsciiGrid<double> spd;
+        AsciiGrid<double> dir;
+        double resolution;
+        std::string demFile;
+        std::string inputSpeedFile;
+        velocityUnits::eVelocityUnits speedUnits;
+        std::string inputDirFile;
+        std::string kmlFile;
+        std::string kmzFile;
+        std::string legendFile;
+        std::string timeDateLegendFile;
+        std::string wxModelName;
+
+        static const char * SPEED;//      = "speed";
+        static const char * DIR;//        = "dir";
+        static const char * AV_DIR;//     = "AV_dir";
+        static const char * AM_DIR;//     = "AM_dir";
+        static const char * QGIS_DIR;//   = "QGIS_dir";
+        static const char * OGR_FILE;
+
+        double geTheta;
+
+        static const int numColors = 5;
+
+        double *splitValue;
+
+        double northExtent, eastExtent, southExtent, westExtent;
+        double lineWidth;
+
+        GDALDatasetH hSrcDS;
+        GDALDatasetH hDstDS;
+        GDALDriverH  hDriver;
+        unsigned char *pafScanline;
+        char** papszOptions;
+        OGRLayerH hLayer;
+        OGRFieldDefnH hFieldDefn;
+        OGRDataSourceH hDataSource;
+        OGRSFDriverH hOGRDriver;
+
+}; /* -----  end of class OutputWriter  ----- */
+
+#endif /*  OUTPUTWRITER_H  */

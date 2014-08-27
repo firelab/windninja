@@ -4649,6 +4649,45 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 	}
 	}//end omp section
 
+#pragma omp section
+	{
+	try{
+		if(input.pdfOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+            OutputWriter output;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+			output.setDirGrid(*angTempGrid);
+			output.setSpeedGrid(*velTempGrid);
+            output.setDEMfile(input.pdfDEMFileName);
+            output.write(input.pdfFile, "PDF");
+
+
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+		}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+	}
+	} //end omp section
 	}	//end parallel sections region
 }
 
@@ -5878,6 +5917,8 @@ void ninja::set_googOutFlag(bool flag)
     input.googOutFlag = flag;
 }
 
+
+
 void ninja::set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling)
 {
     if(scaling != KmlVector::equal_color && scaling != KmlVector::equal_interval)
@@ -5945,6 +5986,28 @@ void ninja::set_shpResolution(double Resolution, lengthUnits::eLengthUnits units
     input.shpResolution = Resolution;
 }
 
+void ninja::set_pdfOutFlag(bool flag)
+{
+    input.pdfOutFlag = flag;
+}
+
+void ninja::set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units)
+{
+    input.shpUnits = units;
+    lengthUnits::toBaseUnits(Resolution, units);
+
+    input.pdfResolution = Resolution;
+}
+
+void ninja::set_pdfDEM(std::string dem_file_name)
+{
+    if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
+        throw std::runtime_error(std::string("The file ") +
+                dem_file_name + " does not exist or may be in use by another program.");
+    input.pdfDEMFileName = dem_file_name;
+}
+
+
 void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
@@ -5986,11 +6049,13 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.velResolution = meshResolution;
     if( input.angResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.angResolution = meshResolution;
+    if( input.pdfResolution <= 0.0 )
+        input.pdfResolution = meshResolution;
 
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -6053,8 +6118,9 @@ void ninja::set_outputFilenames(double& meshResolution,
     kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
+    pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
@@ -6063,6 +6129,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -6070,21 +6137,25 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_kmz << "_point";
         os_shp << "_point";
         os_ascii << "_point";
+        os_pdf   << "_point";
     }
 
     double meshResolutionTemp = meshResolution;
     double kmzResolutionTemp = input.kmzResolution;
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
+    double pdfResolutionTemp = input.pdfResolution;
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
+    os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
     #ifdef STABILITY
     if( input.stabilityFlag == true && input.alphaStability != -1 )
@@ -6093,6 +6164,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_kmz   << "_alpha_" << input.alphaStability;
         os_shp   << "_alpha_" << input.alphaStability;
         os_ascii << "_alpha_" << input.alphaStability;
+        os_pdf   << "_alpha_" << input.alphaStability;
     }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
@@ -6100,6 +6172,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_kmz   << "_non_neutral_stability";
         os_shp   << "_non_neutral_stability";
         os_ascii << "_non_neutral_stability";
+        os_pdf   << "_non_neutral_stability";
     }
     #endif
 
@@ -6107,6 +6180,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
+    pdf_fileAppend   = os_pdf.str();
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -6116,6 +6190,8 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     input.shpFile = rootFile + shp_fileAppend + ".shp";
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
+
+    input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";

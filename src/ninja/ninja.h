@@ -99,6 +99,7 @@
 #include "element.h"
 #include "farsiteAtm.h"
 #include <boost/shared_ptr.hpp>
+#include "OutputWriter.h"
 
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
@@ -331,6 +332,9 @@ public:
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
     void set_txtOutFlag(bool flag);
     void set_vtkOutFlag(bool flag);		//determines if VTK volume output files will be written
+    void set_pdfOutFlag(bool flag);
+    void set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units);
+    void set_pdfDEM(std::string dem_file_name);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);

@@ -96,6 +96,11 @@ WindNinjaInputs::WindNinjaInputs()
     legFile = "!set";
     dateTimeLegFile = "!set";
     volVTKFile = "!set";
+    pdfOutFlag = false;
+    pdfDEMFileName = "!set";
+    pdfResolution = -1.0;
+    pdfUnits = lengthUnits::meters;
+    pdfFile = "!set";
     keepOutGridsInMemory = false;
     #ifdef STABILITY
     stabilityFlag = false;
