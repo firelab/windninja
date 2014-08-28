@@ -223,9 +223,9 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
             CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s",
 #ifdef NOMADS_USE_IP
                         NOMADS_URL_CGI_IP,
-#else
+#else /* NOMADS_USE_IP */
                         NOMADS_URL_CGI_HOST,
-#endif
+#endif /* NOMADS_USE_IP */
                         ppszKey[NOMADS_FILTER_BIN], pszVars, pszLevels,
                         NOMADS_SUBREGION, pszGribFile, pszGribDir );
         pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
@@ -385,9 +385,9 @@ static void NomadsFetchAsync( void *pData )
     psData = (NomadsThreadData*)pData;
 #ifdef NOMADS_USE_VSI_READ
     rc = NomadsFetchVsi( psData->pszUrl, psData->pszFilename );
-#else
+#else /* NOMADS_USE_VSI_READ */
     rc = NomadsFetchHttp( psData->pszUrl, psData->pszFilename );
-#endif
+#endif /* NOMADS_USE_VSI_READ */
     psData->nErr = rc;
 }
 
@@ -482,11 +482,9 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     int nMaxFcstRewind;
     int nrc;
     int bZip;
-#ifdef NOMADS_ENABLE_ASYNC
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
-#endif
 
     NomadsThreadData *pasData;
     nomads_utc *ref, *end, *fcst;
@@ -543,7 +541,12 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     }
     pThreads = CPLMalloc( sizeof( void * ) * nThreads );
     pasData = CPLMalloc( sizeof( NomadsThreadData ) * nThreads );
-#endif
+#else /* NOMADS_ENABLE_ASYNC */
+    /* Unused variables, set to null to so free is no-op */
+    nThreads = 1;
+    pThreads = NULL;
+    pasData = NULL;
+#endif /* NOMADS_ENABLE_ASYNC */
 
     fcst = NULL;
     nFcstTries = 0;
@@ -609,9 +612,9 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         /* Download one file and start over if it's not there. */
 #ifdef NOMADS_USE_VSI_READ
         nrc = NomadsFetchVsi( papszDownloadUrls[0], papszOutputFiles[0] );
-#else
+#else /* NOMADS_USE_VSI_READ */
         nrc = NomadsFetchHttp( papszDownloadUrls[0], papszOutputFiles[0] );
-#endif
+#endif /* NOMADS_USE_VSI_READ */
         if( nrc != NOMADS_OK )
         {
             CPLError( CE_Warning, CPLE_AppDefined,
@@ -673,10 +676,10 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 #ifdef NOMADS_USE_VSI_READ
                     rc = NomadsFetchVsi( pasData[t].pszUrl,
                                          pasData[t].pszFilename );
-#else
+#else /* NOMADS_USE_VSI_READ */
                     rc = NomadsFetchHttp( pasData[t].pszUrl,
                                           pasData[t].pszFilename );
-#endif
+#endif /* NOMADS_USE_VSI_READ */
                     if( rc != NOMADS_OK )
                     {
                         nrc = rc;
@@ -686,9 +689,9 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 #else /* NOMADS_ENABLE_ASYNC */
 #ifdef NOMADS_USE_VSI_READ
             nrc = NomadsFetchVsi( papszDownloadUrls[i], papszOutputFiles[i] );
-#else
+#else /* NOMADS_USE_VSI_READ */
             nrc = NomadsFetchHttp( papszDownloadUrls[i], papszOutputFiles[i] );
-#endif
+#endif /* NOMADS_USE_VSI_READ */
             i++;
 #endif /* NOMADS_ENABLE_ASYNC */
             if( nrc != NOMADS_OK )
@@ -751,10 +754,8 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLUnlinkTree( pszTmpDir );
         CPLFree( (void*)pszTmpDir );
     }
-#ifdef NOMADS_ENABLE_ASYNC
     CPLFree( (void*)pasData );
     CPLFree( (void**)pThreads );
-#endif
 
     NomadsUtcFree( ref );
     NomadsUtcFree( end );
