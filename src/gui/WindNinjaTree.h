@@ -42,6 +42,10 @@
 #include "stabilityInput.h"
 #endif
 
+#ifdef NINJAFOAM
+#include "ninjafoamInput.h"
+#endif
+
 #include "windInput.h"
 #include "pointInput.h"
 #include "weatherModel.h"
@@ -68,6 +72,7 @@ class WindNinjaTree : public QWidget
   QSplitter *splitter;
   //items
   QTreeWidgetItem *mainItem;
+  QTreeWidgetItem *solverMethodItem;
   QTreeWidgetItem *inputItem;
   QTreeWidgetItem *surfaceItem;
   
@@ -79,6 +84,9 @@ class WindNinjaTree : public QWidget
   QTreeWidgetItem *diurnalItem;
 #ifdef STABILITY
   QTreeWidgetItem *stabilityItem;
+#endif
+#ifdef NINJAFOAM
+  QTreeWidgetItem *ninjafoamItem;
 #endif
   
   //output file items...
@@ -93,6 +101,7 @@ class WindNinjaTree : public QWidget
   void createTree();
   void createIcons();
   void createInputItems();
+  void createSolverMethodItems();
   void createOutputItems();
   void createStack();
   void createConnections();
@@ -105,6 +114,9 @@ class WindNinjaTree : public QWidget
   diurnalInput *diurnal;
 #ifdef STABILITY
   stabilityInput *stability;
+#endif
+#ifdef NINJAFOAM
+  ninjafoamInput *ninjafoam;
 #endif
   windInput *wind;
   pointInput *point;

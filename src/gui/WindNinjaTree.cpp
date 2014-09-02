@@ -53,6 +53,9 @@ void WindNinjaTree::createTree()
   tree = new QTreeWidget;
   tree->setColumnCount(1);
   createInputItems();
+#ifdef NINJAFOAM
+  createSolverMethodItems();
+#endif
   createOutputItems();
 
   mainItem = new QTreeWidgetItem;
@@ -64,9 +67,14 @@ void WindNinjaTree::createTree()
   
   //add items in gui order
   tree->setHeaderItem(mainItem);
+#ifdef NINJAFOAM
+  tree->addTopLevelItem(solverMethodItem);
+  solverMethodItem->setExpanded(true);
+  solverMethodItem->setSelected(true);
+#endif
   tree->addTopLevelItem(inputItem);
   inputItem->setExpanded(true);
-  surfaceItem->setSelected(true);
+  //surfaceItem->setSelected(true);
   windItem->setExpanded(true);
   tree->addTopLevelItem(diurnalItem);
 #ifdef STABILITY
@@ -90,6 +98,21 @@ void WindNinjaTree::createIcons()
   radio.addFile(":radio_bullet_blue.png");
   sun.addFile(":weather_sun.png");
 }
+
+#ifdef NINJAFOAM 
+void WindNinjaTree::createSolverMethodItems()
+{
+  solverMethodItem = new QTreeWidgetItem;
+  solverMethodItem->setIcon(0, blue);
+  solverMethodItem->setText(0, tr("Solver"));
+  
+  ninjafoamItem = new QTreeWidgetItem;
+  ninjafoamItem->setText(0, tr("Conservation of Momentum"));
+  ninjafoamItem->setIcon(0, blue);
+
+  solverMethodItem->addChild(ninjafoamItem);
+}
+#endif //NINJAFOAM
 
 void WindNinjaTree::createInputItems()
 {
@@ -174,6 +197,9 @@ void WindNinjaTree::createStack()
 #ifdef STABILITY
   stability = new stabilityInput;
 #endif
+#ifdef NINJAFOAM
+  ninjafoam = new ninjafoamInput;
+#endif
   wind = new windInput;
   point = new pointInput;
   weather = new weatherModel;
@@ -189,6 +215,9 @@ void WindNinjaTree::createStack()
   stack->addWidget(diurnal);
 #ifdef STABILITY
   stack->addWidget(stability);
+#endif
+#ifdef NINJAFOAM
+  stack->addWidget(ninjafoam);
 #endif
   stack->addWidget(wind);
   stack->addWidget(point);
@@ -224,6 +253,10 @@ void WindNinjaTree::updateInterface()
 #ifdef STABILITY
   else if(item == stabilityItem)
       stack->setCurrentWidget(stability);
+#endif
+#ifdef NINJAFOAM
+  else if(item == ninjafoamItem)
+      stack->setCurrentWidget(ninjafoam);
 #endif
   else if(item == windItem)
     stack->setCurrentWidget(wind);

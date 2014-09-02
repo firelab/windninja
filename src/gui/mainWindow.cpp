@@ -29,7 +29,8 @@
 
 #include "mainWindow.h"
 
-mainWindow::mainWindow(QWidget *parent) : QMainWindow(parent)
+mainWindow::mainWindow(QWidget *parent) 
+: QMainWindow(parent)
 {
     GDALAllRegister();
     lineNumber = 1;
@@ -1330,6 +1331,10 @@ int mainWindow::solve()
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
 #endif
 
+#ifdef NINJAFOAM
+    bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
+#endif
+
     //initialization method
     WindNinjaInputs::eInitializationMethod initMethod;
     if( tree->wind->windGroupBox->isChecked() )
@@ -1477,13 +1482,19 @@ int mainWindow::solve()
     progressDialog->setLabelText( "Initializing runs..." );
 
     writeToConsole( "Initializing runs..." );
-
+    
+    #ifdef NINJAFOAM
+    army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
+    #else
+    army = new ninjaArmy(1); // native ninja solver
+    #endif
+    
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
         //we can only do one run with point
         nRuns = 1;
-        army.setSize( nRuns );
+        army->setSize( nRuns );
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
@@ -1493,7 +1504,7 @@ int mainWindow::solve()
         {
             nRuns++;
         }
-        army.setSize( nRuns );
+        army->setSize( nRuns );
     }
     else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
     {
@@ -1509,8 +1520,8 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
-        army.makeArmy( weatherFile, timeZone );
-        nRuns = army.getSize();
+        army->makeArmy( weatherFile, timeZone );
+        nRuns = army->getSize();
     }
 
     progressDialog->setValue( 0 );
@@ -1521,27 +1532,27 @@ int mainWindow::solve()
     //resize the army
 
     //fill in the values
-    for(int i = 0;i < army.getSize(); i++) 
+    for(int i = 0;i < army->getSize(); i++) 
     {
 
         //set initialization
         if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
         {
-            army.setInitializationMethod( i, initMethod );
+            army->setInitializationMethod( i, initMethod );
         }
         //set the ninjaCom
-        army.setNinjaCommunication( i, i, ninjaComClass::ninjaGUICom );
+        army->setNinjaCommunication( i, i, ninjaComClass::ninjaGUICom );
 
         //set the input file
         //army.readInputFile( i, demFile );
 
         if( inputFileType != LCP )
         {
-            army.setUniVegetation( i, vegetation );
+            army->setUniVegetation( i, vegetation );
         }
         if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
         {
-           if( NINJA_SUCCESS != army.setWxStationFilename( i, pointFile ) )
+           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
             {
                 QMessageBox::critical( this, 
                                        tr("Invalid Point inititialization file" ),
@@ -1558,61 +1569,61 @@ int mainWindow::solve()
         else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
         {
             //get speed
-            army.setInputSpeed( i,
+            army->setInputSpeed( i,
                                 tree->wind->windTable->speed[i]->value(),
                                 inputSpeedUnits);
             //get direction
-            army.setInputDirection( i, tree->wind->windTable->dir[i]->value() );
+            army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
         }
         
         //set input output height
-        army.setInputWindHeight ( i, inHeight, inHeightUnits );
-        army.setOutputWindHeight( i, outHeight, outHeightUnits );
+        army->setInputWindHeight ( i, inHeight, inHeightUnits );
+        army->setOutputWindHeight( i, outHeight, outHeightUnits );
 
         //set output speed units
-        army.setOutputSpeedUnits( i, outputSpeedUnits );
+        army->setOutputSpeedUnits( i, outputSpeedUnits );
 
         //set clipping
-        army.setOutputBufferClipping( i, (double) clip );
+        army->setOutputBufferClipping( i, (double) clip );
 
         //diurnal, if needed
-        army.setDiurnalWinds( i, useDiurnal );
+        army->setDiurnalWinds( i, useDiurnal );
         if( useDiurnal == true ) 
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
-            army.setDateTime( i, tree->wind->windTable->date[i]->date().year(),
+            army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
                                  tree->wind->windTable->time[i]->time().hour(),
                                  tree->wind->windTable->time[i]->time().minute(),
                                  0, timeZone );
-            army.setUniAirTemp( i,
+            army->setUniAirTemp( i,
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
-            army.setUniCloudCover( i,
+            army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
-            army.setPosition( i, GDALCenterLat, GDALCenterLon );
+            army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag )
             {
-                army.setDateTime( 0, tree->point->dateTimeEdit->date().year(),
+                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
                         tree->point->dateTimeEdit->date().month(),
                         tree->point->dateTimeEdit->date().day(),
                         tree->point->dateTimeEdit->time().hour(),
                         tree->point->dateTimeEdit->time().minute(),
                         0, timeZone );
-                army.setPosition( i, GDALCenterLat, GDALCenterLon );
+                army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
             {
-                army.setPosition( i );
+                army->setPosition( i );
             }
         }
         else // initMethod is wxModelInitialization or useDiurnal is false
         {
-            army.setPosition( i );
+            army->setPosition( i );
         }
 
 #ifdef STABILITY
@@ -1621,82 +1632,81 @@ int mainWindow::solve()
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
-            army.setDateTime( i, tree->wind->windTable->date[i]->date().year(),
+            army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
                                  tree->wind->windTable->time[i]->time().hour(),
                                  tree->wind->windTable->time[i]->time().minute(),
                                  0, timeZone );
-            army.setUniAirTemp( i,
+            army->setUniAirTemp( i,
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
-            army.setUniCloudCover( i,
+            army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
-            army.setPosition( i, GDALCenterLat, GDALCenterLon );
+            army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag )
             {
-                army.setDateTime( 0, tree->point->dateTimeEdit->date().year(),
+                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
                         tree->point->dateTimeEdit->date().month(),
                         tree->point->dateTimeEdit->date().day(),
                         tree->point->dateTimeEdit->time().hour(),
                         tree->point->dateTimeEdit->time().minute(),
                         0, timeZone );
-                army.setPosition( i, GDALCenterLat, GDALCenterLon );
+                army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
         }
-        army.setStabilityFlag( i, useStability );
+        army->setStabilityFlag( i, useStability );
 #endif
-
         //set mesh stuff
         if( customMesh )
         {
-            army.setMeshResolution( i, meshRes, meshUnits );
+            army->setMeshResolution( i, meshRes, meshUnits );
         }
         else
         {
-            army.setMeshResolutionChoice( i, meshChoice );
+            army->setMeshResolutionChoice( i, meshChoice );
         }
 
-        army.setNumVertLayers( i, 20 );
+        army->setNumVertLayers( i, 20 );
 
         //set the input file
         //army.ninjas[i].readInputFile( demFile );
-        army.setDEM( i, demFile );
+        army->setDEM( i, demFile );
         // this is commented out?
         //army.ninjas[i].mesh.compute_domain_height();
 
         //set number of cpus...
         //army.setnumberCPUs(1);
 
-        army.setGoogOutFlag     (i,writeGoogle);
-        army.setGoogLineWidth   (i,vectorWidth);
-        army.setGoogResolution  (i,googleRes,googleUnits);
-        army.setGoogSpeedScaling(i,googleScale);
-        army.setShpOutFlag      (i,writeShape); 
-        army.setShpResolution   (i,shapeRes,shapeUnits);
-        army.setAsciiOutFlag    (i,writeFb);    
-        army.setAsciiResolution (i,fbRes,fbUnits);
-        //army.setWriteAtmFile  (i,writeAtm );  
-        army.setVtkOutFlag      (i,writeVTK);  
+        army->setGoogOutFlag     (i,writeGoogle);
+        army->setGoogLineWidth   (i,vectorWidth);
+        army->setGoogResolution  (i,googleRes,googleUnits);
+        army->setGoogSpeedScaling(i,googleScale);
+        army->setShpOutFlag      (i,writeShape); 
+        army->setShpResolution   (i,shapeRes,shapeUnits);
+        army->setAsciiOutFlag    (i,writeFb);    
+        army->setAsciiResolution (i,fbRes,fbUnits);
+        //army->setWriteAtmFile  (i,writeAtm );  
+        army->setVtkOutFlag      (i,writeVTK);  
          
         if( initMethod == WindNinjaInputs::wxModelInitializationFlag &&
             writeWxOutput == true )
         {
-            army.setWxModelGoogOutFlag( i, writeGoogle );
-            army.setWxModelShpOutFlag( i, writeShape );
-            army.setWxModelAsciiOutFlag( i, writeFb );
+            army->setWxModelGoogOutFlag( i, writeGoogle );
+            army->setWxModelShpOutFlag( i, writeShape );
+            army->setWxModelAsciiOutFlag( i, writeFb );
         }
 
         //army.setOutputFilenames();
-        army.setNinjaComNumRuns( i, nRuns );
+        army->setNinjaComNumRuns( i, nRuns );
     }
 
 
-    army.set_writeFarsiteAtmFile( writeAtm );
+    army->set_writeFarsiteAtmFile( writeAtm );
 
-    for( unsigned int i = 0; i < army.getSize(); i++ )
+    for( unsigned int i = 0; i < army->getSize(); i++ )
     {
         runProgress[i] = 0;
     }
@@ -1710,25 +1720,25 @@ int mainWindow::solve()
             this, SLOT(writeToConsole(QString, QColor)),
             Qt::AutoConnection);
     */
-    for( unsigned int i = 0; i < army.getSize(); i++ ) 
+    for( unsigned int i = 0; i < army->getSize(); i++ ) 
     {
-        connect( army.getNinjaCom( i ),
+        connect( army->getNinjaCom( i ),
                  SIGNAL( sendProgress( int, int) ), this,
                  SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
 
-        connect( army.getNinjaCom( i ),
+        connect( army->getNinjaCom( i ),
                  SIGNAL( sendMessage(QString, QColor)),
                  this, SLOT(writeToConsole(QString, QColor ) ),
                  Qt::AutoConnection );
     }
-    writeToConsole(QString::number( army.getSize() ) + " runs initialized. Starting solver...");
+    writeToConsole(QString::number( army->getSize() ) + " runs initialized. Starting solver...");
     //sThread->start();
 
     bool ninjaSuccess = false;
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-            ninjaSuccess = army.startRuns( nThreads );
+            ninjaSuccess = army->startRuns( nThreads );
     }
     catch (bad_alloc& e)
     {
@@ -1785,10 +1795,10 @@ int mainWindow::solve()
 
      //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
-    outputPath = QString::fromStdString( army.getOutputPath( 0 ) );
+    outputPath = QString::fromStdString( army->getOutputPath( 0 ) );
 
     //clear the army
-    army.reset();
+    army->reset();
 
     setCursor(Qt::ArrowCursor);
 
@@ -2369,7 +2379,7 @@ void mainWindow::cancelSolve()
 {
   progressDialog->setAutoClose(true);
   progressDialog->setLabelText("Canceling...");
-  army.cancel();  
+  army->cancel();  
 }
 
 void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)

@@ -73,7 +73,8 @@ class mainWindow : public QMainWindow
   mainWindow(QWidget *parent = 0);
   
   //ninja *inputNinja;
-  ninjaArmy army;
+  
+  ninjaArmy *army;
 
   QProgressDialog *progressDialog;
   int nRuns;

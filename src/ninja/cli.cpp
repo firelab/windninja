@@ -549,9 +549,7 @@ int windNinjaCLI(int argc, char* argv[])
 
         #ifdef NINJAFOAM
         ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
-        #endif
-
-        #ifndef NINJAFOAM
+        #else
         ninjaArmy windsim(1); //-Moved to header file
         #endif
 
