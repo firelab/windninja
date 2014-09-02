@@ -274,10 +274,19 @@ public:
     * \brief Set the mesh count for a NinjaFOAM run
     *
     * \param nIndex index of a ninja
-    * \param nMeshCount Mesh count
+    * \param meshCount Mesh count
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the mesh count for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param meshChoice Mesh resolution choice
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMeshCount( const int nIndex, const std::string meshChoice, char ** papszOptions=NULL );
 
     /**
     * \brief Enable/disable non-equilbrium boundary conditions for a NinjaFOAM run

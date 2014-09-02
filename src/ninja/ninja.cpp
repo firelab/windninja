@@ -5115,6 +5115,21 @@ void ninja::set_MeshCount(int meshCount)
 {
     input.meshCount = meshCount;
 }
+void ninja::set_MeshCount(std::string meshChoice)
+{
+    if(meshChoice == std::string("coarse")){
+        input.meshCount = 1000000;
+    }
+    else if(meshChoice == std::string("medium")){
+        input.meshCount = 2000000;
+    }
+    else if(meshChoice == std::string("fine")){
+        input.meshCount = 2500000;
+    }
+    else{
+        throw std::range_error("The mesh resolution choice has been set improperly.");
+    }
+}
 void ninja::set_NonEqBc(bool flag)
 {
     input.nonEqBc = flag;

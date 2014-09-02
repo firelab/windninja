@@ -738,50 +738,27 @@ int windNinjaCLI(int argc, char* argv[])
         //  only some options are possible with momentum solver
         //---------------------------------------------------------------------
         #ifdef NINJAFOAM 
+        
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") && 
-           vm["momentum_flag"].as<bool>())
-        {
+           vm["momentum_flag"].as<bool>()){
             cout << "'initialization_method' must be 'domainAverageInitialization' if the momentum solver is enabled.\n";
             return -1;
         }
-        if(vm["momentum_flag"].as<bool>() && vm["diurnal_winds"].as<bool>())
-        {
-            cout << "Dirunal slope winds option not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
-        #ifdef STABILITY
-        if(vm["momentum_flag"].as<bool>() && vm["non_neutral_stability"].as<bool>())
-        {
-            cout << "Non-neutral stability option not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
-        #endif
+        conflicting_options(vm, "momentum_flag", "diurnal_winds");
+        conflicting_options(vm, "momentum_flag", "input_points_file");
         #ifdef FRICTION_VELOCITY
-        if(vm["momentum_flag"].as<bool>() && vm["compute_friction_velocity"].as<bool>())
-        {
-            cout << "Friction velocity calculations not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
+        conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
         #ifdef EMISSIONS
-        if(vm["momentum_flag"].as<bool>() && vm["compute_emissions"].as<bool>())
-        {
-            cout << "Emission calculations not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
+        conflicting_options(vm, "momentum_flag", "compute_emissions");
         #endif
         #ifdef SCALAR
-        if(vm["momentum_flag"].as<bool>() && vm["compute_scalar_transport"].as<bool>())
-        {
-            cout << "Scalar transport calculations not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
+        conflicting_options(vm, "momentum_flag", "compute_scalar_transport");
         #endif
-        if(vm["momentum_flag"].as<bool>() && vm.count("input_points_file"))
-        {
-            cout << "Scalar transport calculations not supported if the momentum solver is enabled.\n";
-            return -1;
-        }
+        #ifdef STABILITY
+        conflicting_options(vm, "momentum_flag", "non_neutral_stability");
+        #endif
+        
         #endif //NINJAFOAM
         
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
@@ -835,6 +812,33 @@ int windNinjaCLI(int argc, char* argv[])
             //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
             windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
             windsim.setPosition( i_ );    //get position from DEM file
+            
+            #ifdef NINJAFOAM
+            if(vm["momentum_flag"].as<bool>()){
+                if(vm.count("number_of_iterations")){
+                    windsim.setNumberOfIterations( i_,
+                        vm["number_of_iterations"].as<int>() );
+                }
+                conflicting_options(vm, "mesh_choice", "mesh_count");
+                if(vm.count("mesh_choice")){
+                    if( windsim.setMeshCount( i_,
+                        vm["mesh_choice"].as<std::string>() ) != 0 ){
+                        cout << "'mesh_choice' of " << vm["mesh_choice"].as<std::string>()
+                            << " is not valid.\n" \
+                            << "Choices are: coarse, medium, or fine.\n";
+                        return -1;
+                    }
+                }
+                if(vm.count("mesh_count") && !vm.count("mesh_choice")){
+                    windsim.setMeshCount( i_,
+                        vm["mesh_count"].as<int>() );
+                }
+                if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
+                    windsim.setNonEqBc( i_,
+                        vm["non_equilibrium_boundary_conditions"].as<bool>() );
+                }
+            }
+            #endif
 
             //stuff for requested output locations
             if( vm.count("input_points_file") )
@@ -882,23 +886,6 @@ int windNinjaCLI(int argc, char* argv[])
             else
             {
                 windsim.setDustFlag( i_, false );  //default false doensn't work ??
-            }
-            #endif
-                    
-            #ifdef NINJAFOAM
-            if(vm["momentum_flag"].as<bool>()){
-                if(vm.count("number_of_iterations")){
-                    windsim.setNumberOfIterations( i_,
-                        vm["number_of_iterations"].as<int>() );
-                }
-                if(vm.count("mesh_count")){
-                    windsim.setMeshCount( i_,
-                        vm["mesh_count"].as<int>() );
-                }
-                if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
-                    windsim.setNonEqBc( i_,
-                        vm["non_equilibrium_boundary_conditions"].as<bool>() );
-                }
             }
             #endif
 
@@ -1164,7 +1151,13 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 option_dependency(vm, "mesh_resolution", "units_mesh_resolution");
                 windsim.setMeshResolution( i_, vm["mesh_resolution"].as<double>(), lengthUnits::getUnit(vm["units_mesh_resolution"].as<std::string>()));
-            }else{
+            }
+            #ifdef NINJAFOAM
+            else if(vm["momentum_flag"].as<bool>()){
+                //don't do anything
+            }
+            #endif
+            else{
                 cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
                 return -1;
             }
