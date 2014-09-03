@@ -470,6 +470,10 @@ void mainWindow::createConnections()
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
 #endif
+#ifdef NINJAFOAM
+  connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(checkAllItems()));
+#endif
 
   //connect the speed and direction in the first row to the checkers
   connect(tree->wind->windTable->speed[0], SIGNAL(valueChanged(double)), this,
@@ -1277,6 +1281,10 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
+    #ifdef NINJAFOAM
+    bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
+    #endif
+    
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
 
@@ -1329,10 +1337,6 @@ int mainWindow::solve()
     //stability
 #ifdef STABILITY
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
-#endif
-
-#ifdef NINJAFOAM
-    bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
 #endif
 
     //initialization method
@@ -1831,12 +1835,35 @@ int mainWindow::checkAllItems()
 {
   //check and see if the objects have been visited before changing
   eInputStatus status = green;
+#ifdef NINJAFOAM
+  checkSolverMethodItem();
+#endif
   checkInputItem();
   checkOutputItem();
   checkSolveItem();
 
   return status;
 }
+
+#ifdef NINJAFOAM
+int mainWindow::checkSolverMethodItem()
+{
+    eInputStatus status = blue;
+    if(checkNinjafoamItem() == blue)
+    {
+        tree->solverMethodItem->setIcon(0, tree->check);
+        tree->solverMethodItem->setToolTip(0, "Using native solver");
+        status = green;
+    }
+    else
+    {
+        tree->solverMethodItem->setIcon(0, tree->check);
+        tree->solverMethodItem->setToolTip(0, "Using momentum solver");
+        status = green;
+    }
+    return status;
+}
+#endif
 
 int mainWindow::checkInputItem()
 {
@@ -1930,6 +1957,27 @@ int mainWindow::checkDiurnalItem()
   }
   return status;
 }
+
+#ifdef NINJAFOAM
+int mainWindow::checkNinjafoamItem()
+{
+    eInputStatus status = green;
+    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
+    {
+        tree->ninjafoamItem->setIcon(0, tree->blue);
+        tree->ninjafoamItem->setToolTip(0, "Momentum solver not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->ninjafoamItem->setIcon(0, tree->check);
+        tree->ninjafoamItem->setToolTip(0, "Momentum solver selected");
+        status = green;
+    }
+
+    return status;
+}
+#endif
 
 #ifdef STABILITY
 int mainWindow::checkStabilityItem()
@@ -2393,6 +2441,15 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       else
     tree->diurnal->diurnalGroupBox->setChecked(true);
     }
+#ifdef NINJAFOAM
+  else if(item == tree->ninjafoamItem)
+  {
+      if(tree->ninjafoam->ninjafoamGroupBox->isChecked())
+          tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
+      else
+          tree->ninjafoam->ninjafoamGroupBox->setChecked(true);
+  }
+#endif
 #ifdef STABILITY
   else if(item == tree->stabilityItem)
   {

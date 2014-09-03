@@ -185,6 +185,10 @@ class mainWindow : public QMainWindow
 #ifdef STABILITY
   int checkStabilityItem();
 #endif
+#ifdef NINJAFOAM
+  int checkNinjafoamItem();
+  int checkSolverMethodItem();
+#endif
   int checkWindItem();
   int checkSpdDirItem();
   int checkPointItem();

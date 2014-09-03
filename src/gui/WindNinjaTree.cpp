@@ -74,7 +74,9 @@ void WindNinjaTree::createTree()
 #endif
   tree->addTopLevelItem(inputItem);
   inputItem->setExpanded(true);
-  //surfaceItem->setSelected(true);
+#ifndef NINJAFOAM
+  surfaceItem->setSelected(true);
+#endif
   windItem->setExpanded(true);
   tree->addTopLevelItem(diurnalItem);
 #ifdef STABILITY
