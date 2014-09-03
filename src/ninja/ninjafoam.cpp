@@ -1600,7 +1600,7 @@ int NinjaFoam::SimpleFoam()
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
-    
+
     return nRet;
 }
 
@@ -1640,13 +1640,18 @@ int NinjaFoam::SanitizeOutput()
     const char *pszVrtFile;
     const char *pszVrt;
     std::string s;
-    fin = VSIFOpen( "U_triSurfaceSampling.raw", "r" );
+    const char *pszTmp;
+
+    //pszTmp = CPLSPrintf( "%s/postProcessing/surfaces/input.nIterations/" \
+                         //"U_triSurfaceSampling.raw", pszTempPath );
+    pszTmp = "/home/kyle/src/windninja/build/U_triSurfaceSampling.raw";
+    fin = VSIFOpen( pszTmp, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
                          "EPSG:32612" );
-    VSIFWriteL(pszVrt, strlen( pszVrt ), 1, fvrt );
+    VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
     /* eat the first line */
@@ -1657,29 +1662,110 @@ int NinjaFoam::SanitizeOutput()
     ReplaceKeys( s, "  ", "", 1 );
     ReplaceKeys( s, "  ", ",", 5 );
     ReplaceKeys( s, "  ", "", 1 );
-    /*
-    ReplaceToken( buf, "#", "", 1 );
-    ReplaceToken( buf, "  ", "", 1 );
-    ReplaceToken( buf, "  ", ",", 5 );
-    ReplaceToken( buf, "  ", "", 1 );
-    */
     VSIFWriteL( s.c_str(), s.size(), 1, fout );
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
         s = buf;
         ReplaceKeys( s, " ", ",", 5 );
-        //ReplaceToken( buf, " ", ",", 5 );
         VSIFWriteL( s.c_str(), s.size(), 1, fout );
     }
     VSIFClose( fin );
     VSIFCloseL( fout );
+    //VSIFCloseL( fvrt );
     return 0;
 }
+
 int NinjaFoam::SampleCloud()
 {
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+    OGRGeometryH hGeometry;
+    hDS = OGROpen( pszVrtMem, FALSE, NULL );
+    if( hDS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid in memory datasource in NinjaFoam" );
+        return NINJA_E_FILE_IO;
+    }
+
+    hLayer = OGR_DS_GetLayer( hDS, 0 );
+    if( hLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to extract a valid layer for NinjaFoam resampling" );
+        return NINJA_E_OTHER;
+    }
+    double *padfX, *padfY, *padfU, *padfW;
+    double *padfData;
+    int nPoints, nXSize, nYSize;
+    double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
+    dfXMin = input.dem.get_xllCorner();
+    dfXMax = input.dem.get_xllCorner() + input.dem.get_xDimension();
+    dfYMin = input.dem.get_yllCorner();
+    dfYMax = input.dem.get_yllCorner() + input.dem.get_yDimension();
+    dfCellSize = input.dem.get_cellSize();
+
+    nPoints = OGR_L_GetFeatureCount( hLayer, FALSE );
+    CPLDebug( "WINDNINJA", "NinjaFoam gridding %d points", nPoints );
+    padfX = (double*)CPLMalloc( sizeof( double ) * nPoints );
+    padfY = (double*)CPLMalloc( sizeof( double ) * nPoints );
+    padfU = (double*)CPLMalloc( sizeof( double ) * nPoints );
+    padfW = (double*)CPLMalloc( sizeof( double ) * nPoints );
+
+    int i = 0;
+    while( (hFeature = OGR_L_GetNextFeature( hLayer )) != NULL )
+    {
+        hGeometry = OGR_F_GetGeometryRef( hFeature );
+        padfX[i] = OGR_G_GetX( hGeometry, 0 );
+        padfY[i] = OGR_G_GetY( hGeometry, 0 );
+        padfU[i] = OGR_F_GetFieldAsDouble( hFeature, 3 );
+        padfW[i] = OGR_F_GetFieldAsDouble( hFeature, 4 );
+        i++;
+    }
+
+    /* Get DEM/output specs */
+    nXSize = input.dem.get_nCols();
+    nYSize = input.dem.get_nRows();
+
+    GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+    hGriddedDS = GDALCreate( hDriver, "/vsimem/foam.mem", nXSize, nYSize,
+                             2, GDT_Float64, NULL );
+    padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
+
+    /* U field */
+    GDALGridCreate( GGA_NearestNeighbor, NULL, nPoints, padfX, padfY, padfU,
+                    dfXMin, dfXMax, dfYMin, dfYMax, nXSize, nYSize, GDT_Float64,
+                    padfData, NULL, NULL );
+
+    GDALRasterBandH hBand;
+    hBand = GDALGetRasterBand( hGriddedDS, 1 );
+    GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
+                  nXSize, nYSize, GDT_Float64, 0, 0 );
+
+    /* W field */
+    GDALGridCreate( GGA_NearestNeighbor, NULL, nPoints, padfX, padfY, padfW,
+                    dfXMin, dfXMax, dfYMin, dfYMax, nXSize, nYSize, GDT_Float64,
+                    padfData, NULL, NULL );
+
+    hBand = GDALGetRasterBand( hGriddedDS, 2 );
+    GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
+                  nXSize, nYSize, GDT_Float64, 0, 0 );
+
+    CPLFree( (void*)padfX );
+    CPLFree( (void*)padfY );
+    CPLFree( (void*)padfU );
+    CPLFree( (void*)padfW );
+
+    CPLFree( (void*)padfData );
+
+    GDALClose( hGriddedDS );
+    OGR_DS_Destroy( hDS );
+
     return 0;
 }
 int NinjaFoam::CreateGrids()
 {
     return 0;
 }
+
