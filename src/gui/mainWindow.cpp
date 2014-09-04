@@ -2627,6 +2627,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setChecked( false );
         
         tree->surface->meshResComboBox->removeItem(4);
+        
+        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( true );
+        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
+        
     }
     else{
         tree->diurnal->diurnalGroupBox->setEnabled( true );
@@ -2646,6 +2650,9 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setChecked( false );
         
         tree->surface->meshResComboBox->addItem("Custom", 4);
+        
+        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( false );
+        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
     }
 }
 #endif

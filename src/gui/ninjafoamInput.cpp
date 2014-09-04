@@ -40,13 +40,25 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
     ninjafoamGroupBox = new QGroupBox(tr("Use Momentum Solver"));
     ninjafoamGroupBox->setCheckable(true);
     ninjafoamGroupBox->setChecked(false);
+    
     ninjafoamLayout = new QVBoxLayout;
   
     ninjafoamGroupBox->setLayout(ninjafoamLayout);
-
+    
+    ninjafoamBcGroupBox = new QGroupBox(tr("Use Non-Equilibrium Boundary Conditions"));
+    ninjafoamBcGroupBox->setCheckable(true);
+    ninjafoamBcGroupBox->setChecked(false);
+    ninjafoamBcGroupBox->setEnabled(false);
+    
+    ninjafoamBcLayout = new QVBoxLayout;
+    
+    ninjafoamBcGroupBox->setLayout(ninjafoamBcLayout);
+    
     layout = new QVBoxLayout;
     layout->addWidget(ninjafoamGroupBox);
+    layout->addWidget(ninjafoamBcGroupBox);
     layout->addStretch();
     setLayout(layout);
+
     
 }
