@@ -646,6 +646,8 @@ void mainWindow::openInputFile()
         }
 
       tree->surface->inputFileLineEdit->setText(shortName);
+      
+      tree->surface->meshResComboBox->setEnabled(true);
 
       if(inputFileName != fileName)
           emit(inputFileChanged(fileName));
@@ -696,6 +698,8 @@ void mainWindow::updateFileInput(const char* file)
         }
 
     tree->surface->inputFileLineEdit->setText(shortName);
+    
+    tree->surface->meshResComboBox->setEnabled(true);
 
       if(inputFileName != fileName)
     emit(inputFileChanged(fileName));

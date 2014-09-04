@@ -87,6 +87,7 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     meshResComboBox->addItem(tr("Custom"));
     meshResComboBox->insertSeparator(3);
     meshResComboBox->setCurrentIndex(2);
+    meshResComboBox->setEnabled(false);
 
     meshResDoubleSpinBox = new QDoubleSpinBox;
     meshResDoubleSpinBox->setRange(1, 50000);
