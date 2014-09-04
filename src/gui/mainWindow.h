@@ -210,6 +210,9 @@ class mainWindow : public QMainWindow
   void selectPointInitialization( bool pick );
   void selectWeatherInitialization( bool pick );
   void enablePointDate(bool enable);
+#ifdef NINJAFOAM
+  void enableNinjafoamOptions(bool enable);
+#endif
 
  protected:
   void closeEvent(QCloseEvent *event);

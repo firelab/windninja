@@ -459,6 +459,10 @@ void mainWindow::createConnections()
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableStabilityCells(bool)));
 #endif
+#ifdef NINJAFOAM
+  connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(enableNinjafoamOptions(bool)));
+#endif
   //connect change in tree to the checkers
   connect(tree->tree, SIGNAL(currentItemChanged(QTreeWidgetItem *,
       QTreeWidgetItem *)), this, SLOT(checkAllItems()));
@@ -1866,31 +1870,32 @@ int mainWindow::checkSolverMethodItem()
 #endif
 
 int mainWindow::checkInputItem()
-{
+{  
   eInputStatus status = red;
+  
 #ifdef STABILITY
-  if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red && checkStabilityItem() == red)
-    {
+  if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red || checkStabilityItem() == red)
+    { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input, stability input, and diurnal input");
       status = red;
     }
 #else
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red )
-    {
+    { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input and diurnal input");
       status = red;
     }
 #endif
   else if(checkSurfaceItem() == red)
-    {
+    { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input");
       status = red;
     }
   else if(checkDiurnalItem() == red)
-    {
+    { 
       tree->inputItem->setIcon(0, tree->caution);
       tree->inputItem->setToolTip(0, "Check diurnal input");
       status = red;
@@ -1943,7 +1948,7 @@ int mainWindow::checkSurfaceItem()
 }
 
 int mainWindow::checkDiurnalItem()
-{
+{ 
   eInputStatus status = green;
   if(!tree->diurnal->diurnalGroupBox->isChecked()) {
       tree->diurnalItem->setIcon(0, tree->blue);
@@ -1952,8 +1957,8 @@ int mainWindow::checkDiurnalItem()
   }
   else
   {
-          tree->diurnalItem->setIcon(0, tree->check);
-          status = green;
+        tree->diurnalItem->setIcon(0, tree->check);
+        status = green;
   }
   return status;
 }
@@ -1981,7 +1986,7 @@ int mainWindow::checkNinjafoamItem()
 
 #ifdef STABILITY
 int mainWindow::checkStabilityItem()
-{
+{   
     eInputStatus status = green;
     if(!tree->stability->stabilityGroupBox->isChecked())
     {
@@ -1991,11 +1996,8 @@ int mainWindow::checkStabilityItem()
     }
     else
     {
-        if(checkSurfaceItem() != red)
-        {
-                tree->stabilityItem->setIcon(0, tree->check);
-                status = green;
-        }
+        tree->stabilityItem->setIcon(0, tree->check);
+        status = green;
     }
     return status;
 }
@@ -2599,4 +2601,32 @@ void mainWindow::enablePointDate(bool enable)
         }
     }
 }
+
+#ifdef NINJAFOAM
+void mainWindow::enableNinjafoamOptions(bool enable)
+{
+    (void)enable;
+    if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
+    {
+        tree->diurnal->diurnalGroupBox->setEnabled( false );
+        tree->diurnal->diurnalGroupBox->setCheckable( false );
+        tree->diurnal->diurnalGroupBox->setChecked( false );
+        #ifdef STABILITY
+        tree->stability->stabilityGroupBox->setEnabled( false );
+        tree->stability->stabilityGroupBox->setChecked( false );
+        tree->stability->stabilityGroupBox->setCheckable( false );
+        #endif
+    }
+    else{
+        tree->diurnal->diurnalGroupBox->setEnabled( true );
+        tree->diurnal->diurnalGroupBox->setCheckable( true );
+        tree->diurnal->diurnalGroupBox->setChecked( false );
+        #ifdef STABILITY
+        tree->stability->stabilityGroupBox->setEnabled( true );
+        tree->stability->stabilityGroupBox->setCheckable( true );
+        tree->stability->stabilityGroupBox->setChecked( false );
+        #endif
+    }
+}
+#endif
 
