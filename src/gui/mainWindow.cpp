@@ -1873,6 +1873,8 @@ int mainWindow::checkInputItem()
 {  
   eInputStatus status = red;
   
+  checkWindItem();
+  
 #ifdef STABILITY
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red || checkStabilityItem() == red)
     { 
@@ -2616,6 +2618,13 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setCheckable( false );
         #endif
+        tree->point->pointGroupBox->setEnabled( false );
+        tree->point->pointGroupBox->setCheckable( false );
+        tree->point->pointGroupBox->setChecked( false );
+        
+        tree->weather->weatherGroupBox->setEnabled( false );
+        tree->weather->weatherGroupBox->setCheckable( false );
+        tree->weather->weatherGroupBox->setChecked( false );
     }
     else{
         tree->diurnal->diurnalGroupBox->setEnabled( true );
@@ -2626,6 +2635,13 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->stability->stabilityGroupBox->setCheckable( true );
         tree->stability->stabilityGroupBox->setChecked( false );
         #endif
+        tree->point->pointGroupBox->setEnabled( true );
+        tree->point->pointGroupBox->setCheckable( true );
+        tree->point->pointGroupBox->setChecked( false );
+        
+        tree->weather->weatherGroupBox->setEnabled( true );
+        tree->weather->weatherGroupBox->setCheckable( true );
+        tree->weather->weatherGroupBox->setChecked( false );
     }
 }
 #endif
