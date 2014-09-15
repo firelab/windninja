@@ -99,8 +99,7 @@ extern "C" {
 ** NOMADS_LEVELS          8       Levels list
 ** NOMADS_GRID_RES        9       Horizontal resolution, as "value unit"
 **                                ("0.5 deg" or "12 km")
-** NOMADS_GRID            10      NWS Grid used for the model
-** NOMADS_HUMAN_READABLE  11      Human readable name
+** NOMADS_HUMAN_READABLE  1      Human readable name
 **
 ** The models are listed in the same order as found on the web page.  Models
 ** not yet implemented (or may never be) are marked with XXX.
