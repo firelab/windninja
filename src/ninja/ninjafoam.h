@@ -76,8 +76,7 @@ private:
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
-    std::vector<std::string> bcs;
-    
+    std::vector<std::string> bcs; 
     OGRDataSourceH hOFOutput;
     GDALDatasetH hGriddedDS;
 
@@ -140,8 +139,14 @@ private:
     /* GDAL/OGR output */
     const char *pszVrtMem;
     const char *pszMem;
+#ifdef NINJA_BUILD_TESTING
+public:
+#endif
     int SanitizeOutput();
     int SampleCloud();
+#ifdef NINJA_BUILD_TESTING
+private:
+#endif
     int CreateGrids();
 
 };

@@ -87,6 +87,11 @@ IF(WITH_NOMADS_SUPPORT)
                      test_utctime.cpp)
 ENDIF(WITH_NOMADS_SUPPORT)
 
+IF(NINJAFOAM)
+    SET(TEST_SOURCES ${TEST_SOURCES}
+                     test_foam.cpp)
+ENDIF(NINJAFOAM)
+
 ADD_EXECUTABLE(test_main ${TEST_SOURCES})
 
 # *****************************************************************************
@@ -333,6 +338,10 @@ IF(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/form_name_1)
 ENDIF(WITH_NOMADS_SUPPORT)
 
+IF(NINJAFOAM)
+    ADD_TEST(sample_cloud_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=ninjafoam/sample_cloud_1)
+ENDIF(NINJAFOAM)
 # *****************************************************************************
 # Command Line Interface Testing Section
 # *****************************************************************************
