@@ -32,15 +32,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-/******************************************************************************
-*                        BEGIN "landfireclient" BOOST TEST SUITE
-*******************************************************************************
-*   Tests:
-*       landfireclient/mackay
-*       landfireclient/alaska
-*       landfireclient/hawaii
-*       landfireclient/unzip
-******************************************************************************/
 struct NinjaFoamData
 {
     NinjaFoamData()
