@@ -312,8 +312,10 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* convert output files                                              */
     /*-------------------------------------------------------------------*/
-#ifdef NINJA_FOAM_TEST
     AsciiGrid<double>foamSpd, foamDir, foamU, foamV;
+    int rc;
+    rc = SanitizeOutput();
+    rc = SampleCloud();
     GDALDatasetH hDS = GetRasterOutputHandle();
     if( hDS == NULL )
     {
@@ -334,7 +336,6 @@ bool NinjaFoam::simulate_wind()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
-#endif
 
     return true;
 }
@@ -1681,12 +1682,8 @@ int NinjaFoam::SanitizeOutput()
     pszVrtMem = CPLStrdup( "output.vrt" );
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
 
-#if defined(NINJA_BUILD_TESTING) && defined(NINJA_FOAM_TEST)
-    pszRaw = "/home/kyle/src/windninja/build/U_triSurfaceSampling.raw";
-#else
     pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/input.nIterations/" \
                              "U_triSurfaceSampling.raw", pszTempPath );
-#endif
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -1697,7 +1694,8 @@ int NinjaFoam::SanitizeOutput()
     ** XXX
     */
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
-                         "EPSG:32612" );
+                         input.dem.prjString.c_str() );
+                         //"EPSG:32612" );
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
@@ -1760,7 +1758,7 @@ int NinjaFoam::SampleCloud()
     double *padfData;
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
-#if defined(NINJA_BUILD_TESTING) && defined(NINJA_FOAM_TEST)
+#if _NOT_DEFINED__
     OGREnvelope psEnv;
     OGR_L_GetExtent( hLayer, &psEnv, TRUE );
     dfXMin = psEnv.MinX;
@@ -1797,10 +1795,6 @@ int NinjaFoam::SampleCloud()
     /* Get DEM/output specs */
     nXSize = input.dem.get_nCols();
     nYSize = input.dem.get_nRows();
-#if defined(NINJA_BUILD_TESTING) && defined(NINJA_FOAM_TEST)
-    nXSize = 309;
-    nYSize = 184;
-#endif
 
     /*
     ** XXX
