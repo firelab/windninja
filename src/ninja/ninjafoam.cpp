@@ -29,12 +29,20 @@
 
 #include "ninjafoam.h"
 
+/*
+** for local testing on kyle's machine, remove for production
+*/
+#define NINJA_FOAM_TEST
+
 NinjaFoam::NinjaFoam() : ninja()
 {
     pszTerrainFile = NULL;
     pszTempPath = NULL;
     pszOgrBase = NULL;
     hGriddedDS = NULL;
+    pszRaw = NULL;
+    pszMem = NULL;
+    pszVrtMem = NULL;
 
     boundary_name = "";
     terrainName = "NAME";
@@ -45,10 +53,6 @@ NinjaFoam::NinjaFoam() : ninja()
     inletoutletvalue = "";
     template_ = "";
 
-    pszMem = CPLStrdup( "output.raw" );
-    //pszMem = CPLStrdup( "/vsimem/output.raw" );
-    pszVrtMem = CPLStrdup( "output.vrt" );
-    //pszVrtMem = CPLStrdup( "/vsimem/output.vrt" );
 }
 
 /**
@@ -82,6 +86,7 @@ NinjaFoam::~NinjaFoam()
     free( (void*)pszOgrBase );
     free( (void*)pszVrtMem );
     free( (void*)pszMem );
+    GDALClose( hGriddedDS );
 }
 
 bool NinjaFoam::simulate_wind()
@@ -307,8 +312,30 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* convert output files                                              */
     /*-------------------------------------------------------------------*/
-    
-    
+#ifdef NINJA_FOAM_TEST
+    AsciiGrid<double>foamSpd, foamDir, foamU, foamV;
+    GDALDatasetH hDS = GetRasterOutputHandle();
+    if( hDS == NULL )
+    {
+        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Invalid output written" );
+        return false;
+    }
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
+
+    for(int i=0; i<foamU.get_nRows(); i++)
+    {
+        for(int j=0; j<foamU.get_nCols(); j++)
+        {
+            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+        }
+    }
+
+    AngleGrid = foamDir;
+    VelocityGrid = foamSpd;
+#endif
+
     return true;
 }
 
@@ -1638,7 +1665,7 @@ int NinjaFoam::Sample()
 
 int NinjaFoam::SanitizeOutput()
 {
-       /*
+    /*
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
@@ -1649,15 +1676,26 @@ int NinjaFoam::SanitizeOutput()
     const char *pszVrtFile;
     const char *pszVrt;
     std::string s;
-    const char *pszTmp;
 
-    //pszTmp = CPLSPrintf( "%s/postProcessing/surfaces/input.nIterations/" \
-                         //"U_triSurfaceSampling.raw", pszTempPath );
-    pszTmp = "/home/kyle/src/windninja/build/U_triSurfaceSampling.raw";
-    fin = VSIFOpen( pszTmp, "r" );
+    pszMem = CPLStrdup( CPLSPrintf( "%s/output.raw", pszTempPath ) );
+    pszVrtMem = CPLStrdup( "output.vrt" );
+    pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
+
+#if defined(NINJA_BUILD_TESTING) && defined(NINJA_FOAM_TEST)
+    pszRaw = "/home/kyle/src/windninja/build/U_triSurfaceSampling.raw";
+#else
+    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/input.nIterations/" \
+                             "U_triSurfaceSampling.raw", pszTempPath );
+#endif
+    fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
+    /*
+    ** XXX
+    ** Need to set SRS here !
+    ** XXX
+    */
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
                          "EPSG:32612" );
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
@@ -1682,6 +1720,8 @@ int NinjaFoam::SanitizeOutput()
     VSIFCloseL( fout );
     return 0;
 }
+
+
 /*
 ** Sample a point cloud and create a 2-band GDALDataset of U and V values.
 **
@@ -1692,14 +1732,15 @@ int NinjaFoam::SanitizeOutput()
 **
 */
 
-#define NINJA_FOAM_TEST
-
 int NinjaFoam::SampleCloud()
 {
+    int rc;
     OGRDataSourceH hDS = NULL;
     OGRLayerH hLayer = NULL;
     OGRFeatureH hFeature = NULL;
     OGRGeometryH hGeometry = NULL;
+    if( hGriddedDS != NULL )
+        GDALClose( hGriddedDS );
     hDS = OGROpen( pszVrtMem, FALSE, NULL );
     if( hDS == NULL )
     {
@@ -1720,10 +1761,12 @@ int NinjaFoam::SampleCloud()
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
 #if defined(NINJA_BUILD_TESTING) && defined(NINJA_FOAM_TEST)
-    dfXMin = 555623.;
-    dfXMax = 565179.;
-    dfYMin = 5025278.;
-    dfYMax = 5030968.;
+    OGREnvelope psEnv;
+    OGR_L_GetExtent( hLayer, &psEnv, TRUE );
+    dfXMin = psEnv.MinX;
+    dfXMax = psEnv.MaxX;
+    dfYMin = psEnv.MinY;
+    dfYMax = psEnv.MaxY;
     dfCellSize = 30.;
 #else
     dfXMin = input.dem.get_xllCorner();
@@ -1771,14 +1814,14 @@ int NinjaFoam::SampleCloud()
     poOptions.dfNoDataValue = -9999;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
-    hGriddedDS = GDALCreate( hDriver, "foam.tif", nXSize, nYSize,
-                             2, GDT_Float64, NULL );
+    hGriddedDS = GDALCreate( hDriver, CPLSPrintf( "%s/foam.tif", pszTempPath ),
+                             nXSize, nYSize, 2, GDT_Float64, NULL );
     padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
 
     /* U field */
-    GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
-                    padfX, padfY, padfU, dfXMin, dfXMax, dfYMin, dfYMax,
-                    nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
+    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
+                         padfX, padfY, padfU, dfXMin, dfXMax, dfYMin, dfYMax,
+                         nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
     GDALRasterBandH hBand;
     hBand = GDALGetRasterBand( hGriddedDS, 1 );
@@ -1787,9 +1830,9 @@ int NinjaFoam::SampleCloud()
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
     /* V field */
-    GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
-                    padfX, padfY, padfV, dfXMin, dfXMax, dfYMin, dfYMax,
-                    nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
+    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
+                         padfX, padfY, padfV, dfXMin, dfXMax, dfYMin, dfYMax,
+                         nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
     hBand = GDALGetRasterBand( hGriddedDS, 2 );
     GDALSetRasterNoDataValue( hBand, -9999 );
@@ -1803,13 +1846,13 @@ int NinjaFoam::SampleCloud()
 
     CPLFree( (void*)padfData );
 
-    GDALClose( hGriddedDS );
     OGR_DS_Destroy( hDS );
 
     return 0;
 }
-int NinjaFoam::CreateGrids()
+
+GDALDatasetH NinjaFoam::GetGridHandle()
 {
-    return 0;
+    return hGriddedDS;
 }
 

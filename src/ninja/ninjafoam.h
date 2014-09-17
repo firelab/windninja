@@ -139,6 +139,7 @@ private:
     /* GDAL/OGR output */
     const char *pszVrtMem;
     const char *pszMem;
+    const char *pszRaw;
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
@@ -147,7 +148,7 @@ public:
 #ifdef NINJA_BUILD_TESTING
 private:
 #endif
-    int CreateGrids();
+    GDALDatasetH GetGridHandle();
 
 };
 
