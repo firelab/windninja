@@ -4901,6 +4901,13 @@ void ninja::set_outputPointsFilename(std::string filename)
     input.outputPointsFilename = filename;
 }
 
+#ifdef INITIALIZATION_SPEED_DAMPENING
+void ninja::set_speedDampeningRatio(double ratio)
+{
+    input.speedDampeningRatio = ratio;
+}
+#endif
+
 #ifdef FRICTION_VELOCITY
 void ninja::set_frictionVelocityFlag(bool flag)
 {

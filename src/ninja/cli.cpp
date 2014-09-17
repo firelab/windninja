@@ -355,6 +355,9 @@ int windNinjaCLI(int argc, char* argv[])
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)") 
                 #endif
+                #ifdef INITIALIZATION_SPEED_DAMPENING
+                ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
+                #endif
                 ;
 
         // Hidden options, will be allowed both on command line and
@@ -849,6 +852,13 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setOutputPointsFilename( i_,
                         vm["output_points_file"].as<std::string>() );
             }
+            
+            #ifdef INITIALIZATION_SPEED_DAMPENING
+            if(vm.count("initialization_speed_dampening_ratio"))
+            {
+                windsim.setSpeedDampeningRatio( i_, vm["initialization_speed_dampening_ratio"].as<double>() );
+            }
+            #endif
 
             #ifdef FRICTION_VELOCITY
             if(vm["compute_friction_velocity"].as<bool>())

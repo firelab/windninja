@@ -203,8 +203,14 @@ public:
     std::string pdfFile;
     double      pdfResolution;
     lengthUnits::eLengthUnits pdfUnits;
-    
 
+    /*-----------------------------------------------------------------------------
+     *  Initializaiton Speed Dampening Section
+     *-----------------------------------------------------------------------------*/
+#ifdef INITIALIZATION_SPEED_DAMPENING
+    double speedDampeningRatio;  //initialization speed dampening ratio for wx model runs
+#endif
+    
     /*-----------------------------------------------------------------------------
      *  Friction Velocity Section
      *-----------------------------------------------------------------------------*/

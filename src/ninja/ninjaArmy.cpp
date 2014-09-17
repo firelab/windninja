@@ -620,6 +620,18 @@ ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
 #endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
+ *  Initialization Speed Dampening Methods
+ *-----------------------------------------------------------------------------*/
+#ifdef INITIALIZATION_SPEED_DAMPENING
+int ninjaArmy::setSpeedDampeningRatio( const int nIndex, const double ratio,
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedDampeningRatio( ratio ) );
+}
+
+#endif
+
+/*-----------------------------------------------------------------------------
  *  Friciton Velocity Methods
  *-----------------------------------------------------------------------------*/
 #ifdef FRICTION_VELOCITY

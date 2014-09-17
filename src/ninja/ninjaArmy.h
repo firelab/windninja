@@ -170,6 +170,21 @@ public:
 #endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------
+     *  Initialization Speed Dampening Methods
+     *-----------------------------------------------------------------------------*/
+#ifdef INITIALIZATION_SPEED_DAMPENING
+    /**
+    * \brief Enable/disable friction velocity calculations for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables friciton velocity if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setSpeedDampeningRatio( const int nIndex, const double ratio, char ** papszOptions=NULL );
+#endif
+
+    /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/
 #ifdef FRICTION_VELOCITY

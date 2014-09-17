@@ -102,6 +102,9 @@ WindNinjaInputs::WindNinjaInputs()
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
+    #ifdef INITIALIZATION_SPEED_DAMPENING
+    speedDampeningRatio = 1;
+    #endif
     #ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
@@ -232,6 +235,10 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   dateTimeLegFile = rhs.dateTimeLegFile;
   volVTKFile = rhs.volVTKFile;
   keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+  
+  #ifdef INITIALIZATION_SPEED_DAMPENING
+  speedDampeningRatio = rhs.speedDampeningRatio;
+  #endif
 
   #ifdef EMISSIONS
   dustFile = rhs.dustFile;
@@ -359,7 +366,11 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dateTimeLegFile = rhs.dateTimeLegFile;
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
-
+      
+      #ifdef INITIALIZATION_SPEED_DAMPENING
+      speedDampeningRatio = rhs.speedDampeningRatio;
+      #endif
+      
       #ifdef EMISSIONS
       dustFile = rhs.dustFile;
       ustarFile = rhs.ustarFile;
