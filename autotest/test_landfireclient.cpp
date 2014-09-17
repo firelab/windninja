@@ -70,6 +70,20 @@ struct LandfireTestData
     LandfireClient lfcFetcher;
 };
 
+static int CheckPrj( const char *pszLcpFile )
+{
+    int rc = 0;
+    GDALDatasetH hDS;
+    hDS = GDALOpen( pszLcpFile, GA_ReadOnly );
+    if( hDS == NULL )
+        return 1;
+    const char *pszPrj = GDALGetProjectionRef( hDS );
+    if( pszPrj == NULL || EQUAL( pszPrj, "" ) )
+        rc = 1;
+    GDALClose( hDS );
+    return rc;
+}
+
 BOOST_FIXTURE_TEST_SUITE( landfireclient, LandfireTestData )
 
 BOOST_AUTO_TEST_CASE( mackay )
@@ -89,6 +103,7 @@ BOOST_AUTO_TEST_CASE( mackay )
     BOOST_CHECK( CPLCheckForFile( (char*)osLcpFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( CPLCheckForFile( (char*)osPrjFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( rc == 0 );
+    BOOST_CHECK( CheckPrj( osLcpFile.c_str() ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( alaska )
@@ -103,6 +118,7 @@ BOOST_AUTO_TEST_CASE( alaska )
     BOOST_CHECK( CPLCheckForFile( (char*)osLcpFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( CPLCheckForFile( (char*)osPrjFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( rc == 0 );
+    BOOST_CHECK( CheckPrj( osLcpFile.c_str() ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( alaska_bad_geom )
@@ -117,6 +133,7 @@ BOOST_AUTO_TEST_CASE( alaska_bad_geom )
     BOOST_CHECK( CPLCheckForFile( (char*)osLcpFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( CPLCheckForFile( (char*)osPrjFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( rc == 0 );
+    BOOST_CHECK( CheckPrj( osLcpFile.c_str() ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( alaska_out )
@@ -145,6 +162,7 @@ BOOST_AUTO_TEST_CASE( hawaii )
     BOOST_CHECK( CPLCheckForFile( (char*)osLcpFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( CPLCheckForFile( (char*)osPrjFile.c_str(), NULL ) == TRUE );
     BOOST_CHECK( rc == 0 );
+    BOOST_CHECK( CheckPrj( osLcpFile.c_str() ) == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( unzip )
