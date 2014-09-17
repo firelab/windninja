@@ -1085,7 +1085,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
     cloud.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
     speedInitializationGrid.interpolateFromGrid(speedInitializationGrid_wxModel, AsciiGrid<double>::order1);
-    dirInitializationGrid.interpolateFromGrid(dirInitializationGrid_wxModel, AsciiGrid<double>::order1);
+    //dirInitializationGrid.interpolateFromGrid(dirInitializationGrid_wxModel, AsciiGrid<double>::order1); //can't use this interpolation on circular values
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
 
