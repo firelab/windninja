@@ -45,7 +45,7 @@
 #include "solar.h"
 #include "SurfProperties.h"
 #include "constants.h"
-#include "WindNinjaInputs.h"
+
 /*
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Class that stores and computes the diurnal component of wind flow for

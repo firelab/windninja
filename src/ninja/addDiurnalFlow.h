@@ -47,7 +47,6 @@
 #include "solar.h"
 #include "cellDiurnal.h"
 #include "SurfProperties.h"
-#include "WindNinjaInputs.h"
 
 #ifdef _OPENMP
 #include <omp.h>
