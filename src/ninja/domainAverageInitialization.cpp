@@ -125,7 +125,11 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 		Slope slope(&input.dem, input.numberCPUs);
 		Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
 
-		addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, &bl_height, &input.dem, &aspect, &slope, &shade, &solar, &input.surface, &cloudCoverGrid, &airTempGrid, input.numberCPUs);
+		addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
+                        &bl_height, &input.dem, &aspect, &slope, &shade, 
+                        &solar, &input.surface, &cloudCoverGrid, &airTempGrid, 
+                        input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
+                        input.upDragCoeff, input.upEntrainmentCoeff);
 		
 
 		////Testing: Print diurnal component as .kmz file

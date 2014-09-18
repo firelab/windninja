@@ -170,18 +170,58 @@ public:
 #endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------
-     *  Initialization Speed Dampening Methods
+     *  Ninja speed testing Methods
      *-----------------------------------------------------------------------------*/
-#ifdef INITIALIZATION_SPEED_DAMPENING
+#ifdef NINJA_SPEED_TESTING
     /**
-    * \brief Enable/disable friction velocity calculations for a ninja
+    * \brief Set speed dampening ratio for a ninja
     *
     *
     * \param nIndex index of a ninja
-    * \param flag Enables friciton velocity if true, disables if false
+    * \param ratio speed dampening ratio (0.0- 1.0)
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setSpeedDampeningRatio( const int nIndex, const double ratio, char ** papszOptions=NULL );
+    int setSpeedDampeningRatio( const int nIndex, const double r, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set downslope drag coefficient for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param coeff downslope drag coefficient
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDownDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set downslope entrainment coefficient for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param coeff downslope entrainment coefficient
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDownEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set upslope drag coefficient for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param coeff upslope drag coefficient
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setUpDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set upslope entrainment coefficient for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param coeff upslope entrainment coefficient
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
 
     /*-----------------------------------------------------------------------------

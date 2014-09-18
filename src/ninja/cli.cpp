@@ -241,7 +241,7 @@ int windNinjaCLI(int argc, char* argv[])
     bool writeValues = false;
 
     //initializeOptions();
-
+    
     // Moved to initializeOptions()
     try {
         // Declare a group of options that will be
@@ -355,8 +355,12 @@ int windNinjaCLI(int argc, char* argv[])
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)") 
                 #endif
-                #ifdef INITIALIZATION_SPEED_DAMPENING
+                #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
+                ("downslope_drag_coefficient", po::value<double>()->default_value(0.0001), "downslope drag coefficient for diurnal calculations")
+                ("downslope_entrainment_coefficient", po::value<double>()->default_value(0.01), "downslope entrainment coefficient for diurnal calculations")
+                ("upslope_drag_coefficient", po::value<double>()->default_value(0.2), "upslope drag coefficient for diurnal calculations")
+                ("upslope_entrainment_coefficient", po::value<double>()->default_value(0.2), "upslope entrainment coefficient for diurnal calculations")
                 #endif
                 ;
 
@@ -853,10 +857,26 @@ int windNinjaCLI(int argc, char* argv[])
                         vm["output_points_file"].as<std::string>() );
             }
             
-            #ifdef INITIALIZATION_SPEED_DAMPENING
+            #ifdef NINJA_SPEED_TESTING
             if(vm.count("initialization_speed_dampening_ratio"))
             {
                 windsim.setSpeedDampeningRatio( i_, vm["initialization_speed_dampening_ratio"].as<double>() );
+            }
+            if(vm.count("downslope_drag_coefficient"))
+            {
+                windsim.setDownDragCoeff( i_, vm["downslope_drag_coefficient"].as<double>() );
+            }
+            if(vm.count("downslope_entrainment_coefficient"))
+            {
+                windsim.setDownEntrainmentCoeff( i_, vm["downslope_entrainment_coefficient"].as<double>() );
+            }
+            if(vm.count("upslope_drag_coefficient"))
+            {
+                windsim.setUpDragCoeff( i_, vm["upslope_drag_coefficient"].as<double>() );
+            }
+            if(vm.count("upslope_entrainment_coefficient"))
+            {
+                windsim.setUpEntrainmentCoeff( i_, vm["upslope_entrainment_coefficient"].as<double>() );
             }
             #endif
 

@@ -278,7 +278,9 @@ void Stability::SetDomainAverageAlpha(WindNinjaInputs &input,
 	Aspect aspect(&input.dem, input.numberCPUs);
 	Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar);
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar, 
+                    input.downDragCoeff, input.downEntrainmentCoeff,
+                    input.upDragCoeff, input.upEntrainmentCoeff);
 	cDiurnal.CloudCover = input.cloudCover;  //set CloudCover in cellDiurnal bfore computing Qsw
 		
 	for(unsigned int i=0;i<input.dem.get_nRows();i++)
@@ -356,7 +358,9 @@ void Stability::SetPointInitializationAlpha(WindNinjaInputs &input,
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar);
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
+                        input.downDragCoeff, input.downEntrainmentCoeff,
+                        input.upDragCoeff, input.upEntrainmentCoeff);
 		
 	for(unsigned int i=0;i<input.dem.get_nRows();i++)
 	{
@@ -421,7 +425,9 @@ void Stability::Set2dWxInitializationAlpha(WindNinjaInputs &input,
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar);
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
+                        input.downDragCoeff, input.downEntrainmentCoeff,
+                        input.upDragCoeff, input.upEntrainmentCoeff);
 		
 	for(unsigned int i=0;i<input.dem.get_nRows();i++)
 	{

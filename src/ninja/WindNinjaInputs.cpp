@@ -102,9 +102,13 @@ WindNinjaInputs::WindNinjaInputs()
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
-    #ifdef INITIALIZATION_SPEED_DAMPENING
+    #ifdef NINJA_SPEED_TESTING
     speedDampeningRatio = 1;
     #endif
+    downDragCoeff = 0.0001;
+    downEntrainmentCoeff = 0.01;
+    upDragCoeff = 0.2;
+    upEntrainmentCoeff = 0.2;
     #ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
@@ -236,9 +240,14 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   volVTKFile = rhs.volVTKFile;
   keepOutGridsInMemory = rhs.keepOutGridsInMemory;
   
-  #ifdef INITIALIZATION_SPEED_DAMPENING
+  #ifdef NINJA_SPEED_TESTING
   speedDampeningRatio = rhs.speedDampeningRatio;
   #endif
+  
+  downDragCoeff = rhs.downDragCoeff;
+  downEntrainmentCoeff = rhs.downDragCoeff;
+  upDragCoeff = rhs.upDragCoeff;
+  upEntrainmentCoeff = rhs.upEntrainmentCoeff;
 
   #ifdef EMISSIONS
   dustFile = rhs.dustFile;
@@ -367,9 +376,14 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
       
-      #ifdef INITIALIZATION_SPEED_DAMPENING
+      #ifdef NINJA_SPEED_TESTING
       speedDampeningRatio = rhs.speedDampeningRatio;
       #endif
+      
+      downDragCoeff = rhs.downDragCoeff;
+      downEntrainmentCoeff = rhs.downDragCoeff;
+      upDragCoeff = rhs.upDragCoeff;
+      upEntrainmentCoeff = rhs.upEntrainmentCoeff;
       
       #ifdef EMISSIONS
       dustFile = rhs.dustFile;

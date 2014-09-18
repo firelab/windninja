@@ -4901,10 +4901,26 @@ void ninja::set_outputPointsFilename(std::string filename)
     input.outputPointsFilename = filename;
 }
 
-#ifdef INITIALIZATION_SPEED_DAMPENING
-void ninja::set_speedDampeningRatio(double ratio)
+#ifdef NINJA_SPEED_TESTING
+void ninja::set_speedDampeningRatio(double r)
 {
-    input.speedDampeningRatio = ratio;
+    input.speedDampeningRatio = r;
+}
+void ninja::set_downDragCoeff(double coeff)
+{
+    input.downDragCoeff = coeff;
+}
+void ninja::set_downEntrainmentCoeff(double coeff)
+{
+    input.downEntrainmentCoeff = coeff;
+}
+void ninja::set_upDragCoeff(double coeff)
+{
+    input.upDragCoeff = coeff;
+}
+void ninja::set_upEntrainmentCoeff(double coeff)
+{
+    input.upEntrainmentCoeff = coeff;
 }
 #endif
 

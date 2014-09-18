@@ -267,8 +267,12 @@ public:
     void set_meshResChoice( const Mesh::eMeshChoice );
     void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
     void set_numVertLayers( const int nLayers );
-#ifdef INITIALIZATION_SPEED_DAMPENING
-    void set_speedDampeningRatio(double ratio);
+#ifdef NINJA_SPEED_TESTING
+    void set_speedDampeningRatio(double r);
+    void set_downDragCoeff(double coeff);
+    void set_downEntrainmentCoeff(double coeff);
+    void set_upDragCoeff(double coeff);
+    void set_upEntrainmentCoeff(double coeff);
 #endif
 #ifdef FRICTION_VELOCITY
     void set_frictionVelocityFlag(bool flag);

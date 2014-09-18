@@ -359,7 +359,11 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 	//compute diurnal wind
 	if(input.diurnalWinds == true)
 	{
-		addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, &bl_height, &input.dem, &aspect, &slope, &shade, &solar, &input.surface, &cloudCoverGrid, &airTempGrid, input.numberCPUs);
+		addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
+                        &bl_height, &input.dem, &aspect, &slope, &shade, &solar, 
+                        &input.surface, &cloudCoverGrid, &airTempGrid, 
+                        input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
+                        input.upDragCoeff, input.upEntrainmentCoeff);
 		
 		////Testing: Print diurnal component as .kmz file
 		//AsciiGrid<double> *diurnalVelocityGrid, *diurnalAngleGrid;

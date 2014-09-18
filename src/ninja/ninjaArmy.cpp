@@ -620,16 +620,40 @@ ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
 #endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
- *  Initialization Speed Dampening Methods
+ *  Ninja Speed Testing Methods
  *-----------------------------------------------------------------------------*/
-#ifdef INITIALIZATION_SPEED_DAMPENING
-int ninjaArmy::setSpeedDampeningRatio( const int nIndex, const double ratio,
+#ifdef NINJA_SPEED_TESTING
+int ninjaArmy::setSpeedDampeningRatio( const int nIndex, const double r,
                             char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedDampeningRatio( ratio ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedDampeningRatio( r ) );
 }
 
+int ninjaArmy::setDownDragCoeff( const int nIndex, const double coeff,
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_downDragCoeff( coeff ) );
+}
+
+int ninjaArmy::setDownEntrainmentCoeff( const int nIndex, const double coeff,
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_downEntrainmentCoeff( coeff ) );
+}
+
+int ninjaArmy::setUpDragCoeff( const int nIndex, const double coeff,
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_upDragCoeff( coeff ) );
+}
+
+int ninjaArmy::setUpEntrainmentCoeff( const int nIndex, const double coeff,
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_upEntrainmentCoeff( coeff ) );
+}
 #endif
+
 
 /*-----------------------------------------------------------------------------
  *  Friciton Velocity Methods

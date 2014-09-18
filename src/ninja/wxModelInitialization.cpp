@@ -1089,7 +1089,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
     
-    #ifdef INITIALIZATION_SPEED_DAMPENING
+    #ifdef NINJA_SPEED_TESTING
     // adjustment to increase drag on 10 m wx model winds    
     
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
@@ -1296,7 +1296,12 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
         Slope slope(&input.dem, input.numberCPUs);
         Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
 
-        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, &bl_height, &input.dem, &aspect, &slope, &shade, &solar, &input.surface, &cloud, &airTempGrid, input.numberCPUs);
+        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L,
+                        &u_star, &bl_height, &input.dem, &aspect, &slope,
+                        &shade, &solar, &input.surface, &cloud, 
+                        &airTempGrid, input.numberCPUs, input.downDragCoeff, 
+                        input.downEntrainmentCoeff, input.upDragCoeff, 
+                        input.upEntrainmentCoeff);
 
 
         ////Testing: Print diurnal component as .kmz file

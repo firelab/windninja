@@ -29,10 +29,17 @@
 
 #include "addDiurnalFlow.h"
 
-addDiurnal::addDiurnal(AsciiGrid<double> *u, AsciiGrid<double> *v, AsciiGrid<double> *w, AsciiGrid<double> *height, AsciiGrid<double> *L, AsciiGrid<double> *U_star, AsciiGrid<double> *BL_height, Elevation const* dem, Aspect const* asp, Slope const* slp, Shade const* shd, Solar *inSolar, surfProperties const* surface, AsciiGrid<double> const* cloudCover, AsciiGrid<double> const* airTemperature, int const number_CPUs)
+addDiurnal::addDiurnal(AsciiGrid<double> *u, AsciiGrid<double> *v, AsciiGrid<double> *w, 
+                    AsciiGrid<double> *height, AsciiGrid<double> *L, AsciiGrid<double> *U_star, 
+                    AsciiGrid<double> *BL_height, Elevation const* dem, Aspect const* asp, Slope
+                    const* slp, Shade const* shd, Solar *inSolar, surfProperties const* 
+                    surface, AsciiGrid<double> const* cloudCover, AsciiGrid<double> const* 
+                    airTemperature, int const number_CPUs, double const downDragCoeff,
+                    double const downEntrainmentCoeff, double const upDragCoeff, 
+                    double const upEntrainmentCoeff)
 {
 	
-	cellDiurnal cDiurnal(dem, shd, inSolar);
+	cellDiurnal cDiurnal(dem, shd, inSolar, downDragCoeff, downEntrainmentCoeff, upDragCoeff, upEntrainmentCoeff);
 
 	double u_, v_, w_, height_, L_, U_star_, BL_height_, Xord, Yord, WindSpeed, Z;
 	int i,j;

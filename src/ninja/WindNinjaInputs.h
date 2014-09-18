@@ -205,11 +205,15 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
 
     /*-----------------------------------------------------------------------------
-     *  Initializaiton Speed Dampening Section
+     *  Ninja Speed Testing Section
      *-----------------------------------------------------------------------------*/
-#ifdef INITIALIZATION_SPEED_DAMPENING
+#ifdef NINJA_SPEED_TESTING
     double speedDampeningRatio;  //initialization speed dampening ratio for wx model runs
 #endif
+    double downDragCoeff; // downslope drag coefficient for diurnal calculations
+    double downEntrainmentCoeff; // downslope entrainment coefficient for diurnal calculations
+    double upDragCoeff; // upslope drag coefficient for diurnal calculations
+    double upEntrainmentCoeff; // upslope entrainment coefficient for diurnal calculations 
     
     /*-----------------------------------------------------------------------------
      *  Friction Velocity Section
