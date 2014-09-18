@@ -34,7 +34,10 @@ cellDiurnal::cellDiurnal()
 
 }
 
-cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd, Solar *solarInput)
+cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd, 
+                        Solar *solarInput, double const downDragCoeff,
+                        double const downEntrainmentCoeff, double const upDragCoeff, 
+                        double const upEntrainmentCoeff)
 {
 	#ifdef CELL_DIURNAL_DEBUG
 		Stopwatch fxTimer;
@@ -74,16 +77,21 @@ cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd, Solar *
 	cellDist_shadeFlag = true;
     g = 9.81;
 
-	Cd_downslope = 0.0001;
-	entrainment_coeff_downslope = 0.01;
-	Cd_upslope = 0.2;
-	entrainment_coeff_upslope = 0.2;
+	Cd_downslope = downDragCoeff; //0.0001;
+	entrainment_coeff_downslope = downEntrainmentCoeff; //0.01;
+	Cd_upslope = upDragCoeff; //0.2;
+	entrainment_coeff_upslope = upEntrainmentCoeff; //0.2;
+	
+	cout<<"downDrag = "<<Cd_downslope<<endl;
+	cout<<"downEntrain = "<<entrainment_coeff_downslope<<endl;
+	cout<<"upDrag = "<<Cd_upslope<<endl;
+	cout<<"upEntrain = "<<entrainment_coeff_upslope<<endl;
 
-     epsilon = dem->get_cellSize()/1000.0;
-     c1 = 5.31e-13;
+    epsilon = dem->get_cellSize()/1000.0;
+    c1 = 5.31e-13;
 	c2 = 60;
 	c3 = 0.12;
-     a1 = 990;
+    a1 = 990;
 	a2 = -30;
 	b1 = -0.75;
 	b2 = 3.4;

@@ -47,6 +47,7 @@
 #include "solar.h"
 #include "cellDiurnal.h"
 #include "SurfProperties.h"
+#include "WindNinjaInputs.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -62,7 +63,14 @@ class addDiurnal
 {	
 
 public:
-	addDiurnal(AsciiGrid<double> *u, AsciiGrid<double> *v, AsciiGrid<double> *w, AsciiGrid<double> *height, AsciiGrid<double> *L, AsciiGrid<double> *U_star, AsciiGrid<double> *BL_height, Elevation const* dem, Aspect const* asp, Slope const* slp, Shade const* shd, Solar *inSolar, surfProperties const* surface, AsciiGrid<double> const* cloudCover, AsciiGrid<double> const* airTemperature, int const number_CPUs);
+	addDiurnal(AsciiGrid<double> *u, AsciiGrid<double> *v, AsciiGrid<double> *w, 
+                AsciiGrid<double> *height, AsciiGrid<double> *L, AsciiGrid<double> *U_star, 
+                AsciiGrid<double> *BL_height, Elevation const* dem, Aspect const* asp, 
+                Slope const* slp, Shade const* shd, Solar *inSolar, surfProperties const* surface, 
+                AsciiGrid<double> const* cloudCover, AsciiGrid<double> const* airTemperature, 
+                int const number_CPUs, double const downDragCoeff,
+                double const downEntrainmentCoeff, double const upDragCoeff, 
+                double const upEntrainmentCoeff);
 	~addDiurnal();
 
 private:
