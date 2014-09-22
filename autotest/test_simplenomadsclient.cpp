@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
     if( EQUAL( pszVsiType, "zip" ) )
     {
         const char *p = pszVsiPath;
-        pszVsiPath = CPLStrdup( CPLSPrintf( "%s.zip" ) );
+        pszVsiPath = CPLStrdup( CPLSPrintf( "%s.zip", pszVsiPath ) );
         CPLFree( (void*)p );
     }
     else if( EQUAL( pszVsiType, "path" ) )
