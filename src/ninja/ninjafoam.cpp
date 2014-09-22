@@ -1682,12 +1682,13 @@ int NinjaFoam::SanitizeOutput()
     pszVrtMem = CPLStrdup( "output.vrt" );
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
 
-    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/input.nIterations/" \
-                             "U_triSurfaceSampling.raw", pszTempPath );
+    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
+                             "U_triSurfaceSampling.raw", pszTempPath, input.nIterations );
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
+    
     /*
     ** XXX
     ** Need to set SRS here !
