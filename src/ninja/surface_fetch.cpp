@@ -291,7 +291,7 @@ int SurfaceFetch::SelfTest()
 
 int SurfaceFetch::TestZip()
 {
-    if( CPLCheckForFile( "unziptmp.zip", NULL ) )
+    if( CPLCheckForFile( (char*)"unziptmp.zip", NULL ) )
     {
         VSIUnlink( "unziptmp.zip" );
     }
@@ -308,21 +308,21 @@ int SurfaceFetch::TestZip()
     VSIFCloseL( tmp );
 
     ExtractFileFromZip( "unziptmp.zip", "one.txt", "one.txt" );
-    if( !CPLCheckForFile( "one.txt", NULL ) )
+    if( !CPLCheckForFile( (char*)"one.txt", NULL ) )
     {
         VSIUnlink( "unziptmp.zip" );
         return 1;
     }
     VSIUnlink( "one.txt" );
     ExtractFileFromZip( "unziptmp.zip",  "two/two.txt", "two.txt" );
-    if( !CPLCheckForFile( "two.txt", NULL ) )
+    if( !CPLCheckForFile( (char*)"two.txt", NULL ) )
     {
         VSIUnlink( "unziptmp.zip" );
         return 1;
     }
     VSIUnlink( "two.txt" );
     ExtractFileFromZip( "unziptmp.zip", "three/three/three.txt", "three.txt" );
-    if( !CPLCheckForFile( "three.txt", NULL ) )
+    if( !CPLCheckForFile( (char*)"three.txt", NULL ) )
     {
         VSIUnlink( "unziptmp.zip" );
         return 1;
