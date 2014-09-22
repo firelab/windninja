@@ -123,6 +123,8 @@ static const char *apszNomadsKeys[][11] =
 {
     /*
     ** GFS
+    ** GFS is moving to 0.25 degree in late 2014.  The only change will be the
+    ** grid resolution, just fix below.
     */
     { /* Name key of the model */
       "gfs_global",
@@ -143,6 +145,7 @@ static const char *apszNomadsKeys[][11] =
       /* Levels list */
       "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
       /* Horizontal grid resolution */
+      /* "0.25 deg", */
       "0.5 deg",
       /* Human readable name */
       "GFS Global" },
