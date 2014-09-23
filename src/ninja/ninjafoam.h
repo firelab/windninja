@@ -48,7 +48,6 @@
                            "    <SrcDataSource>%s</SrcDataSource>" \
                            "    <SrcLayer>%s</SrcLayer>" \
                            "    <GeometryType>wkbPoint</GeometryType>" \
-                           "    <LayerSRS>%s</LayerSRS>" \
                            "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\"/>"  \
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
@@ -80,7 +79,6 @@ private:
     const char *pszTempPath;
 
     int GenerateTempDirectory();
-    int RunGridSampling();
     int WriteJson();
     
     int WriteFoamFiles();

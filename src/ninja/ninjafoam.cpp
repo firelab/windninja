@@ -726,11 +726,6 @@ void NinjaFoam::ComputeDirection()
     direction.push_back(0); 
 }
 
-int NinjaFoam::RunGridSampling()
-{
-    return NINJA_SUCCESS;
-}
-
 int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
 {
     //append BC blocks from template files
@@ -1654,8 +1649,7 @@ int NinjaFoam::SanitizeOutput()
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
 
-    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
-                         input.dem.prjString.c_str() );
+    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
@@ -1767,6 +1761,7 @@ int NinjaFoam::SampleCloud()
     ** XXX
     ** Nearest neighbour gridding options.  Switch these if you switch the
     ** algorithm.
+    ** XXX
     */
     GDALGridNearestNeighborOptions poOptions;
     poOptions.dfRadius1 = dfCellSize * 10;
