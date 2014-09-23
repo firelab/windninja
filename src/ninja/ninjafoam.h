@@ -72,19 +72,14 @@ public:
     GDALDatasetH GetRasterOutputHandle();
 
 private:
-    const char *pszTerrainFile;
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs; 
-    OGRDataSourceH hOFOutput;
-    GDALDatasetH hGriddedDS;
 
     const char *pszTempPath;
-    const char *pszOgrBase;
-    const char *pszOutFile;
+
     int GenerateTempDirectory();
-    int WriteOgrVrt( const char *pszSrsWkt );
     int RunGridSampling();
     int WriteJson();
     
@@ -138,8 +133,6 @@ private:
 
     /* GDAL/OGR output */
     const char *pszVrtMem;
-    const char *pszMem;
-    const char *pszRaw;
     const char *pszGridFilename;
 #ifdef NINJA_BUILD_TESTING
 public:

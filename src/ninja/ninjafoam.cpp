@@ -36,15 +36,9 @@
 
 NinjaFoam::NinjaFoam() : ninja()
 {
-    pszTerrainFile = NULL;
     pszTempPath = NULL;
-    pszOgrBase = NULL;
-    hGriddedDS = NULL;
-    pszRaw = NULL;
-    pszMem = NULL;
     pszVrtMem = NULL;
     pszGridFilename = NULL;
-    hGriddedDS = NULL;
 
     boundary_name = "";
     terrainName = "NAME";
@@ -83,11 +77,8 @@ NinjaFoam& NinjaFoam::operator= (NinjaFoam const& A)
 
 NinjaFoam::~NinjaFoam()
 {
-    CPLFree( (void*)pszTerrainFile );
     CPLFree( (void*)pszTempPath );
-    CPLFree( (void*)pszOgrBase );
     CPLFree( (void*)pszVrtMem );
-    CPLFree( (void*)pszMem );
     CPLFree( (void*)pszGridFilename );
 }
 
@@ -633,8 +624,6 @@ int NinjaFoam::GenerateTempDirectory()
 {
     pszTempPath = CPLStrdup( CPLGenerateTempFilename( NULL ) );
     VSIMkdir( pszTempPath, 0777 );
-    pszOgrBase = NULL;
-
     return NINJA_SUCCESS;
 }
 
@@ -737,37 +726,9 @@ void NinjaFoam::ComputeDirection()
     direction.push_back(0); 
 }
 
-int NinjaFoam::WriteOgrVrt( const char *pszSrsWkt )
-{
-    VSILFILE *fout;
-    CPLAssert( pszTempPath );
-    CPLAssert( pszOgrBase );
-    CPLAssert( pszSrsWkt );
-    vsi_l_offset nOffset;
-    fout = VSIFOpenL( CPLFormFilename( pszTempPath, pszOgrBase, ".vrt" ),
-                      "wb" );
-    if( !fout )
-    {
-        return NINJA_E_FILE_IO;
-    }
-    const char *pszVrt;
-    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, pszOgrBase, pszOgrBase,
-                         pszOgrBase, pszSrsWkt );
-
-    nOffset = VSIFWriteL( pszVrt, CPLStrnlen( pszVrt, 8192 ), 1, fout );
-    CPLAssert( nOffset );
-    VSIFCloseL( fout );
-    return NINJA_SUCCESS;
-}
-
 int NinjaFoam::RunGridSampling()
 {
     return NINJA_SUCCESS;
-}
-
-GDALDatasetH NinjaFoam::GetRasterOutputHandle()
-{
-    return hGriddedDS;
 }
 
 int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
@@ -1664,7 +1625,6 @@ int NinjaFoam::Sample()
 **
 ** This essentially copies the data and changes it inline.
 **
-** TODO: Support MEM datasets for processing.
 */
 
 int NinjaFoam::SanitizeOutput()
@@ -1679,9 +1639,13 @@ int NinjaFoam::SanitizeOutput()
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
+    const char *pszRaw;
+    const char *pszMem;
     std::string s;
 
-    pszMem = CPLStrdup( CPLSPrintf( "%s/output.raw", pszTempPath ) );
+
+    pszMem = CPLSPrintf( "%s/output.raw", pszTempPath );
+    /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
     pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
                          "U_triSurfaceSampling.raw", pszTempPath, input.nIterations );
@@ -1689,20 +1653,19 @@ int NinjaFoam::SanitizeOutput()
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
-    
-    /*
-    ** XXX
-    ** Need to set SRS here !
-    ** XXX
-    */
+
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output", 
                          input.dem.prjString.c_str() );
-                         //"EPSG:32612" );
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
-    /* eat the first line */
+    /*
+    ** eat the first line
+    */
     VSIFGets( buf, 512, fin );
+    /*
+    ** fix the header
+    */
     VSIFGets( buf, 512, fin );
     s = buf;
     ReplaceKeys( s, "#", "", 1 );
@@ -1710,6 +1673,9 @@ int NinjaFoam::SanitizeOutput()
     ReplaceKeys( s, "  ", ",", 5 );
     ReplaceKeys( s, "  ", "", 1 );
     VSIFWriteL( s.c_str(), s.size(), 1, fout );
+    /*
+    ** sanitize the data.
+    */
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
         s = buf;
@@ -1720,7 +1686,6 @@ int NinjaFoam::SanitizeOutput()
     VSIFCloseL( fout );
     return 0;
 }
-
 
 /*
 ** Sample a point cloud and create a 2-band GDALDataset of U and V values.
@@ -1739,8 +1704,8 @@ int NinjaFoam::SampleCloud()
     OGRLayerH hLayer = NULL;
     OGRFeatureH hFeature = NULL;
     OGRGeometryH hGeometry = NULL;
-    if( hGriddedDS != NULL )
-        GDALClose( hGriddedDS );
+    GDALDatasetH hGriddedDS = NULL;
+
     hDS = OGROpen( pszVrtMem, FALSE, NULL );
     if( hDS == NULL )
     {
