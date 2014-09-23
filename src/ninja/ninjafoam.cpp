@@ -43,6 +43,7 @@ NinjaFoam::NinjaFoam() : ninja()
     pszRaw = NULL;
     pszMem = NULL;
     pszVrtMem = NULL;
+    hGriddedDS = NULL;
 
     boundary_name = "";
     terrainName = "NAME";
@@ -1759,7 +1760,7 @@ int NinjaFoam::SampleCloud()
     double *padfData;
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
-#if _NOT_DEFINED__
+#if __NOT_DEFINED__
     OGREnvelope psEnv;
     OGR_L_GetExtent( hLayer, &psEnv, TRUE );
     dfXMin = psEnv.MinX;
@@ -1833,6 +1834,9 @@ int NinjaFoam::SampleCloud()
     GDALSetRasterNoDataValue( hBand, -9999 );
     GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
                   nXSize, nYSize, GDT_Float64, 0, 0 );
+
+    /* Set the projection from the DEM */
+    rc = GDALSetProjection( hDS, input.dem.prjString.c_str() );
 
     CPLFree( (void*)padfX );
     CPLFree( (void*)padfY );
