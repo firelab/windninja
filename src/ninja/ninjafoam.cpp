@@ -305,7 +305,7 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* convert output files                                              */
     /*-------------------------------------------------------------------*/
-    AsciiGrid<double>foamSpd, foamDir, foamU, foamV;
+    AsciiGrid<double> foamU, foamV;
     int rc;
     rc = SanitizeOutput();
     rc = SampleCloud();
@@ -319,6 +319,9 @@ bool NinjaFoam::simulate_wind()
     }
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
+
+    AsciiGrid<double> foamSpd( foamU );
+    AsciiGrid<double> foamDir( foamU );
 
     for(int i=0; i<foamU.get_nRows(); i++)
     {
@@ -622,7 +625,7 @@ int NinjaFoam::WriteFoamFiles()
 
 int NinjaFoam::GenerateTempDirectory()
 {
-    pszTempPath = CPLStrdup( CPLGenerateTempFilename( NULL ) );
+    pszTempPath = CPLStrdup( CPLGenerateTempFilename( "NINJAFOAM" ) );
     VSIMkdir( pszTempPath, 0777 );
     return NINJA_SUCCESS;
 }
@@ -1643,7 +1646,8 @@ int NinjaFoam::SanitizeOutput()
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
     pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
-                         "U_triSurfaceSampling.raw", pszTempPath, input.nIterations );
+                         "U_triSurfaceSampling.raw", pszTempPath,
+                         input.nIterations );
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -1699,6 +1703,8 @@ int NinjaFoam::SampleCloud()
     OGRFeatureH hFeature = NULL;
     OGRGeometryH hGeometry = NULL;
     GDALDatasetH hGriddedDS = NULL;
+
+    double adfGeoTransform[6];
 
     hDS = OGROpen( pszVrtMem, FALSE, NULL );
     if( hDS == NULL )
@@ -1797,7 +1803,16 @@ int NinjaFoam::SampleCloud()
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
     /* Set the projection from the DEM */
-    rc = GDALSetProjection( hDS, input.dem.prjString.c_str() );
+    rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
+
+    adfGeoTransform[0] = input.dem.get_xllCorner();
+    adfGeoTransform[1] = input.dem.get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = input.dem.get_yllCorner() + input.dem.get_cellSize() * input.dem.get_nRows();
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = input.dem.get_cellSize();
+
+    GDALSetGeoTransform( hGriddedDS, adfGeoTransform );
 
     CPLFree( (void*)padfX );
     CPLFree( (void*)padfY );
