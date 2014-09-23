@@ -1682,11 +1682,9 @@ int NinjaFoam::SanitizeOutput()
     std::string s;
 
     pszMem = CPLStrdup( CPLSPrintf( "%s/output.raw", pszTempPath ) );
-    pszVrtMem = CPLStrdup( "output.vrt" );
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
-
     pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
-                             "U_triSurfaceSampling.raw", pszTempPath, input.nIterations );
+                         "U_triSurfaceSampling.raw", pszTempPath, input.nIterations );
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
