@@ -43,6 +43,7 @@ NinjaFoam::NinjaFoam() : ninja()
     pszRaw = NULL;
     pszMem = NULL;
     pszVrtMem = NULL;
+    pszGridFilename = NULL;
     hGriddedDS = NULL;
 
     boundary_name = "";
@@ -82,12 +83,12 @@ NinjaFoam& NinjaFoam::operator= (NinjaFoam const& A)
 
 NinjaFoam::~NinjaFoam()
 {
-    free( (void*)pszTerrainFile );
-    free( (void*)pszTempPath );
-    free( (void*)pszOgrBase );
-    free( (void*)pszVrtMem );
-    free( (void*)pszMem );
-    GDALClose( hGriddedDS );
+    CPLFree( (void*)pszTerrainFile );
+    CPLFree( (void*)pszTempPath );
+    CPLFree( (void*)pszOgrBase );
+    CPLFree( (void*)pszVrtMem );
+    CPLFree( (void*)pszMem );
+    CPLFree( (void*)pszGridFilename );
 }
 
 bool NinjaFoam::simulate_wind()
@@ -137,7 +138,7 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
     const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
-    const char *pszStlPath = CPLSPrintf("%s/constant/triSurface/", pszTempPath);
+    const char *pszStlPath = CPLStrdup( CPLSPrintf("%s/constant/triSurface/", pszTempPath) );
     const char *pszStlFileName = CPLFormFilename(pszStlPath, pszShortName, ".stl");
 
     int nBand = 1;
@@ -317,7 +318,8 @@ bool NinjaFoam::simulate_wind()
     int rc;
     rc = SanitizeOutput();
     rc = SampleCloud();
-    GDALDatasetH hDS = GetRasterOutputHandle();
+    GDALDatasetH hDS;
+    hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
     {
         //do something
@@ -1810,8 +1812,9 @@ int NinjaFoam::SampleCloud()
     poOptions.dfNoDataValue = -9999;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
-    hGriddedDS = GDALCreate( hDriver, CPLSPrintf( "%s/foam.tif", pszTempPath ),
-                             nXSize, nYSize, 2, GDT_Float64, NULL );
+    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszTempPath ) );
+    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
+                             GDT_Float64, NULL );
     padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
 
     /* U field */
@@ -1846,12 +1849,13 @@ int NinjaFoam::SampleCloud()
     CPLFree( (void*)padfData );
 
     OGR_DS_Destroy( hDS );
+    GDALClose( hGriddedDS );
 
     return 0;
 }
 
-GDALDatasetH NinjaFoam::GetGridHandle()
+const char * NinjaFoam::GetGridFilename()
 {
-    return hGriddedDS;
+    return pszGridFilename;
 }
 

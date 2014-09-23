@@ -140,6 +140,7 @@ private:
     const char *pszVrtMem;
     const char *pszMem;
     const char *pszRaw;
+    const char *pszGridFilename;
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
@@ -148,7 +149,7 @@ public:
 #ifdef NINJA_BUILD_TESTING
 private:
 #endif
-    GDALDatasetH GetGridHandle();
+    const char * GetGridFilename();
 
 };
 
