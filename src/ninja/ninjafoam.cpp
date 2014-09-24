@@ -29,11 +29,6 @@
 
 #include "ninjafoam.h"
 
-/*
-** for local testing on kyle's machine, remove for production
-*/
-#define NINJA_FOAM_TEST
-
 NinjaFoam::NinjaFoam() : ninja()
 {
     pszTempPath = NULL;
@@ -109,7 +104,7 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
     int status;
-
+    
     status = GenerateTempDirectory();
     if(status != 0){
         //do something
@@ -300,10 +295,10 @@ bool NinjaFoam::simulate_wind()
     status = chdir("../");
     if(status != 0){
         //do something
-    } 
+    }
     
     /*-------------------------------------------------------------------*/
-    /* convert output files                                              */
+    /* convert output from xyz to speed and direction                    */
     /*-------------------------------------------------------------------*/
     AsciiGrid<double> foamU, foamV;
     int rc;
@@ -317,6 +312,7 @@ bool NinjaFoam::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Invalid output written" );
         return false;
     }
+
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
 
@@ -330,9 +326,17 @@ bool NinjaFoam::simulate_wind()
             wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
         }
     }
-
+    
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+       
+    /*----------------------------------------*/
+    /*  write output files                    */
+    /*----------------------------------------*/
+	
+	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
+
+	WriteOutputFiles();
 
     return true;
 }
@@ -1648,12 +1652,14 @@ int NinjaFoam::SanitizeOutput()
     pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
                          "U_triSurfaceSampling.raw", pszTempPath,
                          input.nIterations );
+
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
 
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
+
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
@@ -1820,7 +1826,6 @@ int NinjaFoam::SampleCloud()
     CPLFree( (void*)padfV );
 
     CPLFree( (void*)padfData );
-
     OGR_DS_Destroy( hDS );
     GDALClose( hGriddedDS );
 
@@ -1830,5 +1835,279 @@ int NinjaFoam::SampleCloud()
 const char * NinjaFoam::GetGridFilename()
 {
     return pszGridFilename;
+}
+
+void NinjaFoam::SetOutputFilenames()
+{
+    //Set output file resolutions now
+    if( input.kmzResolution <= 0.0 )  //if negative, use DEM resolution
+        input.kmzResolution = input.dem.get_cellSize();
+    if( input.shpResolution <= 0.0 )  //if negative, use DEM resolution
+        input.shpResolution = input.dem.get_cellSize();
+    if( input.velResolution <= 0.0 )  //if negative, use DEMresolution
+        input.velResolution = input.dem.get_cellSize();
+    if( input.angResolution <= 0.0 )  //if negative, use DEM resolution
+        input.angResolution = input.dem.get_cellSize();
+    if( input.pdfResolution <= 0.0 )
+        input.pdfResolution = input.dem.get_cellSize();
+
+    //Do file naming string stuff for all output files
+    std::string rootFile, rootName, fileAppend, kmz_fileAppend, \
+        shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+
+    std::string pathName;
+    std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+    
+    pathName = CPLGetPath(input.dem.fileName.c_str());
+    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+
+    /* set the output path member variable */
+    input.outputPath = pathName;
+
+    mesh_units = "m";
+    kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
+    shp_mesh_units = lengthUnits::getString( input.shpUnits );
+    ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
+    pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+
+    double tempSpeed = input.inputSpeed;
+    velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
+    os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    
+    double meshResolutionTemp = input.dem.get_cellSize();
+    double kmzResolutionTemp = input.kmzResolution;
+    double shpResolutionTemp = input.shpResolution;
+    double velResolutionTemp = input.velResolution;
+    double pdfResolutionTemp = input.pdfResolution;
+    
+    lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
+    
+    lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
+
+    os << "_" << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_kmz << "_" << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
+    os_shp << "_" << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
+    os_ascii << "_" << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
+    os_pdf << "_" << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+
+    fileAppend = os.str();
+    kmz_fileAppend = os_kmz.str();
+    shp_fileAppend = os_shp.str();
+    ascii_fileAppend = os_ascii.str();
+    pdf_fileAppend   = os_pdf.str();
+
+    input.kmlFile = rootFile + kmz_fileAppend + ".kml";
+    input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
+
+    input.shpFile = rootFile + shp_fileAppend + ".shp";
+    input.dbfFile = rootFile + shp_fileAppend + ".dbf";
+
+    input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+
+    input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
+    input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
+    input.atmFile = rootFile + ascii_fileAppend + ".atm";
+
+    input.legFile = rootFile + kmz_fileAppend + ".bmp";
+    if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
+        input.dateTimeLegFile = "";
+    else
+        input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
+}
+
+
+void NinjaFoam::WriteOutputFiles()
+{
+    SetOutputFilenames();
+
+	try{
+		if(input.asciiOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+			angTempGrid->write_Grid(input.angFile.c_str(), 0);
+			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+
+            //angTempGrid->write_Grid("angle.asc", 0);
+			//velTempGrid->write_Grid("vel.asc", 2);
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+
+			//Write .atm file for this run.  Only has one time value in file.
+			if(input.writeAtmFile)
+			{
+			    farsiteAtm atmosphere;
+			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
+	}
+
+	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
+	try{
+		if(input.txtOutFlag==true)
+			write_compare_output();
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
+	}
+
+	//write shape files
+	try{
+		if(input.shpOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+
+			ShapeVector ninjaShapeFiles;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+			ninjaShapeFiles.setDirGrid(*angTempGrid);
+			ninjaShapeFiles.setSpeedGrid(*velTempGrid);
+			ninjaShapeFiles.setDataBaseName(input.dbfFile);
+			ninjaShapeFiles.setShapeFileName(input.shpFile);
+			ninjaShapeFiles.makeShapeFiles();
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+	}
+
+	//write kmz file
+	try{
+		if(input.googOutFlag==true)
+
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+
+			KmlVector ninjaKmlFiles;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+			ninjaKmlFiles.setKmlFile(input.kmlFile);
+			ninjaKmlFiles.setKmzFile(input.kmzFile);
+			ninjaKmlFiles.setDemFile(input.dem.fileName);
+
+			ninjaKmlFiles.setLegendFile(input.legFile);
+			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
+			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+			ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+            ninjaKmlFiles.setLineWidth(input.googLineWidth);
+			ninjaKmlFiles.setTime(input.ninjaTime);
+
+			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))
+			{
+				if(ninjaKmlFiles.makeKmz())
+					ninjaKmlFiles.removeKmlFile();
+			}
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+	}
+
+	try{
+		if(input.pdfOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+            OutputWriter output;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+			output.setDirGrid(*angTempGrid);
+			output.setSpeedGrid(*velTempGrid);
+            output.setDEMfile(input.pdfDEMFileName);
+            output.write(input.pdfFile, "PDF");
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+		}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+	}
+
 }
 

@@ -132,6 +132,10 @@ private:
     /* GDAL/OGR output */
     const char *pszVrtMem;
     const char *pszGridFilename;
+    
+    void WriteOutputFiles();
+    void SetOutputFilenames();
+    
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
