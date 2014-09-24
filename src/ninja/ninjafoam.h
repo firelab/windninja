@@ -133,8 +133,18 @@ private:
     const char *pszVrtMem;
     const char *pszGridFilename;
     
-    void WriteOutputFiles();
+    int WriteOutputFiles();
     void SetOutputFilenames();
+    
+    //Timers
+    double startTotal, endTotal;
+    double startMesh, endMesh;
+    double startInit, endInit;
+    double startSolve, endSolve;
+    double startWriteOut, endWriteOut;
+    double startFoamFileWriting, endFoamFileWriting;
+    double startOutputSampling, endOutputSampling;
+    double startStlConversion, endStlConversion;
     
 #ifdef NINJA_BUILD_TESTING
 public:

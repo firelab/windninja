@@ -79,6 +79,10 @@ NinjaFoam::~NinjaFoam()
 
 bool NinjaFoam::simulate_wind()
 {
+    #ifdef _OPENMP
+    startTotal = omp_get_wtime();
+	#endif
+    
     checkCancel();
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
@@ -101,6 +105,10 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
+    #ifdef _OPENMP
+    startFoamFileWriting = omp_get_wtime();
+	#endif
+    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
     int status;
@@ -121,6 +129,10 @@ bool NinjaFoam::simulate_wind()
     /*  convert DEM to STL format and write to constant/triSurface       */
     /*-------------------------------------------------------------------*/
 
+    #ifdef _OPENMP
+    startStlConversion = omp_get_wtime();
+	#endif
+    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
     const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
@@ -177,6 +189,10 @@ bool NinjaFoam::simulate_wind()
 
     checkCancel();
     
+    #ifdef _OPENMP
+    endStlConversion = omp_get_wtime();
+	#endif
+    
     /*-------------------------------------------------------------------*/
     /*  write contstant/polyMesh/blockMeshDict                           */
     /*-------------------------------------------------------------------*/
@@ -197,6 +213,9 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
+    #ifdef _OPENMP
+    endFoamFileWriting = omp_get_wtime();
+	#endif
     
     /*-------------------------------------------------------------------*/
     /* execute commands in run.bat                                       */
@@ -209,6 +228,10 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
+    #ifdef _OPENMP
+    startMesh = omp_get_wtime();
+	#endif
+	
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
     status = BlockMesh();
     if(status != 0){
@@ -253,12 +276,22 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
+    #ifdef _OPENMP
+    endMesh = omp_get_wtime();
+    startInit = omp_get_wtime();
+	#endif
+	
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
     if(status != 0){
         //do something
     }
     
+    #ifdef _OPENMP
+    endInit = omp_get_wtime();
+    startSolve = omp_get_wtime();
+	#endif
+	
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
         fout = VSIFOpenL("log", "w" );
@@ -285,11 +318,20 @@ bool NinjaFoam::simulate_wind()
         }
     }
     
+    #ifdef _OPENMP
+    endSolve = omp_get_wtime();
+    startOutputSampling = omp_get_wtime();
+	#endif
+	
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
     status = Sample();
     if(status != 0){
         //do something
     }
+    
+    #ifdef _OPENMP
+    endOutputSampling = omp_get_wtime();
+	#endif
     
     //move back to ninja working directory
     status = chdir("../");
@@ -297,46 +339,51 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    /*-------------------------------------------------------------------*/
-    /* convert output from xyz to speed and direction                    */
-    /*-------------------------------------------------------------------*/
-    AsciiGrid<double> foamU, foamV;
-    int rc;
-    rc = SanitizeOutput();
-    rc = SampleCloud();
-    GDALDatasetH hDS;
-    hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
-    if( hDS == NULL )
-    {
-        //do something
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Invalid output written" );
-        return false;
-    }
-
-    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
-    GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
-
-    AsciiGrid<double> foamSpd( foamU );
-    AsciiGrid<double> foamDir( foamU );
-
-    for(int i=0; i<foamU.get_nRows(); i++)
-    {
-        for(int j=0; j<foamU.get_nCols(); j++)
-        {
-            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
-        }
-    }
-    
-    AngleGrid = foamDir;
-    VelocityGrid = foamSpd;
-       
     /*----------------------------------------*/
     /*  write output files                    */
     /*----------------------------------------*/
+    
+    #ifdef _OPENMP
+    startWriteOut = omp_get_wtime();
+    #endif
 	
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
-	WriteOutputFiles();
+	status = WriteOutputFiles();
+    if(status != 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing...");
+        return false;
+    }
+    
+    #ifdef _OPENMP
+    endWriteOut = omp_get_wtime();
+    endTotal = omp_get_wtime();
+	#endif
+	
+    /*----------------------------------------*/
+    /*  wrap up                              */
+    /*----------------------------------------*/
+    
+    #ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL converstion time was %lf seconds.", endStlConversion-startStlConversion);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
+	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output sampling time was %lf seconds.", endOutputSampling-startOutputSampling);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
+	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
+	#endif 
+    
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
+    
+    //VSIUnlink(pszTempPath);
+    
+    if(!input.keepOutGridsInMemory)
+	{
+        AngleGrid.deallocate();
+	    VelocityGrid.deallocate();
+    }
 
     return true;
 }
@@ -396,7 +443,6 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
     
     dataString.append(s);
-    //cout<<"data in new block = \n"<<s<<endl;
     
     CPLFree(data);
     VSIFCloseL(fin);
@@ -579,7 +625,6 @@ int NinjaFoam::WriteFoamFiles()
 
     //write temporary OpenFOAM directories
     pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
-    //cout<<"pszPath = "<<pszPath<<endl;
     pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
     papszFileList = VSIReadDirRecursive( pszArchive );
     for(int i = 0; i < CSLCount( papszFileList ); i++){
@@ -629,7 +674,7 @@ int NinjaFoam::WriteFoamFiles()
 
 int NinjaFoam::GenerateTempDirectory()
 {
-    pszTempPath = CPLStrdup( CPLGenerateTempFilename( "NINJAFOAM" ) );
+    pszTempPath = CPLStrdup( CPLGenerateTempFilename( "NINJAFOAM_" ) );
     VSIMkdir( pszTempPath, 0777 );
     return NINJA_SUCCESS;
 }
@@ -1927,9 +1972,51 @@ void NinjaFoam::SetOutputFilenames()
 }
 
 
-void NinjaFoam::WriteOutputFiles()
+int NinjaFoam::WriteOutputFiles()
 {
+    /*-------------------------------------------------------------------*/
+    /* convert output from xyz to speed and direction                    */
+    /*-------------------------------------------------------------------*/
+    
+    AsciiGrid<double> foamU, foamV;
+    int rc;
+    rc = SanitizeOutput();
+    rc = SampleCloud();
+    GDALDatasetH hDS;
+    hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
+    if( hDS == NULL )
+    {
+        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Invalid output written" );
+        return false;
+    }
+
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
+
+    AsciiGrid<double> foamSpd( foamU );
+    AsciiGrid<double> foamDir( foamU );
+
+    for(int i=0; i<foamU.get_nRows(); i++)
+    {
+        for(int j=0; j<foamU.get_nCols(); j++)
+        {
+            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+        }
+    }
+    
+    AngleGrid = foamDir;
+    VelocityGrid = foamSpd;
+    
+    /*-------------------------------------------------------------------*/
+    /* set up filenames                                                  */
+    /*-------------------------------------------------------------------*/
+    
     SetOutputFilenames();
+    
+    /*-------------------------------------------------------------------*/
+    /* write output files                                                */
+    /*-------------------------------------------------------------------*/
 
 	try{
 		if(input.asciiOutFlag==true)
@@ -2108,6 +2195,7 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
-
+	
+	return true;
 }
 
