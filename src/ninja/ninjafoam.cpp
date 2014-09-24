@@ -1816,7 +1816,7 @@ int NinjaFoam::SampleCloud()
     adfGeoTransform[2] = 0;
     adfGeoTransform[3] = input.dem.get_yllCorner() + input.dem.get_cellSize() * input.dem.get_nRows();
     adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = input.dem.get_cellSize();
+    adfGeoTransform[5] = -input.dem.get_cellSize();
 
     GDALSetGeoTransform( hGriddedDS, adfGeoTransform );
 
