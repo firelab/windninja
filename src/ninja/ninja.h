@@ -471,7 +471,9 @@ private:
 //	double norm_residual(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
 //	double norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
     void interp_uvw();
+protected:
     void write_compare_output();
+private:
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
     double get_aspect_ratio(int NUMEL, int NUMNP, double *XORD, double *YORD, double *ZORD,
                             int nrows, int ncols, int nlayers);
