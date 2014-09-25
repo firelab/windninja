@@ -102,6 +102,11 @@ int NinjaInitialize()
         }
     }
 #ifndef DISABLE_THREDDS_UPDATE
+    /*
+    ** Disable VSI caching, this breaks nomads downloader if it's on.
+    */
+    CPLSetConfigOption( "VSI_CACHE", "FALSE" );
+
     /* Try to update our thredds file */
     int rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
                                                  "NO" ) );
