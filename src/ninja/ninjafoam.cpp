@@ -1816,11 +1816,11 @@ int NinjaFoam::SampleCloud()
     ** algorithm.
     ** XXX
     */
-    GDALGridNearestNeighborOptions poOptions;
-    poOptions.dfRadius1 = 0.;
-    poOptions.dfRadius2 = poOptions.dfRadius1;
-    poOptions.dfAngle = 0.;
-    poOptions.dfNoDataValue = -9999;
+    GDALGridNearestNeighborOptions sOptions;
+    sOptions.dfRadius1 = 0.;
+    sOptions.dfRadius2 = sOptions.dfRadius1;
+    sOptions.dfAngle = 0.;
+    sOptions.dfNoDataValue = -9999;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszTempPath ) );
@@ -1829,7 +1829,7 @@ int NinjaFoam::SampleCloud()
     padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
 
     /* U field */
-    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
+    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
                          padfX, padfY, padfU, dfXMin, dfXMax, dfYMin, dfYMax,
                          nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
@@ -1840,7 +1840,7 @@ int NinjaFoam::SampleCloud()
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
     /* V field */
-    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&poOptions, nPoints,
+    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
                          padfX, padfY, padfV, dfXMin, dfXMax, dfYMin, dfYMax,
                          nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
