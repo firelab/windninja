@@ -1793,6 +1793,7 @@ int NinjaFoam::SampleCloud()
 
     int i = 0;
     int nUIndex, nVIndex;
+    OGR_L_ResetReading( hLayer );
     hFeatDefn = OGR_L_GetLayerDefn( hLayer );
     nUIndex = OGR_FD_GetFieldIndex( hFeatDefn, "U" );
     nVIndex = OGR_FD_GetFieldIndex( hFeatDefn, "V" );
