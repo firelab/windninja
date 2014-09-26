@@ -1752,6 +1752,7 @@ int NinjaFoam::SampleCloud()
     OGRDataSourceH hDS = NULL;
     OGRLayerH hLayer = NULL;
     OGRFeatureH hFeature = NULL;
+    OGRFeatureDefnH hFeatDefn = NULL;
     OGRGeometryH hGeometry = NULL;
     GDALDatasetH hGriddedDS = NULL;
 
@@ -1776,21 +1777,12 @@ int NinjaFoam::SampleCloud()
     double *padfData;
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
-#if __NOT_DEFINED__
-    OGREnvelope psEnv;
-    OGR_L_GetExtent( hLayer, &psEnv, TRUE );
-    dfXMin = psEnv.MinX;
-    dfXMax = psEnv.MaxX;
-    dfYMin = psEnv.MinY;
-    dfYMax = psEnv.MaxY;
-    dfCellSize = 30.;
-#else
+
     dfXMin = input.dem.get_xllCorner();
     dfXMax = input.dem.get_xllCorner() + input.dem.get_xDimension();
     dfYMin = input.dem.get_yllCorner();
     dfYMax = input.dem.get_yllCorner() + input.dem.get_yDimension();
     dfCellSize = input.dem.get_cellSize();
-#endif
 
     nPoints = OGR_L_GetFeatureCount( hLayer, TRUE );
     CPLDebug( "WINDNINJA", "NinjaFoam gridding %d points", nPoints );
@@ -1800,13 +1792,17 @@ int NinjaFoam::SampleCloud()
     padfV = (double*)CPLMalloc( sizeof( double ) * nPoints );
 
     int i = 0;
+    int nUIndex, nVIndex;
+    hFeatDefn = OGR_L_GetLayerDefn( hLayer );
+    nUIndex = OGR_FD_GetFieldIndex( hFeatDefn, "U" );
+    nVIndex = OGR_FD_GetFieldIndex( hFeatDefn, "V" );
     while( (hFeature = OGR_L_GetNextFeature( hLayer )) != NULL )
     {
         hGeometry = OGR_F_GetGeometryRef( hFeature );
         padfX[i] = OGR_G_GetX( hGeometry, 0 );
         padfY[i] = OGR_G_GetY( hGeometry, 0 );
-        padfU[i] = OGR_F_GetFieldAsDouble( hFeature, 3 );
-        padfV[i] = OGR_F_GetFieldAsDouble( hFeature, 4 );
+        padfU[i] = OGR_F_GetFieldAsDouble( hFeature, nUIndex );
+        padfV[i] = OGR_F_GetFieldAsDouble( hFeature, nVIndex );
         i++;
     }
 
@@ -1821,7 +1817,7 @@ int NinjaFoam::SampleCloud()
     ** XXX
     */
     GDALGridNearestNeighborOptions poOptions;
-    poOptions.dfRadius1 = dfCellSize * 10;
+    poOptions.dfRadius1 = 0.;
     poOptions.dfRadius2 = poOptions.dfRadius1;
     poOptions.dfAngle = 0.;
     poOptions.dfNoDataValue = -9999;

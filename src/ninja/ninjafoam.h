@@ -49,6 +49,12 @@
                            "    <SrcLayer>%s</SrcLayer>" \
                            "    <GeometryType>wkbPoint</GeometryType>" \
                            "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\"/>"  \
+                           "    <Field name=\"X\" src=\"x\" type=\"Real\"/>" \
+                           "    <Field name=\"Y\" src=\"y\" type=\"Real\"/>" \
+                           "    <Field name=\"Z\" src=\"z\" type=\"Real\"/>" \
+                           "    <Field name=\"U\" src=\"U_x\" type=\"Real\"/>" \
+                           "    <Field name=\"V\" src=\"U_y\" type=\"Real\"/>" \
+                           "    <Field name=\"W\" src=\"U_z\" type=\"Real\"/>" \
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
 

@@ -50,8 +50,8 @@ BOOST_FIXTURE_TEST_SUITE( ninjafoam, NinjaFoamData)
 BOOST_AUTO_TEST_CASE( sample_cloud_1 )
 {
     int rc;
-    rc = f.SanitizeOutput();
-    BOOST_REQUIRE(rc == 0);
+    //rc = f.SanitizeOutput();
+    //BOOST_REQUIRE(rc == 0);
     rc = f.SampleCloud();
     BOOST_REQUIRE(rc == 0);
 }
