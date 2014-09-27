@@ -315,6 +315,8 @@ bool NinjaFoam::simulate_wind()
         status = ReconstructPar("-latestTime", fout);
         if(status != 0){
             //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReconstructPar(). Check that number of iterations is a multiple of 100.");
+            return false;
         }
     }
     

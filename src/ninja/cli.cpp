@@ -821,8 +821,11 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 if(vm.count("number_of_iterations")){
-                    windsim.setNumberOfIterations( i_,
-                        vm["number_of_iterations"].as<int>() );
+                    if((vm["number_of_iterations"].as<int>() % 100) != 0){
+                        cout<<"'number_of_iterations' must be a multiptle of 100."<<endl;
+                        return -1;
+                    }
+                    windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
                 if(vm.count("mesh_choice")){
