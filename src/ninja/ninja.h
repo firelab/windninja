@@ -286,6 +286,9 @@ public:
     void set_dustFlag(bool flag);
     void computeDustEmissions();
     const std::string get_DustFileName() const; //returns the name of the dust file name
+    const std::string get_GeotiffFileName() const; //returns the name of the geotiff file name
+    void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
+    void set_geotiffOutFlag(bool flag);
 #endif
 #ifdef SCALAR
     void set_scalarTransportFlag(bool flag);
@@ -364,6 +367,7 @@ public:
 
 protected:
     void checkCancel();
+    void write_compare_output();
 
     /*-----------------------------------------------------------------------------
      *  Private Access
@@ -471,8 +475,7 @@ private:
 //	double norm_residual(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
 //	double norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
     void interp_uvw();
-protected:
-    void write_compare_output();
+
 private:
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
     double get_aspect_ratio(int NUMEL, int NUMNP, double *XORD, double *YORD, double *ZORD,

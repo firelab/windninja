@@ -3015,7 +3015,7 @@ void ninja::discretize(bool scalarTransportSimulation)
         }
     }
     else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
-    {
+    {  
         for(unsigned int k=0; k<mesh.nlayers; k++)
         {
             for(unsigned int i=0; i<mesh.nrows; i++)
@@ -4958,6 +4958,17 @@ void ninja::set_dustFileOut(std::string filename)
         input.dustFileOut = filename;
     }
 }
+void ninja::set_geotiffOutFlag(bool flag)
+{
+    input.geotiffOutFlag = flag;
+}
+void ninja::set_geotiffOutFilename(std::string filename)
+{
+    if( input.geotiffOutFlag==true )
+    {
+        input.geotiffOutFilename = filename; //if file exisits, bands are appended
+    }
+}
 #endif //EMISSIONS
 
 void ninja::set_DEM(std::string dem_file_name)
@@ -5478,6 +5489,10 @@ void ninja::set_inputSpeed(double speed, velocityUnits::eVelocityUnits units)
 const std::string ninja::get_DustFileName() const
 {
     return input.dustFile;
+}
+const std::string ninja::get_GeotiffFileName() const
+{
+    return input.geotiffOutFilename;
 }
 #endif
 #ifdef FRICTION_VELOCITY

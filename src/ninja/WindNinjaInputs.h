@@ -232,6 +232,8 @@ public:
     std::string dustFileOut;   //filename of the output dust emissions file
     std::string dustFilename;   //filename of fire perimeter for dust emissions calculation
     std::string dustFile;
+    std::string geotiffOutFilename; //filename of multiband geotiff output file
+    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
 #endif
 
     /*-----------------------------------------------------------------------------

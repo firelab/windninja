@@ -325,7 +325,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
-                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
+                ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
  
@@ -340,6 +340,8 @@ int windNinjaCLI(int argc, char* argv[])
                 #ifdef EMISSIONS
                 ("compute_emissions",po::value<bool>()->default_value(false), "compute dust emissions (true, false)")
                 ("fire_perimeter_file", po::value<std::string>(), "input burn perimeter path/filename (*.shp)")
+                ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file for dust emissions (true, false)")
+                ("geotiff_file", po::value<std::string>(), "output geotiff path/filename (*.tif)")
                 #endif
                 #ifdef SCALAR
                 ("compute_scalar_transport", po::value<bool>()->default_value(false), "compute scalar transport (true, false)")
@@ -905,18 +907,22 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef EMISSIONS
             if(vm["compute_emissions"].as<bool>())
             {
-                //verify_option_set(vm, "compute_friction_velocity");
-                //verify_option_set(vm, "fire_perimeter_file");
-
                 option_dependency(vm, "compute_emissions", "compute_friction_velocity");
                 option_dependency(vm, "compute_emissions", "fire_perimeter_file");
+                option_dependency(vm, "write_multiband_geotiff_output", "geotiff_file");
+                option_dependency(vm, "write_multiband_geotiff_output", "compute_emissions");
 
                 windsim.setDustFlag( i_, true );
                 windsim.setDustFilename( i_, vm["fire_perimeter_file"].as<std::string>() );
+                
+                if(vm["write_multiband_geotiff_output"].as<bool>()){
+                    windsim.setGeotiffOutFlag( i_, true );
+                    windsim.setGeotiffOutFilename( i_, vm["geotiff_file"].as<std::string>() );
+                }
             }
             else
             {
-                windsim.setDustFlag( i_, false );  //default false doensn't work ??
+                windsim.setDustFlag( i_, false );
             }
             #endif
 

@@ -271,6 +271,25 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDustFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+        /**
+    * \brief Set the dust geotiff file output name for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param filename name of the dust geotiff output file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeotiffOutFilename( const int nIndex, const std::string filename, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable dust geotiff file output for a ninja
+    *
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables dust geotiff output if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
     /*-----------------------------------------------------------------------------

@@ -683,11 +683,24 @@ int ninjaArmy::setDustFilename( const int nIndex, const std::string filename,
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFilename( filename ) );
 }
 
-int ninjaArmy::setDustFlag    ( const int nIndex, const bool flag,
-                                char ** papszOptions )
+int ninjaArmy::setDustFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFlag( flag ) );
 }
+
+int ninjaArmy::setGeotiffOutFilename( const int nIndex, const std::string filename,
+                                char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFilename( filename ) );
+}
+
+int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
+}
+
+
+
 #endif //EMISSIONS
 
 /*-----------------------------------------------------------------------------
