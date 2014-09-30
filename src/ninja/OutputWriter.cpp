@@ -103,6 +103,10 @@ OutputWriter::write (std::string outputFilename, std::string driver)
     {
         _writePDF(outputFilename);
     }
+    else if( 0 == driver.compare( "GTiff" ) )
+    {
+        _writeGTiff(outputFilename);
+    }
     else
     {
         throw std::runtime_error("OutputWriter: unrecognized output format");
@@ -270,3 +274,59 @@ OutputWriter::_writePDF (std::string filename)
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */
 
+bool OutputWriter::_writeGTiff (std::string filename)
+{
+    // Silence error if file does not yet exist
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    hDstDS = GDALOpen(filename.c_str(), GA_ReadOnly);
+    CPLPopErrorHandler();
+    //if file doesn't already exist, create it
+    if(hDstDS == NULL)
+    {
+        const char *pszDriverName = "GTiff";
+        hDriver = GDALGetDriverByName( pszDriverName );
+    
+        int nXSize = spd.get_nCols();
+        int nYSize = spd.get_nRows();
+        int nBands = 1;
+
+        hDstDS = GDALCreate(hDriver, filename.c_str(), nXSize, nYSize, 
+                        nBands, GDT_Float32, NULL);
+                        
+        double adfGeoTransform[6];
+        adfGeoTransform[0] = spd.get_xllCorner();
+        adfGeoTransform[1] = spd.get_cellSize();
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = -(spd.get_cellSize());
+        
+        char* pszDstWKT = (char*)spd.prjString.c_str();
+        GDALSetProjection(hDstDS, pszDstWKT);
+        GDALSetGeoTransform(hDstDS, adfGeoTransform);
+        
+        GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, 1 );
+        
+        double *padfScanline;
+        padfScanline = new double[nXSize];
+
+        for(int i=nYSize-1; i>=0; i--)
+        {
+            for(int j=0; j<nXSize; j++)
+            {
+                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
+                
+                GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                             1, GDT_Float64, 0, 0);    
+            }
+        }
+    }
+    else{
+        //if file already exists, just add a new band
+    }
+    
+    GDALClose(hDstDS);
+    hDstDS = NULL;
+
+    return true;
+}		/* -----  end of method OutputWriter::_writeGTiff  ----- */

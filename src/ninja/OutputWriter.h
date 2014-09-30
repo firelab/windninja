@@ -99,6 +99,7 @@ class OutputWriter
         /* ====================  METHODS       ======================================= */
         void _createOGRFileWithFields();
         bool _writePDF(std::string filename);
+        bool _writeGTiff(std::string filename);
         
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
@@ -132,7 +133,7 @@ class OutputWriter
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
-        GDALDriverH  hDriver;
+        GDALDriverH hDriver;
         unsigned char *pafScanline;
         char** papszOptions;
         OGRLayerH hLayer;

@@ -4688,6 +4688,44 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
 	} //end omp section
+
+#pragma omp section
+	{
+	try{
+		if(input.geotiffOutFlag==true)
+		{
+			//AsciiGrid<double> *velTempGrid, *angTempGrid;
+			//velTempGrid=NULL;
+			//angTempGrid=NULL;
+            OutputWriter output;
+
+			//angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			//velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+			output.setDirGrid(AngleGrid);
+			output.setSpeedGrid(VelocityGrid);
+            //output.setDEMfile(input.pdfDEMFileName);
+            output.write(input.geotiffOutFilename, "GTiff");
+
+			/*if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+            }
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}*/
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+	}
+	} //end omp section	
 	}	//end parallel sections region
 }
 

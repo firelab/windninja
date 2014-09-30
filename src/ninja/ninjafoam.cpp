@@ -105,6 +105,12 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
+    cout<<"Rd = "<<input.surface.Rough_d(0,0)<<endl;
+    cout<<"z0 = "<<input.surface.Roughness(0,0)<<endl;
+    cout<<"length inlets = "<<inlets.size()<<endl;
+    cout<<"inlets = "<<inlets[0]<<endl;
+
+    
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
 	#endif
@@ -353,7 +359,7 @@ bool NinjaFoam::simulate_wind()
 
 	status = WriteOutputFiles();
     if(status != 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing...");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
         return false;
     }
     
