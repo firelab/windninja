@@ -141,7 +141,7 @@ struct setup
         adfMackayLarger[1] = adfMackay[1] + 2.0;
         adfMackayLarger[2] = adfMackay[2] + 2.0;
         adfMackayLarger[3] = adfMackay[3] - 2.0;
-        pszVsiPath = CPLStrdup( CPLGenerateTempFilename( NULL ) );
+        pszVsiPath = CPLStrdup( CPLGenerateTempFilename( "NOMADS_TEST" ) );
     }
     ~setup()
     {
