@@ -490,6 +490,9 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     nomads_utc *ref, *end, *fcst;
     nrc = NOMADS_OK;
 
+    CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
+              padfBbox[0], padfBbox[1], padfBbox[2], padfBbox[3] );
+
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
     {
@@ -527,7 +530,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         nMaxFcstRewind = 2;
     }
     /* Go back at least 3 for rap, as it may not get updated all the time. */
-    if( EQUALN( pszModelKey, "rap", 3 ) )
+    if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) )
     {
         nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
     }

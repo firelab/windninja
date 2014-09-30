@@ -64,7 +64,7 @@ extern "C" {
 #define NOMADS_GENERIC_VAR_LIST          "TCDC,TMP,UGRD,VGRD"
 #define NOMADS_GENERIC_3D_VAR_LIST       "DZDT,HGT," NOMADS_GENERIC_VAR_LIST
 #define NOMADS_GENERIC_LEVELS_LIST       "2_m_above_ground,10_m_above_ground," \
-                                         "entire_atmosphere_(considered_as_a_single_layer)" 
+                                         "entire_atmosphere_(considered_as_a_single_layer)"
 #define NOMADS_GENERIC_3D_LEVELS_LIST    "surface,2_m_above_ground," \
                                          "10_m_above_ground,1000_mb,975_mb," \
                                          "950_mb,925_mb,900_mb,875_mb,850_mb," \
@@ -93,7 +93,7 @@ extern "C" {
 **                                as folowing
 ** NOMADS_DIR_DATE_FRMT   4       Date format for directory
 ** NOMADS_FCST_HOURS      5       Forecast hours, start:stop:stride
-** NOMADS_FCST_RUN_HOURS  6       Forecast run hours, in the format of 
+** NOMADS_FCST_RUN_HOURS  6       Forecast run hours, in the format of
 **                                start:stop:stride,start:stop:stride,...
 ** NOMADS_VARIABLES       7       Variable list
 ** NOMADS_LEVELS          8       Levels list
@@ -308,6 +308,22 @@ static const char *apszNomadsKeys[][11] =
     /* XXX: Hawaii RTMA */
     /* XXX: Puerto Rico RTMA */
 #endif
+    /*
+    ** HRRR
+    */
+    {
+      "hrrr_conus",
+      "filter_hrrr_2d.pl",
+      "hrrr.t%02dz.wrfsfcf%02d.grib2",
+      "hrrr.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:15:1",
+      NOMADS_GENERIC_VAR_LIST,
+      "2_m_above_ground,10_m_above_ground," \
+      "entire_atmosphere",
+      "3 km",
+      "HRRR CONUS" },
     /*
     ** RAP
     */

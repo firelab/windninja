@@ -511,11 +511,17 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     for( i = 0; i < nBandCount; i++ )
     {
         hBand = GDALGetRasterBand( hVrtDS, i + 1 );
-
+        /*
+        ** Check the shortname and make sure it's valid.  HRRR TCDC uses
+        ** entire_atmosphere instead of
+        ** entire_atmosphere_(considered_as_a_single_layer), so we account for
+        ** this with the 0-RESERVED(10).
+        */
         pszShortName = GDALGetMetadataItem( hBand, "GRIB_SHORT_NAME", NULL );
         if( !EQUAL( "10-HTGL", pszShortName ) &&
             !EQUAL( "2-HTGL", pszShortName ) &&
-            !EQUAL( "0-EATM", pszShortName ) )
+            !EQUAL( "0-EATM", pszShortName ) &&
+            !EQUAL( "0-RESERVED(10)", pszShortName ) )
         {
             continue;
         }
