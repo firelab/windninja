@@ -345,7 +345,7 @@ bool OutputWriter::_writeGTiff (std::string filename)
         }
         
         //copy VRT to GTiff format        
-        hDstDS = GDALCreateCopy(hDriver, "another_dust_out.tif", hVrtDS, FALSE, NULL, NULL, NULL);
+        hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hVrtDS, FALSE, NULL, NULL, NULL);
         
         //close VRT
         GDALClose(hVrtDS);
@@ -372,6 +372,11 @@ bool OutputWriter::_writeGTiff (std::string filename)
     }
     
     delete [] padfScanline;
+    
+    if(CPLCheckForFile("temp_dust", NULL)){
+      VSIUnlink("temp_dust");
+    }
+    
 
     return true;
 }		/* -----  end of method OutputWriter::_writeGTiff  ----- */
