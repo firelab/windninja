@@ -276,22 +276,28 @@ OutputWriter::_writePDF (std::string filename)
 
 bool OutputWriter::_writeGTiff (std::string filename)
 {
+    const char *pszDriverName = "GTiff";
+    hDriver = GDALGetDriverByName( pszDriverName );
+    
+    int nXSize = spd.get_nCols();
+    int nYSize = spd.get_nRows();
+    
+    double *padfScanline;
+    padfScanline = new double[nXSize];
+    
     // Silence error if file does not yet exist
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    hDstDS = GDALOpen(filename.c_str(), GA_ReadOnly);
+    hDstDS = GDALOpenShared(filename.c_str(), GA_ReadOnly);
     CPLPopErrorHandler();
-    //if file doesn't already exist, create it
-    if(hDstDS == NULL)
-    {
-        const char *pszDriverName = "GTiff";
-        hDriver = GDALGetDriverByName( pszDriverName );
     
-        int nXSize = spd.get_nCols();
-        int nYSize = spd.get_nRows();
-        int nBands = 1;
-
+    if(hDstDS == NULL)
+    { 
+        /*------------------------------------------*/
+        /*  If file doesn't exists, create it       */
+        /*------------------------------------------*/
+        
         hDstDS = GDALCreate(hDriver, filename.c_str(), nXSize, nYSize, 
-                        nBands, GDT_Float32, NULL);
+                        1, GDT_Float64, NULL);
                         
         double adfGeoTransform[6];
         adfGeoTransform[0] = spd.get_xllCorner();
@@ -299,16 +305,54 @@ bool OutputWriter::_writeGTiff (std::string filename)
         adfGeoTransform[2] = 0;
         adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
         adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -(spd.get_cellSize());
+        adfGeoTransform[5] = -spd.get_cellSize();
         
         char* pszDstWKT = (char*)spd.prjString.c_str();
         GDALSetProjection(hDstDS, pszDstWKT);
         GDALSetGeoTransform(hDstDS, adfGeoTransform);
         
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, 1 );
+
+        for(int i=nYSize-1; i>=0; i--)
+        {
+            for(int j=0; j<nXSize; j++)
+            {
+                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
+                
+                GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                             1, GDT_Float64, 0, 0);    
+            }
+        }
         
-        double *padfScanline;
-        padfScanline = new double[nXSize];
+    }
+    else{
+    
+        /*------------------------------------------*/
+        /*  If file already exists, add a new band  */
+        /*------------------------------------------*/
+        
+        // CreateCopy() as VRT, AddBand(), CreateCopy() with GTiff
+        GDALDriverH hVrtDriver = GDALGetDriverByName( "VRT" );
+        GDALDatasetH hVrtDS = GDALCreateCopy(hVrtDriver, "temp_dust", hDstDS, FALSE, NULL, NULL, NULL);
+        
+        //close original geotiff
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+
+        CPLErr eErr = GDALAddBand(hVrtDS, GDT_Float64, NULL);
+        if(eErr != 0){
+            return false;
+        }
+        
+        //copy VRT to GTiff format        
+        hDstDS = GDALCreateCopy(hDriver, "another_dust_out.tif", hVrtDS, FALSE, NULL, NULL, NULL);
+        
+        //close VRT
+        GDALClose(hVrtDS);
+        hVrtDS = NULL;
+        
+        // write current grid to last band in hDstDS        
+        GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, GDALGetRasterCount(hDstDS) );
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -321,12 +365,13 @@ bool OutputWriter::_writeGTiff (std::string filename)
             }
         }
     }
-    else{
-        //if file already exists, just add a new band
+    
+    if( hDstDS != NULL ){
+        GDALClose( hDstDS );
+        hDstDS = NULL;
     }
     
-    GDALClose(hDstDS);
-    hDstDS = NULL;
+    delete [] padfScanline;
 
     return true;
 }		/* -----  end of method OutputWriter::_writeGTiff  ----- */
