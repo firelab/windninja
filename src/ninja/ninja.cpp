@@ -3015,7 +3015,7 @@ void ninja::discretize(bool scalarTransportSimulation)
         }
     }
     else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
-    {  
+    {
         for(unsigned int k=0; k<mesh.nlayers; k++)
         {
             for(unsigned int i=0; i<mesh.nrows; i++)
@@ -4691,6 +4691,7 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 
 #pragma omp section
 	{
+#ifdef EMISSIONS
 	try{
 		if(input.geotiffOutFlag==true)
 		{
@@ -4725,7 +4726,8 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
-	} //end omp section	
+#endif //EMISSIONS
+	} //end omp section
 	}	//end parallel sections region
 }
 
