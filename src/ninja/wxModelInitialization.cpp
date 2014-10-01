@@ -1047,22 +1047,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     //====end set3dGrids()==============================================================================
     #endif
 
-    speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
-    dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
-
-    //now make speed and direction from u,v components
-    for(int i=0; i<speedInitializationGrid_wxModel.get_nRows(); i++) {
-        for(int j=0; j<speedInitializationGrid_wxModel.get_nCols(); j++) {
-        if( uGrid_wxModel(i,j) == uGrid_wxModel.get_NoDataValue() ||
-        vGrid_wxModel(i,j) == vGrid_wxModel.get_NoDataValue() ) {
-        speedInitializationGrid_wxModel(i,j) = speedInitializationGrid_wxModel.get_NoDataValue();
-        dirInitializationGrid_wxModel(i,j) = dirInitializationGrid_wxModel.get_NoDataValue();
-        }
-        else
-        wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j), &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
-        }
-    }
-
     //Make final grids with same header as dem
     AsciiGrid<double> airTempGrid;
     airTempGrid.set_headerData(input.dem);
@@ -1096,7 +1080,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     }
 
 #ifdef NINJA_SPEED_TESTING
-    // adjustment to increase drag on 10 m wx model winds    
+    // adjustment to increase drag on 10 m wx model winds
     speedInitializationGrid = speedInitializationGrid * input.speedDampeningRatio;
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
@@ -1107,7 +1091,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     //Check for noData values
     if(airTempGrid.checkForNoDataValues() ||
-       cloud.checkForNoDataValues() || 
+       cloud.checkForNoDataValues() ||
        speedInitializationGrid.checkForNoDataValues() ||
        dirInitializationGrid.checkForNoDataValues())
     {
@@ -1116,6 +1100,22 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
     {
+        speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
+        dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
+
+        //now make speed and direction from u,v components
+        for(int i=0; i<speedInitializationGrid_wxModel.get_nRows(); i++) {
+            for(int j=0; j<speedInitializationGrid_wxModel.get_nCols(); j++) {
+                if( uGrid_wxModel(i,j) == uGrid_wxModel.get_NoDataValue() ||
+                    vGrid_wxModel(i,j) == vGrid_wxModel.get_NoDataValue() ) {
+                    speedInitializationGrid_wxModel(i,j) = speedInitializationGrid_wxModel.get_NoDataValue();
+                    dirInitializationGrid_wxModel(i,j) = dirInitializationGrid_wxModel.get_NoDataValue();
+                }
+                else
+                    wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j), &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
+            }
+        }
+
         //Write raw model output files
         std::string rootname, path;
         //rootname = CPLGetBasename(input.forecastFilename.c_str());
@@ -1300,9 +1300,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
         addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L,
                         &u_star, &bl_height, &input.dem, &aspect, &slope,
-                        &shade, &solar, &input.surface, &cloud, 
-                        &airTempGrid, input.numberCPUs, input.downDragCoeff, 
-                        input.downEntrainmentCoeff, input.upDragCoeff, 
+                        &shade, &solar, &input.surface, &cloud,
+                        &airTempGrid, input.numberCPUs, input.downDragCoeff,
+                        input.downEntrainmentCoeff, input.upDragCoeff,
                         input.upEntrainmentCoeff);
 
 
