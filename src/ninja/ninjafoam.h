@@ -74,8 +74,6 @@ public:
 
     virtual bool simulate_wind();
 
-    GDALDatasetH GetRasterOutputHandle();
-
 private:
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation

@@ -1861,12 +1861,12 @@ int NinjaFoam::SampleCloud()
     /* Set the projection from the DEM */
     rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
 
-    adfGeoTransform[0] = input.dem.get_xllCorner();
-    adfGeoTransform[1] = input.dem.get_cellSize();
+    adfGeoTransform[0] = dfXMin;
+    adfGeoTransform[1] = dfCellSize;
     adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = input.dem.get_yllCorner() + input.dem.get_cellSize() * input.dem.get_nRows();
+    adfGeoTransform[3] = dfYMin;
     adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = -input.dem.get_cellSize();
+    adfGeoTransform[5] = dfCellSize;
 
     GDALSetGeoTransform( hGriddedDS, adfGeoTransform );
 
