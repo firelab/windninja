@@ -78,7 +78,13 @@ OutputWriter::~OutputWriter ()
     return;
 }		/* -----  end of method OutputWriter::~OutputWriter  ----- */
 
-
+#ifdef EMISSIONS
+void OutputWriter::setDustGrid(AsciiGrid<double> &d)
+{
+    dust = d;
+    return;
+}		/* -----  end of method OutputWriter::setDustGrid  ----- */
+#endif
 
     void
 OutputWriter::setSpeedGrid ( AsciiGrid<double> &s)
@@ -105,7 +111,26 @@ OutputWriter::write (std::string outputFilename, std::string driver)
     }
     else if( 0 == driver.compare( "GTiff" ) )
     {
-        _writeGTiff(outputFilename);
+        /*------------------------------------------*/
+        /*  Loop over spd, dir, dust grids          */
+        /*------------------------------------------*/
+        std::string outFilename;
+    
+        for(int grid=0; grid<3; grid++){
+            outFilename = outputFilename;
+            if(grid == 0){
+                outFilename.insert(outFilename.find(".tif"), "_spd");
+            }
+            else if(grid == 1){
+                outFilename.insert(outFilename.find(".tif"), "_dir");
+            }
+#ifdef EMISISONS
+            else if(grid == 2){
+                outFilename.insert(outFilename.find(".tif"), "_dust");
+            }
+#endif
+            _writeGTiff(outFilename);
+        }
     }
     else
     {
@@ -284,7 +309,7 @@ bool OutputWriter::_writeGTiff (std::string filename)
     
     double *padfScanline;
     padfScanline = new double[nXSize];
-    
+
     // Silence error if file does not yet exist
     CPLPushErrorHandler(CPLQuietErrorHandler);
     hDstDS = GDALOpenShared(filename.c_str(), GA_ReadOnly);
@@ -316,8 +341,19 @@ bool OutputWriter::_writeGTiff (std::string filename)
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
-            {
-                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
+            {   
+                if(filename.find("spd.tif") != filename.npos){
+                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
+                }
+                else if(filename.find("dir.tif") != filename.npos){
+                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
+                }
+                else if(filename.find("dust.tif") != filename.npos){
+                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
+                }
+                else{
+                    return false;
+                }
                 
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
                              1, GDT_Float64, 0, 0);    
@@ -333,7 +369,7 @@ bool OutputWriter::_writeGTiff (std::string filename)
         
         // CreateCopy() as VRT, AddBand(), CreateCopy() with GTiff
         GDALDriverH hVrtDriver = GDALGetDriverByName( "VRT" );
-        GDALDatasetH hVrtDS = GDALCreateCopy(hVrtDriver, "temp_dust", hDstDS, FALSE, NULL, NULL, NULL);
+        GDALDatasetH hVrtDS = GDALCreateCopy(hVrtDriver, "", hDstDS, FALSE, NULL, NULL, NULL);
         
         //close original geotiff
         GDALClose(hDstDS);
@@ -358,8 +394,19 @@ bool OutputWriter::_writeGTiff (std::string filename)
         {
             for(int j=0; j<nXSize; j++)
             {
-                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                
+                if(filename.find("spd.tif") != filename.npos){
+                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
+                }
+                else if(filename.find("dir.tif") != filename.npos){
+                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
+                }
+                else if(filename.find("dust.tif") != filename.npos){
+                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
+                }
+                else{
+                    return false;
+                }
+
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
                              1, GDT_Float64, 0, 0);    
             }
@@ -371,12 +418,8 @@ bool OutputWriter::_writeGTiff (std::string filename)
         hDstDS = NULL;
     }
     
+    
     delete [] padfScanline;
-    
-    if(CPLCheckForFile("temp_dust", NULL)){
-      VSIUnlink("temp_dust");
-    }
-    
 
     return true;
 }		/* -----  end of method OutputWriter::_writeGTiff  ----- */

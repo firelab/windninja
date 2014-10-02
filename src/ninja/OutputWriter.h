@@ -85,6 +85,9 @@ class OutputWriter
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s);
         void setDirGrid(AsciiGrid<double> &d);
+#ifdef EMISSIONS
+        void setDustGrid(AsciiGrid<double> &d);
+#endif
         void setDEMfile(std::string fname) {demFile=fname;}
 
         /* ====================  OPERATORS     ======================================= */
@@ -104,6 +107,9 @@ class OutputWriter
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;
+#ifdef EMISSIONS
+        AsciiGrid<double> dust;
+#endif
         double resolution;
         std::string demFile;
         std::string inputSpeedFile;

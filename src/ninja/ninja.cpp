@@ -4695,29 +4695,17 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 	try{
 		if(input.geotiffOutFlag==true)
 		{
-			//AsciiGrid<double> *velTempGrid, *angTempGrid;
-			//velTempGrid=NULL;
-			//angTempGrid=NULL;
             OutputWriter output;
-
-			//angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			//velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid);
-            //output.setDEMfile(input.pdfDEMFileName);
-            output.write(input.geotiffOutFilename, "GTiff");
-
-			/*if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
+			
+#ifdef EMISSIONS
+			if(input.dustFlag == 1){
+                output.setDustGrid(DustGrid);
             }
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}*/
+#endif
+            output.write(input.geotiffOutFilename, "GTiff");
 		}
 	}catch (exception& e)
 	{
