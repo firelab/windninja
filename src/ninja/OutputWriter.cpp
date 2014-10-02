@@ -124,7 +124,7 @@ OutputWriter::write (std::string outputFilename, std::string driver)
             else if(grid == 1){
                 outFilename.insert(outFilename.find(".tif"), "_dir");
             }
-#ifdef EMISISONS
+#ifdef EMISSIONS
             else if(grid == 2){
                 outFilename.insert(outFilename.find(".tif"), "_dust");
             }
@@ -337,6 +337,8 @@ bool OutputWriter::_writeGTiff (std::string filename)
         GDALSetGeoTransform(hDstDS, adfGeoTransform);
         
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, 1 );
+        
+        GDALSetRasterNoDataValue(hBand, -9999.0);
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -391,6 +393,8 @@ bool OutputWriter::_writeGTiff (std::string filename)
         
         // write current grid to last band in hDstDS        
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, GDALGetRasterCount(hDstDS) );
+        
+        GDALSetRasterNoDataValue(hBand, -9999.0);
 
         for(int i=nYSize-1; i>=0; i--)
         {
