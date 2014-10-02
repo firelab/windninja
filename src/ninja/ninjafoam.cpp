@@ -1945,7 +1945,7 @@ int NinjaFoam::SampleCloudGrid()
 
     /* U field */
     rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
-                         padfX, padfY, padfU, dfXMin, dfXMax, dfYMin, dfYMax,
+                         padfX, padfY, padfU, dfXMin, dfXMax, dfYMax, dfYMin,
                          nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
     GDALRasterBandH hBand;
@@ -1956,7 +1956,7 @@ int NinjaFoam::SampleCloudGrid()
 
     /* V field */
     rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
-                         padfX, padfY, padfV, dfXMin, dfXMax, dfYMin, dfYMax,
+                         padfX, padfY, padfV, dfXMin, dfXMax, dfYMax, dfYMin,
                          nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
     hBand = GDALGetRasterBand( hGriddedDS, 2 );
@@ -1970,9 +1970,9 @@ int NinjaFoam::SampleCloudGrid()
     adfGeoTransform[0] = dfXMin;
     adfGeoTransform[1] = dfCellSize;
     adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = dfYMin;
+    adfGeoTransform[3] = dfYMax;
     adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = dfCellSize;
+    adfGeoTransform[5] = -dfCellSize;
 
     GDALSetGeoTransform( hGriddedDS, adfGeoTransform );
 
