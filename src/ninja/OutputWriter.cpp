@@ -348,9 +348,11 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 else if(filename.find("dir.tif") != filename.npos){
                     padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
                 }
+#ifdef EMISSIONS
                 else if(filename.find("dust.tif") != filename.npos){
                     padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
                 }
+#endif
                 else{
                     return false;
                 }
@@ -400,9 +402,11 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 else if(filename.find("dir.tif") != filename.npos){
                     padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
                 }
+#ifdef EMISSIONS
                 else if(filename.find("dust.tif") != filename.npos){
                     padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
                 }
+#endif
                 else{
                     return false;
                 }
