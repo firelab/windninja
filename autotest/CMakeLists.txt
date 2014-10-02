@@ -66,6 +66,7 @@ FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/surface_data
 SET(TEST_SOURCES test_main.cpp 
                  test_contain.cpp 
                  test_srtm.cpp 
+                 test_gdal_fetch.cpp 
                  test_grid_interp.cpp
                  test_array2d.cpp
                  test_timezone.cpp
@@ -187,6 +188,8 @@ IF(RUN_SLOW_TESTS)
             ADD_TEST(test_gmted_world   
                      ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gmted/world )
         ENDIF(ENABLE_GMTED)
+        ADD_TEST(test_gdal_fetch_us_box
+                 ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_fetch/us_box )
     ENDIF(NOT WIN32)
 
     IF(WITH_LCP_CLIENT)

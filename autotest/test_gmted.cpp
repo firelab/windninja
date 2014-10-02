@@ -34,6 +34,7 @@
 #ifndef WIN32
 #include <boost/test/unit_test.hpp>
 #include "gdal_priv.h"
+#include "cpl_conv.h"
 
 #include "fetch_factory.h"
 #include "ninja.h"
@@ -49,7 +50,8 @@ struct GmtedTestData
         OGRRegisterAll();
         fetch = NULL;
         poDS  = NULL;
-        pszFilename = "out.tif";
+        pszFilename =
+            CPLFormFilename( NULL, CPLGenerateTempFilename( "GMTED_TEST" ), ".tif" );
         RASTER_X_SIZE = 738;
         RASTER_Y_SIZE = 919;
     }

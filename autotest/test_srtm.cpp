@@ -39,6 +39,8 @@
 #include "fetch_factory.h"
 #include "ninja.h"
 
+#include "cpl_conv.h"
+
 #include "gdal_priv.h"
 
 /******************************************************************************
@@ -52,7 +54,8 @@ struct SrtmTestData
         OGRRegisterAll();
         fetch = NULL;
         poDS  = NULL;
-        pszFilename = "out.tif";
+        pszFilename =
+            CPLFormFilename( NULL, CPLGenerateTempFilename( "SRTM_TEST" ), ".tif" );
         RASTER_X_SIZE = 738;
         RASTER_Y_SIZE = 919;
     }

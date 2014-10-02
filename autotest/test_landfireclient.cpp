@@ -49,8 +49,9 @@ struct LandfireTestData
     {
         GDALAllRegister();
         OGRRegisterAll();
-        osLcpFile = "lcp.lcp";
-        osPrjFile = "lcp.prj";
+        const char *pszBase = CPLGenerateTempFilename( "LANDFIRE_TEST" );
+        osLcpFile = CPLString( pszBase ) + ".lcp";
+        osPrjFile = CPLString( pszBase ) + ".prj";
         CPLSetConfigOption( "LCP_DOWNLOAD_WAIT", "10" );
     }
     ~LandfireTestData()
