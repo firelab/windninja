@@ -1744,6 +1744,112 @@ int NinjaFoam::SanitizeOutput()
     return 0;
 }
 
+static int TransformGeoToPixelSpace( double *adfInvGeoTransform, double dfX,
+                                     double dfY, int *iPixel, int *iLine )
+{
+    *iPixel = (int) floor( adfInvGeoTransform[0] +
+                           adfInvGeoTransform[1] * dfX +
+                           adfInvGeoTransform[2] * dfY );
+    *iLine  = (int) floor( adfInvGeoTransform[3] +
+                           adfInvGeoTransform[4] * dfX +
+                           adfInvGeoTransform[5] * dfY );
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::SampleCloud()
+{
+    int rc;
+    OGRDataSourceH hDS = NULL;
+    OGRLayerH hLayer = NULL;
+    OGRFeatureH hFeature = NULL;
+    OGRFeatureDefnH hFeatDefn = NULL;
+    OGRGeometryH hGeometry = NULL;
+    GDALDatasetH hGriddedDS = NULL;
+
+    double adfGeoTransform[6], adfInvGeoTransform[6];
+
+    hDS = OGROpen( pszVrtMem, FALSE, NULL );
+    if( hDS == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Invalid in memory datasource in NinjaFoam" );
+        return NINJA_E_FILE_IO;
+    }
+
+    hLayer = OGR_DS_GetLayer( hDS, 0 );
+    if( hLayer == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to extract a valid layer for NinjaFoam resampling" );
+        return NINJA_E_OTHER;
+    }
+    double dfX, dfY, dfU, dfV;
+    int nPoints, nXSize, nYSize;
+    double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
+
+    dfXMin = input.dem.get_xllCorner();
+    dfXMax = input.dem.get_xllCorner() + input.dem.get_xDimension();
+    dfYMin = input.dem.get_yllCorner();
+    dfYMax = input.dem.get_yllCorner() + input.dem.get_yDimension();
+    dfCellSize = input.dem.get_cellSize();
+
+    nPoints = OGR_L_GetFeatureCount( hLayer, TRUE );
+    CPLDebug( "WINDNINJA", "NinjaFoam gridding %d points", nPoints );
+
+    /* Get DEM/output specs */
+    nXSize = input.dem.get_nCols();
+    nYSize = input.dem.get_nRows();
+
+    GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
+    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszTempPath ) );
+    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
+                             GDT_Float64, NULL );
+    GDALRasterBandH hUBand, hVBand;
+    hUBand = GDALGetRasterBand( hGriddedDS, 1 );
+    hVBand = GDALGetRasterBand( hGriddedDS, 2 );
+    GDALSetRasterNoDataValue( hUBand, -9999 );
+    GDALSetRasterNoDataValue( hVBand, -9999 );
+
+    /* Set the projection from the DEM */
+    rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
+
+    adfGeoTransform[0] = dfXMin;
+    adfGeoTransform[1] = dfCellSize;
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = dfYMax;
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -dfCellSize;
+
+    GDALSetGeoTransform( hGriddedDS, adfGeoTransform );
+    rc = GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform );
+
+    int i = 0;
+    int nUIndex, nVIndex;
+    int nPixel, nLine;
+    OGR_L_ResetReading( hLayer );
+    hFeatDefn = OGR_L_GetLayerDefn( hLayer );
+    nUIndex = OGR_FD_GetFieldIndex( hFeatDefn, "U" );
+    nVIndex = OGR_FD_GetFieldIndex( hFeatDefn, "V" );
+    while( (hFeature = OGR_L_GetNextFeature( hLayer )) != NULL )
+    {
+        hGeometry = OGR_F_GetGeometryRef( hFeature );
+        dfX = OGR_G_GetX( hGeometry, 0 );
+        dfY = OGR_G_GetY( hGeometry, 0 );
+        dfU = OGR_F_GetFieldAsDouble( hFeature, nUIndex );
+        dfV = OGR_F_GetFieldAsDouble( hFeature, nVIndex );
+        TransformGeoToPixelSpace( adfInvGeoTransform, dfX, dfY, &nPixel, &nLine );
+        GDALRasterIO( hUBand, GF_Write, nPixel, nLine, 1, 1, &dfU,
+                      1, 1, GDT_Float64, 0, 0 );
+        GDALRasterIO( hVBand, GF_Write, nPixel, nLine, 1, 1, &dfV,
+                      1, 1, GDT_Float64, 0, 0 );
+        i++;
+    }
+    OGR_DS_Destroy( hDS );
+    GDALClose( hGriddedDS );
+
+    return 0;
+}
+
 /*
 ** Sample a point cloud and create a 2-band GDALDataset of U and V values.
 **
@@ -1754,7 +1860,7 @@ int NinjaFoam::SanitizeOutput()
 **
 */
 
-int NinjaFoam::SampleCloud()
+int NinjaFoam::SampleCloudGrid()
 {
     int rc;
     OGRDataSourceH hDS = NULL;
@@ -1986,7 +2092,10 @@ int NinjaFoam::WriteOutputFiles()
     AsciiGrid<double> foamU, foamV;
     int rc;
     rc = SanitizeOutput();
-    rc = SampleCloud();
+    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_GDALGRID", "NO" ) ) )
+        rc = SampleCloudGrid();
+    else
+        rc = SampleCloud();
     GDALDatasetH hDS;
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )

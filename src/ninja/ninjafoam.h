@@ -154,6 +154,7 @@ private:
 public:
 #endif
     int SanitizeOutput();
+    int SampleCloudGrid();
     int SampleCloud();
 #ifdef NINJA_BUILD_TESTING
 private:
