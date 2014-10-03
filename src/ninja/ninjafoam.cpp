@@ -1112,7 +1112,7 @@ int NinjaFoam::writeSnappyMesh()
 {
     int lx, ly, lz;
     double expansionRatio;
-    double final;
+    double final_;
     double first;
     int nLayers;
     
@@ -1120,9 +1120,9 @@ int NinjaFoam::writeSnappyMesh()
     ly = int((bbox[1] + bbox[4]) * 0.5);
     lz = int((bbox[6]));
     expansionRatio = 1.4;
-    final = side1/expansionRatio;
+    final_ = side1/expansionRatio;
     first = 4.0;
-    nLayers = int((log(final/first) / log(expansionRatio)) + 1 + 1);
+    nLayers = int((log(final_/first) / log(expansionRatio)) + 1 + 1);
     
     const char *pszInput;
     const char *pszOutput;
@@ -1168,7 +1168,7 @@ int NinjaFoam::writeSnappyMesh()
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
     ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
     ReplaceKeys(s, "$expansion_ratio$", CPLSPrintf("%.1lf", expansionRatio));
-    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
+    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final_));
     
     const char * d = s.c_str();
     int nSize = strlen(d);
@@ -1206,7 +1206,7 @@ int NinjaFoam::writeSnappyMesh()
     ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
     ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
     ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
-    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final));
+    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final_));
     
     d = s.c_str();
     nSize = strlen(d);
