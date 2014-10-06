@@ -105,10 +105,10 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
-    cout<<"Rd = "<<input.surface.Rough_d(0,0)<<endl;
+    /*cout<<"Rd = "<<input.surface.Rough_d(0,0)<<endl;
     cout<<"z0 = "<<input.surface.Roughness(0,0)<<endl;
     cout<<"length inlets = "<<inlets.size()<<endl;
-    cout<<"inlets = "<<inlets[0]<<endl;
+    cout<<"inlets = "<<inlets[0]<<endl;*/
 
     
     #ifdef _OPENMP
@@ -918,7 +918,7 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readLogFile(int &ratio)
+int NinjaFoam::readLogFile(int &ratio_)
 {
     const char *pszInput;
     
@@ -1009,8 +1009,8 @@ int NinjaFoam::readLogFile(int &ratio)
     
     firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio;
     nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
-    ratio = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
-    expansionRatio = std::pow(ratio, (1.0 / (nCells[5] - 1)));
+    ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
+    expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
     
     CPLFree(data);
     VSIFCloseL(fin);
@@ -1024,10 +1024,10 @@ int NinjaFoam::writeBlockMesh()
     const char *pszOutput;
     const char *pszPath;
     const char *pszArchive;
-    int ratio;
+    int ratio_;
     
     int status;
-    status = readLogFile(ratio);
+    status = readLogFile(ratio_);
     if(status != 0){
         //do something
     }
@@ -1095,7 +1095,7 @@ int NinjaFoam::writeBlockMesh()
         }
     }
     
-    ReplaceKeys(s, "$Ratio$", boost::lexical_cast<std::string>(ratio));
+    ReplaceKeys(s, "$Ratio$", boost::lexical_cast<std::string>(ratio_));
     
     const char * d = s.c_str();
     int nSize = strlen(d);
