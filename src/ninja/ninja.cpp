@@ -4700,6 +4700,8 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid);
 			
+			VelocityGrid.write_Grid("velgrid", 2);
+			
 #ifdef EMISSIONS
 			if(input.dustFlag == 1){
                 output.setDustGrid(DustGrid);
@@ -6162,7 +6164,15 @@ void ninja::set_outputFilenames(double& meshResolution,
     {
         std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
         pathName = CPLGetPath(input.forecastFilename.c_str());
-        rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+        
+        //if it's a .tar, write to directory containing the .tar file
+        if( strstr(pathName.c_str(), ".tar") ){
+            pathName.erase( pathName.rfind("/") );
+            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+        }
+        else{
+            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+        }
     }else{
         std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
         pathName = CPLGetPath(input.dem.fileName.c_str());
