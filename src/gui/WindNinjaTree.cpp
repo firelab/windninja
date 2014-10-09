@@ -259,6 +259,8 @@ void WindNinjaTree::updateInterface()
 #ifdef NINJAFOAM
   else if(item == ninjafoamItem)
       stack->setCurrentWidget(ninjafoam);
+  else if(item == solverMethodItem)
+      stack->setCurrentWidget(ninjafoam);
 #endif
   else if(item == windItem)
     stack->setCurrentWidget(wind);
