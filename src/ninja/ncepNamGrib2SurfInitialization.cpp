@@ -147,7 +147,13 @@ bool ncepNamGrib2SurfInitialization::identify( std::string fileName )
     if( fileName.find("nam") == fileName.npos ) {
         identified = false;
     }
-    GDALDatasetH hDS = GDALOpenShared( fileName.c_str(), GA_ReadOnly );
+    GDALDatasetH hDS;
+    if( strstr( fileName.c_str(), ".tar" ) ){
+        hDS = GDALOpenShared( CPLSPrintf( "/vsitar/%s", fileName.c_str() ) , GA_ReadOnly );
+    }
+    else{
+        hDS = GDALOpenShared( fileName.c_str(), GA_ReadOnly );
+    }
     if( !hDS || GDALGetRasterCount( hDS ) < 8 )
         identified = false;
     GDALClose( hDS );
@@ -205,8 +211,14 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     GDALWarpOptions* psWarpOptions;
 
-    srcDS = (GDALDataset*)GDALOpenShared(
-    input.forecastFilename.c_str(), GA_ReadOnly );
+    if( strstr( input.forecastFilename.c_str(), ".tar" ) ){
+        srcDS = (GDALDataset*)GDALOpenShared(
+        CPLSPrintf( "/vsitar/%s", input.forecastFilename.c_str() ), GA_ReadOnly );
+    }
+    else{
+        srcDS = (GDALDataset*)GDALOpenShared(
+        input.forecastFilename.c_str(), GA_ReadOnly );
+    }
 
     srcWkt = srcDS->GetProjectionRef();
 

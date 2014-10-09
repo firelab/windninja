@@ -558,7 +558,13 @@ wxModelInitialization::getTimeList(const char *pszVariable,
        this->getForecastIdentifier() == "NCEP-HRRR-3km-SURFACE"){
         //Just 1 time step per forecast file for now.
         GDALDataset *srcDS;
-        srcDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
+        
+        if( strstr( wxModelFileName.c_str(), ".tar" ) ){
+            srcDS = (GDALDataset*)GDALOpenShared(CPLSPrintf( "/vsitar/%s", wxModelFileName.c_str() ), GA_ReadOnly);
+        }
+        else{        
+            srcDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
+        }
 
 
         if( srcDS == NULL ) {

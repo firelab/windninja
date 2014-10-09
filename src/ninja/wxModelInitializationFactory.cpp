@@ -60,7 +60,14 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
 
     VSIStatBufL sStat;
     VSIStatL( fileName.c_str(), &sStat );
-    if( !VSI_ISDIR( sStat.st_mode ) && !strstr( fileName.c_str(), ".zip" ) )
+    if( !VSI_ISDIR( sStat.st_mode ) && strstr( fileName.c_str(), ".tar" ) )
+    {
+        if(ncepNamGrib2Surf.identify(fileName)) {
+            ncepNamGrib2Surf.setModelFileName( fileName );
+            return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
+        }
+    }
+    else if( !VSI_ISDIR( sStat.st_mode ) && !strstr( fileName.c_str(), ".zip" ) )
     {
         //Determine what type of weather model the file came from
         //Check netcdf first, otherwise grib_api spews out crap
@@ -100,7 +107,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
             return new wrf3dInitialization(wrf3d);
         }
         #endif
-        else if(ncepNamGrib2Surf.identify(fileName)) {
+        if(ncepNamGrib2Surf.identify(fileName)) {
             ncepNamGrib2Surf.setModelFileName( fileName );
             return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
         }
