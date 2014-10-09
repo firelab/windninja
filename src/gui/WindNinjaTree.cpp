@@ -194,14 +194,15 @@ void WindNinjaTree::createOutputItems()
 
 void WindNinjaTree::createStack()
 {
+#ifdef NINJAFOAM
+  ninjafoam = new ninjafoamInput;
+#endif
   surface = new surfaceInput;
   diurnal = new diurnalInput;
 #ifdef STABILITY
   stability = new stabilityInput;
 #endif
-#ifdef NINJAFOAM
-  ninjafoam = new ninjafoamInput;
-#endif
+
   wind = new windInput;
   point = new pointInput;
   weather = new weatherModel;
@@ -213,14 +214,16 @@ void WindNinjaTree::createStack()
   solve = new solvePage;
   
   stack = new QStackedWidget;
+  
+#ifdef NINJAFOAM
+  stack->addWidget(ninjafoam);
+#endif
   stack->addWidget(surface);
   stack->addWidget(diurnal);
 #ifdef STABILITY
   stack->addWidget(stability);
 #endif
-#ifdef NINJAFOAM
-  stack->addWidget(ninjafoam);
-#endif
+
   stack->addWidget(wind);
   stack->addWidget(point);
   stack->addWidget(weather);
