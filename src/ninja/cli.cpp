@@ -563,6 +563,91 @@ int windNinjaCLI(int argc, char* argv[])
         #endif
 
         /* Do we have to fetch an elevation file */
+        
+        #ifdef EMISSIONS
+        /*------------------------------------------*/
+        /* Download DEM covering the fire perimeter */
+        /* if elevation_file wasn't specified       */ 
+        /*------------------------------------------*/            
+         
+        if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
+            cout<<"fetching elevation file for emissions simulation..."<<endl;
+            cout<<"fire = "<<vm["fire_perimeter_file"].as<std::string>()<<endl;
+            
+            OGRDataSource *poOGRDS;
+            poOGRDS = OGRSFDriverRegistrar::Open(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE);
+
+            if( poOGRDS == NULL )
+            {
+                fprintf(stderr, "Failed to open fire perimeter file.\n");
+                exit(1);
+            }
+
+            OGRLayer *poLayer;
+            OGRFeature *poFeature;
+            OGRGeometry *poGeo;
+    
+            poLayer = poOGRDS->GetLayer(0);
+            poLayer->ResetReading();
+            poFeature = poLayer->GetNextFeature();
+            poGeo = poFeature->GetGeometryRef();
+            
+            OGREnvelope psEnvelope;
+            
+            poGeo->getEnvelope(&psEnvelope);
+            
+            //add a ~1 x 1 km buffer (for western US) 
+            double bbox[4];
+            bbox[0] = psEnvelope.MaxY + 0.009; //north
+            bbox[1] = psEnvelope.MaxX + 0.012; //east
+            bbox[2] = psEnvelope.MinY - 0.009; //south
+            bbox[3] = psEnvelope.MinX - 0.012; //west
+            
+            std::cout << "Downloading elevation file..." << std::endl;
+            std::string new_elev = "dem.tif";
+            
+            SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "us_srtm" );
+            
+            if( NULL == fetch )
+            {
+                fprintf(stderr, "Invalid DEM Source\n");
+                exit(1);
+            }
+            
+            int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+                                                     new_elev.c_str(), NULL);
+                                                     
+            if(nSrtmError < 0)
+            {
+                cerr << "Failed to download elevation data\n";
+                VSIUnlink(new_elev.c_str());
+                exit(1);
+            }
+            
+            vm.insert(std::make_pair("elevation_file", po::variable_value(new_elev, false)));
+            po::notify(vm);
+            
+            //fill in no data values
+            GDALDataset *poDS;
+            poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_Update);
+            if(poDS == NULL)
+            {
+                throw std::runtime_error("Could not open DEM for reading");
+            }
+            int nNoDataValues = 0;
+            if(GDALHasNoData(poDS, 1))
+            {
+                nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
+            }
+            GDALClose((GDALDatasetH)poDS);
+            if(nNoDataValues > 0)
+            {
+                std::cerr << "Could not download valid elevation file, " <<
+                            "it contains no data values" << std::endl;
+                return 1;
+            }
+        }
+        #endif //EMISSIONS
 
         if(vm.count("north") || vm.count("south") ||
                vm.count("east") || vm.count("west"))
