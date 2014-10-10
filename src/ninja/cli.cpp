@@ -624,10 +624,10 @@ int windNinjaCLI(int argc, char* argv[])
                     VSIUnlink(new_elev.c_str());
                     exit(1);
                 }
-     
+                
                 //fill in no data values
                 GDALDataset *poDS;
-                poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_Update);
+                poDS = (GDALDataset*)GDALOpen(new_elev.c_str(), GA_Update);
                 if(poDS == NULL)
                 {
                     throw std::runtime_error("Could not open DEM for reading");
