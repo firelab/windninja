@@ -571,9 +571,6 @@ int windNinjaCLI(int argc, char* argv[])
         /*------------------------------------------*/            
          
         if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
-            cout<<"fetching elevation file for emissions simulation..."<<endl;
-            cout<<"fire = "<<vm["fire_perimeter_file"].as<std::string>()<<endl;
-            
             OGRDataSource *poOGRDS;
             poOGRDS = OGRSFDriverRegistrar::Open(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE);
 
@@ -603,50 +600,54 @@ int windNinjaCLI(int argc, char* argv[])
             bbox[2] = psEnvelope.MinY - 0.009; //south
             bbox[3] = psEnvelope.MinX - 0.012; //west
             
-            std::cout << "Downloading elevation file..." << std::endl;
             std::string new_elev = CPLGetBasename( vm["fire_perimeter_file"].as<std::string>().c_str() );
             new_elev += ".tif";
             
-            SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "us_srtm" );
+            //if the elevation file doesn't exist, fetch it
+            if(!CPLCheckForFile(new_elev.c_str(), NULL)){
+                std::cout << "Downloading elevation file..." << std::endl;
+                
+                SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "us_srtm" );
             
-            if( NULL == fetch )
-            {
-                fprintf(stderr, "Invalid DEM Source\n");
-                exit(1);
-            }
+                if( NULL == fetch )
+                {
+                    fprintf(stderr, "Invalid DEM Source\n");
+                    exit(1);
+                }
             
-            int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+                int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
                                                      new_elev.c_str(), NULL);
                                                      
-            if(nSrtmError < 0)
-            {
-                cerr << "Failed to download elevation data\n";
-                VSIUnlink(new_elev.c_str());
-                exit(1);
+                if(nSrtmError < 0)
+                {
+                    cerr << "Failed to download elevation data\n";
+                    VSIUnlink(new_elev.c_str());
+                    exit(1);
+                }
+     
+                //fill in no data values
+                GDALDataset *poDS;
+                poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_Update);
+                if(poDS == NULL)
+                {
+                    throw std::runtime_error("Could not open DEM for reading");
+                }
+                int nNoDataValues = 0;
+                if(GDALHasNoData(poDS, 1))
+                {
+                    nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
+                }
+                GDALClose((GDALDatasetH)poDS);
+                if(nNoDataValues > 0)
+                {
+                    std::cerr << "Could not download valid elevation file, " <<
+                                "it contains no data values" << std::endl;
+                    return 1;
+                }
             }
             
             vm.insert(std::make_pair("elevation_file", po::variable_value(new_elev, false)));
             po::notify(vm);
-            
-            //fill in no data values
-            GDALDataset *poDS;
-            poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_Update);
-            if(poDS == NULL)
-            {
-                throw std::runtime_error("Could not open DEM for reading");
-            }
-            int nNoDataValues = 0;
-            if(GDALHasNoData(poDS, 1))
-            {
-                nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
-            }
-            GDALClose((GDALDatasetH)poDS);
-            if(nNoDataValues > 0)
-            {
-                std::cerr << "Could not download valid elevation file, " <<
-                            "it contains no data values" << std::endl;
-                return 1;
-            }
         }
         #endif //EMISSIONS
 
