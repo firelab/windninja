@@ -604,7 +604,8 @@ int windNinjaCLI(int argc, char* argv[])
             bbox[3] = psEnvelope.MinX - 0.012; //west
             
             std::cout << "Downloading elevation file..." << std::endl;
-            std::string new_elev = "dem.tif";
+            std::string new_elev = CPLGetBasename( vm["fire_perimeter_file"].as<std::string>().c_str() );
+            new_elev += ".tif";
             
             SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "us_srtm" );
             
