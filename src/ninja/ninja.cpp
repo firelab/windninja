@@ -4582,8 +4582,6 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid);
 			
-			VelocityGrid.write_Grid("velgrid", 2);
-			
 #ifdef EMISSIONS
 			if(input.dustFlag == 1){
                 output.setDustGrid(DustGrid);
