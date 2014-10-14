@@ -370,6 +370,48 @@ bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
     return true;
 }
 
+bool OGRPointToLatLon( double &x, double &y, OGRDataSource *poSrcDS,
+				const char *datum )
+{
+    char* pszPrj = NULL;
+
+    OGRSpatialReference oSourceSRS, oTargetSRS;
+    OGRCoordinateTransformation *poCT;
+
+    if( poSrcDS == NULL )
+	return false;
+	
+	OGRLayer *poLayer;
+    
+    poLayer = poSrcDS->GetLayer(0);
+    poLayer->ResetReading();
+    
+    OGRSpatialReference *poSrcSRS;
+	
+    if( poLayer->GetSpatialRef() == NULL )
+        return false;
+    else{
+        poSrcSRS = poLayer->GetSpatialRef();
+        poSrcSRS->exportToWkt( &pszPrj );
+    }
+
+    oSourceSRS.importFromWkt( &pszPrj );
+    
+    oTargetSRS.SetWellKnownGeogCS( datum );
+
+    poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
+
+    if( poCT == NULL )
+	return false;
+
+    if( !poCT->Transform( 1, &x, &y ) ) {
+	OGRCoordinateTransformation::DestroyCT( poCT );
+	return false;
+    }
+    OGRCoordinateTransformation::DestroyCT( poCT );
+    return true;
+}
+
 /**
  * Fetch the UTM zone for a GDALDataset
  *

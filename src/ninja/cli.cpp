@@ -593,12 +593,20 @@ int windNinjaCLI(int argc, char* argv[])
             
             poGeo->getEnvelope(&psEnvelope);
             
-            //add a ~1 x 1 km buffer (for western US) 
             double bbox[4];
-            bbox[0] = psEnvelope.MaxY + 0.009; //north
-            bbox[1] = psEnvelope.MaxX + 0.012; //east
-            bbox[2] = psEnvelope.MinY - 0.009; //south
-            bbox[3] = psEnvelope.MinX - 0.012; //west
+            bbox[0] = psEnvelope.MaxY; //north
+            bbox[1] = psEnvelope.MaxX; //east
+            bbox[2] = psEnvelope.MinY; //south
+            bbox[3] = psEnvelope.MinX; //west
+            
+            OGRPointToLatLon(bbox[1], bbox[0], poOGRDS, "WGS84");
+            OGRPointToLatLon(bbox[3], bbox[2], poOGRDS, "WGS84");
+            
+            //add a ~1 x 1 km buffer (for western US) 
+            bbox[0] += 0.009; //north
+            bbox[1] += 0.012; //east
+            bbox[2] -= 0.009; //south
+            bbox[3] -= 0.012; //west
             
             std::string new_elev = CPLGetBasename( vm["fire_perimeter_file"].as<std::string>().c_str() );
             new_elev += ".tif";
