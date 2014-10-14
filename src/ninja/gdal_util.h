@@ -33,15 +33,13 @@
 #include <string>
 #include <iostream>
 
-#ifdef EMISSIONS
+#include "gdal.h"
 #include "gdal_alg.h"
-#include "ogr_geometry.h"
-#include "ogrsf_frmts.h"
-#endif
-
 #include "gdal_priv.h"
+#include "ogr_geometry.h"
 #include "ogr_spatialref.h"
-#include "gdal_alg.h"
+#include "ogrsf_frmts.h"
+
 #include "ascii_grid.h"
 
 bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat );
