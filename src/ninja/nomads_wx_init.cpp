@@ -299,7 +299,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     if( aoCachedTimes.size() > 0 )
         return aoCachedTimes;
     (void)pszVariable;
-    if( wxModelFileName == "" )
+    if( wxModelFileName == "" || ppszModelData == NULL )
     {
         throw badForecastFile( "Invalid forecast file name" );
     }
