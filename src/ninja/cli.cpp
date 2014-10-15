@@ -612,7 +612,7 @@ int windNinjaCLI(int argc, char* argv[])
             new_elev += ".tif";
             
             //if the elevation file doesn't exist, fetch it
-            if(!CPLCheckForFile(new_elev.c_str(), NULL)){
+            if(!CPLCheckForFile((char*)new_elev.c_str(), NULL)){
                 std::cout << "Downloading elevation file..." << std::endl;
                 
                 SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "us_srtm" );
