@@ -82,10 +82,8 @@ cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd,
 	Cd_upslope = upDragCoeff; //0.2;
 	entrainment_coeff_upslope = upEntrainmentCoeff; //0.2;
 	
-	cout<<"downDrag = "<<Cd_downslope<<endl;
-	cout<<"downEntrain = "<<entrainment_coeff_downslope<<endl;
-	cout<<"upDrag = "<<Cd_upslope<<endl;
-	cout<<"upEntrain = "<<entrainment_coeff_upslope<<endl;
+	CPLDebug( "DIURNAL", "downDrag = %lf, downEntrain = %lf, upDrag = %lf, upEntrain = %lf", 
+            Cd_downslope, entrainment_coeff_downslope, Cd_upslope, entrainment_coeff_upslope );
 
     epsilon = dem->get_cellSize()/1000.0;
     c1 = 5.31e-13;
