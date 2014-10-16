@@ -57,6 +57,20 @@ extern "C" {
 #define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
 
 /*
+** We can't do threaded download on older GDAL versions (pre-1.10.0) due to
+** lack of an API.  Handle that here.
+*/
+#ifdef NOMADS_ENABLE_ASYNC
+ #ifdef GDAL_COMPUTE_VERSION
+  #if GDAL_VERSION_NUM < GDAL_COMPUTE_VERSION(1,10,0)
+   #undef NOMADS_ENABLE_ASYNC
+  #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
+ #else /* GDAL_COMPUTE_VERSION */
+  #undef NOMADS_ENABLE_ASYNC
+ #endif /* GDAL_COMPUTE_VERSION */
+#endif /* NOMADS_ENABLE_ASYNC */
+
+/*
 ** XXX: Document me.
 */
 
