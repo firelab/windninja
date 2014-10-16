@@ -255,6 +255,25 @@ int windNinjaCLI(int argc, char* argv[])
                         ("response_file", po::value<std::string>(),
                                  "response file (can be specified with '@name', also)")
                                 ;
+        /*
+        ** Set the available wx model names using hard codes for NCAR and api
+        ** for NOMADS.
+        */
+        std::string osAvailableWx = "type of wx model to download (";
+        osAvailableWx += std::string( "NCAR-NAM-12-KM, NCAR-NAM-ALASKA-11-KM, " ) + 
+                         std::string( "NCAR-NDFD-5-KM, NCAR-RAP-13-KM, " ) +
+                         std::string( "NCAR-GFS-GLOBAL-0.5-DEG" );
+#ifdef WITH_NOMADS_SUPPORT
+        int i = 0;
+        while( apszNomadsKeys[i][0] != NULL )
+        {
+            osAvailableWx += std::string( ", " ) +
+                             std::string( NomadsFormName( apszNomadsKeys[i][0], '-' ) );
+            i++;
+        }
+#endif /* WITH_NOMADS_SUPPORT */
+        osAvailableWx += ")";
+
 
         // Declare a group of options that will be
         // allowed both on command line and in
@@ -280,7 +299,7 @@ int windNinjaCLI(int argc, char* argv[])
 #endif
                 ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (NCAR-NAM-12-KM, NCAR-NAM-Alaska-11-KM, NCAR-NDFD-5-KM, NCAR-RAP-13-KM, NCAR-GFS-GLOBAL-0.5-DEG, )")
+                ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
