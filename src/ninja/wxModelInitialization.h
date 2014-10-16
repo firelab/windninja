@@ -41,6 +41,14 @@
 #include "cpl_conv.h"
 #include "cpl_vsi.h"
 #include "cpl_port.h"
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0)
+#include "cpl_progress.h"
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+ 
 #include "cpl_progress.h"
 #include "cpl_http.h"
 #include "cpl_string.h"
