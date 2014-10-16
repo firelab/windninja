@@ -40,7 +40,10 @@
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0)
 #include "cpl_progress.h"
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
+#else /* GDAL_COMPUTE_VERSION */
+#include "gdal.h"
 #endif /* GDAL_COMPUTE_VERSION */
+
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
