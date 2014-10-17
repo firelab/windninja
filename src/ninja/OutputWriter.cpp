@@ -336,9 +336,12 @@ bool OutputWriter::_writeGTiff (std::string filename)
         GDALSetProjection(hDstDS, pszDstWKT);
         GDALSetGeoTransform(hDstDS, adfGeoTransform);
         
+        GDALSetMetadataItem(hDstDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
+        
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, 1 );
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
+        GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -361,8 +364,7 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
                              1, GDT_Float64, 0, 0);
-                             
-                GDALSetMetadataItem(hBand, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
+ 
             }
         }
         
@@ -372,6 +374,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
         /*------------------------------------------*/
         /*  If file already exists, add a new band  */
         /*------------------------------------------*/
+        
+        //get start time
+        const char* startTime = GDALGetMetadataItem(hDstDS, "TIFFTAG_DATETIME", NULL);
         
         // CreateCopy() as VRT, AddBand(), CreateCopy() with GTiff
         GDALDriverH hVrtDriver = GDALGetDriverByName( "VRT" );
@@ -397,6 +402,10 @@ bool OutputWriter::_writeGTiff (std::string filename)
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, GDALGetRasterCount(hDstDS) );
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
+        
+        // calculate hours since startTime and set DT equal to this
+        
+        GDALSetMetadataItem(hBand, "DT", ninjaTime.c_str(), NULL ); // offset in hours since first band
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -418,9 +427,8 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 }
 
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);
-                             
-                GDALSetMetadataItem(hBand, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
+                             1, GDT_Float64, 0, 0);    
+                                         
             }
         }
     }
