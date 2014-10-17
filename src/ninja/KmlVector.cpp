@@ -41,6 +41,7 @@ KmlVector::KmlVector()
 	resolution = -1.0;
 	timeDateLegendFile = "";
 	wxModelName = "";
+        coordTransform = NULL;
 }
 
 //KmlVector::KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string demFileName, std::string kmzFileName, double res)

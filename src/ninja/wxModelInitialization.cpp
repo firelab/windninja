@@ -1808,8 +1808,12 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
             tp[namelength] = '\0';
             if(strcmp("time", tp) == 0) {
                 timestring =  std::string(timename);
+                CPLDebug( "WINDNINJA", "Found time: %s for variable: %s",
+                          timename, pszVariable );
+                free( (void*)tp );
                 break;
             }
+            free( (void*)tp );
         }
     }
     nc_close(ncid);
