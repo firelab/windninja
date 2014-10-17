@@ -360,7 +360,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 }
                 
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);    
+                             1, GDT_Float64, 0, 0);
+                             
+                GDALSetMetadataItem(hBand, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
             }
         }
         
@@ -416,7 +418,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 }
 
                 GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);    
+                             1, GDT_Float64, 0, 0);
+                             
+                GDALSetMetadataItem(hBand, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
             }
         }
     }

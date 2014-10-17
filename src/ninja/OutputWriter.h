@@ -51,10 +51,11 @@
 #include "gdal_priv.h"
 #include "gdal.h"
 
-#include "gdal_util.h" //nsw
+#include "gdal_util.h"
 
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
+
 
 #include "ninjaException.h"
 
@@ -89,6 +90,7 @@ class OutputWriter
         void setDustGrid(AsciiGrid<double> &d);
 #endif
         void setDEMfile(std::string fname) {demFile=fname;}
+        void setNinjaTime(std::string t) {ninjaTime=t;}
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -110,6 +112,7 @@ class OutputWriter
 #ifdef EMISSIONS
         AsciiGrid<double> dust;
 #endif
+        std::string ninjaTime;
         double resolution;
         std::string demFile;
         std::string inputSpeedFile;

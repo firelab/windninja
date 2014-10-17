@@ -4578,6 +4578,8 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		if(input.geotiffOutFlag==true)
 		{
             OutputWriter output;
+            
+            output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
 
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid);
