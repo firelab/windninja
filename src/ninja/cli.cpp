@@ -621,11 +621,11 @@ int windNinjaCLI(int argc, char* argv[])
             OGRPointToLatLon(bbox[1], bbox[0], poOGRDS, "WGS84");
             OGRPointToLatLon(bbox[3], bbox[2], poOGRDS, "WGS84");
             
-            //add a ~1 x 1 km buffer (for western US) 
+            //add a buffer
             bbox[0] += 0.009; //north
-            bbox[1] += 0.012; //east
+            bbox[1] += 0.042; //east
             bbox[2] -= 0.009; //south
-            bbox[3] -= 0.012; //west
+            bbox[3] -= 0.042; //west
             
             std::string new_elev = CPLGetBasename( vm["fire_perimeter_file"].as<std::string>().c_str() );
             new_elev += ".tif";
