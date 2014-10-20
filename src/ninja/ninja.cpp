@@ -81,7 +81,7 @@ ninja::ninja()
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
-	nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
+    nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
 
     //ninjaCom stuff
@@ -140,7 +140,7 @@ ninja::ninja(const ninja &rhs)
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
     matchTol = rhs.matchTol;
-
+    nMaxMatchingIters = rhs.nMaxMatchingIters;
     //Timers
     startTotal=0.0;
     endTotal=0.0;
@@ -216,6 +216,7 @@ ninja &ninja::operator=(const ninja &rhs)
         isNullRun = rhs.isNullRun;
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
         matchTol = rhs.matchTol;
+        nMaxMatchingIters = rhs.nMaxMatchingIters;
 
         //Timers
         startTotal=0.0;
