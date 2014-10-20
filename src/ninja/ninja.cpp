@@ -80,8 +80,9 @@ ninja::ninja()
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
-	nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
+    nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
+    CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
 
     //ninjaCom stuff
     input.lastComString[0] = '\0';
@@ -140,6 +141,7 @@ ninja::ninja(const ninja &rhs)
     alpha = rhs.alpha;
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
+    nMaxMatchingIters = rhs.nMaxMatchingIters;
     matchTol = rhs.matchTol;
 
     //Timers
@@ -218,6 +220,7 @@ ninja &ninja::operator=(const ninja &rhs)
         alpha = rhs.alpha;
         isNullRun = rhs.isNullRun;
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
+        nMaxMatchingIters = rhs.nMaxMatchingIters;
         matchTol = rhs.matchTol;
 
         //Timers
@@ -353,6 +356,7 @@ bool ninja::simulate_wind()
     ** See constructor to set default.
     */
     int max_matching_iters = nMaxMatchingIters;		//maximum number of outer iterations to do (for matching observations)
+    CPLDebug( "JASON SUCKS", "MAX MATCH ITERS: %d", max_matching_iters );
 
 /*  ----------------------------------------*/
 /*  MESH GENERATION                         */

@@ -1547,10 +1547,11 @@ int mainWindow::solve()
     for(int i = 0;i < army->getSize(); i++) 
     {
 
+        army->setDEM( i, demFile );
         //set initialization
         if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
         {
-            army->setInitializationMethod( i, initMethod );
+            army->setInitializationMethod( i, initMethod, true );
         }
         //set the ninjaCom
         army->setNinjaCommunication( i, i, ninjaComClass::ninjaGUICom );
@@ -1685,7 +1686,7 @@ int mainWindow::solve()
 
         //set the input file
         //army.ninjas[i].readInputFile( demFile );
-        army->setDEM( i, demFile );
+        //army->setDEM( i, demFile );
         // this is commented out?
         //army.ninjas[i].mesh.compute_domain_height();
 
