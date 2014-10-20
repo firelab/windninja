@@ -27,12 +27,12 @@
  *
  *****************************************************************************/
 
+#include <boost/test/unit_test.hpp>
 #include "gdal_priv.h"
 
 #include "fetch_factory.h"
 #include "ninja.h"
 
-#include <boost/test/unit_test.hpp>
 
 /******************************************************************************
 *                        "STRM" TEST FIXTURE
