@@ -27,9 +27,9 @@
  *
  *****************************************************************************/
 
-#ifndef VERSION_H
-#define VERSION_H
-#define VERSION "trunk"
-#define SVN_VERSION "1474:1475"
-#define RELEASE_DATE "06/06/12"
-#endif /* VERSION_H */
+#ifndef WINDNINJA_VERSION_H
+#define WINDNINJA_VERSION_H
+#define VERSION "2.4"
+#define SVN_VERSION "3199"
+#define RELEASE_DATE "10/20/14"
+#endif /* WINDNINJA_VERSION_H */
