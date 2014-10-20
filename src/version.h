@@ -30,6 +30,6 @@
 #ifndef WINDNINJA_VERSION_H
 #define WINDNINJA_VERSION_H
 #define VERSION "2.4"
-#define SVN_VERSION "3199"
+#define SVN_VERSION "3203"
 #define RELEASE_DATE "10/20/14"
 #endif /* WINDNINJA_VERSION_H */
