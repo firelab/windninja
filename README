@@ -1,0 +1,41 @@
+WindNinja
+=========
+
+WindNinja is a mass consistent wind model developed for use in fire modeling.
+
+http://www.windninja.firemodels.org
+https://collab.firelab.org/software/projects/windninja
+https://collab.firelab.org/svn/windninja
+https://github.com/firelab/windninja
+
+Directories:
+ * autotest    -> testing suite
+ * cmake       -> cmake support scripts
+ * data        -> testing data
+ * doc         -> documentation
+ * images      -> splash image and icons for gui
+ * src         -> source files
+
+Dependencies (versions are versions we build against):
+ * Boost 1.4.6:
+    * boost_date_time
+    * boost_program_options
+ * NetCDF 4.1.1
+    * may need HDF5 support (sometimes easier to build on win32)
+ * GDAL 1.10.1
+    * NetCDF support
+    * PROJ.4 support
+    * GEOS support
+    * CURL support
+ * Qt 4.7.4
+    * QtGui
+    * QtCore
+    * QtNetwork/Phonon
+    * QtWebKit
+
+See INSTALL for more information (coming soon)
+
+See CREDITS for authors
+
+See NEWS for release information
+

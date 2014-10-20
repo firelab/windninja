@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>530</width>
+    <height>846</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTreeWidget" name="navTreeWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <column>
+       <property name="text">
+        <string>WindNinja</string>
+       </property>
+      </column>
+      <item>
+       <property name="text">
+        <string>Input</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>Surface</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Location</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Diurnal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Wind Input</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Domain Average Initialization</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Point Initialization</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Weather Model Initialization</string>
+         </property>
+        </item>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>Output</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>Google Earth</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Fire Behavior</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Shape Files</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>VTK</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>Solve</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="inputLabel">
+      <property name="text">
+       <string>Input</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="inputStackedWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="currentIndex">
+       <number>5</number>
+      </property>
+      <widget class="QWidget" name="locationPage">
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <layout class="QHBoxLayout" name="lonLayout">
+          <item>
+           <widget class="QLabel" name="lonLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Longitude</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Marble::LatLonEdit" name="lonEdit" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="lonSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="latLayout">
+          <item>
+           <widget class="QLabel" name="latLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Latitude</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="Marble::LatLonEdit" name="latEdit" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="latSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="locationSpacer2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="diurnalPage">
+       <layout class="QVBoxLayout" name="verticalLayout_7">
+        <item>
+         <widget class="QCheckBox" name="diurnalCheckBox">
+          <property name="text">
+           <string>Use Diurnal Model</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_2">
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QTableView" name="tableView"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_4">
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLineEdit" name="lineEdit"/>
+          </item>
+          <item>
+           <widget class="QToolButton" name="toolButton">
+            <property name="text">
+             <string>Read Station File</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_5">
+       <layout class="QVBoxLayout" name="verticalLayout_10">
+        <item>
+         <spacer name="verticalSpacer_7">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QComboBox" name="comboBox"/>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinBox"/>
+          </item>
+          <item>
+           <widget class="QToolButton" name="toolButton_2">
+            <property name="text">
+             <string>Download Forecast</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTreeWidget" name="treeWidget">
+          <column>
+           <property name="text">
+            <string notr="true">1</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page"/>
+      <widget class="QWidget" name="surfacePage">
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <layout class="QHBoxLayout" name="elevationLayout">
+          <item>
+           <widget class="QLabel" name="elevationLabel">
+            <property name="text">
+             <string>Elevation File</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="elevationLineEdit">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="elevationToolButton">
+            <property name="text">
+             <string>Open Elevation File</string>
+            </property>
+            <property name="toolButtonStyle">
+             <enum>Qt::ToolButtonTextBesideIcon</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="roughLayout">
+          <item>
+           <widget class="QLabel" name="roughLabel">
+            <property name="text">
+             <string>Vegetation </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="roughComboBox">
+            <item>
+             <property name="text">
+              <string>Grass</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Brush</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Trees</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="resLayout">
+          <item>
+           <widget class="QLabel" name="resLabel">
+            <property name="text">
+             <string>Mesh Resolution</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="resComboBox">
+            <item>
+             <property name="text">
+              <string>Coarse</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Medium</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Fine</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Custom</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="resDoubleSpinBox">
+            <property name="accelerated">
+             <bool>true</bool>
+            </property>
+            <property name="maximum">
+             <double>5000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>100.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="metersRadioButton">
+            <property name="text">
+             <string>Meters</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="feetRadioButton">
+            <property name="text">
+             <string>Feet</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>530</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen_Elevation_File"/>
+    <addaction name="actionWrite_Console_Output_to_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionConsole_Output"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionOpen_RDDS_Website"/>
+    <addaction name="actionWrite_Blank_Station_File"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuOptions"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QDockWidget" name="consoleDockWidget">
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="consoledockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <item>
+      <widget class="QTextEdit" name="consoleTextEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpen_Elevation_File">
+   <property name="text">
+    <string>Open &amp;Elevation File</string>
+   </property>
+  </action>
+  <action name="actionWrite_Console_Output_to_File">
+   <property name="text">
+    <string>Write &amp;Console Output to File</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionConsole_Output">
+   <property name="text">
+    <string>Console Output</string>
+   </property>
+  </action>
+  <action name="actionOpen_RDDS_Website">
+   <property name="text">
+    <string>Open RDDS Website</string>
+   </property>
+  </action>
+  <action name="actionWrite_Blank_Station_File">
+   <property name="text">
+    <string>Write Blank Station File</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Marble::LatLonEdit</class>
+   <extends>QWidget</extends>
+   <header>LatLonEdit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

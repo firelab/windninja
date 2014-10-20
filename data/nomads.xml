@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ninja_nomads_forecasts>
+    <date>20130625</date>
+    <author>Kyle Shannon</author>
+    <forecast forcast_id="conus-nam">
+        <base_url>
+            http://nomads.ncep.noaa.gov/cgi-bin/filter_nam.pl
+        </base_url>
+        <directory_frmt>
+            nam.YYYYMMDD
+        </directory_frmt>
+        <hours>
+            1:36:1,39:84:3
+        </hours>
+        <wind_data_format>
+            UV_VECTOR
+        </wind_data_format>
+        <u_variable>
+            UGRD
+        </u_variable>
+        <v_variable>
+            VGRD
+        </v_variable>
+        <temperature_variable>
+            TMP
+        </temperature_variable>
+        <cloud_data_format>
+            BOOLEAN
+        </cloud_data_format>
+        <cloud_variable>
+            TCDC
+        </cloud_variable>
+    </forecast>
+</ninja_nomads_forecasts>
+

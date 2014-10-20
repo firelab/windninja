@@ -1,0 +1,11 @@
+WINDS_AND_CLOUDS
+
+7 15 0200 south_canyon_270_10_100m_vel.asc south_canyon_270_10_100m_ang.asc south_canyon_270_10_100m_cld.asc
+
+7 15 0600 south_canyon_225_20_100m_vel.asc south_canyon_225_20_100m_ang.asc south_canyon_225_20_100m_cld.asc
+
+7 15 1200 south_canyon_270_30_100m_vel.asc south_canyon_270_30_100m_ang.asc south_canyon_270_30_100m_cld.asc
+
+7 15 1600 south_canyon_225_40_100m_vel.asc south_canyon_225_40_100m_ang.asc south_canyon_225_40_100m_cld.asc
+
+7 15 2000 south_canyon_270_50_100m_vel.asc south_canyon_270_50_100m_ang.asc south_canyon_270_50_100m_cld.asc

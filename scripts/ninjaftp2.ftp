@@ -1,0 +1,4 @@
+cd incoming/rmrs/missoula/wind
+binary
+put WindNinja-*-win*-install.exe
+quit

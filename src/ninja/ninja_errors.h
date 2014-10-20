@@ -1,0 +1,54 @@
+/******************************************************************************
+*
+* $Id: ninjaArmy.h 2684 2013-09-05 15:56:15Z levi.malott $
+*
+* Project:  WindNinja
+* Purpose:  Handle various error definitions
+* Author:   Levi Malott <lmnn3@mst.edu>
+*
+******************************************************************************
+*
+* THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
+* MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+* IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+* OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+* PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+* LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+* PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
+* RELIABILITY, OR ANY OTHER CHARACTERISTIC.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*
+*****************************************************************************/
+
+/*-----------------------------------------------------------------------------
+ *  Ninja Error Definitions
+ *-----------------------------------------------------------------------------*/
+#define NINJA_LENGTH_METERS 0
+#define NINJA_DOM 0
+#define NINJA_WX 1
+#define NINJA_POINT 2
+
+#define NINJA_wxMODEL_INITIALIZATION 0
+#define NINJA_POINT_INITIALIZTION 1
+#define NINJA_DOMAIN_INITIALIZTION 2
+
+
+#define NINJA_SUCCESS           0
+#define NINJA_E_FILE_IO         1
+#define NINJA_E_INVALID         2
+#define NINJA_E_NULL_PTR        3
+#define NINJA_UNIMPLEMENTED     4
+#define NINJA_E_BAD_UNITS       5
+#define NINJA_E_BAD_ALLOC       6
+#define NINJA_E_CANCELLED       7
+#define NINJA_E_OTHER           8 
+#define NINJA_E_UNKNOWN         9
+
+

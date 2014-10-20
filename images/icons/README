@@ -1,0 +1,6 @@
+This directory holds the icons *used* by WindNinja GUI.  Most icons are from
+the tango icon library.  The archive contains the entire library.  If you need
+to add an icon from tango, extract only that icon and add it to the qrc file 
+and the svn repo.  Custom icons follow the same protocol.
+
+-kss

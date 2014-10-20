@@ -1,0 +1,85 @@
+{
+   GDAL_TIFF_INFLATE
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   fun:ZIPSetupDecode
+   fun:PredictorSetupDecode
+   fun:TIFFStartStrip
+   fun:TIFFFillStrip
+   fun:TIFFReadEncodedStrip
+   fun:_ZN15GTiffRasterBand10IReadBlockEiiPv
+   fun:_ZN14GDALRasterBand17GetLockedBlockRefEiii
+   fun:_ZN14GDALRasterBand9IRasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+   fun:_ZN15GTiffRasterBand9IRasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+   fun:_ZN14GDALRasterBand8RasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+}
+{
+   GDAL_GTIFF_MUTEX
+   Memcheck:Leak
+   fun:calloc
+   fun:_dlerror_run
+   fun:dlsym
+   fun:GTiffOneTimeInit
+   fun:_ZN12GTiffDataset4OpenEP12GDALOpenInfo
+   fun:_Z16GDALOpenInternalR12GDALOpenInfoPKPKc
+   fun:_Z16GDALOpenInternalPKc10GDALAccessPKS0_
+   fun:GDALOpen
+   fun:_ZN5ninja12set_positionEv
+   fun:_ZN9ninjaArmy11setPositionEiPPc
+   fun:_Z12windNinjaCLIiPPc
+   fun:main
+}
+{
+   GDAL_WMS_MUTEX
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZL22CPLCreateMutexInternali
+   fun:CPLCreateOrAcquireMutex
+   fun:_ZN14CPLMutexHolderC1EPPvdPKci
+   fun:_Z27GetGDALWMSMiniDriverManagerv
+   fun:GDALRegister_WMS
+   fun:GDALAllRegister
+   fun:main
+}
+{
+   GDAL_RASTERBLOCK_MUTEX
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZL22CPLCreateMutexInternali
+   fun:CPLCreateOrAcquireMutex
+   fun:_ZN14CPLMutexHolderC1EPPvdPKci
+   fun:_ZN15GDALRasterBlock13SafeLockBlockEPPS_
+   fun:_ZN14GDALRasterBand20TryGetLockedBlockRefEii
+   fun:_ZN14GDALRasterBand17GetLockedBlockRefEiii
+   fun:_ZN14GDALRasterBand9IRasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+   fun:_ZN15GTiffRasterBand9IRasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+   fun:_ZN14GDALRasterBand8RasterIOE10GDALRWFlagiiiiPvii12GDALDataTypeii
+   fun:_ZN5ninja16importSingleBandEP11GDALDataset
+   fun:_ZN5ninja13readInputFileEv
+}
+{
+   GDAL_LIBJPEG_INTERNAL
+   Memcheck:Leak
+   fun:malloc
+   fun:__fopen_internal
+   fun:libjpeg_general_init
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-2.15.so
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   GDAL_LIBJPEG_GENERAL
+   Memcheck:Leak
+   fun:malloc
+   fun:libjpeg_general_init
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib/x86_64-linux-gnu/ld-2.15.so
+   obj:*
+   obj:*
+   obj:*
+}
