@@ -34,13 +34,13 @@
 #include "omp.h"
 #endif
 
+#include "boost/typeof/typeof.hpp"
 #include "ninja.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
 #include "ninja_errors.h"
 #include <algorithm>
-#include "boost/typeof/typeof.hpp"
 
 /*-----------------------------------------------------------------------------
  *  Helper Macros
