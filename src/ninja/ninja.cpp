@@ -356,7 +356,6 @@ bool ninja::simulate_wind()
     ** See constructor to set default.
     */
     int max_matching_iters = nMaxMatchingIters;		//maximum number of outer iterations to do (for matching observations)
-    CPLDebug( "JASON SUCKS", "MAX MATCH ITERS: %d", max_matching_iters );
 
 /*  ----------------------------------------*/
 /*  MESH GENERATION                         */
