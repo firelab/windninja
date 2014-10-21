@@ -28,13 +28,7 @@
  *****************************************************************************/
 
 #include "cli.h"
-#include "ninjaArmy.h"
-#include "ninjaException.h"
-#include "core_run.h"
 #include "ninja_init.h"
-
-#include "gdal.h"
-#include "ogr_api.h"
 
 #ifdef _OPENMP
     omp_lock_t netCDF_lock;

@@ -48,12 +48,12 @@
 #include <QDir>
 #include <QDesktopServices>
 
+#include "ninjaArmy.h"
 #include "gdal_priv.h"
 #include "ogr_srs_api.h"
 #include "cpl_string.h"
 #include "gdal_util.h"
 #include "startRuns.h"
-#include "ninja.h"
 #include "version.h"
 #include "WindNinjaTree.h"
 #include "consoleDockWidget.h"
@@ -62,7 +62,6 @@
 #include "ninjaUnits.h"
 #include "wxStation.h"
 #include "ninjaUnits.h"
-#include "ninjaArmy.h"
 #include "ninja_conv.h"
 
 class mainWindow : public QMainWindow
