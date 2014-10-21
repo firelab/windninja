@@ -89,6 +89,8 @@ int NinjaInitialize()
     }
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
 #endif
+    CPLDebug( "WINDNINJA", "GDAL_DATA is set to: %s",
+              CPLGetConfigOption( "GDAL_DATA", "NULL" );
     /* Try to update our thredds file */
     CPLDebug( "NINJA", "Attempting to download the thredds.csv file" );
     int rc;
