@@ -677,8 +677,13 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
                                         const WindNinjaInputs::eInitializationMethod  method, 
                                         const bool matchPoints, char ** papszOptions )
 {
+    bool bMatch = false;
+    if( method == WindNinjaInputs::pointInitializationFlag && matchPoints )
+    {
+        bMatch = true;
+    }
     IF_VALID_INDEX_TRY( nIndex, ninjas, 
-            ninjas[ nIndex ].set_initializationMethod( method, matchPoints ) );
+            ninjas[ nIndex ].set_initializationMethod( method, bMatch ) );
 }
 
 int ninjaArmy::setInitializationMethod( const int nIndex,
