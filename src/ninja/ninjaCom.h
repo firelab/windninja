@@ -46,6 +46,7 @@
 #include <QObject>
 #include <QString>
 #include <QColor>
+#include <QCoreApplication>
 #endif
 
 #define NINJA_MSG_SIZE 1000

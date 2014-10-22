@@ -307,9 +307,14 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     //char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     //int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
     int nThreads = 1;
+    /* Trouble */
+    if( runNumber == NULL )
+        return;
+
 #ifdef _OPENMP
     nThreads = omp_get_num_threads();
 #endif
+    QCoreApplication::processEvents();
 
     if(progressMultiplier == 0)
     {

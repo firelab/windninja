@@ -1478,6 +1478,8 @@ int mainWindow::solve()
 
     writeToConsole( "Initializing runs..." );
 
+    army.reset();
+
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
