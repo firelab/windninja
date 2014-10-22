@@ -98,6 +98,7 @@ mainWindow::mainWindow(QWidget *parent)
     computeCellSize(tree->surface->meshResComboBox->currentIndex());
 
     checkAllItems();
+    army = NULL;
 }
 
 bool mainWindow::okToContinue()
@@ -1495,12 +1496,13 @@ int mainWindow::solve()
 
     writeToConsole( "Initializing runs..." );
     
+    delete army;
     #ifdef NINJAFOAM
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
     #else
     army = new ninjaArmy(1); // native ninja solver
     #endif
-    
+
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
