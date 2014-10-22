@@ -403,9 +403,23 @@ bool OutputWriter::_writeGTiff (std::string filename)
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
         
-        // calculate hours since startTime and set DT equal to this
+        // calculate hours since startTime 
+        std::string s(ninjaTime);
+        std::string s0(startTime);
         
-        GDALSetMetadataItem(hBand, "DT", ninjaTime.c_str(), NULL ); // offset in hours since first band
+        s.erase(s.length()-4); //get rid of tz
+        s0.erase(s0.length()-4); //get rid of tz
+               
+        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
+        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
+        
+        boost::posix_time::time_duration tdiff = t - t0;
+        
+        int hdiff = tdiff.hours();
+
+        std::string h(boost::lexical_cast<string>(hdiff));
+        
+        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
         for(int i=nYSize-1; i>=0; i--)
         {
