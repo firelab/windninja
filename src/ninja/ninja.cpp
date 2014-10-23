@@ -4567,10 +4567,10 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		}
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
 	} //end omp section
 
@@ -4596,10 +4596,10 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		}
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
 	}
 #endif //EMISSIONS
 	} //end omp section
