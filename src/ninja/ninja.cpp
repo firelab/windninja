@@ -2517,7 +2517,6 @@ void ninja::interp_uvw()
         windProfile profile;
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
                                                                         //make sure rough_h is set to zero if profile switch is 0 or 2
-
 #pragma omp for
         for(i=0;i<VelocityGrid.get_nRows();i++)
         {

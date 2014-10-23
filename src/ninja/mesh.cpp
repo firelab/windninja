@@ -834,6 +834,8 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
 //     if(first_cell_ht<=greatest_roughness)  //if first cell height is smaller than roughness height, make first cell slightly larger than roughness height instead (to avoid problems with log profile later)
 //          first_cell_ht=greatest_roughness*1.05;
      domainHeight=(first_cell_ht*(std::pow(vertGrowth,double(numVertLayers))-1)/(vertGrowth-1));  //compute total domain height (height above the ground here) using equation that Isaac put together
+     if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))   //make sure the domain height isn't too small (can happen on small extent DEMs)
+             domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
 
 //     for(long i=0; i<input.dem.get_nRows(); i++)
 //     {
