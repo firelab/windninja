@@ -102,46 +102,47 @@ WindNinjaInputs::WindNinjaInputs()
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
-    #ifdef NINJA_SPEED_TESTING
+#ifdef NINJA_SPEED_TESTING
     speedDampeningRatio = 1;
-    #endif
+#endif
     downDragCoeff = 0.0001;
     downEntrainmentCoeff = 0.01;
     upDragCoeff = 0.2;
     upEntrainmentCoeff = 0.2;
-    #ifdef STABILITY
+#ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
-    #endif
-    #ifdef EMISSIONS
+#endif
+#ifdef EMISSIONS
     dustFilename = "!set";
     dustFileOut = "!set";
     dustFlag = false;
     dustFile = "!set";
     ustarFile = "!set";
-    #endif
-    #ifdef SCALAR
+    geotiffOutFlag = false;
+#endif
+#ifdef SCALAR
     scalarTransportFlag = false;
-    #endif
-    #ifdef NINJAFOAM
+#endif
+#ifdef NINJAFOAM
     nIterations = 2000;
     meshCount = 1000000;
     nonEqBc = false;
-    #endif
+#endif
     
     outputPointsFilename = "!set";
     inputPointsFilename = "!set";
 
     outputPath = "!set";
 
-    #ifdef _OPENMP
+#ifdef _OPENMP
     omp_set_nested(false);
     omp_set_dynamic(false);
-    #endif //_OPENMP
+#endif //_OPENMP
 
-    #ifdef MKL
+#ifdef MKL
     mkl_set_dynamic(false);
-    #endif //MKL
+#endif //MKL
 
 }
 
@@ -172,11 +173,14 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   outer_relax = rhs.outer_relax;
   CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
   diurnalWinds = rhs.diurnalWinds;
-  #ifdef EMISSIONS
-  dustFlag = rhs.dustFlag;
-  dustFilename = rhs.dustFilename;
-  dustFileOut = rhs.dustFileOut;
-  #endif
+#ifdef EMISSIONS
+   dustFlag = rhs.dustFlag;
+   dustFilename = rhs.dustFilename;
+   dustFileOut = rhs.dustFileOut;
+   geotiffOutFlag = rhs.geotiffOutFlag;
+   dustFile = rhs.dustFile;
+   ustarFile = rhs.ustarFile;
+#endif
   outputPointsFilename = rhs.outputPointsFilename;
   inputPointsFilename = rhs.inputPointsFilename;
   pointsNamesList = rhs.pointsNamesList;
@@ -240,28 +244,32 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   volVTKFile = rhs.volVTKFile;
   keepOutGridsInMemory = rhs.keepOutGridsInMemory;
   
-  #ifdef NINJA_SPEED_TESTING
+#ifdef NINJA_SPEED_TESTING
   speedDampeningRatio = rhs.speedDampeningRatio;
-  #endif
+#endif
   
   downDragCoeff = rhs.downDragCoeff;
   downEntrainmentCoeff = rhs.downDragCoeff;
   upDragCoeff = rhs.upDragCoeff;
   upEntrainmentCoeff = rhs.upEntrainmentCoeff;
 
-  #ifdef EMISSIONS
+#ifdef EMISSIONS
+  dustFlag = rhs.dustFlag;
+  dustFilename = rhs.dustFilename;
+  dustFileOut = rhs.dustFileOut;
+  geotiffOutFlag = rhs.geotiffOutFlag;
   dustFile = rhs.dustFile;
   ustarFile = rhs.ustarFile;
-  #endif
+#endif
   
-  #ifdef STABILITY
+#ifdef STABILITY
   stabilityFlag = rhs.stabilityFlag;
   alphaStability = rhs.alphaStability;
-  #endif
+#endif
   
-  #ifdef SCALAR
+#ifdef SCALAR
   scalarTransportFlag = rhs.scalarTransportFlag;
-  #endif
+#endif
 
   outputPath = rhs.outputPath;
 
@@ -306,12 +314,14 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       outer_relax = rhs.outer_relax;
       CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
       diurnalWinds = rhs.diurnalWinds;
-      #ifdef EMISSIONS
+#ifdef EMISSIONS
       dustFlag = rhs.dustFlag;
       dustFilename = rhs.dustFilename;
       dustFileOut = rhs.dustFileOut;
-      #endif
-      
+      geotiffOutFlag = rhs.geotiffOutFlag;
+      dustFile = rhs.dustFile;
+      ustarFile = rhs.ustarFile;
+#endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;
       pointsNamesList = rhs.pointsNamesList;
@@ -376,28 +386,23 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
       
-      #ifdef NINJA_SPEED_TESTING
+#ifdef NINJA_SPEED_TESTING
       speedDampeningRatio = rhs.speedDampeningRatio;
-      #endif
-      
+#endif
+
       downDragCoeff = rhs.downDragCoeff;
       downEntrainmentCoeff = rhs.downDragCoeff;
       upDragCoeff = rhs.upDragCoeff;
       upEntrainmentCoeff = rhs.upEntrainmentCoeff;
       
-      #ifdef EMISSIONS
-      dustFile = rhs.dustFile;
-      ustarFile = rhs.ustarFile;
-      #endif
-      
-      #ifdef STABILITY
+#ifdef STABILITY
       stabilityFlag = rhs.stabilityFlag;
       alphaStability = rhs.alphaStability;
-      #endif
+#endif
       
-      #ifdef SCALAR
+#ifdef SCALAR
       scalarTransportFlag = rhs.scalarTransportFlag;
-      #endif
+#endif
 
       outputPath = rhs.outputPath;
 
