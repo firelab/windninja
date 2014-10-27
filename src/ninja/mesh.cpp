@@ -814,39 +814,31 @@ void Mesh::compute_cellsize(Elevation& dem)
      meshResolutionUnits = lengthUnits::meters;
 }
 
+/*
+** Compute the domain height for the mesh.
+**
+** The first cell height is determined by the horizontal cellsize and the limit
+** on the aspect ratio.
+**
+** The total domain height (height above ground) using the equation Isaac put
+** together.
+**
+** Check and make sure the domain height isn't below the maximum roughness plus
+** the output wind height.
+**
+** Reference the domain height against the mean sea level datum (add the max
+** DEM value).
+*/
+
 void Mesh::compute_domain_height(WindNinjaInputs& input)
 {
-    double first_cell_ht;
-
-    //This is and below is now commented out since our new vertical wind profile will
-    //  handle below the roughness height
-//    double greatest_roughness = 0.0;
-//    for(int i = 0; i < surface.Roughness.get_nRows(); i++)
-//    {
-//        for(int j = 0; j < surface.Roughness.get_nCols(); j++)
-//        {
-//            if((surface.Roughness)[i][j] > greatest_roughness)
-//                greatest_roughness = (surface.Roughness)[i][j];
-//        }
-//    }
-
-     first_cell_ht=meshResolution/maxAspectRatio;  //compute first cell's height based on horizontal cellsize and desired aspect ratio
-//     if(first_cell_ht<=greatest_roughness)  //if first cell height is smaller than roughness height, make first cell slightly larger than roughness height instead (to avoid problems with log profile later)
-//          first_cell_ht=greatest_roughness*1.05;
-     domainHeight=(first_cell_ht*(std::pow(vertGrowth,double(numVertLayers))-1)/(vertGrowth-1));  //compute total domain height (height above the ground here) using equation that Isaac put together
-     if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))   //make sure the domain height isn't too small (can happen on small extent DEMs)
-             domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
-
-//     for(long i=0; i<input.dem.get_nRows(); i++)
-//     {
-//          for(long j=0; j<input.dem.get_nCols(); j++)
-//          {
-//            if(input.dem.get_cellValue(i,j)>max_elev)
-//                    max_elev=input.dem.get_cellValue(i,j);  //find the highest elevation point in the DEM
-//          }
-//     }
-
-     domainHeight=domainHeight + input.dem.get_maxValue();   //now shift the domain height so that it is referenced from sea level
+    double first_cell_ht=meshResolution/maxAspectRatio;
+    domainHeight=(first_cell_ht*(std::pow(vertGrowth,double(numVertLayers))-1)/(vertGrowth-1));
+    if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))
+    {
+        domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
+    }
+    domainHeight=domainHeight + input.dem.get_maxValue();
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)
