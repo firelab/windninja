@@ -2522,6 +2522,7 @@ void ninja::interp_uvw()
                 h2=0;
                 while(h2 < (input.outputWindHeight + input.surface.Rough_h(i,j)))
                 {
+                    assert( k < mesh.nlayers );
                     h2=mesh.ZORD(i, j, k)-mesh.ZORD(i, j, 0);
                     h1=mesh.ZORD(i, j, k-1)-mesh.ZORD(i, j, 0);
                     k++;
