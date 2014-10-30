@@ -417,7 +417,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
         
         int hdiff = tdiff.hours();
 
-        std::string h(boost::lexical_cast<string>(hdiff));
+        std::string h(boost::lexical_cast<std::string>(hdiff));
+        
+        cout<<"offset in hours, DT = "<<h.c_str()<<endl;
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
@@ -439,11 +441,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
                 else{
                     return false;
                 }
-
-                GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);    
-                                         
             }
+            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                            1, GDT_Float64, 0, 0); 
         }
     }
     
