@@ -362,10 +362,9 @@ bool OutputWriter::_writeGTiff (std::string filename)
                     return false;
                 }
                 
-                GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);
- 
             }
+            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                             1, GDT_Float64, 0, 0);
         }
         
     }
