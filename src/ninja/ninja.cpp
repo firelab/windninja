@@ -2518,7 +2518,6 @@ void ninja::interp_uvw()
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
                                                                         //make sure rough_h is set to zero if profile switch is 0 or 2
 #pragma omp for
-        double r;
         for(i=0;i<VelocityGrid.get_nRows();i++)
         {
             for(j=0;j<VelocityGrid.get_nCols();j++)
@@ -2526,7 +2525,6 @@ void ninja::interp_uvw()
                 k=1;
                 h2=0;
 
-                r = input.surface.Rough_h( i, j );
                 while(h2 < (input.outputWindHeight + input.surface.Rough_h(i,j)))
                 {
                     assert( k < mesh.nlayers );
