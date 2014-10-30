@@ -105,8 +105,22 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
+    CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
+    CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
+    CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
+    CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
+    CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
+    CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
+    
+    
     /*cout<<"Rd = "<<input.surface.Rough_d(0,0)<<endl;
     cout<<"z0 = "<<input.surface.Roughness(0,0)<<endl;
+    
+    cout<<"input speed = "<<input.inputSpeed<<endl;
+    cout<<"input direction = "<<input.inputDirection<<endl;
+    
+    cout<<"foam direction = "<<direction[0]<<", "<<direction[1]<<", "<<direction[2]<<endl;
+        
     cout<<"length inlets = "<<inlets.size()<<endl;
     cout<<"inlets = "<<inlets[0]<<endl;*/
 
@@ -442,7 +456,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$gammavalue$", gammavalue);
     ReplaceKeys(s, "$pvalue$", pvalue);
     ReplaceKeys(s, "$U_freestream$", boost::lexical_cast<std::string>(input.inputSpeed));
-    ReplaceKeys(s, "$direction$", CPLSPrintf("(%.0lf %.0lf %.0lf)", direction[0],
+    ReplaceKeys(s, "$direction$", CPLSPrintf("(%.4lf %.4lf %.4lf)", direction[0],
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
