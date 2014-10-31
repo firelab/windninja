@@ -301,6 +301,8 @@ OutputWriter::_writePDF (std::string filename)
 
 bool OutputWriter::_writeGTiff (std::string filename)
 {
+    CPLSetConfigOption( "GDAL_CACHEMAX", "1024" );
+    
     const char *pszDriverName = "GTiff";
     hDriver = GDALGetDriverByName( pszDriverName );
     
@@ -312,17 +314,21 @@ bool OutputWriter::_writeGTiff (std::string filename)
 
     // Silence error if file does not yet exist
     CPLPushErrorHandler(CPLQuietErrorHandler);
+    //hDstDS = GDALOpenShared(filename.c_str(), GA_Update);
     hDstDS = GDALOpenShared(filename.c_str(), GA_ReadOnly);
     CPLPopErrorHandler();
     
     if(hDstDS == NULL)
     { 
         /*------------------------------------------*/
-        /*  If file doesn't exists, create it       */
+        /*  If file doesn't exist, create it       */
         /*------------------------------------------*/
-        
+        //create enough bands to store all time steps
+        //hard coded as 9000 for long-term dust, but should be changed later
+        papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");
+        papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );
         hDstDS = GDALCreate(hDriver, filename.c_str(), nXSize, nYSize, 
-                        1, GDT_Float64, NULL);
+                        1, GDT_Float64, papszOptions);
                         
         double adfGeoTransform[6];
         adfGeoTransform[0] = spd.get_xllCorner();
@@ -366,7 +372,6 @@ bool OutputWriter::_writeGTiff (std::string filename)
             GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
                              1, GDT_Float64, 0, 0);
         }
-        
     }
     else{
     
@@ -390,8 +395,10 @@ bool OutputWriter::_writeGTiff (std::string filename)
             return false;
         }
         
-        //copy VRT to GTiff format        
-        hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hVrtDS, FALSE, NULL, NULL, NULL);
+        //copy VRT to GTiff format
+        papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");
+        papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );        
+        hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hVrtDS, FALSE, papszOptions, NULL, NULL);
         
         //close VRT
         GDALClose(hVrtDS);
@@ -399,8 +406,6 @@ bool OutputWriter::_writeGTiff (std::string filename)
         
         // write current grid to last band in hDstDS        
         GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, GDALGetRasterCount(hDstDS) );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
         
         // calculate hours since startTime 
         std::string s(ninjaTime);
@@ -419,6 +424,11 @@ bool OutputWriter::_writeGTiff (std::string filename)
         std::string h(boost::lexical_cast<std::string>(hdiff));
         
         cout<<"offset in hours, DT = "<<h.c_str()<<endl;
+        
+        // write current grid to hdiff+1 band in hDstDS (bands correspond hrs since first simulation)        
+        //GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, hdiff+1 );
+        
+        GDALSetRasterNoDataValue(hBand, -9999.0);
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
@@ -450,7 +460,6 @@ bool OutputWriter::_writeGTiff (std::string filename)
         GDALClose( hDstDS );
         hDstDS = NULL;
     }
-    
     
     delete [] padfScanline;
 
