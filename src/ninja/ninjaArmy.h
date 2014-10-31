@@ -378,6 +378,15 @@ public:
      *  Forecast Model Methods
      *-----------------------------------------------------------------------------*/
     /**
+    * \brief Set the wx forecast filename for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param wx_filename path of the wx file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
+    
+    /**
     * \brief Set the DEM file for a ninja
     *
     * \param nIndex index of a ninja
@@ -682,7 +691,9 @@ public:
     */
     int setDateTime( const int nIndex, int const &yr, int const &mo, int const &day,
                      int const &hr, int const &min, int const &sec,
-                     std::string const &timeZoneString, char ** papszOptions=NULL );
+                     std::string const &timeZoneString, char ** papszOptions=NULL );        
+                          
+    
     /**
     * \brief Set the wxStation filename for a ninja
     *
@@ -1101,12 +1112,17 @@ public:
     void reset();
     void cancel();
     void cancelAndReset();
+
+    std::vector<std::string> wxList;
 protected:
     std::vector<ninja*> ninjas;
+    std::string tz;
 
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
+    
+    
 };
 
 #endif /* NINJA_ARMY_H */

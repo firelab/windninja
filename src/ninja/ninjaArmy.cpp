@@ -181,42 +181,81 @@ std::string ninjaArmy::fetch_wxForecast(eWxModelType modelType, int nHours, std:
  */
 void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
 {
+    wxModelInitialization* model;
+    
+    tz = timeZone;
+    
+    //for a list of paths forecast files
+    if( strstr( forecastFilename.c_str(), ".csv" ) ){
+        FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
+        //std::vector<std::string> wxList;
+        while(1){
+            const char* f = CPLReadLine(fcastList);
+            if (f == NULL)
+                    break;
+            wxList.push_back(f);
+        }
+        VSIFClose(fcastList);
+        
+        model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
+        
+        ninjas.resize(wxList.size());
+        
+        for(unsigned int i = 0; i < wxList.size(); i++)
+        {
+            ninjas[i] = new ninja();
+        }
+        
+        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+        
+        for(unsigned int i = 0; i < wxList.size(); i++)
+        {
+            ninjas[i]->set_date_time(timeList[0]);
+            ninjas[i]->set_wxModelFilename(wxList[i]);
+            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+        }       
+    }
+    
+    
     //Factory function that identifies the type of forecast file and makes appropriate class.
-    wxModelInitialization* model =
-            wxModelInitializationFactory::makeWxInitialization(forecastFilename);
-    try
-    {
-        model->checkForValidData();
-    }
-    catch(armyException &e)
-    {
-        std::cout << "Bad forecast file, exiting" << endl;
-        throw;
-    }
-    std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-    ninjas.resize(timeList.size());
-    //reallocate ninjas after resizing
-    for(unsigned int i = 0; i < timeList.size(); i++)
-    {
-        ninjas[i] = new ninja();  //wxModelInitializations only for ninjas now (not ninjafoams)
-    }
+    else{
+        model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
 
-    for(unsigned int i = 0; i < timeList.size(); i++)
-    //int i = 0;
-    //FOR_EVERY( iter_ninja, ninjas )
-    {
-        ninjas[i]->set_date_time(timeList[i]);
-        ninjas[i]->set_wxModelFilename(forecastFilename);
-        ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-        ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+        try
+        {
+            model->checkForValidData();
+        }
+        catch(armyException &e)
+        {
+            std::cout << "Bad forecast file, exiting" << endl;
+            throw;
+        }
+        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+        ninjas.resize(timeList.size());
+        //reallocate ninjas after resizing
+        for(unsigned int i = 0; i < timeList.size(); i++)
+        {
+            ninjas[i] = new ninja();  //wxModelInitializations only for ninjas now (not ninjafoams)
+        }
 
-        /*iter_ninja->set_date_time( timeList[i] );
-        iter_ninja->set_wxModelFilename( forecastFilename );
-        iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
-        iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-        i++;*/
+        for(unsigned int i = 0; i < timeList.size(); i++)
+        //int i = 0;
+        //FOR_EVERY( iter_ninja, ninjas )
+        {
+            ninjas[i]->set_date_time(timeList[i]);
+            ninjas[i]->set_wxModelFilename(forecastFilename);
+            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+
+            /*iter_ninja->set_date_time( timeList[i] );
+            iter_ninja->set_wxModelFilename( forecastFilename );
+            iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
+            iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
+            i++;*/
+        }
     }
-    delete model;
+    //delete model;
 }
 
 void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
@@ -308,6 +347,8 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
         std::vector<int> anErrors( numProcessors);
         std::vector<std::string>asMessages( numProcessors );
+        
+        std::vector<boost::local_time::local_date_time> timeList; 
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -315,8 +356,22 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             try
             {
+                //list of paths to forecast files, possibly in various zip archives
+                if( wxList.size() > 1 )
+                {
+                    wxModelInitialization* model;
+                    model = wxModelInitializationFactory::makeWxInitialization(wxList[i]); 
+                
+                    timeList = model->getTimeList(tz);
+                    ninjas[i]->set_date_time(timeList[0]);
+                    ninjas[i]->set_wxModelFilename( wxList[i] );
+                    ninjas[i]->set_date_time( timeList[0] ) ;
+                    
+                    delete model;
+                }
                 //start the run
                ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+               
 
             }catch (bad_alloc& e)
             {
@@ -755,6 +810,11 @@ int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptio
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
  *-----------------------------------------------------------------------------*/
+int ninjaArmy::setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions)
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_wxModelFilename( wx_filename ) );
+}
+
 int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
@@ -1033,6 +1093,7 @@ int ninjaArmy::setDateTime( const int nIndex, int const &yr, int const &mo, int 
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_date_time( yr, mo, day, hr, min, sec, timeZoneString ) );
 }
+
 int ninjaArmy::setWxStationFilename( const int nIndex, const std::string station_filename,
                           char ** papszOptions )
 {
