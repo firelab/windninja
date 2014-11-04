@@ -269,6 +269,7 @@ ninja &ninja::operator=(const ninja &rhs)
  */
 bool ninja::simulate_wind()
 {
+
 	checkCancel();
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
@@ -285,7 +286,6 @@ bool ninja::simulate_wind()
 	    out << "Simulation time is " << input.ninjaTime;
 	    input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
 	}
-
 
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -366,7 +366,6 @@ bool ninja::simulate_wind()
 	#endif
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-
 	//generate mesh
 	mesh.buildStandardMesh(input);
 
@@ -2516,7 +2515,9 @@ void ninja::interp_uvw()
         double h2, h1=0.0, slopeu, slopev, slopew, uu, vv, ww, intermedval;
         windProfile profile;
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
+
                                                                         //make sure rough_h is set to zero if profile switch is 0 or 2
+        double r;
 #pragma omp for
         for(i=0;i<VelocityGrid.get_nRows();i++)
         {
@@ -3898,7 +3899,7 @@ void ninja::prepareOutput()
 {
 	VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
-
+	
 	if(!isNullRun)
 		interp_uvw();
 
@@ -4584,9 +4585,14 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
             OutputWriter output;
             
             output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
+            output.setRunNumber(input.inputsRunNumber);
+            output.setMaxRunNumber(input.armySize-1);
 
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid);
+			
+			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
+
 			
 #ifdef EMISSIONS
 			if(input.dustFlag == 1){
@@ -5016,6 +5022,10 @@ WindNinjaInputs::eVegetation ninja::get_eVegetationType(std::string veg)
     else{
         throw std::logic_error("Problem with vegetation string in ninja::get_vegetation().");
     }
+}
+void ninja::setArmySize(int n)
+{
+    input.armySize = n;
 }
 
 #ifdef STABILITY
@@ -5588,6 +5598,18 @@ void ninja::set_uniCloudCover(double cloud_cover, coverUnits::eCoverUnits units)
     input.cloudCover = cloud_cover;
 }
 
+/**
+ * Sets the in-memory datasets for GTiff output writer.
+ * @param hSpdMemDS Name of the in-memory speed dataset.
+ * @param hDirMemDS Name of the in-memory direction dataset.
+ * @param hDustMemDS Name of the in-memory dust dataset.
+ */
+void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs)
+{
+    input.hSpdMemDs = hSpdMemDs;
+    input.hDirMemDs = hDirMemDs;
+    input.hDustMemDs = hDustMemDs;
+}
 
 /**
  * Sets the filename for a weather model initialization run.

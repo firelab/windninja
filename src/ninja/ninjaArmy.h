@@ -38,13 +38,13 @@
 #include "ninjafoam.h"
 #endif
 
-#include "ninja.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
 #include "ninja_errors.h"
 #include <algorithm>
 #include "boost/typeof/typeof.hpp"
+#include "WindNinjaInputs.h"
 
 /*-----------------------------------------------------------------------------
  *  Helper Macros
@@ -1112,6 +1112,10 @@ public:
     void reset();
     void cancel();
     void cancelAndReset();
+    
+    GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
+    GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
+    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer
 
     std::vector<std::string> wxList;
 protected:

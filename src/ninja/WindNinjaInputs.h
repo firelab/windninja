@@ -97,6 +97,11 @@ public:
     char lastComString[NINJA_MSG_SIZE];
     int inputsRunNumber;
     ninjaComClass::eNinjaCom inputsComType;
+    
+    int armySize; 
+    GDALDatasetH hSpdMemDs;
+    GDALDatasetH hDirMemDs;
+    GDALDatasetH hDustMemDs;
 
 
     //DEM input

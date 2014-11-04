@@ -33,6 +33,10 @@ WindNinjaInputs::WindNinjaInputs()
 : ninjaTime(boost::local_time::not_a_date_time)
 {
     //Initialize variables
+    hSpdMemDs = NULL;
+    hDirMemDs = NULL;
+    hDustMemDs = NULL;
+    armySize = 1;
     vegetation = WindNinjaInputs::trees;
     initializationMethod = WindNinjaInputs::noInitializationFlag;
     inputSpeedUnits = velocityUnits::milesPerHour;
@@ -157,6 +161,11 @@ WindNinjaInputs::~WindNinjaInputs()
 WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 : ninjaTime(boost::local_time::not_a_date_time)
 {
+  armySize = rhs.armySize;
+  hSpdMemDs = rhs.hSpdMemDs;
+  hDirMemDs = rhs.hDirMemDs;
+  hDustMemDs = rhs.hDustMemDs;
+  
   vegetation = rhs.vegetation;
 
   initializationMethod = rhs.initializationMethod;
@@ -298,6 +307,11 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
     {
       //ninjaCom stuff
       Com = NULL;   //must be set to null!
+      armySize = rhs.armySize;
+      hSpdMemDs = rhs.hSpdMemDs;
+      hDirMemDs = rhs.hDirMemDs;
+      hDustMemDs = rhs.hDustMemDs;
+      
       vegetation = rhs.vegetation;
 
       initializationMethod = rhs.initializationMethod;

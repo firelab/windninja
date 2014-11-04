@@ -188,7 +188,6 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
     //for a list of paths forecast files
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
-        //std::vector<std::string> wxList;
         while(1){
             const char* f = CPLReadLine(fcastList);
             if (f == NULL)
@@ -214,6 +213,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
             ninjas[i]->set_wxModelFilename(wxList[i]);
             ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+            ninjas[i]->setArmySize(wxList.size());
         }       
     }
     
@@ -349,6 +349,21 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<std::string>asMessages( numProcessors );
         
         std::vector<boost::local_time::local_date_time> timeList; 
+        
+        //create MEM datasets for GTiff output writer
+        ninjas[0]->readInputFile();
+        ninjas[0]->set_position();
+        ninjas[0]->set_uniVegetation();
+        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
+        
+        int nXSize = ninjas[0]->input.dem.get_nCols(); //57; 
+        int nYSize = ninjas[0]->input.dem.get_nRows(); //70; 
+    
+        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+        
+        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+        hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -365,7 +380,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     timeList = model->getTimeList(tz);
                     ninjas[i]->set_date_time(timeList[0]);
                     ninjas[i]->set_wxModelFilename( wxList[i] );
-                    ninjas[i]->set_date_time( timeList[0] ) ;
+                    ninjas[i]->set_date_time( timeList[0] );
+                    //set in-memory datasets for GTiff output writer
+                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS); 
                     
                     delete model;
                 }

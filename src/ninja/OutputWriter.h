@@ -56,7 +56,6 @@
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
-
 #include "ninjaException.h"
 
 
@@ -91,6 +90,10 @@ class OutputWriter
 #endif
         void setDEMfile(std::string fname) {demFile=fname;}
         void setNinjaTime(std::string t) {ninjaTime=t;}
+        void setRunNumber(int n) {runNumber=n;}
+        void setMaxRunNumber(int n) {maxRunNumber=n;}
+        
+        void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -104,7 +107,7 @@ class OutputWriter
         /* ====================  METHODS       ======================================= */
         void _createOGRFileWithFields();
         bool _writePDF(std::string filename);
-        bool _writeGTiff(std::string filename);
+        bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
         
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
@@ -112,6 +115,12 @@ class OutputWriter
 #ifdef EMISSIONS
         AsciiGrid<double> dust;
 #endif
+        int runNumber;
+        int maxRunNumber;
+        GDALDatasetH hSpdMemDs;
+        GDALDatasetH hDirMemDs;
+        GDALDatasetH hDustMemDs;
+        
         std::string ninjaTime;
         double resolution;
         std::string demFile;
