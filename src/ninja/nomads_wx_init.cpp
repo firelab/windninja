@@ -4,7 +4,7 @@
  *
  * Project:  WindNinja
  * Purpose:  Nomads weather model initialization
- * Author:   Kyle Shannon <kyle@pobox.com>
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -521,6 +521,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         if( !EQUAL( "10-HTGL", pszShortName ) &&
             !EQUAL( "2-HTGL", pszShortName ) &&
             !EQUAL( "0-EATM", pszShortName ) &&
+            !EQUAL( "0-CCY", pszShortName ) &&
             !EQUAL( "0-RESERVED(10)", pszShortName ) )
         {
             continue;

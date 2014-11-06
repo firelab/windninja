@@ -4,7 +4,7 @@
  *
  * Project:  WindNinja
  * Purpose:  Nomads weather model initialization
- * Author:   Kyle Shannon <kyle@pobox.com>
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
