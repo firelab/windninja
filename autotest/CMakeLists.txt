@@ -55,8 +55,8 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 #Copy over surface_data folder, necessary for custom gdal_fetch
-FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/surface_data
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+#FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/surface_data
+#     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
 # *****************************************************************************
