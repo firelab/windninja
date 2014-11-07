@@ -3,10 +3,15 @@ WindNinja
 
 WindNinja is a mass consistent wind model developed for use in fire modeling.
 
+Web:
 http://www.windninja.firemodels.org
+
+Source & wiki:
+https://github.com/firelab/windninja
+
+Legacy hosting/wiki:
 https://collab.firelab.org/software/projects/windninja
 https://collab.firelab.org/svn/windninja
-https://github.com/firelab/windninja
 
 Directories:
  * autotest    -> testing suite
