@@ -60,7 +60,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
 
     VSIStatBufL sStat;
     VSIStatL( fileName.c_str(), &sStat );
-    if( !VSI_ISDIR( sStat.st_mode ) && strstr( fileName.c_str(), ".tar" ) )
+    if( strstr( fileName.c_str(), ".tar" ) )
     {
         if(ncepNamGrib2Surf.identify(fileName)) {
             ncepNamGrib2Surf.setModelFileName( fileName );
