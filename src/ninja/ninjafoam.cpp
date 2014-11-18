@@ -112,19 +112,6 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     
-    
-    /*cout<<"Rd = "<<input.surface.Rough_d(0,0)<<endl;
-    cout<<"z0 = "<<input.surface.Roughness(0,0)<<endl;
-    
-    cout<<"input speed = "<<input.inputSpeed<<endl;
-    cout<<"input direction = "<<input.inputDirection<<endl;
-    
-    cout<<"foam direction = "<<direction[0]<<", "<<direction[1]<<", "<<direction[2]<<endl;
-        
-    cout<<"length inlets = "<<inlets.size()<<endl;
-    cout<<"inlets = "<<inlets[0]<<endl;*/
-
-    
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
 	#endif
@@ -524,12 +511,14 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     ReplaceKeys(s, "$terrainName$", "patch0"); //binary stl file
     //ReplaceKeys(s, "$terrainName$", terrainName); //ascii stl file
     
+    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
+    
     if(input.nonEqBc == 0){
         if(std::string(pszFilename) == "epsilon"){
             ReplaceKeys(s, "$wallFunction$", "epsilonWallFunction");
         }
         else if(std::string(pszFilename) == "nut"){
-            ReplaceKeys(s, "$wallFunction$", "nutWallFunction");
+            ReplaceKeys(s, "$wallFunction$", "nutkWallFunction");
         }
     }
     else{
