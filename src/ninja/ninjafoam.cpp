@@ -1562,7 +1562,7 @@ int NinjaFoam::CheckMesh()
     
     const char *const papszArgv[] = { "checkMesh", NULL };
     
-    VSILFILE *fout = VSIFOpenL("log", "w");
+    VSILFILE *fout = VSIFOpenL("log.checkmesh", "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
     
