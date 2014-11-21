@@ -139,7 +139,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     char nil[80];
     memset( nil, '\0', 80 );
 
-    nTriCount = nXSize * nYSize * 2;
+    nTriCount = (nXSize-1) * (nYSize-1) * 2; //cell centers are vertices
     nAttrCount = 0;
 
     float fXOffset, fYOffset;
