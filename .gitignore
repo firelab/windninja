@@ -29,3 +29,8 @@
 
 # Build folder
 build
+
+# vim
+*.swo
+*.swp
+
