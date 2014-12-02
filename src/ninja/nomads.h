@@ -71,17 +71,29 @@ extern "C" {
 #endif /* NOMADS_ENABLE_ASYNC */
 
 /*
-** XXX: Document me.
+** In earlier versions of GDAL, the thread api has an issue with CURL failing
+** to lookup the ip from the hostname using DNS.  This is an attempt to work
+** around that.  It has been fixed in GDAL 1.11.x.  Older versions may want to
+** try defining NOMADS_USE_IP.
 */
-
 #define NOMADS_IP                        "140.90.101.62"
 #define NOMADS_HOST                      "nomads.ncep.noaa.gov"
 
+/* Host for NOMADS */
 #define NOMADS_URL_CGI_HOST              "http://" NOMADS_HOST "/cgi-bin/"
 #define NOMADS_URL_CGI_IP                "http://" NOMADS_IP "/cgi-bin/"
 
+/*
+** cgi path, ignoring the IP issues, not used but left in for reference.  Use
+** the two constant urls above.
+*/
 #define NOMADS_URL_CGI                   "http://nomads.ncep.noaa.gov/cgi-bin/"
 
+/*
+** NAM based defaults.  Most models are derived or based on NAM, so we can use
+** NAM variables and levels for many submodels.  Thes #defines are variable
+** names and heights for NAM.  Use when possible.
+*/
 #define NOMADS_GENERIC_VAR_LIST          "TCDC,TMP,UGRD,VGRD"
 #define NOMADS_GENERIC_3D_VAR_LIST       "DZDT,HGT," NOMADS_GENERIC_VAR_LIST
 #define NOMADS_GENERIC_LEVELS_LIST       "2_m_above_ground,10_m_above_ground," \
@@ -94,8 +106,10 @@ extern "C" {
                                          "575_mb,550_mb,525_mb,500_mb," \
                                          "entire_atmosphere_(considered_as_a_single_layer)"
 
+/* arg list for bounding box */
 #define NOMADS_SUBREGION                 "&subregion=&leftlon=%lf&rightlon=%lf&toplat=%lf&bottomlat=%lf"
 
+/* More NAM based defaults */
 #define NOMADS_GENERIC_DIR               "nam.%s"
 #define NOMADS_GENERIC_DATE              "%Y%m%d"
 #define NOMADS_GENERIC_FCST_HOURS        "0:18:6"
@@ -120,12 +134,12 @@ extern "C" {
 ** NOMADS_LEVELS          8       Levels list
 ** NOMADS_GRID_RES        9       Horizontal resolution, as "value unit"
 **                                ("0.5 deg" or "12 km")
-** NOMADS_HUMAN_READABLE  1      Human readable name
+** NOMADS_HUMAN_READABLE  10     Human readable name
 **
 ** The models are listed in the same order as found on the web page.  Models
 ** not yet implemented (or may never be) are marked with XXX.
 **
-** XXX: Do not forget commas after the constants defined above!!!
+** XXX: Do not forget commas after the constants defined above!!! XXX
 */
 
 #define NOMADS_NAME                 0
