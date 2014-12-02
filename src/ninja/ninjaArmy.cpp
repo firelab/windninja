@@ -387,10 +387,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete model;
                 }
                 //start the run
-               ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+                ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
                
-               delete ninjas[i];
-               ninjas[i] = NULL;
+                if( wxList.size() > 1 )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
 
             }catch (bad_alloc& e)
             {
