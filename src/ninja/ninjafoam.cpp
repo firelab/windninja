@@ -990,7 +990,7 @@ int NinjaFoam::readLogFile(int &ratio_)
     double expansionRatio;
     
     volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
-    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // volume away from terrain
+    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
     
     cellCount1 = input.meshCount * 0.5; // cell count in volume 1
     cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
