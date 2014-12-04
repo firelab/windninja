@@ -239,7 +239,7 @@ void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src )
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt )
 {
     if( !u )
-        return;
+        return NULL;
     strftime( u->s, NOMADS_UTC_STRFTIME_SIZE, frmt, u->ts );
     return u->s;
 }
