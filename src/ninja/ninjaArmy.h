@@ -371,8 +371,17 @@ public:
     */
     int setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL );
     
-    
-#endif
+    /**
+    * \brief Set the type of mesh for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param nMeshType Mesh type (snappyHexMesh or terrainBlockMesh)
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMeshType( const int nIndex, 
+                     const WindNinjaInputs::eMeshType meshType, 
+                     char ** papszOptions=NULL );
+#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Forecast Model Methods

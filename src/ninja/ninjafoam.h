@@ -98,6 +98,7 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
+    int writeTerrainBlockMesh();
     int writeBlockMesh();
     int readLogFile(int &ratio);
     int writeSnappyMesh();
@@ -122,6 +123,7 @@ private:
     
     int SurfaceTransformPoints();
     int SurfaceCheck();
+    int TerrainBlockMesher();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
     int SnappyHexMesh();

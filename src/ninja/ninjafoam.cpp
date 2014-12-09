@@ -187,7 +187,6 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
-    
     //move back to ninja working directory
     status = chdir("../");
     if(status != 0){
@@ -199,25 +198,30 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
 	#endif
-    
+	
+	/*-------------------------------------------------------------------*/
+    /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
-    /*  write contstant/polyMesh/blockMeshDict                           */
-    /*-------------------------------------------------------------------*/
+	
+    CPLDebug("NINJAFOAM", "input.meshType = %d", input.meshType);
     
-    //reads from log.json created from surfaceCheck
-    status = writeBlockMesh();
-    if(status != 0){
-        //do something
+    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
+        status = writeTerrainBlockMesh();
+        if(status != 0){
+            //do something
+        }
     }
+    else{ //use snappyHexMesh 
+        //reads from log.json created from surfaceCheck
+        status = writeBlockMesh();
+        if(status != 0){
+            //do something
+        }
     
-    
-    /*-------------------------------------------------------------------*/
-    /*  write system/snappyHexMeshDict_cast|layer                        */
-    /*-------------------------------------------------------------------*/
-    
-    status = writeSnappyMesh();
-    if(status != 0){
-        //do something
+        status = writeSnappyMesh();
+        if(status != 0){
+            //do something
+        }
     }
     
     #ifdef _OPENMP
@@ -225,7 +229,7 @@ bool NinjaFoam::simulate_wind()
 	#endif
     
     /*-------------------------------------------------------------------*/
-    /* execute commands in run.bat                                       */
+    /* create the mesh                                                   */
     /*-------------------------------------------------------------------*/
     VSILFILE *fout; 
     
@@ -240,48 +244,62 @@ bool NinjaFoam::simulate_wind()
 	#endif
 	
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-    status = BlockMesh();
-    if(status != 0){
-        //do something
-    }
     
-    if(input.numberCPUs > 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
-        fout = VSIFOpenL("logMesh", "w");
-        status = DecomposePar(fout);
+    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
+        status= TerrainBlockMesher();
+        if(status != 0){
+        //do something
+        }
+    }
+    else{ // use snappyHexMesh
+        status = BlockMesh();
+        if(status != 0){
+            //do something
+        }
+    
+        if(input.numberCPUs > 1){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
+            fout = VSIFOpenL("logMesh", "w");
+            status = DecomposePar(fout);
+            if(status != 0){
+            //do something
+            }
+        }
+    
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
+        status = SnappyHexMesh();
+        if(status != 0){
+            //do something
+        }
+    
+        if(input.numberCPUs > 1){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+            fout = VSIFOpenL("logMesh", "w");
+            status = ReconstructParMesh("-constant", fout);
+            if(status != 0){
+                //do something
+            }
+        }
+    
+        if(input.numberCPUs > 1){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
+            status = RenumberMesh();
+            if(status != 0){
+                //do something
+            }
+        }
+    
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
+        status = CheckMesh();
         if(status != 0){
             //do something
         }
     }
     
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
-    status = SnappyHexMesh();
-    if(status != 0){
-        //do something
-    }
+    /*-------------------------------------------------------------------*/
+    /* Apply initial and boundary conditions                             */
+    /*-------------------------------------------------------------------*/
     
-    if(input.numberCPUs > 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-        fout = VSIFOpenL("logMesh", "w");
-        status = ReconstructParMesh("-constant", fout);
-        if(status != 0){
-            //do something
-        }
-    }
-    
-    if(input.numberCPUs > 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
-        status = RenumberMesh();
-        if(status != 0){
-            //do something
-        }
-    }
-    
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
-    status = CheckMesh();
-    if(status != 0){
-        //do something
-    }
     
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
@@ -293,6 +311,11 @@ bool NinjaFoam::simulate_wind()
     if(status != 0){
         //do something
     }
+    
+    
+    /*-------------------------------------------------------------------*/
+    /* Solve for the flow field                                          */
+    /*-------------------------------------------------------------------*/
     
     #ifdef _OPENMP
     endInit = omp_get_wtime();
@@ -327,6 +350,10 @@ bool NinjaFoam::simulate_wind()
         }
     }
     
+    /*-------------------------------------------------------------------*/
+    /* Sample at requested output height                                 */
+    /*-------------------------------------------------------------------*/
+    
     #ifdef _OPENMP
     endSolve = omp_get_wtime();
     startOutputSampling = omp_get_wtime();
@@ -357,7 +384,7 @@ bool NinjaFoam::simulate_wind()
     #endif
 	
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
-
+    
 	status = WriteOutputFiles();
     if(status != 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
@@ -447,9 +474,18 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
+    //ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(0.03));
     ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)));
+    //ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(0.0));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
+    
+    //CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(0.03).c_str());
+    //CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(0.0).c_str());
+    CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)).c_str());
+    CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)).c_str());
+    CPLDebug("NINJAFOAM", "U_freestream = %s", boost::lexical_cast<std::string>(input.inputSpeed).c_str());
+    CPLDebug("NINJAFOAM", "Input wind height = %s", boost::lexical_cast<std::string>(input.inputWindHeight).c_str());
     
     dataString.append(s);
     
@@ -1021,6 +1057,87 @@ int NinjaFoam::readLogFile(int &ratio_)
     return NINJA_SUCCESS;
 }
 
+int NinjaFoam::writeTerrainBlockMesh()
+{
+    const char *pszInput;
+    const char *pszOutput;
+    const char *pszPath;
+    const char *pszArchive;
+    
+    int ratio_;
+    
+    int status;
+    status = readLogFile(ratio_);
+    if(status != 0){
+        //do something
+    }
+    
+    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
+    
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/terrainBlockMesherDict", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/terrainBlockMesherDict", "");
+    
+    VSILFILE *fin;
+    VSILFILE *fout;
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    
+    std::string s(data);
+    int pos; 
+    int len;
+    
+    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    
+    ReplaceKeys(s, "$llx$", boost::lexical_cast<std::string>(bbox[0]));
+    ReplaceKeys(s, "$lly$", boost::lexical_cast<std::string>(bbox[1]));
+    ReplaceKeys(s, "$llz$", boost::lexical_cast<std::string>(input.dem.get_cellValue(0,0)));
+    ReplaceKeys(s, "$xLength$", boost::lexical_cast<std::string>(bbox[3] - bbox[0]));
+    ReplaceKeys(s, "$yLength$", boost::lexical_cast<std::string>(bbox[4] - bbox[1]));
+    ReplaceKeys(s, "$zLength$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 3000));
+    
+    /*ReplaceKeys(s, "$llx$", boost::lexical_cast<std::string>(input.dem.get_xllCorner()));
+    ReplaceKeys(s, "$lly$", boost::lexical_cast<std::string>(input.dem.get_yllCorner()));
+    ReplaceKeys(s, "$llz$", boost::lexical_cast<std::string>(input.dem.get_cellValue(0,0)));
+    ReplaceKeys(s, "$xLength$", boost::lexical_cast<std::string>(input.dem.get_nCols() * input.dem.get_cellSize()));
+    ReplaceKeys(s, "$yLength$", boost::lexical_cast<std::string>(input.dem.get_nRows() * input.dem.get_cellSize()));
+    ReplaceKeys(s, "$zLength$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 3000));*/
+    
+    double xCenter = 0;
+    double yCenter = 0;
+    
+    input.dem.get_gridCenter(&xCenter, &yCenter);
+    
+    ReplaceKeys(s, "$x_pAbove$", boost::lexical_cast<std::string>(xCenter));
+    ReplaceKeys(s, "$y_pAbove$", boost::lexical_cast<std::string>(yCenter));
+    ReplaceKeys(s, "$z_pAbove$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 1000));
+    
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    
+    //cout<<"d = "<<d<<endl;
+        
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout); 
+    
+    return NINJA_SUCCESS;
+
+}
+
 int NinjaFoam::writeBlockMesh()
 {
     const char *pszInput;
@@ -1285,6 +1402,21 @@ int NinjaFoam::SurfaceCheck()
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //writes log.json used in mesh file writing
 
     VSIFCloseL(fout);
+    
+    return nRet;
+}
+
+int NinjaFoam::TerrainBlockMesher()
+{
+    int nRet = -1;
+    
+    const char *const papszArgv[] = { "terrainBlockMesher", NULL };
+    
+    VSILFILE *fout = VSIFOpenL("log.terrainMesher", "w");
+    
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    
+    VSIFCloseL(fout);   
     
     return nRet;
 }
@@ -1709,6 +1841,7 @@ int NinjaFoam::SanitizeOutput()
                          "U_triSurfaceSampling.raw", pszTempPath,
                          input.nIterations );
 
+
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -1744,6 +1877,7 @@ int NinjaFoam::SanitizeOutput()
     }
     VSIFClose( fin );
     VSIFCloseL( fout );
+    
     return 0;
 }
 
