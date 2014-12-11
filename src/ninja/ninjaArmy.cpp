@@ -835,6 +835,11 @@ int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptio
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
 }
 
+int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
+}
+
 #endif
 
 /*-----------------------------------------------------------------------------

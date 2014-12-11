@@ -310,6 +310,7 @@ public:
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eMeshType get_eMeshType(std::string meshType);
     void set_MeshType(WindNinjaInputs::eMeshType meshType); //mesh type for a ninjafoam run (snappyHexMesh or terrainBlockMesh)
+    void set_StlFile(std::string stlFile); 
 #endif
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees

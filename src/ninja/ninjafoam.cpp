@@ -165,6 +165,15 @@ bool NinjaFoam::simulate_wind()
     
     checkCancel();
     
+    if(input.stlFile != "!set"){
+        status = ReadStl();
+        
+        if(status != 0){
+        //do something
+        }
+    }
+
+    
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
@@ -410,7 +419,7 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
 	#endif 
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
     
     //VSIUnlink(pszTempPath);
@@ -1107,13 +1116,6 @@ int NinjaFoam::writeTerrainBlockMesh()
     ReplaceKeys(s, "$xLength$", boost::lexical_cast<std::string>(bbox[3] - bbox[0]));
     ReplaceKeys(s, "$yLength$", boost::lexical_cast<std::string>(bbox[4] - bbox[1]));
     ReplaceKeys(s, "$zLength$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 3000));
-    
-    /*ReplaceKeys(s, "$llx$", boost::lexical_cast<std::string>(input.dem.get_xllCorner()));
-    ReplaceKeys(s, "$lly$", boost::lexical_cast<std::string>(input.dem.get_yllCorner()));
-    ReplaceKeys(s, "$llz$", boost::lexical_cast<std::string>(input.dem.get_cellValue(0,0)));
-    ReplaceKeys(s, "$xLength$", boost::lexical_cast<std::string>(input.dem.get_nCols() * input.dem.get_cellSize()));
-    ReplaceKeys(s, "$yLength$", boost::lexical_cast<std::string>(input.dem.get_nRows() * input.dem.get_cellSize()));
-    ReplaceKeys(s, "$zLength$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 3000));*/
     
     double xCenter = 0;
     double yCenter = 0;
@@ -2225,10 +2227,11 @@ int NinjaFoam::WriteOutputFiles()
     /*-------------------------------------------------------------------*/
     /* convert output from xyz to speed and direction                    */
     /*-------------------------------------------------------------------*/
-    
+
     AsciiGrid<double> foamU, foamV;
     int rc;
     rc = SanitizeOutput();
+
     if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_GDALGRID", "NO" ) ) )
         rc = SampleCloudGrid();
     else
@@ -2450,3 +2453,48 @@ int NinjaFoam::WriteOutputFiles()
 	return true;
 }
 
+int NinjaFoam::ReadStl()
+{
+    //set working directory to pszTempPath
+    int status = chdir(pszTempPath);
+    if(status != 0){
+        //do something
+    }
+    
+    VSILFILE *ffin;
+    VSILFILE *ffout;
+    
+    ffin = VSIFOpenL( input.stlFile.c_str(), "r" );
+    ffout = VSIFOpenL( ("constant/triSurface/%s", CPLGetFilename(input.stlFile.c_str()) ), "w" );
+
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(ffin, 0, SEEK_END);
+    offset = VSIFTellL(ffin);
+
+    VSIRewindL(ffin);
+    data = (char*)CPLMalloc(offset * sizeof(char));
+    VSIFReadL(data, offset, 1, ffin);
+        
+    //cout<<"data = "<<data<<endl;
+    
+    VSIFWriteL(data, offset, 1, ffout);
+        
+    CPLFree(data);
+    VSIFCloseL(ffin); 
+    VSIFCloseL(ffout); 
+    
+    status = chdir("../");
+    if(status != 0){
+        //do something
+    }
+    
+    //move back to ninja working directory
+    status =  chdir("../");
+    if(status != 0){
+        //do something
+    }
+    
+    return true;
+}

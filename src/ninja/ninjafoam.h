@@ -134,6 +134,7 @@ private:
     int ApplyInit();
     int SimpleFoam();
     int Sample();
+    int ReadStl();
 
     /* GDAL/OGR output */
     const char *pszVrtMem;

@@ -5117,6 +5117,12 @@ void ninja::set_MeshType(WindNinjaInputs::eMeshType meshType)
 
     input.meshType = meshType;
 }
+
+void ninja::set_StlFile(std::string stlFile)
+{
+    input.stlFile = stlFile;
+}
+
 #endif
 
 

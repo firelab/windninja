@@ -133,6 +133,7 @@ WindNinjaInputs::WindNinjaInputs()
     meshCount = 1000000;
     nonEqBc = false;
     meshType = WindNinjaInputs::SHM;
+    stlFile = "!set";
 #endif
     
     outputPointsFilename = "!set";
@@ -196,6 +197,7 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     meshCount = rhs.meshCount;
     nonEqBc = rhs.nonEqBc;
     meshType = rhs.meshType;
+    stlFile = rhs.stlFile;
 #endif
   outputPointsFilename = rhs.outputPointsFilename;
   inputPointsFilename = rhs.inputPointsFilename;
@@ -348,6 +350,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       meshCount = rhs.meshCount;
       nonEqBc = rhs.nonEqBc;
       meshType = rhs.meshType;
+      stlFile = rhs.stlFile;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;

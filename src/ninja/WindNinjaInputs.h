@@ -287,6 +287,7 @@ public:
     std::string meshCoice; // fine, medium, coarse
     eMeshType meshType; //TBM (terrainBlockMesh), SHM (snappyHexMesh)
     bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
+    std::string stlFile; //path/filename of an STL file
 
 #endif
 };

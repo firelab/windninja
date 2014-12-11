@@ -381,6 +381,16 @@ public:
     int setMeshType( const int nIndex, 
                      const WindNinjaInputs::eMeshType meshType, 
                      char ** papszOptions=NULL );
+        
+    /**
+    * \brief Set the type of STL file for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of STL file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setStlFile( const int nIndex, const std::string stlFile, char ** papszOptions=NULL );
+    
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
