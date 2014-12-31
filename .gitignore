@@ -34,3 +34,13 @@ build
 *.swo
 *.swp
 
+# Qt Creator files
+*.config
+*.creator*
+*.files
+*.includes
+
+# Weather model files
+*NCAR*
+*NOMADS*
+
