@@ -3913,143 +3913,146 @@ void ninja::prepareOutput()
 	/*
 	 * Interpolate u, v, w to specific locations if an input_points_file is provided
      */
+#pragma omp critical
+    {
+        if(input.inputPointsFilename != "!set"){
+            element elem(&mesh);
+            double new_u, new_v, new_w;
+            double lat, lon;
+            std::string pointName;
+            double u_coord, v_coord, w_coord, x, y, z, height_above_ground;
+            double z_ground, z_temp;
+            int elem_i, elem_j, elem_k, elem_num;
+            windProfile profile;
+            profile.profile_switch = windProfile::monin_obukov_similarity;
 
-	if(input.inputPointsFilename != "!set"){
-        element elem(&mesh);
-        double new_u, new_v, new_w;
-        double lat, lon;
-        std::string pointName;
-        double u_coord, v_coord, w_coord, x, y, z, height_above_ground;
-        double z_ground, z_temp;
-        int elem_i, elem_j, elem_k, elem_num;
-        windProfile profile;
-        profile.profile_switch = windProfile::monin_obukov_similarity;
+            std::vector<boost::local_time::local_date_time> times;
+            std::string dt;
 
-        std::vector<boost::local_time::local_date_time> times;
-        std::string dt;
+            if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
+                times = (wxInit->getTimeList(input.ninjaTimeZone));
+                dt =  boost::lexical_cast<std::string>(input.ninjaTime);
+            }
 
-	    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
-            times = (wxInit->getTimeList(input.ninjaTimeZone));
-            dt =  boost::lexical_cast<std::string>(input.ninjaTime);
-	    }
+            FILE *output;
 
-        FILE *output;
-
-        if(input.outputPointsFilename != "!set"){ //if output file name is specified
-            if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){// if it's a wx model run
-			    if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
+            if(input.outputPointsFilename != "!set"){ //if output file name is specified
+                if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){// if it's a wx model run
+                    if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
+                        output = fopen(input.outputPointsFilename.c_str(), "w");
+                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
+                            fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
+                        }
+                        else{
+                            fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v\n");
+                        }
+                    }
+                    else{ //if not the first time step, just append data
+                        output = fopen(input.outputPointsFilename.c_str(), "a"); //append new time to end of file
+                    }
+                }
+                else{ //if it's not a wx model run
                     output = fopen(input.outputPointsFilename.c_str(), "w");
-                    if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
-                        fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
+                    fprintf(output, "ID,lat,lon,height,u,v,w\n");
+                }
+            }
+            else{ //if out filename is not specified
+                if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
+                    if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
+                        output = fopen("output.txt", "w"); //append new time to end of file
+                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
+                            fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
+                        }
+                        else{//it's a 2D wx model run
+                            fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v\n");
+                        }
+                    }
+                    else{ //if not the first time step, just append data
+                        output = fopen(input.outputPointsFilename.c_str(), "a"); //append new time to end of file
+                    }
+                }
+                else{ //if not a wx model run
+                    output = fopen("output.txt", "w");
+                    fprintf(output, "ID,lat,lon,height,u,v,w\n");
+                }
+            }
+
+            for(unsigned int i = 0; i < input.lonList.size(); i++ ){
+
+                /*
+                 * Transform coords from lat/long to WN mesh space
+                 */
+                x = input.projXList[i];
+                y = input.projYList[i];
+                height_above_ground = input.heightList[i];
+                lat = input.latList[i];
+                lon = input.lonList[i];
+                pointName = input.pointsNamesList[i];
+
+                if(!input.dem.check_inBounds(x, y)){
+                    throw std::runtime_error("Requested output point is located outside of the DEM extent.");
+                }
+
+                x -= input.dem.xllCorner; //adjust to wn coords
+                y -= input.dem.yllCorner; //adjust to wn coords
+
+                elem.get_uv(x, y, elem_i, elem_j, u_coord, v_coord);
+                elem_num = mesh.get_elemNum(elem_i, elem_j, 0);
+                elem.get_xyz(elem_num, u_coord, v_coord, -1, x, y, z); // get z at ground
+                z_ground = z;
+                z += height_above_ground;
+
+                /*
+                 * Perform interpolation on u, v, w
+                 */
+                elem.get_uvw(x, y, z, elem_i, elem_j, elem_k, u_coord, v_coord, w_coord); // find elem_k for this point
+                if(elem_k == 0){//if in first layer, use log profile
+                    //profile stuff is a little weird bc we are not at nodes
+                    //profile is set based on southwest corner of current cell (elem_i, elem_j)
+                    //could interpolate these too?
+                    profile.ObukovLength = L(elem_i,elem_j);
+                    profile.ABL_height = bl_height(elem_i,elem_j);
+                    profile.Roughness = input.surface.Roughness(elem_i,elem_j);
+                    profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
+                    profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
+                    profile.AGL = height_above_ground;  // height above the ground
+
+                    elem.get_xyz(elem_num, u_coord, v_coord, 1, x, y, z_temp); // get z at first layer
+
+                    profile.inputWindHeight = z_temp - z_ground - input.surface.Rough_h(elem_i, elem_j); // height above vegetation
+                    profile.inputWindSpeed = u.interpolate(x, y, z_temp);
+
+                    new_u = profile.getWindSpeed();
+                    profile.inputWindSpeed = v.interpolate(x, y, z_temp);
+                    new_v = profile.getWindSpeed();
+                    profile.inputWindSpeed = w.interpolate(x, y, z_temp);
+                    new_w = profile.getWindSpeed();
+                }
+                else{//else use linear interpolation
+                    new_u = u.interpolate(x,y,z);
+                    new_v = v.interpolate(x,y,z);
+                    new_w = w.interpolate(x,y,z);
+                }
+
+                if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
+
+                    if(wxInit->getForecastIdentifier() == "WRF-3D"){
+                        fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
+                                new_u, new_v, new_w, wxInit->u_wxList[i], wxInit->v_wxList[i], wxInit->w_wxList[i]);
                     }
                     else{
-                        fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v\n");
+                    fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
+                            new_u, new_v, new_w, wxInit->u10List[i], wxInit->v10List[i]);
                     }
                 }
-                else{ //if not the first time step, just append data
-                    output = fopen(input.outputPointsFilename.c_str(), "a"); //append new time to end of file
+                else{ //if not a wx model run
+                   fprintf(output,"%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, new_u, new_v, new_w);
                 }
             }
-            else{ //if it's not a wx model run
-                output = fopen(input.outputPointsFilename.c_str(), "w");
-                fprintf(output, "ID,lat,lon,height,u,v,w\n");
-            }
+            fclose(output);
+
         }
-        else{ //if out filename is not specified
-            if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
-                if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
-                    output = fopen("output.txt", "w"); //append new time to end of file
-                    if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
-                        fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
-                    }
-                    else{//it's a 2D wx model run
-                        fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v\n");
-                    }
-                }
-                else{ //if not the first time step, just append data
-                    output = fopen(input.outputPointsFilename.c_str(), "a"); //append new time to end of file
-                }
-            }
-            else{ //if not a wx model run
-                output = fopen("output.txt", "w");
-                fprintf(output, "ID,lat,lon,height,u,v,w\n");
-            }
-        }
-
-        for(unsigned int i = 0; i < input.lonList.size(); i++ ){
-
-            /*
-             * Transform coords from lat/long to WN mesh space
-             */
-            x = input.projXList[i];
-            y = input.projYList[i];
-            height_above_ground = input.heightList[i];
-            lat = input.latList[i];
-            lon = input.lonList[i];
-            pointName = input.pointsNamesList[i];
-
-            if(!input.dem.check_inBounds(x, y)){
-                throw std::runtime_error("Requested output point is located outside of the DEM extent.");
-            }
-
-            x -= input.dem.xllCorner; //adjust to wn coords
-            y -= input.dem.yllCorner; //adjust to wn coords
-
-            elem.get_uv(x, y, elem_i, elem_j, u_coord, v_coord);
-            elem_num = mesh.get_elemNum(elem_i, elem_j, 0);
-            elem.get_xyz(elem_num, u_coord, v_coord, -1, x, y, z); // get z at ground
-            z_ground = z;
-            z += height_above_ground;
-
-            /*
-             * Perform interpolation on u, v, w
-             */
-            elem.get_uvw(x, y, z, elem_i, elem_j, elem_k, u_coord, v_coord, w_coord); // find elem_k for this point
-            if(elem_k == 0){//if in first layer, use log profile
-                //profile stuff is a little weird bc we are not at nodes
-                //profile is set based on southwest corner of current cell (elem_i, elem_j)
-                //could interpolate these too?
-                profile.ObukovLength = L(elem_i,elem_j);
-                profile.ABL_height = bl_height(elem_i,elem_j);
-                profile.Roughness = input.surface.Roughness(elem_i,elem_j);
-                profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
-                profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
-                profile.AGL = height_above_ground;  // height above the ground
-
-                elem.get_xyz(elem_num, u_coord, v_coord, 1, x, y, z_temp); // get z at first layer
-
-                profile.inputWindHeight = z_temp - z_ground - input.surface.Rough_h(elem_i, elem_j); // height above vegetation
-                profile.inputWindSpeed = u.interpolate(x, y, z_temp);
-
-                new_u = profile.getWindSpeed();
-                profile.inputWindSpeed = v.interpolate(x, y, z_temp);
-                new_v = profile.getWindSpeed();
-                profile.inputWindSpeed = w.interpolate(x, y, z_temp);
-                new_w = profile.getWindSpeed();
-            }
-            else{//else use linear interpolation
-                new_u = u.interpolate(x,y,z);
-                new_v = v.interpolate(x,y,z);
-                new_w = w.interpolate(x,y,z);
-            }
-
-            if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
-
-                if(wxInit->getForecastIdentifier() == "WRF-3D"){
-                    fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                            new_u, new_v, new_w, wxInit->u_wxList[i], wxInit->v_wxList[i], wxInit->w_wxList[i]);
-                }
-                else{
-                fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                        new_u, new_v, new_w, wxInit->u10List[i], wxInit->v10List[i]);
-                }
-            }
-            else{ //if not a wx model run
-               fprintf(output,"%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, new_u, new_v, new_w);
-            }
-        }
-        fclose(output);
-	}
+    }
 }
 
 /**Compares the current simulated wind field to the measured wind at points.
