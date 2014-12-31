@@ -3896,7 +3896,7 @@ void ninja::computeUVWField()
  */
 void ninja::prepareOutput()
 {
-	VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+    VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	
 	if(!isNullRun)
@@ -4262,6 +4262,7 @@ void ninja::computeDustEmissions()
 
 void ninja::writeOutputFiles(bool scalarTransportSimulation)
 {
+    
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
 	//Write volume data to VTK format (always in m/s?)
@@ -5077,6 +5078,7 @@ void ninja::set_MeshCount(int meshCount)
 {
     input.meshCount = meshCount;
 }
+
 void ninja::set_MeshCount(std::string meshChoice)
 {
     if(meshChoice == std::string("coarse")){
@@ -5096,6 +5098,34 @@ void ninja::set_NonEqBc(bool flag)
 {
     input.nonEqBc = flag;
 }
+
+WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)
+{
+    if(meshType == "TBM"){
+        return WindNinjaInputs::TBM;
+    }
+    else if(meshType == "SHM"){
+        return WindNinjaInputs::SHM;
+    }
+    else{
+        throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
+    }
+}
+
+void ninja::set_MeshType(WindNinjaInputs::eMeshType meshType)
+{
+    if( (meshType != WindNinjaInputs::SHM) &&
+        (meshType != WindNinjaInputs::TBM) )
+        throw std::logic_error("Problem with mesh type in ninja::set_MeshType().");
+
+    input.meshType = meshType;
+}
+
+void ninja::set_StlFile(std::string stlFile)
+{
+    input.stlFile = stlFile;
+}
+
 #endif
 
 

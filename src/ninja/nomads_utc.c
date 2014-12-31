@@ -98,6 +98,8 @@ void NomadsUtcNow( nomads_utc *u )
 
 void NomadsUtcFromTimeT( nomads_utc *u, time_t t )
 {
+    if( !u )
+        return;
     u->t = t;
     NomadsUpdateTimeStruct( u );
 }
@@ -236,6 +238,8 @@ void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src )
 */
 const char * NomadsUtcStrfTime( nomads_utc *u, const char *frmt )
 {
+    if( !u )
+        return NULL;
     strftime( u->s, NOMADS_UTC_STRFTIME_SIZE, frmt, u->ts );
     return u->s;
 }

@@ -387,10 +387,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete model;
                 }
                 //start the run
-               ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+                ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
                
-               delete ninjas[i];
-               ninjas[i] = NULL;
+                if( wxList.size() > 1 )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
 
             }catch (bad_alloc& e)
             {
@@ -820,10 +823,23 @@ int ninjaArmy::setMeshCount( const int nIndex, const std::string meshChoice, cha
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
 }
+int ninjaArmy::setMeshType( const int nIndex, 
+                            const WindNinjaInputs::eMeshType meshType, 
+                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshType( meshType ) );
+}
+
 int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
 }
+
+int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
+}
+
 #endif
 
 /*-----------------------------------------------------------------------------

@@ -118,7 +118,7 @@ IF(WITH_NOMADS_SUPPORT)
                       nomads_utc.c)
     IF(NOT HAVE_TIMEGM)
         MESSAGE("Using internal timegm")
-        SET(NINJA_SOURCES ${NINJA_SOURCES} timegm.cpp)
+        SET(NINJA_SOURCES ${NINJA_SOURCES} timegm.c)
     ENDIF(NOT HAVE_TIMEGM)
 ENDIF(WITH_NOMADS_SUPPORT)
 

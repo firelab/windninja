@@ -374,7 +374,9 @@ int windNinjaCLI(int argc, char* argv[])
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>()->default_value(2000), "number of iterations for momentum solver (must be a multiple of 100)") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
-                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)") 
+                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
+                ("mesh_type", po::value<std::string>(), "mesh type (SHM, TBM)")
+                ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -931,11 +933,28 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
             //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
+            #ifdef NINJAFOAM
+            if(vm["momentum_flag"].as<bool>()){
+                if(!vm.count("stl_file")){
+                    //only set the dem if there is no STL file specified
+                    windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
+                    windsim.setPosition( i_ );    //get position from DEM file
+                }
+            }
+            #endif //NINJAFOAM
+            
+            #ifndef NINJAFOAM
             windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
             windsim.setPosition( i_ );    //get position from DEM file
+            #endif 
             
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
+                conflicting_options(vm, "stl_file", "elevation_file");
+                if(vm.count("stl_file")){
+                    windsim.setStlFile( i_, vm["stl_file"].as<std::string>() );
+                }
+            
                 if(vm.count("number_of_iterations")){
                     if((vm["number_of_iterations"].as<int>() % 100) != 0){
                         cout<<"'number_of_iterations' must be a multiptle of 100."<<endl;
@@ -961,8 +980,18 @@ int windNinjaCLI(int argc, char* argv[])
                     windsim.setNonEqBc( i_,
                         vm["non_equilibrium_boundary_conditions"].as<bool>() );
                 }
+                if(vm.count("mesh_type")){
+                    if(windsim.setMeshType( i_,
+                        ninja::get_eMeshType(vm["mesh_type"].as<std::string>()) ) !=0 )
+                        {                           
+                            cout << "'mesh_type' of " << vm["mesh_type"].as<std::string>()
+                            << " is not valid.\n" \
+                            << "Choices are: TBM or SHM.\n";
+                            return -1;
+                        }
+                }
             }
-            #endif
+            #endif //NINJAFOAM
 
             //stuff for requested output locations
             if( vm.count("input_points_file") )

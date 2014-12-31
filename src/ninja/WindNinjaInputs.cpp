@@ -132,6 +132,8 @@ WindNinjaInputs::WindNinjaInputs()
     nIterations = 2000;
     meshCount = 1000000;
     nonEqBc = false;
+    meshType = WindNinjaInputs::SHM;
+    stlFile = "!set";
 #endif
     
     outputPointsFilename = "!set";
@@ -189,6 +191,13 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
    geotiffOutFlag = rhs.geotiffOutFlag;
    dustFile = rhs.dustFile;
    ustarFile = rhs.ustarFile;
+#endif
+#ifdef NINJAFOAM
+    nIterations = rhs.nIterations;
+    meshCount = rhs.meshCount;
+    nonEqBc = rhs.nonEqBc;
+    meshType = rhs.meshType;
+    stlFile = rhs.stlFile;
 #endif
   outputPointsFilename = rhs.outputPointsFilename;
   inputPointsFilename = rhs.inputPointsFilename;
@@ -335,6 +344,13 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       geotiffOutFlag = rhs.geotiffOutFlag;
       dustFile = rhs.dustFile;
       ustarFile = rhs.ustarFile;
+#endif
+#ifdef NINJAFOAM
+      nIterations = rhs.nIterations;
+      meshCount = rhs.meshCount;
+      nonEqBc = rhs.nonEqBc;
+      meshType = rhs.meshType;
+      stlFile = rhs.stlFile;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;
