@@ -31,7 +31,12 @@
 
 mainWindow::mainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    GDALAllRegister();
+    std::string tzfile = FindDataPath( "date_time_zonespec.csv" );
+    if( tzfile == "" )
+    {
+        throw std::runtime_error( "Could not find supporting data files, " \
+                                  "try setting WINDNINJA_DATA." );
+    }
     lineNumber = 1;
     GDALProjRef = "";
 
