@@ -61,7 +61,7 @@ class windProfile
 		double powerLawPower;			//used in power_law_askervein
 
 		double getWindSpeed();		//function returns wind velocity given the inputs (profile_switch, AGL, etc...)
-		double monin_obukov(double const& z, double const& U1, double const& z1, double const& z0, double const& L);
+        double monin_obukov(double z, double const& U1, double const& z1, double const& z0, double const& L);
 		double stability_function(double const& z_over_L, double const& L_switch);
 		
 		
@@ -73,3 +73,4 @@ class windProfile
 };
 
 #endif /* WIND_PROFILE_H */
+

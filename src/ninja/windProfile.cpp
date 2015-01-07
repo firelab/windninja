@@ -115,7 +115,10 @@ double windProfile::getWindSpeed()
                         velocity = monin_obukov((AGL - Rough_d), inputWindSpeed, inwindheight, Roughness, ObukovLength);
                         return velocity;
                     }else{	//else we're above the ABL...
-                        velocity = monin_obukov(ABL_height, inputWindSpeed, inwindheight, Roughness, ObukovLength);
+                        if(ABL_height<=0.0) //This can happen if input velocity is 0 which gives u_star=0 (typically if diurnal is off)
+                            velocity = 0.0;
+                        else
+                            velocity = monin_obukov(ABL_height, inputWindSpeed, inwindheight, Roughness, ObukovLength);
                         return velocity;
                     }
                 }
@@ -124,10 +127,12 @@ double windProfile::getWindSpeed()
 	    throw std::runtime_error("Could not identify profile switch.\n");
 }
 
-double windProfile::monin_obukov(double const& z, double const& U1, double const& z1, double const& z0, double const& L)
+double windProfile::monin_obukov(double z, double const& U1, double const& z1, double const& z0, double const& L)
 {
 	double speed;
-	
+    if(z/z0<1)  //If this happens, log below will give nonsensical results, don't let it happen.
+        z = z0;
+    assert(z1/z0 >=1);
 	if(L == 0.0)
 		speed = U1*(log(z/z0))/(log(z1/z0));
 	else
