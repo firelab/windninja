@@ -439,6 +439,12 @@ int windNinjaCLI(int argc, char* argv[])
         store(opts_command, vm);
         //notify(vm);
 
+        if( argc == 1 )
+        {
+            cout << visible << "\n";
+            return -1;
+        }
+
         if (vm.count("config_file")) {
             ifstream ifs(vm["config_file"].as<std::string>().c_str());
             if (!ifs)
