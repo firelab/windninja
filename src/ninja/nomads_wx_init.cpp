@@ -106,6 +106,7 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
     char **papszFileList = NULL;
     int nCount;
     papszFileList = VSIReadDir( pszVsiDir );
+    CPLFree( (void*)pszVsiDir );
     if( !papszFileList )
     {
         return FALSE;
@@ -204,8 +205,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     if( !VSI_ISDIR( sStat.st_mode ) )
         rc = VSIMkdir( newPath.c_str(), 0777 );
     const char *pszTmpFile = CPLGenerateTempFilename( "NINJA_FCST" );
-    pszTmpFile = CPLStrdup (CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
-
+    pszTmpFile = CPLSPrintf( "%s", CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
     const char *p = strchr( pszTmpFile, '/' );
     if( !p )
         p = strchr( pszTmpFile, '\\' );
