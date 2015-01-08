@@ -154,7 +154,7 @@ class wxModelInitialization : public initialize
                                   AsciiGrid<double> &vGrid,
                                   AsciiGrid<double> &wGrid ) = 0;
                                   
-    #ifdef STABILITY
+    #ifdef NOMADS_ENABLE_3D
     virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
     virtual void setGlobalAttributes(WindNinjaInputs &input);
     virtual void buildWxMeshes(WindNinjaInputs &input, Mesh const& mesh);

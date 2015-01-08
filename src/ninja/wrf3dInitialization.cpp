@@ -33,7 +33,7 @@
  * Constructor for the class initializes the variable names
  *
  */
-#ifdef STABILITY
+#ifdef NOMADS_ENABLE_3D
 wrf3dInitialization::wrf3dInitialization() : wrfSurfInitialization()
 {
 
@@ -1113,7 +1113,8 @@ void wrf3dInitialization::buildWxMeshes(WindNinjaInputs &input, Mesh const& mesh
                 filename = "zStaggerElevationArray" + boost::lexical_cast<std::string>(k);
             }
         }
-        testGrid.write_Grid(filename.c_str(), 2);*/
+        testGrid.write_Grid(filename.c_str(), 2);
+    }*/
     /*for(int k = 0; k<phbArray.layers_; k++){
         for(int i = 0; i<phbArray.rows_; i++){
             for(int j = 0; j<phbArray.cols_; j++ ){

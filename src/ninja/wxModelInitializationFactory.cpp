@@ -95,18 +95,18 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
             ncepGfsSurf.setModelFileName( fileName );
             return new ncepGfsSurfInitialization(ncepGfsSurf);
         }
+#ifdef NOMADS_ENABLE_3D
+        else if(wrf3d.identify(fileName)) {
+            wrf3d.setModelFileName( fileName );
+            CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.identify(fileName) = %i\n", wrf3d.identify(fileName));
+            return new wrf3dInitialization(wrf3d);
+        }
+#endif
         else if(wrfSurf.identify(fileName)) {
             wrfSurf.setModelFileName( fileName );
             CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.identify(fileName) = %i\n", wrfSurf.identify(fileName));
             return new wrfSurfInitialization(wrfSurf);
         }
-        #ifdef STABILITY
-        else if(wrf3d.identify(fileName)) {    //fix this later to read either wrf3d or wrfSurf
-            wrf3d.setModelFileName( fileName );
-            CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.identify(fileName) = %i\n", wrf3d.identify(fileName));
-            return new wrf3dInitialization(wrf3d);
-        }
-        #endif
         if(ncepNamGrib2Surf.identify(fileName)) {
             ncepNamGrib2Surf.setModelFileName( fileName );
             return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);

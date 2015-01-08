@@ -968,7 +968,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
 /**
  *
  */
-#ifdef STABILITY
+#ifdef NOMADS_ENABLE_3D
 void wxModelInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 {
     return;
@@ -1043,15 +1043,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
 
-    #ifdef STABILITY
-    //====set3dGrids()===================================================================================
-
-    //cout<<"wxModel_nLayers = " <<wxModel_nLayers<<endl;
-
+#ifdef NOMADS_ENABLE_3D
     set3dGrids(input, mesh);
-
-    //====end set3dGrids()==============================================================================
-    #endif
+#endif
 
     //Make final grids with same header as dem
     AsciiGrid<double> airTempGrid;
@@ -1467,7 +1461,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     bool wxModel3d = false;
     int kk;
     double tempGradient;
-    #ifdef STABILITY
+    #ifdef NOMADS_ENABLE_3D
     if(this->getForecastReadable().find("3D") != std::string::npos){
         wxModel3d = true;
     }

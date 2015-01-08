@@ -37,7 +37,7 @@
  */
 class wrf3dInitialization : public wrfSurfInitialization
 {
- #ifdef STABILITY
+ #ifdef NOMADS_ENABLE_3D
  public:
 
     wrf3dInitialization();
