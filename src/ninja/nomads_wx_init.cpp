@@ -597,10 +597,18 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             pszNextFcst =
                 NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
             hSrcDS = GDALOpen( pszNextFcst, GA_ReadOnly );
+            if( hSrcDS == NULL )
+            {
+                throw badForecastFile( "Could not load cloud data." );
+            }
             pszSrcWkt = GDALGetProjectionRef( hSrcDS );
             hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                               GRA_NearestNeighbour, 1.0,
                                               psWarpOptions );
+            if( hVrtDS == NULL )
+            {
+                throw badForecastFile( "Could not load cloud data." );
+            }
             int j = 0;
             for( j = 0; j < GDALGetRasterCount( hVrtDS ); j++ )
             {
@@ -611,6 +619,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                     break;
                 }
                 hBand = NULL;
+            }
+            if( hBand == NULL )
+            {
+                throw badForecastFile( "Could not find cloud data band." );
             }
             GDAL2AsciiGrid( (GDALDataset*)hVrtDS, j + 1, cloudGrid );
             dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
