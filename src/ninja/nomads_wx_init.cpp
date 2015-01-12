@@ -469,7 +469,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             t = (input.ninjaTime.utc_time() - epoch).total_seconds();
             pszForecastFile =
                 NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-            if( i == 0 && timeList.size() > 0 )
+            if( i == 0 && timeList.size() > 1 )
             {
                 bNeedNextCloud = TRUE;
             }
