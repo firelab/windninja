@@ -208,7 +208,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
                   pszGribFile );
         NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
         /* Special case for gfs */
-        if( EQUAL( pszKey, "gfs_global" ) )
+        if( EQUALN( pszKey, "gfs_global", 10 ) )
         {
             pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s, nFcstHour );
         }
@@ -427,6 +427,15 @@ static void NomadsFetchAsync( void *pData )
 **                                to attempt to get a full time frame.
 **        GDAL_HTTP_TIMEOUT: Timeout for HTTP requests in seconds.  We should
 **                           be able to set this reasonably low.
+**
+** Information on available models can be found at:
+**
+**     http://nomads.ncep.noaa.gov
+**
+** Model availability is typically consistent, however there are outages
+** occasionally.  A list serve with outage alerts can be subscribed to here:
+**
+**     https://lstsrv.ncep.noaa.gov/mailman/listinfo/ncep.list.nomads-ftpprd
 **
 ** \param pszModelKey The name key of the model to use, ie "nam_conus".  For a
 **                    listing of models, see nomads.ncep.gov or /see nomads.h

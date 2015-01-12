@@ -184,6 +184,25 @@ static const char *apszNomadsKeys[][11] =
       "0.5 deg",
       /* Human readable name */
       "GFS Global" },
+    /*
+    ** GFS Parallel 0.25
+    ** This run has lower time resolution, but better space than the other GFS
+    ** runs.
+    */
+    {
+      "gfs_global_parallel",
+      "filter_gfs_0p25.pl",
+      "gfs.t%02dz.pgrb2.0p25.f%03d",
+      "gfs.%s%02d",
+      "%Y%m%d",
+      NOMADS_GENERIC_FCST_HOURS,
+      "0:240:3,252:384:12",
+      NOMADS_GENERIC_VAR_LIST,
+      /* Note entire_atmosphere instead of the default */
+      "2_m_above_ground,10_m_above_ground,entire_atmosphere",
+      "0.25 deg",
+      "GFS Global" },
+
     /* XXX: Climate Forecast System Flux (CFS)??? */
     /*
     ** HIRES Alaska

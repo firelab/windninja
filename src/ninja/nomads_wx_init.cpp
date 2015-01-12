@@ -572,7 +572,13 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         }
     }
     if( !bHaveCloud )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data from " \
+                  "the forecast file.  If this is the 0th time step of a GFS " \
+                  "model this is a known issue, otherwise investigate." );
+        cloudGrid.set_headerData( uGrid );
         cloudGrid = 0.0;
+    }
     cloudGrid /= 100.0;
     airGrid += 273.15;
 
