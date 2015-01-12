@@ -454,6 +454,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     int bSuccess;
     double dfNoData;
     int nBandCount;
+    int bNeedNextCloud = FALSE;
     /*
     ** We need to find the correct file in the directory.  It may not be the
     ** filename.
@@ -468,8 +469,13 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             t = (input.ninjaTime.utc_time() - epoch).total_seconds();
             pszForecastFile =
                 NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
+            if( i == 0 && timeList.size() > 0 )
+            {
+                bNeedNextCloud = TRUE;
+            }
             break;
         }
+
     }
     if( !pszForecastFile )
     {
@@ -571,13 +577,66 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             bHaveCloud = TRUE;
         }
     }
+    GDALClose( hSrcDS );
+    GDALClose( hVrtDS );
     if( !bHaveCloud )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data from " \
-                  "the forecast file.  If this is the 0th time step of a GFS " \
-                  "model this is a known issue, otherwise investigate." );
-        cloudGrid.set_headerData( uGrid );
-        cloudGrid = 0.0;
+        /*
+        ** If we don't have cloud cover, and we are on the first time step, we
+        ** may be in a strange discretization situation.  GFS 0th time step
+        ** doesn't have time averaged cloud cover.  Let's go forward in time
+        ** and copy the cloud cover from the 1st time.  Issue a warning.
+        */
+        if( bNeedNextCloud == TRUE )
+        {
+            GDALDatasetH hDSNextCloud;
+            const char *pszNextFcst;
+            bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
+            bpt::time_duration::sec_type t;
+            t = (timeList[1].utc_time() - epoch).total_seconds();
+            pszNextFcst =
+                NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
+            hSrcDS = GDALOpen( pszNextFcst, GA_ReadOnly );
+            pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+            hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                              GRA_NearestNeighbour, 1.0,
+                                              psWarpOptions );
+            int j = 0;
+            for( j = 0; j < GDALGetRasterCount( hVrtDS ); j++ )
+            {
+                hBand = GDALGetRasterBand( hVrtDS, j + 1 );
+                pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
+                if( EQUAL( pszElement, "TCDC" ) )
+                {
+                    break;
+                }
+                hBand = NULL;
+            }
+            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, j + 1, cloudGrid );
+            dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
+            if( bSuccess == FALSE )
+            {
+                dfNoData = -9999.0;
+            }
+            if( CPLIsNan( dfNoData ) )
+            {
+                cloudGrid.set_noDataValue( -9999.0 );
+                cloudGrid.replaceNan( -9999.0 );
+            }
+            CPLFree( (void*)pszNextFcst );
+            GDALClose( hSrcDS );
+            GDALClose( hVrtDS );
+            CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data "
+                      "from 0th time step, using time step 1." );
+        }
+        else
+        {
+            CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data " \
+                      "from the forecast file, setting to 0." );
+
+            cloudGrid.set_headerData( uGrid );
+            cloudGrid = 0.0;
+        }
     }
     cloudGrid /= 100.0;
     airGrid += 273.15;
@@ -586,8 +645,6 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     wGrid = 0.0;
 
     GDALDestroyWarpOptions( psWarpOptions );
-    GDALClose( hSrcDS );
-    GDALClose( hVrtDS );
 }
 
 void NomadsWxModel::checkForValidData()
