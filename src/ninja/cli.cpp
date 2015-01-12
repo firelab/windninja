@@ -663,7 +663,7 @@ int windNinjaCLI(int argc, char* argv[])
             CSLTestBoolean( CPLGetConfigOption( "NINJA_FILL_DEM_NO_DATA",
                                                 "NO" ) );
         /* If we downloaded from our fetcher, we fill */
-        if( vm.count(" fetch_elevation" ) )
+        if( vm.count("fetch_elevation" ) )
             bFillNoData = TRUE;
         if( bFillNoData )
         {
