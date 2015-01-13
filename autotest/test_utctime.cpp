@@ -134,13 +134,9 @@ BOOST_AUTO_TEST_CASE( add_hours_6 )
     int d = u->ts->tm_mday;
     NomadsUtcAddHours( u, 25 );
     BOOST_CHECK_EQUAL( (h + 25) % 24, u->ts->tm_hour );
-    BOOST_CHECK( (d + 1) % 28 == u->ts->tm_mday ||
+    BOOST_CHECK( (d + 2) % 29 == u->ts->tm_mday ||
                  (d + 2) % 29 == u->ts->tm_mday ||
-                 (d + 1) % 29 == u->ts->tm_mday ||
-                 (d + 2) % 29 == u->ts->tm_mday ||
-                 (d + 1) % 30 == u->ts->tm_mday ||
                  (d + 2) % 30 == u->ts->tm_mday ||
-                 (d + 1) % 31 == u->ts->tm_mday ||
                  (d + 2) % 31 == u->ts->tm_mday );
 }
 
