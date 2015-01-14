@@ -348,11 +348,35 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 
 # data folder
 #INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data DESTINATION share/windninja)
-                         
-SET(OSGEO4W_HOME "c:/osgeo4w64")
-SET(FIRELAB_DEPEND_ROOT ${OSGEO4W_HOME})
-SET(FIRELAB_DEPEND_ROOT_QT ${OSGEO4W_HOME})
-SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${OSGEO4W_HOME}/apps/qt4/plugins/imageformats")
+
+# *****************************************************************************
+# Check the windows architecture for 64 or 32
+# *****************************************************************************
+IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 TRUE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 64-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 32-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Cannot determine architecture, using 32-bit by default")
+    ENDIF(PACKAGE_DEBUG)
+ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+
+IF(BUILD_64)
+    SET(JASON_HOME "c:/x64/")
+ELSE(BUILD_64)
+    SET(JASON_HOME "c:/x86/")
+ENDIF(BUILD_64)
+SET(FIRELAB_DEPEND_ROOT ${JASON_HOME})
+SET(FIRELAB_DEPEND_ROOT_QT ${JASON_HOME})
+SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${JASON_HOME}/plugins/imageformats")
 
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
     INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/share/gdal/" DESTINATION share/windninja/gdal-data/data)
@@ -403,7 +427,27 @@ SET(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
 CMAKE_POLICY(SET CMP0010 OLD)
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION}")
-SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_PACKAGE_INSTALL_REGISTR# *****************************************************************************
+# Check the windows architecture for 64 or 32
+# *****************************************************************************
+IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 TRUE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 64-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 32-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Cannot determine architecture, using 32-bit by default")
+    ENDIF(PACKAGE_DEBUG)
+ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+
+Y_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
 CMAKE_POLICY(POP)
 # *****************************************************************************
 # Add/Remove Programs support
@@ -446,26 +490,6 @@ Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\\DEM Download Instructions.ln
 Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Example Files.lnk\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
-
-# *****************************************************************************
-# Check the windows architecture for 64 or 32
-# *****************************************************************************
-IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 TRUE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 64-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 32-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Cannot determine architecture, using 32-bit by default")
-    ENDIF(PACKAGE_DEBUG)
-ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
 # *****************************************************************************
 # Build the nsis installer on the firelab machine(s).  Not for external use.
