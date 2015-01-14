@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
             BOOST_CHECK_EQUAL( rc, 3 );
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );
-        else if EQUAL( pszKey, "gfs_global_parallel" )
+        else if EQUAL( pszKey, "gfs_global" )
             BOOST_CHECK_EQUAL( rc, 3 );
         else
             /* Sometimes we get double variables */
@@ -265,7 +265,13 @@ BOOST_AUTO_TEST_CASE( form_name_1 )
     char *s;
     s = NomadsFormName( "gfs_global", ' ' );
     BOOST_REQUIRE( s );
+#if defined(NOMADS_GFS_0P5DEG)
     BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.5 DEG" ) );
+#elif defined(NOMADS_GFS_1P0DEG)
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 1.0 DEG" ) );
+#else /* NOMADS_GFS_0.25DEG is default */
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.25 DEG" ) );
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()
