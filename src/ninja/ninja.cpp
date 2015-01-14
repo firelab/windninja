@@ -1771,7 +1771,7 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
 		#endif //NINJA_DEBUG_VERBOSE
 
 		input.Com->ninjaCom(ninjaComClass::ninjaDebug, "solver: n=%d iterations = %d residual norm %12.4e", n,i,rnorm/bnorm);
-		fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,rnorm/bnorm,tol);
+		fprintf(convergence_history,"\n%d\t%lf\t%lf",i,rnorm/bnorm,tol);
 
 
 	    //residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
