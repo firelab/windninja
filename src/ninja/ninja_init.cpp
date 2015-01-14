@@ -41,7 +41,7 @@ void NinjaCheckThreddsData( void *rc )
     }
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     CPLHTTPResult *poResult;
-    poResult = CPLHTTPFetch( "https://collab.firelab.org/svn/windninja/trunk/data/thredds.csv", NULL );
+    poResult = CPLHTTPFetch( "https://github.com/firelab/windninja/raw/master/data/thredds.csv", NULL );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
