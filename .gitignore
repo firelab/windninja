@@ -28,7 +28,7 @@
 *.app
 
 # Build folder
-build
+build*
 
 # vim
 *.swo
