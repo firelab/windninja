@@ -369,16 +369,16 @@ ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
     ENDIF(PACKAGE_DEBUG)
 ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
-IF(BUILD_64)
-    SET(JASON_HOME "c:/src/x64")
-ELSE(BUILD_64)
-    SET(JASON_HOME "c:/src/x86")
-ENDIF(BUILD_64)
-SET(FIRELAB_DEPEND_ROOT ${JASON_HOME})
-SET(FIRELAB_DEPEND_ROOT_QT ${JASON_HOME})
-SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${JASON_HOME}/plugins/imageformats")
-
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
+    IF(BUILD_64)
+        SET(DLL_HOME "c:/src/x64")
+    ELSE(BUILD_64)
+        SET(DLL_HOME "c:/src/x86")
+    ENDIF(BUILD_64)
+    SET(FIRELAB_DEPEND_ROOT ${DLL_HOME})
+    SET(FIRELAB_DEPEND_ROOT_QT ${DLL_HOME})
+    SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${DLL_HOME}/plugins/imageformats")
+
     INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/data/" DESTINATION share/windninja/gdal-data/data)
     #Qt image plugins
 # *****************************************************************************
