@@ -117,6 +117,14 @@ int NinjaInitialize()
         //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
     }
 #endif /* DISABLE_THREDDS_UPDATE */
+#ifdef NINJA_ENABLE_CALL_HOME
+    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
+    {
+        CPLHTTPResult *poResult;
+        poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit.py?visit=1", NULL );
+        CPLHTTPDestroyResult( poResult );
+    }
+#endif
     return 0;
 }
 
