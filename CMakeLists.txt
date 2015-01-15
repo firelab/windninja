@@ -92,6 +92,7 @@ IF(GENERATE_VERSION_INFO)
     FILE(WRITE "${CMAKE_SOURCE_DIR}/src/version.h" ${V})
 ENDIF(GENERATE_VERSION_INFO)
 SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
+SET(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 
 # *****************************************************************************
 # Find boost libs, required for all builds.  1.41.1 may be arbitrary.
@@ -353,10 +354,10 @@ ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
 SET(FIRELAB_DEPEND_ROOT "C:/Users/ksshannon/Desktop/FS_SOFTWARE_BUILD")
 SET(FIRELAB_DEPEND_ROOT_QT "${FIRELAB_DEPEND_ROOT}/qt-everywhere-opensource-src-4.8.5")
 IF(BUILD_64)
-    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION}-win64-install)
+    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION_NAME}-win64-install)
     SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x64")
 ELSE(BUILD_64)
-    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION}-win32-install)
+    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION_NAME}-win32-install)
     SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x86")
 ENDIF(BUILD_64)
 
@@ -499,7 +500,7 @@ ENDIF(NINJA_QTGUI)
 # *****************************************************************************
 # CPack variables
 # *****************************************************************************
-SET(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION})
+SET(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION_NAME})
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
 # version
 SET(CPACK_VERSION_MAJOR ${WINDNINJA_VERSION_MAJOR})
@@ -510,8 +511,8 @@ SET(CPACK_PACKAGE_VERSION ${WIND_NINJA_VERSION})
 SET(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
 CMAKE_POLICY(SET CMP0010 OLD)
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION}")
-SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
+SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 CMAKE_POLICY(POP)
 # *****************************************************************************
 # Add/Remove Programs support
@@ -521,14 +522,14 @@ CMAKE_POLICY(POP)
 # *****************************************************************************
 # NSIS Specific stuff
 # *****************************************************************************
-SET(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 SET(CPACK_NSIS_INSTALLED_ICON_NAME 
     "${CMAKE_SOURCE_DIR}/images/icons/wn-desktop.ico")
 
 SET(CPACK_CREATE_DESKTOP_LINKS WindNinja)
 SET(CPACK_NSIS_MODIFY_PATH WindNinja)
 
-SET(CPACK_PACKAGE_EXECUTABLES "WindNinja" ${WINDNINJA_VERSION})
+SET(CPACK_PACKAGE_EXECUTABLES "WindNinja" ${WINDNINJA_VERSION_NAME})
 SET(CPACK_NSIS_CREATE_ICONS_EXTRA "
 CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\"
 CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\"
