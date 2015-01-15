@@ -427,27 +427,7 @@ SET(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
 CMAKE_POLICY(SET CMP0010 OLD)
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION}")
-SET(CPACK_PACKAGE_INSTALL_REGISTR# *****************************************************************************
-# Check the windows architecture for 64 or 32
-# *****************************************************************************
-IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 TRUE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 64-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 32-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Cannot determine architecture, using 32-bit by default")
-    ENDIF(PACKAGE_DEBUG)
-ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-
-Y_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
 CMAKE_POLICY(POP)
 # *****************************************************************************
 # Add/Remove Programs support
