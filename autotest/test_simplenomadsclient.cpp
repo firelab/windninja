@@ -44,30 +44,25 @@ static int CheckBands( const char *pszVsiPath )
     int i, j, k;
     int nFiles, nBands;
     char **papszFiles = NULL;
+    const char *pszTestPath;
     if( strstr( pszVsiPath, ".zip" ) )
-        pszVsiPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", pszVsiPath ) );
+        pszTestPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", pszVsiPath ) );
     else
-        pszVsiPath = CPLStrdup( pszVsiPath );
-    papszFiles = VSIReadDir( pszVsiPath );
+        pszTestPath = CPLStrdup( pszVsiPath );
+    papszFiles = VSIReadDir( pszTestPath );
     nFiles = CSLCount( papszFiles );
     for( i = 0; i < nFiles; i++ )
     {
         SKIP_DOT_AND_DOTDOT( papszFiles[i] );
-        pszVsiFilename = CPLSPrintf( "%s/%s", pszVsiPath, papszFiles[i] );
+        pszVsiFilename = CPLSPrintf( "%s/%s", pszTestPath, papszFiles[i] );
         hDS = GDALOpen( pszVsiFilename, GA_ReadOnly );
         if( !hDS )
         {
             CSLDestroy( papszFiles );
-            CPLFree( (void*)pszVsiPath );
+            CPLFree( (void*)pszTestPath );
             return 1;
         }
         nBands = GDALGetRasterCount( hDS );
-        if( nBands < 4 )
-        {
-            CSLDestroy( papszFiles );
-            CPLFree( (void*)pszVsiPath );
-            return 1;
-        }
         k = 0;
         for( j = 0; j < nBands; j++ )
         {
@@ -84,13 +79,11 @@ static int CheckBands( const char *pszVsiPath )
         GDALClose( hDS );
         if( k < 4 )
         {
-            CSLDestroy( papszFiles );
-            CPLFree( (void*)pszVsiPath );
-            return k;
+            break;
         }
     }
     CSLDestroy( papszFiles );
-    CPLFree( (void*)pszVsiPath );
+    CPLFree( (void*)pszTestPath );
     return k;
 }
 
@@ -165,7 +158,6 @@ BOOST_AUTO_TEST_CASE( download_1 )
     const char *pszKey = NULL;
     const char *pszWhere = NULL;
     const char *pszVsiType = NULL;
-    const char *pszVsiPath = NULL;
     pszWhere = boost::unit_test::framework::master_test_suite().argv[1];
     pszKey = boost::unit_test::framework::master_test_suite().argv[2];
     int n, hours;
@@ -213,6 +205,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
             BOOST_CHECK_EQUAL( rc, 3 );
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );
+        else if EQUAL( pszKey, "gfs_global" )
+            BOOST_CHECK_EQUAL( rc, 3 );
         else
             /* Sometimes we get double variables */
             BOOST_CHECK( rc >= 4 );
@@ -271,7 +265,13 @@ BOOST_AUTO_TEST_CASE( form_name_1 )
     char *s;
     s = NomadsFormName( "gfs_global", ' ' );
     BOOST_REQUIRE( s );
+#if defined(NOMADS_GFS_0P5DEG)
     BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.5 DEG" ) );
+#elif defined(NOMADS_GFS_1P0DEG)
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 1.0 DEG" ) );
+#else /* NOMADS_GFS_0.25DEG is default */
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.25 DEG" ) );
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

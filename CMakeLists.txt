@@ -31,34 +31,68 @@
 # *****************************************************************************
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(WindNinja)
-# *****************************************************************************
-# Project WindNinja, version 2.x.x.  At some point port the versioning to 
-# write a header.
-# *****************************************************************************
 
-# Fetch version info from where we are at.  See get_svn_vers.py 
-# use FILE(...)
-
-GET_FILENAME_COMPONENT(V "${CMAKE_SOURCE_DIR}" NAME)
-STRING(REPLACE "." ";" V2 ${V})
-LIST(LENGTH V2 V_SIZE)
-IF(V_SIZE GREATER 0)
-    LIST(GET V2 0 WINDNINJA_VERSION_MAJOR)
-    SET(VERSION ${WINDNINJA_VERSION_MAJOR})
-ENDIF(V_SIZE GREATER 0)
-IF(V_SIZE GREATER 1)
-    LIST(GET V2 1 WINDNINJA_VERSION_MINOR)
-    SET(VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR})
-ENDIF(V_SIZE GREATER 1)
-IF(V_SIZE GREATER 2)
-    LIST(GET V2 2 WINDNINJA_VERSION_PATCH)
-    SET(VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
-ENDIF(V_SIZE GREATER 2)
-SET(WINDNINJA_VERSION "WindNinja-${VERSION}")
 # *****************************************************************************
 # Add our cmake directory to the path for netcdf, gdal and proj
 # *****************************************************************************
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+# *****************************************************************************
+# Set this option early so we can default stuff.
+# *****************************************************************************
+OPTION(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
+MARK_AS_ADVANCED(FIRELAB_PACKAGE)
+
+SET(WINDNINJA_VERSION_MAJOR "2")
+SET(WINDNINJA_VERSION_MINOR "4")
+SET(WINDNINJA_VERSION_PATCH "1")
+OPTION(GENERATE_VERSION_INFO "Write version info files." OFF)
+IF(GENERATE_VERSION_INFO)
+    FILE(READ ${CMAKE_SOURCE_DIR}/VERSION V)
+    STRING(REPLACE "\n" "" V ${V})
+    IF(V)
+        STRING(REPLACE "." ";" VLIST ${V})
+        LIST(LENGTH VLIST VCOUNT)
+        IF(VCOUNT GREATER 0)
+            LIST(GET VLIST 0 WINDNINJA_VERSION_MAJOR)
+        ENDIF(VCOUNT GREATER 0)
+        IF(VCOUNT GREATER 1)
+            LIST(GET VLIST 1 WINDNINJA_VERSION_MINOR)
+        ENDIF(VCOUNT GREATER 1)
+        IF(VCOUNT GREATER 2)
+            LIST(GET VLIST 2 WINDNINJA_VERSION_PATCH)
+        ENDIF(VCOUNT GREATER 2)
+    ENDIF(V)
+    SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
+    FILE(READ ${CMAKE_SOURCE_DIR}/disclaimer VERSION_HEADER)
+    IF(NOT GITCOMMAND)
+        SET(GIT_EXE git)
+    ELSE(NOT GITCOMMAND)
+        SET(GIT_EXE ${GITCOMMAND})
+    ENDIF(NOT GITCOMMAND)
+    EXECUTE_PROCESS(COMMAND ${GIT_EXE} "rev-parse" "HEAD"
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                    RESULT_VARIABLE GIT_RC
+                    OUTPUT_VARIABLE GIT_REV)
+    IF(GIT_RC)
+        SET(GIT_REV "NOT SET")
+    ENDIF(GIT_RC)
+    STRING(REPLACE "\n" "" GIT_REV ${GIT_REV})
+
+    INCLUDE(GetDate)
+    GET_DATE()
+
+    SET(V "${VERSION_HEADER}
+#ifndef VERSION_H
+#define VERSION_H
+#define VERSION \"${WINDNINJA_VERSION}\"
+#define SVN_VERSION \"${GIT_REV}\"
+#define RELEASE_DATE \"${GD_MONTH}/${GD_DAY}/${GD_YEAR}\"
+#endif /* VERSION_H */\n")
+    FILE(WRITE "${CMAKE_SOURCE_DIR}/src/version.h" ${V})
+ENDIF(GENERATE_VERSION_INFO)
+SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
+SET(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 
 # *****************************************************************************
 # Find boost libs, required for all builds.  1.41.1 may be arbitrary.
@@ -76,15 +110,6 @@ SET(Boost_USE_MULTITHREAD OFF)
 FIND_PACKAGE(Boost 1.41.1 COMPONENTS date_time program_options
                                      unit_test_framework REQUIRED)
 
-# *****************************************************************************
-# # OSGeo4W support
-# *****************************************************************************
-IF(WIN32)
-    OPTION(USE_OSGEO4W "Use dependencies (as many as possible) from OSGeo4W" OFF)
-    IF(USE_OSGEO4W)
-        FIND_PATH(OSGEO4W_HOME OSGeo4W CACHE PATH)
-    ENDIF(USE_OSGEO4W)
-ENDIF(WIN32)
 # *****************************************************************************
 # We now use gdals internal zlib
 # Find zlib, required for all builds
@@ -104,25 +129,7 @@ ENDIF(WIN32)
 # cmake/Modules/FindNetCDF.cmake for more info.
 # *****************************************************************************
 INCLUDE(FindNetCDF)
-IF(WIN32)
-    IF(NOT OSGEO4W_HOME)
-        FIND_PACKAGE(NetCDF REQUIRED)
-    ELSE(NOT OSGEO4W_HOME)
-        FIND_PACKAGE(NetCDF)
-    ENDIF(NOT OSGEO4W_HOME)
-ELSE(WIN32)
-    FIND_PACKAGE(NetCDF REQUIRED)
-ENDIF(WIN32)
-
-IF(WIN32)
-    IF(NOT NETCDF_INCLUDES-NOTFOUND AND OSGEO4W_HOME)
-        SET(NETCDF_INCLUDES ${OSGEO4W_HOME}/include CACHE TYPE PATH FORCE)
-        SET(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
-        SET(NETCDF_LIBRARIES_C ${OSGEO4W_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
-        SET(NETCDF_INCLUDES-FOUND TRUE)
-        SET(NETCDF_LIBRARIES_C-FOUND TRUE)
-    ENDIF(NOT NETCDF_INCLUDES-NOTFOUND AND OSGEO4W_HOME)
-ENDIF(WIN32)
+FIND_PACKAGE(NetCDF REQUIRED)
 
 # *****************************************************************************
 # Find gdal, version must be 1.8.1+ right now.  Have NOT tested 1.9,
@@ -130,24 +137,7 @@ ENDIF(WIN32)
 # as we warp the data, the units issue is okay.  Stick w/1.8.1 for now.
 # *****************************************************************************
 INCLUDE(FindGDAL)
-IF(WIN32)
-    IF(NOT OSGEO4W_HOME)
-        FIND_PACKAGE(GDAL REQUIRED)
-    ELSE(NOT OSGEO4W_HOME)
-        FIND_PACKAGE(GDAL)
-    ENDIF(NOT OSGEO4W_HOME)
-ELSE(WIN32)
-    FIND_PACKAGE(GDAL REQUIRED)
-ENDIF(WIN32)
-
-IF(WIN32)
-    IF(NOT GDAL_INCLUDE_DIR-NOTFOUND AND OSGEO4W_HOME)
-        SET(GDAL_INCLUDE_DIR ${OSGEO4W_HOME}/include CACHE TYPE PATH FORCE)
-        SET(GDAL_LIBRARY ${OSGEO4W_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
-        SET(GDAL_INCLUDE_DIR-FOUND TRUE)
-        SET(GDAL_LIBRARY-FOUND TRUE)
-    ENDIF(NOT GDAL_INCLUDE_DIR-NOTFOUND AND OSGEO4W_HOME)
-ENDIF(WIN32)
+FIND_PACKAGE(GDAL REQUIRED)
 
 # *****************************************************************************
 # We don't link to proj directly, but gdal must have proj support to perform
@@ -245,11 +235,6 @@ IF(NINJA_QTGUI)
     IF(ENABLE_FIDDLER)
         ADD_DEFINITIONS(-DENABLE_FIDDLER)
     ENDIF(ENABLE_FIDDLER)
-    IF(WIN32)
-        IF(NOT QT_QMAKE_EXECUTABLE_NOTFOUND AND OSGEO4W_HOME)
-            SET(QT_QMAKE_EXECUTABLE ${OSGEO4W_HOME}/bin/qmake.exe CACHE TYPE NAME FORCE)
-        ENDIF(NOT QT_QMAKE_EXECUTABLE_NOTFOUND AND OSGEO4W_HOME)
-    ENDIF(WIN32)
 ENDIF(NINJA_QTGUI)
 
 # *****************************************************************************
@@ -347,11 +332,50 @@ OPTION(PACKAGE_DEBUG "Show some information about the package" OFF)
 MARK_AS_ADVANCED(PACKAGE_DEBUG)
 
 # *****************************************************************************
+# Check installer version.
+# *****************************************************************************
+IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 TRUE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 64-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Building 32-bit installer")
+    ENDIF(PACKAGE_DEBUG)
+ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
+    SET(BUILD_64 FALSE)
+    IF(PACKAGE_DEBUG)
+        MESSAGE("Cannot determine architecture, using 32-bit by default")
+    ENDIF(PACKAGE_DEBUG)
+ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
+
+SET(FIRELAB_DEPEND_ROOT "C:/Users/ksshannon/Desktop/FS_SOFTWARE_BUILD")
+SET(FIRELAB_DEPEND_ROOT_QT "${FIRELAB_DEPEND_ROOT}/qt-everywhere-opensource-src-4.8.5")
+IF(BUILD_64)
+    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION_NAME}-win64-install)
+    SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x64")
+ELSE(BUILD_64)
+    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION_NAME}-win32-install)
+    SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x86")
+ENDIF(BUILD_64)
+
+IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
+    IF(BUILD_64)
+        SET(DLL_HOME "c:/src/x64")
+    ELSE(BUILD_64)
+        SET(DLL_HOME "c:/src/x86")
+    ENDIF(BUILD_64)
+    SET(FIRELAB_DEPEND_ROOT ${DLL_HOME})
+    SET(FIRELAB_DEPEND_ROOT_QT ${DLL_HOME})
+    SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${DLL_HOME}/plugins/imageformats")
+ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
+
+# *****************************************************************************
 # Option for creating the installer with all the dlls from the firelab machine.
 # If build type not explicity set, then we set it to release for dll builds
 # *****************************************************************************
-OPTION(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
-MARK_AS_ADVANCED(FIRELAB_PACKAGE)
 IF(FIRELAB_PACKAGE)
     SET(NINJA_QTGUI ON)
     SET(NINJA_CLI ON)
@@ -447,44 +471,8 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 
 # data folder
 #INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data DESTINATION share/windninja)
-IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 TRUE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 64-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSEIF(CMAKE_SIZEOF_VOID_P MATCHES "4")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Building 32-bit installer")
-    ENDIF(PACKAGE_DEBUG)
-ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    SET(BUILD_64 FALSE)
-    IF(PACKAGE_DEBUG)
-        MESSAGE("Cannot determine architecture, using 32-bit by default")
-    ENDIF(PACKAGE_DEBUG)
-ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
-
-SET(FIRELAB_DEPEND_ROOT "C:/Users/ksshannon/Desktop/FS_SOFTWARE_BUILD")
-SET(FIRELAB_DEPEND_ROOT_QT "${FIRELAB_DEPEND_ROOT}/qt-everywhere-opensource-src-4.8.5")
-IF(BUILD_64)
-    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION}-win64-install)
-    SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x64")
-ELSE(BUILD_64)
-    SET(CPACK_PACKAGE_FILE_NAME ${WINDNINJA_VERSION}-win32-install)
-    SET(FIRELAB_DEPEND_ROOT "${FIRELAB_DEPEND_ROOT}/x86")
-ENDIF(BUILD_64)
-
-# If we're using OSGeo4W, override the dependency root
-IF(USE_OSGEO4W AND OSGEO4W_HOME)
-    MESSAGE("Using OSGeo4W root of:" ${OSGEO4W_HOME})
-    SET(FIRELAB_DEPEND_ROOT ${OSGEO4W_HOME})
-    SET(FIRELAB_DEPEND_ROOT_QT ${OSGEO4W_HOME})
-ENDIF(USE_OSGEO4W AND OSGEO4W_HOME)
-#OSGeo4w has plugins in apps/Qt4/plugins/imageformats
-SET(FIRELAB_DEPEND_ROOT_QT_PLUGIN "${OSGEO4W_HOME}/apps/qt4/plugins/imageformats")
-
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
-    INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/share/gdal/" DESTINATION share/windninja/gdal-data/data)
+    INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/data/" DESTINATION share/windninja/gdal-data/data)
 ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 
 IF(BUILD_TYPE MATCHES "debug")
@@ -512,19 +500,19 @@ ENDIF(NINJA_QTGUI)
 # *****************************************************************************
 # CPack variables
 # *****************************************************************************
-SET(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION})
+SET(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION_NAME})
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
 # version
 SET(CPACK_VERSION_MAJOR ${WINDNINJA_VERSION_MAJOR})
 SET(CPACK_VERSION_MINOR ${WINDNINJA_VERSION_MINOR})
 SET(CPACK_VERSION_PATCH ${WINDNINJA_VERSION_PATCH})
-SET(CPACK_PACKAGE_VERSION ${VERSION})
+SET(CPACK_PACKAGE_VERSION ${WIND_NINJA_VERSION})
 
 SET(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
 CMAKE_POLICY(SET CMP0010 OLD)
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION}")
-SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
+SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 CMAKE_POLICY(POP)
 # *****************************************************************************
 # Add/Remove Programs support
@@ -534,14 +522,14 @@ CMAKE_POLICY(POP)
 # *****************************************************************************
 # NSIS Specific stuff
 # *****************************************************************************
-SET(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION}")
+SET(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 SET(CPACK_NSIS_INSTALLED_ICON_NAME 
     "${CMAKE_SOURCE_DIR}/images/icons/wn-desktop.ico")
 
 SET(CPACK_CREATE_DESKTOP_LINKS WindNinja)
 SET(CPACK_NSIS_MODIFY_PATH WindNinja)
 
-SET(CPACK_PACKAGE_EXECUTABLES "WindNinja" ${WINDNINJA_VERSION})
+SET(CPACK_PACKAGE_EXECUTABLES "WindNinja" ${WINDNINJA_VERSION_NAME})
 SET(CPACK_NSIS_CREATE_ICONS_EXTRA "
 CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\"
 CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\"
@@ -569,10 +557,6 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
 # *****************************************************************************
-# Check the windows architecture for 64 or 32
-# *****************************************************************************
-
-# *****************************************************************************
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 # *****************************************************************************
 IF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
@@ -580,28 +564,9 @@ IF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/proj.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/netcdf.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geos_c.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/expat.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/freexl.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geotiff.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/hdf5.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/iconv.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/jpeg.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/jpeg12.dll" DESTINATION bin COMPONENT apps)
+    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geos.dll" DESTINATION bin COMPONENT apps)
     INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libcurl.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libeay32.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libmysql.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libpng16.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libpq.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libtiff.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libxml2.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/ogdi.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/openjp2.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/spatialite.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/ssleay32.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/sqlite3.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/szip.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/xerces-c_3_1.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/zlib1.dll" DESTINATION bin COMPONENT apps)
+    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/zlib.dll" DESTINATION bin COMPONENT apps)
     IF(BUILD_TYPE MATCHES "release")
         MESSAGE("IN RELEASE PACKAGE MODE")
         INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtgui4.dll" DESTINATION bin COMPONENT apps)

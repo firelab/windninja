@@ -42,21 +42,49 @@ Dust::~Dust()      //destructor
 #ifdef EMISSIONS
 void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
 {
+    /*------------------------------------------*/
+    /* Open grid as a GDAL dataset              */
+    /*------------------------------------------*/
+    int nXSize = grid.get_nCols();
+    int nYSize = grid.get_nRows();
     
-    /* -------------------------------------------------------------------- */
-    /*  Open ds and create copy as GTiff to support writing                 */
-    /* -------------------------------------------------------------------- */
+    GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+        
+    GDALDatasetH hMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
     
-    grid.write_Grid("temp_burn_grid", 1);
+    double *padfScanline;
+    padfScanline = new double[nXSize];
+    
+    double adfGeoTransform[6];
+    adfGeoTransform[0] = grid.get_xllCorner();
+    adfGeoTransform[1] = grid.get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = grid.get_yllCorner()+(grid.get_nRows()*grid.get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -grid.get_cellSize();
+        
+    char* pszDstWKT = (char*)grid.prjString.c_str();
+    GDALSetProjection(hMemDS, pszDstWKT);
+    GDALSetGeoTransform(hMemDS, adfGeoTransform);
+        
+    GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
+        
+    GDALSetRasterNoDataValue(hBand, -9999.0);        
 
-    GDALDataset *poDS;
-    GDALDataset *poSrcDS;
+    for(int i=nYSize-1; i>=0; i--)
+    {
+        for(int j=0; j<nXSize; j++)
+        {  
+            padfScanline[j] = grid.get_cellValue(nYSize-1-i, j);
+        }
+        GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                     1, GDT_Float64, 0, 0);
+    }
     
-    poSrcDS = (GDALDataset*)GDALOpen("temp_burn_grid", GA_ReadOnly);
+    /*------------------------------------------*/
+    /* Get the geometry info                    */
+    /*------------------------------------------*/
     
-    GDALDriver *poDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
-    poDS = poDriver->CreateCopy("temp_burn_grid", poSrcDS, FALSE, NULL, NULL, NULL);
-
     OGRRegisterAll();
     OGRDataSource *poOGRDS;
     poOGRDS = OGRSFDriverRegistrar::Open(input.dustFilename.c_str(), FALSE);
@@ -75,9 +103,8 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
     /*  Check for same CRS in fire perimeter and DEM files                  */
     /* -------------------------------------------------------------------- */
 
-    char *pszDstWKT, *pszSrcWKT;
+    char *pszSrcWKT;
     OGRSpatialReference *poSrcSRS, oDstSRS;
-    pszDstWKT = (char*)poDS->GetProjectionRef(); //DEM CRS
     poSrcSRS = poLayer->GetSpatialRef(); //shapefile CRS
     poSrcSRS->exportToWkt( &pszSrcWKT );
 
@@ -110,28 +137,24 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
     double BurnValue = 1.0;
     CPLErr eErr;
     
-    eErr = GDALRasterizeGeometries(poDS, 1, &nTargetBand, 1, &hPolygon, pfnTransformer, NULL, &BurnValue, NULL, NULL, NULL);
+    eErr = GDALRasterizeGeometries(hMemDS, 1, &nTargetBand, 1, &hPolygon, pfnTransformer, NULL, &BurnValue, NULL, NULL, NULL);
     if(eErr != CE_None)
     {
         throw std::runtime_error("Error in GDALRasterizeGeometies in Dust:MakeGrid().");
     }
     
-    GDAL2AsciiGrid(poDS, 1, grid);
-    //grid.write_Grid("dustgridFileOut", 1);
+    GDAL2AsciiGrid((GDALDataset*)hMemDS, 1, grid);
     
     /* -------------------------------------------------------------------- */
     /*   clean up                                                           */
     /* -------------------------------------------------------------------- */
     
-    GDALClose((GDALDatasetH) poDS);
-    GDALClose((GDALDatasetH) poSrcDS);
+    if( hMemDS != NULL ){
+        GDALClose( hMemDS );
+        hMemDS = NULL;
+    }
+    
     OGRDataSource::DestroyDataSource( poOGRDS );
-
-    if("temp_burn_grid")
-        VSIUnlink("temp_burn_grid");
-    if ("temp_burn_grid.prj")
-        VSIUnlink("temp_burn_grid.prj");
-
 }
 #endif
 

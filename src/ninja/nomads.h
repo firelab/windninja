@@ -158,30 +158,48 @@ static const char *apszNomadsKeys[][11] =
 {
     /*
     ** GFS
-    ** GFS is moving to 0.25 degree in late 2014.  The only change will be the
-    ** grid resolution, just fix below.
+    **
+    ** Note that there are 3 resolutions available.  Depending on the
+    ** situation, we may want to use one over the other.
     */
     { /* Name key of the model */
       "gfs_global",
       /* name of the perl script for the grib filter */
-      "filter_gfs_hd.pl",
+#if defined(NOMADS_GFS_0P5DEG)
+      "filter_gfs_0p50.pl",
+#elif defined(NOMADS_GFS_1P0DEG)
+      "filter_gfs_1p00.pl",
+#else /* NOMADS_GFS_0.25DEG is default */
+      "filter_gfs_0p25.pl",
+#endif
       /* File naming format */
-      "gfs.t%02dz.mastergrb2f%02d",
+#if defined(NOMADS_GFS_0P5DEG)
+      "gfs.t%02dz.pgrb2full.0p50.f%03d",
+#elif defined(NOMADS_GFS_1P0DEG)
+      "gfs.t%02dz.pgrb2.1p00.f%03d",
+#else /* NOMADS_GFS_0.25DEG is default */
+      "gfs.t%02dz.pgrb2.0p25.f%03d",
+#endif
       /* Directory formats, string is date formatted as folowing */
-      "gfs.%s%02d/master",
+      "gfs.%s%02d",
       /* Date format for directory */
       "%Y%m%d",
       /* Forecast hours, start:stop:stride */
       NOMADS_GENERIC_FCST_HOURS,
       /* Forecast run hours, start:stop:stride,start:stop:stride,... */
-      "0:192:3",
+      "0:240:3,252:384:12",
       /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
-      /* Levels list */
-      "convective_cloud_layer,10_m_above_ground,2_m_above_ground,",
+      /* Level list. XXX Note entire_atmosphere instead of the default */
+      "2_m_above_ground,10_m_above_ground,entire_atmosphere",
       /* Horizontal grid resolution */
-      /* "0.25 deg", */
+#if defined(NOMADS_GFS_0P5DEG)
       "0.5 deg",
+#elif defined(NOMADS_GFS_1P0DEG)
+      "1.0 deg",
+#else /* NOMADS_GFS_0.25DEG is default */
+      "0.25 deg",
+#endif
       /* Human readable name */
       "GFS Global" },
     /* XXX: Climate Forecast System Flux (CFS)??? */

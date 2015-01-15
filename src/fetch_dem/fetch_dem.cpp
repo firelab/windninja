@@ -40,6 +40,9 @@
 #include "ogr_api.h"
 #include "ogr_geocoding.h"
 #define FETCH_DEM_GEOCODE 1
+#ifdef WIN32
+#undef FETCH_DEM_GEOCODE
+#endif /* WIN32 */
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
