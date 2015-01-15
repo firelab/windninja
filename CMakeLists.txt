@@ -31,22 +31,62 @@
 # *****************************************************************************
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(WindNinja)
-# *****************************************************************************
-# Project WindNinja, version 2.x.x.  At some point port the versioning to 
-# write a header.
-# *****************************************************************************
-
-# Fetch version info from where we are at.  See get_svn_vers.py 
-# use FILE(...)
-SET(WINDNINJA_VERSION_MAJOR "2")
-SET(WINDNINJA_VERSION_MINOR "4")
-SET(WINDNINJA_VERSION_PATCH "1")
-SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
 
 # *****************************************************************************
 # Add our cmake directory to the path for netcdf, gdal and proj
 # *****************************************************************************
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+# *****************************************************************************
+# Set this option early so we can default stuff.
+# *****************************************************************************
+OPTION(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
+MARK_AS_ADVANCED(FIRELAB_PACKAGE)
+
+SET(WINDNINJA_VERSION_MAJOR "2")
+SET(WINDNINJA_VERSION_MINOR "4")
+SET(WINDNINJA_VERSION_PATCH "1")
+OPTION(GENERATE_VERSION_INFO "Write version info files." OFF)
+IF(GENERATE_VERSION_INFO OR FIRELAB_PACKAGE)
+    FILE(READ ${CMAKE_SOURCE_DIR}/VERSION V)
+    STRING(REPLACE "\n" "" V ${V})
+    IF(V)
+        STRING(REPLACE "." ";" VLIST ${V})
+        LIST(LENGTH VLIST VCOUNT)
+        IF(VCOUNT GREATER 0)
+            LIST(GET VLIST 0 WINDNINJA_VERSION_MAJOR)
+        ENDIF(VCOUNT GREATER 0)
+        IF(VCOUNT GREATER 1)
+            LIST(GET VLIST 1 WINDNINJA_VERSION_MINOR)
+        ENDIF(VCOUNT GREATER 1)
+        IF(VCOUNT GREATER 2)
+            LIST(GET VLIST 2 WINDNINJA_VERSION_PATCH)
+        ENDIF(VCOUNT GREATER 2)
+    ENDIF(V)
+    SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
+    FILE(READ ${CMAKE_SOURCE_DIR}/disclaimer VERSION_HEADER)
+    EXECUTE_PROCESS(COMMAND "git" "rev-parse" "HEAD"
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                    RESULT_VARIABLE GIT_RC
+                    OUTPUT_VARIABLE GIT_REV)
+    IF(GIT_RC)
+        SET(GIT_REV "NOT SET")
+    ENDIF(GIT_RC)
+    STRING(REPLACE "\n" "" GIT_REV ${GIT_REV})
+
+    INCLUDE(GetDate)
+    GET_DATE()
+
+    SET(V "${VERSION_HEADER}
+#ifndef VERSION_H
+#define VERSION_H
+#define VERSION \"${WINDNINJA_VERSION}\"
+#define SVN_VERSION \"${GIT_REV}\"
+#define RELEASE_DATE \"${GD_MONTH}/${GD_DAY}/${GD_YEAR}\"
+#endif /* VERSION_H */\n")
+    FILE(WRITE "${CMAKE_SOURCE_DIR}/src/version.h" ${V})
+ENDIF(GENERATE_VERSION_INFO OR FIRELAB_PACKAGE)
+SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
 
 # *****************************************************************************
 # Find boost libs, required for all builds.  1.41.1 may be arbitrary.
@@ -330,8 +370,6 @@ ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 # Option for creating the installer with all the dlls from the firelab machine.
 # If build type not explicity set, then we set it to release for dll builds
 # *****************************************************************************
-OPTION(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
-MARK_AS_ADVANCED(FIRELAB_PACKAGE)
 IF(FIRELAB_PACKAGE)
     SET(NINJA_QTGUI ON)
     SET(NINJA_CLI ON)
