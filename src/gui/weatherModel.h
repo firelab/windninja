@@ -68,7 +68,7 @@ static void *pCancel;
 
 static const char *apszWxModelGlossary[] =
 {
-    "NCAR=National Center for Atomosperhic Research",
+    "UCAR=University Corporation for Atomosperhic Research",
     "NOMADS=NOAA Operational Model Archive and Distribution System",
     "NDFD=National Digital Forecast Database",
     "NAM=North American Mesoscale",

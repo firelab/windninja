@@ -102,7 +102,7 @@ std::vector<std::string> ncepRapSurfInitialization::getVariableList()
 */
 std::string ncepRapSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "NCAR-RAP-CONUS-13-KM" );
+    return std::string( "UCAR-RAP-CONUS-13-KM" );
 }
 
 int ncepRapSurfInitialization::getStartHour()

@@ -147,7 +147,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
  * file.
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
- * \param forecastFilename A valid thredds/ncar based weather model file.
+ * \param forecastFilename A valid thredds/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
  *                 See WINDNINJA_DATA/date_time_zonespec.csv
@@ -236,7 +236,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
  * key-> "wxmodel"
  *
  * Description: Initialize the field using coarse-scale weather model data.
- *              These data come from NCAR/thredds through version 2.2.0,
+ *              These data come from UCAR/thredds through version 2.2.0,
  *              although it may change in the future.  This initialization
  *              method should be used in conjuction with NinjaMakeArmy.
  * \see NinjaMakeArmy
