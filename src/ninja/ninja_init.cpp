@@ -121,7 +121,7 @@ int NinjaInitialize()
     if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
     {
         CPLHTTPResult *poResult;
-        poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit.py?visit=1", NULL );
+        poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
         CPLHTTPDestroyResult( poResult );
     }
 #endif
