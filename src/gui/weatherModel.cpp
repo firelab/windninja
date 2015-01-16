@@ -40,10 +40,10 @@ void httpGetThread::run( wxModelInitialization *model, QString file,
              int days )
 {
     try {
-    model->fetchForecast( file.toStdString(), days );
+        model->fetchForecast( file.toStdString(), days );
     }
     catch( badForecastFile &e ) {
-        qDebug() << "Caught bad forecast file";
+        qDebug() << "Caught bad forecast file" << e.what();
     }
 }
 
