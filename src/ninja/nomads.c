@@ -616,6 +616,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
         CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
 
+        CPLDebug( "NOMADS", "Starting download..." );
         if( pfnProgress )
         {
             pfnProgress( 0.0, "Starting download...", NULL );
