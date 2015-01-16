@@ -50,6 +50,7 @@
  */
 int main(int argc, char *argv[])
 {
+    CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
     NinjaInitialize();
     int result;
 #ifdef _OPENMP
