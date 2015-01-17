@@ -81,14 +81,6 @@ static const char *apszWxModelGlossary[] =
     NULL
 };
 
-class httpGetThread : public QThread
-{
- Q_OBJECT
-
- public:
-    void run( wxModelInitialization *model, QString file, int days );
-};
-
 class weatherModel : public QWidget
 {
     Q_OBJECT
@@ -129,7 +121,6 @@ class weatherModel : public QWidget
 
     boost::local_time::tz_database tz_db;
     QString tzString;
-    httpGetThread http;
  private:
     void loadModelComboBox();
 

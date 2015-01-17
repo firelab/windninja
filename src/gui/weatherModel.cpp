@@ -30,24 +30,6 @@
 #include "weatherModel.h"
 
 /**
- * Thread for downloading the weather data, to allow gui response
- *
- * @param model model to fetch
- * @param file dem file
- * @param days number of days
- */
-void httpGetThread::run( wxModelInitialization *model, QString file,
-             int days )
-{
-    try {
-        model->fetchForecast( file.toStdString(), days );
-    }
-    catch( badForecastFile &e ) {
-        qDebug() << "Caught bad forecast file" << e.what();
-    }
-}
-
-/**
  * Constructor
  *
  * @param parent parent widget for the widget
@@ -192,8 +174,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
 }
 
 /**
- * Destructor.  Closes files and http connections
- *
+ * Destructor.  Closes files.`
  */
 weatherModel::~weatherModel()
 {
@@ -309,11 +290,6 @@ void weatherModel::getData()
         progressDialog->setCancelButtonText( "Cancel" );
 #endif
     }
-
-    /* use a separate thread for the download? */
-    //http.start();
-    //http.run( model, inputFile, days * 24 );
-
 
     try {
         model->fetchForecast( inputFile.toStdString(), hours );
