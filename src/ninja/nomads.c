@@ -471,12 +471,7 @@ static void NomadsFetchAsync( void *pData )
 int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                  int nHours, int nStride, double *padfBbox,
                  const char *pszDstVsiPath, char ** papszOptions,
-#if defined(WIN32) && !defined(NINJA_64BIT)
-                 void *pfnWin32Progress
-#else
-                 GDALProgressFunc pfnProgress
-#endif
-               )
+                 GDALProgressFunc pfnProgress )
 {
     const char **ppszKey = NULL;
     int nFcstHour = 0;
@@ -504,9 +499,6 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     nomads_utc *ref, *end, *fcst;
     nrc = NOMADS_OK;
 
-#if defined(WIN32) && !defined(NINJA_64BIT)
-    GDALProgressFunc pfnProgress = (GDALProgressFunc)pfnWin32Progress;
-#endif
     CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
               padfBbox[0], padfBbox[1], padfBbox[2], padfBbox[3] );
 
