@@ -286,7 +286,8 @@ void weatherModel::getData()
         /*
         ** Disable progress on 32-bit windows as we segfault.
         */
-#if defined(WIN32) && defined(NINJA_32BIT)
+//#if defined(WIN32) && defined(NINJA_32BIT)
+#ifdef WIN32
         model->SetProgressFunc( NULL );
         QCoreApplication::processEvents();
 #else /* defined(WIN32) && !defined(NINJA_64BIT) */
@@ -320,7 +321,7 @@ void weatherModel::getData()
         return;
     }
 
-#if defined(WIN32) && defined(NINJA_32BIT) && defined(WITH_NOMADS_SUPPORT)
+#ifndef WIN32
     if( modelChoice > 4 )
     {
         progressDialog->setRange( 0, 100 );
