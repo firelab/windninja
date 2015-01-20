@@ -320,7 +320,7 @@ void weatherModel::getData()
         return;
     }
 
-#ifdef TEST
+#if defined(WIN32) && !defined(NINJA_64BIT) && defined(WITH_NOMADS_SUPPORT)
     if( modelChoice > 4 )
     {
         progressDialog->setRange( 0, 100 );
@@ -328,7 +328,7 @@ void weatherModel::getData()
         progressDialog->setLabelText( "Done" );
         progressDialog->setCancelButtonText( "Close" );
     }
-#endif
+#endif /* defined(WIN32) && !defined(NINJA_64BIT) && defined(WITH_NOMADS_SUPPORT) */
 
     checkForModelData();
     setCursor(Qt::ArrowCursor);
