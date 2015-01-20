@@ -292,7 +292,7 @@ void weatherModel::getData()
 #else /* defined(WIN32) && !defined(NINJA_64BIT) */
         progressDialog->reset();
         progressDialog->setRange( 0, 100 );
-        model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
+        model->SetProgressFunc( (void*)&UpdateProgress );
         progressDialog->show();
         progressDialog->setCancelButtonText( "Cancel" );
 #endif /* defined(WIN32) && !defined(NINJA_64BIT) */
