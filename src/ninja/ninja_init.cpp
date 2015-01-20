@@ -41,7 +41,7 @@ void NinjaCheckThreddsData( void *rc )
     }
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     CPLHTTPResult *poResult;
-    poResult = CPLHTTPFetch( "https://github.com/firelab/windninja/raw/master/data/thredds.csv", NULL );
+    poResult = CPLHTTPFetch( "https://marblerye.org/cgi-bin/ninja_visit?thredds=1", NULL );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
@@ -118,7 +118,8 @@ int NinjaInitialize()
     }
 #endif /* DISABLE_THREDDS_UPDATE */
 #ifdef NINJA_ENABLE_CALL_HOME
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
+    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) && rc == TRUE ) )
+
     {
         CPLHTTPResult *poResult;
         poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
