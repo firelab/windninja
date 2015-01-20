@@ -336,6 +336,7 @@ MARK_AS_ADVANCED(PACKAGE_DEBUG)
 # *****************************************************************************
 IF(CMAKE_SIZEOF_VOID_P MATCHES "8")
     SET(BUILD_64 TRUE)
+    ADD_DEFINITIONS(-DNINJA_64BIT=1)
     IF(PACKAGE_DEBUG)
         MESSAGE("Building 64-bit installer")
     ENDIF(PACKAGE_DEBUG)

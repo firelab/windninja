@@ -283,12 +283,20 @@ void weatherModel::getData()
     {
 #ifdef WITH_NOMADS_SUPPORT
         model = papoNomads[modelChoice - 5];
+        /*
+        ** Disable progress on 32-bit windows as we segfault.
+        */
+#if defined(WIN32) && !defined(NINJA_64BIT)
+        model->SetProgressFunc( NULL );
+        QCoreApplication::processEvents();
+#else /* defined(WIN32) && !defined(NINJA_64BIT) */
         progressDialog->reset();
         progressDialog->setRange( 0, 100 );
         model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
         progressDialog->show();
         progressDialog->setCancelButtonText( "Cancel" );
-#endif
+#endif /* defined(WIN32) && !defined(NINJA_64BIT) */
+#endif /* WITH_NOMADS_SUPPORT */
     }
 
     try {
@@ -312,12 +320,15 @@ void weatherModel::getData()
         return;
     }
 
+#ifdef TEST
     if( modelChoice > 4 )
     {
+        progressDialog->setRange( 0, 100 );
         progressDialog->setValue( 100 );
         progressDialog->setLabelText( "Done" );
         progressDialog->setCancelButtonText( "Close" );
     }
+#endif
 
     checkForModelData();
     setCursor(Qt::ArrowCursor);
