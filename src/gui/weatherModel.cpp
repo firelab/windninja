@@ -286,8 +286,7 @@ void weatherModel::getData()
         /*
         ** Disable progress on 32-bit windows as we segfault.
         */
-//#if defined(WIN32) && defined(NINJA_32BIT)
-#ifdef WIN32
+#if defined(WIN32) && defined(NINJA_32BIT)
         model->SetProgressFunc( NULL );
         QCoreApplication::processEvents();
 #else /* defined(WIN32) && !defined(NINJA_64BIT) */
@@ -296,7 +295,7 @@ void weatherModel::getData()
         model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
         progressDialog->show();
         progressDialog->setCancelButtonText( "Cancel" );
-#endif /* defined(WIN32) && !defined(NINJA_64BIT) */
+#endif /* defined(WIN32) && defined(NINJA_32BIT) */
 #endif /* WITH_NOMADS_SUPPORT */
     }
 
@@ -321,7 +320,7 @@ void weatherModel::getData()
         return;
     }
 
-#ifndef WIN32
+#if defined(NINJA_64BIT)
     if( modelChoice > 4 )
     {
         progressDialog->setRange( 0, 100 );
@@ -329,7 +328,7 @@ void weatherModel::getData()
         progressDialog->setLabelText( "Done" );
         progressDialog->setCancelButtonText( "Close" );
     }
-#endif /* defined(WIN32) && !defined(NINJA_64BIT) && defined(WITH_NOMADS_SUPPORT) */
+#endif /* defined(NINJA_64BIT) */
 
     checkForModelData();
     setCursor(Qt::ArrowCursor);
