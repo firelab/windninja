@@ -41,10 +41,11 @@ void NinjaCheckThreddsData( void *rc )
     }
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     CPLHTTPResult *poResult;
-    poResult = CPLHTTPFetch( "https://marblerye.org/cgi-bin/ninja_visit?thredds=1", NULL );
+    poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?thredds=1", NULL );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
+        CPLDebug( "NINJA", "Failed to download thredds file." );
         *r = 1;
         return;
     }
@@ -101,6 +102,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
+    int rc = TRUE;
 #ifndef DISABLE_THREDDS_UPDATE
     /*
     ** Disable VSI caching, this breaks nomads downloader if it's on.
@@ -108,7 +110,7 @@ int NinjaInitialize()
     CPLSetConfigOption( "VSI_CACHE", "FALSE" );
 
     /* Try to update our thredds file */
-    int rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
+    rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
                                                  "NO" ) );
     if( rc == FALSE )
     {
@@ -118,12 +120,15 @@ int NinjaInitialize()
     }
 #endif /* DISABLE_THREDDS_UPDATE */
 #ifdef NINJA_ENABLE_CALL_HOME
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) && rc == TRUE ) )
+    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
 
     {
-        CPLHTTPResult *poResult;
-        poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
-        CPLHTTPDestroyResult( poResult );
+        if( rc == TRUE )
+        {
+            CPLHTTPResult *poResult;
+            poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
+            CPLHTTPDestroyResult( poResult );
+        }
     }
 #endif
     return 0;
