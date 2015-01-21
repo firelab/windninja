@@ -41,6 +41,7 @@ build*
 *.includes
 
 # Weather model files
+*UCAR*
 *NCAR*
 *NOMADS*
 
