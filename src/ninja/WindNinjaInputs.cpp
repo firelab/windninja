@@ -48,7 +48,7 @@ WindNinjaInputs::WindNinjaInputs()
     outputWindHeightUnits = lengthUnits::meters;
     outputWindHeight = -1.0;
     matchWxStations = false;
-    outer_relax = atof(CPLGetConfigOption("NINJA_POINT_MATCH_OUT_RELAX", "0.8"));
+    outer_relax = atof(CPLGetConfigOption("NINJA_POINT_MATCH_OUT_RELAX", "1.0"));
     CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
     //outer_relax = 0.01;
     diurnalWinds = false;
@@ -180,6 +180,11 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   inputWindHeight = rhs.inputWindHeight;
   outputWindHeightUnits = rhs.outputWindHeightUnits;
   outputWindHeight = rhs.outputWindHeight;
+  stations = rhs.stations;
+  wxStationFilename = rhs.wxStationFilename;
+  stationsScratch = rhs.stationsScratch;
+  stationsOldInput = rhs.stationsOldInput;
+  stationsOldOutput = rhs.stationsOldOutput;
   matchWxStations = rhs.matchWxStations;
   outer_relax = rhs.outer_relax;
   CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
@@ -333,6 +338,11 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       inputWindHeight = rhs.inputWindHeight;
       outputWindHeightUnits = rhs.outputWindHeightUnits;
       outputWindHeight = rhs.outputWindHeight;
+      stations = rhs.stations;
+      wxStationFilename = rhs.wxStationFilename;
+      stationsScratch = rhs.stationsScratch;
+      stationsOldInput = rhs.stationsOldInput;
+      stationsOldOutput = rhs.stationsOldOutput;
       matchWxStations = rhs.matchWxStations;
       outer_relax = rhs.outer_relax;
       CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);

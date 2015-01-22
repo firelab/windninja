@@ -365,18 +365,10 @@ public:
 
     WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
 
-
-    /*-----------------------------------------------------------------------------
-     *  Protected Access
-     *-----------------------------------------------------------------------------*/
-
 protected:
     void checkCancel();
     void write_compare_output();
 
-    /*-----------------------------------------------------------------------------
-     *  Private Access
-     *-----------------------------------------------------------------------------*/
 private:
 
 
@@ -384,6 +376,9 @@ private:
                             //Each u, v, w velocity component is checked.
 
     int nMaxMatchingIters;
+    std::vector<int> num_outer_iter_tries_u;   //used in outer iterations calcs
+    std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
+    std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
     wn_3dScalarField u, v, w;
     wn_3dScalarField u0;		//u is positive toward East
@@ -481,7 +476,6 @@ private:
 //	double norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
     void interp_uvw();
 
-private:
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
     double get_aspect_ratio(int NUMEL, int NUMNP, double *XORD, double *YORD, double *ZORD,
                             int nrows, int ncols, int nlayers);

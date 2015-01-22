@@ -143,6 +143,9 @@ ninja::ninja(const ninja &rhs)
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
     nMaxMatchingIters = rhs.nMaxMatchingIters;
     matchTol = rhs.matchTol;
+    num_outer_iter_tries_u = rhs.num_outer_iter_tries_u;
+    num_outer_iter_tries_v = rhs.num_outer_iter_tries_v;
+    num_outer_iter_tries_w = rhs.num_outer_iter_tries_w;
 
     //Timers
     startTotal=0.0;
@@ -222,6 +225,9 @@ ninja &ninja::operator=(const ninja &rhs)
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
         nMaxMatchingIters = rhs.nMaxMatchingIters;
         matchTol = rhs.matchTol;
+        num_outer_iter_tries_u = rhs.num_outer_iter_tries_u;
+        num_outer_iter_tries_v = rhs.num_outer_iter_tries_v;
+        num_outer_iter_tries_w = rhs.num_outer_iter_tries_w;
 
         //Timers
         startTotal=0.0;
@@ -393,6 +399,12 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 
 int matchingIterCount = 0;
 bool matchFlag = false;
+if(input.matchWxStations == true)
+{
+    num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
+    num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
+    num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
+}
 do
 {
 /*  ----------------------------------------*/
@@ -4073,16 +4085,20 @@ bool ninja::matched(int iter)
 		element elem(&mesh);
 		double x, y, z;
 		double u_loc, v_loc, w_loc;
-		double u_vel, v_vel, w_vel;
+        double try_output_u, try_output_v, try_output_w;
 		int cell_i, cell_j, cell_k;
 		double spd, dir;
 		double true_u, true_v, true_w;
-		double last_input_u, last_input_v, last_input_w;
+        double try_input_u, try_input_v, try_input_w;
+        double old_input_u, old_input_v, old_input_w;
+        double old_output_u, old_output_v, old_output_w;
 		double new_input_u, new_input_v, new_input_w;
 		double maxCurrentOuterDiff = -1.0;
 		double percent_complete, time_percent_complete;
 		double tempCompleteIn, tempCompleteOut;
 		bool ret = true;
+        bool u_keep_old, v_keep_old, w_keep_old;
+
 
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Stations matching check:");
 		//input.Com->ninjaCom(ninjaComClass::ninjaNone, "Station #\tmeas_u\tcomp_u\tmeas_v\tcomp_v\tmeas_w\tcomp_w");
@@ -4100,26 +4116,26 @@ bool ninja::matched(int iter)
 			//Get cell number and "parent cell" coordinates of station location
 			elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
-			//Get velocity at the station location
-			u_vel = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-			v_vel = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-			w_vel = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            //Get velocity at the station location
+            try_output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            try_output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
 			wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance
-			if( abs(true_u-u_vel) > matchTol)
+            if( abs(true_u-try_output_u) > matchTol)
 			{
 				ret = false;
 			}
-			if( abs(true_v-v_vel) > matchTol)
+            if( abs(true_v-try_output_v) > matchTol)
 			{
 				ret = false;
 			}
 			//At this point, we don't match vertical velocity...
-            //if( abs(input.stations[i].get_w_speed()-w_vel) > matchTol)
+            //if( abs(input.stations[i].get_w_speed()-try_output_w) > matchTol)
 			//{
 			//	ret = false;
 			//}
@@ -4127,25 +4143,29 @@ bool ninja::matched(int iter)
 			//Store starting difference
 			if(iter == 1)
 			{
-			    if( abs(true_u-u_vel) > maxStartingOuterDiff)
-			        maxStartingOuterDiff = abs(true_u-u_vel);
-			    if( abs(true_v-v_vel) > maxStartingOuterDiff)
-			        maxStartingOuterDiff = abs(true_v-v_vel);
+                if( abs(true_u-try_output_u) > maxStartingOuterDiff)
+                    maxStartingOuterDiff = abs(true_u-try_output_u);
+                if( abs(true_v-try_output_v) > maxStartingOuterDiff)
+                    maxStartingOuterDiff = abs(true_v-try_output_v);
 			    maxCurrentOuterDiff = maxStartingOuterDiff;
 			}else{
-			    if(abs(true_u-u_vel) > maxCurrentOuterDiff)
-			        maxCurrentOuterDiff = abs(true_u-u_vel);
-			    if(abs(true_v-v_vel) > maxCurrentOuterDiff)
-			        maxCurrentOuterDiff = abs(true_v-v_vel);
+                if(abs(true_u-try_output_u) > maxCurrentOuterDiff)
+                    maxCurrentOuterDiff = abs(true_u-try_output_u);
+                if(abs(true_v-try_output_v) > maxCurrentOuterDiff)
+                    maxCurrentOuterDiff = abs(true_v-try_output_v);
 			}
 
-            wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &last_input_u, &last_input_v);
-			last_input_w = input.stationsScratch[i].get_w_speed();
+            wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &try_input_u, &try_input_v);
+            try_input_w = input.stationsScratch[i].get_w_speed();
+            wind_sd_to_uv(input.stationsOldInput[i].get_speed(), input.stationsOldInput[i].get_direction(), &old_input_u, &old_input_v);
+            old_input_w = input.stationsOldInput[i].get_w_speed();
+            wind_sd_to_uv(input.stationsOldOutput[i].get_speed(), input.stationsOldOutput[i].get_direction(), &old_output_u, &old_output_v);
+            old_output_w = input.stationsOldOutput[i].get_w_speed();
 
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - u_vel, true_v - v_vel, true_w - w_vel);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "last_input_u = %lf\tu_solve = %lf\tu_true = %lf", last_input_u, u_vel, true_u);
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "last_input_v = %lf\tv_solve = %lf\tv_true = %lf", last_input_v, v_vel, true_v);
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "last_input_w = %lf\tw_solve = %lf\tw_true = %lf", last_input_w, w_vel, true_w);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - try_output_u, true_v - try_output_v, true_w - try_output_w);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_u = %lf\tu_solve = %lf\tu_true = %lf", try_input_u, try_output_u, true_u);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_v = %lf\tv_solve = %lf\tv_true = %lf", try_input_v, try_output_v, true_v);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_w = %lf\tw_solve = %lf\tw_true = %lf", try_input_w, try_output_w, true_w);
 
 			//Compute new values using formula (from Lopes (2003)):
 			//
@@ -4159,22 +4179,133 @@ bool ninja::matched(int iter)
 			//            y1 = computed value at the wx station, in the previous iteration
             //			  outer_relax = relaxation value (Lopes found 0.8 to be good compromise between fast convergence and to prevent divergence)
 
-
-
 			//u component
-			new_input_u = last_input_u + input.outer_relax*(true_u - u_vel);
+            //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
 			//v component
-			new_input_v = last_input_v + input.outer_relax*(true_v - v_vel);
+            //new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v);
 			//w component
-			//new_input_w = last_input_w + input.outer_relax*(true_w - w_vel);
+            //new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w);
 
+
+            //Compute new values using formula (use ideas from Walter Murray 2010, page 6, http://web.stanford.edu/class/cme304/docs/newton-type-methods.pdf):
+            //
+            //            x2 = x1 + outer_relax(yr - y1)
+            //old_output_u
+            //        where
+            //
+            //            x2 = new input value at the present iteration
+            //            x1 = input value at the previous iteration
+            //            yr = reference value, i.e., reading at the wx station
+            //            y1 = computed value at the wx station, in the previous iteration
+            //			  outer_relax = relaxation value (Lopes found 0.8 to be good compromise between fast convergence and to prevent divergence)
+
+            if(i==0)
+                printf("crap");
+
+            //Did our last correction attempt improve things for u?
+            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1)
+            {
+                //Then scrap the last try and, only step halfway
+                num_outer_iter_tries_u[i]++;
+                new_input_u = old_input_u + input.outer_relax*(true_u - old_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
+                u_keep_old = true;
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last u step was bad, try half step.");
+            }else
+            {
+                num_outer_iter_tries_u[i] = 0;
+                new_input_u = try_input_u + input.outer_relax*(true_u - old_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
+                u_keep_old = false;
+            }
+
+            //Did our last correction attempt improve things for v?
+            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1)
+            {
+                //Then scrap the last try and, only step halfway
+                num_outer_iter_tries_v[i]++;
+                new_input_v = old_input_v + input.outer_relax*(true_v - old_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
+                v_keep_old = true;
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last v step was bad, try half step.");
+            }else
+            {
+                num_outer_iter_tries_v[i] = 0;
+                new_input_v = try_input_v + input.outer_relax*(true_v - old_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
+                v_keep_old = false;
+            }
+
+            //Did our last correction attempt improve things for w?
+            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1)
+            {
+                //Then scrap the last try and, only step halfway
+                num_outer_iter_tries_w[i]++;
+                new_input_w = old_input_w + input.outer_relax*(true_w - old_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
+                w_keep_old = true;
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last w step was bad, try half step.");
+            }else
+            {
+                num_outer_iter_tries_w[i] = 0;
+                new_input_w = try_input_w + input.outer_relax*(true_w - old_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
+                w_keep_old = false;
+            }
+
+            if(u_keep_old==true && v_keep_old==true)
+            {
+                wind_uv_to_sd(old_input_u, old_input_v, &spd, &dir);
+                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldInput[i].set_direction(dir);
+
+                wind_uv_to_sd(old_output_u, old_output_v, &spd, &dir);
+                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldOutput[i].set_direction(dir);
+
+            }else if(u_keep_old==true && v_keep_old==false)
+            {
+                wind_uv_to_sd(old_input_u, try_input_v, &spd, &dir);
+                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldInput[i].set_direction(dir);
+
+                wind_uv_to_sd(old_output_u, try_output_v, &spd, &dir);
+                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldOutput[i].set_direction(dir);
+
+            }else if(u_keep_old==false && v_keep_old==true)
+            {
+                wind_uv_to_sd(try_input_u, old_input_v, &spd, &dir);
+                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldInput[i].set_direction(dir);
+
+                wind_uv_to_sd(try_output_u, old_output_v, &spd, &dir);
+                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldOutput[i].set_direction(dir);
+
+            }else
+            {
+                wind_uv_to_sd(try_input_u, try_input_v, &spd, &dir);
+                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldInput[i].set_direction(dir);
+
+                wind_uv_to_sd(try_output_u, try_output_v, &spd, &dir);
+                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
+                input.stationsOldOutput[i].set_direction(dir);
+            }
+
+
+            //input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
+
+
+
+            //u component
+            //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
+            //v component
+            //new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v);
+            //w component
+            //new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w);
 
 			//Set stationsScratch to new velocities and direction that are closer (hopefully!)
 			wind_uv_to_sd(new_input_u, new_input_v, &spd, &dir);
-			input.stationsScratch[i].set_speed(spd, velocityUnits::metersPerSecond);
+            input.stationsScratch[i].set_speed(spd, velocityUnits::metersPerSecond);
 			input.stationsScratch[i].set_direction(dir);
 			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
-		}
+        }
 
 		//compute percent complete
 		percent_complete=100.0-100.0*((maxCurrentOuterDiff-matchTol)/(maxStartingOuterDiff-matchTol));
@@ -5667,6 +5798,8 @@ void ninja::set_wxStationFilename(std::string station_filename)
     input.wxStationFilename = station_filename;
     input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
     input.stationsScratch = input.stations;
+    input.stationsOldInput = input.stations;
+    input.stationsOldOutput = input.stations;
     for (unsigned int i = 0; i < input.stations.size(); i++)
     {
         if (!input.stations[i].check_station())
