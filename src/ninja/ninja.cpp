@@ -4098,6 +4098,7 @@ bool ninja::matched(int iter)
 		double tempCompleteIn, tempCompleteOut;
 		bool ret = true;
         bool u_keep_old, v_keep_old, w_keep_old;
+        double delta = 0.1;
 
 
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Stations matching check:");
@@ -4186,66 +4187,57 @@ bool ninja::matched(int iter)
 			//w component
             //new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w);
 
-
             //Compute new values using formula (use ideas from Walter Murray 2010, page 6, http://web.stanford.edu/class/cme304/docs/newton-type-methods.pdf):
-            //
-            //            x2 = x1 + outer_relax(yr - y1)
-            //old_output_u
-            //        where
-            //
-            //            x2 = new input value at the present iteration
-            //            x1 = input value at the previous iteration
-            //            yr = reference value, i.e., reading at the wx station
-            //            y1 = computed value at the wx station, in the previous iteration
-            //			  outer_relax = relaxation value (Lopes found 0.8 to be good compromise between fast convergence and to prevent divergence)
+            //Changed the old method above to include limiting of over shooting and making the solutions worse, in this case we just scrap that step and try a half step.
+            //    this recurses (the half steps) until it's better than the last good step OR 3 half step recursions have been attempted.  In the latter case, we stop
+            //    and just take the step, because there was a problem where we got into a never ending recursion problem.
 
-            if(i==0)
-                printf("crap");
 
             //Did our last correction attempt improve things for u?
-            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1)
+            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<3)
             {
-                //Then scrap the last try and, only step halfway
+                //If worse, then scrap the last try and, only step halfway
                 num_outer_iter_tries_u[i]++;
                 new_input_u = old_input_u + input.outer_relax*(true_u - old_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
                 u_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last u step was bad, try half step.");
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last u step was worse, try half that step.");
             }else
             {
                 num_outer_iter_tries_u[i] = 0;
-                new_input_u = try_input_u + input.outer_relax*(true_u - old_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
+                new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
                 u_keep_old = false;
             }
 
             //Did our last correction attempt improve things for v?
-            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1)
+            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1 && num_outer_iter_tries_v[i]<3)
             {
                 //Then scrap the last try and, only step halfway
                 num_outer_iter_tries_v[i]++;
                 new_input_v = old_input_v + input.outer_relax*(true_v - old_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
                 v_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last v step was bad, try half step.");
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last v step was worse, try half that step.");
             }else
             {
                 num_outer_iter_tries_v[i] = 0;
-                new_input_v = try_input_v + input.outer_relax*(true_v - old_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
+                new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
                 v_keep_old = false;
             }
 
             //Did our last correction attempt improve things for w?
-            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1)
+            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1 && num_outer_iter_tries_w[i]<3)
             {
                 //Then scrap the last try and, only step halfway
                 num_outer_iter_tries_w[i]++;
                 new_input_w = old_input_w + input.outer_relax*(true_w - old_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
                 w_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last w step was bad, try half step.");
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last w step was worse, try half that step.");
             }else
             {
                 num_outer_iter_tries_w[i] = 0;
-                new_input_w = try_input_w + input.outer_relax*(true_w - old_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
+                new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
                 w_keep_old = false;
             }
+
 
             if(u_keep_old==true && v_keep_old==true)
             {
