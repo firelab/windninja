@@ -4194,7 +4194,7 @@ bool ninja::matched(int iter)
 
 
             //Did our last correction attempt improve things for u?
-            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<3)
+            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<1)
             {
                 //If worse, then scrap the last try and, only step halfway
                 num_outer_iter_tries_u[i]++;
@@ -4209,7 +4209,7 @@ bool ninja::matched(int iter)
             }
 
             //Did our last correction attempt improve things for v?
-            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1 && num_outer_iter_tries_v[i]<3)
+            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1 && num_outer_iter_tries_v[i]<1)
             {
                 //Then scrap the last try and, only step halfway
                 num_outer_iter_tries_v[i]++;
@@ -4224,7 +4224,7 @@ bool ninja::matched(int iter)
             }
 
             //Did our last correction attempt improve things for w?
-            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1 && num_outer_iter_tries_w[i]<3)
+            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1 && num_outer_iter_tries_w[i]<1)
             {
                 //Then scrap the last try and, only step halfway
                 num_outer_iter_tries_w[i]++;
