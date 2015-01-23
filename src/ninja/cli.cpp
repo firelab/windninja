@@ -265,10 +265,15 @@ int windNinjaCLI(int argc, char* argv[])
                          std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
+        const char *pszNomadsName;
         while( apszNomadsKeys[i][0] != NULL )
         {
-            osAvailableWx += std::string( ", " ) +
-                             std::string( NomadsFormName( apszNomadsKeys[i][0], '-' ) );
+            pszNomadsName = NomadsFormName( apszNomadsKeys[i][0], '-' );
+            if( pszNomadsName != NULL )
+            {
+                osAvailableWx += std::string( ", " ) + std::string( pszNomadsName );
+                NomadsFree( (void*)pszNomadsName );
+            }
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
