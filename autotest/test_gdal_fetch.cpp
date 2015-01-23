@@ -104,7 +104,11 @@ BOOST_AUTO_TEST_CASE( us_box )
     adfBbox[2] =  43.7832152227745 + 0.05;
     adfBbox[3] = -113.749693430469 + 0.05;
 
-    fetch = FetchFactory::GetSurfaceFetch(FetchFactory::CUSTOM_GDAL, "/home/kyle/src/windninja/trunk/data/mackay.tif");
+    const char *pszDataPath;
+    pszDataPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
+    BOOST_REQUIRE_MESSAGE( pszDataPath != NULL, "WINDNINJA_DATA not set" );
+    const char *pszPath = CPLFormFilename( pszDataPath, "mackay", ".tif" );
+    fetch = FetchFactory::GetSurfaceFetch(FetchFactory::CUSTOM_GDAL, pszPath );
     BOOST_REQUIRE_MESSAGE( NULL != fetch, "GetSurfaceFetch returned NULL" );
 
     int rc = fetch->FetchBoundingBox(adfBbox, 30.0, pszFilename.c_str(), NULL);
