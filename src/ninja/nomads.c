@@ -393,12 +393,13 @@ static void NomadsFetchAsync( void *pData )
 
 static double NomadsGetMinSize( const char **ppszModel )
 {
+    double dfRes = 0;
     char **papszTokens = CSLTokenizeString2( ppszModel[NOMADS_GRID_RES], " ", 0 );
     if( papszTokens == NULL || CSLCount( papszTokens ) < 2 )
     {
         return 0;
     }
-    double dfRes = atof( papszTokens[0] );
+    dfRes = atof( papszTokens[0] );
     if( EQUAL( papszTokens[1], "deg" ) )
     {
         return dfRes;
