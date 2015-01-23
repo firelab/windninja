@@ -596,7 +596,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             t = (timeList[1].utc_time() - epoch).total_seconds();
             pszNextFcst =
                 NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-            hSrcDS = GDALOpen( pszNextFcst, GA_ReadOnly );
+            hSrcDS = GDALOpenShared( pszNextFcst, GA_ReadOnly );
             if( hSrcDS == NULL )
             {
                 throw badForecastFile( "Could not load cloud data." );
