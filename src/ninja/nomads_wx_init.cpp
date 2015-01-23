@@ -338,7 +338,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             continue;
         }
-        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
             CSLDestroy( papszFileList );
@@ -409,7 +409,7 @@ const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
             continue;
         }
         pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
-        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
             continue;
