@@ -134,6 +134,10 @@ struct setup
         adfMackayLarger[1] = adfMackay[1] + 2.0;
         adfMackayLarger[2] = adfMackay[2] + 2.0;
         adfMackayLarger[3] = adfMackay[3] - 2.0;
+        adfTooSmallForGfs[0] = -113.74;
+        adfTooSmallForGfs[1] = -113.72;
+        adfTooSmallForGfs[2] = 44.02;
+        adfTooSmallForGfs[3] = 44.00;
         pszVsiPath = CPLStrdup( CPLGenerateTempFilename( "NOMADS_TEST" ) );
     }
     ~setup()
@@ -148,6 +152,7 @@ struct setup
     double adfAfrica[4];
     double adfSouthAmerica[4];
     double adfMackayLarger[4];
+    double adfTooSmallForGfs[4];
     const char *pszVsiPath;
 };
 
@@ -178,6 +183,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
         pdfBbox = adfSouthAmerica;
     else if( EQUAL( pszWhere, "mackay_large" ) )
         pdfBbox = adfMackayLarger;
+    else if( EQUAL( pszWhere, "small" ) )
+        pdfBbox = adfTooSmallForGfs;
     else
         BOOST_REQUIRE( 0 );
     int rc = 0;

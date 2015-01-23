@@ -56,6 +56,14 @@ extern "C" {
 #define NOMADS_OK  0
 #define NOMADS_ERR 1
 
+/*
+** Helper for bbox ordering
+*/
+#define NOMADS_XMIN 0
+#define NOMADS_XMAX 1
+#define NOMADS_YMIN 3
+#define NOMADS_YMAX 2
+
 #define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
 
 /*
