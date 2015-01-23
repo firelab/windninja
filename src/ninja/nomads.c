@@ -355,7 +355,7 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
     VSILFILE *fout;
     psResult = NULL;
     psResult = CPLHTTPFetch( pszUrl, NULL );
-    if( !psResult || psResult->nStatus != 0 ||
+    if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 ||
         strstr( psResult->pabyData, "HTTP error code : 404" ) ||
         strstr( psResult->pabyData, "data file is not present" ) )
     {
@@ -498,6 +498,8 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     NomadsThreadData *pasData;
     nomads_utc *ref, *end, *fcst;
     nrc = NOMADS_OK;
+
+    assert( padfBbox[0] < padfBbox[1] && padfBbox[2] > padfBbox[3] );
 
     CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
               padfBbox[0], padfBbox[1], padfBbox[2], padfBbox[3] );

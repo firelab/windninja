@@ -32,6 +32,8 @@
 
 #include "nomads_utc.h"
 
+#include <assert.h>
+
 #include "cpl_port.h"
 #include "cpl_error.h"
 #include "cpl_http.h"
