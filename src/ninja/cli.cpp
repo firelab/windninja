@@ -265,7 +265,7 @@ int windNinjaCLI(int argc, char* argv[])
                          std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
-        const char *pszNomadsName;
+        char *pszNomadsName;
         while( apszNomadsKeys[i][0] != NULL )
         {
             pszNomadsName = NomadsFormName( apszNomadsKeys[i][0], '-' );
