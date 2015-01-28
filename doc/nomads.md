@@ -9,41 +9,17 @@ NOMADS is the National Weather Service data dissemination server/service.  WindN
 
 ### Available Models:
 <table>
-  <tr>
-    <th>Model</th>
-    <th>Resolution</th>
-    <th>Domain</th>
-  </tr>
-  <tr>
-    <td>GFS</td><td>0.25 deg</td><td>Global</td>
-  </tr>
-  <tr>
-    <td>HIRES Alaska</td><td>~5 km</td><td>Alaska</td>
-  </tr>
-  <tr>
-    <td>HIRES ARW</td><td>~5 km</td><td>CONUS</td>
-  </tr>
-  <tr>
-    <td>HIRES NMM</td><td>~5 km</td><td>CONUS</td>
-  </tr>
-  <tr>
-    <td>NAM Alaska</td><td>11.25 km</td><td>Alaska</td>
-  </tr>
-  <tr>
-    <td>NAM CONUS</td><td>13 km</td><td>CONUS</td>
-  </tr>
-  <tr>
-    <td>NAM North America</td><td>32 km</td><td>North America</td>
-  </tr>
-  <tr>
-    <td>HRRR</td><td>3 km</td><td>CONUS</td>
-  </tr>
-  <tr>
-    <td>RAP CONUS</td><td>13 km</td><td>CONUS</td>
-  </tr>
-  <tr>
-    <td>RAP North America</td><td>32 km</td><td>North America</td>
-  </tr>
+  <tr><th>Model</th><th>Resolution</th><th>Domain</th></tr>
+  <tr><td>GFS</td><td>0.25 deg</td><td>Global</td></tr>
+  <tr><td>HIRES Alaska</td><td>~5 km</td><td>Alaska</td></tr>
+  <tr><td>HIRES ARW</td><td>~5 km</td><td>CONUS</td></tr>
+  <tr><td>HIRES NMM</td><td>~5 km</td><td>CONUS</td></tr>
+  <tr><td>NAM Alaska</td><td>11.25 km</td><td>Alaska</td></tr>
+  <tr><td>NAM CONUS</td><td>13 km</td><td>CONUS</td></tr>
+  <tr><td>NAM North America</td><td>32 km</td><td>North America</td></tr>
+  <tr><td>HRRR</td><td>3 km</td><td>CONUS</td></tr>
+  <tr><td>RAP CONUS</td><td>13 km</td><td>CONUS</td></tr>
+  <tr><td>RAP North America</td><td>32 km</td><td>North America</td></tr>
 </table>
 
 NOMADS Configuration
@@ -109,4 +85,10 @@ Known Issues
 The new (2014-01-14) GFS model omits t000 cloud cover data as it is a
 time-averaged variable.  Since no time has passed, it is NULL.  The work around
 is to grab the next time step and use it's cloud cover data.
+
+Further Information
+-------------------
+
+Model descriptions and other information can be found at
+http://nomads.ncep.noaa.gov/
 
