@@ -586,6 +586,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         ** may be in a strange discretization situation.  GFS 0th time step
         ** doesn't have time averaged cloud cover.  Let's go forward in time
         ** and copy the cloud cover from the 1st time.  Issue a warning.
+        **
+        ** Note that GDAL handles thread safety *in* the GRIB driver by
+        ** acquiring a mutex in the driver.  We should be fine here, as long as
+        ** we use GDALOpenShared().
         */
         if( bNeedNextCloud == TRUE )
         {
