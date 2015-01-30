@@ -54,10 +54,10 @@ WindNinja 2.0.3
   based on forecasts from various sources
 
 * Point Initialization
-    ** WindNinja will allow a user to select a point on the domain where a wind
+    * WindNinja will allow a user to select a point on the domain where a wind
        speed and direction are known (a weather station or personal observation).
 
-    ** WindNinja will then do its best to match that point's wind speed and
+    * WindNinja will then do its best to match that point's wind speed and
        direction.
 
 WindNinja 2.1.0
@@ -155,11 +155,11 @@ WindNinja 2.2.0
 ---------------
 
 * Elevation file grabber
-    ** Built in Google Maps window for navigation and graphical selection of area.
+    * Built in Google Maps window for navigation and graphical selection of area.
 
-    ** Three different elevation data sets to choose from.
+    * Three different elevation data sets to choose from.
 
-    ** Added a command line version, also.
+    * Added a command line version, also.
 
 * Added better handling of non-neutral stability flows.
 
