@@ -1348,6 +1348,24 @@ int mainWindow::solve()
     //location
 
     int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
+    if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
+                         tree->weather->weatherGroupBox->isChecked()
+#ifdef STABILITY
+                         || tree->stability->stabilityGroupBox->isChecked()
+#endif
+                         ))
+    {
+        QMessageBox::warning(this, tr("WindNinja"), tr("Could not auto-identify "
+                                                      "time zone, please " 
+                                                      "specify one in Surface"),
+                             QMessageBox::Ok | QMessageBox::Default);
+        progressDialog->setValue( 0 );
+        progressDialog->cancel();
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+        setCursor(Qt::ArrowCursor);
+        return false;
+    }
+
     QVariant temp = tree->surface->timeZone->tzComboBox->itemData( tzIndex );
     std::string timeZone = temp.toString().toStdString();
 
