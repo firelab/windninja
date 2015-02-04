@@ -211,12 +211,23 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     GDALWarpOperation oOperation;
 
     oOperation.Initialize( psWarpOptions );
-    oOperation.ChunkAndWarpImage( 0, 0, 
-                                  GDALGetRasterXSize( hDstDS ), 
-                                  GDALGetRasterYSize( hDstDS ) );
+    eErr = oOperation.ChunkAndWarpImage( 0, 0, 
+                                         GDALGetRasterXSize( hDstDS ), 
+                                         GDALGetRasterYSize( hDstDS ) );
 
     GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
     GDALDestroyWarpOptions( psWarpOptions );
+
+    if( eErr != CE_None )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
+                                               "download failed." );
+        CPLFree((void*)pszDstWKT);
+        GDALClose(hDstDS);
+        GDALClose(hSrcDS);
+        return SURF_FETCH_E_IO_ERR;
+    }
+
 
     GDALRasterBandH hSrcBand;
     GDALRasterBandH hDstBand;
