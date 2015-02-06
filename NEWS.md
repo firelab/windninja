@@ -41,6 +41,22 @@ WindNinja 2.0.0
   independently. Also, an option to use the wind simulation mesh resolution has
   been added and more control over Google Earth output files is now possible.
 
+WindNinja 2.0.1
+---------------
+
+* Add time zone support
+
+* Fancy splash screen
+
+* QGIS shapefile rotation support
+
+WindNinja 2.0.2
+---------------
+
+* Fix bug in the diurnal model
+
+* Fix lcp reading.
+
 WindNinja 2.0.3
 ---------------
 
@@ -109,6 +125,13 @@ WindNinja 2.1.0
   chose the timezone based on the location of the simulation, and WindNinja
   determines if it is daylight savings or not (based on the date), the UTC
   offset, etc.
+
+WindNinja 2.1.1
+---------------
+
+* Fix example point initialization files bundled with WindNinja
+
+* New build system (CMake)
 
 WindNinja 2.1.2
 ---------------
