@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( add_hours_4 )
     int h = u->ts->tm_hour;
     NomadsUtcAddHours( u, - 1 );
     if( h - 1 < 0 )
-        BOOST_CHECK_EQUAL( 24 - h - 1, u->ts->tm_hour );
+        BOOST_CHECK_EQUAL( 24 + h - 1, u->ts->tm_hour );
     else
         BOOST_CHECK_EQUAL( h - 1, u->ts->tm_hour );
 }
@@ -118,9 +118,9 @@ BOOST_AUTO_TEST_CASE( add_hours_5 )
 {
     NomadsUtcNow( u );
     int h = u->ts->tm_hour;
-    NomadsUtcAddHours( u, - 2 );
+    NomadsUtcAddHours( u, -2 );
     if( h - 2 < 0 )
-        BOOST_CHECK_EQUAL( 24 - h - 2, u->ts->tm_hour );
+        BOOST_CHECK_EQUAL( 24 + h - 2, u->ts->tm_hour );
     else
         BOOST_CHECK_EQUAL( h - 2, u->ts->tm_hour );
 }
@@ -135,6 +135,24 @@ BOOST_AUTO_TEST_CASE( add_hours_6 )
     NomadsUtcAddHours( u, 25 );
     BOOST_CHECK_EQUAL( (h + 25) % 24, u->ts->tm_hour );
     BOOST_CHECK( (d + 2) % 31 == u->ts->tm_mday );
+}
+
+BOOST_AUTO_TEST_CASE( add_hours_7 )
+{
+    int rc;
+    rc = NomadsUtcFromIsoFrmt( u, "20150210T01:23:28" );
+    NomadsUtcAddHours( u, -2 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mday, 9 );
+    BOOST_CHECK_EQUAL( u->ts->tm_hour, 23 );
+}
+
+BOOST_AUTO_TEST_CASE( add_hours_8 )
+{
+    int rc;
+    rc = NomadsUtcFromIsoFrmt( u, "20150210T00:23:28" );
+    NomadsUtcAddHours( u, -2 );
+    BOOST_CHECK_EQUAL( u->ts->tm_mday, 9 );
+    BOOST_CHECK_EQUAL( u->ts->tm_hour, 22 );
 }
 
 BOOST_AUTO_TEST_CASE( now_1 )
