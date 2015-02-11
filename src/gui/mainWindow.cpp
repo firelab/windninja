@@ -1572,8 +1572,6 @@ int mainWindow::solve()
     progressDialog->setRange(0, nRuns * 100);
     runProgress = new int[nRuns];
 
-    //resize the army
-
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
     {
