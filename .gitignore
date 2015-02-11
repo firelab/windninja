@@ -44,5 +44,6 @@ debug*
 # Weather model files
 *UCAR*
 *NCAR*
+*NCEP*
 *NOMADS*
 
