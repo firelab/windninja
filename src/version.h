@@ -30,7 +30,7 @@
 
 #ifndef VERSION_H
 #define VERSION_H
-#define VERSION "2.5.0"
-#define SVN_VERSION "4ccb58ae5b0e92e71d690874bfb1ffa1f0776a66"
-#define RELEASE_DATE "01/20/2015"
+#define VERSION "2.5.1"
+#define SVN_VERSION "aee7dc211ff920db735bd5d76f0aac4fd6fddf17"
+#define RELEASE_DATE "02/11/2015"
 #endif /* VERSION_H */
