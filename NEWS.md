@@ -46,6 +46,8 @@ WindNinja 2.4.1
 WindNinja 2.4.0
 ---------------
 
+* Fix UCAR server endpoints, incorporated features from the trunk.
+
 WindNinja 2.3.0
 ---------------
 
@@ -53,9 +55,6 @@ WindNinja 2.3.0
   files from the LANDFIRE server for the U.S.
 
 * Two bugs were fixed (unknown).
-
-
-* Fix UCAR server endpoints, incorporated features from the trunk.
 
 WindNinja 2.2.0
 ---------------
