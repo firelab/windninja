@@ -251,3 +251,16 @@ WindNinja 2.5.0
 * Fixed command line interface (CLI) so it shows help if no arguments are
   supplied.
 
+WindNinja 2.5.1
+---------------
+
+WindNinja 2.5.0 had a major bug that crashed the application when more than one
+domain average initialization was run.  All users are encouraged to upgrade
+immediately.
+
+* Fixed regression in 2.5.0 that didn't allow more than one domain averaged
+  run (#33).
+
+* Handle timezone mismatches more effectively when the geospatial timezone data
+  doesn't match the boost tz database (#25).
+
