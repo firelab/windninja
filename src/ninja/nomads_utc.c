@@ -201,6 +201,7 @@ int NomadsUtcFromIsoFrmt( nomads_utc *u, const char *s )
     {
         rc = 1;
     }
+    u->t = timegm( u->ts );
 
 cleanup:
     free( t );

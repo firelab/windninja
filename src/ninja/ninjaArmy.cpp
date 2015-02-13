@@ -665,6 +665,8 @@ void ninjaArmy::setAtmFlags()
 void ninjaArmy::setSize( int nSize )
 {
     ninjas.resize( nSize );
+    for( int i = 0; i < nSize; i++ )
+        ninjas[i] = new ninja();
 }
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods

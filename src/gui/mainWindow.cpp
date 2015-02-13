@@ -271,6 +271,11 @@ void mainWindow::createActions()
   connect(writeBlankStationFileAction, SIGNAL(triggered()), this,
       SLOT(writeBlankStationFile()));
 
+  setConfigAction = new QAction(tr("Set Configuration Option"), this);
+  setConfigAction->setIcon(QIcon(":cog_go.png"));
+  setConfigAction->setStatusTip(tr("Set advanced runtime configuration options"));
+  connect(setConfigAction, SIGNAL(triggered()), this, SLOT(SetConfigOption()));
+
   //wind ninja help action
   windNinjaHelpAction = new QAction(tr("WindNinja &Help"), this);
   windNinjaHelpAction->setIcon(QIcon(":help.png"));
@@ -391,6 +396,7 @@ void mainWindow::createMenus()
   toolsMenu = menuBar()->addMenu(tr("&Tools"));
   //toolsMenu->addAction(resampleAction);
   toolsMenu->addAction(writeBlankStationFileAction);
+  toolsMenu->addAction(setConfigAction);
 
   //help/tutorial menus
   helpMenu = menuBar()->addMenu(tr("&Help"));
@@ -1342,6 +1348,24 @@ int mainWindow::solve()
     //location
 
     int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
+    if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
+                         tree->weather->weatherGroupBox->isChecked()
+#ifdef STABILITY
+                         || tree->stability->stabilityGroupBox->isChecked()
+#endif
+                         ))
+    {
+        QMessageBox::warning(this, tr("WindNinja"), tr("Could not auto-identify "
+                                                      "time zone, please " 
+                                                      "specify one in Surface"),
+                             QMessageBox::Ok | QMessageBox::Default);
+        progressDialog->setValue( 0 );
+        progressDialog->cancel();
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+        setCursor(Qt::ArrowCursor);
+        return false;
+    }
+
     QVariant temp = tree->surface->timeZone->tzComboBox->itemData( tzIndex );
     std::string timeZone = temp.toString().toStdString();
 
@@ -1547,8 +1571,6 @@ int mainWindow::solve()
     //set progress dialog and initial value
     progressDialog->setRange(0, nRuns * 100);
     runProgress = new int[nRuns];
-
-    //resize the army
 
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
@@ -2668,4 +2690,26 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     }
 }
 #endif
+
+void mainWindow::SetConfigOption()
+{
+    QString key, val;
+    int rc;
+    SetConfigDialog dialog;
+    rc = dialog.exec();
+    if( rc == QDialog::Rejected )
+        return;
+    const char *pszKey, *pszVal;
+    key = dialog.GetKey();
+    val = dialog.GetVal();
+    if( key == "" )
+        return;
+    if( val == "" )
+        pszVal = NULL;
+    else
+        pszVal = CPLSPrintf( "%s", (char*)val.toLocal8Bit().data() );
+    qDebug() << "Setting config option " << key << "to" << val;
+    pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
+    CPLSetConfigOption( pszKey, pszVal );
+}
 

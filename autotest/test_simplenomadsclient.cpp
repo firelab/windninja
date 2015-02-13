@@ -115,25 +115,29 @@ struct setup
         adfMackay[2] = 44.0249023401036;
         adfMackay[3] = 43.7832152227745;
         adfAlaska[0] = -146.769276;
-        adfAlaska[1] = -146.738977;
+        adfAlaska[1] = -146.438977;
         adfAlaska[2] = 63.797157;
-        adfAlaska[3] = 63.78351;
+        adfAlaska[3] = 63.48351;
         adfHawaii[0] = -155.400;
-        adfHawaii[1] = -155.385;
+        adfHawaii[1] = -155.185;
         adfHawaii[2] = 19.7356;
-        adfHawaii[3] = 19.7345;
-        adfAfrica[0] = 19.780;
-        adfAfrica[1] = 19.795;
+        adfHawaii[3] = 19.4345;
+        adfAfrica[0] = 19.495;
+        adfAfrica[1] = 19.780;
         adfAfrica[2] = 12.195;
-        adfAfrica[3] = 12.180;
+        adfAfrica[3] = 11.780;
         adfSouthAmerica[0] = -11.060;
-        adfSouthAmerica[1] = -11.045;
+        adfSouthAmerica[1] = -10.745;
         adfSouthAmerica[2] = -51.10;
-        adfSouthAmerica[3] = -51.25;
+        adfSouthAmerica[3] = -51.55;
         adfMackayLarger[0] = adfMackay[0] - 2.0;
         adfMackayLarger[1] = adfMackay[1] + 2.0;
         adfMackayLarger[2] = adfMackay[2] + 2.0;
         adfMackayLarger[3] = adfMackay[3] - 2.0;
+        adfTooSmallForGfs[0] = -113.74;
+        adfTooSmallForGfs[1] = -113.72;
+        adfTooSmallForGfs[2] = 44.02;
+        adfTooSmallForGfs[3] = 44.00;
         pszVsiPath = CPLStrdup( CPLGenerateTempFilename( "NOMADS_TEST" ) );
     }
     ~setup()
@@ -148,6 +152,7 @@ struct setup
     double adfAfrica[4];
     double adfSouthAmerica[4];
     double adfMackayLarger[4];
+    double adfTooSmallForGfs[4];
     const char *pszVsiPath;
 };
 
@@ -178,6 +183,8 @@ BOOST_AUTO_TEST_CASE( download_1 )
         pdfBbox = adfSouthAmerica;
     else if( EQUAL( pszWhere, "mackay_large" ) )
         pdfBbox = adfMackayLarger;
+    else if( EQUAL( pszWhere, "small" ) )
+        pdfBbox = adfTooSmallForGfs;
     else
         BOOST_REQUIRE( 0 );
     int rc = 0;
@@ -205,7 +212,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
             BOOST_CHECK_EQUAL( rc, 3 );
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );
-        else if EQUAL( pszKey, "gfs_global_parallel" )
+        else if EQUAL( pszKey, "gfs_global" )
             BOOST_CHECK_EQUAL( rc, 3 );
         else
             /* Sometimes we get double variables */
@@ -265,7 +272,13 @@ BOOST_AUTO_TEST_CASE( form_name_1 )
     char *s;
     s = NomadsFormName( "gfs_global", ' ' );
     BOOST_REQUIRE( s );
+#if defined(NOMADS_GFS_0P5DEG)
     BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.5 DEG" ) );
+#elif defined(NOMADS_GFS_1P0DEG)
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 1.0 DEG" ) );
+#else /* NOMADS_GFS_0.25DEG is default */
+    BOOST_CHECK( EQUAL( s, "NOMADS GFS GLOBAL 0.25 DEG" ) );
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

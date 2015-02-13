@@ -29,7 +29,6 @@ Dependencies (versions are versions we build against):
     * boost_date_time
     * boost_program_options
  * NetCDF 4.1.1
-    * may need HDF5 support (sometimes easier to build on win32)
  * GDAL 1.10.1
     * NetCDF support
     * PROJ.4 support

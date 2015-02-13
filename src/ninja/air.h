@@ -39,7 +39,7 @@ class Air : public Fluid
 {
   public:
     Air();
-    ~Air();
+    virtual ~Air();
 };
 
 #endif /* AIR_H */

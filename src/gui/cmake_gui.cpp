@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 
     if(argc > 1)
     {
+        CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
         return windNinjaCLI(argc, argv);
     }
 

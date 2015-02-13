@@ -338,7 +338,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             continue;
         }
-        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
             CSLDestroy( papszFileList );
@@ -409,7 +409,7 @@ const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
             continue;
         }
         pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
-        hDS = GDALOpen( pszFullPath, GA_ReadOnly );
+        hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
             continue;
@@ -586,6 +586,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         ** may be in a strange discretization situation.  GFS 0th time step
         ** doesn't have time averaged cloud cover.  Let's go forward in time
         ** and copy the cloud cover from the 1st time.  Issue a warning.
+        **
+        ** Note that GDAL handles thread safety *in* the GRIB driver by
+        ** acquiring a mutex in the driver.  We should be fine here, as long as
+        ** we use GDALOpenShared().
         */
         if( bNeedNextCloud == TRUE )
         {
@@ -596,7 +600,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             t = (timeList[1].utc_time() - epoch).total_seconds();
             pszNextFcst =
                 NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-            hSrcDS = GDALOpen( pszNextFcst, GA_ReadOnly );
+            hSrcDS = GDALOpenShared( pszNextFcst, GA_ReadOnly );
             if( hSrcDS == NULL )
             {
                 throw badForecastFile( "Could not load cloud data." );

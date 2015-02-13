@@ -244,8 +244,8 @@ IF(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 1 2 0 zip)
     ADD_TEST(nomads_hrrr_15_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 15 16 0 zip)
-    ADD_TEST(nomads_gfs_parallel_1
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay gfs_global_parallel 6 3 0 zip)
+    ADD_TEST(nomads_buffer_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 small gfs_global 1 2 0 zip)
     IF(NOMADS_EXPER_FORECASTS)
         ADD_TEST(nomads_nam_nest_conus_1_hour_zip
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_nest_conus 1 2 0 zip)
@@ -271,6 +271,12 @@ IF(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_4)
     ADD_TEST(utc_add_hours_5
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_5)
+    ADD_TEST(utc_add_hours_6
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_6)
+    ADD_TEST(utc_add_hours_7
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_7)
+    ADD_TEST(utc_add_hours_8
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_8)
     ADD_TEST(utc_now_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
     ADD_TEST(utc_compare_1

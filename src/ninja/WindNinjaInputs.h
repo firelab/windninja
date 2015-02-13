@@ -128,6 +128,8 @@ public:
     std::vector<wxStation> stations;		//array of weather stations used in point initialization
     std::string wxStationFilename;	//filename of a weather station(s) file
     std::vector<wxStation> stationsScratch;		//scratch space for a copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
+    std::vector<wxStation> stationsOldInput;		//old copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
+    std::vector<wxStation> stationsOldOutput;		//old copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
     bool matchWxStations;		//flag used to determine if wx stations matching should be done
     double outer_relax;			//relax/ation value (Lopes found 0.8 to be good compromise between fast convergence and to prevent divergence)
 

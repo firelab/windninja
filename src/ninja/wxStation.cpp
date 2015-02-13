@@ -517,7 +517,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
         }
     }
 
-    char *pszLower;
+    const char *pszKey;
     std::string oStationName;
 
     poLayer->ResetReading();
@@ -529,10 +529,9 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
     oStation.set_stationName( oStationName );
 
     // get location
-    pszLower = CPLStrdup( poFeature->GetFieldAsString( 1 ) );
-    pszLower = CPLStrlwr( pszLower );
+    pszKey = poFeature->GetFieldAsString( 1 );
 
-    if( EQUAL( pszLower, "geogcs" ) ){
+    if( EQUAL( pszKey, "geogcs" ) ){
         //check for valid latitude in degrees
         dfTempValue = poFeature->GetFieldAsDouble( 3 );
         if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
@@ -566,7 +565,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
                        pszDatum );
     }
 
-    else if( EQUAL( pszLower, "projcs" ) ) {
+    else if( EQUAL( pszKey, "projcs" ) ) {
         oStation.set_location_projected( poFeature->GetFieldAsDouble( 3 ),
                          poFeature->GetFieldAsDouble( 4 ),
                          demFile );
@@ -582,8 +581,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
 
     //get height and units
 
-    pszLower = CPLStrdup( poFeature->GetFieldAsString( 6 ) );
-    pszLower = CPLStrlwr( pszLower );
+    pszKey = poFeature->GetFieldAsString( 6 );
 
     dfTempValue = poFeature->GetFieldAsDouble( 5 );
 
@@ -595,9 +593,9 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
 
         throw( std::domain_error( oErrorString ) );
     }
-    if( EQUAL( pszLower, "meters" ) )
+    if( EQUAL( pszKey, "meters" ) )
         oStation.set_height( dfTempValue, lengthUnits::meters );
-    else if( EQUAL( pszLower,"feet" ) )
+    else if( EQUAL( pszKey, "feet" ) )
         oStation.set_height( dfTempValue, lengthUnits::feet );
     else {
         oErrorString = "Invalid units for height: ";
@@ -609,8 +607,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
     }
 
     // get speed and speed units
-    pszLower = CPLStrdup( poFeature->GetFieldAsString( 8 ) );
-    pszLower = CPLStrlwr( pszLower );
+    pszKey = poFeature->GetFieldAsString( 8 );
 
     dfTempValue = poFeature->GetFieldAsDouble( 7 );
     if( dfTempValue < 0.0 ) {
@@ -621,12 +618,12 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
         throw( std::domain_error( oErrorString ) );
     }
 
-    if( EQUAL( pszLower, "mph" ) )
+    if( EQUAL( pszKey, "mph" ) )
         oStation.set_speed( dfTempValue, velocityUnits::milesPerHour );
-    else if( EQUAL( pszLower, "kph" ) )
+    else if( EQUAL( pszKey, "kph" ) )
         oStation.set_speed( dfTempValue,
                 velocityUnits::kilometersPerHour );
-    else if ( EQUAL( pszLower, "mps" ) )
+    else if ( EQUAL( pszKey, "mps" ) )
         oStation.set_speed( dfTempValue, velocityUnits::metersPerSecond );
     else {
         oErrorString = "Invalid units for speed: ";
@@ -648,16 +645,15 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
     oStation.set_direction( dfTempValue );
 
     //set temperature
-    pszLower = CPLStrdup( poFeature->GetFieldAsString( 11 ) );
-    pszLower = CPLStrlwr( pszLower );
+    pszKey = poFeature->GetFieldAsString( 11 );
 
-    if( EQUAL(pszLower, "f" ) )
+    if( EQUAL(pszKey, "f" ) )
         oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
                       temperatureUnits::F );
-    else if( EQUAL( pszLower, "c" ) )
+    else if( EQUAL( pszKey, "c" ) )
         oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
                       temperatureUnits::C );
-    else if( EQUAL( pszLower, "k" ) )
+    else if( EQUAL( pszKey, "k" ) )
         oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
                       temperatureUnits::K );
     else {
@@ -680,19 +676,18 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
     oStation.set_cloudCover( dfTempValue, coverUnits::percent );
 
     //set radius of influence
-    pszLower = CPLStrdup( poFeature->GetFieldAsString( 14 ) );
-    pszLower = CPLStrlwr( pszLower );
+    pszKey = poFeature->GetFieldAsString( 14 );
 
     dfTempValue = poFeature->GetFieldAsDouble( 13 );
 
-    if( EQUAL( pszLower, "miles" ) )
+    if( EQUAL( pszKey, "miles" ) )
         oStation.set_influenceRadius( dfTempValue, lengthUnits::miles );
-    else if( EQUAL( pszLower, "feet" ) )
+    else if( EQUAL( pszKey, "feet" ) )
         oStation.set_influenceRadius( dfTempValue, lengthUnits::feet );
-    else if( EQUAL( pszLower, "km" ) )
+    else if( EQUAL( pszKey, "km" ) )
         oStation.set_influenceRadius( dfTempValue,
                       lengthUnits::kilometers );
-    else if( EQUAL( pszLower, "meters" ) )
+    else if( EQUAL( pszKey, "meters" ) )
         oStation.set_influenceRadius( dfTempValue, lengthUnits::meters );
     else {
         oErrorString = "Invalid units for influence radius: ";

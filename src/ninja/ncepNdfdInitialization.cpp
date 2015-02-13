@@ -36,7 +36,7 @@
 ncepNdfdInitialization::ncepNdfdInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground1";
-    path = "/thredds/ncss/grib/NCEP/NDFD/CONUS_5km/Best/LambertConformal_689X1073-38p24N-95p42W?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
+    path = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
     LoadFromCsv();
 }
 
@@ -80,7 +80,7 @@ double ncepNdfdInitialization::Get_Wind_Height()
 
 std::vector<blt::local_date_time> ncepNdfdInitialization::getTimeList(blt::time_zone_ptr timeZonePtr)
 {
-    return wxModelInitialization::getTimeList("Total_cloud_cover_entire_atmosphere_layer", timeZonePtr);
+    return wxModelInitialization::getTimeList("Total_cloud_cover_entire_atmosphere_single_layer_layer", timeZonePtr);
 }
 
 /**
@@ -110,7 +110,7 @@ std::vector<std::string> ncepNdfdInitialization::getVariableList()
     std::vector<std::string> varList;
     varList.push_back( "Maximum_temperature_height_above_ground_12_Hour_Maximum" );
     varList.push_back( "Minimum_temperature_height_above_ground_12_Hour_Minimum" );
-    varList.push_back( "Total_cloud_cover_entire_atmosphere_layer" );
+    varList.push_back( "Total_cloud_cover_entire_atmosphere_single_layer_layer" );
     varList.push_back( "Wind_direction_from_which_blowing_height_above_ground" );
     varList.push_back( "Wind_speed_height_above_ground" );
     return varList;
@@ -124,7 +124,7 @@ std::vector<std::string> ncepNdfdInitialization::getVariableList()
 */
 std::string ncepNdfdInitialization::getForecastIdentifier()
 {
-    return std::string( "NCAR-NDFD-CONUS-5-KM" );
+    return std::string( "UCAR-NDFD-CONUS-5-KM" );
 }
 
 int ncepNdfdInitialization::getStartHour()
@@ -274,7 +274,7 @@ void ncepNdfdInitialization::checkForValidData()
                     if(padfScanline[k] < 0.0 || padfScanline[k] > 220.0)
                         throw badForecastFile("Wind speed is out of range in forecast file.");
                 }
-                else if( varList[i] == "Total_cloud_cover_entire_atmosphere_layer" )  //units are percent
+                else if( varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer" )  //units are percent
                 {
                     if(padfScanline[k] < 0.0 || padfScanline[k] > 100.0)
                         throw badForecastFile("Total cloud cover is out of range in forecast file.");
@@ -700,7 +700,7 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         airGrid.set_noDataValue(-9999.0);
         airGrid.replaceNan( -9999.0 );
         }
-        }else if(varList[i] == "Total_cloud_cover_entire_atmosphere_layer")
+        }else if(varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer")
         {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
         if( CPLIsNan( dfNoData ) ) {

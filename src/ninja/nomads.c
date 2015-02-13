@@ -355,7 +355,7 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
     VSILFILE *fout;
     psResult = NULL;
     psResult = CPLHTTPFetch( pszUrl, NULL );
-    if( !psResult || psResult->nStatus != 0 ||
+    if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 ||
         strstr( psResult->pabyData, "HTTP error code : 404" ) ||
         strstr( psResult->pabyData, "data file is not present" ) )
     {
@@ -389,6 +389,28 @@ static void NomadsFetchAsync( void *pData )
     rc = NomadsFetchHttp( psData->pszUrl, psData->pszFilename );
 #endif /* NOMADS_USE_VSI_READ */
     psData->nErr = rc;
+}
+
+static double NomadsGetMinSize( const char **ppszModel )
+{
+    double dfRes = 0;
+    char **papszTokens = CSLTokenizeString2( ppszModel[NOMADS_GRID_RES], " ", 0 );
+    if( papszTokens == NULL || CSLCount( papszTokens ) < 2 )
+    {
+        return 0;
+    }
+    dfRes = atof( papszTokens[0] );
+    if( EQUAL( papszTokens[1], "deg" ) )
+    {
+        return dfRes;
+    }
+    else if( EQUAL( papszTokens[1], "km" ) )
+    {
+        /* https://en.wikipedia.org/wiki/Decimal_degrees */
+        return dfRes / 111.32;
+    }
+    assert( 0 );
+    return 0;
 }
 
 /*
@@ -494,13 +516,14 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     void **pThreads;
     int nThreads;
     const char *pszThreadCount;
+    double dfMinRes;
+    double adfBufBbox[4];
+    double dfXMax, dfXMin, dfYMax, dfYMin;
+    int nBufTries;
 
     NomadsThreadData *pasData;
     nomads_utc *ref, *end, *fcst;
     nrc = NOMADS_OK;
-
-    CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
-              padfBbox[0], padfBbox[1], padfBbox[2], padfBbox[3] );
 
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
@@ -509,6 +532,39 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                   "Could not find model key in nomads data" );
         return NOMADS_ERR;
     }
+
+    assert( padfBbox[NOMADS_XMIN] < padfBbox[NOMADS_XMAX] &&
+            padfBbox[NOMADS_YMIN] < padfBbox[NOMADS_YMAX] );
+
+    /*
+    ** Check our bounding box size.  If we request a forecast smaller than one
+    ** cell size, it returns everything.  Note that the meta fetcher buffers
+    ** our DEM, so this should never be a problem.
+    **
+    ** Order is xmin, xmax, ymax, ymin.
+    */
+    memcpy( adfBufBbox, padfBbox, sizeof( double ) * 4 );
+    dfMinRes = NomadsGetMinSize( ppszKey );
+    nBufTries = 0;
+    while( fabs( adfBufBbox[NOMADS_XMAX] - adfBufBbox[NOMADS_XMIN] ) < dfMinRes &&
+           nBufTries <= 10 )
+    {
+        adfBufBbox[NOMADS_XMAX] += dfMinRes / 2;
+        adfBufBbox[NOMADS_XMIN] -= dfMinRes / 2;
+        nBufTries++;
+    }
+
+    nBufTries = 0;
+    while( fabs( adfBufBbox[NOMADS_YMAX] - adfBufBbox[NOMADS_YMIN] ) < dfMinRes &&
+           nBufTries <= 10 )
+    {
+        adfBufBbox[NOMADS_YMAX] += dfMinRes / 2;
+        adfBufBbox[NOMADS_YMIN] -= dfMinRes / 2;
+        nBufTries++;
+    }
+
+    CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
+              adfBufBbox[0], adfBufBbox[1],adfBufBbox[2],adfBufBbox[3] );
 
     NomadsUtcCreate( &ref );
     NomadsUtcCreate( &end );
@@ -584,7 +640,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 
         papszDownloadUrls =
             NomadsBuildForecastFileList( pszModelKey, nFcstHour, panRunHours,
-                                         nFilesToGet, fcst, padfBbox );
+                                         nFilesToGet, fcst, adfBufBbox );
         if( papszDownloadUrls == NULL )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -616,6 +672,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
         CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
 
+        CPLDebug( "NOMADS", "Starting download..." );
         if( pfnProgress )
         {
             pfnProgress( 0.0, "Starting download...", NULL );

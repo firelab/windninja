@@ -28,7 +28,8 @@
 *.app
 
 # Build folder
-build
+build*
+debug*
 
 # vim
 *.swo
@@ -41,6 +42,8 @@ build
 *.includes
 
 # Weather model files
+*UCAR*
 *NCAR*
+*NCEP*
 *NOMADS*
 

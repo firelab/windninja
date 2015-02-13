@@ -68,7 +68,7 @@ static void *pCancel;
 
 static const char *apszWxModelGlossary[] =
 {
-    "NCAR=National Center for Atomosperhic Research",
+    "UCAR=University Corporation for Atomosperhic Research",
     "NOMADS=NOAA Operational Model Archive and Distribution System",
     "NDFD=National Digital Forecast Database",
     "NAM=North American Mesoscale",
@@ -79,14 +79,6 @@ static const char *apszWxModelGlossary[] =
     "ARW=Advanced Research WRF",
     "NMM=Non-hydrostatic Mesoscale model",
     NULL
-};
-
-class httpGetThread : public QThread
-{
- Q_OBJECT
-
- public:
-    void run( wxModelInitialization *model, QString file, int days );
 };
 
 class weatherModel : public QWidget
@@ -129,7 +121,6 @@ class weatherModel : public QWidget
 
     boost::local_time::tz_database tz_db;
     QString tzString;
-    httpGetThread http;
  private:
     void loadModelComboBox();
 

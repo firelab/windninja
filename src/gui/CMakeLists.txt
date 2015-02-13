@@ -29,7 +29,8 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui)
+QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
+                        setconfigdialog.ui)
 
 SET(NINJA_GUI_INCLUDES consoleDockWidget.h
                        diurnalInput.h
@@ -59,6 +60,7 @@ SET(NINJA_GUI_INCLUDES consoleDockWidget.h
                        windInputTable.h
                        WindNinjaTree.h
                        GoogleMapsInterface.h
+                       setconfigdialog.h
                        ${QTUI_H_SRCS})
 
 INCLUDE_DIRECTORIES(${QT_INCLUDES}
@@ -103,6 +105,7 @@ SET(NINJA_GUI_SOURCES cmake_gui.cpp
                       WindNinjaTree.cpp
                       WidgetDownloadDEM.cpp
                       GoogleMapsInterface.cpp
+                      setconfigdialog.cpp
                       ${QTUI_H_SRCS})
 IF(WIN32)
     SET(NINJA_GUI_SOURCES ${NINJA_GUI_SOURCES} 

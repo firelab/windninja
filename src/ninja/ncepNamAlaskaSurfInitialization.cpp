@@ -89,7 +89,7 @@ std::vector<std::string> ncepNamAlaskaSurfInitialization::getVariableList()
     varList.push_back( "Temperature_height_above_ground" );
     varList.push_back( "v-component_of_wind_height_above_ground" );
     varList.push_back( "u-component_of_wind_height_above_ground" );
-    varList.push_back( "Total_cloud_cover_entire_atmosphere" );
+    varList.push_back( "Total_cloud_cover_entire_atmosphere_single_layer" );
     return varList;
 }
 
@@ -101,7 +101,7 @@ std::vector<std::string> ncepNamAlaskaSurfInitialization::getVariableList()
 */
 std::string ncepNamAlaskaSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "NCAR-NAM-Alaska-11-KM" );
+    return std::string( "UCAR-NAM-ALASKA-11-KM" );
 }
 
 int ncepNamAlaskaSurfInitialization::getStartHour()
@@ -228,7 +228,7 @@ void ncepNamAlaskaSurfInitialization::checkForValidData()
                     if(std::abs(padfScanline[k]) > 220.0)
                         throw badForecastFile("U-velocity is out of range in forecast file.");
                 }
-                else if( varList[i] == "Total_cloud_cover_entire_atmosphere" )  //units are percent
+                else if( varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer" )  //units are percent
                 {
                     if(padfScanline[k] < 0.0 || padfScanline[k] > 100.0)
                         throw badForecastFile("Total cloud cover is out of range in forecast file.");
@@ -498,7 +498,7 @@ void ncepNamAlaskaSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         uGrid.replaceNan( -9999.0 );
         }
     }
-        else if( varList[i] == "Total_cloud_cover_entire_atmosphere" ) {
+        else if( varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
         if( CPLIsNan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);

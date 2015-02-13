@@ -65,6 +65,8 @@
 #include "ninjaArmy.h"
 #include "ninja_conv.h"
 
+#include "setconfigdialog.h"
+
 class mainWindow : public QMainWindow
 {
   Q_OBJECT
@@ -214,6 +216,8 @@ class mainWindow : public QMainWindow
   void enableNinjafoamOptions(bool enable);
 #endif
 
+  void SetConfigOption();
+
  protected:
   void closeEvent(QCloseEvent *event);
 
@@ -224,6 +228,7 @@ class mainWindow : public QMainWindow
   QAction *writeConsoleOutputAction;
   QAction *rddsAction;
   QAction *writeBlankStationFileAction;
+  QAction *setConfigAction;
   QAction *rddsInstructAction;
   QAction *resampleAction;
   QAction *windNinjaHelpAction;
