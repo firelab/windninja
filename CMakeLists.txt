@@ -414,9 +414,9 @@ OPTION(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" O
 OPTION(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
 
 # *****************************************************************************
-# Build the STL file converter
+# Build the output file converter
 # *****************************************************************************
-OPTION(BUILD_CONVERT_OUTPUT "Build a standalone command line interface xyz file conversions" OFF )
+OPTION(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
 
 # *****************************************************************************
 # Start recursing through directories
