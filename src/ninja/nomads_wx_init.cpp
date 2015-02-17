@@ -208,7 +208,6 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     pszTmpFile = CPLSPrintf( "%s", CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
     /* Copy the temp file, many CPL calls in NomadsFetch */
     pszTmpFile = CPLStrdup( pszTmpFile );
-    VSIMkdir( pszTmpFile, 0777 );
 
     rc = NomadsFetch( pszKey, NULL, nHours, 1, adfWENS, pszTmpFile, NULL,
                       pfnProgress );
