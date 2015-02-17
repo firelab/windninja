@@ -1832,6 +1832,7 @@ int mainWindow::solve()
     elapsedRunTime = runTime->elapsed() / 1000.0;
 
     progressDialog->setLabelText("Simulations finished");
+    progressDialog->setValue(progressDialog->maximum());
     progressDialog->setCancelButtonText("Close");
 
 
