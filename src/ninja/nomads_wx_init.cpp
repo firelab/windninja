@@ -206,13 +206,9 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
         rc = VSIMkdir( newPath.c_str(), 0777 );
     const char *pszTmpFile = CPLGenerateTempFilename( "NINJA_FCST" );
     pszTmpFile = CPLSPrintf( "%s", CPLFormFilename( NULL, pszTmpFile, ".zip" ) );
-    const char *p = strchr( pszTmpFile, '/' );
-    if( !p )
-        p = strchr( pszTmpFile, '\\' );
-    if( !p )
-        p = pszTmpFile;
-    pszTmpFile = CPLStrdup( p );
-    VSIMkdir( p, 0777 );
+    /* Copy the temp file, many CPL calls in NomadsFetch */
+    pszTmpFile = CPLStrdup( pszTmpFile );
+    VSIMkdir( pszTmpFile, 0777 );
 
     rc = NomadsFetch( pszKey, NULL, nHours, 1, adfWENS, pszTmpFile, NULL,
                       pfnProgress );
