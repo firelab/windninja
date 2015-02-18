@@ -130,6 +130,11 @@ bool NinjaFoam::simulate_wind()
         //do something
     }
     
+    //write controlDict for flow solution--this will get modified during moveDynamicMesh
+    const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
+    const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    CopyFile(pszInput, pszOutput);
+    
     checkCancel();
 
     /*-------------------------------------------------------------------*/
@@ -285,6 +290,11 @@ bool NinjaFoam::simulate_wind()
         }
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
         status = RenumberMesh();
+        if(status != 0){
+            //do something
+        }
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
+        status = CheckMesh();
         if(status != 0){
             //do something
         }
@@ -1259,19 +1269,13 @@ int NinjaFoam::writeBlockMesh()
 
 int NinjaFoam::writeMoveDynamicMesh()
 {
-    const char *pszInput;
-    const char *pszOutput;
-    
-    pszInput = CPLFormFilename(pszTempPath, "system/controlDict_moveDynamicMesh", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
-    
-    CopyFile(pszInput, pszOutput); //write controlDict for moveDynamicMesh
-    
     VSILFILE *fin;
     VSILFILE *fout;
     
     const char *pszPath;
     const char *pszArchive;
+    const char *pszInput;
+    const char *pszOutput;
     
     pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
     pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
@@ -1521,75 +1525,146 @@ int NinjaFoam::MoveDynamicMesh()
 {
     int nRet = -1;
     
-    /*const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+    const char *pszInput;
+    const char *pszOutput;
+
+    if(input.numberCPUs > 1){
+    
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
+        VSILFILE *fout = VSIFOpenL("logMesh", "w");
+        nRet = DecomposePar(fout);
+        if(nRet != 0){
+            //do something
+        }
+        
+        //re-write controlDict for moveDynamicMesh
+        pszInput = CPLFormFilename("system", "controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");    
+        CopyFile(pszInput, pszOutput); 
+
+#ifdef WIN32
+        const char *const papszArgv[] = { "mpiexec", 
+                                      "-env",
+                                      "MPI_BUFFER_SIZE",
+                                      "20000000",
+                                      "-n",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "moveDynamicMesh",
+                                      "-parallel",
+                                       NULL };
+#else
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv[] = { "mpiexec", 
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      "moveDynamicMesh",
+                                      "-parallel",
+                                       NULL };
+#endif
                                        
-    CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
-    CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-    char data[PIPE_BUFFER_SIZE];
-    int pos;
-    std::string s;
+        char data[PIPE_BUFFER_SIZE + 1];
+        int pos;
+        std::string s;
         
-    /* Track progress */
-    /*while(CPLPipeRead(out_child, &data, sizeof(data))){
-        s.append(data);
-        cout<<s<<endl;
-        if(s.find("Morph iteration 8") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
-            break;
+        /* Track progress */
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){	
+            data[sizeof(data)-1] = '\0';
+            CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
+            s.append(data);
+            if(s.find("Time = 100") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
+                break;
+            }
+            else if(s.find("Time = 90\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 90%% complete...");
+            }
+            else if(s.find("Time = 80\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 80%% complete...");
+            }
+            else if(s.find("Time = 70\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 70%% complete...");
+            }
+            else if(s.find("Time = 60\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 60%% complete...");
+            }
+            else if(s.find("Time = 50\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 50%% complete...");
+            }
+            else if(s.find("Time = 40\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 40%% complete...");
+            }
+            else if(s.find("Time = 30\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 30%% complete...");
+            }
+            else if(s.find("Time = 20\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 20%% complete...");
+            }
+            else if(s.find("Time = 10\n") != s.npos){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 10%% complete...");
+            }       
         }
-        else if(s.find("Morph iteration 6") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        if(nRet != 0){
+            //do something
         }
-        else if(s.find("Morph iteration 4") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
-        }
-        else if(s.find("Morph iteration 2") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
-        }
-        else if(s.find("Morph iteration 0") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
-        }
-        else if(s.find("Checking initial mesh") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
-        }
-        else if(s.find("Determining initial surface intersections") != s.npos){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
-        }         
-    }*/
+ 
+        //re-write controlDict for flow
+        pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");    
+        CopyFile(pszInput, pszOutput); 
     
-    const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+        fout = VSIFOpenL("logMesh", "w");
+        nRet = ReconstructPar("-latestTime", fout);
+        //nRet = ReconstructParMesh("-constant", fout);
+        
+        VSIFCloseL(fout);
+        
+        if(nRet != 0){
+            //do something
+        }
+    } 
     
-    VSILFILE *fout = VSIFOpenL("log.moveDynamicMesh", "w");
+    else{ // single processor
+        //re-write controlDict for moveDynamicMesh
+        pszInput = CPLFormFilename("system", "controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");    
+        CopyFile(pszInput, pszOutput); 
     
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        const char *const papszArgv[] = { "moveDynamicMesh", NULL };
     
-    VSIFCloseL(fout);
+        VSILFILE *fout = VSIFOpenL("log.moveDynamicMesh", "w");
+    
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    
+        VSIFCloseL(fout);
+        
+        //re-write controlDict for flow solution
+        pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");
+        CopyFile(pszInput, pszOutput);
+    }
     
     //copy 0/ to 100/ (or latest time)
-    const char *pszInput, *pszOutput;
-    
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("5", "U", "");
+    pszOutput = CPLFormFilename("100", "U", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("5", "p", "");
+    pszOutput = CPLFormFilename("100", "p", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("5", "k", "");
+    pszOutput = CPLFormFilename("100", "k", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("5", "epsilon", "");
+    pszOutput = CPLFormFilename("100", "epsilon", "");
     CopyFile(pszInput, pszOutput);
-    
-    //re-write controlDict for flow solution
-    pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
-    pszOutput = CPLFormFilename("system", "controlDict", "");
-    CopyFile(pszInput, pszOutput);
-    
+
     return nRet;
 }
 
@@ -1665,12 +1740,13 @@ int NinjaFoam::SnappyHexMesh()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        char data[PIPE_BUFFER_SIZE];
+        char data[PIPE_BUFFER_SIZE + 1];
         int pos;
         std::string s;
         
         /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
             s.append(data);
             if(s.find("Morph iteration 8") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
@@ -1705,12 +1781,13 @@ int NinjaFoam::SnappyHexMesh()
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
         
-        char data[PIPE_BUFFER_SIZE];
+        char data[PIPE_BUFFER_SIZE + 1];
         int pos;
         std::string s;
         
         /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
             s.append(data);
             if(s.find("Morph iteration 8") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
@@ -1789,11 +1866,12 @@ int NinjaFoam::SnappyHexMesh()
             CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
             CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
             
-            char data[PIPE_BUFFER_SIZE];
+            char data[PIPE_BUFFER_SIZE + 1];
             int pos;
             std::string s;
         
-            while(CPLPipeRead(out_child, &data, sizeof(data))){
+            while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+                data[sizeof(data)-1] = '\0';
                 s.append(data);
                 if(s.find("Checking initial mesh") != s.npos){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
@@ -1816,7 +1894,8 @@ int NinjaFoam::SnappyHexMesh()
             int pos;
             std::string s;
             
-            while(CPLPipeRead(out_child, &data, sizeof(data))){
+            while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+                data[sizeof(data)-1] = '\0';
                 s.append(data);
                 if(s.find("Checking initial mesh") != s.npos){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
