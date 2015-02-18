@@ -257,11 +257,7 @@ std::vector<std::string> NomadsWxModel::getVariableList()
 
 std::string NomadsWxModel::getForecastIdentifier()
 {
-    if( !ppszModelData )
-    {
-        throw badForecastFile( "Invalid Model" );
-    }
-    return std::string( ppszModelData[NOMADS_NAME] );
+    return getForecastReadable( '-' );
 }
 
 std::string NomadsWxModel::getForecastReadable( const char bySwapWithSpace )
