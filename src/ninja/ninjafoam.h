@@ -98,6 +98,7 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
+    int writeMoveDynamicMesh();
     int writeTerrainBlockMesh();
     int writeBlockMesh();
     int readLogFile(int &ratio);
@@ -120,9 +121,11 @@ private:
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
+    int CopyFile(const char *pszInput, const char *pszOutput);
     
     int SurfaceTransformPoints();
     int SurfaceCheck();
+    int MoveDynamicMesh();
     int TerrainBlockMesher();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);

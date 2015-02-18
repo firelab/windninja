@@ -214,13 +214,31 @@ bool NinjaFoam::simulate_wind()
 	
     CPLDebug("NINJAFOAM", "input.meshType = %d", input.meshType);
     
-    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
+    if(input.meshType == WindNinjaInputs::MDM){ //use moveDynamicMesh
+        //reads from log.json created from surfaceCheck
+        status = writeBlockMesh();
+        if(status != 0){
+            //do something
+        }
+        status = writeMoveDynamicMesh();
+        if(status != 0){
+            //do something
+        }
+    }
+    else if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
         status = writeTerrainBlockMesh();
         if(status != 0){
             //do something
         }
     }
     else{ //use snappyHexMesh 
+        const char *pszInput;
+        const char *pszOutput;
+    
+        pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
+        pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+        CopyFile(pszInput, pszOutput); //write controlDict for flow solution
+        
         //reads from log.json created from surfaceCheck
         status = writeBlockMesh();
         if(status != 0){
@@ -254,8 +272,25 @@ bool NinjaFoam::simulate_wind()
 	
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
     
-    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
-        status= TerrainBlockMesher();
+    if(input.meshType == WindNinjaInputs::MDM){ //use moveDynamicMesh
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running blockMesh...");
+        status = BlockMesh();
+        if(status != 0){
+            //do something
+        }
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+        status = MoveDynamicMesh();
+        if(status != 0){
+        //do something
+        }
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
+        status = RenumberMesh();
+        if(status != 0){
+            //do something
+        }
+    }
+    else if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
+        status = TerrainBlockMesher();
         if(status != 0){
         //do something
         }
@@ -309,7 +344,6 @@ bool NinjaFoam::simulate_wind()
     /* Apply initial and boundary conditions                             */
     /*-------------------------------------------------------------------*/
     
-    
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
@@ -330,6 +364,7 @@ bool NinjaFoam::simulate_wind()
     endInit = omp_get_wtime();
     startSolve = omp_get_wtime();
 	#endif
+
 	
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
@@ -483,18 +518,9 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
-    //ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(0.03));
     ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)));
-    //ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(0.0));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
-    
-    //CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(0.03).c_str());
-    //CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(0.0).c_str());
-    CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)).c_str());
-    CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)).c_str());
-    CPLDebug("NINJAFOAM", "U_freestream = %s", boost::lexical_cast<std::string>(input.inputSpeed).c_str());
-    CPLDebug("NINJAFOAM", "Input wind height = %s", boost::lexical_cast<std::string>(input.inputWindHeight).c_str());
     
     dataString.append(s);
     
@@ -621,7 +647,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
-    else if(std::string(pszFilename) == "controlDict"){
+    else if(std::string(pszFilename) == "controlDict_simpleFoam"){
         #ifdef WIN32
         ReplaceKeys(s, "$lib$", "libWindNinja");
         #else
@@ -702,7 +728,8 @@ int NinjaFoam::WriteFoamFiles()
         if(std::string(pszFilename) != "" && 
            std::string(CPLGetExtension(pszFilename)) != "tmp" &&
            std::string(pszFilename) != "snappyHexMeshDict_cast" &&
-           std::string(pszFilename) != "snappyHexMeshDict_layer"){
+           std::string(pszFilename) != "snappyHexMeshDict_layer" &&
+           std::string(pszFilename) != "pointDisplacement"){
             pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
             pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
@@ -1230,6 +1257,56 @@ int NinjaFoam::writeBlockMesh()
     return NINJA_SUCCESS;
 }
 
+int NinjaFoam::writeMoveDynamicMesh()
+{
+    const char *pszInput;
+    const char *pszOutput;
+    
+    pszInput = CPLFormFilename(pszTempPath, "system/controlDict_moveDynamicMesh", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    
+    CopyFile(pszInput, pszOutput); //write controlDict for moveDynamicMesh
+    
+    VSILFILE *fin;
+    VSILFILE *fout;
+    
+    const char *pszPath;
+    const char *pszArchive;
+    
+    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
+    
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/0/pointDisplacement", "");
+    pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+    
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    
+    std::string s(data);
+    
+    std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+    ReplaceKeys(s, "$stlName$", t);
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout);
+
+}
+
 int NinjaFoam::writeSnappyMesh()
 {
     int lx, ly, lz;
@@ -1371,6 +1448,38 @@ int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v, int n)
     return rc;
 }
 
+int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput)
+{
+    VSILFILE *fin;
+    VSILFILE *fout;
+    
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
+
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    
+    std::string s(data);
+    
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+        
+    CPLFree(data);
+    VSIFCloseL(fin); 
+    VSIFCloseL(fout);
+    
+    return NINJA_SUCCESS;
+}
+
 int NinjaFoam::SurfaceTransformPoints()
 {
     int nRet = -1;
@@ -1404,6 +1513,82 @@ int NinjaFoam::SurfaceCheck()
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //writes log.json used in mesh file writing
 
     VSIFCloseL(fout);
+    
+    return nRet;
+}
+
+int NinjaFoam::MoveDynamicMesh()
+{
+    int nRet = -1;
+    
+    /*const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+                                       
+    CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+    CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+        
+    char data[PIPE_BUFFER_SIZE];
+    int pos;
+    std::string s;
+        
+    /* Track progress */
+    /*while(CPLPipeRead(out_child, &data, sizeof(data))){
+        s.append(data);
+        cout<<s<<endl;
+        if(s.find("Morph iteration 8") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
+            break;
+        }
+        else if(s.find("Morph iteration 6") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
+        }
+        else if(s.find("Morph iteration 4") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
+        }
+        else if(s.find("Morph iteration 2") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
+        }
+        else if(s.find("Morph iteration 0") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
+        }
+        else if(s.find("Checking initial mesh") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
+        }
+        else if(s.find("Determining initial surface intersections") != s.npos){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
+        }         
+    }*/
+    
+    const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+    
+    VSILFILE *fout = VSIFOpenL("log.moveDynamicMesh", "w");
+    
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    
+    VSIFCloseL(fout);
+    
+    //copy 0/ to 100/ (or latest time)
+    const char *pszInput, *pszOutput;
+    
+    pszInput = CPLFormFilename("0", "U", "");
+    pszOutput = CPLFormFilename("5", "U", "");
+    CopyFile(pszInput, pszOutput);
+    
+    pszInput = CPLFormFilename("0", "p", "");
+    pszOutput = CPLFormFilename("5", "p", "");
+    CopyFile(pszInput, pszOutput);
+    
+    pszInput = CPLFormFilename("0", "k", "");
+    pszOutput = CPLFormFilename("5", "k", "");
+    CopyFile(pszInput, pszOutput);
+    
+    pszInput = CPLFormFilename("0", "epsilon", "");
+    pszOutput = CPLFormFilename("5", "epsilon", "");
+    CopyFile(pszInput, pszOutput);
+    
+    //re-write controlDict for flow solution
+    pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
+    pszOutput = CPLFormFilename("system", "controlDict", "");
+    CopyFile(pszInput, pszOutput);
     
     return nRet;
 }
