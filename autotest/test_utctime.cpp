@@ -159,6 +159,12 @@ BOOST_AUTO_TEST_CASE( now_1 )
 {
     NomadsUtcNow( u );
     BOOST_CHECK( u->ts->tm_year >= 2014 - 1900 );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    sleep( 1000 );
+    NomadsUtcNow( v );
+    BOOST_CHECK( NomadsUtcCompare( u, v ) == -1 );
+    NomadsUtcFree( v );
 }
 
 BOOST_AUTO_TEST_CASE( compare_1 )
