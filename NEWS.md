@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+WindNinja 2.5.2
+---------------
+
+* Fixed bug where nomads forecasts wouldn't download properly due to a missing
+  drive letter in the path.  This was only present when the working directory
+  was different than C:\ (temporary file path root)(#35).
+
+* Make sure progress finishes on the gui (#36).
+
 WindNinja 2.5.1
 ---------------
 
