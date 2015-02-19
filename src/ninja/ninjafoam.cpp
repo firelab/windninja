@@ -230,12 +230,6 @@ bool NinjaFoam::simulate_wind()
             //do something
         }
     }
-    else if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
-        status = writeTerrainBlockMesh();
-        if(status != 0){
-            //do something
-        }
-    }
     else{ //use snappyHexMesh 
         const char *pszInput;
         const char *pszOutput;
@@ -297,12 +291,6 @@ bool NinjaFoam::simulate_wind()
         status = CheckMesh();
         if(status != 0){
             //do something
-        }
-    }
-    else if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
-        status = TerrainBlockMesher();
-        if(status != 0){
-        //do something
         }
     }
     else{ // use snappyHexMesh
@@ -1038,25 +1026,32 @@ int NinjaFoam::readLogFile(int &ratio_)
         ss.append(s.substr(pos4+1, pos5-pos4-1));// xmin ymin zmin xmax ymax zmax
         found = ss.find(" ");
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(0, found).c_str())); // xmin
-            bbox.push_back(atof(ss.substr(found).c_str())); // ymin
+            bbox.push_back(atof(ss.substr(0, found).c_str()) + 100); // xmin
+            bbox.push_back(atof(ss.substr(found).c_str()) + 100); // ymin
+            //bbox.push_back(atof(ss.substr(0, found).c_str())); // xmin
+            //bbox.push_back(atof(ss.substr(found).c_str())); // ymin
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // zmin
+            bbox.push_back(atof(ss.substr(found).c_str()) + 1500); // zmin (should be above highest point in DEM)
+            //bbox.push_back(atof(ss.substr(found).c_str())); // zmin
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // xmax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // xmax
+            //bbox.push_back(atof(ss.substr(found).c_str())); // xmax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // ymax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // ymax
+            //bbox.push_back(atof(ss.substr(found).c_str())); // ymax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) + 3000); // zmax
-            bbox.push_back(atof(ss.substr(found).c_str()) + 1000); // zmid
+            bbox.push_back(atof(ss.substr(found).c_str()) + 5000); // zmax
+            bbox.push_back(atof(ss.substr(found).c_str()) + 2500); // zmid
+            //bbox.push_back(atof(ss.substr(found).c_str()) + 3000); // zmax
+            //bbox.push_back(atof(ss.substr(found).c_str()) + 1000); // zmid
         }
     }
     else{
@@ -1525,13 +1520,15 @@ int NinjaFoam::MoveDynamicMesh()
 {
     int nRet = -1;
     
+    VSILFILE *fout;
+    
     const char *pszInput;
     const char *pszOutput;
 
     if(input.numberCPUs > 1){
     
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
-        VSILFILE *fout = VSIFOpenL("logMesh", "w");
+        fout = VSIFOpenL("logMesh", "w");
         nRet = DecomposePar(fout);
         if(nRet != 0){
             //do something
@@ -1573,7 +1570,7 @@ int NinjaFoam::MoveDynamicMesh()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){	
             data[sizeof(data)-1] = '\0';
             CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
-            s.append(data);
+            /*s.append(data);
             if(s.find("Time = 100") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
                 break;
@@ -1604,7 +1601,7 @@ int NinjaFoam::MoveDynamicMesh()
             }
             else if(s.find("Time = 10\n") != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 10%% complete...");
-            }       
+            }*/       
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
@@ -1621,7 +1618,7 @@ int NinjaFoam::MoveDynamicMesh()
         nRet = ReconstructPar("-latestTime", fout);
         //nRet = ReconstructParMesh("-constant", fout);
         
-        VSIFCloseL(fout);
+        //VSIFCloseL(fout);
         
         if(nRet != 0){
             //do something
@@ -1640,7 +1637,7 @@ int NinjaFoam::MoveDynamicMesh()
     
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
     
-        VSIFCloseL(fout);
+        //VSIFCloseL(fout);
         
         //re-write controlDict for flow solution
         pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
@@ -1650,20 +1647,22 @@ int NinjaFoam::MoveDynamicMesh()
     
     //copy 0/ to 100/ (or latest time)
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("100", "U", "");
+    pszOutput = CPLFormFilename("200", "U", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("100", "p", "");
+    pszOutput = CPLFormFilename("200", "p", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("100", "k", "");
+    pszOutput = CPLFormFilename("200", "k", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("100", "epsilon", "");
+    pszOutput = CPLFormFilename("200", "epsilon", "");
     CopyFile(pszInput, pszOutput);
+    
+    //VSIFCloseL(fout);
 
     return nRet;
 }

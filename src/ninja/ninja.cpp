@@ -5227,9 +5227,6 @@ WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)
     if(meshType == "MDM"){
         return WindNinjaInputs::MDM;
     }
-    else if(meshType == "TBM"){
-        return WindNinjaInputs::TBM;
-    }
     else if(meshType == "SHM"){
         return WindNinjaInputs::SHM;
     }
@@ -5241,8 +5238,7 @@ WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)
 void ninja::set_MeshType(WindNinjaInputs::eMeshType meshType)
 {
     if( (meshType != WindNinjaInputs::MDM) &&
-        (meshType != WindNinjaInputs::SHM) &&
-        (meshType != WindNinjaInputs::TBM) )
+        (meshType != WindNinjaInputs::SHM) )
         throw std::logic_error("Problem with mesh type in ninja::set_MeshType().");
 
     input.meshType = meshType;

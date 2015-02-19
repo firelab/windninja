@@ -74,7 +74,6 @@ public:
     
     enum eMeshType{
         MDM,
-        TBM,
         SHM
     };
 

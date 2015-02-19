@@ -132,7 +132,7 @@ WindNinjaInputs::WindNinjaInputs()
     nIterations = 2000;
     meshCount = 1000000;
     nonEqBc = false;
-    meshType = WindNinjaInputs::SHM;
+    meshType = WindNinjaInputs::MDM;
     stlFile = "!set";
 #endif
     
