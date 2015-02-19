@@ -99,9 +99,9 @@ private:
     void SetInlets();
     void SetBcs();
     int writeMoveDynamicMesh();
-    int writeTerrainBlockMesh();
     int writeBlockMesh();
-    int readLogFile(int &ratio);
+    int readDem(int &ratio_); //sets blockMesh data from DEM 
+    int readLogFile(int &ratio); //sets blockMesh data from STL log file when DEM not available
     int writeSnappyMesh();
     
     std::string boundary_name;
@@ -126,7 +126,6 @@ private:
     int SurfaceTransformPoints();
     int SurfaceCheck();
     int MoveDynamicMesh();
-    int TerrainBlockMesher();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
     int SnappyHexMesh();
