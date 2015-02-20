@@ -945,12 +945,10 @@ int windNinjaCLI(int argc, char* argv[])
 
             //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
             #ifdef NINJAFOAM
-            if(vm["momentum_flag"].as<bool>()){
-                if(!vm.count("stl_file")){
-                    //only set the dem if there is no STL file specified
-                    windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
-                    windsim.setPosition( i_ );    //get position from DEM file
-                }
+            if(!vm.count("stl_file")){
+                //only set the dem if there is no STL file specified
+                windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
+                windsim.setPosition( i_ );    //get position from DEM file
             }
             #endif //NINJAFOAM
             
