@@ -408,7 +408,7 @@ bool NinjaFoam::simulate_wind()
     
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL converstion time was %lf seconds.", endStlConversion-startStlConversion);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
@@ -1002,7 +1002,7 @@ int NinjaFoam::readLogFile(int &ratio_)
         found = ss.find(" ", found+1);
         if(found != ss.npos){
             if(input.meshType == WindNinjaInputs::MDM){
-                bbox.push_back(atof(ss.substr(found).c_str()) + 1500); // zmin (should be above highest point in DEM)
+                bbox.push_back(atof(ss.substr(found).c_str()) + 50); // zmin (should be above highest point in DEM)
             }
             else{ // SHM
                 bbox.push_back(atof(ss.substr(found).c_str())); // zmin
@@ -1087,7 +1087,7 @@ int NinjaFoam::readDem(int &ratio_)
     if(input.meshType == WindNinjaInputs::MDM){
         bbox.push_back( input.dem.get_xllCorner() + 100); //xmin (+/- 100 is a buffer for MDM)
         bbox.push_back( input.dem.get_yllCorner() + 100); //ymin
-        bbox.push_back( input.dem.get_maxValue() + 500); //zmin (should be above highest point in DEM for MDM)
+        bbox.push_back( input.dem.get_maxValue() + 50); //zmin (should be above highest point in DEM for MDM)
         bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100); //xmax
         bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100); //ymax
         bbox.push_back( input.dem.get_maxValue() + 5000); //zmax
