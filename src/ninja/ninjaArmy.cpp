@@ -668,7 +668,7 @@ void ninjaArmy::setSize( int nSize )
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
     ninjas.resize( nSize );
-    for( int i = 0; i < nSize; i++ )
+    for( i = 0; i < nSize; i++ )
         ninjas[i] = new ninja();
 }
 /*-----------------------------------------------------------------------------
