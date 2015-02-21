@@ -1551,38 +1551,55 @@ int NinjaFoam::MoveDynamicMesh()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){	
             data[sizeof(data)-1] = '\0';
             CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
-            /*s.append(data);
-            if(s.find("Time = 100") != s.npos){
+            s.append(data);
+            
+            /* eventually set up to stop at resid < 1e-6, a little complicated...for now just stop at 100 */
+            /*if(s.find("Initial residual") != s.npos){
+                pos = s.rfind("Initial residual");
+                    if( s.find(',', pos) != s.npos ){ // if not at the end of the string
+                    int nchar = s.find(',', pos) - (pos+19);
+                    std::string resid = s.substr( pos+19, s.find(',', pos)-(pos+19) );
+                    if(atof(resid.c_str()) < 1e-6){
+                        /* 
+                         * change endTime = writeNow in system/controlDict
+                         * also need to know what last written time step is since 0/* needs to be copied here after reoncstructPar/
+                         * right now only set to write every 10th time step, so it's not simply latestTime
+                         */
+                        /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
+                    }
+                }
+            }*/
+            
+            if(s.find("Time = 100\n", 10) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
-                break;
             }
-            else if(s.find("Time = 90\n") != s.npos){
+            else if(s.find("Time = 90\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 90%% complete...");
             }
-            else if(s.find("Time = 80\n") != s.npos){
+            else if(s.find("Time = 80\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 80%% complete...");
             }
-            else if(s.find("Time = 70\n") != s.npos){
+            else if(s.find("Time = 70\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 70%% complete...");
             }
-            else if(s.find("Time = 60\n") != s.npos){
+            else if(s.find("Time = 60\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 60%% complete...");
             }
-            else if(s.find("Time = 50\n") != s.npos){
+            else if(s.find("Time = 50\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 50%% complete...");
             }
-            else if(s.find("Time = 40\n") != s.npos){
+            else if(s.find("Time = 40\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 40%% complete...");
             }
-            else if(s.find("Time = 30\n") != s.npos){
+            else if(s.find("Time = 30\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 30%% complete...");
             }
-            else if(s.find("Time = 20\n") != s.npos){
+            else if(s.find("Time = 20\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 20%% complete...");
             }
-            else if(s.find("Time = 10\n") != s.npos){
+            else if(s.find("Time = 10\n", 9) != s.npos){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 10%% complete...");
-            }*/       
+            }   
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
@@ -1597,7 +1614,6 @@ int NinjaFoam::MoveDynamicMesh()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
         fout = VSIFOpenL("logMesh", "w");
         nRet = ReconstructPar("-latestTime", fout);
-        //nRet = ReconstructParMesh("-constant", fout);
         
         //VSIFCloseL(fout);
         
@@ -1628,19 +1644,19 @@ int NinjaFoam::MoveDynamicMesh()
     
     //copy 0/ to 100/ (or latest time)
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("200", "U", "");
+    pszOutput = CPLFormFilename("100", "U", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("200", "p", "");
+    pszOutput = CPLFormFilename("100", "p", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("200", "k", "");
+    pszOutput = CPLFormFilename("100", "k", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("200", "epsilon", "");
+    pszOutput = CPLFormFilename("100", "epsilon", "");
     CopyFile(pszInput, pszOutput);
     
     //VSIFCloseL(fout);
