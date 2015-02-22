@@ -489,6 +489,8 @@ void mainWindow::createConnections()
 #ifdef NINJAFOAM
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+  connect(tree->nativesolver->nativeSolverGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(checkAllItems()));
 #endif
 
   //connect the speed and direction in the first row to the checkers
@@ -1888,17 +1890,26 @@ int mainWindow::checkAllItems()
 int mainWindow::checkSolverMethodItem()
 {
     eInputStatus status = blue;
-    if(checkNinjafoamItem() == blue)
+
+    if(checkNativeSolverItem() == green)
     {
         tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using native solver");
+        tree->solverMethodItem->setToolTip(0, "Using conservation of mass solver");
+        checkNinjafoamItem();
+        status = green;
+    }
+    else if(checkNinjafoamItem() == green)
+    {
+        tree->solverMethodItem->setIcon(0, tree->check);
+        tree->solverMethodItem->setToolTip(0, "Using conservation of mass and momentum solver");
+        checkNativeSolverItem();
         status = green;
     }
     else
     {
-        tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using momentum solver");
-        status = green;
+        tree->solverMethodItem->setIcon(0, tree->cross);
+        tree->solverMethodItem->setToolTip(0, "Select a solver");
+        status = red;
     }
     return status;
 }
@@ -2001,19 +2012,39 @@ int mainWindow::checkDiurnalItem()
 }
 
 #ifdef NINJAFOAM
+int mainWindow::checkNativeSolverItem()
+{
+    eInputStatus status = green;
+    if(!tree->nativesolver->nativeSolverGroupBox->isChecked())
+    {
+        tree->nativeSolverItem->setIcon(0, tree->blue);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->nativeSolverItem->setIcon(0, tree->check);
+        tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass selected");
+        status = green;
+    }
+
+    return status;
+}
 int mainWindow::checkNinjafoamItem()
 {
     eInputStatus status = green;
     if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
     {
         tree->ninjafoamItem->setIcon(0, tree->blue);
-        tree->ninjafoamItem->setToolTip(0, "Momentum solver not selected");
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum not selected");
         status = blue;
     }
     else
     {
         tree->ninjafoamItem->setIcon(0, tree->check);
-        tree->ninjafoamItem->setToolTip(0, "Momentum solver selected");
+        tree->nativesolver->nativeSolverGroupBox->setChecked(false);
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
         status = green;
     }
 
@@ -2481,6 +2512,13 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
     tree->diurnal->diurnalGroupBox->setChecked(true);
     }
 #ifdef NINJAFOAM
+  else if(item == tree->nativeSolverItem)
+  {
+      if(tree->nativesolver->nativeSolverGroupBox->isChecked())
+          tree->nativesolver->nativeSolverGroupBox->setChecked(false);
+      else
+          tree->nativesolver->nativeSolverGroupBox->setChecked(true);
+  }
   else if(item == tree->ninjafoamItem)
   {
       if(tree->ninjafoam->ninjafoamGroupBox->isChecked())
@@ -2662,10 +2700,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setChecked( false );
         
         tree->surface->meshResComboBox->removeItem(4);
-        
-        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( true );
-        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
-        
     }
     else{
         tree->diurnal->diurnalGroupBox->setEnabled( true );
@@ -2685,9 +2719,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setChecked( false );
         
         tree->surface->meshResComboBox->addItem("Custom", 4);
-        
-        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( false );
-        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
     }
 }
 #endif

@@ -3,7 +3,7 @@
  * $Id: stabilityInput.cpp 1304 2012-01-20 21:07:12Z kyle.shannon $
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  NinjaFOAM interface
+ * Purpose:  native solver interface
  * Author:   Kyle Shannon <ksshannon@gmail.com>
  *
  ******************************************************************************
@@ -27,30 +27,29 @@
  *
  *****************************************************************************/
 
-#include "ninjafoamInput.h"
+#include "nativeSolverInput.h"
 
 /** 
- * Construct and layout the ninjafoamInput widget.  This is only a checkable
+ * Construct and layout the nativeSolverInput widget.  This is only a checkable
  * option now.
  * 
  * @param parent parent widget
  */
-ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
+nativeSolverInput::nativeSolverInput(QWidget *parent) : QWidget(parent)
 {
-    ninjafoamGroupBox = new QGroupBox(tr("Conservation of Mass and Momentum"));
-    ninjafoamGroupBox->setCheckable(true);
-    ninjafoamGroupBox->setChecked(false);
+    nativeSolverGroupBox = new QGroupBox(tr("Conservation of Mass"));
+    nativeSolverGroupBox->setCheckable(true);
+    nativeSolverGroupBox->setChecked(false);
     
-    ninjafoamLabel = new QLabel(tr("This is a conservation of mass and momentum solver\n"\
-                "based on the OpenFOAM CFD toolbox."), this);
+    nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver."), this);
     
-    ninjafoamLayout = new QVBoxLayout;
+    nativeSolverLayout = new QVBoxLayout;
   
-    ninjafoamGroupBox->setLayout(ninjafoamLayout);
+    nativeSolverGroupBox->setLayout(nativeSolverLayout);
     
     layout = new QVBoxLayout;
-    layout->addWidget(ninjafoamGroupBox);
-    layout->addWidget(ninjafoamLabel);
+    layout->addWidget(nativeSolverGroupBox);
+    layout->addWidget(nativeSolverLabel);
     layout->addStretch();
     setLayout(layout);
 

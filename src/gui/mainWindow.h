@@ -188,6 +188,7 @@ class mainWindow : public QMainWindow
   int checkStabilityItem();
 #endif
 #ifdef NINJAFOAM
+  int checkNativeSolverItem();
   int checkNinjafoamItem();
   int checkSolverMethodItem();
 #endif

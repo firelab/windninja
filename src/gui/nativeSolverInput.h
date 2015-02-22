@@ -1,5 +1,5 @@
-#ifndef NINJAFOAMINPUT_H
-#define NINJAFOAMINPUT_H
+#ifndef NATIVESOLVERINPUT_H
+#define NATIVESOLVERINPUT_H
 
 #include <QGroupBox>
 #include <QComboBox>
@@ -24,18 +24,19 @@
 
 #include "qdebug.h"
 
-class ninjafoamInput : public QWidget
+class nativeSolverInput : public QWidget
 {
   Q_OBJECT
 
  public:
   
-  ninjafoamInput(QWidget *parent = 0);
-  QGroupBox *ninjafoamGroupBox;
-  QVBoxLayout *ninjafoamLayout;
+  nativeSolverInput(QWidget *parent = 0);
+  QGroupBox *nativeSolverGroupBox;
+  QVBoxLayout *nativeSolverLayout;
   QVBoxLayout *layout;
-  QLabel *ninjafoamLabel;
+  QLabel *nativeSolverLabel;
+  
 
 };
 
-#endif /* NINJAFOAMINPUT_H */
+#endif /* NATIVESOLVERINPUT_H */
