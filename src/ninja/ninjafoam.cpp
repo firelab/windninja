@@ -1570,36 +1570,15 @@ int NinjaFoam::MoveDynamicMesh()
                 }
             }*/
             
-            if(s.find("Time = 100\n", 10) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
+            std::string ss;
+            int nchar;
+            
+            if(s.rfind("Time = ") != s.npos){
+                pos = s.rfind("Time = ");
+                    nchar = s.find('\n', pos) - (pos+7);
+                    ss = s.substr( (pos+7), nchar );
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str()));
             }
-            else if(s.find("Time = 90\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 90%% complete...");
-            }
-            else if(s.find("Time = 80\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 80%% complete...");
-            }
-            else if(s.find("Time = 70\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 70%% complete...");
-            }
-            else if(s.find("Time = 60\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 60%% complete...");
-            }
-            else if(s.find("Time = 50\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 50%% complete...");
-            }
-            else if(s.find("Time = 40\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 40%% complete...");
-            }
-            else if(s.find("Time = 30\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 30%% complete...");
-            }
-            else if(s.find("Time = 20\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 20%% complete...");
-            }
-            else if(s.find("Time = 10\n", 9) != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 10%% complete...");
-            }   
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
