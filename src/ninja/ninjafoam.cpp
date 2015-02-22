@@ -1623,19 +1623,19 @@ int NinjaFoam::MoveDynamicMesh()
     
     //copy 0/ to 100/ (or latest time)
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("100", "U", "");
+    pszOutput = CPLFormFilename("50", "U", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("100", "p", "");
+    pszOutput = CPLFormFilename("50", "p", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("100", "k", "");
+    pszOutput = CPLFormFilename("50", "k", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("100", "epsilon", "");
+    pszOutput = CPLFormFilename("50", "epsilon", "");
     CopyFile(pszInput, pszOutput);
     
     //VSIFCloseL(fout);
