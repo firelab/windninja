@@ -182,7 +182,7 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
-    
+       
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
@@ -2082,9 +2082,19 @@ int NinjaFoam::SanitizeOutput()
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
     
-    char **pszOutputSurfacePath;
-    pszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );	
-    pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, pszOutputSurfacePath[2]) );
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
+    
+    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
+        if(std::string(papszOutputSurfacePath[i]) != "." || 
+           std::string(papszOutputSurfacePath[i]) != "..") {
+            pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
+            break;
+        }
+        else{
+            continue;
+        }
+    }
     
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
