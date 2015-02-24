@@ -1577,7 +1577,7 @@ int NinjaFoam::MoveDynamicMesh()
                 pos = s.rfind("Time = ");
                     nchar = s.find('\n', pos) - (pos+7);
                     ss = s.substr( (pos+7), nchar );
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str()));
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
