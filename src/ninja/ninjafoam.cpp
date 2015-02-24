@@ -2078,15 +2078,14 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-
     pszMem = CPLSPrintf( "%s/output.raw", pszTempPath );
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
-    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
-                         "U_triSurfaceSampling.raw", pszTempPath,
-                         input.nIterations );
-
-
+    
+    char **pszOutputSurfacePath;
+    pszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );	
+    pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, pszOutputSurfacePath[2]) );
+    
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
