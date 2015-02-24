@@ -2086,7 +2086,7 @@ int NinjaFoam::SanitizeOutput()
     papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
     
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
-        if(std::string(papszOutputSurfacePath[i]) != "." || 
+        if(std::string(papszOutputSurfacePath[i]) != "." && 
            std::string(papszOutputSurfacePath[i]) != "..") {
             pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
             break;
