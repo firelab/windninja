@@ -1890,6 +1890,9 @@ int mainWindow::checkAllItems()
 int mainWindow::checkSolverMethodItem()
 {
     eInputStatus status = blue;
+    
+    checkNativeSolverItem();
+    checkNinjafoamItem();
 
     if(checkNativeSolverItem() == green)
     {
@@ -1913,7 +1916,44 @@ int mainWindow::checkSolverMethodItem()
     }
     return status;
 }
-#endif
+
+int mainWindow::checkNativeSolverItem()
+{
+    eInputStatus status = green;
+    if(!tree->nativesolver->nativeSolverGroupBox->isChecked())
+    {
+        tree->nativeSolverItem->setIcon(0, tree->radio);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->nativeSolverItem->setIcon(0, tree->check);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass selected");
+        status = green;
+    }
+
+    return status;
+}
+int mainWindow::checkNinjafoamItem()
+{
+    eInputStatus status = green;
+    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
+    {
+        tree->ninjafoamItem->setIcon(0, tree->radio);
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->ninjafoamItem->setIcon(0, tree->check);
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
+        status = green;
+    }
+
+    return status;
+}
+#endif //NINJAFOAM
 
 int mainWindow::checkInputItem()
 {  
@@ -2010,47 +2050,6 @@ int mainWindow::checkDiurnalItem()
   }
   return status;
 }
-
-#ifdef NINJAFOAM
-int mainWindow::checkNativeSolverItem()
-{
-    eInputStatus status = green;
-    if(!tree->nativesolver->nativeSolverGroupBox->isChecked())
-    {
-        tree->nativeSolverItem->setIcon(0, tree->blue);
-        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass not selected");
-        status = blue;
-    }
-    else
-    {
-        tree->nativeSolverItem->setIcon(0, tree->check);
-        tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
-        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass selected");
-        status = green;
-    }
-
-    return status;
-}
-int mainWindow::checkNinjafoamItem()
-{
-    eInputStatus status = green;
-    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
-    {
-        tree->ninjafoamItem->setIcon(0, tree->blue);
-        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum not selected");
-        status = blue;
-    }
-    else
-    {
-        tree->ninjafoamItem->setIcon(0, tree->check);
-        tree->nativesolver->nativeSolverGroupBox->setChecked(false);
-        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
-        status = green;
-    }
-
-    return status;
-}
-#endif
 
 #ifdef STABILITY
 int mainWindow::checkStabilityItem()
@@ -2516,15 +2515,19 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
   {
       if(tree->nativesolver->nativeSolverGroupBox->isChecked())
           tree->nativesolver->nativeSolverGroupBox->setChecked(false);
-      else
+      else{
           tree->nativesolver->nativeSolverGroupBox->setChecked(true);
+          tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
+      }
   }
   else if(item == tree->ninjafoamItem)
   {
       if(tree->ninjafoam->ninjafoamGroupBox->isChecked())
           tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
-      else
+      else{
           tree->ninjafoam->ninjafoamGroupBox->setChecked(true);
+          tree->nativesolver->nativeSolverGroupBox->setChecked(false);
+      }
   }
 #endif
 #ifdef STABILITY
