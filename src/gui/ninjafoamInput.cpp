@@ -41,8 +41,16 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
     ninjafoamGroupBox->setCheckable(true);
     ninjafoamGroupBox->setChecked(false);
     
-    ninjafoamLabel = new QLabel(tr("This is a conservation of mass and momentum solver\n"\
-                "based on the OpenFOAM CFD toolbox."), this);
+    ninjafoamLabel = new QLabel(tr("This solver conserves both mass and momentum. It is based on the OpenFOAM\n"
+                "CFD toolbox. This solver should give more accurate wind predictions in regions where\n"
+                "momentum effects are important, such as on the lee side of terrain obstacles. Because\n"
+                "this solver is more computationally intensive than the conservation of mass solver,\n"
+                "simulation times will be longer. Typcial simulation times for this solver are on the\n"
+                "order of 1-2 hours, but will depend on your domain, resolution, and computational\n"
+                "resources. Note that some options (e.g., weather model initialization and diurnal\n"
+                "winds) are not available for this solver at this time. We plan to make these options\n"
+                "available in future releases."
+                ), this);
     
     ninjafoamLayout = new QVBoxLayout;
   

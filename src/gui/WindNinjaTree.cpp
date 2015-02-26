@@ -223,8 +223,8 @@ void WindNinjaTree::createStack()
   stack = new QStackedWidget;
   
 #ifdef NINJAFOAM
-  stack->addWidget(ninjafoam);
   stack->addWidget(nativesolver);
+  stack->addWidget(ninjafoam);
 #endif
   stack->addWidget(surface);
   stack->addWidget(diurnal);

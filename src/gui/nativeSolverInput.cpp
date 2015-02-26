@@ -41,7 +41,11 @@ nativeSolverInput::nativeSolverInput(QWidget *parent) : QWidget(parent)
     nativeSolverGroupBox->setCheckable(true);
     nativeSolverGroupBox->setChecked(true);
     
-    nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver."), this);
+    nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver. It solves a conservation of mass equation,\n"
+        "but not a conservation of momentum equation. This solver is fast-running, \n"
+        "but may give less accurate wind predictions in regions where momentum effects are\n"
+        "important, for example on the lee side of terrain obstacles.\n"
+        ), this);
     
     nativeSolverLayout = new QVBoxLayout;
   
