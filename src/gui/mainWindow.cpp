@@ -487,10 +487,15 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
 #endif
 #ifdef NINJAFOAM
+//connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
   connect(tree->nativesolver->nativeSolverGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+  connect( tree->nativesolver->nativeSolverGroupBox, SIGNAL( toggled( bool ) ),
+       this, SLOT( selectNativeSolver( bool ) ) );      
+  connect( tree->ninjafoam->ninjafoamGroupBox, SIGNAL( toggled( bool ) ),
+       this, SLOT( selectNinjafoamSolver( bool ) ) );
 #endif
 
   //connect the speed and direction in the first row to the checkers
@@ -616,6 +621,24 @@ void mainWindow::selectWeatherInitialization( bool pick )
     }
     tree->output->wxModelOutputCheckBox->setEnabled( pick );
 }
+
+#ifdef NINJAFOAM
+void mainWindow::selectNativeSolver( bool pick )
+{
+    if( pick ) {
+    tree->ninjafoam->ninjafoamGroupBox->setChecked( false );
+    checkAllItems();
+    }
+}
+void mainWindow::selectNinjafoamSolver( bool pick )
+{
+    if( pick ) {
+    tree->nativesolver->nativeSolverGroupBox->setChecked( false );
+    checkAllItems();
+    }
+}
+#endif //NINJAFOAM
+
 
 //function for finding and opening an input file.
 void mainWindow::openInputFile()
@@ -1946,7 +1969,7 @@ int mainWindow::checkNinjafoamItem()
     }
     else
     {
-        tree->ninjafoamItem->setIcon(0, tree->check);
+        tree->ninjafoamItem->setIcon(0, tree->check);        
         tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
         status = green;
     }
@@ -2517,7 +2540,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
           tree->nativesolver->nativeSolverGroupBox->setChecked(false);
       else{
           tree->nativesolver->nativeSolverGroupBox->setChecked(true);
-          tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
       }
   }
   else if(item == tree->ninjafoamItem)
@@ -2526,7 +2548,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
           tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
       else{
           tree->ninjafoam->ninjafoamGroupBox->setChecked(true);
-          tree->nativesolver->nativeSolverGroupBox->setChecked(false);
       }
   }
 #endif

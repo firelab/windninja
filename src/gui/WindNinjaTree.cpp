@@ -110,13 +110,13 @@ void WindNinjaTree::createSolverMethodItems()
   
   nativeSolverItem = new QTreeWidgetItem;
   nativeSolverItem->setText(0, tr("Conservation of Mass"));
-  nativeSolverItem->setIcon(0, blue);
+  nativeSolverItem->setIcon(0, radio);
   
   solverMethodItem->addChild(nativeSolverItem);
   
   ninjafoamItem = new QTreeWidgetItem;
   ninjafoamItem->setText(0, tr("Conservation of Mass and Momentum"));
-  ninjafoamItem->setIcon(0, blue);
+  ninjafoamItem->setIcon(0, radio);
 
   solverMethodItem->addChild(ninjafoamItem);
 }

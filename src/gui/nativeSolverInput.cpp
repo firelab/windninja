@@ -39,7 +39,7 @@ nativeSolverInput::nativeSolverInput(QWidget *parent) : QWidget(parent)
 {
     nativeSolverGroupBox = new QGroupBox(tr("Conservation of Mass"));
     nativeSolverGroupBox->setCheckable(true);
-    nativeSolverGroupBox->setChecked(false);
+    nativeSolverGroupBox->setChecked(true);
     
     nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver."), this);
     
