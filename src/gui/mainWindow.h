@@ -126,6 +126,7 @@ class mainWindow : public QMainWindow
   double GDALCenterLon;
   int GDALXSize, GDALYSize;
   double GDALCellSize, GDALNoData;
+  double GDALMaxValue;
 
   //threshold for no-googling = 400000
 
@@ -193,6 +194,7 @@ class mainWindow : public QMainWindow
   int checkSolverMethodItem();
   void selectNativeSolver( bool pick );
   void selectNinjafoamSolver( bool pick );
+  double computeNinjafoamCellSize( int index );
 #endif
   int checkWindItem();
   int checkSpdDirItem();

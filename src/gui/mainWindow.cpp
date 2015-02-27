@@ -1143,6 +1143,55 @@ double mainWindow::computeCellSize(int index)
   return meshResolution;
 }
 
+#ifdef NINJAFOAM 
+double mainWindow::computeNinjafoamCellSize(int index)
+{
+  /*calculates mesh resolution of lower volume in block mesh*/
+  
+  int coarse = 100000;
+  int medium = 500000;
+  int fine = 1e6;
+
+  double side1 = 200.0;
+
+  int meshCount = fine;
+  switch(index)
+    {
+    case 0:
+      meshCount = coarse;
+      break;
+    case 1:
+      meshCount = medium;
+      break;
+    case 2:
+      meshCount = fine;
+      break;
+    case 3:
+      return side1;
+      break;
+    case 4:
+      return side1;
+      break;
+    default:
+      return side1;
+    }
+  
+  double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
+  double YLength = (GDALYSize + 1) * GDALCellSize + 200;
+  
+  double volume1;
+  double cellCount1;
+  double cellVolume1;
+    
+  volume1 = XLength * YLength * GDALMaxValue; //volume near terrain
+  cellCount1 = meshCount * 0.5; // cell count in volume 1
+  cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
+  side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    
+  return side1;
+}
+#endif //NINJAFOAM
+
 //open input file as a GDALDataset, return file type enum;
 int mainWindow::checkInputFile(QString fileName)
 {
@@ -1189,6 +1238,12 @@ int mainWindow::checkInputFile(QString fileName)
     //get x and y dimension
     GDALXSize = poInputDS->GetRasterXSize();
     GDALYSize = poInputDS->GetRasterYSize();
+    
+    //get max z value for computeNinjafoamCellSize()
+    GDALRasterBandH hBand = GDALGetRasterBand( (GDALDatasetH)poInputDS, 1 );
+    double adfMinMax[2];
+    GDALComputeRasterMinMax( hBand, TRUE, adfMinMax);
+    GDALMaxValue = adfMinMax[1];
 
     if(!GDALTestSRS(poInputDS))
     {
@@ -1247,6 +1302,7 @@ int mainWindow::checkInputFile(QString fileName)
             {
                 GDALCenterLon = ll[0];
                 GDALCenterLat = ll[1];
+
                 //set diurnal location, also set DD.DDDDD
                 QString oTimeZone = FetchTimeZone(GDALCenterLon, GDALCenterLat, NULL).c_str();
                 if(oTimeZone != "")
@@ -2723,7 +2779,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setCheckable( false );
         tree->weather->weatherGroupBox->setChecked( false );
         
-        tree->surface->meshResComboBox->removeItem(4);
+        //tree->surface->meshResComboBox->removeItem(4);
     }
     else{
         tree->diurnal->diurnalGroupBox->setEnabled( true );
@@ -2742,7 +2798,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setCheckable( true );
         tree->weather->weatherGroupBox->setChecked( false );
         
-        tree->surface->meshResComboBox->addItem("Custom", 4);
+        //tree->surface->meshResComboBox->addItem("Custom", 4);
     }
 }
 #endif
