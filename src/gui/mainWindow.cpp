@@ -1101,11 +1101,29 @@ void mainWindow::checkMeshUnits(bool checked)
 
 double mainWindow::computeCellSize(int index)
 {
-  int coarse = 4000;
-  int medium = 10000;
-  int fine = 20000;
-
-  double meshResolution = 200.0;
+  int coarse, medium, fine;
+  double meshResolution;
+  
+  meshResolution = 200.0;
+  
+#ifdef NINJAFOAM  
+  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
+    /*ninjafoam: calculate mesh resolution of lower volume in block mesh*/
+    coarse = 100000;
+    medium = 500000;
+    fine = 1e6;
+  }
+  else{
+    /* use native mesh */
+    coarse = 4000;
+    medium = 10000;
+    fine = 20000;
+  }
+#else
+  coarse = 4000;
+  medium = 10000;
+  fine = 20000;
+#endif //NINJAFOAM
 
   int targetNumHorizCells = fine;
   switch(index)
@@ -1128,6 +1146,37 @@ double mainWindow::computeCellSize(int index)
     default:
       return meshResolution;
     }
+    
+#ifdef NINJAFOAM  
+  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
+    /* ninjafoam mesh */
+    double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
+    double YLength = (GDALYSize + 1) * GDALCellSize + 200;
+    double ZLength = 2450; //bottom face is 50 m above terrain max, top face is 2500 m above terrain max
+  
+    double volume1;
+    double cellCount1;
+    double cellVolume1;
+    
+    volume1 = XLength * YLength * ZLength; //volume near terrain
+    cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
+    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+  }
+  else{
+    /* native windninja mesh */
+    double XLength = (GDALXSize + 1) * GDALCellSize;
+    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
+    double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
+
+    double XCellSize = XLength / nXCells;
+    double YCellSize = YLength / nYCells;
+
+    meshResolution = (XCellSize + YCellSize) / 2;
+  
+  }
+#else 
   double XLength = (GDALXSize + 1) * GDALCellSize;
   double YLength = (GDALYSize + 1) * GDALCellSize;
   double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
@@ -1139,58 +1188,10 @@ double mainWindow::computeCellSize(int index)
   meshResolution = (XCellSize + YCellSize) / 2;
 
   //noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
+#endif //NINJAFOAM
 
   return meshResolution;
 }
-
-#ifdef NINJAFOAM 
-double mainWindow::computeNinjafoamCellSize(int index)
-{
-  /*calculates mesh resolution of lower volume in block mesh*/
-  
-  int coarse = 100000;
-  int medium = 500000;
-  int fine = 1e6;
-
-  double side1 = 200.0;
-
-  int meshCount = fine;
-  switch(index)
-    {
-    case 0:
-      meshCount = coarse;
-      break;
-    case 1:
-      meshCount = medium;
-      break;
-    case 2:
-      meshCount = fine;
-      break;
-    case 3:
-      return side1;
-      break;
-    case 4:
-      return side1;
-      break;
-    default:
-      return side1;
-    }
-  
-  double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
-  double YLength = (GDALYSize + 1) * GDALCellSize + 200;
-  
-  double volume1;
-  double cellCount1;
-  double cellVolume1;
-    
-  volume1 = XLength * YLength * GDALMaxValue; //volume near terrain
-  cellCount1 = meshCount * 0.5; // cell count in volume 1
-  cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-  side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
-    
-  return side1;
-}
-#endif //NINJAFOAM
 
 //open input file as a GDALDataset, return file type enum;
 int mainWindow::checkInputFile(QString fileName)
@@ -1238,12 +1239,6 @@ int mainWindow::checkInputFile(QString fileName)
     //get x and y dimension
     GDALXSize = poInputDS->GetRasterXSize();
     GDALYSize = poInputDS->GetRasterYSize();
-    
-    //get max z value for computeNinjafoamCellSize()
-    GDALRasterBandH hBand = GDALGetRasterBand( (GDALDatasetH)poInputDS, 1 );
-    double adfMinMax[2];
-    GDALComputeRasterMinMax( hBand, TRUE, adfMinMax);
-    GDALMaxValue = adfMinMax[1];
 
     if(!GDALTestSRS(poInputDS))
     {
