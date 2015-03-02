@@ -2767,6 +2767,9 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setCheckable( false );
         #endif
+        
+        tree->wind->windTable->enableDiurnalCells( false ); 
+        
         tree->point->pointGroupBox->setEnabled( false );
         tree->point->pointGroupBox->setCheckable( false );
         tree->point->pointGroupBox->setChecked( false );
