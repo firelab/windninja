@@ -1952,6 +1952,7 @@ int mainWindow::checkAllItems()
   eInputStatus status = green;
 #ifdef NINJAFOAM
   checkSolverMethodItem();
+  checkMeshCombo();
 #endif
   checkInputItem();
   checkOutputItem();
