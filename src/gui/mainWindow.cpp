@@ -2775,6 +2775,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setCheckable( false );
         tree->weather->weatherGroupBox->setChecked( false );
         
+        tree->surface->timeZoneGroupBox->setEnabled( false );
+        tree->surface->timeZoneGroupBox->setCheckable( false );
+        tree->surface->timeZoneGroupBox->setChecked( false );
+        
         //tree->surface->meshResComboBox->removeItem(4);
     }
     else{
@@ -2793,6 +2797,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setEnabled( true );
         tree->weather->weatherGroupBox->setCheckable( true );
         tree->weather->weatherGroupBox->setChecked( false );
+        
+        tree->surface->timeZoneGroupBox->setEnabled( true );
+        tree->surface->timeZoneGroupBox->setCheckable( true );
+        tree->surface->timeZoneGroupBox->setChecked( false );
         
         //tree->surface->meshResComboBox->addItem("Custom", 4);
     }
