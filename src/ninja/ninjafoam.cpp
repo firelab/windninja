@@ -419,8 +419,6 @@ bool NinjaFoam::simulate_wind()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
     
-    //VSIUnlink(pszTempPath);
-    
     if(!input.keepOutGridsInMemory)
 	{
         AngleGrid.deallocate();
@@ -2000,6 +1998,7 @@ int NinjaFoam::SimpleFoam()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             data[sizeof(data)-1] = '\0';
             s.append(data);
+            CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
             pos = s.rfind("Time = ");
             if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
                 t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
@@ -2523,7 +2522,7 @@ int NinjaFoam::WriteOutputFiles()
     /*-------------------------------------------------------------------*/
     /* write output files                                                */
     /*-------------------------------------------------------------------*/
-
+    
 	try{
 		if(input.asciiOutFlag==true)
 		{
@@ -2701,6 +2700,11 @@ int NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
+	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
+	if(input.volVTKOutFlag==false)
+    {
+        VSIUnlink( pszTempPath ); // delete pszTempPath and all OpenFOAM directories
+    }
 	
 	return true;
 }
