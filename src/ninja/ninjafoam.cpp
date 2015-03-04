@@ -479,8 +479,8 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
-    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)));
-    ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)));
+    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
+    ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
     
     dataString.append(s);
@@ -2704,29 +2704,7 @@ int NinjaFoam::WriteOutputFiles()
 	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
 	if(input.volVTKOutFlag==false)
     {
-        char **papszFileList;
-        VSIStatBufL sStat;
-
-        papszFileList = VSIReadDirRecursive( pszTempPath );
-        
-        for(int i = 0; i < CSLCount( papszFileList ); i++){          
-            VSIStatL( CPLFormFilename( pszTempPath, papszFileList[i], "") , &sStat );
-            if( !VSI_ISDIR( sStat.st_mode ) ){ 
-                VSIUnlink( CPLFormFilename( pszTempPath, papszFileList[i], "" ) );
-            }
-            else
-               continue;
-        }
-        papszFileList = VSIReadDirRecursive( pszTempPath );
-        while( CSLCount( papszFileList ) != 0 ){
-            for(int i = 0; i < CSLCount( papszFileList ); i++){
-                VSIRmdir( CPLFormFilename( pszTempPath, papszFileList[i], "") );
-            }
-            papszFileList = VSIReadDirRecursive( pszTempPath );
-        }
-        
-        VSIRmdir( pszTempPath );
-        CSLDestroy( papszFileList );
+        NinjaUnlinkTree( pszTempPath );
     }
 	
 	return true;
