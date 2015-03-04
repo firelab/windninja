@@ -104,7 +104,8 @@ bool NinjaFoam::simulate_wind()
     /*------------------------------------------*/
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
-
+    
+    CPLDebug("NINJAFOAM", "meshCount = %d", input.meshCount);
     CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
@@ -182,7 +183,7 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
-    
+       
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
@@ -418,8 +419,6 @@ bool NinjaFoam::simulate_wind()
 	#endif 
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
-    
-    //VSIUnlink(pszTempPath);
     
     if(!input.keepOutGridsInMemory)
 	{
@@ -1551,38 +1550,34 @@ int NinjaFoam::MoveDynamicMesh()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){	
             data[sizeof(data)-1] = '\0';
             CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
-            /*s.append(data);
-            if(s.find("Time = 100") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
-                break;
+            s.append(data);
+            
+            /* eventually set up to stop at resid < 1e-6, a little complicated...for now just stop at 100 */
+            /*if(s.find("Initial residual") != s.npos){
+                pos = s.rfind("Initial residual");
+                    if( s.find(',', pos) != s.npos ){ // if not at the end of the string
+                    int nchar = s.find(',', pos) - (pos+19);
+                    std::string resid = s.substr( pos+19, s.find(',', pos)-(pos+19) );
+                    if(atof(resid.c_str()) < 1e-6){
+                        /* 
+                         * change endTime = writeNow in system/controlDict
+                         * also need to know what last written time step is since 0/* needs to be copied here after reoncstructPar/
+                         * right now only set to write every 10th time step, so it's not simply latestTime
+                         */
+                        /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
+                    }
+                }
+            }*/
+            
+            std::string ss;
+            int nchar;
+            
+            if(s.rfind("Time = ") != s.npos){
+                pos = s.rfind("Time = ");
+                    nchar = s.find('\n', pos) - (pos+7);
+                    ss = s.substr( (pos+7), nchar );
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
             }
-            else if(s.find("Time = 90\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 90%% complete...");
-            }
-            else if(s.find("Time = 80\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 80%% complete...");
-            }
-            else if(s.find("Time = 70\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 70%% complete...");
-            }
-            else if(s.find("Time = 60\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 60%% complete...");
-            }
-            else if(s.find("Time = 50\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 50%% complete...");
-            }
-            else if(s.find("Time = 40\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 40%% complete...");
-            }
-            else if(s.find("Time = 30\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 30%% complete...");
-            }
-            else if(s.find("Time = 20\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 20%% complete...");
-            }
-            else if(s.find("Time = 10\n") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 10%% complete...");
-            }*/       
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
@@ -1597,7 +1592,6 @@ int NinjaFoam::MoveDynamicMesh()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
         fout = VSIFOpenL("logMesh", "w");
         nRet = ReconstructPar("-latestTime", fout);
-        //nRet = ReconstructParMesh("-constant", fout);
         
         //VSIFCloseL(fout);
         
@@ -1628,19 +1622,19 @@ int NinjaFoam::MoveDynamicMesh()
     
     //copy 0/ to 100/ (or latest time)
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("200", "U", "");
+    pszOutput = CPLFormFilename("50", "U", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("200", "p", "");
+    pszOutput = CPLFormFilename("50", "p", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("200", "k", "");
+    pszOutput = CPLFormFilename("50", "k", "");
     CopyFile(pszInput, pszOutput);
     
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("200", "epsilon", "");
+    pszOutput = CPLFormFilename("50", "epsilon", "");
     CopyFile(pszInput, pszOutput);
     
     //VSIFCloseL(fout);
@@ -2005,6 +1999,7 @@ int NinjaFoam::SimpleFoam()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             data[sizeof(data)-1] = '\0';
             s.append(data);
+            CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
             pos = s.rfind("Time = ");
             if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
                 t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
@@ -2083,15 +2078,24 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-
     pszMem = CPLSPrintf( "%s/output.raw", pszTempPath );
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
-    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
-                         "U_triSurfaceSampling.raw", pszTempPath,
-                         input.nIterations );
-
-
+    
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
+    
+    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
+        if(std::string(papszOutputSurfacePath[i]) != "." && 
+           std::string(papszOutputSurfacePath[i]) != "..") {
+            pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
+            break;
+        }
+        else{
+            continue;
+        }
+    }
+    
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -2519,7 +2523,7 @@ int NinjaFoam::WriteOutputFiles()
     /*-------------------------------------------------------------------*/
     /* write output files                                                */
     /*-------------------------------------------------------------------*/
-
+    
 	try{
 		if(input.asciiOutFlag==true)
 		{
@@ -2697,6 +2701,33 @@ int NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
+	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
+	if(input.volVTKOutFlag==false)
+    {
+        char **papszFileList;
+        VSIStatBufL sStat;
+
+        papszFileList = VSIReadDirRecursive( pszTempPath );
+        
+        for(int i = 0; i < CSLCount( papszFileList ); i++){          
+            VSIStatL( CPLFormFilename( pszTempPath, papszFileList[i], "") , &sStat );
+            if( !VSI_ISDIR( sStat.st_mode ) ){ 
+                VSIUnlink( CPLFormFilename( pszTempPath, papszFileList[i], "" ) );
+            }
+            else
+               continue;
+        }
+        papszFileList = VSIReadDirRecursive( pszTempPath );
+        while( CSLCount( papszFileList ) != 0 ){
+            for(int i = 0; i < CSLCount( papszFileList ); i++){
+                VSIRmdir( CPLFormFilename( pszTempPath, papszFileList[i], "") );
+            }
+            papszFileList = VSIReadDirRecursive( pszTempPath );
+        }
+        
+        VSIRmdir( pszTempPath );
+        CSLDestroy( papszFileList );
+    }
 	
 	return true;
 }

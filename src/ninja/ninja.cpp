@@ -279,7 +279,7 @@ bool ninja::simulate_wind()
 	checkCancel();
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
-
+	
 	readInputFile();
 	set_position();
 	set_uniVegetation();
@@ -374,7 +374,7 @@ bool ninja::simulate_wind()
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
 	//generate mesh
 	mesh.buildStandardMesh(input);
-
+	
 	u0.allocate(&mesh);		//u is positive toward East
 	v0.allocate(&mesh);		//v is positive toward North
 	w0.allocate(&mesh);		//w is positive up
@@ -5205,13 +5205,13 @@ void ninja::set_MeshCount(int meshCount)
 void ninja::set_MeshCount(std::string meshChoice)
 {
     if(meshChoice == std::string("coarse")){
-        input.meshCount = 1000000;
+        input.meshCount = 100000;
     }
     else if(meshChoice == std::string("medium")){
-        input.meshCount = 2000000;
+        input.meshCount = 500000;
     }
     else if(meshChoice == std::string("fine")){
-        input.meshCount = 2500000;
+        input.meshCount = 1e6;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");

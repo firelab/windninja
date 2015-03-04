@@ -108,9 +108,15 @@ void WindNinjaTree::createSolverMethodItems()
   solverMethodItem->setIcon(0, blue);
   solverMethodItem->setText(0, tr("Solver"));
   
+  nativeSolverItem = new QTreeWidgetItem;
+  nativeSolverItem->setText(0, tr("Conservation of Mass"));
+  nativeSolverItem->setIcon(0, radio);
+  
+  solverMethodItem->addChild(nativeSolverItem);
+  
   ninjafoamItem = new QTreeWidgetItem;
-  ninjafoamItem->setText(0, tr("Conservation of Momentum"));
-  ninjafoamItem->setIcon(0, blue);
+  ninjafoamItem->setText(0, tr("Conservation of Mass and Momentum"));
+  ninjafoamItem->setIcon(0, radio);
 
   solverMethodItem->addChild(ninjafoamItem);
 }
@@ -196,6 +202,7 @@ void WindNinjaTree::createStack()
 {
 #ifdef NINJAFOAM
   ninjafoam = new ninjafoamInput;
+  nativesolver = new nativeSolverInput;
 #endif
   surface = new surfaceInput;
   diurnal = new diurnalInput;
@@ -216,6 +223,7 @@ void WindNinjaTree::createStack()
   stack = new QStackedWidget;
   
 #ifdef NINJAFOAM
+  stack->addWidget(nativesolver);
   stack->addWidget(ninjafoam);
 #endif
   stack->addWidget(surface);
@@ -260,6 +268,8 @@ void WindNinjaTree::updateInterface()
       stack->setCurrentWidget(stability);
 #endif
 #ifdef NINJAFOAM
+  else if(item == nativeSolverItem)
+      stack->setCurrentWidget(nativesolver);
   else if(item == ninjafoamItem)
       stack->setCurrentWidget(ninjafoam);
   else if(item == solverMethodItem)

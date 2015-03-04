@@ -92,3 +92,8 @@ Further Information
 Model descriptions and other information can be found at
 http://nomads.ncep.noaa.gov/
 
+Frequent users would benefit by subscribing to NCEP's list-serv pertaining to
+the NOMADS server.  Changes and downtime are reported there:
+
+https://lstsrv.ncep.noaa.gov/mailman/listinfo/ncep.list.nomads-ftpprd
+

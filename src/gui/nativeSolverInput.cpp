@@ -3,7 +3,7 @@
  * $Id: stabilityInput.cpp 1304 2012-01-20 21:07:12Z kyle.shannon $
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  NinjaFOAM interface
+ * Purpose:  native solver interface
  * Author:   Kyle Shannon <ksshannon@gmail.com>
  *
  ******************************************************************************
@@ -27,38 +27,33 @@
  *
  *****************************************************************************/
 
-#include "ninjafoamInput.h"
+#include "nativeSolverInput.h"
 
 /** 
- * Construct and layout the ninjafoamInput widget.  This is only a checkable
+ * Construct and layout the nativeSolverInput widget.  This is only a checkable
  * option now.
  * 
  * @param parent parent widget
  */
-ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
+nativeSolverInput::nativeSolverInput(QWidget *parent) : QWidget(parent)
 {
-    ninjafoamGroupBox = new QGroupBox(tr("Conservation of Mass and Momentum"));
-    ninjafoamGroupBox->setCheckable(true);
-    ninjafoamGroupBox->setChecked(false);
+    nativeSolverGroupBox = new QGroupBox(tr("Conservation of Mass"));
+    nativeSolverGroupBox->setCheckable(true);
+    nativeSolverGroupBox->setChecked(true);
     
-    ninjafoamLabel = new QLabel(tr("This solver conserves both mass and momentum. It is based on the OpenFOAM\n"
-                "CFD toolbox. This solver should give more accurate wind predictions in regions where\n"
-                "momentum effects are important, such as on the lee side of terrain obstacles. Because\n"
-                "this solver is more computationally intensive than the conservation of mass solver,\n"
-                "simulation times will be longer. Typcial simulation times for this solver are on the\n"
-                "order of 1-2 hours, but will depend on your domain, resolution, and computational\n"
-                "resources. Note that some options (e.g., weather model initialization and diurnal\n"
-                "winds) are not available for this solver at this time. We plan to make these options\n"
-                "available in future releases."
-                ), this);
+    nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver. It solves a conservation of mass equation,\n"
+        "but not a conservation of momentum equation. This solver is fast-running, \n"
+        "but may give less accurate wind predictions in regions where momentum effects are\n"
+        "important, for example on the lee side of terrain obstacles.\n"
+        ), this);
     
-    ninjafoamLayout = new QVBoxLayout;
+    nativeSolverLayout = new QVBoxLayout;
   
-    ninjafoamGroupBox->setLayout(ninjafoamLayout);
+    nativeSolverGroupBox->setLayout(nativeSolverLayout);
     
     layout = new QVBoxLayout;
-    layout->addWidget(ninjafoamGroupBox);
-    layout->addWidget(ninjafoamLabel);
+    layout->addWidget(nativeSolverGroupBox);
+    layout->addWidget(nativeSolverLabel);
     layout->addStretch();
     setLayout(layout);
 

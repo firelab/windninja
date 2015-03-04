@@ -40,6 +40,7 @@ SET(NINJA_GUI_INCLUDES consoleDockWidget.h
                        latLonWidget.h
                        mainWindow.h
                        metaWindWidget.h
+                       nativeSolverInput.h
                        ninjafoamInput.h
                        outputHeightWidget.h
                        outputMetaData.h
@@ -87,6 +88,7 @@ SET(NINJA_GUI_SOURCES cmake_gui.cpp
                       metaWindWidget.cpp
                       outputHeightWidget.cpp
                       outputMetaData.cpp
+                      nativeSolverInput.cpp
                       ninjafoamInput.cpp
                       pointDataModel.cpp
                       pointInput.cpp
