@@ -40,6 +40,10 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#ifndef SKIP_DOT_AND_DOTDOT
+#define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
+#endif
+
 #ifndef MAX_PATH
 #define MAX_PATH 8192
 #endif
@@ -70,7 +74,6 @@ std::string FindDataPath(std::string path);
 #endif /* WITH_NOMADS_SUPPORT */
 
 int NinjaUnlinkTree( const char *pszPath );
-int NinjaUnlinkTreeRecurse( const char *pszPath );
 
 void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );

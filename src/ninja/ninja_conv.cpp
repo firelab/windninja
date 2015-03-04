@@ -277,7 +277,7 @@ static int NinjaUnlinkTreeRecurse( const char *pszPath )
     int i, n;
     char **papszDirList = NULL;
     char *pszJoinedPath, *pszTmp;
-    VSIStatBuf sStat;
+    VSIStatBufL sStat;
 
     papszDirList = VSIReadDir( pszPath );
     i = 0;
@@ -287,7 +287,7 @@ static int NinjaUnlinkTreeRecurse( const char *pszPath )
         pszTmp = papszDirList[i];
         SKIP_DOT_AND_DOTDOT( pszTmp );
         pszJoinedPath = CPLStrdup( CPLFormFilename( pszPath, pszTmp, NULL ) );
-        VSIStat( pszJoinedPath, &sStat );
+        VSIStatL( pszJoinedPath, &sStat );
         if( VSI_ISDIR( sStat.st_mode ) )
         {
             NinjaUnlinkTreeRecurse( pszJoinedPath );
