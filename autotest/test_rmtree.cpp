@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( rmtree_sym_2 )
     pszTarget = CPLFormFilename( pszPath, "c", ".txt" );
     Touch( pszTarget );
     symlink( pszTarget, pszSym );
-    pszSym = CPLFormFilename( pszTmpPath, "s2", pszTarget );
+    pszSym = CPLFormFilename( pszTmpPath, "s2", NULL );
     symlink( pszTarget, pszSym );
     rc = NinjaUnlinkTree( pszTmpPath );
     VSIStatBufL sStat;

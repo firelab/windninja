@@ -10,7 +10,7 @@
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
  * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT 
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105 
+ * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE n17 SECTION 105 
  * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT 
  * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES 
  * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
@@ -287,10 +287,11 @@ static int NinjaUnlinkTreeRecurse( const char *pszPath )
         pszTmp = papszDirList[i];
         SKIP_DOT_AND_DOTDOT( pszTmp );
         pszJoinedPath = CPLStrdup( CPLFormFilename( pszPath, pszTmp, NULL ) );
-        VSIStatL( pszJoinedPath, &sStat );
+        VSIStatExL( pszJoinedPath, &sStat, 0 );
         if( VSI_ISDIR( sStat.st_mode ) )
         {
             NinjaUnlinkTreeRecurse( pszJoinedPath );
+            VSIUnlink( pszJoinedPath );
             VSIRmdir( pszJoinedPath );
         }
         else
