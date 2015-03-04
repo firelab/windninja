@@ -104,7 +104,8 @@ bool NinjaFoam::simulate_wind()
     /*------------------------------------------*/
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
-
+    
+    CPLDebug("NINJAFOAM", "meshCount = %d", input.meshCount);
     CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
@@ -2703,7 +2704,29 @@ int NinjaFoam::WriteOutputFiles()
 	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
 	if(input.volVTKOutFlag==false)
     {
-        VSIUnlink( pszTempPath ); // delete pszTempPath and all OpenFOAM directories
+        char **papszFileList;
+        VSIStatBufL sStat;
+
+        papszFileList = VSIReadDirRecursive( pszTempPath );
+        
+        for(int i = 0; i < CSLCount( papszFileList ); i++){          
+            VSIStatL( CPLFormFilename( pszTempPath, papszFileList[i], "") , &sStat );
+            if( !VSI_ISDIR( sStat.st_mode ) ){ 
+                VSIUnlink( CPLFormFilename( pszTempPath, papszFileList[i], "" ) );
+            }
+            else
+               continue;
+        }
+        papszFileList = VSIReadDirRecursive( pszTempPath );
+        while( CSLCount( papszFileList ) != 0 ){
+            for(int i = 0; i < CSLCount( papszFileList ); i++){
+                VSIRmdir( CPLFormFilename( pszTempPath, papszFileList[i], "") );
+            }
+            papszFileList = VSIReadDirRecursive( pszTempPath );
+        }
+        
+        VSIRmdir( pszTempPath );
+        CSLDestroy( papszFileList );
     }
 	
 	return true;
