@@ -69,6 +69,9 @@ std::string FindDataPath(std::string path);
 #endif /* GDAL_COMPUTE_VERSION */
 #endif /* WITH_NOMADS_SUPPORT */
 
+int NinjaUnlinkTree( const char *pszPath );
+int NinjaUnlinkTreeRecurse( const char *pszPath );
+
 void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );
 

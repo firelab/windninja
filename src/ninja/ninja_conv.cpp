@@ -26,8 +26,7 @@
  *
  *****************************************************************************/
 
-#include "ninja_conv.h"
-
+#include "ninja_conv.h" 
 /**
  * \brief Find the root directory for the installation.
  *
@@ -272,6 +271,44 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 }
 #endif /* USE_MANUAL_VSIREAD_DIR_RECURSIVE */
 #endif /* WITH_NOMADS_SUPPORT */
+
+static int NinjaUnlinkTreeRecurse( const char *pszPath )
+{
+    int i, n;
+    char **papszDirList = NULL;
+    char *pszJoinedPath, *pszTmp;
+    VSIStatBuf sStat;
+
+    papszDirList = VSIReadDir( pszPath );
+    i = 0;
+    n = CSLCount( papszDirList );
+    for( i=0; i<n; i++ )
+    {
+        pszTmp = papszDirList[i];
+        SKIP_DOT_AND_DOTDOT( pszTmp );
+        pszJoinedPath = CPLStrdup( CPLFormFilename( pszPath, pszTmp, NULL ) );
+        VSIStat( pszJoinedPath, &sStat );
+        if( VSI_ISDIR( sStat.st_mode ) )
+        {
+            NinjaUnlinkTreeRecurse( pszJoinedPath );
+            VSIRmdir( pszPath );
+        }
+        else
+        {
+            VSIUnlink( pszPath );
+        }
+        CPLFree( pszJoinedPath );
+    }
+    CSLDestroy( papszDirList );
+    return 0;
+}
+
+int NinjaUnlinkTree( const char *pszPath )
+{
+    int rc = NinjaUnlinkTreeRecurse( pszPath );
+    VSIRmdir( pszPath );
+    return rc;
+}
 
 void * NinjaMalloc( unsigned int nSize )
 {
