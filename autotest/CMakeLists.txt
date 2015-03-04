@@ -73,7 +73,8 @@ SET(TEST_SOURCES test_main.cpp
                  test_init.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
-                 test_stl)
+                 test_stl
+                 test_rmtree.cpp)
 IF(WITH_LCP_CLIENT)
     SET(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
 ENDIF(WITH_LCP_CLIENT)
@@ -301,6 +302,13 @@ IF(NINJAFOAM)
     #ADD_TEST(sample_cloud_1
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=ninjafoam/sample_cloud_1)
 ENDIF(NINJAFOAM)
+
+ADD_TEST(rmtree_1
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_1)
+ADD_TEST(rmtree_sym_1
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_1)
+ADD_TEST(rmtree_sym_2
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_2)
 # *****************************************************************************
 # Command Line Interface Testing Section
 # *****************************************************************************
