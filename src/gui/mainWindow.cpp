@@ -1878,7 +1878,15 @@ int mainWindow::solve()
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-        ninjaSuccess = army->startRuns( nThreads );
+#ifdef NINJAFOAM
+            if(tree->ninjafoam->ninjafoamGroupBox->isChecked()){
+                ninjaSuccess = army->startNinjaFoamRuns( nThreads );
+            }
+            else
+                ninjaSuccess = army->startRuns( nThreads );
+#else
+            ninjaSuccess = army->startRuns( nThreads );
+#endif //NINJAFOAM
     }
     catch (bad_alloc& e)
     {

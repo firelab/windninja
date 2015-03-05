@@ -115,6 +115,9 @@ public:
     std::string fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName);
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
+#ifdef NINJAFOAM
+    bool startNinjaFoamRuns(int numProcessors);
+#endif
     bool startRuns(int numProcessors);
     bool startFirstRun();
 
