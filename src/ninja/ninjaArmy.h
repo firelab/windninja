@@ -91,12 +91,11 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM
     ninjaArmy(int numNinjas, bool momentumFlag);
-    #endif
-    #ifndef NINJAFOAM
+#else
     ninjaArmy(int numNinjas);
-    #endif
+#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
@@ -134,7 +133,7 @@ public:
     * \param nRuns number of ninjas to create
     * \return
     */
-    void setSize( int nRuns );
+    void setSize( int nRuns, bool momentumFlag);
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/

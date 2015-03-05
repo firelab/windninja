@@ -492,7 +492,6 @@ bool ninjaArmy::startRuns(int numProcessors)
             status = false;
             throw;
         }
-
     }
 
     return status;
@@ -662,14 +661,22 @@ void ninjaArmy::setAtmFlags()
     }
 }
 
-void ninjaArmy::setSize( int nSize )
+void ninjaArmy::setSize( int nSize, bool momentumFlag )
 {
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
     ninjas.resize( nSize );
-    for( i = 0; i < nSize; i++ )
+    for( i = 0; i < nSize; i++ ){
+#ifdef NINJAFOAM
+        if(momentumFlag)
+            ninjas[i] = new NinjaFoam();
+        else
+            ninjas[i] = new ninja();
+#else
         ninjas[i] = new ninja();
+#endif
+    }
 }
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods

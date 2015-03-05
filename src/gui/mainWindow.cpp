@@ -487,7 +487,7 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
 #endif
 #ifdef NINJAFOAM
-//connect the solver method check boxes for mutex
+  //connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
   connect(tree->nativesolver->nativeSolverGroupBox, SIGNAL(toggled(bool)),
@@ -1377,9 +1377,9 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
-    #endif
+#endif
     
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
@@ -1602,18 +1602,18 @@ int mainWindow::solve()
     writeToConsole( "Initializing runs..." );
     
     delete army;
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
-    #else
+#else
     army = new ninjaArmy(1); // native ninja solver
-    #endif
+#endif
 
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
         //we can only do one run with point
         nRuns = 1;
-        army->setSize( nRuns );
+        army->setSize( nRuns, false );
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
@@ -1623,7 +1623,11 @@ int mainWindow::solve()
         {
             nRuns++;
         }
-        army->setSize( nRuns );
+#ifdef NINJAFOAM
+        army->setSize( nRuns, useNinjaFoam);
+#else
+        army->setSize( nRuns, false);
+#endif
     }
     else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
     {
@@ -1856,7 +1860,7 @@ int mainWindow::solve()
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-            ninjaSuccess = army->startRuns( nThreads );
+        ninjaSuccess = army->startRuns( nThreads );
     }
     catch (bad_alloc& e)
     {
