@@ -974,7 +974,7 @@ int windNinjaCLI(int argc, char* argv[])
                 conflicting_options(vm, "mesh_resolution", "mesh_count");
                 if(vm.count("mesh_choice")){
                     if( windsim.setMeshCount( i_,
-                        vm["mesh_choice"].as<std::string>() ) != 0 ){
+                        ninja::get_eNinjafoamMeshChoice(vm["mesh_choice"].as<std::string>()) ) != 0 ){
                         cout << "'mesh_choice' of " << vm["mesh_choice"].as<std::string>()
                             << " is not valid.\n" \
                             << "Choices are: coarse, medium, or fine.\n";

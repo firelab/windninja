@@ -831,7 +831,9 @@ int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** paps
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-int ninjaArmy::setMeshCount( const int nIndex, const std::string meshChoice, char ** papszOptions )
+int ninjaArmy::setMeshCount( const int nIndex, 
+                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+                             char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
 }

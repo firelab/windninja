@@ -1420,6 +1420,17 @@ int mainWindow::solve()
     else
         meshUnits = lengthUnits::meters;
     }
+#ifdef NINJAFOAM
+    WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
+    if(useNinjaFoam){
+        if( meshIndex == 0 )
+            ninjafoamMeshChoice = WindNinjaInputs::coarse;
+        else if( meshIndex == 1 )
+            ninjafoamMeshChoice = WindNinjaInputs::medium;
+        else if (meshIndex == 2)
+            ninjafoamMeshChoice = WindNinjaInputs::fine;
+    }
+#endif
 
     //location
 
@@ -1788,7 +1799,14 @@ int mainWindow::solve()
         }
         else
         {
+#ifdef NINJAFOAM
+            if(useNinjaFoam)
+                army->setMeshCount( i, ninjafoamMeshChoice );
+            else
+                army->setMeshResolutionChoice( i, meshChoice );
+#else
             army->setMeshResolutionChoice( i, meshChoice );
+#endif
         }
 
         army->setNumVertLayers( i, 20 );

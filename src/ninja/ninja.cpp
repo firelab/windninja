@@ -275,7 +275,6 @@ ninja &ninja::operator=(const ninja &rhs)
  */
 bool ninja::simulate_wind()
 {
-
 	checkCancel();
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
@@ -5202,15 +5201,15 @@ void ninja::set_MeshCount(int meshCount)
     input.meshCount = meshCount;
 }
 
-void ninja::set_MeshCount(std::string meshChoice)
+void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
-    if(meshChoice == std::string("coarse")){
+    if(meshChoice == WindNinjaInputs::coarse){
         input.meshCount = 100000;
     }
-    else if(meshChoice == std::string("medium")){
+    else if(meshChoice == WindNinjaInputs::medium){
         input.meshCount = 500000;
     }
-    else if(meshChoice == std::string("fine")){
+    else if(meshChoice == WindNinjaInputs::fine){
         input.meshCount = 1e6;
     }
     else{
@@ -5220,6 +5219,22 @@ void ninja::set_MeshCount(std::string meshChoice)
 void ninja::set_NonEqBc(bool flag)
 {
     input.nonEqBc = flag;
+}
+
+WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::string meshChoice)
+{
+    if(meshChoice == "coarse"){
+        return WindNinjaInputs::coarse;
+    }
+    else if(meshChoice == "medium"){
+        return WindNinjaInputs::medium;
+    }
+    else if(meshChoice == "fine"){
+        return WindNinjaInputs::fine;
+    }
+    else{
+        throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
+    }
 }
 
 WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)

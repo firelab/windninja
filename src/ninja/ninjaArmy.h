@@ -359,7 +359,9 @@ public:
     * \param meshChoice Mesh resolution choice
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setMeshCount( const int nIndex, const std::string meshChoice, char ** papszOptions=NULL );
+    int setMeshCount( const int nIndex, 
+                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+                      char ** papszOptions=NULL );
 
     /**
     * \brief Enable/disable non-equilbrium boundary conditions for a NinjaFOAM run

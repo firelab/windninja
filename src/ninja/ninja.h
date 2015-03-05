@@ -306,10 +306,11 @@ public:
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
-    void set_MeshCount(std::string meshChoice); //mesh count for a ninjafoam run
+    void set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice); //mesh count for a ninjafoam run
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
+    static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     static WindNinjaInputs::eMeshType get_eMeshType(std::string meshType);
-    void set_MeshType(WindNinjaInputs::eMeshType meshType); //mesh type for a ninjafoam run (snappyHexMesh or terrainBlockMesh)
+    void set_MeshType(WindNinjaInputs::eMeshType meshType); //mesh type for a ninjafoam run (snappyHexMesh or moveDynamicMesh)
     void set_StlFile(std::string stlFile); 
 #endif
 
