@@ -2099,6 +2099,27 @@ int NinjaFoam::SanitizeOutput()
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
+    if( !fin )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "reading." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fout )
+    {
+        VSIFClose( fin );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fvrt )
+    {
+        VSIFClose( fin );
+        VSIFClose( fout );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
 
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
@@ -2114,6 +2135,7 @@ int NinjaFoam::SanitizeOutput()
     ** fix the header
     */
     VSIFGets( buf, 512, fin );
+
     s = buf;
     ReplaceKeys( s, "#", "", 1 );
     ReplaceKeys( s, "  ", "", 1 );
