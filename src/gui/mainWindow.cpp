@@ -2789,11 +2789,13 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
+        tree->diurnal->diurnalGroupBox->setCheckable( false );
         tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( true );
         tree->diurnal->ninjafoamConflictLabel->setHidden( false );
 
         #ifdef STABILITY
+        tree->stability->stabilityGroupBox->setCheckable( false );
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( true );
         tree->stability->ninjafoamConflictLabel->setHidden( false );
@@ -2801,10 +2803,12 @@ void mainWindow::enableNinjafoamOptions(bool enable)
          
         tree->wind->windTable->enableDiurnalCells( false ); 
         
+        tree->point->pointGroupBox->setCheckable( false );
         tree->point->pointGroupBox->setChecked( false );
         tree->point->pointGroupBox->setHidden( true );
         tree->point->ninjafoamConflictLabel->setHidden( false );
         
+        tree->weather->weatherGroupBox->setCheckable( false );
         tree->weather->weatherGroupBox->setChecked( false );
         tree->weather->weatherGroupBox->setHidden( true );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
@@ -2815,17 +2819,22 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
     }
     else{
+        tree->diurnal->diurnalGroupBox->setCheckable( true );
         tree->diurnal->diurnalGroupBox->setHidden( false );
         tree->diurnal->ninjafoamConflictLabel->setHidden( true );
         
         #ifdef STABILITY
+        tree->stability->stabilityGroupBox->setCheckable( true );
+        tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( false );
         tree->stability->ninjafoamConflictLabel->setHidden( true );
         #endif
         
+        tree->point->pointGroupBox->setCheckable( true );
         tree->point->pointGroupBox->setHidden( false );
         tree->point->ninjafoamConflictLabel->setHidden( true );
         
+        tree->weather->weatherGroupBox->setCheckable( true );
         tree->weather->weatherGroupBox->setHidden( false );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
