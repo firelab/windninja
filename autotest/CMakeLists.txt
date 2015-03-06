@@ -309,6 +309,8 @@ ADD_TEST(rmtree_sym_1
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_1)
 ADD_TEST(rmtree_sym_2
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_2)
+ADD_TEST(rmtree_sym_3
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_3)
 # *****************************************************************************
 # Command Line Interface Testing Section
 # *****************************************************************************
