@@ -2817,6 +2817,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->meshResComboBox->removeItem(4);
         tree->surface->ninjafoamConflictLabel->setHidden( false );
         
+        tree->vtk->ninjafoamConflictLabel->setHidden( false );
+        tree->vtk->vtkLabel->setHidden( true );
+        tree->vtk->vtkWarningLabel->setHidden( true );
+        
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
@@ -2844,6 +2848,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
         tree->surface->ninjafoamConflictLabel->setHidden( true );
+        
+        tree->vtk->ninjafoamConflictLabel->setHidden( true );
+        tree->vtk->vtkLabel->setHidden( false );
+        tree->vtk->vtkWarningLabel->setHidden( false );
         
     }
 }

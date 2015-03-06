@@ -41,17 +41,32 @@ vtkOutput::vtkOutput(QWidget *parent) : QWidget(parent)
   //writeVolumeCheckBox = new QCheckBox(tr("Volume File"), this); 
   //writeSurfaceCheckBox = new QCheckBox(tr("Surface File"), this);
   
-  vtkLayout = new QVBoxLayout;
-  vtkLayout->addWidget(vtkLabel);
+  ninjafoamConflictLabel = new QLabel(tr("*.vtk files are not written for the mometum solver output. Instead,\n"
+   "if the VTK option is selected, the OpenFOAM case directory will\n"
+   "be left behind in your working directory. This case directory contains\n"
+   "3-D files which can be viewed in a program called ParaView. See the \n"
+   "OpenFOAM documentation for more details.\n"
+   "\nThese files are for advanced users and are rarely used by fire\n"
+   "managers/modelers.\n"
+   ), this);
+  ninjafoamConflictLabel->setHidden(true);
+  
+  //vtkLayout = new QVBoxLayout;
+  //vtkLayout->addWidget(vtkLabel);
   //vtkLayout->addWidget(writeVolumeCheckBox);
   //vtkLayout->addWidget(writeSurfaceCheckBox);
-  vtkLayout->addStretch();
-  vtkLayout->addWidget(vtkWarningLabel);
-  vtkGroupBox->setLayout(vtkLayout);
+  //vtkLayout->addStretch();
+  //vtkLayout->addWidget(vtkWarningLabel);
+  //vtkGroupBox->setLayout(vtkLayout);
 
   layout = new QVBoxLayout;
 
   layout->addWidget(vtkGroupBox);
+  layout->addWidget(vtkLabel);
+  layout->addWidget(vtkWarningLabel);
+  layout->addWidget(ninjafoamConflictLabel);
+  layout->addStretch();
+  setLayout(layout);
   //layout->addStretch();
 }
   
