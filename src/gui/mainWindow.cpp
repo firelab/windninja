@@ -2820,6 +2820,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
+        tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( false );
         tree->diurnal->ninjafoamConflictLabel->setHidden( true );
         
@@ -2831,10 +2832,12 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         #endif
         
         tree->point->pointGroupBox->setCheckable( true );
+        tree->point->pointGroupBox->setChecked( false );
         tree->point->pointGroupBox->setHidden( false );
         tree->point->ninjafoamConflictLabel->setHidden( true );
         
         tree->weather->weatherGroupBox->setCheckable( true );
+        tree->weather->weatherGroupBox->setChecked( false );
         tree->weather->weatherGroupBox->setHidden( false );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
