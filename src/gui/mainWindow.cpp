@@ -2811,6 +2811,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->timeZoneGroupBox->setHidden( true );
         tree->surface->meshResComboBox->removeItem(4);
+        tree->surface->ninjafoamConflictLabel->setHidden( false );
         
     }
     else{
@@ -2830,6 +2831,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
+        tree->surface->ninjafoamConflictLabel->setHidden( true );
         
     }
 }
