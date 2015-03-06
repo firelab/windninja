@@ -105,6 +105,26 @@ BOOST_AUTO_TEST_CASE( rmtree_sym_2 )
     BOOST_CHECK( VSIStatExL( pszTmpPath, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 );
 }
 
+BOOST_AUTO_TEST_CASE( rmtree_sym_3 )
+{
+    int rc;
+    const char *pszTarget, *pszPath, *pszSym;
+    pszPath = CPLFormFilename( pszTmpPath, "a", NULL );
+    pszSym = CPLFormFilename( pszPath, "s", NULL );
+    rc = VSIMkdir( pszPath, 0777 );
+    pszPath = CPLFormFilename( pszTmpPath, "b", NULL );
+    rc = VSIMkdir( pszPath, 0777 );
+    pszTarget = CPLFormFilename( pszPath, "c", ".txt" );
+    Touch( pszTarget );
+    symlink( pszTarget, pszSym );
+    pszSym = CPLFormFilename( pszPath, "s3", NULL );
+    symlink( pszTarget, pszSym );
+    pszSym = CPLFormFilename( pszTmpPath, "s2", NULL );
+    symlink( pszTarget, pszSym );
+    rc = NinjaUnlinkTree( pszTmpPath );
+    VSIStatBufL sStat;
+    BOOST_CHECK( VSIStatExL( pszTmpPath, &sStat, VSI_STAT_EXISTS_FLAG ) != 0 );
+}
 
 #endif
 
