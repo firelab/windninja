@@ -2789,53 +2789,48 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        tree->diurnal->diurnalGroupBox->setEnabled( false );
-        tree->diurnal->diurnalGroupBox->setCheckable( false );
         tree->diurnal->diurnalGroupBox->setChecked( false );
+        tree->diurnal->diurnalGroupBox->setHidden( true );
+        tree->diurnal->ninjafoamConflictLabel->setHidden( false );
+
         #ifdef STABILITY
-        tree->stability->stabilityGroupBox->setEnabled( false );
         tree->stability->stabilityGroupBox->setChecked( false );
-        tree->stability->stabilityGroupBox->setCheckable( false );
+        tree->stability->stabilityGroupBox->setHidden( true );
+        tree->stability->ninjafoamConflictLabel->setHidden( false );
         #endif
-        
+         
         tree->wind->windTable->enableDiurnalCells( false ); 
         
-        tree->point->pointGroupBox->setEnabled( false );
-        tree->point->pointGroupBox->setCheckable( false );
         tree->point->pointGroupBox->setChecked( false );
+        tree->point->pointGroupBox->setHidden( true );
+        tree->point->ninjafoamConflictLabel->setHidden( false );
         
-        tree->weather->weatherGroupBox->setEnabled( false );
-        tree->weather->weatherGroupBox->setCheckable( false );
         tree->weather->weatherGroupBox->setChecked( false );
+        tree->weather->weatherGroupBox->setHidden( true );
+        tree->weather->ninjafoamConflictLabel->setHidden( false );
         
-        tree->surface->timeZoneGroupBox->setEnabled( false );
-        tree->surface->timeZoneGroupBox->setCheckable( false );
-        tree->surface->timeZoneGroupBox->setChecked( false );
+        tree->surface->timeZoneGroupBox->setHidden( true );
+        tree->surface->meshResComboBox->removeItem(4);
         
-        //tree->surface->meshResComboBox->removeItem(4);
     }
     else{
-        tree->diurnal->diurnalGroupBox->setEnabled( true );
-        tree->diurnal->diurnalGroupBox->setCheckable( true );
-        tree->diurnal->diurnalGroupBox->setChecked( false );
+        tree->diurnal->diurnalGroupBox->setHidden( false );
+        tree->diurnal->ninjafoamConflictLabel->setHidden( true );
+        
         #ifdef STABILITY
-        tree->stability->stabilityGroupBox->setEnabled( true );
-        tree->stability->stabilityGroupBox->setCheckable( true );
-        tree->stability->stabilityGroupBox->setChecked( false );
+        tree->stability->stabilityGroupBox->setHidden( false );
+        tree->stability->ninjafoamConflictLabel->setHidden( true );
         #endif
-        tree->point->pointGroupBox->setEnabled( true );
-        tree->point->pointGroupBox->setCheckable( true );
-        tree->point->pointGroupBox->setChecked( false );
         
-        tree->weather->weatherGroupBox->setEnabled( true );
-        tree->weather->weatherGroupBox->setCheckable( true );
-        tree->weather->weatherGroupBox->setChecked( false );
+        tree->point->pointGroupBox->setHidden( false );
+        tree->point->ninjafoamConflictLabel->setHidden( true );
         
-        tree->surface->timeZoneGroupBox->setEnabled( true );
-        tree->surface->timeZoneGroupBox->setCheckable( true );
-        tree->surface->timeZoneGroupBox->setChecked( false );
+        tree->weather->weatherGroupBox->setHidden( false );
+        tree->weather->ninjafoamConflictLabel->setHidden( false );
         
-        //tree->surface->meshResComboBox->addItem("Custom", 4);
+        tree->surface->timeZoneGroupBox->setHidden( false );
+        tree->surface->meshResComboBox->addItem("Custom", 4);
+        
     }
 }
 #endif

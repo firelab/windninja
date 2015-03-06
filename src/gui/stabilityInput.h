@@ -34,6 +34,7 @@ class stabilityInput : public QWidget
   QGroupBox *stabilityGroupBox;
   QVBoxLayout *stabilityLayout;
   QVBoxLayout *layout;
+  QLabel *ninjafoamConflictLabel;
 
 };
 
