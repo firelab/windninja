@@ -51,6 +51,7 @@ class vtkOutput : public QWidget
 
   QVBoxLayout *vtkLayout;
   QVBoxLayout *layout;
+  QLabel *ninjafoamConflictLabel;
 };
 
 #endif /* VTKOUTPUT_H */
