@@ -129,10 +129,10 @@ WindNinjaInputs::WindNinjaInputs()
     scalarTransportFlag = false;
 #endif
 #ifdef NINJAFOAM
-    nIterations = 2000;
+    nIterations = 1000;
     meshCount = 1000000;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
-    nonEqBc = false;
+    nonEqBc = true;
     meshType = WindNinjaInputs::MDM;
     stlFile = "!set";
 #endif
