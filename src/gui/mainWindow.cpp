@@ -2843,7 +2843,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setCheckable( true );
         tree->weather->weatherGroupBox->setChecked( false );
         tree->weather->weatherGroupBox->setHidden( false );
-        tree->weather->ninjafoamConflictLabel->setHidden( false );
+        tree->weather->ninjafoamConflictLabel->setHidden( true );
         
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
