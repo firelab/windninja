@@ -108,10 +108,13 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "meshCount = %d", input.meshCount);
     CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
+    CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
     CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
+    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
+    CPLDebug("NINJAFOAM", "input.meshType = %d", input.meshType);
 
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
@@ -217,8 +220,6 @@ bool NinjaFoam::simulate_wind()
 	/*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
-
-    CPLDebug("NINJAFOAM", "input.meshType = %d", input.meshType);
 
     if(input.meshType == WindNinjaInputs::MDM){ //use moveDynamicMesh
         //reads from log.json created from surfaceCheck
@@ -541,8 +542,6 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
 
     ReplaceKeys(s, "$terrainName$", "patch0"); //binary stl file
     //ReplaceKeys(s, "$terrainName$", terrainName); //ascii stl file
-
-    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
 
     if(input.nonEqBc == 0){
         if(std::string(pszFilename) == "epsilon"){
@@ -2536,6 +2535,17 @@ int NinjaFoam::WriteOutputFiles()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    
+    /*-------------------------------------------------------------------*/
+    /* prepare output                                                    */
+    /*-------------------------------------------------------------------*/
+    
+    //Clip off bounding doughnut if desired
+	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+
+	//change windspeed units back to what is specified by speed units switch
+	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
 
     /*-------------------------------------------------------------------*/
     /* set up filenames                                                  */
