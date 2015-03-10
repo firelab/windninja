@@ -244,7 +244,6 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
         status = writeMoveDynamicMesh();
-        cout<<"status = "<<status<<endl;
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeMoveDynamicMesh().");
             NinjaUnlinkTree( pszTempPath );
@@ -408,7 +407,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
     status = Sample();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while sampling the output.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     #ifdef _OPENMP
@@ -418,7 +419,9 @@ bool NinjaFoam::simulate_wind()
     //move back to ninja working directory
     status = chdir("../");
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving out of NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     /*----------------------------------------*/
@@ -432,9 +435,9 @@ bool NinjaFoam::simulate_wind()
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
 	status = WriteOutputFiles();
-    if(status != 1){
+    if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
-        return false;
+        return NINJA_E_OTHER;
     }
 
     #ifdef _OPENMP
@@ -465,7 +468,7 @@ bool NinjaFoam::simulate_wind()
 	    VelocityGrid.deallocate();
     }
 
-    return true;
+    return NINJA_SUCCESS;
 }
 
 int NinjaFoam::AddBcBlock(std::string &dataString)
@@ -1316,7 +1319,6 @@ int NinjaFoam::writeMoveDynamicMesh()
     VSIFCloseL(fout);
     
     return NINJA_SUCCESS;
-
 }
 
 int NinjaFoam::writeSnappyMesh()
@@ -2805,7 +2807,7 @@ int NinjaFoam::WriteOutputFiles()
         NinjaUnlinkTree( pszTempPath );
     }
 
-	return true;
+	return NINJA_SUCCESS;
 }
 
 int NinjaFoam::ReadStl()
@@ -2851,5 +2853,5 @@ int NinjaFoam::ReadStl()
         //do something
     }
 
-    return true;
+    return NINJA_SUCCESS;
 }
