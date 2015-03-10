@@ -126,13 +126,16 @@ bool NinjaFoam::simulate_wind()
 
     status = GenerateTempDirectory();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error generating the NINJAFOAM directory.");
+        return NINJA_E_OTHER;
     }
 
     //writes *most* of the foam files, but not all can be written at this point
     status = WriteFoamFiles();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during WriteFoamFiles().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     //write controlDict for flow solution--this will get modified during moveDynamicMesh
@@ -170,16 +173,19 @@ bool NinjaFoam::simulate_wind()
                         NULL);
 
     if(eErr != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while converting DEM to STL format.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     checkCancel();
 
     if(input.stlFile != "!set"){
         status = ReadStl();
-
         if(status != 0){
-        //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReadStl().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
@@ -190,25 +196,33 @@ bool NinjaFoam::simulate_wind()
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving into NINJFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
     status = SurfaceTransformPoints();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
     status = SurfaceCheck();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     //move back to ninja working directory
     status = chdir("../");
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving out of NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     checkCancel();
@@ -225,11 +239,16 @@ bool NinjaFoam::simulate_wind()
         //reads from log.json created from surfaceCheck
         status = writeBlockMesh();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlcokMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
         status = writeMoveDynamicMesh();
+        cout<<"status = "<<status<<endl;
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeMoveDynamicMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
     else{ //use snappyHexMesh
@@ -243,12 +262,16 @@ bool NinjaFoam::simulate_wind()
         //reads from log.json created from surfaceCheck
         status = writeBlockMesh();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlockMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
 
         status = writeSnappyMesh();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeSnappyMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
@@ -263,7 +286,9 @@ bool NinjaFoam::simulate_wind()
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving into NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     #ifdef _OPENMP
@@ -275,18 +300,24 @@ bool NinjaFoam::simulate_wind()
     if(input.meshType == WindNinjaInputs::MDM){ //use moveDynamicMesh
         status = MoveDynamicMesh();
         if(status != 0){
-        //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during moveDynamicMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
     else{ // use snappyHexMesh
         status = BlockMesh();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during blockMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
         status = SnappyHexMesh();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during snappyHexMesh().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
@@ -298,7 +329,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
     status = CheckMesh();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during checkMesh().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     /*-------------------------------------------------------------------*/
@@ -313,7 +346,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during applyInit().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
 
@@ -334,7 +369,9 @@ bool NinjaFoam::simulate_wind()
         fout = VSIFOpenL("log", "w" );
         status = DecomposePar(fout);
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
@@ -1277,6 +1314,8 @@ int NinjaFoam::writeMoveDynamicMesh()
     CPLFree(data);
     VSIFCloseL(fin);
     VSIFCloseL(fout);
+    
+    return NINJA_SUCCESS;
 
 }
 
