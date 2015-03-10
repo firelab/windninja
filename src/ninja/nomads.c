@@ -51,8 +51,7 @@ const char ** NomadsFindModel( const char *pszKey )
 ** Results must be free'd.  We can't use CPLSPrintf on large lists fo arguments
 ** because we overrun the ring buffer.
 */
-static const char * NomadsBuildArgList( const char *pszVars,
-                                        const char *pszPrefix )
+static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
 {
     int i, n, m;
     char *pszList;
@@ -75,7 +74,7 @@ static const char * NomadsBuildArgList( const char *pszVars,
         sprintf( pszList, "%s&%s_%s=on", pszList, pszPrefix, papszArgs[i] );
     }
     CSLDestroy( papszArgs );
-    return (const char*)pszList;
+    return pszList;
 }
 
 nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
@@ -186,8 +185,8 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     const char **ppszKey;
     const char *pszGribFile;
     const char *pszGribDir;
-    const char *pszLevels;
-    const char *pszVars;
+    char *pszLevels;
+    char *pszVars;
     const char *pszUrl;
     char **papszFileList = NULL;
 
