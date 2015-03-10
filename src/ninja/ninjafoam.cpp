@@ -1506,7 +1506,7 @@ int NinjaFoam::MoveDynamicMesh()
     if(input.numberCPUs > 1){
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
-        fout = VSIFOpenL("logMesh", "w");
+        fout = VSIFOpenL("logMesh", "w"); //closed in DecomposePar
         nRet = DecomposePar(fout);
         if(nRet != 0){
             //do something
@@ -1543,8 +1543,8 @@ int NinjaFoam::MoveDynamicMesh()
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         char data[PIPE_BUFFER_SIZE + 1];
-        int pos;
-        std::string s;
+        int pos, nchar, startPos;
+        std::string s, ss;
 
         /* Track progress */
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
@@ -1569,9 +1569,6 @@ int NinjaFoam::MoveDynamicMesh()
                 }
             }*/
 
-            std::string ss;
-            int nchar, startPos;
-
             if(s.rfind("GAMG") != s.npos){
                 if(s.rfind("Time = ") != s.npos){
                     startPos = s.rfind("GAMG", s.npos);
@@ -1593,11 +1590,8 @@ int NinjaFoam::MoveDynamicMesh()
         CopyFile(pszInput, pszOutput);
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-        fout = VSIFOpenL("logMesh", "w");
+        fout = VSIFOpenL("logMesh", "w"); //closed in ReconstructPar
         nRet = ReconstructPar("-latestTime", fout);
-
-        //VSIFCloseL(fout);
-
         if(nRet != 0){
             //do something
         }
@@ -1610,12 +1604,35 @@ int NinjaFoam::MoveDynamicMesh()
         CopyFile(pszInput, pszOutput);
 
         const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+        
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
-        VSILFILE *fout = VSIFOpenL("log.moveDynamicMesh", "w");
+        char data[PIPE_BUFFER_SIZE + 1];
+        int pos;
+        std::string s, ss;
+        int nchar, startPos;
 
-        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-
-        //VSIFCloseL(fout);
+        /* Track progress */
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
+            CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
+            s.append(data);
+            if(s.rfind("GAMG") != s.npos){
+                if(s.rfind("Time = ") != s.npos){
+                    startPos = s.rfind("GAMG", s.npos);
+                    pos = s.rfind("Time = ", startPos);
+                    nchar = s.find('\n', pos) - (pos+7);
+                    ss = s.substr( (pos+7), nchar );
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
+                }
+            }
+        }
+        
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        if(nRet != 0){
+            //do something
+        }
 
         //re-write controlDict for flow solution
         pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
@@ -1639,8 +1656,6 @@ int NinjaFoam::MoveDynamicMesh()
     pszInput = CPLFormFilename("0", "epsilon", "");
     pszOutput = CPLFormFilename("50", "epsilon", "");
     CopyFile(pszInput, pszOutput);
-
-    //VSIFCloseL(fout);
 
     return nRet;
 }
