@@ -343,7 +343,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     status = SimpleFoam();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Try a finer resolution mesh.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
 
     if(input.numberCPUs > 1){
@@ -351,9 +353,9 @@ bool NinjaFoam::simulate_wind()
         fout = VSIFOpenL("log", "w");
         status = ReconstructPar("-latestTime", fout);
         if(status != 0){
-            //do something
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReconstructPar(). Check that number of iterations is a multiple of 100.");
-            return false;
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
@@ -1988,7 +1990,6 @@ int NinjaFoam::SimpleFoam()
     int pos, startPos;
     std::string s, t;
     double p;
-
 
     if(input.numberCPUs > 1){
         #ifdef WIN32
