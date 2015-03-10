@@ -2009,7 +2009,7 @@ int NinjaFoam::SimpleFoam()
                 if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
                     t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                     p = atof(t.c_str()) / input.nIterations * 100;
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                    input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d", (int)p);
                 }
             }
         }
