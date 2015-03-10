@@ -1570,13 +1570,16 @@ int NinjaFoam::MoveDynamicMesh()
             }*/
 
             std::string ss;
-            int nchar;
+            int nchar, startPos;
 
-            if(s.rfind("Time = ") != s.npos){
-                pos = s.rfind("Time = ");
+            if(s.rfind("GAMG") != s.npos){
+                if(s.rfind("Time = ") != s.npos){
+                    startPos = s.rfind("GAMG", s.npos);
+                    pos = s.rfind("Time = ", startPos);
                     nchar = s.find('\n', pos) - (pos+7);
                     ss = s.substr( (pos+7), nchar );
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
+                }
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
@@ -1967,7 +1970,7 @@ int NinjaFoam::SimpleFoam()
     int nRet = -1;
 
     char data[PIPE_BUFFER_SIZE + 1];
-    int pos;
+    int pos, startPos;
     std::string s, t;
     double p;
 
@@ -2000,11 +2003,14 @@ int NinjaFoam::SimpleFoam()
             data[sizeof(data)-1] = '\0';
             s.append(data);
             CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
-            pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
-                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                p = atof(t.c_str()) / input.nIterations * 100;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    p = atof(t.c_str()) / input.nIterations * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                }
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
@@ -2019,11 +2025,15 @@ int NinjaFoam::SimpleFoam()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             data[sizeof(data)-1] = '\0';
             s.append(data);
-            pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
-                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                p = atof(t.c_str()) / input.nIterations * 100;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+            
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    p = atof(t.c_str()) / input.nIterations * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                }
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
