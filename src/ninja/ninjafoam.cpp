@@ -230,6 +230,12 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
 	#endif
+	
+    if( atoi(CPLGetConfigOption( "WRITE_FOAM_FILES", NULL )) == 0 ){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
+        return true;
+    }
+
 
 	/*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
@@ -277,6 +283,11 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endFoamFileWriting = omp_get_wtime();
 	#endif
+	
+    if( atoi(CPLGetConfigOption( "WRITE_FOAM_FILES", NULL )) == 1 ){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 1. Mesh dict files written.");
+        return true;
+    }
 
     /*-------------------------------------------------------------------*/
     /* create the mesh                                                   */
@@ -331,6 +342,11 @@ bool NinjaFoam::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during checkMesh().");
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
+    }
+
+    if( atoi(CPLGetConfigOption( "WRITE_FOAM_FILES", NULL )) == 2 ){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 2. Mesh written.");
+        return true;
     }
 
     /*-------------------------------------------------------------------*/
