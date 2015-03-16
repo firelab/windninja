@@ -1603,6 +1603,8 @@ int NinjaFoam::MoveDynamicMesh()
 
     const char *pszInput;
     const char *pszOutput;
+    
+    std::string s, ss;
 
     if(input.numberCPUs > 1){
 
@@ -1645,7 +1647,6 @@ int NinjaFoam::MoveDynamicMesh()
 
         char data[PIPE_BUFFER_SIZE + 1];
         int pos, nchar, startPos;
-        std::string s, ss;
 
         /* Track progress */
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
@@ -1711,7 +1712,6 @@ int NinjaFoam::MoveDynamicMesh()
 
         char data[PIPE_BUFFER_SIZE + 1];
         int pos;
-        std::string s, ss;
         int nchar, startPos;
 
         /* Track progress */
@@ -1740,7 +1740,13 @@ int NinjaFoam::MoveDynamicMesh()
         pszOutput = CPLFormFilename("system", "controlDict", "");
         CopyFile(pszInput, pszOutput);
     }
-
+    
+    // write moveDynamicMesh stdout to a log file 
+    fout = VSIFOpenL("log.moveDynamicMesh", "w");
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
     
     //refine surface layer in the wall-normal direction
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
