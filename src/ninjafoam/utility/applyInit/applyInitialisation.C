@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	// for salmon height is 1900 calculated from south face
 	//for big butte height is 2500 calculated from terrian max
 	// from this height log profile will be initialised
-	const scalar logProfileHeight = 2000;
+	const scalar logProfileHeight = 0;
 	forAll(y,cellI)
 	{
 		if(y[cellI]>=logProfileHeight)
