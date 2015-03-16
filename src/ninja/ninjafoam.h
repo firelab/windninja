@@ -121,7 +121,7 @@ private:
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
-    int CopyFile(const char *pszInput, const char *pszOutput);
+    int CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
     
     int SurfaceTransformPoints();
     int SurfaceCheck();

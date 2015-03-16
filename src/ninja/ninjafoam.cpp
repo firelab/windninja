@@ -1204,9 +1204,29 @@ int NinjaFoam::readDem(int &ratio_)
     CPLDebug("NINJAFOAM", "Nz2 = %d", nCells[5]);
     
     double firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
-       
+    double finalFirstCellHeight = firstCellHeight1/4/4; //4s come from refineWallLayer 
+    
     CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
-
+    CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+    
+    
+    /* write firstCellHeight to inlet files */
+    CopyFile(CPLSPrintf("%s/0/U", pszTempPath), 
+            CPLSPrintf("%s/0/U", pszTempPath),
+            "$firstCellHeight$", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile(CPLSPrintf("%s/0/k", pszTempPath), 
+            CPLSPrintf("%s/0/k", pszTempPath),
+            "$firstCellHeight$", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile(CPLSPrintf("%s/0/epsilon", pszTempPath), 
+            CPLSPrintf("%s/0/epsilon", pszTempPath),
+            "$firstCellHeight$", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    
     return NINJA_SUCCESS;
 }
 
@@ -1494,13 +1514,12 @@ int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v, int n)
     return rc;
 }
 
-int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput)
+int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput, std::string key, std::string value)
 {
     VSILFILE *fin;
     VSILFILE *fout;
 
     fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
 
     char *data;
 
@@ -1514,13 +1533,20 @@ int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput)
     data[offset] = '\0';
 
     std::string s(data);
+    
+    CPLFree(data);
+    VSIFCloseL(fin);
+    
+    if(key != ""){
+        ReplaceKeys(s, key, value);
+    }
 
+    fout = VSIFOpenL( pszOutput, "w" );
+    
     const char * d = s.c_str();
     int nSize = strlen(d);
     VSIFWriteL(d, nSize, 1, fout);
-
-    CPLFree(data);
-    VSIFCloseL(fin);
+    
     VSIFCloseL(fout);
 
     return NINJA_SUCCESS;
@@ -1748,7 +1774,14 @@ int NinjaFoam::MoveDynamicMesh()
 int NinjaFoam::RefineWallLayer()
 {
     int nRet = -1;
-    //0.5 splits near-wall cell into two equal-size cells
+    
+    /* 
+     * 0.25 splits near-wall cell into two cells: one is 0.75x and the other
+     * 0.25x the original cell height.
+     * If this value is chagned, edit latestTime dirctory and the calculation for
+     * firstCellHeight.
+     */
+    
     const char *const papszArgv[] = { "refineWallLayer",  
                                     "minZ", 
                                     "0.25", 
