@@ -281,7 +281,7 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* create the mesh                                                   */
     /*-------------------------------------------------------------------*/
-
+    
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
@@ -336,7 +336,7 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* Apply initial and boundary conditions                             */
     /*-------------------------------------------------------------------*/
-
+    
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
@@ -468,7 +468,7 @@ bool NinjaFoam::simulate_wind()
 	    VelocityGrid.deallocate();
     }
 
-    return NINJA_SUCCESS;
+    return true;
 }
 
 int NinjaFoam::AddBcBlock(std::string &dataString)
@@ -1124,13 +1124,13 @@ int NinjaFoam::readLogFile(int &ratio_)
 int NinjaFoam::readDem(int &ratio_)
 {
     if(input.meshType == WindNinjaInputs::MDM){
-        bbox.push_back( input.dem.get_xllCorner() + 100); //xmin (+/- 100 is a buffer for MDM)
-        bbox.push_back( input.dem.get_yllCorner() + 100); //ymin
-        bbox.push_back( input.dem.get_maxValue() + 50); //zmin (should be above highest point in DEM for MDM)
-        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100); //xmax
-        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100); //ymax
-        bbox.push_back( input.dem.get_maxValue() + 5000); //zmax
-        bbox.push_back( input.dem.get_maxValue() + 2500); //zmid
+        bbox.push_back( input.dem.get_xllCorner() + 100.0); //xmin (+/- 100 is a buffer for MDM)
+        bbox.push_back( input.dem.get_yllCorner() + 100.0); //ymin
+        bbox.push_back( input.dem.get_maxValue() + 50.0); //zmin (should be above highest point in DEM for MDM)
+        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100.0); //xmax
+        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100.0); //ymax
+        bbox.push_back( input.dem.get_maxValue() + 5000.0); //zmax
+        bbox.push_back( input.dem.get_maxValue() + 2500.0); //zmid
     }
     else{ // SHM requires zmin == lowest point in the STL
         bbox.push_back( input.dem.get_xllCorner() ); //xmin
@@ -1174,6 +1174,22 @@ int NinjaFoam::readDem(int &ratio_)
     nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
     ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
     expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
+    
+    CPLDebug("NINJAFOAM", "firstCellHeight2 = %f", firstCellHeight2);
+        
+    CPLDebug("NINJAFOAM", "side1 = %f", side1);
+    CPLDebug("NINJAFOAM", "side2 = %f", side2);
+    
+    CPLDebug("NINJAFOAM", "Nx1 = %d", nCells[0]);
+    CPLDebug("NINJAFOAM", "Ny1 = %d", nCells[1]);
+    CPLDebug("NINJAFOAM", "Nz1 = %d", nCells[2]);
+    CPLDebug("NINJAFOAM", "Nx2 = %d", nCells[3]);
+    CPLDebug("NINJAFOAM", "Ny2 = %d", nCells[4]);
+    CPLDebug("NINJAFOAM", "Nz2 = %d", nCells[5]);
+    
+    double firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
+       
+    CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
 
     return NINJA_SUCCESS;
 }
@@ -1538,7 +1554,7 @@ int NinjaFoam::MoveDynamicMesh()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running blockMesh...");
     nRet = BlockMesh();
     if(nRet != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during blockMesh().");
     }
 
     VSILFILE *fout;
@@ -1683,25 +1699,54 @@ int NinjaFoam::MoveDynamicMesh()
         CopyFile(pszInput, pszOutput);
     }
 
-    //copy 0/ to 100/ (or latest time)
+    
+    //refine surface layer in the wall-normal direction
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
+    for(int i=0; i<2; i++){
+        nRet = RefineWallLayer();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
+        }
+    }
+    
+    //copy 0/ to latest time
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("50", "U", "");
+    pszOutput = CPLFormFilename("52", "U", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("50", "p", "");
+    pszOutput = CPLFormFilename("52", "p", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("50", "k", "");
+    pszOutput = CPLFormFilename("52", "k", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("50", "epsilon", "");
+    pszOutput = CPLFormFilename("52", "epsilon", "");
     CopyFile(pszInput, pszOutput);
+    
+    return nRet;
+}
+
+int NinjaFoam::RefineWallLayer()
+{
+    int nRet = -1;
+    //0.5 splits near-wall cell into two equal-size cells
+    const char *const papszArgv[] = { "refineWallLayer",  
+                                    "minZ", 
+                                    "0.25", 
+                                    NULL };
+
+    VSILFILE *fout = VSIFOpenL("log.refineWallLayer", "w");
+    
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+
+    VSIFCloseL(fout);
 
     return nRet;
 }
+
 
 int NinjaFoam::BlockMesh()
 {

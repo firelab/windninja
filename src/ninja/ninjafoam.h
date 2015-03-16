@@ -126,6 +126,7 @@ private:
     int SurfaceTransformPoints();
     int SurfaceCheck();
     int MoveDynamicMesh();
+    int RefineWallLayer();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
     int SnappyHexMesh();
