@@ -43,7 +43,9 @@ NinjaFoam::NinjaFoam() : ninja()
     pvalue = "";
     inletoutletvalue = "";
     template_ = "";
-
+    
+    firstCellHeight1 = -1.0;
+    latestTime = 50; //endTime in moveDynamicMesh
 }
 
 /**
@@ -1186,7 +1188,7 @@ int NinjaFoam::readDem(int &ratio_)
 
     expansionRatio = 1.13; // expansion ratio in zone2
 
-    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio;
+    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio; //first layer in zone2
     nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
     ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
     expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
@@ -1203,29 +1205,7 @@ int NinjaFoam::readDem(int &ratio_)
     CPLDebug("NINJAFOAM", "Ny2 = %d", nCells[4]);
     CPLDebug("NINJAFOAM", "Nz2 = %d", nCells[5]);
     
-    double firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
-    double finalFirstCellHeight = firstCellHeight1/4/4; //4s come from refineWallLayer 
-    
-    CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
-    CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
-    
-    
-    /* write firstCellHeight to inlet files */
-    CopyFile(CPLSPrintf("%s/0/U", pszTempPath), 
-            CPLSPrintf("%s/0/U", pszTempPath),
-            "$firstCellHeight$", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
-            
-    CopyFile(CPLSPrintf("%s/0/k", pszTempPath), 
-            CPLSPrintf("%s/0/k", pszTempPath),
-            "$firstCellHeight$", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
-            
-    CopyFile(CPLSPrintf("%s/0/epsilon", pszTempPath), 
-            CPLSPrintf("%s/0/epsilon", pszTempPath),
-            "$firstCellHeight$", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
-            
+    firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
     
     return NINJA_SUCCESS;
 }
@@ -1750,28 +1730,51 @@ int NinjaFoam::MoveDynamicMesh()
     
     //refine surface layer in the wall-normal direction
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
-    for(int i=0; i<2; i++){
+    double finalFirstCellHeight = firstCellHeight1;
+    while(finalFirstCellHeight > 5.0){ //refine wall layer until cell height < 5 m
         nRet = RefineWallLayer();
+        latestTime += 1;
+        finalFirstCellHeight /= 4.0;
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
         }
     }
     
-    //copy 0/ to latest time
+    CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
+    CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+    
+    /* write firstCellHeight to inlet files */
+    cout<<"copying files..."<<endl;
+    CopyFile("0/U", 
+            "0/U", 
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile("0/k", 
+            "0/k",
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile("0/epsilon", 
+            "0/epsilon",
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+    
+    //copy 0/ to latest time    
     pszInput = CPLFormFilename("0", "U", "");
-    pszOutput = CPLFormFilename("52", "U", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "U", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "p", "");
-    pszOutput = CPLFormFilename("52", "p", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "p", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "k", "");
-    pszOutput = CPLFormFilename("52", "k", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "k", "");
     CopyFile(pszInput, pszOutput);
 
     pszInput = CPLFormFilename("0", "epsilon", "");
-    pszOutput = CPLFormFilename("52", "epsilon", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "epsilon", "");
     CopyFile(pszInput, pszOutput);
     
     return nRet;
