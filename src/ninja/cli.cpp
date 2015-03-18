@@ -379,7 +379,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(2000), "number of iterations for momentum solver (must be a multiple of 100)") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
-                ("mesh_type", po::value<std::string>()->default_value("MDM"), "mesh type (MDM, SHM)")
                 ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
@@ -988,16 +987,6 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
                     windsim.setNonEqBc( i_,
                         vm["non_equilibrium_boundary_conditions"].as<bool>() );
-                }
-                if(vm.count("mesh_type")){
-                    if(windsim.setMeshType( i_,
-                        ninja::get_eMeshType(vm["mesh_type"].as<std::string>()) ) !=0 )
-                        {                           
-                            cout << "'mesh_type' of " << vm["mesh_type"].as<std::string>()
-                            << " is not valid.\n" \
-                            << "Choices are: MDM or SHM.\n";
-                            return -1;
-                        }
                 }
             }
             #endif //NINJAFOAM

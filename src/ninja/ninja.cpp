@@ -5237,28 +5237,6 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
     }
 }
 
-WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)
-{
-    if(meshType == "MDM"){
-        return WindNinjaInputs::MDM;
-    }
-    else if(meshType == "SHM"){
-        return WindNinjaInputs::SHM;
-    }
-    else{
-        throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
-    }
-}
-
-void ninja::set_MeshType(WindNinjaInputs::eMeshType meshType)
-{
-    if( (meshType != WindNinjaInputs::MDM) &&
-        (meshType != WindNinjaInputs::SHM) )
-        throw std::logic_error("Problem with mesh type in ninja::set_MeshType().");
-
-    input.meshType = meshType;
-}
-
 void ninja::set_StlFile(std::string stlFile)
 {
     input.stlFile = stlFile;

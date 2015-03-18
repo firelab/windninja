@@ -102,7 +102,6 @@ private:
     int writeBlockMesh();
     int readDem(int &ratio_); //sets blockMesh data from DEM 
     int readLogFile(int &ratio); //sets blockMesh data from STL log file when DEM not available
-    int writeSnappyMesh();
     
     std::string boundary_name;
     std::string terrainName;
@@ -131,7 +130,6 @@ private:
     int RefineWallLayer();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
-    int SnappyHexMesh();
     int ReconstructParMesh(const char *const arg, VSILFILE *fout);
     int ReconstructPar(const char *const arg, VSILFILE *fout);
     int RenumberMesh();

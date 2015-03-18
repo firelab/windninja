@@ -914,13 +914,6 @@ int ninjaArmy::setMeshCount( const int nIndex,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
 }
-int ninjaArmy::setMeshType( const int nIndex, 
-                            const WindNinjaInputs::eMeshType meshType, 
-                            char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshType( meshType ) );
-}
-
 int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
