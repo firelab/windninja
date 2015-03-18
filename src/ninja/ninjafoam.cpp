@@ -1592,7 +1592,8 @@ int NinjaFoam::MoveDynamicMesh()
         fout = VSIFOpenL("logMesh", "w"); //closed in DecomposePar
         nRet = DecomposePar(fout);
         if(nRet != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
+            return NINJA_E_OTHER;
         }
 
         //re-write controlDict for moveDynamicMesh
