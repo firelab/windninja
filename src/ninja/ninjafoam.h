@@ -129,7 +129,7 @@ private:
     int MoveDynamicMesh();
     int RefineWallLayer();
     int BlockMesh();
-    int DecomposePar(VSILFILE *fout);
+    int DecomposePar();
     int ReconstructParMesh(const char *const arg);
     int ReconstructPar(const char *const arg);
     int RenumberMesh();

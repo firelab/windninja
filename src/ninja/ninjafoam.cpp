@@ -339,8 +339,7 @@ bool NinjaFoam::simulate_wind()
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-        fout = VSIFOpenL("log", "w" );
-        status = DecomposePar(fout);
+        status = DecomposePar();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
             NinjaUnlinkTree( pszTempPath );
@@ -1393,8 +1392,7 @@ int NinjaFoam::MoveDynamicMesh()
     if(input.numberCPUs > 1){
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
-        fout = VSIFOpenL("logMesh", "w"); //closed in DecomposePar
-        nRet = DecomposePar(fout);
+        nRet = DecomposePar();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
             return NINJA_E_OTHER;
@@ -1623,11 +1621,13 @@ int NinjaFoam::BlockMesh()
     return nRet;
 }
 
-int NinjaFoam::DecomposePar(VSILFILE *fout)
+int NinjaFoam::DecomposePar()
 {
     int nRet = -1;
 
     const char *const papszArgv[] = { "decomposePar", "-force", NULL };
+    
+    VSILFILE *fout = VSIFOpenL("log.decomposePar", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
