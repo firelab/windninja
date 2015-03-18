@@ -360,8 +360,7 @@ bool NinjaFoam::simulate_wind()
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-        fout = VSIFOpenL("log", "w");
-        status = ReconstructPar("-latestTime", fout);
+        status = ReconstructPar("-latestTime");
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReconstructPar(). Check that number of iterations is a multiple of 100.");
             NinjaUnlinkTree( pszTempPath );
@@ -1478,8 +1477,7 @@ int NinjaFoam::MoveDynamicMesh()
         CopyFile(pszInput, pszOutput);
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-        fout = VSIFOpenL("logMesh", "w"); //closed in ReconstructPar
-        nRet = ReconstructPar("-latestTime", fout);
+        nRet = ReconstructParMesh("-latestTime");
         if(nRet != 0){
             //do something
         }
@@ -1550,7 +1548,6 @@ int NinjaFoam::MoveDynamicMesh()
     CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
     
     /* write firstCellHeight to inlet files */
-    cout<<"copying files..."<<endl;
     CopyFile("0/U", 
             "0/U", 
             "-9999.9", 
@@ -1617,7 +1614,7 @@ int NinjaFoam::BlockMesh()
 
     const char *const papszArgv[] = { "blockMesh", NULL };
 
-    VSILFILE *fout = VSIFOpenL("logMesh", "w");
+    VSILFILE *fout = VSIFOpenL("log.blockMesh", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1639,11 +1636,13 @@ int NinjaFoam::DecomposePar(VSILFILE *fout)
     return nRet;
 }
 
-int NinjaFoam::ReconstructParMesh(const char *const arg, VSILFILE *fout)
+int NinjaFoam::ReconstructParMesh(const char *const arg)
 {
     int nRet = -1;
 
     const char *const papszArgv[] = { "reconstructParMesh", arg, NULL };
+    
+    VSILFILE *fout = VSIFOpenL("log.reconstructParMesh", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1652,11 +1651,13 @@ int NinjaFoam::ReconstructParMesh(const char *const arg, VSILFILE *fout)
     return nRet;
 }
 
-int NinjaFoam::ReconstructPar(const char *const arg, VSILFILE *fout)
+int NinjaFoam::ReconstructPar(const char *const arg)
 {
     int nRet = -1;
 
     const char *const papszArgv[] = { "reconstructPar", arg, NULL };
+    
+    VSILFILE *fout = VSIFOpenL("log.reconstructPar", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1671,7 +1672,7 @@ int NinjaFoam::RenumberMesh()
 
     const char *const papszArgv[] = { "renumberMesh", "-overwrite", NULL };
 
-    VSILFILE *fout = VSIFOpenL("log", "w");
+    VSILFILE *fout = VSIFOpenL("log.renumberMesh", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1701,7 +1702,7 @@ int NinjaFoam::ApplyInit()
 
     const char *const papszArgv[] = { "applyInit", NULL };
 
-    VSILFILE *fout = VSIFOpenL("log", "w");
+    VSILFILE *fout = VSIFOpenL("log.applyInit", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1782,6 +1783,13 @@ int NinjaFoam::SimpleFoam()
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
+    
+    // write simpleFoam stdout to a log file 
+    VSILFILE *fout = VSIFOpenL("log.simpleFoam", "w");
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
 
     return nRet;
 }
@@ -1792,7 +1800,7 @@ int NinjaFoam::Sample()
 
     const char *const papszArgv[] = { "sample", "-latestTime", NULL };
 
-    VSILFILE *fout = VSIFOpenL("log", "w");
+    VSILFILE *fout = VSIFOpenL("log.sample", "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 

@@ -130,8 +130,8 @@ private:
     int RefineWallLayer();
     int BlockMesh();
     int DecomposePar(VSILFILE *fout);
-    int ReconstructParMesh(const char *const arg, VSILFILE *fout);
-    int ReconstructPar(const char *const arg, VSILFILE *fout);
+    int ReconstructParMesh(const char *const arg);
+    int ReconstructPar(const char *const arg);
     int RenumberMesh();
     int CheckMesh();
     int ApplyInit();
