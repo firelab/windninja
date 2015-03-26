@@ -1533,14 +1533,14 @@ int NinjaFoam::MoveDynamicMesh()
     //refine surface layer in the wall-normal direction
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
     double finalFirstCellHeight = firstCellHeight1;
-    while(finalFirstCellHeight > 5.0){ //refine wall layer until cell height < 5 m
+    /*while(finalFirstCellHeight > 5.0){ //refine wall layer until cell height < x m
         nRet = RefineWallLayer();
         latestTime += 1;
         finalFirstCellHeight /= 4.0;
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
         }
-    }
+    }*/
     
     CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
     CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
