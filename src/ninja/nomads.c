@@ -313,6 +313,10 @@ static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
     {
         pszVsiUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
     }
+    else
+    {
+        pszVsiUrl = pszUrl;
+    }
     fin = VSIFOpenL( pszVsiUrl, "rb" );
     if( !fin )
     {
@@ -355,8 +359,8 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
     psResult = NULL;
     psResult = CPLHTTPFetch( pszUrl, NULL );
     if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 ||
-        strstr( psResult->pabyData, "HTTP error code : 404" ) ||
-        strstr( psResult->pabyData, "data file is not present" ) )
+        strstr( (char*)psResult->pabyData, "HTTP error code : 404" ) ||
+        strstr( (char*)psResult->pabyData, "data file is not present" ) )
     {
         CPLHTTPDestroyResult( psResult );
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -737,7 +741,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                               "serial download for %s",
                               CPLGetFilename( pasData[t].pszFilename ) );
                     /* Try again, serially though */
-                    if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) );
+                    if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) )
                     {
                         VSIUnlink( pasData[t].pszFilename );
                     }

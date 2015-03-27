@@ -156,7 +156,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
         return CE_Failure;
     }
 
-    CPLErr eErr;
+    CPLErr eErr = CE_None;
     int i, j;
     StlPosition a, b, c, d;
     StlPosition v1, v2, norm;
