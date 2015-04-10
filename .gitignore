@@ -47,3 +47,5 @@ debug*
 *NCEP*
 *NOMADS*
 
+# OpenFOAM
+*.dep
