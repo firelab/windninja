@@ -57,13 +57,18 @@ int main(int argc, char *argv[])
 
         while (simple.correctNonOrthogonal())
         {
+            dimensionedScalar source
+            (
+                "source", dimensionSet(0, 0, -1, 1, 0), 1.0
+            );
+            
             solve
             (
                 fvm::ddt(T)
               + fvm::div(phi, T)
               - fvm::laplacian(DT, T)
              ==
-                fvOptions(T)
+                source //fvOptions(T)
             );
         }
 
