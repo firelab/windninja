@@ -1,0 +1,3 @@
+myScalarTransportFoam.C
+
+EXE = $(FOAM_APPBIN)/myScalarTransportFoam
