@@ -1,7 +1,5 @@
 /******************************************************************************
  *
- * $Id$
- *
  * Project:  WindNinja
  * Purpose:  Nomads C client
  * Author:   Kyle Shannon <kyle at pobox dot com>
