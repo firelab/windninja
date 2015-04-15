@@ -352,7 +352,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
- 
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
@@ -380,7 +379,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(2000), "number of iterations for momentum solver (must be a multiple of 100)") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
-                ("mesh_type", po::value<std::string>(), "mesh type (SHM, TBM)")
                 ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
@@ -945,12 +943,10 @@ int windNinjaCLI(int argc, char* argv[])
 
             //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
             #ifdef NINJAFOAM
-            if(vm["momentum_flag"].as<bool>()){
-                if(!vm.count("stl_file")){
-                    //only set the dem if there is no STL file specified
-                    windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
-                    windsim.setPosition( i_ );    //get position from DEM file
-                }
+            if(!vm.count("stl_file")){
+                //only set the dem if there is no STL file specified
+                windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
+                windsim.setPosition( i_ );    //get position from DEM file
             }
             #endif //NINJAFOAM
             
@@ -974,9 +970,10 @@ int windNinjaCLI(int argc, char* argv[])
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
+                conflicting_options(vm, "mesh_resolution", "mesh_count");
                 if(vm.count("mesh_choice")){
                     if( windsim.setMeshCount( i_,
-                        vm["mesh_choice"].as<std::string>() ) != 0 ){
+                        ninja::get_eNinjafoamMeshChoice(vm["mesh_choice"].as<std::string>()) ) != 0 ){
                         cout << "'mesh_choice' of " << vm["mesh_choice"].as<std::string>()
                             << " is not valid.\n" \
                             << "Choices are: coarse, medium, or fine.\n";
@@ -990,16 +987,6 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
                     windsim.setNonEqBc( i_,
                         vm["non_equilibrium_boundary_conditions"].as<bool>() );
-                }
-                if(vm.count("mesh_type")){
-                    if(windsim.setMeshType( i_,
-                        ninja::get_eMeshType(vm["mesh_type"].as<std::string>()) ) !=0 )
-                        {                           
-                            cout << "'mesh_type' of " << vm["mesh_type"].as<std::string>()
-                            << " is not valid.\n" \
-                            << "Choices are: TBM or SHM.\n";
-                            return -1;
-                        }
                 }
             }
             #endif //NINJAFOAM

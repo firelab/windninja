@@ -98,6 +98,7 @@ class weatherModel : public QWidget
     QSpinBox *hourSpinBox;
     QToolButton *downloadToolButton;
 
+    QLabel *ninjafoamConflictLabel;
     QLabel *statusLabel;
     QToolButton *refreshToolButton;
 

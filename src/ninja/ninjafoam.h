@@ -98,10 +98,10 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
-    int writeTerrainBlockMesh();
+    int writeMoveDynamicMesh();
     int writeBlockMesh();
-    int readLogFile(int &ratio);
-    int writeSnappyMesh();
+    int readDem(int &ratio_); //sets blockMesh data from DEM 
+    int readLogFile(int &ratio); //sets blockMesh data from STL log file when DEM not available
     
     std::string boundary_name;
     std::string terrainName;
@@ -117,18 +117,21 @@ private:
     std::vector<double> bbox;
     std::vector<int> nCells;
     double side1; // length of side of regular hex cell in zone1
+    double firstCellHeight1; //height of near-ground cell after moveDynamicMesh
+    int latestTime; //latest time directory 
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
+    int CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
     
     int SurfaceTransformPoints();
     int SurfaceCheck();
-    int TerrainBlockMesher();
+    int MoveDynamicMesh();
+    int RefineWallLayer();
     int BlockMesh();
-    int DecomposePar(VSILFILE *fout);
-    int SnappyHexMesh();
-    int ReconstructParMesh(const char *const arg, VSILFILE *fout);
-    int ReconstructPar(const char *const arg, VSILFILE *fout);
+    int DecomposePar();
+    int ReconstructParMesh(const char *const arg);
+    int ReconstructPar(const char *const arg);
     int RenumberMesh();
     int CheckMesh();
     int ApplyInit();

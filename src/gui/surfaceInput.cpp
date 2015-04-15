@@ -120,12 +120,19 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     roughnessGroupBox->setLayout(roughnessLayout);
     meshResGroupBox->setLayout(meshResLayout);
     timeZoneGroupBox->setLayout(timeZoneLayout);
+    
+    ninjafoamConflictLabel = new QLabel(tr("The horizontal resolution is not necessarily constant in the mesh\n"
+    "used by the momentum solver. In cases where the resolution varies,\n"
+    "the displayed value indicates the coarsest horizontal resolution used\n"
+    "for your domain.\n"), this);
+    ninjafoamConflictLabel->setHidden(true);
 
     //main layout
     mainLayout = new QVBoxLayout;
     mainLayout->addWidget(inputFileGroupBox);
     mainLayout->addWidget(roughnessGroupBox);
     mainLayout->addWidget(meshResGroupBox);
+    mainLayout->addWidget(ninjafoamConflictLabel);
     mainLayout->addWidget(timeZoneGroupBox);
     mainLayout->addStretch();
 

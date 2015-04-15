@@ -51,8 +51,7 @@ const char ** NomadsFindModel( const char *pszKey )
 ** Results must be free'd.  We can't use CPLSPrintf on large lists fo arguments
 ** because we overrun the ring buffer.
 */
-static const char * NomadsBuildArgList( const char *pszVars,
-                                        const char *pszPrefix )
+static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
 {
     int i, n, m;
     char *pszList;
@@ -75,7 +74,7 @@ static const char * NomadsBuildArgList( const char *pszVars,
         sprintf( pszList, "%s&%s_%s=on", pszList, pszPrefix, papszArgs[i] );
     }
     CSLDestroy( papszArgs );
-    return (const char*)pszList;
+    return pszList;
 }
 
 nomads_utc * NomadsSetForecastTime( const char **ppszKey, nomads_utc *ref,
@@ -186,8 +185,8 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     const char **ppszKey;
     const char *pszGribFile;
     const char *pszGribDir;
-    const char *pszLevels;
-    const char *pszVars;
+    char *pszLevels;
+    char *pszVars;
     const char *pszUrl;
     char **papszFileList = NULL;
 
@@ -314,6 +313,10 @@ static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
     {
         pszVsiUrl = CPLSPrintf( "/vsicurl/%s", pszUrl );
     }
+    else
+    {
+        pszVsiUrl = pszUrl;
+    }
     fin = VSIFOpenL( pszVsiUrl, "rb" );
     if( !fin )
     {
@@ -356,8 +359,8 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
     psResult = NULL;
     psResult = CPLHTTPFetch( pszUrl, NULL );
     if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 ||
-        strstr( psResult->pabyData, "HTTP error code : 404" ) ||
-        strstr( psResult->pabyData, "data file is not present" ) )
+        strstr( (char*)psResult->pabyData, "HTTP error code : 404" ) ||
+        strstr( (char*)psResult->pabyData, "data file is not present" ) )
     {
         CPLHTTPDestroyResult( psResult );
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -429,6 +432,7 @@ static double NomadsGetMinSize( const char **ppszModel )
 **                       possibly goes around dns lookup, but it's doubtfull.
 **        NOMADS_ENABLE_ASYNC: Allow for asynchronous connections to the
 **                             server.
+**        NOMADS_RTMA : Enable the RTMA forecasts.
 **        NOMADS_EXPER_FORECASTS: Compile in forecasts that may not work with
 **                                the current configuration, essentially
 **                                unsupported (ie NARRE, RTMA).
@@ -594,8 +598,12 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     {
         nMaxFcstRewind = 2;
     }
-    /* Go back at least 3 for rap, as it may not get updated all the time. */
-    if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) )
+    /*
+    ** Go back at least 3 for rap, hrrr, and rtma, as it may not get updated all
+    ** the time.
+    */
+    if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) ||
+        EQUALN( pszModelKey, "rtma", 4 ) )
     {
         nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
     }
@@ -626,7 +634,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
                   NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
 
-        if( EQUAL( pszModelKey, "rtma_conus" ) )
+        if( EQUALN( pszModelKey, "rtma", 4 ) )
         {
             panRunHours = (int*)CPLMalloc( sizeof( int ) );
             nFilesToGet = 1;
@@ -738,7 +746,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                               "serial download for %s",
                               CPLGetFilename( pasData[t].pszFilename ) );
                     /* Try again, serially though */
-                    if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) );
+                    if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) )
                     {
                         VSIUnlink( pasData[t].pszFilename );
                     }

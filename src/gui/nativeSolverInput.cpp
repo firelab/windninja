@@ -1,9 +1,9 @@
 /******************************************************************************
  * 
- * $Id$
+ * $Id: stabilityInput.cpp 1304 2012-01-20 21:07:12Z kyle.shannon $
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  OpenGL implementation for viewing DEM inputs
+ * Purpose:  native solver interface
  * Author:   Kyle Shannon <ksshannon@gmail.com>
  *
  ******************************************************************************
@@ -27,45 +27,35 @@
  *
  *****************************************************************************/
 
-#ifndef DIURNALINPUT_H_
-#define DIURNALINPUT_H_
+#include "nativeSolverInput.h"
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QDoubleSpinBox>
-#include <QLabel>
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QGridLayout>
-
-#include <string>
-#include <vector>
-
-#include "gdal_priv.h"
-#include "ogr_srs_api.h"
-
-#include "boost/date_time/local_time/local_time.hpp"
-#include "boost/date_time/posix_time/posix_time_types.hpp"
-
-#include "latLonWidget.h"
-#include "timeZoneWidget.h"
-
-#include "qdebug.h"
-
-class diurnalInput : public QWidget
+/** 
+ * Construct and layout the nativeSolverInput widget.  This is only a checkable
+ * option now.
+ * 
+ * @param parent parent widget
+ */
+nativeSolverInput::nativeSolverInput(QWidget *parent) : QWidget(parent)
 {
-  Q_OBJECT
+    nativeSolverGroupBox = new QGroupBox(tr("Conservation of Mass"));
+    nativeSolverGroupBox->setCheckable(true);
+    nativeSolverGroupBox->setChecked(true);
+    
+    nativeSolverLabel = new QLabel(tr("This is the native WindNinja solver. It solves a conservation of mass equation,\n"
+        "but not a conservation of momentum equation. This solver is fast-running, \n"
+        "but may give less accurate wind predictions in regions where momentum effects are\n"
+        "important, for example on the lee side of terrain obstacles.\n"
+        ), this);
+    
+    nativeSolverLayout = new QVBoxLayout;
+  
+    nativeSolverGroupBox->setLayout(nativeSolverLayout);
+    
+    layout = new QVBoxLayout;
+    layout->addWidget(nativeSolverGroupBox);
+    layout->addWidget(nativeSolverLabel);
+    layout->addStretch();
+    setLayout(layout);
 
- public:
-
-  diurnalInput(QWidget *parent = 0);
-  QGroupBox *diurnalGroupBox;
-  QVBoxLayout *diurnalLayout;
-  QVBoxLayout *layout;
-  QLabel *ninjafoamConflictLabel;
-
-};
-
-#endif /* DIURNALINPUT_H_ */
-
+    
+}

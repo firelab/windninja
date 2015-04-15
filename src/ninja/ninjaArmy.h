@@ -91,12 +91,11 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM
     ninjaArmy(int numNinjas, bool momentumFlag);
-    #endif
-    #ifndef NINJAFOAM
+#else
     ninjaArmy(int numNinjas);
-    #endif
+#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
@@ -116,6 +115,9 @@ public:
     std::string fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName);
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
+#ifdef NINJAFOAM
+    bool startNinjaFoamRuns(int numProcessors);
+#endif
     bool startRuns(int numProcessors);
     bool startFirstRun();
 
@@ -134,7 +136,7 @@ public:
     * \param nRuns number of ninjas to create
     * \return
     */
-    void setSize( int nRuns );
+    void setSize( int nRuns, bool momentumFlag);
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
@@ -360,7 +362,9 @@ public:
     * \param meshChoice Mesh resolution choice
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setMeshCount( const int nIndex, const std::string meshChoice, char ** papszOptions=NULL );
+    int setMeshCount( const int nIndex, 
+                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+                      char ** papszOptions=NULL );
 
     /**
     * \brief Enable/disable non-equilbrium boundary conditions for a NinjaFOAM run
@@ -370,17 +374,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
-    /**
-    * \brief Set the type of mesh for a NinjaFOAM run
-    *
-    * \param nIndex index of a ninja
-    * \param nMeshType Mesh type (snappyHexMesh or terrainBlockMesh)
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setMeshType( const int nIndex, 
-                     const WindNinjaInputs::eMeshType meshType, 
-                     char ** papszOptions=NULL );
         
     /**
     * \brief Set the type of STL file for a NinjaFOAM run

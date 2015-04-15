@@ -73,7 +73,8 @@ SET(TEST_SOURCES test_main.cpp
                  test_init.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
-                 test_stl)
+                 test_stl
+                 test_rmtree.cpp)
 IF(WITH_LCP_CLIENT)
     SET(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
 ENDIF(WITH_LCP_CLIENT)
@@ -255,9 +256,11 @@ IF(WITH_NOMADS_SUPPORT)
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_nest_alaska 1 2 0 zip)
         ADD_TEST(nomads_nam_narre_1_hour_zip
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay narre 1 2 0 zip)
+    ENDIF(NOMADS_EXPER_FORECASTS)
+    IF(NOMADS_RTMA)
         ADD_TEST(nomads_rtma_conus_1_hour_zip
                  ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay rtma_conus 1 1 0 zip)
-    ENDIF(NOMADS_EXPER_FORECASTS)
+    ENDIF(NOMADS_RTMA)
     # UTC
     ADD_TEST(utc_create_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/create_1)
@@ -301,6 +304,15 @@ IF(NINJAFOAM)
     #ADD_TEST(sample_cloud_1
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=ninjafoam/sample_cloud_1)
 ENDIF(NINJAFOAM)
+
+ADD_TEST(rmtree_1
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_1)
+ADD_TEST(rmtree_sym_1
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_1)
+ADD_TEST(rmtree_sym_2
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_2)
+ADD_TEST(rmtree_sym_3
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=rmtree/rmtree_sym_3)
 # *****************************************************************************
 # Command Line Interface Testing Section
 # *****************************************************************************

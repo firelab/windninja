@@ -129,10 +129,10 @@ WindNinjaInputs::WindNinjaInputs()
     scalarTransportFlag = false;
 #endif
 #ifdef NINJAFOAM
-    nIterations = 2000;
+    nIterations = 1000;
     meshCount = 1000000;
-    nonEqBc = false;
-    meshType = WindNinjaInputs::SHM;
+    ninjafoamMeshChoice = WindNinjaInputs::fine;
+    nonEqBc = true;
     stlFile = "!set";
 #endif
     
@@ -200,8 +200,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 #ifdef NINJAFOAM
     nIterations = rhs.nIterations;
     meshCount = rhs.meshCount;
+    ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
     nonEqBc = rhs.nonEqBc;
-    meshType = rhs.meshType;
     stlFile = rhs.stlFile;
 #endif
   outputPointsFilename = rhs.outputPointsFilename;
@@ -358,8 +358,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 #ifdef NINJAFOAM
       nIterations = rhs.nIterations;
       meshCount = rhs.meshCount;
+      ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
       nonEqBc = rhs.nonEqBc;
-      meshType = rhs.meshType;
       stlFile = rhs.stlFile;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;

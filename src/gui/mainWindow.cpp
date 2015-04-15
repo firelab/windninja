@@ -487,8 +487,15 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
 #endif
 #ifdef NINJAFOAM
+  //connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+  connect(tree->nativesolver->nativeSolverGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(checkAllItems()));
+  connect( tree->nativesolver->nativeSolverGroupBox, SIGNAL( toggled( bool ) ),
+       this, SLOT( selectNativeSolver( bool ) ) );      
+  connect( tree->ninjafoam->ninjafoamGroupBox, SIGNAL( toggled( bool ) ),
+       this, SLOT( selectNinjafoamSolver( bool ) ) );
 #endif
 
   //connect the speed and direction in the first row to the checkers
@@ -614,6 +621,24 @@ void mainWindow::selectWeatherInitialization( bool pick )
     }
     tree->output->wxModelOutputCheckBox->setEnabled( pick );
 }
+
+#ifdef NINJAFOAM
+void mainWindow::selectNativeSolver( bool pick )
+{
+    if( pick ) {
+    tree->ninjafoam->ninjafoamGroupBox->setChecked( false );
+    checkAllItems();
+    }
+}
+void mainWindow::selectNinjafoamSolver( bool pick )
+{
+    if( pick ) {
+    tree->nativesolver->nativeSolverGroupBox->setChecked( false );
+    checkAllItems();
+    }
+}
+#endif //NINJAFOAM
+
 
 //function for finding and opening an input file.
 void mainWindow::openInputFile()
@@ -1076,11 +1101,29 @@ void mainWindow::checkMeshUnits(bool checked)
 
 double mainWindow::computeCellSize(int index)
 {
-  int coarse = 4000;
-  int medium = 10000;
-  int fine = 20000;
-
-  double meshResolution = 200.0;
+  int coarse, medium, fine;
+  double meshResolution;
+  
+  meshResolution = 200.0;
+  
+#ifdef NINJAFOAM  
+  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
+    /*ninjafoam: calculate mesh resolution of lower volume in block mesh*/
+    coarse = 100000;
+    medium = 500000;
+    fine = 1e6;
+  }
+  else{
+    /* use native mesh */
+    coarse = 4000;
+    medium = 10000;
+    fine = 20000;
+  }
+#else
+  coarse = 4000;
+  medium = 10000;
+  fine = 20000;
+#endif //NINJAFOAM
 
   int targetNumHorizCells = fine;
   switch(index)
@@ -1103,6 +1146,37 @@ double mainWindow::computeCellSize(int index)
     default:
       return meshResolution;
     }
+    
+#ifdef NINJAFOAM  
+  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
+    /* ninjafoam mesh */
+    double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
+    double YLength = (GDALYSize + 1) * GDALCellSize + 200;
+    double ZLength = 2450; //bottom face is 50 m above terrain max, top face is 2500 m above terrain max
+  
+    double volume1;
+    double cellCount1;
+    double cellVolume1;
+    
+    volume1 = XLength * YLength * ZLength; //volume near terrain
+    cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
+    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+  }
+  else{
+    /* native windninja mesh */
+    double XLength = (GDALXSize + 1) * GDALCellSize;
+    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
+    double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
+
+    double XCellSize = XLength / nXCells;
+    double YCellSize = YLength / nYCells;
+
+    meshResolution = (XCellSize + YCellSize) / 2;
+  
+  }
+#else 
   double XLength = (GDALXSize + 1) * GDALCellSize;
   double YLength = (GDALYSize + 1) * GDALCellSize;
   double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
@@ -1114,6 +1188,7 @@ double mainWindow::computeCellSize(int index)
   meshResolution = (XCellSize + YCellSize) / 2;
 
   //noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
+#endif //NINJAFOAM
 
   return meshResolution;
 }
@@ -1222,6 +1297,7 @@ int mainWindow::checkInputFile(QString fileName)
             {
                 GDALCenterLon = ll[0];
                 GDALCenterLat = ll[1];
+
                 //set diurnal location, also set DD.DDDDD
                 QString oTimeZone = FetchTimeZone(GDALCenterLon, GDALCenterLat, NULL).c_str();
                 if(oTimeZone != "")
@@ -1301,9 +1377,9 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
-    #endif
+#endif
     
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
@@ -1344,6 +1420,17 @@ int mainWindow::solve()
     else
         meshUnits = lengthUnits::meters;
     }
+#ifdef NINJAFOAM
+    WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
+    if(useNinjaFoam){
+        if( meshIndex == 0 )
+            ninjafoamMeshChoice = WindNinjaInputs::coarse;
+        else if( meshIndex == 1 )
+            ninjafoamMeshChoice = WindNinjaInputs::medium;
+        else if (meshIndex == 2)
+            ninjafoamMeshChoice = WindNinjaInputs::fine;
+    }
+#endif
 
     //location
 
@@ -1526,18 +1613,18 @@ int mainWindow::solve()
     writeToConsole( "Initializing runs..." );
     
     delete army;
-    #ifdef NINJAFOAM
+#ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
-    #else
+#else
     army = new ninjaArmy(1); // native ninja solver
-    #endif
+#endif
 
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
         //we can only do one run with point
         nRuns = 1;
-        army->setSize( nRuns );
+        army->setSize( nRuns, false );
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
@@ -1547,7 +1634,11 @@ int mainWindow::solve()
         {
             nRuns++;
         }
-        army->setSize( nRuns );
+#ifdef NINJAFOAM
+        army->setSize( nRuns, useNinjaFoam);
+#else
+        army->setSize( nRuns, false);
+#endif
     }
     else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
     {
@@ -1708,7 +1799,14 @@ int mainWindow::solve()
         }
         else
         {
+#ifdef NINJAFOAM
+            if(useNinjaFoam)
+                army->setMeshCount( i, ninjafoamMeshChoice );
+            else
+                army->setMeshResolutionChoice( i, meshChoice );
+#else
             army->setMeshResolutionChoice( i, meshChoice );
+#endif
         }
 
         army->setNumVertLayers( i, 20 );
@@ -1780,7 +1878,15 @@ int mainWindow::solve()
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
+#ifdef NINJAFOAM
+            if(tree->ninjafoam->ninjafoamGroupBox->isChecked()){
+                ninjaSuccess = army->startNinjaFoamRuns( nThreads );
+            }
+            else
+                ninjaSuccess = army->startRuns( nThreads );
+#else
             ninjaSuccess = army->startRuns( nThreads );
+#endif //NINJAFOAM
     }
     catch (bad_alloc& e)
     {
@@ -1876,6 +1982,7 @@ int mainWindow::checkAllItems()
   eInputStatus status = green;
 #ifdef NINJAFOAM
   checkSolverMethodItem();
+  checkMeshCombo();
 #endif
   checkInputItem();
   checkOutputItem();
@@ -1888,21 +1995,70 @@ int mainWindow::checkAllItems()
 int mainWindow::checkSolverMethodItem()
 {
     eInputStatus status = blue;
-    if(checkNinjafoamItem() == blue)
+    
+    checkNativeSolverItem();
+    checkNinjafoamItem();
+
+    if(checkNativeSolverItem() == green)
     {
         tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using native solver");
+        tree->solverMethodItem->setToolTip(0, "Using conservation of mass solver");
+        checkNinjafoamItem();
+        status = green;
+    }
+    else if(checkNinjafoamItem() == green)
+    {
+        tree->solverMethodItem->setIcon(0, tree->check);
+        tree->solverMethodItem->setToolTip(0, "Using conservation of mass and momentum solver");
+        checkNativeSolverItem();
         status = green;
     }
     else
     {
-        tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using momentum solver");
-        status = green;
+        tree->solverMethodItem->setIcon(0, tree->cross);
+        tree->solverMethodItem->setToolTip(0, "Select a solver");
+        status = red;
     }
     return status;
 }
-#endif
+
+int mainWindow::checkNativeSolverItem()
+{
+    eInputStatus status = green;
+    if(!tree->nativesolver->nativeSolverGroupBox->isChecked())
+    {
+        tree->nativeSolverItem->setIcon(0, tree->radio);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->nativeSolverItem->setIcon(0, tree->check);
+        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass selected");
+        status = green;
+    }
+
+    return status;
+}
+int mainWindow::checkNinjafoamItem()
+{
+    eInputStatus status = green;
+    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
+    {
+        tree->ninjafoamItem->setIcon(0, tree->radio);
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum not selected");
+        status = blue;
+    }
+    else
+    {
+        tree->ninjafoamItem->setIcon(0, tree->check);        
+        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
+        status = green;
+    }
+
+    return status;
+}
+#endif //NINJAFOAM
 
 int mainWindow::checkInputItem()
 {  
@@ -1999,27 +2155,6 @@ int mainWindow::checkDiurnalItem()
   }
   return status;
 }
-
-#ifdef NINJAFOAM
-int mainWindow::checkNinjafoamItem()
-{
-    eInputStatus status = green;
-    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
-    {
-        tree->ninjafoamItem->setIcon(0, tree->blue);
-        tree->ninjafoamItem->setToolTip(0, "Momentum solver not selected");
-        status = blue;
-    }
-    else
-    {
-        tree->ninjafoamItem->setIcon(0, tree->check);
-        tree->ninjafoamItem->setToolTip(0, "Momentum solver selected");
-        status = green;
-    }
-
-    return status;
-}
-#endif
 
 #ifdef STABILITY
 int mainWindow::checkStabilityItem()
@@ -2481,12 +2616,21 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
     tree->diurnal->diurnalGroupBox->setChecked(true);
     }
 #ifdef NINJAFOAM
+  else if(item == tree->nativeSolverItem)
+  {
+      if(tree->nativesolver->nativeSolverGroupBox->isChecked())
+          tree->nativesolver->nativeSolverGroupBox->setChecked(false);
+      else{
+          tree->nativesolver->nativeSolverGroupBox->setChecked(true);
+      }
+  }
   else if(item == tree->ninjafoamItem)
   {
       if(tree->ninjafoam->ninjafoamGroupBox->isChecked())
           tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
-      else
+      else{
           tree->ninjafoam->ninjafoamGroupBox->setChecked(true);
+      }
   }
 #endif
 #ifdef STABILITY
@@ -2645,49 +2789,70 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        tree->diurnal->diurnalGroupBox->setEnabled( false );
         tree->diurnal->diurnalGroupBox->setCheckable( false );
         tree->diurnal->diurnalGroupBox->setChecked( false );
+        tree->diurnal->diurnalGroupBox->setHidden( true );
+        tree->diurnal->ninjafoamConflictLabel->setHidden( false );
+
         #ifdef STABILITY
-        tree->stability->stabilityGroupBox->setEnabled( false );
-        tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setCheckable( false );
+        tree->stability->stabilityGroupBox->setChecked( false );
+        tree->stability->stabilityGroupBox->setHidden( true );
+        tree->stability->ninjafoamConflictLabel->setHidden( false );
         #endif
-        tree->point->pointGroupBox->setEnabled( false );
+         
+        tree->wind->windTable->enableDiurnalCells( false ); 
+        
         tree->point->pointGroupBox->setCheckable( false );
         tree->point->pointGroupBox->setChecked( false );
+        tree->point->pointGroupBox->setHidden( true );
+        tree->point->ninjafoamConflictLabel->setHidden( false );
         
-        tree->weather->weatherGroupBox->setEnabled( false );
         tree->weather->weatherGroupBox->setCheckable( false );
         tree->weather->weatherGroupBox->setChecked( false );
+        tree->weather->weatherGroupBox->setHidden( true );
+        tree->weather->ninjafoamConflictLabel->setHidden( false );
         
+        tree->surface->timeZoneGroupBox->setHidden( true );
         tree->surface->meshResComboBox->removeItem(4);
+        tree->surface->ninjafoamConflictLabel->setHidden( false );
         
-        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( true );
-        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
+        tree->vtk->ninjafoamConflictLabel->setHidden( false );
+        tree->vtk->vtkLabel->setHidden( true );
+        tree->vtk->vtkWarningLabel->setHidden( true );
         
     }
     else{
-        tree->diurnal->diurnalGroupBox->setEnabled( true );
         tree->diurnal->diurnalGroupBox->setCheckable( true );
         tree->diurnal->diurnalGroupBox->setChecked( false );
+        tree->diurnal->diurnalGroupBox->setHidden( false );
+        tree->diurnal->ninjafoamConflictLabel->setHidden( true );
+        
         #ifdef STABILITY
-        tree->stability->stabilityGroupBox->setEnabled( true );
         tree->stability->stabilityGroupBox->setCheckable( true );
         tree->stability->stabilityGroupBox->setChecked( false );
+        tree->stability->stabilityGroupBox->setHidden( false );
+        tree->stability->ninjafoamConflictLabel->setHidden( true );
         #endif
-        tree->point->pointGroupBox->setEnabled( true );
+        
         tree->point->pointGroupBox->setCheckable( true );
         tree->point->pointGroupBox->setChecked( false );
+        tree->point->pointGroupBox->setHidden( false );
+        tree->point->ninjafoamConflictLabel->setHidden( true );
         
-        tree->weather->weatherGroupBox->setEnabled( true );
         tree->weather->weatherGroupBox->setCheckable( true );
         tree->weather->weatherGroupBox->setChecked( false );
+        tree->weather->weatherGroupBox->setHidden( false );
+        tree->weather->ninjafoamConflictLabel->setHidden( true );
         
+        tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
+        tree->surface->ninjafoamConflictLabel->setHidden( true );
         
-        tree->ninjafoam->ninjafoamBcGroupBox->setEnabled( false );
-        tree->ninjafoam->ninjafoamBcGroupBox->setChecked( false );
+        tree->vtk->ninjafoamConflictLabel->setHidden( true );
+        tree->vtk->vtkLabel->setHidden( false );
+        tree->vtk->vtkWarningLabel->setHidden( false );
+        
     }
 }
 #endif

@@ -10,6 +10,8 @@ WindNinja 2.5.2
 
 * Make sure progress finishes on the gui (#36).
 
+* Fix NOMADS output file naming (#37).
+
 WindNinja 2.5.1
 ---------------
 

@@ -92,8 +92,9 @@ int main(int argc, char *argv[])
 	const dictionary dict(uFile_.subDict("boundaryField").subDict(patchName));
 
 	Info<< "Calculating wall distance field" << endl;
-	//volScalarField y(wallDist(mesh).y());
-	volScalarField y(mesh.C().component(2));
+
+    volScalarField y = wallDist(mesh).y();	//distance to nearest wall
+	//volScalarField y(mesh.C().component(2)); //z-component of cell center
 
 	const scalar UfreeStream_(readScalar(dict.lookup("UfreeStream")));
 	const vector uDirection_(dict.lookup("uDirection"));
@@ -102,36 +103,28 @@ int main(int argc, char *argv[])
 	const scalar Rd_(readScalar(dict.lookup("Rd")));
 	scalar ustar = Foam::log((inputWindHeight_Veg_-Rd_)/z0_);
 	ustar = (UfreeStream_*0.41)/(ustar);
-	//scalar ustar = (UfreeStream_ + Foam::log(z0_))*0.41/(Foam::log(inputWindHeight_Veg_-Rd_));
 	scalar ucalc(0.0);
 
-	// Loop over all the faces in that patch
-	// for salmon height is 1900 calculated from south face
-	//for big butte height is 2500 calculated from terrian max
-	// from this height log profile will be initialised
-	const scalar logProfileHeight = 2000;
+	// Loop over all the faces in the patch
+	// and initialize the log profile
+    
 	forAll(y,cellI)
 	{
-		if(y[cellI]>=logProfileHeight)
-		{
-			// relative height from ground for face lists
-			scalar AGL = y[cellI]-logProfileHeight;
+		// relative height from ground for face lists
+		scalar AGL = y[cellI];
 
-			//if we're below the log profile, initialize velocities to zero
-			if (AGL < Rd_ )
-			{
-				ucalc = UfreeStream_*AGL/inputWindHeight_Veg_;
-				U[cellI] = ucalc*uDirection_;
-			}
-			else  //Apply the log law equation profile
-			{
-				ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
-				U[cellI] = ucalc*uDirection_;
-			}
+		//if we're below the veg height, use linear interpolation to ground
+		if (AGL < Rd_ )
+		{
+			ucalc = UfreeStream_*AGL/inputWindHeight_Veg_;
+			U[cellI] = ucalc*uDirection_;
+		}
+		else  //Apply the log law equation profile
+		{
+			ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
+			U[cellI] = ucalc*uDirection_;
 		}
 	}
-
-
 
 	U.write();
 	Info<< "End\n" << endl;

@@ -44,6 +44,7 @@
 
 #ifdef NINJAFOAM
 #include "ninjafoamInput.h"
+#include "nativeSolverInput.h"
 #endif
 
 #include "windInput.h"
@@ -87,6 +88,7 @@ class WindNinjaTree : public QWidget
 #endif
 #ifdef NINJAFOAM
   QTreeWidgetItem *ninjafoamItem;
+  QTreeWidgetItem *nativeSolverItem;
 #endif
   
   //output file items...
@@ -117,6 +119,7 @@ class WindNinjaTree : public QWidget
 #endif
 #ifdef NINJAFOAM
   ninjafoamInput *ninjafoam;
+  nativeSolverInput *nativesolver;
 #endif
   windInput *wind;
   pointInput *point;

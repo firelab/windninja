@@ -79,6 +79,8 @@ public:
     QHBoxLayout *meshResLayout;
     QHBoxLayout *timeZoneLayout;
     QVBoxLayout *mainLayout;
+    
+    QLabel *ninjafoamConflictLabel;
 signals:
     void writeToMainConsole(QString message);
 

@@ -32,10 +32,9 @@ class ninjafoamInput : public QWidget
   
   ninjafoamInput(QWidget *parent = 0);
   QGroupBox *ninjafoamGroupBox;
-  QGroupBox *ninjafoamBcGroupBox;
   QVBoxLayout *ninjafoamLayout;
-  QVBoxLayout *ninjafoamBcLayout;
   QVBoxLayout *layout;
+  QLabel *ninjafoamLabel;
 
 };
 

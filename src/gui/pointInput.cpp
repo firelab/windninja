@@ -93,9 +93,14 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     pointLayout->addLayout( buttonLayout );
 
     pointGroupBox->setLayout( pointLayout );
+    
+    ninjafoamConflictLabel = new QLabel(tr("The point initialization option is not currently available for the momentum solver.\n"
+        ), this);
+    ninjafoamConflictLabel->setHidden(true);
 
     layout = new QVBoxLayout;
     layout->addWidget( pointGroupBox );
+    layout->addWidget(ninjafoamConflictLabel);
     //layout->addStretch();
 
     setLayout( layout );

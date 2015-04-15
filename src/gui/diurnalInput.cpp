@@ -43,10 +43,15 @@ diurnalInput::diurnalInput(QWidget *parent) : QWidget(parent)
     diurnalGroupBox->setChecked(false);
     diurnalLayout = new QVBoxLayout;
 
+    ninjafoamConflictLabel = new QLabel(tr("The diurnal wind option is not currently available for the momentum solver.\n"
+        ), this);
+    ninjafoamConflictLabel->setHidden(true);
+
     diurnalGroupBox->setLayout(diurnalLayout);
 
     layout = new QVBoxLayout;
     layout->addWidget(diurnalGroupBox);
+    layout->addWidget(ninjafoamConflictLabel);
     layout->addStretch();
     setLayout(layout);
 }

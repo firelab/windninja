@@ -275,11 +275,10 @@ ninja &ninja::operator=(const ninja &rhs)
  */
 bool ninja::simulate_wind()
 {
-
 	checkCancel();
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
-
+	
 	readInputFile();
 	set_position();
 	set_uniVegetation();
@@ -374,7 +373,7 @@ bool ninja::simulate_wind()
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
 	//generate mesh
 	mesh.buildStandardMesh(input);
-
+	
 	u0.allocate(&mesh);		//u is positive toward East
 	v0.allocate(&mesh);		//v is positive toward North
 	w0.allocate(&mesh);		//w is positive up
@@ -5202,16 +5201,16 @@ void ninja::set_MeshCount(int meshCount)
     input.meshCount = meshCount;
 }
 
-void ninja::set_MeshCount(std::string meshChoice)
+void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
-    if(meshChoice == std::string("coarse")){
-        input.meshCount = 1000000;
+    if(meshChoice == WindNinjaInputs::coarse){
+        input.meshCount = 100000;
     }
-    else if(meshChoice == std::string("medium")){
-        input.meshCount = 2000000;
+    else if(meshChoice == WindNinjaInputs::medium){
+        input.meshCount = 500000;
     }
-    else if(meshChoice == std::string("fine")){
-        input.meshCount = 2500000;
+    else if(meshChoice == WindNinjaInputs::fine){
+        input.meshCount = 1e6;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
@@ -5222,26 +5221,20 @@ void ninja::set_NonEqBc(bool flag)
     input.nonEqBc = flag;
 }
 
-WindNinjaInputs::eMeshType ninja::get_eMeshType(std::string meshType)
+WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::string meshChoice)
 {
-    if(meshType == "TBM"){
-        return WindNinjaInputs::TBM;
+    if(meshChoice == "coarse"){
+        return WindNinjaInputs::coarse;
     }
-    else if(meshType == "SHM"){
-        return WindNinjaInputs::SHM;
+    else if(meshChoice == "medium"){
+        return WindNinjaInputs::medium;
+    }
+    else if(meshChoice == "fine"){
+        return WindNinjaInputs::fine;
     }
     else{
         throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
     }
-}
-
-void ninja::set_MeshType(WindNinjaInputs::eMeshType meshType)
-{
-    if( (meshType != WindNinjaInputs::SHM) &&
-        (meshType != WindNinjaInputs::TBM) )
-        throw std::logic_error("Problem with mesh type in ninja::set_MeshType().");
-
-    input.meshType = meshType;
 }
 
 void ninja::set_StlFile(std::string stlFile)

@@ -41,11 +41,16 @@ stabilityInput::stabilityInput(QWidget *parent) : QWidget(parent)
     stabilityGroupBox->setCheckable(true);
     stabilityGroupBox->setChecked(false);
     stabilityLayout = new QVBoxLayout;
+    
+    ninjafoamConflictLabel = new QLabel(tr("The non-neutral stability option is not currently available for the momentum solver.\n"
+        ), this);
+    ninjafoamConflictLabel->setHidden(true);
   
     stabilityGroupBox->setLayout(stabilityLayout);
 
     layout = new QVBoxLayout;
     layout->addWidget(stabilityGroupBox);
+    layout->addWidget(ninjafoamConflictLabel);
     layout->addStretch();
     setLayout(layout);
 }

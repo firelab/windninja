@@ -43,7 +43,9 @@ NinjaFoam::NinjaFoam() : ninja()
     pvalue = "";
     inletoutletvalue = "";
     template_ = "";
-
+    
+    firstCellHeight1 = -1.0;
+    latestTime = 50; //endTime in moveDynamicMesh
 }
 
 /**
@@ -82,9 +84,9 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
 	#endif
-    
+
     checkCancel();
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
     readInputFile();
@@ -92,11 +94,11 @@ bool NinjaFoam::simulate_wind()
     set_uniVegetation();
 
     checkInputs();
-    
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
-    
+
     checkCancel();
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -105,31 +107,43 @@ bool NinjaFoam::simulate_wind()
     /*  write OpenFOAM files                    */
     /*------------------------------------------*/
 
+    CPLDebug("NINJAFOAM", "meshCount = %d", input.meshCount);
     CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
+    CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
     CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
-    
+    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
+
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
 	#endif
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
     int status;
-    
+
     status = GenerateTempDirectory();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error generating the NINJAFOAM directory.");
+        return NINJA_E_OTHER;
     }
-    
+
+    //writes *most* of the foam files, but not all can be written at this point
     status = WriteFoamFiles();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during WriteFoamFiles().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
+    //write controlDict for flow solution--this will get modified during moveDynamicMesh
+    const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
+    const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    CopyFile(pszInput, pszOutput);
+
     checkCancel();
 
     /*-------------------------------------------------------------------*/
@@ -139,7 +153,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     startStlConversion = omp_get_wtime();
 	#endif
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
     const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
@@ -160,270 +174,266 @@ bool NinjaFoam::simulate_wind()
                         NULL);
 
     if(eErr != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while converting DEM to STL format.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     checkCancel();
-    
+
     if(input.stlFile != "!set"){
         status = ReadStl();
-        
         if(status != 0){
-        //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReadStl().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
 
-    
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
-    
+
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving into NINJFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
     status = SurfaceTransformPoints();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
     status = SurfaceCheck();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     //move back to ninja working directory
     status = chdir("../");
     if(status != 0){
-        //do something
-    } 
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving out of NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
+    }
 
     checkCancel();
-    
+
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
 	#endif
 	
+    if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
+        return true;
+    }
+
+
 	/*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
-	
-    CPLDebug("NINJAFOAM", "input.meshType = %d", input.meshType);
-    
-    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
-        status = writeTerrainBlockMesh();
-        if(status != 0){
-            //do something
-        }
+
+    //reads from log.json created from surfaceCheck if DEM not available
+    status = writeBlockMesh();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlcokMesh().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    else{ //use snappyHexMesh 
-        //reads from log.json created from surfaceCheck
-        status = writeBlockMesh();
-        if(status != 0){
-            //do something
-        }
-    
-        status = writeSnappyMesh();
-        if(status != 0){
-            //do something
-        }
+    status = writeMoveDynamicMesh();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeMoveDynamicMesh().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     #ifdef _OPENMP
     endFoamFileWriting = omp_get_wtime();
 	#endif
-    
+	
+    if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 1. Mesh dict files written.");
+        return true;
+    }
+
     /*-------------------------------------------------------------------*/
     /* create the mesh                                                   */
     /*-------------------------------------------------------------------*/
-    VSILFILE *fout; 
     
     //set working directory to pszTempPath
     status = chdir(pszTempPath);
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving into NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     #ifdef _OPENMP
     startMesh = omp_get_wtime();
 	#endif
-	
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-    
-    if(input.meshType == WindNinjaInputs::TBM){ //use terrainBlockMesher
-        status= TerrainBlockMesher();
-        if(status != 0){
+
+    status = MoveDynamicMesh();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during moveDynamicMesh().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
+    }
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
+    status = RenumberMesh();
+    if(status != 0){
         //do something
-        }
     }
-    else{ // use snappyHexMesh
-        status = BlockMesh();
-        if(status != 0){
-            //do something
-        }
-    
-        if(input.numberCPUs > 1){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
-            fout = VSIFOpenL("logMesh", "w");
-            status = DecomposePar(fout);
-            if(status != 0){
-            //do something
-            }
-        }
-    
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running snappyHexMesh...");
-        status = SnappyHexMesh();
-        if(status != 0){
-            //do something
-        }
-    
-        if(input.numberCPUs > 1){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-            fout = VSIFOpenL("logMesh", "w");
-            status = ReconstructParMesh("-constant", fout);
-            if(status != 0){
-                //do something
-            }
-        }
-    
-        if(input.numberCPUs > 1){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
-            status = RenumberMesh();
-            if(status != 0){
-                //do something
-            }
-        }
-    
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
-        status = CheckMesh();
-        if(status != 0){
-            //do something
-        }
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
+    status = CheckMesh();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during checkMesh().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
+    if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 2){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 2. Mesh written.");
+        return true;
+    }
+
     /*-------------------------------------------------------------------*/
     /* Apply initial and boundary conditions                             */
     /*-------------------------------------------------------------------*/
-    
     
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
 	#endif
-	
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during applyInit().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
-    
+
+
     /*-------------------------------------------------------------------*/
     /* Solve for the flow field                                          */
     /*-------------------------------------------------------------------*/
-    
+
+    VSILFILE *fout;
+
     #ifdef _OPENMP
     endInit = omp_get_wtime();
     startSolve = omp_get_wtime();
 	#endif
-	
+
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-        fout = VSIFOpenL("log", "w" );
-        status = DecomposePar(fout);
+        status = DecomposePar();
         if(status != 0){
-            //do something
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
-    
+
     checkCancel();
-    
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     status = SimpleFoam();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Try a finer resolution mesh.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-        fout = VSIFOpenL("log", "w");
-        status = ReconstructPar("-latestTime", fout);
+        status = ReconstructPar("-latestTime");
         if(status != 0){
-            //do something
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReconstructPar(). Check that number of iterations is a multiple of 100.");
-            return false;
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
         }
     }
-    
+
     /*-------------------------------------------------------------------*/
     /* Sample at requested output height                                 */
     /*-------------------------------------------------------------------*/
-    
+
     #ifdef _OPENMP
     endSolve = omp_get_wtime();
     startOutputSampling = omp_get_wtime();
 	#endif
-	
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
     status = Sample();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while sampling the output.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     #ifdef _OPENMP
     endOutputSampling = omp_get_wtime();
 	#endif
-    
+
     //move back to ninja working directory
     status = chdir("../");
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while moving out of NINJAFOAM directory.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
     }
-    
+
     /*----------------------------------------*/
     /*  write output files                    */
     /*----------------------------------------*/
-    
+
     #ifdef _OPENMP
     startWriteOut = omp_get_wtime();
     #endif
-	
+
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
-    
+
 	status = WriteOutputFiles();
-    if(status != 1){
+    if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
-        return false;
+        return NINJA_E_OTHER;
     }
-    
+
     #ifdef _OPENMP
     endWriteOut = omp_get_wtime();
     endTotal = omp_get_wtime();
 	#endif
-	
+
     /*----------------------------------------*/
     /*  wrap up                              */
     /*----------------------------------------*/
-    
+
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL converstion time was %lf seconds.", endStlConversion-startStlConversion);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output sampling time was %lf seconds.", endOutputSampling-startOutputSampling);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-	#endif 
+	#endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
-    
-    //VSIUnlink(pszTempPath);
-    
+
     if(!input.keepOutGridsInMemory)
 	{
         AngleGrid.deallocate();
@@ -439,7 +449,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     const char *pszTemplateFile;
     const char *pszPathToFile;
     const char *pszTemplate;
-    
+
     if(template_ == ""){
         if(gammavalue != ""){
             pszTemplate = CPLStrdup("genericTypeVal.tmp");
@@ -455,13 +465,13 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
         pszTemplate = CPLStrdup(template_.c_str());
     }
 
-    pszPathToFile = CPLSPrintf("ninjafoam.zip/ninjafoam/0/%s", pszTemplate); 
+    pszPathToFile = CPLSPrintf("ninjafoam.zip/ninjafoam/0/%s", pszTemplate);
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
 
     char *data;
     VSILFILE *fin;
     fin = VSIFOpenL( pszTemplateFile, "r" );
-    
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -470,9 +480,9 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in the template file
     data[offset] = '\0';
-    
+
     std::string s(data);
-    
+
     ReplaceKeys(s, "$boundary_name$", boundary_name);
     ReplaceKeys(s, "$type$", type);
     ReplaceKeys(s, "$value$", value);
@@ -483,33 +493,24 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
-    //ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(0.03));
-    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)));
-    ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)));
-    //ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>(0.0));
+    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
+    ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
-    
-    //CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(0.03).c_str());
-    //CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(0.0).c_str());
-    CPLDebug("NINJAFOAM", "z0 = %s", boost::lexical_cast<std::string>(input.surface.Roughness(0,0)).c_str());
-    CPLDebug("NINJAFOAM", "Rd = %s", boost::lexical_cast<std::string>(input.surface.Rough_d(0,0)).c_str());
-    CPLDebug("NINJAFOAM", "U_freestream = %s", boost::lexical_cast<std::string>(input.inputSpeed).c_str());
-    CPLDebug("NINJAFOAM", "Input wind height = %s", boost::lexical_cast<std::string>(input.inputWindHeight).c_str());
-    
+
     dataString.append(s);
-    
+
     CPLFree(data);
     VSIFCloseL(fin);
-    
+
     return NINJA_SUCCESS;
-    
+
 }
 
 int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
     int pos;
     char *data;
-        
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -518,7 +519,7 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
-        
+
     // write to first dictionary value
     std::string dataString;
     std::string s(data);
@@ -527,37 +528,35 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(pos);
         dataString.append(s);
     }
-         
+
     // add boundary field values from .tmp files
     if(std::string(pszFilename) == "p"){
         WritePBoundaryField(dataString);
     }
-    
+
     if(std::string(pszFilename) == "U"){
         WriteUBoundaryField(dataString);
     }
-      
+
     if(std::string(pszFilename) == "k"){
         WriteKBoundaryField(dataString);
     }
-      
+
     if(std::string(pszFilename) == "epsilon"){
         WriteEpsilonBoundaryField(dataString);
     }
-    
-    // writing remaining fields from template file 
+
+    // writing remaining fields from template file
     s = data;
     pos = s.find("$boundaryField$");
     int len = std::string("$boundaryField$").length();
     if(pos != s.npos){
         s.erase(0, pos+len);
     }
-    
+
     ReplaceKeys(s, "$terrainName$", "patch0"); //binary stl file
     //ReplaceKeys(s, "$terrainName$", terrainName); //ascii stl file
-    
-    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
-    
+
     if(input.nonEqBc == 0){
         if(std::string(pszFilename) == "epsilon"){
             ReplaceKeys(s, "$wallFunction$", "epsilonWallFunction");
@@ -574,28 +573,28 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
             ReplaceKeys(s, "$wallFunction$", "nutNonEquiWallFunction");
         }
     }
-        
+
     dataString.append(s);
-        
+
     const char * d = dataString.c_str();
     int nSize = strlen(d);
-        
+
     VSIFWriteL( d, nSize, 1, fout );
-        
+
     CPLFree(data);
-    
+
     VSIFCloseL( fin ); // reopened for each file in writeFoamFiles()
     VSIFCloseL( fout ); // reopened for each file in writeFoamFiles()
-        
+
     return NINJA_SUCCESS;
 }
 
 int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
     int pos;
-    int len; 
+    int len;
     char *data;
-        
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -604,9 +603,9 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
-    
+
     std::string s(data);
-    
+
     if(std::string(pszFilename) == "decomposeParDict"){
         ReplaceKeys(s, "$nProc$", boost::lexical_cast<std::string>(input.numberCPUs));
         const char * d = s.c_str();
@@ -621,7 +620,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
-    else if(std::string(pszFilename) == "controlDict"){
+    else if(std::string(pszFilename) == "controlDict_simpleFoam"){
         #ifdef WIN32
         ReplaceKeys(s, "$lib$", "libWindNinja");
         #else
@@ -635,12 +634,12 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
     else{
         VSIFWriteL(data, offset, 1, fout);
     }
-        
+
     CPLFree(data);
-    
+
     VSIFCloseL(fin); // reopened for each file in writeFoamFiles()
     VSIFCloseL(fout); // reopened for each file in writeFoamFiles()
-        
+
     return NINJA_SUCCESS;
 }
 
@@ -648,7 +647,7 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
 {
     int pos;
     char *data;
-        
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -657,14 +656,14 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin); //read in full template file
     data[offset] = '\0';
-    
+
     VSIFWriteL(data, offset, 1, fout);
-        
+
     CPLFree(data);
-    
+
     VSIFCloseL(fin); // reopened for each file in writeFoamFiles()
     VSIFCloseL(fout); // reopened for each file in writeFoamFiles()
-        
+
     return NINJA_SUCCESS;
 }
 
@@ -695,14 +694,13 @@ int NinjaFoam::WriteFoamFiles()
     //write temporary OpenFOAM files
     VSILFILE *fin;
     VSILFILE *fout;
-    
+
     for(int i = 0; i < CSLCount( papszFileList ); i++){
         osFullPath = papszFileList[i];
         pszFilename = CPLGetFilename(papszFileList[i]);
-        if(std::string(pszFilename) != "" && 
+        if(std::string(pszFilename) != "" &&
            std::string(CPLGetExtension(pszFilename)) != "tmp" &&
-           std::string(pszFilename) != "snappyHexMeshDict_cast" &&
-           std::string(pszFilename) != "snappyHexMeshDict_layer"){
+           std::string(pszFilename) != "pointDisplacement"){
             pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
             pszArchive = CPLSPrintf("%s/ninjafoam.zip/ninjafoam", pszPath);
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
@@ -710,7 +708,7 @@ int NinjaFoam::WriteFoamFiles()
 
             fin = VSIFOpenL( pszInput, "r" );
             fout = VSIFOpenL( pszOutput, "w" );
-            
+
             if( osFullPath.find("0") == 0){
                 WriteZeroFiles(fin, fout, pszFilename);
             }
@@ -779,12 +777,12 @@ void NinjaFoam::SetInlets()
 void NinjaFoam::ComputeDirection()
 {
     double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
-    
+
     d = input.inputDirection - 180; //convert wind direction from --> wind direction to
     if(d < 0){
         d += 360;
     }
-    
+
     if(d > 0 && d < 90){ //quadrant 1
         d1 = d;
         d2 = 90 - d;
@@ -828,10 +826,10 @@ void NinjaFoam::ComputeDirection()
         dx = -1;
         dy = 0;
     }
-    
+
     direction.push_back(dx);
     direction.push_back(dy);
-    direction.push_back(0); 
+    direction.push_back(0);
 }
 
 int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
@@ -863,7 +861,7 @@ int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
             //do something
         }
     }
-        
+
     return NINJA_SUCCESS;
 }
 
@@ -897,7 +895,7 @@ int NinjaFoam::WriteKBoundaryField(std::string &dataString)
             //do something
         }
     }
-        
+
     return NINJA_SUCCESS;
 }
 
@@ -930,7 +928,7 @@ int NinjaFoam::WritePBoundaryField(std::string &dataString)
             //do something
         }
     }
-        
+
     return NINJA_SUCCESS;
 }
 
@@ -962,21 +960,21 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
             //do something
         }
     }
-        
+
     return NINJA_SUCCESS;
 }
 
 int NinjaFoam::readLogFile(int &ratio_)
 {
     const char *pszInput;
-    
+
     pszInput = CPLFormFilename(pszTempPath, "log", "json");
-    
+
     VSILFILE *fin;
     fin = VSIFOpenL( pszInput, "r" );
-    
+
     char *data;
-    
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -985,11 +983,11 @@ int NinjaFoam::readLogFile(int &ratio_)
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
-    
+
     std::string s(data);
     std:string ss;
-    int pos, pos2, pos3, pos4, pos5; 
-    int found; 
+    int pos, pos2, pos3, pos4, pos5;
+    int found;
     pos = s.find("Bounding Box");
     if(pos != s.npos){
         pos2 = s.find("(", pos);
@@ -1001,143 +999,129 @@ int NinjaFoam::readLogFile(int &ratio_)
         ss.append(s.substr(pos4+1, pos5-pos4-1));// xmin ymin zmin xmax ymax zmax
         found = ss.find(" ");
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(0, found).c_str())); // xmin
-            bbox.push_back(atof(ss.substr(found).c_str())); // ymin
+            bbox.push_back(atof(ss.substr(0, found).c_str()) + 100); // xmin
+            bbox.push_back(atof(ss.substr(found).c_str()) + 100); // ymin
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // zmin
+            bbox.push_back(atof(ss.substr(found).c_str()) + 50); // zmin (should be above highest point in DEM)
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // xmax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // xmax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str())); // ymax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // ymax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) + 3000); // zmax
-            bbox.push_back(atof(ss.substr(found).c_str()) + 1000); // zmid
+            bbox.push_back(atof(ss.substr(found).c_str()) + 5000); // zmax
+            bbox.push_back(atof(ss.substr(found).c_str()) + 2500); // zmid
         }
     }
     else{
         cout<<"Bounding Box not found in log.json!"<<endl;
         return NINJA_E_FILE_IO;
     }
-    
+
     double volume1, volume2;
     double cellCount1, cellCount2;
     double cellVolume1, cellVolume2;
     double side2;
     double firstCellHeight2;
     double expansionRatio;
-    
+
     volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
     volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
-    
+
     cellCount1 = input.meshCount * 0.5; // cell count in volume 1
     cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
-    
+
     cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
     cellVolume2 = volume2/cellCount2; // volume of 1 cell in zone2
-    
+
     side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
     side2 = std::pow(cellVolume2, (1.0/3.0)); // length of side of regular hex cell in zone2
-    
+
     nCells.push_back(int( (bbox[3] - bbox[0]) / side1)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side1)); // Ny1
     nCells.push_back(int( (bbox[6] - bbox[2]) / side1)); // Nz1
-    
+
     nCells.push_back(nCells[0]); // Nx2 = Nx1;
     nCells.push_back(nCells[1]); // Ny2 = Ny1;
-    
+
     expansionRatio = 1.13; // expansion ratio in zone2
-    
+
     firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio;
     nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
     ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
     expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
-    
+
     CPLFree(data);
     VSIFCloseL(fin);
-    
+
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::writeTerrainBlockMesh()
+int NinjaFoam::readDem(int &ratio_)
 {
-    const char *pszInput;
-    const char *pszOutput;
-    const char *pszPath;
-    const char *pszArchive;
-    
-    int ratio_;
-    
-    int status;
-    status = readLogFile(ratio_);
-    if(status != 0){
-        //do something
-    }
-    
-    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
-    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
-    
-    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/terrainBlockMesherDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/terrainBlockMesherDict", "");
-    
-    VSILFILE *fin;
-    VSILFILE *fout;
-    
-    fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
+    bbox.push_back( input.dem.get_xllCorner() + 100.0); //xmin (+/- 100 is a buffer for MDM)
+    bbox.push_back( input.dem.get_yllCorner() + 100.0); //ymin
+    bbox.push_back( input.dem.get_maxValue() + 50.0); //zmin (should be above highest point in DEM for MDM)
+    bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100.0); //xmax
+    bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100.0); //ymax
+    bbox.push_back( input.dem.get_maxValue() + 5000.0); //zmax
+    bbox.push_back( input.dem.get_maxValue() + 2500.0); //zmid
 
-    char *data;
-    
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
+    double volume1, volume2;
+    double cellCount1, cellCount2;
+    double cellVolume1, cellVolume2;
+    double side2;
+    double firstCellHeight2;
+    double expansionRatio;
 
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
+    volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
+    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
+
+    cellCount1 = input.meshCount * 0.5; // cell count in volume 1
+    cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
+
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
+    cellVolume2 = volume2/cellCount2; // volume of 1 cell in zone2
+
+    side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    side2 = std::pow(cellVolume2, (1.0/3.0)); // length of side of regular hex cell in zone2
+
+    nCells.push_back(int( (bbox[3] - bbox[0]) / side1)); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / side1)); // Ny1
+    nCells.push_back(int( (bbox[6] - bbox[2]) / side1)); // Nz1
+
+    nCells.push_back(nCells[0]); // Nx2 = Nx1;
+    nCells.push_back(nCells[1]); // Ny2 = Ny1;
+
+    expansionRatio = 1.13; // expansion ratio in zone2
+
+    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio; //first layer in zone2
+    nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
+    ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
+    expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
     
-    std::string s(data);
-    int pos; 
-    int len;
-    
-    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
-    
-    ReplaceKeys(s, "$llx$", boost::lexical_cast<std::string>(bbox[0]));
-    ReplaceKeys(s, "$lly$", boost::lexical_cast<std::string>(bbox[1]));
-    ReplaceKeys(s, "$llz$", boost::lexical_cast<std::string>(input.dem.get_cellValue(0,0)));
-    ReplaceKeys(s, "$xLength$", boost::lexical_cast<std::string>(bbox[3] - bbox[0]));
-    ReplaceKeys(s, "$yLength$", boost::lexical_cast<std::string>(bbox[4] - bbox[1]));
-    ReplaceKeys(s, "$zLength$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 3000));
-    
-    double xCenter = 0;
-    double yCenter = 0;
-    
-    input.dem.get_gridCenter(&xCenter, &yCenter);
-    
-    ReplaceKeys(s, "$x_pAbove$", boost::lexical_cast<std::string>(xCenter));
-    ReplaceKeys(s, "$y_pAbove$", boost::lexical_cast<std::string>(yCenter));
-    ReplaceKeys(s, "$z_pAbove$", boost::lexical_cast<std::string>(input.dem.get_maxValue() + 1000));
-    
-    const char * d = s.c_str();
-    int nSize = strlen(d);
-    VSIFWriteL(d, nSize, 1, fout);
-    
-    //cout<<"d = "<<d<<endl;
+    CPLDebug("NINJAFOAM", "firstCellHeight2 = %f", firstCellHeight2);
         
-    CPLFree(data);
-    VSIFCloseL(fin); 
-    VSIFCloseL(fout); 
+    CPLDebug("NINJAFOAM", "side1 = %f", side1);
+    CPLDebug("NINJAFOAM", "side2 = %f", side2);
+    
+    CPLDebug("NINJAFOAM", "Nx1 = %d", nCells[0]);
+    CPLDebug("NINJAFOAM", "Ny1 = %d", nCells[1]);
+    CPLDebug("NINJAFOAM", "Nz1 = %d", nCells[2]);
+    CPLDebug("NINJAFOAM", "Nx2 = %d", nCells[3]);
+    CPLDebug("NINJAFOAM", "Ny2 = %d", nCells[4]);
+    CPLDebug("NINJAFOAM", "Nz2 = %d", nCells[5]);
+    
+    firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
     
     return NINJA_SUCCESS;
-
 }
 
 int NinjaFoam::writeBlockMesh()
@@ -1147,27 +1131,35 @@ int NinjaFoam::writeBlockMesh()
     const char *pszPath;
     const char *pszArchive;
     int ratio_;
-    
     int status;
-    status = readLogFile(ratio_);
-    if(status != 0){
-        //do something
+
+    if(input.stlFile != "!set"){ //if an STL file was supplied and we don't have a DEM
+        status = readLogFile(ratio_);
+        if(status != 0){
+            //do something
+        }
     }
-    
+    else{
+        status = readDem(ratio_);
+        if(status != 0){
+            //do something
+        }
+    }
+
     pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
     pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
-    
+
     pszInput = CPLFormFilename(pszArchive, "ninjafoam/constant/polyMesh/blockMeshDict", "");
     pszOutput = CPLFormFilename(pszTempPath, "constant/polyMesh/blockMeshDict", "");
-    
+
     VSILFILE *fin;
     VSILFILE *fout;
-    
+
     fin = VSIFOpenL( pszInput, "r" );
     fout = VSIFOpenL( pszOutput, "w" );
 
     char *data;
-    
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -1176,11 +1168,11 @@ int NinjaFoam::writeBlockMesh()
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
-    
+
     std::string s(data);
-    int pos; 
+    int pos;
     int len;
-    
+
     bboxField.push_back("$xmin$");
     bboxField.push_back("$ymin$");
     bboxField.push_back("$zmin$");
@@ -1188,14 +1180,14 @@ int NinjaFoam::writeBlockMesh()
     bboxField.push_back("$ymax$");
     bboxField.push_back("$zmax$");
     bboxField.push_back("$zmid$");
-    
+
     cellField.push_back("$Nx1$");
     cellField.push_back("$Ny1$");
     cellField.push_back("$Nz1$");
     cellField.push_back("$Nx2$");
     cellField.push_back("$Ny2$");
     cellField.push_back("$Nz2$");
-    
+
     for(int i = 0; i<bbox.size(); i++){
         pos = s.find(bboxField[i]);
         len = std::string(bboxField[i]).length();
@@ -1216,59 +1208,41 @@ int NinjaFoam::writeBlockMesh()
             len = std::string(cellField[i]).length();
         }
     }
-    
+
     ReplaceKeys(s, "$Ratio$", boost::lexical_cast<std::string>(ratio_));
-    
+
     const char * d = s.c_str();
     int nSize = strlen(d);
     VSIFWriteL(d, nSize, 1, fout);
-        
+
     CPLFree(data);
-    VSIFCloseL(fin); 
-    VSIFCloseL(fout); 
-    
+    VSIFCloseL(fin);
+    VSIFCloseL(fout);
+
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::writeSnappyMesh()
+int NinjaFoam::writeMoveDynamicMesh()
 {
-    int lx, ly, lz;
-    double expansionRatio;
-    double final_;
-    double first;
-    int nLayers;
-    
-    lx = int((bbox[0] + bbox[3]) * 0.5);
-    ly = int((bbox[1] + bbox[4]) * 0.5);
-    lz = int((bbox[6]));
-    expansionRatio = 1.4;
-    final_ = side1/expansionRatio;
-    first = 4.0;
-    nLayers = int((log(final_/first) / log(expansionRatio)) + 1 + 1);
-    
-    const char *pszInput;
-    const char *pszOutput;
-    const char *pszPath;
-    const char *pszArchive;
-    
-    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
-    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
-    
-    //-----------------------------
-    //  write snappyHexMeshDict
-    //-----------------------------
-    
-    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/snappyHexMeshDict_cast", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/snappyHexMeshDict", "");
-    
     VSILFILE *fin;
     VSILFILE *fout;
-    
+
+    const char *pszPath;
+    const char *pszArchive;
+    const char *pszInput;
+    const char *pszOutput;
+
+    pszPath = CPLSPrintf( "/vsizip/%s", CPLGetConfigOption( "WINDNINJA_DATA", NULL ) );
+    pszArchive = CPLSPrintf("%s/ninjafoam.zip", pszPath);
+
+    pszInput = CPLFormFilename(pszArchive, "ninjafoam/0/pointDisplacement", "");
+    pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+
     fin = VSIFOpenL( pszInput, "r" );
     fout = VSIFOpenL( pszOutput, "w" );
 
     char *data;
-    
+
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
     offset = VSIFTellL(fin);
@@ -1277,66 +1251,18 @@ int NinjaFoam::writeSnappyMesh()
     data = (char*)CPLMalloc(offset * sizeof(char) + 1);
     VSIFReadL(data, offset, 1, fin);
     data[offset] = '\0';
-    
+
     std::string s(data);
-    int pos; 
-    int len;
-    
-    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
-    ReplaceKeys(s, "$stlRegionName$", "patch0"); //binary stl files
-    //ReplaceKeys(s, "$stlRegionName$", "NAME"); //ascii stl files
-    ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
-    ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
-    ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
-    ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
-    ReplaceKeys(s, "$expansion_ratio$", CPLSPrintf("%.1lf", expansionRatio));
-    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final_));
-    
+
+    std::string t = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+    ReplaceKeys(s, "$stlName$", t);
     const char * d = s.c_str();
     int nSize = strlen(d);
     VSIFWriteL(d, nSize, 1, fout);
-        
-    CPLFree(data);
-    VSIFCloseL(fin); 
-    VSIFCloseL(fout); 
-    
-    //-----------------------------
-    //  write snappyHexMeshDict1
-    //-----------------------------
-    
-    pszInput = CPLFormFilename(pszArchive, "ninjafoam/system/snappyHexMeshDict_layer", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/snappyHexMeshDict1", "");
-    
-    fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
-    
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
 
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
-    
-    s = data;
-    
-    ReplaceKeys(s, "$stlName$", std::string(CPLGetBasename(input.dem.fileName.c_str())));
-    ReplaceKeys(s, "$stlRegionName$", "patch0"); //binary stl files
-    //ReplaceKeys(s, "$stlRegionName$", "NAME"); //ascii stl files
-    ReplaceKeys(s, "$lx$", boost::lexical_cast<std::string>(lx));
-    ReplaceKeys(s, "$ly$", boost::lexical_cast<std::string>(ly));
-    ReplaceKeys(s, "$lz$", boost::lexical_cast<std::string>(lz));
-    ReplaceKeys(s, "$Nolayers$", boost::lexical_cast<std::string>(nLayers));
-    ReplaceKeys(s, "$expansion_ratio$", boost::lexical_cast<std::string>(expansionRatio));
-    ReplaceKeys(s, "$final$", boost::lexical_cast<std::string>(final_));
-    
-    d = s.c_str();
-    nSize = strlen(d);
-    VSIFWriteL(d, nSize, 1, fout);
-        
     CPLFree(data);
-    VSIFCloseL(fin); 
-    VSIFCloseL(fout); 
+    VSIFCloseL(fin);
+    VSIFCloseL(fout);
     
     return NINJA_SUCCESS;
 }
@@ -1371,397 +1297,465 @@ int NinjaFoam::ReplaceKeys(std::string &s, std::string k, std::string v, int n)
     return rc;
 }
 
+int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput, std::string key, std::string value)
+{
+    VSILFILE *fin;
+    VSILFILE *fout;
+
+    fin = VSIFOpenL( pszInput, "r" );
+
+    char *data;
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+
+    std::string s(data);
+    
+    CPLFree(data);
+    VSIFCloseL(fin);
+    
+    if(key != ""){
+        ReplaceKeys(s, key, value);
+    }
+
+    fout = VSIFOpenL( pszOutput, "w" );
+    
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    
+    VSIFCloseL(fout);
+
+    return NINJA_SUCCESS;
+}
+
 int NinjaFoam::SurfaceTransformPoints()
 {
     int nRet = -1;
-    
-    const char *const papszArgv[] = { "surfaceTransformPoints", 
-                                      "-translate", 
-                                      CPLSPrintf("(0 0 %.0f)", input.outputWindHeight), 
-                                      CPLSPrintf("constant/triSurface/%s.stl", CPLGetBasename(input.dem.fileName.c_str())), 
+
+    const char *const papszArgv[] = { "surfaceTransformPoints",
+                                      "-translate",
+                                      CPLSPrintf("(0 0 %.0f)", input.outputWindHeight),
+                                      CPLSPrintf("constant/triSurface/%s.stl", CPLGetBasename(input.dem.fileName.c_str())),
                                       CPLSPrintf("constant/triSurface/%s_out.stl", CPLGetBasename(input.dem.fileName.c_str())),
                                       NULL };
-    
+
     VSILFILE *fout = VSIFOpenL("surfaceTransformPoints.log", "w");
-    
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //create output surface stl in pszTemppath/constant/triSurface
 
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
 int NinjaFoam::SurfaceCheck()
 {
     int nRet = -1;
-    
-    const char *const papszArgv[] = { "surfaceCheck", 
-                                      CPLSPrintf("constant/triSurface/%s.stl", CPLGetBasename(input.dem.fileName.c_str())), 
+
+    const char *const papszArgv[] = { "surfaceCheck",
+                                      CPLSPrintf("constant/triSurface/%s.stl", CPLGetBasename(input.dem.fileName.c_str())),
                                       NULL };
-                                      
+
     VSILFILE *fout = VSIFOpenL("log.json", "w");
-    
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //writes log.json used in mesh file writing
 
     VSIFCloseL(fout);
+
+    return nRet;
+}
+
+int NinjaFoam::MoveDynamicMesh()
+{
+    int nRet = -1;
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running blockMesh...");
+    nRet = BlockMesh();
+    if(nRet != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during blockMesh().");
+    }
+
+    VSILFILE *fout;
+
+    const char *pszInput;
+    const char *pszOutput;
+    
+    std::string s, ss;
+
+    if(input.numberCPUs > 1){
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel mesh calculations...");
+        nRet = DecomposePar();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
+            return NINJA_E_OTHER;
+        }
+
+        //re-write controlDict for moveDynamicMesh
+        pszInput = CPLFormFilename("system", "controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");
+        CopyFile(pszInput, pszOutput);
+
+#ifdef WIN32
+        const char *const papszArgv[] = { "mpiexec",
+                                      "-env",
+                                      "MPI_BUFFER_SIZE",
+                                      "20000000",
+                                      "-n",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "moveDynamicMesh",
+                                      "-parallel",
+                                       NULL };
+#else
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "moveDynamicMesh",
+                                      "-parallel",
+                                       NULL };
+#endif
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+
+        char data[PIPE_BUFFER_SIZE + 1];
+        int pos, nchar, startPos;
+
+        /* Track progress */
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
+            CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
+            s.append(data);
+
+            /* eventually set up to stop at resid < 1e-6, a little complicated...for now just stop at 100 */
+            /*if(s.find("Initial residual") != s.npos){
+                pos = s.rfind("Initial residual");
+                    if( s.find(',', pos) != s.npos ){ // if not at the end of the string
+                    int nchar = s.find(',', pos) - (pos+19);
+                    std::string resid = s.substr( pos+19, s.find(',', pos)-(pos+19) );
+                    if(atof(resid.c_str()) < 1e-6){
+                        /*
+                         * change endTime = writeNow in system/controlDict
+                         * also need to know what last written time step is since 0/* needs to be copied here after reoncstructPar/
+                         * right now only set to write every 10th time step, so it's not simply latestTime
+                         */
+                        /*input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) 100%% complete...");
+                    }
+                }
+            }*/
+
+            if(s.rfind("GAMG") != s.npos){
+                if(s.rfind("Time = ") != s.npos){
+                    startPos = s.rfind("GAMG", s.npos);
+                    pos = s.rfind("Time = ", startPos);
+                    nchar = s.find('\n', pos) - (pos+7);
+                    ss = s.substr( (pos+7), nchar );
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
+                }
+            }
+        }
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        if(nRet != 0){
+            //do something
+        }
+
+        //re-write controlDict for flow
+        pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");
+        CopyFile(pszInput, pszOutput);
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+        nRet = ReconstructParMesh("-latestTime");
+        if(nRet != 0){
+            //do something
+        }
+    }
+
+    else{ // single processor
+        //re-write controlDict for moveDynamicMesh
+        pszInput = CPLFormFilename("system", "controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");
+        CopyFile(pszInput, pszOutput);
+
+        const char *const papszArgv[] = { "moveDynamicMesh", NULL };
+        
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+
+        char data[PIPE_BUFFER_SIZE + 1];
+        int pos;
+        int nchar, startPos;
+
+        /* Track progress */
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
+            CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
+            s.append(data);
+            if(s.rfind("GAMG") != s.npos){
+                if(s.rfind("Time = ") != s.npos){
+                    startPos = s.rfind("GAMG", s.npos);
+                    pos = s.rfind("Time = ", startPos);
+                    nchar = s.find('\n', pos) - (pos+7);
+                    ss = s.substr( (pos+7), nchar );
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(moveDynamicMesh) %.0f%% complete...", atof(ss.c_str())*2);
+                }
+            }
+        }
+        
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        if(nRet != 0){
+            //do something
+        }
+
+        //re-write controlDict for flow solution
+        pszInput = CPLFormFilename("system", "controlDict_simpleFoam", "");
+        pszOutput = CPLFormFilename("system", "controlDict", "");
+        CopyFile(pszInput, pszOutput);
+    }
+    
+    // write moveDynamicMesh stdout to a log file 
+    fout = VSIFOpenL("log.moveDynamicMesh", "w");
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
+    
+    //refine surface layer in the wall-normal direction
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
+    double finalFirstCellHeight = firstCellHeight1;
+    /*while(finalFirstCellHeight > 5.0){ //refine wall layer until cell height < x m
+        nRet = RefineWallLayer();
+        latestTime += 1;
+        finalFirstCellHeight /= 4.0;
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
+        }
+    }*/
+    
+    CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
+    CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+    
+    /* write firstCellHeight to inlet files */
+    CopyFile("0/U", 
+            "0/U", 
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile("0/k", 
+            "0/k",
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            
+    CopyFile("0/epsilon", 
+            "0/epsilon",
+            "-9999.9", 
+            boost::lexical_cast<std::string>(finalFirstCellHeight));
+    
+    //copy 0/ to latest time    
+    pszInput = CPLFormFilename("0", "U", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "U", "");
+    CopyFile(pszInput, pszOutput);
+
+    pszInput = CPLFormFilename("0", "p", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "p", "");
+    CopyFile(pszInput, pszOutput);
+
+    pszInput = CPLFormFilename("0", "k", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "k", "");
+    CopyFile(pszInput, pszOutput);
+
+    pszInput = CPLFormFilename("0", "epsilon", "");
+    pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "epsilon", "");
+    CopyFile(pszInput, pszOutput);
     
     return nRet;
 }
 
-int NinjaFoam::TerrainBlockMesher()
+int NinjaFoam::RefineWallLayer()
 {
     int nRet = -1;
     
-    const char *const papszArgv[] = { "terrainBlockMesher", NULL };
+    /* 
+     * 0.25 splits near-wall cell into two cells: one is 0.75x and the other
+     * 0.25x the original cell height.
+     * If this value is chagned, edit latestTime dirctory and the calculation for
+     * firstCellHeight.
+     */
     
-    VSILFILE *fout = VSIFOpenL("log.terrainMesher", "w");
+    const char *const papszArgv[] = { "refineWallLayer",  
+                                    "minZ", 
+                                    "0.25", 
+                                    NULL };
+
+    VSILFILE *fout = VSIFOpenL("log.refineWallLayer", "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
-    VSIFCloseL(fout);   
-    
+
+    VSIFCloseL(fout);
+
     return nRet;
 }
 
 int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "blockMesh", NULL };
-    
-    VSILFILE *fout = VSIFOpenL("logMesh", "w");
-    
+
+    VSILFILE *fout = VSIFOpenL("log.blockMesh", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
-int NinjaFoam::DecomposePar(VSILFILE *fout)
+int NinjaFoam::DecomposePar()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "decomposePar", "-force", NULL };
     
+    VSILFILE *fout = VSIFOpenL("log.decomposePar", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
-int NinjaFoam::SnappyHexMesh()
-{    
-    int nRet = -1;
-    
-    if(input.numberCPUs > 1){
-        #ifdef WIN32
-        const char *const papszArgv[] = { "mpiexec", 
-                                      "-env",
-                                      "MPI_BUFFER_SIZE",
-                                      "20000000",
-                                      "-n",
-                                      CPLSPrintf("%d", input.numberCPUs),
-                                      "snappyHexMesh",
-                                      "-overwrite",
-                                      "-parallel",
-                                       NULL };
-        #else
-        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-        const char *const papszArgv[] = { "mpiexec", 
-                                      "-np",
-                                      CPLSPrintf("%d", input.numberCPUs), 
-                                      "snappyHexMesh",
-                                      "-overwrite",
-                                      "-parallel",
-                                       NULL };
-        #endif
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
-        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
-        char data[PIPE_BUFFER_SIZE];
-        int pos;
-        std::string s;
-        
-        /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
-            s.append(data);
-            if(s.find("Morph iteration 8") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
-                break;
-            }
-            else if(s.find("Morph iteration 6") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
-            }
-            else if(s.find("Morph iteration 4") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
-            }
-            else if(s.find("Morph iteration 2") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
-            }
-            else if(s.find("Morph iteration 0") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
-            }
-            else if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
-            }
-            else if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
-            }       
-        }
-        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
-    }
-    else{
-        const char *const papszArgv[] = { "snappyHexMesh",
-                                      "-overwrite",
-                                       NULL };
-                                       
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
-        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
-        char data[PIPE_BUFFER_SIZE];
-        int pos;
-        std::string s;
-        
-        /* find a better way to determine % complete. Are the number of morph iterations fixed? */
-        while(CPLPipeRead(out_child, &data, sizeof(data))){
-            s.append(data);
-            if(s.find("Morph iteration 8") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 60%% complete...");
-                break;
-            }
-            else if(s.find("Morph iteration 6") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 50%% complete...");
-            }
-            else if(s.find("Morph iteration 4") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 40%% complete...");
-            }
-            else if(s.find("Morph iteration 2") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 30%% complete...");
-            }
-            else if(s.find("Morph iteration 0") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 20%% complete...");
-            }
-            else if(s.find("Checking initial mesh") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 10%% complete...");
-            }
-            else if(s.find("Determining initial surface intersections") != s.npos){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 5%% complete...");
-            }         
-        }
-        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
-    }
-    
-    if(nRet != 0){
-        return nRet;
-    }
-    else{
-        VSIUnlink(CPLFormFilename("system", "snappyHexMeshDict", ""));
-      
-        VSILFILE *fin = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict1", ""), "r" );
-        VSILFILE *fout = VSIFOpenL(CPLFormFilename("system", "snappyHexMeshDict", ""), "w" );
-    
-        char *data;
-    
-        vsi_l_offset offset;
-        VSIFSeekL(fin, 0, SEEK_END);
-        offset = VSIFTellL(fin);
-
-        VSIRewindL(fin);
-        data = (char*)CPLMalloc(offset * sizeof(char));
-        VSIFReadL(data, offset, 1, fin);
-        VSIFWriteL(data, offset, 1, fout);
-        
-        CPLFree(data);
-        VSIFCloseL(fin);
-        VSIFCloseL(fout);
-        VSIUnlink(CPLFormFilename("system", "snappyHexMeshDict1", ""));
-        
-        if(input.numberCPUs > 1){
-            #ifdef WIN32
-            const char *const papszArgv2[] = { "mpiexec", 
-                                     "-env",
-                                      "MPI_BUFFER_SIZE",
-                                      "20000000",
-                                      "-n",
-                                      CPLSPrintf("%d", input.numberCPUs), 
-                                      "snappyHexMesh",
-                                      "-overwrite",
-                                      "-parallel",
-                                       NULL };
-            #else
-            CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-            const char *const papszArgv2[] = { "mpiexec", 
-                                      "-np",
-                                      CPLSPrintf("%d", input.numberCPUs), 
-                                      "snappyHexMesh",
-                                      "-overwrite",
-                                      "-parallel",
-                                       NULL };
-            #endif
-        
-            CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
-            CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-            
-            char data[PIPE_BUFFER_SIZE];
-            int pos;
-            std::string s;
-        
-            while(CPLPipeRead(out_child, &data, sizeof(data))){
-                s.append(data);
-                if(s.find("Checking initial mesh") != s.npos){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
-                }
-                else if(s.find("Determining initial surface intersections") != s.npos){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
-                }
-            }
-            nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
-        }
-        else{
-            const char *const papszArgv2[] = { "snappyHexMesh",
-                                           "-overwrite",
-                                            NULL };
-        
-            CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv2, FALSE, TRUE, TRUE, NULL);
-            CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-            
-            char data[PIPE_BUFFER_SIZE];
-            int pos;
-            std::string s;
-            
-            while(CPLPipeRead(out_child, &data, sizeof(data))){
-                s.append(data);
-                if(s.find("Checking initial mesh") != s.npos){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 80%% complete...");
-                }
-                else if(s.find("Determining initial surface intersections") != s.npos){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 70%% complete...");
-                }
-            }
-            nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
-        }
-    }
-    
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(snappyHexMesh) 100%% complete...");
-    
-    return nRet;
-}
-
-int NinjaFoam::ReconstructParMesh(const char *const arg, VSILFILE *fout)
+int NinjaFoam::ReconstructParMesh(const char *const arg)
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "reconstructParMesh", arg, NULL };
     
+    VSILFILE *fout = VSIFOpenL("log.reconstructParMesh", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
-int NinjaFoam::ReconstructPar(const char *const arg, VSILFILE *fout)
+int NinjaFoam::ReconstructPar(const char *const arg)
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "reconstructPar", arg, NULL };
     
+    VSILFILE *fout = VSIFOpenL("log.reconstructPar", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
 int NinjaFoam::RenumberMesh()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "renumberMesh", "-overwrite", NULL };
-    
-    VSILFILE *fout = VSIFOpenL("log", "w");
-    
+
+    VSILFILE *fout = VSIFOpenL("log.renumberMesh", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
 int NinjaFoam::CheckMesh()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "checkMesh", NULL };
-    
+
     VSILFILE *fout = VSIFOpenL("log.checkmesh", "w");
-    
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
 int NinjaFoam::ApplyInit()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "applyInit", NULL };
-    
-    VSILFILE *fout = VSIFOpenL("log", "w");
-    
+
+    VSILFILE *fout = VSIFOpenL("log.applyInit", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
 int NinjaFoam::SimpleFoam()
 {
     int nRet = -1;
-    
+
     char data[PIPE_BUFFER_SIZE + 1];
-    int pos;
+    int pos, startPos;
     std::string s, t;
     double p;
-    
-    
-    if(input.numberCPUs > 1){    
+
+    if(input.numberCPUs > 1){
         #ifdef WIN32
-        const char *const papszArgv[] = { "mpiexec", 
+        const char *const papszArgv[] = { "mpiexec",
                                       "-env",
                                       "MPI_BUFFER_SIZE",
                                       "20000000",
                                       "-n",
-                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      CPLSPrintf("%d", input.numberCPUs),
                                       "simpleFoam",
                                       "-parallel",
                                        NULL };
         #else
         CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-        const char *const papszArgv[] = { "mpiexec", 
+        const char *const papszArgv[] = { "mpiexec",
                                       "-np",
-                                      CPLSPrintf("%d", input.numberCPUs), 
+                                      CPLSPrintf("%d", input.numberCPUs),
                                       "simpleFoam",
                                       "-parallel",
                                        NULL };
         #endif
-        
+
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
+
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             data[sizeof(data)-1] = '\0';
             s.append(data);
-            pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
-                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                p = atof(t.c_str()) / input.nIterations * 100;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+            CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    p = atof(t.c_str()) / input.nIterations * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d", (int)p);
+                }
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
@@ -1769,22 +1763,33 @@ int NinjaFoam::SimpleFoam()
     else{
         const char *const papszArgv[] = { "simpleFoam",
                                        NULL };
-                                       
+
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
-        
+
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             data[sizeof(data)-1] = '\0';
             s.append(data);
-            pos = s.rfind("Time = ");
-            if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){ 
-                t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                p = atof(t.c_str()) / input.nIterations * 100;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+            
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    p = atof(t.c_str()) / input.nIterations * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                }
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
     }
+    
+    // write simpleFoam stdout to a log file 
+    VSILFILE *fout = VSIFOpenL("log.simpleFoam", "w");
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
 
     return nRet;
 }
@@ -1792,15 +1797,15 @@ int NinjaFoam::SimpleFoam()
 int NinjaFoam::Sample()
 {
     int nRet = -1;
-    
+
     const char *const papszArgv[] = { "sample", "-latestTime", NULL };
-    
-    VSILFILE *fout = VSIFOpenL("log", "w");
-    
+
+    VSILFILE *fout = VSIFOpenL("log.sample", "w");
+
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    
+
     VSIFCloseL(fout);
-    
+
     return nRet;
 }
 
@@ -1835,18 +1840,48 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-
     pszMem = CPLSPrintf( "%s/output.raw", pszTempPath );
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
-    pszRaw = CPLSPrintf( "%s/postProcessing/surfaces/%d/" \
-                         "U_triSurfaceSampling.raw", pszTempPath,
-                         input.nIterations );
 
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
+
+    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
+        if(std::string(papszOutputSurfacePath[i]) != "." &&
+           std::string(papszOutputSurfacePath[i]) != "..") {
+            pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
+            break;
+        }
+        else{
+            continue;
+        }
+    }
 
     fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
+    if( !fin )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "reading." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fout )
+    {
+        VSIFClose( fin );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fvrt )
+    {
+        VSIFClose( fin );
+        VSIFClose( fout );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
 
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
@@ -1862,6 +1897,7 @@ int NinjaFoam::SanitizeOutput()
     ** fix the header
     */
     VSIFGets( buf, 512, fin );
+
     s = buf;
     ReplaceKeys( s, "#", "", 1 );
     ReplaceKeys( s, "  ", "", 1 );
@@ -1879,7 +1915,7 @@ int NinjaFoam::SanitizeOutput()
     }
     VSIFClose( fin );
     VSIFCloseL( fout );
-    
+
     return 0;
 }
 
@@ -2153,7 +2189,7 @@ void NinjaFoam::SetOutputFilenames()
 
     std::string pathName;
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-    
+
     pathName = CPLGetPath(input.dem.fileName.c_str());
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
 
@@ -2175,15 +2211,15 @@ void NinjaFoam::SetOutputFilenames()
     os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
     os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
     os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    
+
     double meshResolutionTemp = input.dem.get_cellSize();
     double kmzResolutionTemp = input.kmzResolution;
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
-    
+
     lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
-    
+
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
@@ -2258,16 +2294,27 @@ int NinjaFoam::WriteOutputFiles()
             wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
         }
     }
-    
+
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
     
     /*-------------------------------------------------------------------*/
-    /* set up filenames                                                  */
+    /* prepare output                                                    */
     /*-------------------------------------------------------------------*/
     
+    //Clip off bounding doughnut if desired
+	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+
+	//change windspeed units back to what is specified by speed units switch
+	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+
+    /*-------------------------------------------------------------------*/
+    /* set up filenames                                                  */
+    /*-------------------------------------------------------------------*/
+
     SetOutputFilenames();
-    
+
     /*-------------------------------------------------------------------*/
     /* write output files                                                */
     /*-------------------------------------------------------------------*/
@@ -2449,8 +2496,13 @@ int NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
 	}
-	
-	return true;
+	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
+	if(input.volVTKOutFlag==false)
+    {
+        NinjaUnlinkTree( pszTempPath );
+    }
+
+	return NINJA_SUCCESS;
 }
 
 int NinjaFoam::ReadStl()
@@ -2460,15 +2512,15 @@ int NinjaFoam::ReadStl()
     if(status != 0){
         //do something
     }
-    
+
     VSILFILE *ffin;
     VSILFILE *ffout;
-    
+
     ffin = VSIFOpenL( input.stlFile.c_str(), "r" );
     ffout = VSIFOpenL( ("constant/triSurface/%s", CPLGetFilename(input.stlFile.c_str()) ), "w" );
 
     char *data;
-    
+
     vsi_l_offset offset;
     VSIFSeekL(ffin, 0, SEEK_END);
     offset = VSIFTellL(ffin);
@@ -2476,25 +2528,25 @@ int NinjaFoam::ReadStl()
     VSIRewindL(ffin);
     data = (char*)CPLMalloc(offset * sizeof(char));
     VSIFReadL(data, offset, 1, ffin);
-        
+
     //cout<<"data = "<<data<<endl;
-    
+
     VSIFWriteL(data, offset, 1, ffout);
-        
+
     CPLFree(data);
-    VSIFCloseL(ffin); 
-    VSIFCloseL(ffout); 
-    
+    VSIFCloseL(ffin);
+    VSIFCloseL(ffout);
+
     status = chdir("../");
     if(status != 0){
         //do something
     }
-    
+
     //move back to ninja working directory
     status =  chdir("../");
     if(status != 0){
         //do something
     }
-    
-    return true;
+
+    return NINJA_SUCCESS;
 }

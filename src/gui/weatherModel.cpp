@@ -141,10 +141,15 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
     weatherLayout->addLayout(loadLayout);
+    
+    ninjafoamConflictLabel = new QLabel(tr("The weather model initialization option is not currently available for the\n"
+        "momentum solver."), this);
+    ninjafoamConflictLabel->setHidden(true);
 
     weatherGroupBox->setLayout( weatherLayout );
 
     layout = new QVBoxLayout;
+    layout->addWidget(ninjafoamConflictLabel);
     layout->addWidget( weatherGroupBox );
     setLayout(layout);
 

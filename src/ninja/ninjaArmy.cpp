@@ -264,6 +264,83 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 }
 
 /**
+* @brief Function to start WindNinja NinjaFoam runs.
+*
+* @param numProcessors Number of processors for OpenFOAM use.
+* @return True if runs complete properly.
+*/
+#ifdef NINJAFOAM
+bool ninjaArmy::startNinjaFoamRuns(int numProcessors)
+{
+    bool status = true;
+
+    if(ninjas.size()<1 || numProcessors<1)
+        return false;
+
+    setAtmFlags();
+
+    for( int i = 0; i < ninjas.size(); i++ )
+    {
+        ninjas[i]->set_numberCPUs(numProcessors);
+        
+        try
+        {                
+            //start the run
+            ninjas[i]->simulate_wind();	
+
+        }catch (bad_alloc& e)
+        {
+            throw;
+        }catch (logic_error& e)
+        {
+            throw;
+        }catch (cancelledByUser& e)
+        {
+            throw;
+        }catch (badForecastFile& e)
+        {
+            throw;
+        }catch (exception& e)
+        {
+            throw;
+        }catch (...)
+        {
+            throw;
+        }
+    }
+    try{
+        //write farsite atmosphere file
+        if(writeFarsiteAtmFile)
+            writeFarsiteAtmosphereFile();
+
+    }catch (bad_alloc& e)
+    {
+        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+        std::cout << "WindNinja appears to have run out of memory." << endl;
+        status = false;
+        throw;
+    }catch (cancelledByUser& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
+    }catch (exception& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
+    }catch (...)
+    {
+        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        status = false;
+        throw;
+    }
+
+    return status;
+}
+#endif //NINJAFOAM
+
+/**
 * @brief Function to start WindNinja core runs using multiple threads.
 *
 * @param numProcessors Number of processors to use.
@@ -492,7 +569,6 @@ bool ninjaArmy::startRuns(int numProcessors)
             status = false;
             throw;
         }
-
     }
 
     return status;
@@ -662,11 +738,22 @@ void ninjaArmy::setAtmFlags()
     }
 }
 
-void ninjaArmy::setSize( int nSize )
+void ninjaArmy::setSize( int nSize, bool momentumFlag )
 {
+    int i;
+    for( i=0; i < ninjas.size();i ++) 
+        delete ninjas[i];
     ninjas.resize( nSize );
-    for( int i = 0; i < nSize; i++ )
+    for( i = 0; i < nSize; i++ ){
+#ifdef NINJAFOAM
+        if(momentumFlag)
+            ninjas[i] = new NinjaFoam();
+        else
+            ninjas[i] = new ninja();
+#else
         ninjas[i] = new ninja();
+#endif
+    }
 }
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
@@ -821,17 +908,12 @@ int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** paps
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-int ninjaArmy::setMeshCount( const int nIndex, const std::string meshChoice, char ** papszOptions )
+int ninjaArmy::setMeshCount( const int nIndex, 
+                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+                             char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
 }
-int ninjaArmy::setMeshType( const int nIndex, 
-                            const WindNinjaInputs::eMeshType meshType, 
-                            char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshType( meshType ) );
-}
-
 int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );

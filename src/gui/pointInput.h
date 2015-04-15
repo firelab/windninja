@@ -92,6 +92,7 @@ class pointInput : public QWidget
     QHBoxLayout *buttonLayout;
     QVBoxLayout *pointLayout;
     QVBoxLayout *layout;
+    QLabel *ninjafoamConflictLabel;
 
     pointDataModel pointData;
 

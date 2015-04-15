@@ -1,5 +1,5 @@
-#ifndef STABILITYINPUT_H
-#define STABILITYINPUT_H
+#ifndef NATIVESOLVERINPUT_H
+#define NATIVESOLVERINPUT_H
 
 #include <QGroupBox>
 #include <QComboBox>
@@ -24,18 +24,19 @@
 
 #include "qdebug.h"
 
-class stabilityInput : public QWidget
+class nativeSolverInput : public QWidget
 {
   Q_OBJECT
 
  public:
   
-  stabilityInput(QWidget *parent = 0);
-  QGroupBox *stabilityGroupBox;
-  QVBoxLayout *stabilityLayout;
+  nativeSolverInput(QWidget *parent = 0);
+  QGroupBox *nativeSolverGroupBox;
+  QVBoxLayout *nativeSolverLayout;
   QVBoxLayout *layout;
-  QLabel *ninjafoamConflictLabel;
+  QLabel *nativeSolverLabel;
+  
 
 };
 
-#endif /* STABILITYINPUT_H */
+#endif /* NATIVESOLVERINPUT_H */
