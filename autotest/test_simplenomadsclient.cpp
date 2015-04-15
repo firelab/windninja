@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
         rc = CheckZip( pszVsiPath );
         BOOST_CHECK( rc >= n - 1 );
         rc = CheckBands( pszVsiPath );
-        if( EQUAL( pszKey, "rtma_conus" ) )
+        if( EQUALN( pszKey, "rtma", 4 ) && !EQUAL( pszKey, "rtma_conus" ) )
             BOOST_CHECK_EQUAL( rc, 3 );
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );

@@ -429,6 +429,7 @@ static double NomadsGetMinSize( const char **ppszModel )
 **                       possibly goes around dns lookup, but it's doubtfull.
 **        NOMADS_ENABLE_ASYNC: Allow for asynchronous connections to the
 **                             server.
+**        NOMADS_RTMA : Enable the RTMA forecasts.
 **        NOMADS_EXPER_FORECASTS: Compile in forecasts that may not work with
 **                                the current configuration, essentially
 **                                unsupported (ie NARRE, RTMA).
@@ -594,8 +595,12 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     {
         nMaxFcstRewind = 2;
     }
-    /* Go back at least 3 for rap, as it may not get updated all the time. */
-    if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) )
+    /*
+    ** Go back at least 3 for rap, hrrr, and rtma, as it may not get updated all
+    ** the time.
+    */
+    if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) ||
+        EQUALN( pszModelKey, "rtma", 4 ) )
     {
         nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
     }
@@ -626,7 +631,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
                   NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
 
-        if( EQUAL( pszModelKey, "rtma_conus" ) )
+        if( EQUALN( pszModelKey, "rtma", 4 ) )
         {
             panRunHours = (int*)CPLMalloc( sizeof( int ) );
             nFilesToGet = 1;
