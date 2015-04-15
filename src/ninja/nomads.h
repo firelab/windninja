@@ -1,7 +1,5 @@
 /******************************************************************************
  *
- * $Id$
- *
  * Project:  WindNinja
  * Purpose:  Nomads C client
  * Author:   Kyle Shannon <kyle at pobox dot com>
@@ -351,7 +349,19 @@ static const char *apszNomadsKeys[][11] =
       "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
-    /* XXX: Alaska RTMA */
+    /* Alaska RTMA */
+    {
+      "rtma_ak",
+      "filter_akrtma.pl",
+      "akrtma.t%02dz.2dvaranl_ndfd.grb2",
+      "akrtma.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:0:1",
+      "TMP,UGRD,VGRD",
+      "10_m_above_ground,2_m_above_ground",
+      "2.5 km",
+      "RTMA ALASKA" },
 #endif /* NOMADS_EXPER_FORECASTS */
 #ifdef NOMADS_RTMA
     /*
