@@ -1541,6 +1541,7 @@ int NinjaFoam::MoveDynamicMesh()
     /*now refine the mesh near the ground */
     //write topoSetDict
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
+    double finalFirstCellHeight = firstCellHeight1;
     CopyFile("system/topoSetDict", 
             "system/topoSetDict",
             "$terrain$", 
@@ -1548,29 +1549,58 @@ int NinjaFoam::MoveDynamicMesh()
     CopyFile("system/topoSetDict", 
             "system/topoSetDict",
             "$xout$", 
-            boost::lexical_cast<std::string>(bbox[0] + 10));
+            CPLSPrintf("%.2f", (bbox[0] + 10)));
     CopyFile("system/topoSetDict", 
             "system/topoSetDict",
             "$yout$", 
-            boost::lexical_cast<std::string>(bbox[1] + 10));
+            CPLSPrintf("%.2f", (bbox[1] + 10)));
     CopyFile("system/topoSetDict", 
             "system/topoSetDict",
             "$zout$", 
-            boost::lexical_cast<std::string>(bbox[5] - 10));
+            CPLSPrintf("%.2f", (bbox[5] - 10)));
+    CopyFile("system/topoSetDict", 
+            "system/topoSetDict",
+            "$nearDistance$", 
+            CPLSPrintf("%.2f", finalFirstCellHeight));
     
-    double finalFirstCellHeight = firstCellHeight1;
-
-    nRet = TopoSet();
-    if(nRet != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
-    }
+    double pDone = 0.0;
+    double oldFirstCellHeight = finalFirstCellHeight;
+    //refine in all directions until cell height < 20 m
+    while(finalFirstCellHeight > 20.0){ 
+        nRet = TopoSet();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
+            return nRet;
+        }
+        nRet = RefineMesh();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
+            return nRet;
+            
+        }
+        latestTime += 1;
+        oldFirstCellHeight = finalFirstCellHeight;
+        finalFirstCellHeight /= 2.0;
         
-    nRet = RefineMesh();
-    if(nRet != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
-    }
+        CopyFile("system/topoSetDict", 
+            "system/topoSetDict",
+            CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
+            CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
         
-    latestTime += 1;
+        pDone = (firstCellHeight1 - 20)/(firstCellHeight1 - finalFirstCellHeight);
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) %.0f%% complete...", 1-pDone*95);
+    }
+    //refine wall layer in vertical direction only until cell height < 5 m
+    while(finalFirstCellHeight > 5.0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 95%% complete...");
+        nRet = RefineWallLayer();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
+            return nRet;
+        }
+        latestTime += 1;
+        finalFirstCellHeight /= 4.0;
+    }
     
     CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
     CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
@@ -1608,6 +1638,31 @@ int NinjaFoam::MoveDynamicMesh()
     pszOutput = CPLFormFilename(boost::lexical_cast<std::string>(latestTime).c_str(), "epsilon", "");
     CopyFile(pszInput, pszOutput);
     
+    return nRet;
+}
+
+int NinjaFoam::RefineWallLayer()
+{
+     int nRet = -1;
+     
+    /* 
+     * 0.25 splits near-wall cell into two cells: one is 0.75x and the other
+     * 0.25x the original cell height.
+     * If this value is chagned, edit latestTime dirctory and the calculation for
+     * firstCellHeight.
+     */
+    
+    const char *const papszArgv[] = { "refineWallLayer",  
+                                    "minZ", 
+                                    "0.25", 
+                                    NULL};
+    
+    VSILFILE *fout = VSIFOpenL("log.refineWallLayer", "w");
+                                    
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+
+    VSIFCloseL(fout);
+
     return nRet;
 }
 

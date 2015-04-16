@@ -127,6 +127,7 @@ private:
     int SurfaceTransformPoints();
     int SurfaceCheck();
     int MoveDynamicMesh();
+    int RefineWallLayer();
     int TopoSet();
     int RefineMesh();
     int BlockMesh();
