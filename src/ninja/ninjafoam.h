@@ -127,7 +127,8 @@ private:
     int SurfaceTransformPoints();
     int SurfaceCheck();
     int MoveDynamicMesh();
-    int RefineWallLayer();
+    int TopoSet();
+    int RefineMesh();
     int BlockMesh();
     int DecomposePar();
     int ReconstructParMesh(const char *const arg);
