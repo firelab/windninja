@@ -4,6 +4,8 @@ Release Notes
 WindNinja 2.5.2
 ---------------
 
+2015-02-18
+
 * Fixed bug where nomads forecasts wouldn't download properly due to a missing
   drive letter in the path.  This was only present when the working directory
   was different than C:\ (temporary file path root)(#35).
@@ -14,6 +16,8 @@ WindNinja 2.5.2
 
 WindNinja 2.5.1
 ---------------
+
+2015-02-11
 
 WindNinja 2.5.0 had a major bug that crashed the application when more than one
 domain average initialization was run.  All users are encouraged to upgrade
@@ -28,6 +32,8 @@ immediately.
 
 WindNinja 2.5.0
 ---------------
+
+2015-01-23
 
 * Add NOMADS server as a coarse scale weather model data source.
 
@@ -51,6 +57,8 @@ WindNinja 2.5.0
 
 WindNinja 2.4.1
 ---------------
+
+2015-01-24
 
 * Unreleased version with bug fixes from 2.5.0, but without NOMADS support.
 

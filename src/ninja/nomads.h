@@ -1,7 +1,5 @@
 /******************************************************************************
  *
- * $Id$
- *
  * Project:  WindNinja
  * Purpose:  Nomads C client
  * Author:   Kyle Shannon <kyle at pobox dot com>
@@ -351,7 +349,21 @@ static const char *apszNomadsKeys[][11] =
       "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
-    /* XXX: Alaska RTMA */
+    /* Alaska RTMA */
+    {
+      "rtma_ak",
+      "filter_akrtma.pl",
+      "akrtma.t%02dz.2dvaranl_ndfd.grb2",
+      "akrtma.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:0:1",
+      "TMP,UGRD,VGRD",
+      "10_m_above_ground,2_m_above_ground",
+      "2.5 km",
+      "RTMA ALASKA" },
+#endif /* NOMADS_EXPER_FORECASTS */
+#ifdef NOMADS_RTMA
     /*
     ** CONUS RTMA
     */
@@ -363,14 +375,52 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_DATE,
       "0:23:1",
       "0:0:1",
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "2.5 km",
+      "RTMA CONUS" },
+#endif /* NOMADS_RTMA */
+#ifdef NOMADS_EXPER_FORECASTS
+    /* Guam RTMA */
+    {
+      "rtma_gu",
+      "filter_gurtma.pl",
+      "gurtma.t%02dz.2dvaranl_ndfd.grb2",
+      "gurtma.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:0:1",
       "TMP,UGRD,VGRD",
       "10_m_above_ground,2_m_above_ground",
       "2.5 km",
-      "RTMA CONUS" },
-    /* XXX: Guam RTMA */
-    /* XXX: Hawaii RTMA */
-    /* XXX: Puerto Rico RTMA */
-#endif
+      "RTMA GUAM" },
+    /* Hawaii RTMA */
+    {
+      "rtma_hi",
+      "filter_hirtma.pl",
+      "hirtma.t%02dz.2dvaranl_ndfd.grb2",
+      "hirtma.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:0:1",
+      "TMP,UGRD,VGRD",
+      "10_m_above_ground,2_m_above_ground",
+      "2.5 km",
+      "RTMA HAWAII" },
+    /* Puerto Rico RTMA */
+    {
+      "rtma_pr",
+      "filter_prrtma.pl",
+      "prrtma.t%02dz.2dvaranl_ndfd.grb2",
+      "prrtma.%s",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:0:1",
+      "TMP,UGRD,VGRD",
+      "10_m_above_ground,2_m_above_ground",
+      "2.5 km",
+      "RTMA PUERTO RICO" },
+#endif /* NOMADS_EXPER_FORECASTS */
     /*
     ** HRRR
     */
