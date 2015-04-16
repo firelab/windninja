@@ -1563,9 +1563,9 @@ int NinjaFoam::MoveDynamicMesh()
             "$nearDistance$", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
     
-    double pDone = 0.0;
     double oldFirstCellHeight = finalFirstCellHeight;
     //refine in all directions until cell height < 20 m
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
     while(finalFirstCellHeight > 20.0){ 
         nRet = TopoSet();
         if(nRet != 0){
@@ -1586,13 +1586,10 @@ int NinjaFoam::MoveDynamicMesh()
             "system/topoSetDict",
             CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
             CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
-        
-        pDone = (firstCellHeight1 - 20)/(firstCellHeight1 - finalFirstCellHeight);
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) %.0f%% complete...", 1-pDone*95);
     }
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
     //refine wall layer in vertical direction only until cell height < 5 m
     while(finalFirstCellHeight > 5.0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 95%% complete...");
         nRet = RefineWallLayer();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
@@ -1601,6 +1598,7 @@ int NinjaFoam::MoveDynamicMesh()
         latestTime += 1;
         finalFirstCellHeight /= 4.0;
     }
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
     CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
     CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
