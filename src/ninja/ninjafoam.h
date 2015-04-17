@@ -132,8 +132,8 @@ private:
     int RefineMesh();
     int BlockMesh();
     int DecomposePar();
-    int ReconstructParMesh(const char *const arg);
-    int ReconstructPar(const char *const arg);
+    int ReconstructParMesh();
+    int ReconstructPar();
     int RenumberMesh();
     int CheckMesh();
     int ApplyInit();
