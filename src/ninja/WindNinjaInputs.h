@@ -221,6 +221,7 @@ public:
     std::string pdfFile;
     double      pdfResolution;
     lengthUnits::eLengthUnits pdfUnits;
+    std::string customOutputPath; //user-specified path for output
 
     /*-----------------------------------------------------------------------------
      *  Ninja Speed Testing Section

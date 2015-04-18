@@ -869,6 +869,16 @@ public:
      *  Output Parameter Methods
      *-----------------------------------------------------------------------------*/
     /**
+    * \brief Set the output path for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param path path where output will be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setOutputPath( const int nIndex, std::string path,
+                                 char ** papszOptions=NULL );
+    
+    /**
     * \brief Set the percent of output buffer clipping for a ninja
     *
     * \param nIndex index of a ninja

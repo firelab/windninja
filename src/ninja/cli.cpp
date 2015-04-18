@@ -352,6 +352,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
+                ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
@@ -1342,6 +1343,10 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setNumVertLayers( i_, 20);
 
             //output------------------------------------------------------------------------------
+            if(vm.count("output_path")){
+                windsim.setOutputPath( i_, vm["output_path"].as<std::string>());
+            }
+            
             windsim.setOutputBufferClipping( i_, vm["output_buffer_clipping"].as<double>());
 
             if(!vm.count("write_wx_model_goog_output") &&

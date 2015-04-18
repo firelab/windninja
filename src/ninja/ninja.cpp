@@ -6178,6 +6178,20 @@ void ninja::set_vtkOutFlag(bool flag)
     input.volVTKOutFlag = flag;
 }
 
+void ninja::set_outputPath(std::string path)
+{
+    VSIStatBufL sStat;
+    VSIStatL( path.c_str(), &sStat );
+    if( VSI_ISDIR( sStat.st_mode ) ){
+        input.customOutputPath = path;
+    }
+    else{
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, 
+            CPLSPrintf("The path %s does not exist, writing outputs to default location...", path.c_str()));
+    }
+        
+}
+
 void ninja::set_outputFilenames(double& meshResolution,
                                 lengthUnits::eLengthUnits meshResolutionUnits)
 {
@@ -6218,25 +6232,26 @@ void ninja::set_outputFilenames(double& meshResolution,
 #endif
 
     std::string pathName;
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
-    {
-        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-        pathName = CPLGetPath(input.forecastFilename.c_str());
-        
-        //if it's a .tar, write to directory containing the .tar file
-        if( strstr(pathName.c_str(), ".tar") ){
-            pathName.erase( pathName.rfind("/") );
-            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+    std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+    
+    if(input.customOutputPath == "!set"){ // if a custom output path was not specified in the cli
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
+        {
+            pathName = CPLGetPath(input.forecastFilename.c_str());
+            //if it's a .tar, write to directory containing the .tar file
+            if( strstr(pathName.c_str(), ".tar") ){
+                pathName.erase( pathName.rfind("/") );
+            }
+        }else{
+            pathName = CPLGetPath(input.dem.fileName.c_str());
         }
-        else{
-            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
-        }
-    }else{
-        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-        pathName = CPLGetPath(input.dem.fileName.c_str());
-        rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
     }
-
+    else{ // if a custom output path was specified in the cli
+        pathName = input.customOutputPath;
+    }
+    
+    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+    
     /* set the output path member variable */
     input.outputPath = pathName;
 

@@ -106,6 +106,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
+    customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
     speedDampeningRatio = 1;
 #endif
@@ -266,6 +267,7 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   dateTimeLegFile = rhs.dateTimeLegFile;
   volVTKFile = rhs.volVTKFile;
   keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+  customOutputPath = rhs.customOutputPath;
   
 #ifdef NINJA_SPEED_TESTING
   speedDampeningRatio = rhs.speedDampeningRatio;
@@ -425,6 +427,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dateTimeLegFile = rhs.dateTimeLegFile;
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+      customOutputPath = rhs.customOutputPath;
       
 #ifdef NINJA_SPEED_TESTING
       speedDampeningRatio = rhs.speedDampeningRatio;

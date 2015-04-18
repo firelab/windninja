@@ -2320,7 +2320,13 @@ void NinjaFoam::SetOutputFilenames()
     std::string pathName;
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
 
-    pathName = CPLGetPath(input.dem.fileName.c_str());
+    if(input.customOutputPath == "!set"){
+        pathName = CPLGetPath(input.dem.fileName.c_str());
+    }
+    else{
+        pathName = input.customOutputPath;
+    }
+    
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
 
     /* set the output path member variable */

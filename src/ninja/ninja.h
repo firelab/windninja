@@ -353,6 +353,7 @@ public:
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);
+    void set_outputPath(std::string path);
 
     void set_PrjString(std::string prj);
 
