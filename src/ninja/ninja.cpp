@@ -6182,8 +6182,20 @@ void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
     VSIStatL( path.c_str(), &sStat );
+    const char *pszTestPath = CPLFormFilename(path.c_str(), "test", "");
+    int nRet;
+    
     if( VSI_ISDIR( sStat.st_mode ) ){
-        input.customOutputPath = path;
+        //see if we can write to this path
+        nRet = VSIMkdir(pszTestPath, 0777);
+        if(nRet == 0){
+            VSIRmdir(pszTestPath);
+            input.customOutputPath = path;
+        }
+        else{
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, 
+            CPLSPrintf("Cannot write to path %s. Do you have write permission on this directory? Writing outputs to default location...", path.c_str()));
+        }
     }
     else{
         input.Com->ninjaCom(ninjaComClass::ninjaNone, 
