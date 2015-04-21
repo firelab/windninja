@@ -5206,7 +5206,7 @@ void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
     /* Note that these are not final mesh counts, but are the number of 
      * cells used in the blockMesh. Final total number of cells is larger
      * due to surface refinement after moveDynamicMesh. Also note that
-     * increaseing these values may cause moveDynamicMesh to crash
+     * increasing these values may cause moveDynamicMesh to crash
      * for some terrains, especially terrains with small extents/dz's.
      */
     if(meshChoice == WindNinjaInputs::coarse){
