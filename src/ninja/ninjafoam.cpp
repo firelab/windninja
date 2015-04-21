@@ -1034,13 +1034,43 @@ int NinjaFoam::readLogFile(int &ratio_)
 
 int NinjaFoam::readDem(int &ratio_)
 {
-    bbox.push_back( input.dem.get_xllCorner() + 100.0); //xmin (+/- 100 is a buffer for MDM)
-    bbox.push_back( input.dem.get_yllCorner() + 100.0); //ymin
-    bbox.push_back( input.dem.get_maxValue() + 50.0); //zmin (should be above highest point in DEM for MDM)
-    bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100.0); //xmax
-    bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100.0); //ymax
-    bbox.push_back( input.dem.get_maxValue() + 5000.0); //zmax
-    bbox.push_back( input.dem.get_maxValue() + 2500.0); //zmid
+    
+    // determine what the mesh extents based on DEM info
+    double dz = input.dem.get_maxValue() - input.dem.get_minValue();
+    double dx = ( input.dem.get_xllCorner() + input.dem.get_xDimension() ) - input.dem.get_xllCorner();
+    double dy = ( input.dem.get_yllCorner() + input.dem.get_yDimension() ) - input.dem.get_yllCorner();
+    double xBuffer, yBuffer;
+    
+    xBuffer = dx*0.01; // buffers for MDM
+    yBuffer = dy*0.01;
+            
+    bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
+    bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
+    if(dz == 0.0){ //flat terrain
+        bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
+    }
+    else{
+        bbox.push_back( input.dem.get_maxValue() + dz * 0.1 ); //zmin (should be above highest point in DEM for MDM)
+    }
+    bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
+    bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
+    if(dz == 0.0){ //flat terrain
+        bbox.push_back( input.dem.get_maxValue() * 2.5 ); //zmax
+        bbox.push_back( input.dem.get_maxValue() * 1.5 ); //zmid
+    }
+    else{
+        bbox.push_back( input.dem.get_maxValue() + dz * 2.5 ); //zmax
+        bbox.push_back( input.dem.get_maxValue() + dz * 0.5 ); //zmid
+    }
+    
+    
+    //bbox.push_back( input.dem.get_xllCorner() + 100.0); //xmin (+/- 100 is a buffer for MDM)
+    //bbox.push_back( input.dem.get_yllCorner() + 100.0); //ymin
+    //bbox.push_back( input.dem.get_maxValue() + 50.0); //zmin (should be above highest point in DEM for MDM)
+    //bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - 100.0); //xmax
+    //bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - 100.0); //ymax
+    //bbox.push_back( input.dem.get_maxValue() + 5000.0); //zmax
+    //bbox.push_back( input.dem.get_maxValue() + 2500.0); //zmid
 
     double volume1, volume2;
     double cellCount1, cellCount2;
@@ -1051,6 +1081,9 @@ int NinjaFoam::readDem(int &ratio_)
 
     volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
     volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
+    
+    CPLDebug("NINJAFOAM", "volume1 = %f", volume1);
+    CPLDebug("NINJAFOAM", "volume2 = %f", volume2);
 
     cellCount1 = input.meshCount * 0.5; // cell count in volume 1
     cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
@@ -1545,7 +1578,8 @@ int NinjaFoam::MoveDynamicMesh()
     double oldFirstCellHeight = finalFirstCellHeight;
     //refine in all directions until cell height < 20 m
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
-    while(finalFirstCellHeight > 20.0){ 
+    bool keepRefining = true; //do at least one round of refinement
+    while(keepRefining){ 
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1565,10 +1599,14 @@ int NinjaFoam::MoveDynamicMesh()
             CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
             CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
             CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
+        
+        if(finalFirstCellHeight < 20.0)
+            keepRefining = false;
     }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
     //refine wall layer in vertical direction only until cell height < 5 m
-    while(finalFirstCellHeight > 5.0){
+    keepRefining = true; //do at least one round of refinement
+    while(keepRefining){ 
         nRet = RefineWallLayer();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
@@ -1576,6 +1614,9 @@ int NinjaFoam::MoveDynamicMesh()
         }
         latestTime += 1;
         finalFirstCellHeight /= 4.0;
+        
+        if(finalFirstCellHeight < 5.0)
+            keepRefining = false;
     }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
