@@ -285,7 +285,7 @@ bool NinjaFoam::simulate_wind()
     }
 
     /*-------------------------------------------------------------------*/
-    /* Apply initial and boundary conditions                             */
+    /* Apply initial conditions                                          */
     /*-------------------------------------------------------------------*/
     
     #ifdef _OPENMP
@@ -300,7 +300,6 @@ bool NinjaFoam::simulate_wind()
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
     }
-
 
     /*-------------------------------------------------------------------*/
     /* Solve for the flow field                                          */
@@ -1035,7 +1034,7 @@ int NinjaFoam::readDem(double &expansionRatio)
             
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-    bbox.push_back( input.dem.get_maxValue() + dz * 1.1 ); //zmin (should be above highest point in DEM for MDM)
+    bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
     bbox.push_back( input.dem.get_maxValue() + dz * 2.5 ); //zmax
