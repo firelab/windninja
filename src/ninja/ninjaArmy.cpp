@@ -1385,7 +1385,7 @@ int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/
 int ninjaArmy::setOutputPath( const int nIndex, std::string path,
-                                 char ** papszOptions=NULL )
+                                 char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
