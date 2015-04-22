@@ -1210,6 +1210,22 @@ int NinjaFoam::writeMoveDynamicMesh()
     VSIFCloseL(fin);
     VSIFCloseL(fout);
     
+    pszInput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+    pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+    
+    //check firstCellHeight after blockMesh
+    //if it is small need to decrease poinstDisplacement velocity    
+    if(firstCellHeight < 10.0){ 
+        CopyFile(pszInput, pszOutput, "$vx$", "1");
+        CopyFile(pszInput, pszOutput, "$vy$", "1");
+        CopyFile(pszInput, pszOutput, "$vz$", "1");
+    }
+    else{
+        CopyFile(pszInput, pszOutput, "$vx$", "90");
+        CopyFile(pszInput, pszOutput, "$vy$", "90");
+        CopyFile(pszInput, pszOutput, "$vz$", "90");
+    }
+    
     return NINJA_SUCCESS;
 }
 
