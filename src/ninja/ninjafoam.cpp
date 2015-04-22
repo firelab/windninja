@@ -1045,7 +1045,7 @@ int NinjaFoam::readDem(double &expansionRatio)
 
     meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
     cellCount = input.meshCount;
-    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
+    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
@@ -1053,7 +1053,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
 
     firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
-    expansionRatio = 4.0;
+    expansionRatio = 1.0;
     
     CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
