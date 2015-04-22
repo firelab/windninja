@@ -5210,10 +5210,10 @@ void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
      * for some terrains, especially terrains with small extents/dz's.
      */
     if(meshChoice == WindNinjaInputs::coarse){
-        input.meshCount = 10000;
+        input.meshCount = 50000;
     }
     else if(meshChoice == WindNinjaInputs::medium){
-        input.meshCount = 50000;
+        input.meshCount = 75000;
     }
     else if(meshChoice == WindNinjaInputs::fine){
         input.meshCount = 100000;

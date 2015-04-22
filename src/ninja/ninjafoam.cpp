@@ -44,7 +44,7 @@ NinjaFoam::NinjaFoam() : ninja()
     inletoutletvalue = "";
     template_ = "";
     
-    firstCellHeight1 = -1.0;
+    firstCellHeight = -1.0;
     latestTime = 50; //endTime in moveDynamicMesh
 }
 
@@ -932,7 +932,7 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readLogFile(int &ratio_)
+int NinjaFoam::readLogFile(double &expansionRatio)
 {
     const char *pszInput;
 
@@ -967,25 +967,24 @@ int NinjaFoam::readLogFile(int &ratio_)
         ss.append(s.substr(pos4+1, pos5-pos4-1));// xmin ymin zmin xmax ymax zmax
         found = ss.find(" ");
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(0, found).c_str()) + 100); // xmin
-            bbox.push_back(atof(ss.substr(found).c_str()) + 100); // ymin
+            bbox.push_back(atof(ss.substr(0, found).c_str()) + 10); // xmin
+            bbox.push_back(atof(ss.substr(found).c_str()) + 10); // ymin
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) + 50); // zmin (should be above highest point in DEM)
+            bbox.push_back(atof(ss.substr(found).c_str()) * 1.1); // zmin (should be above highest point in DEM)
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // xmax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 10); // xmax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) - 100); // ymax
+            bbox.push_back(atof(ss.substr(found).c_str()) - 10); // ymax
         }
         found = ss.find(" ", found+1);
         if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) + 5000); // zmax
-            bbox.push_back(atof(ss.substr(found).c_str()) + 2500); // zmid
+            bbox.push_back(atof(ss.substr(found).c_str()) * 2.5); // zmax
         }
     }
     else{
@@ -993,38 +992,21 @@ int NinjaFoam::readLogFile(int &ratio_)
         return NINJA_E_FILE_IO;
     }
 
-    double volume1, volume2;
-    double cellCount1, cellCount2;
-    double cellVolume1, cellVolume2;
-    double side2;
-    double firstCellHeight2;
-    double expansionRatio;
+    double meshVolume;
+    double cellCount, cellVolume;
+    double side;
 
-    volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
-    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
+    meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
+    cellCount = input.meshCount;
+    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
+    side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
 
-    cellCount1 = input.meshCount * 0.5; // cell count in volume 1
-    cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
+    nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
+    nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
 
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-    cellVolume2 = volume2/cellCount2; // volume of 1 cell in zone2
-
-    side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
-    side2 = std::pow(cellVolume2, (1.0/3.0)); // length of side of regular hex cell in zone2
-
-    nCells.push_back(int( (bbox[3] - bbox[0]) / side1)); // Nx1
-    nCells.push_back(int( (bbox[4] - bbox[1]) / side1)); // Ny1
-    nCells.push_back(int( (bbox[6] - bbox[2]) / side1)); // Nz1
-
-    nCells.push_back(nCells[0]); // Nx2 = Nx1;
-    nCells.push_back(nCells[1]); // Ny2 = Ny1;
-
-    expansionRatio = 1.13; // expansion ratio in zone2
-
-    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio;
-    nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
-    ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
-    expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
+    firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
+    expansionRatio = 4.0;
 
     CPLFree(data);
     VSIFCloseL(fin);
@@ -1032,10 +1014,10 @@ int NinjaFoam::readLogFile(int &ratio_)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readDem(int &ratio_)
+int NinjaFoam::readDem(double &expansionRatio)
 {
     
-    // determine what the mesh extents based on DEM info
+    // get some info from the DEM
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
     double dx = ( input.dem.get_xllCorner() + input.dem.get_xDimension() ) - input.dem.get_xllCorner();
     double dy = ( input.dem.get_yllCorner() + input.dem.get_yDimension() ) - input.dem.get_yllCorner();
@@ -1043,73 +1025,45 @@ int NinjaFoam::readDem(int &ratio_)
     
     xBuffer = dx*0.01; // buffers for MDM
     yBuffer = dy*0.01;
+    
+    if(dz == 0.0){ 
+        if(dx * dy < 1000)
+            dz = 0.5 * dx * dy; //min value allowed for dz 
+        else
+            dz = 1000; //min value allowed for dz 
+    }
             
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-    if(dz == 0.0){ //flat terrain
-        bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
-    }
-    else{
-        bbox.push_back( input.dem.get_maxValue() + dz * 0.1 ); //zmin (should be above highest point in DEM for MDM)
-    }
+    bbox.push_back( input.dem.get_maxValue() + dz * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    if(dz == 0.0){ //flat terrain
-        bbox.push_back( input.dem.get_maxValue() * 2.5 ); //zmax
-        bbox.push_back( input.dem.get_maxValue() * 1.5 ); //zmid
-    }
-    else{
-        bbox.push_back( input.dem.get_maxValue() + dz * 2.5 ); //zmax
-        bbox.push_back( input.dem.get_maxValue() + dz * 0.5 ); //zmid
-    }
+    bbox.push_back( input.dem.get_maxValue() + dz * 2.5 ); //zmax
 
-    double volume1, volume2;
-    double cellCount1, cellCount2;
-    double cellVolume1, cellVolume2;
-    double side2;
-    double firstCellHeight2;
-    double expansionRatio;
+    double meshVolume;
+    double cellCount, cellVolume;
+    double side;
 
-    volume1 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[6] - bbox[2]); // volume near terrain
-    volume2 = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[6]); // volume away from terrain
+    meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
+    cellCount = input.meshCount;
+    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
+    side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+
+    nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
+    nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
+
+    firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
+    expansionRatio = 4.0;
     
-    CPLDebug("NINJAFOAM", "volume1 = %f", volume1);
-    CPLDebug("NINJAFOAM", "volume2 = %f", volume2);
-
-    cellCount1 = input.meshCount * 0.5; // cell count in volume 1
-    cellCount2 = input.meshCount - cellCount1; // cell count in volume 2
-
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-    cellVolume2 = volume2/cellCount2; // volume of 1 cell in zone2
-
-    side1 = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
-    side2 = std::pow(cellVolume2, (1.0/3.0)); // length of side of regular hex cell in zone2
-
-    nCells.push_back(int( (bbox[3] - bbox[0]) / side1)); // Nx1
-    nCells.push_back(int( (bbox[4] - bbox[1]) / side1)); // Ny1
-    nCells.push_back(int( (bbox[6] - bbox[2]) / side1)); // Nz1
-
-    nCells.push_back(nCells[0]); // Nx2 = Nx1;
-    nCells.push_back(nCells[1]); // Ny2 = Ny1;
-
-    expansionRatio = 1.13; // expansion ratio in zone2
-
-    firstCellHeight2 = ((bbox[6] - bbox[2]) / nCells[2]) * expansionRatio; //first layer in zone2
-    nCells.push_back(int (log(((bbox[5] - bbox[6]) * (expansionRatio - 1) / firstCellHeight2) + 1) / log(expansionRatio) + 1) ); // Nz2
-    ratio_ = int(std::pow(expansionRatio, (nCells[5] - 1))); // final2oneRatio
-    expansionRatio = std::pow(ratio_, (1.0 / (nCells[5] - 1)));
-    
-    CPLDebug("NINJAFOAM", "firstCellHeight2 = %f", firstCellHeight2);
-        
-    CPLDebug("NINJAFOAM", "side1 = %f", side1);
-    CPLDebug("NINJAFOAM", "side2 = %f", side2);
+    CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
+    CPLDebug("NINJAFOAM", "side = %f", side);
+    CPLDebug("NINJAFOAM", "expansionRatio = %f", expansionRatio);
     
     CPLDebug("NINJAFOAM", "Nx1 = %d", nCells[0]);
     CPLDebug("NINJAFOAM", "Ny1 = %d", nCells[1]);
     CPLDebug("NINJAFOAM", "Nz1 = %d", nCells[2]);
-    CPLDebug("NINJAFOAM", "Nx2 = %d", nCells[3]);
-    CPLDebug("NINJAFOAM", "Ny2 = %d", nCells[4]);
-    CPLDebug("NINJAFOAM", "Nz2 = %d", nCells[5]);
     
     CPLDebug("NINJAFOAM", "xmin = %f", bbox[0]);
     CPLDebug("NINJAFOAM", "ymin = %f", bbox[1]);
@@ -1117,9 +1071,6 @@ int NinjaFoam::readDem(int &ratio_)
     CPLDebug("NINJAFOAM", "xmax = %f", bbox[3]);
     CPLDebug("NINJAFOAM", "ymax = %f", bbox[4]);
     CPLDebug("NINJAFOAM", "zmax = %f", bbox[5]);
-    CPLDebug("NINJAFOAM", "zmid = %f", bbox[6]);
-    
-    firstCellHeight1 = (bbox[6] - bbox[2]) / nCells[2];
     
     return NINJA_SUCCESS;
 }
@@ -1130,7 +1081,7 @@ int NinjaFoam::writeBlockMesh()
     const char *pszOutput;
     const char *pszPath;
     const char *pszArchive;
-    int ratio_;
+    double ratio_;
     int status;
 
     if(input.stlFile != "!set"){ //if an STL file was supplied and we don't have a DEM
@@ -1179,14 +1130,10 @@ int NinjaFoam::writeBlockMesh()
     bboxField.push_back("$xmax$");
     bboxField.push_back("$ymax$");
     bboxField.push_back("$zmax$");
-    bboxField.push_back("$zmid$");
      
     cellField.push_back("$Nx1$");
     cellField.push_back("$Ny1$");
     cellField.push_back("$Nz1$");
-    cellField.push_back("$Nx2$");
-    cellField.push_back("$Ny2$");
-    cellField.push_back("$Nz2$");
 
     for(int i = 0; i<bbox.size(); i++){
         pos = s.find(bboxField[i]);
@@ -1544,7 +1491,7 @@ int NinjaFoam::MoveDynamicMesh()
     /*now refine the mesh near the ground */
     //write topoSetDict
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
-    double finalFirstCellHeight = firstCellHeight1;
+    double finalFirstCellHeight = firstCellHeight;
     CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
             CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
             "$terrain$", 
@@ -1567,7 +1514,7 @@ int NinjaFoam::MoveDynamicMesh()
             CPLSPrintf("%.2f", finalFirstCellHeight));
     
     double oldFirstCellHeight = finalFirstCellHeight;
-    //refine in all directions until cell height < 20 m
+    //refine in all directions until cell height < 50 m
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
     bool keepRefining = true; //do at least one round of refinement
     while(keepRefining){ 
@@ -1591,7 +1538,7 @@ int NinjaFoam::MoveDynamicMesh()
             CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
             CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
         
-        if(finalFirstCellHeight < 20.0)
+        if(finalFirstCellHeight < 50.0)
             keepRefining = false;
     }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
@@ -1611,7 +1558,7 @@ int NinjaFoam::MoveDynamicMesh()
     }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
-    CPLDebug("NINJAFOAM", "firstCellHeight1 = %f", firstCellHeight1);
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
     CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
     
     /* write firstCellHeight to inlet files */
