@@ -265,6 +265,14 @@ bool NinjaFoam::simulate_wind()
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
     }
+    
+    /*refine mesh near the ground */
+    status = RefineSurfaceLayer();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineSurfaceLayer().");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
+    }
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
     status = RenumberMesh();
@@ -1505,7 +1513,14 @@ int NinjaFoam::MoveDynamicMesh()
     VSIFWriteL(d, nSize, 1, fout);
     VSIFCloseL(fout);
     
-    /*now refine the mesh near the ground */
+    return nRet;
+}
+
+int NinjaFoam::RefineSurfaceLayer(){    
+    const char *pszInput;
+    const char *pszOutput;
+    int nRet;
+    
     //write topoSetDict
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
     double finalFirstCellHeight = firstCellHeight;
@@ -1541,7 +1556,7 @@ int NinjaFoam::MoveDynamicMesh()
         
         CopyFile(pszInput, pszOutput, 
                 CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
-                CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
+                CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
         
         if(finalFirstCellHeight < 50.0)
             keepRefining = false;
