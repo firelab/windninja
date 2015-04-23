@@ -1509,26 +1509,15 @@ int NinjaFoam::MoveDynamicMesh()
     //write topoSetDict
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
     double finalFirstCellHeight = firstCellHeight;
-    CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            "$terrain$", 
-            CPLGetBasename(input.dem.fileName.c_str()));
-    CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""),  
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            "$xout$", 
-            CPLSPrintf("%.2f", (bbox[0] + 10)));
-    CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            "$yout$", 
-            CPLSPrintf("%.2f", (bbox[1] + 10)));
-    CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""),  
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            "$zout$", 
-            CPLSPrintf("%.2f", (bbox[5] - 10)));
-    CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            "$nearDistance$", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
+    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    
+    CopyFile(pszInput, pszOutput, "$terrain$", 
+            CPLFormFilename(CPLSPrintf("%s/constant/triSurface", pszTempPath), CPLGetBasename(input.dem.fileName.c_str()), ""));
+    CopyFile(pszInput, pszOutput, "$xout$", CPLSPrintf("%.2f", (bbox[0] + 10)));
+    CopyFile(pszInput, pszOutput, "$yout$", CPLSPrintf("%.2f", (bbox[1] + 10)));
+    CopyFile(pszInput, pszOutput, "$zout$", CPLSPrintf("%.2f", (bbox[5] - 10)));
+    CopyFile(pszInput, pszOutput, "$nearDistance$", CPLSPrintf("%.2f", finalFirstCellHeight));
     
     double oldFirstCellHeight = finalFirstCellHeight;
     //refine in all directions until cell height < 50 m
@@ -1550,10 +1539,9 @@ int NinjaFoam::MoveDynamicMesh()
         oldFirstCellHeight = finalFirstCellHeight;
         finalFirstCellHeight /= 2.0;
         
-        CopyFile(CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            CPLFormFilename(pszTempPath, "system/topoSetDict", ""), 
-            CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
-            CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
+        CopyFile(pszInput, pszOutput, 
+                CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
+                CPLSPrintf("nearDistance    %.2f", (finalFirstCellHeight)));
         
         if(finalFirstCellHeight < 50.0)
             keepRefining = false;
@@ -1644,27 +1632,20 @@ int NinjaFoam::RefineWallLayer()
 int NinjaFoam::TopoSet()
 {
     int nRet = -1;
-    
-    nRet = chdir(pszTempPath);
-    if(nRet != 0){
-        return nRet;
-    }
        
     const char *const papszArgv[] = { "topoSet",
+                                    "-case",
+                                    pszTempPath,
                                     "-dict",
                                     "system/topoSetDict",
+                                    "-latestTime",
                                     NULL };
 
-    VSILFILE *fout = VSIFOpenL("log.topoSet", "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.topoSet", ""), "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
     VSIFCloseL(fout);
-    
-    nRet = chdir("../");
-    if(nRet != 0){
-        return nRet;
-    }
     
     return nRet;
 }
@@ -1673,26 +1654,18 @@ int NinjaFoam::RefineMesh()
 {
     int nRet = -1;
     
-    nRet = chdir(pszTempPath);
-    if(nRet != 0){
-        return nRet;
-    }
-       
-    const char *const papszArgv[] = { "refineMesh",  
+    const char *const papszArgv[] = { "refineMesh",
+                                    "-case",
+                                    pszTempPath,
                                     "-dict",
                                     "system/refineMeshDict", 
                                     NULL };
 
-    VSILFILE *fout = VSIFOpenL("log.refineMesh", "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.refineMesh", ""), "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
     VSIFCloseL(fout);
-    
-    nRet = chdir("../");
-    if(nRet != 0){
-        return nRet;
-    }
 
     return nRet;
 }
