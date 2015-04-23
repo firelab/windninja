@@ -1213,18 +1213,20 @@ int NinjaFoam::writeMoveDynamicMesh()
     pszInput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
     pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
     
-    //check firstCellHeight after blockMesh
-    //if it is small need to decrease poinstDisplacement velocity    
-    if(firstCellHeight < 10.0){ 
-        CopyFile(pszInput, pszOutput, "$vx$", "1");
-        CopyFile(pszInput, pszOutput, "$vy$", "1");
-        CopyFile(pszInput, pszOutput, "$vz$", "1");
-    }
-    else{
-        CopyFile(pszInput, pszOutput, "$vx$", "90");
-        CopyFile(pszInput, pszOutput, "$vy$", "90");
-        CopyFile(pszInput, pszOutput, "$vz$", "90");
-    }
+    /*
+     * Check firstCellHeight in the block mesh. 
+     * We have same distance between all layers, since expansionRatio = 1
+     * deltaT * velocity must be less than distance between layers, otherwise cells
+     * above may move too quickly toward the surface, casuing cells to get turned
+     * inside-out. detaT is set to 1.0 in controlDict.
+     */
+    double displacementVelocity = 0.5 * firstCellHeight;
+    CopyFile(pszInput, pszOutput, "$vx$", CPLSPrintf("%.2f", displacementVelocity));
+    CopyFile(pszInput, pszOutput, "$vy$", CPLSPrintf("%.2f", displacementVelocity));
+    CopyFile(pszInput, pszOutput, "$vz$", CPLSPrintf("%.2f", displacementVelocity));
+
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
+    CPLDebug("NINJAFOAM", "displacementVelocity = %f", displacementVelocity);
     
     return NINJA_SUCCESS;
 }
