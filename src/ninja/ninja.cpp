@@ -5205,18 +5205,16 @@ void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
     /* Note that these are not final mesh counts, but are the number of 
      * cells used in the blockMesh. Final total number of cells is larger
-     * due to surface refinement after moveDynamicMesh. Also note that
-     * increasing these values may cause moveDynamicMesh to crash
-     * for some terrains, especially terrains with small extents/dz's.
+     * due to surface refinement after moveDynamicMesh.
      */
     if(meshChoice == WindNinjaInputs::coarse){
-        input.meshCount = 50000;
+        input.meshCount = 100000;
     }
     else if(meshChoice == WindNinjaInputs::medium){
-        input.meshCount = 75000;
+        input.meshCount = 500000;
     }
     else if(meshChoice == WindNinjaInputs::fine){
-        input.meshCount = 100000;
+        input.meshCount = 1e6;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
