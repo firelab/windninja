@@ -529,9 +529,6 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(0, pos+len);
     }
 
-    ReplaceKeys(s, "$terrainName$", "patch0"); //binary stl file
-    //ReplaceKeys(s, "$terrainName$", terrainName); //ascii stl file
-
     if(input.nonEqBc == 0){
         if(std::string(pszFilename) == "epsilon"){
             ReplaceKeys(s, "$wallFunction$", "epsilonWallFunction");
