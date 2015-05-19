@@ -393,7 +393,7 @@ bool NinjaFoam::simulate_wind()
 	#endif
 
     /*----------------------------------------*/
-    /*  wrap up                              */
+    /*  wrap up                               */
     /*----------------------------------------*/
 
     #ifdef _OPENMP
@@ -467,7 +467,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$direction$", CPLSPrintf("(%.4lf %.4lf %.4lf)", direction[0],
                                                               direction[1],
                                                               direction[2]));
-    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight));
+    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight + input.surface.Rough_d.get_meanValue()));
     ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
@@ -1042,7 +1042,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + dz * 2.5 ); //zmax
+    bbox.push_back( input.dem.get_maxValue() + dz * 10.5 ); //zmax
 
     double meshVolume;
     double cellCount, cellVolume;
@@ -1223,7 +1223,7 @@ int NinjaFoam::writeMoveDynamicMesh()
      * We have same distance between all layers, since expansionRatio = 1
      * deltaT * velocity must be less than distance between layers, otherwise cells
      * above may move too quickly toward the surface, casuing cells to get turned
-     * inside-out. detaT is set to 1.0 in controlDict.
+     * inside-out. deltaT is set to 1.0 in controlDict.
      */
     double displacementVelocity = 0.5 * firstCellHeight;
     CopyFile(pszInput, pszOutput, "$vx$", CPLSPrintf("%.2f", displacementVelocity));
