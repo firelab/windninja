@@ -116,6 +116,9 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
+    CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());
+    CPLDebug("NINJAFOAM", "Rough_d = %f", input.surface.Rough_d.get_meanValue());
+    CPLDebug("NINJAFOAM", "Rough_h = %f", input.surface.Rough_h.get_meanValue());
 
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
@@ -467,7 +470,7 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$direction$", CPLSPrintf("(%.4lf %.4lf %.4lf)", direction[0],
                                                               direction[1],
                                                               direction[2]));
-    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight + input.surface.Rough_d.get_meanValue()));
+    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight + input.surface.Rough_h.get_meanValue()));
     ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
@@ -1042,7 +1045,8 @@ int NinjaFoam::readDem(double &expansionRatio)
     bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + dz * 10.5 ); //zmax
+    //bbox.push_back( input.dem.get_maxValue() + dz * 10.5 ); //zmax
+    bbox.push_back( input.dem.get_maxValue() + 3000 ); //zmax
 
     double meshVolume;
     double cellCount, cellVolume;
@@ -1059,6 +1063,22 @@ int NinjaFoam::readDem(double &expansionRatio)
 
     firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
     expansionRatio = 1.0;
+    
+    //firstCellheight will be used when decomposing domain for moveDynamicMesh
+    CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
+            CPLFormFilename(pszTempPath, "0/U", ""), 
+            "-9999.9", 
+            CPLSPrintf("%.2f", firstCellHeight));
+            
+    CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
+            CPLFormFilename(pszTempPath, "0/k", ""), 
+            "-9999.9", 
+            CPLSPrintf("%.2f", firstCellHeight));
+            
+    CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
+            CPLFormFilename(pszTempPath, "0/epsilon", ""), 
+            "-9999.9", 
+            CPLSPrintf("%.2f", firstCellHeight));
     
     CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
@@ -1580,19 +1600,25 @@ int NinjaFoam::RefineSurfaceLayer(){
     
     /* write firstCellHeight to inlet files */
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
-            CPLFormFilename(pszTempPath, "0/U", ""), 
-            "-9999.9", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            CPLFormFilename(pszTempPath, "0/U", ""),
+            CPLSPrintf("firstCellHeight %.2f;",  firstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight));
+            //"-9999.9", 
+            //boost::lexical_cast<std::string>(finalFirstCellHeight));
             
     CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
-            CPLFormFilename(pszTempPath, "0/k", ""), 
-            "-9999.9", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            CPLFormFilename(pszTempPath, "0/k", ""),
+            CPLSPrintf("firstCellHeight %.2f;",  firstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
+            //"-9999.9", 
+            //boost::lexical_cast<std::string>(finalFirstCellHeight));
             
     CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            "-9999.9", 
-            boost::lexical_cast<std::string>(finalFirstCellHeight));
+            CPLFormFilename(pszTempPath, "0/epsilon", ""),
+            CPLSPrintf("firstCellHeight %.2f;",  firstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
+            //"-9999.9", 
+            //boost::lexical_cast<std::string>(finalFirstCellHeight));
     
     //copy 0/ to latest time    
     pszInput = CPLFormFilename(pszTempPath, "0/U", "");

@@ -192,6 +192,11 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
     scalar inputWindHeight = inputWindHeight_Veg_;
     scalarField Kp(patch().Cf().size(), scalar(0));
 
+    Info<< "logProfileTKE inputWindHeight_Veg_ = " <<inputWindHeight_Veg_<< endl;
+    Info<< "logProfileTKE Rd_ = " <<Rd_<< endl;
+    Info<< "logProfileTKE z0_ = " <<z0_<< endl;
+    Info<< "logProfileTKE UfreeStream_ = " <<UfreeStream_<< endl;
+
     //const RASModel& rasModel = db().lookupObject<RASModel>("RASProperties");
     //const incompressible::RASModel& rasModel = db().lookupObject<incompressible::RASModel>("RASProperties");
 
@@ -201,7 +206,7 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
     scalar Cmu = 0.09;
     scalar kappa = 0.4187;
 
-    scalar ustar = (UfreeStream_ + log(z0_))*0.41/(log(inputWindHeight_Veg_-Rd_));
+    scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_-Rd_)/z0_);
 
     // Loop over all the faces in that patch
     forAll(Kp, faceI )
