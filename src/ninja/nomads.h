@@ -83,9 +83,17 @@ extern "C" {
 ** to lookup the ip from the hostname using DNS.  This is an attempt to work
 ** around that.  It has been fixed in GDAL 1.11.x.  Older versions may want to
 ** try defining NOMADS_USE_IP.
+**
+** If NOMADS_TEST_PARA is set, use the parallel test server for pre-release
+** testing.
 */
-#define NOMADS_IP                        "140.90.101.62"
-#define NOMADS_HOST                      "nomads.ncep.noaa.gov"
+#ifdef NOMADS_TEST_PARA
+ #define NOMADS_IP                        "140.172.17.38"
+ #define NOMADS_HOST                      "para.nomads.ncep.noaa.gov"
+#else /* NOMADS_TEST_PARA */
+ #define NOMADS_IP                        "140.90.101.62"
+ #define NOMADS_HOST                      "nomads.ncep.noaa.gov"
+#endif /* NOMADS_TEST_PARA */
 
 /* Host for NOMADS */
 #define NOMADS_URL_CGI_HOST              "http://" NOMADS_HOST "/cgi-bin/"
