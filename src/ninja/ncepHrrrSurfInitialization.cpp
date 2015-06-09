@@ -144,10 +144,10 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
 {
 
     bool identified = true;
-    return false;
 
     if( fileName.find("nam") != fileName.npos ) {
         identified = false;
+        return identified;
     }
 
     //ID based on 10u band
