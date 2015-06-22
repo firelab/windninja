@@ -37,25 +37,32 @@ const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
 const char * OutputWriter::AM_DIR    = "AM_dir";
 const char * OutputWriter::QGIS_DIR  = "QGIS_dir";
-const char * OutputWriter::OGR_FILE  = "/vsimem/out.ogr";
+const char * OutputWriter::OGR_FILE  = "/tmp/out.shp";
 
 
 OutputWriter::OutputWriter ()
 {
     OGRRegisterAll();
     GDALAllRegister();
-    hSrcDS = NULL;
-    hDstDS = NULL;
-    hDriver = NULL;
-    pafScanline = NULL;
-    hLayer = NULL;
-    hFieldDefn = NULL;
-    hDataSource = NULL;
-    hOGRDriver = NULL;
+    hSrcDS       = NULL;
+    hDstDS       = NULL;
+    hDriver      = NULL;
+    pafScanline  = NULL;
+    hLayer       = NULL;
+    hFieldDefn   = NULL;
+    hDataSource  = NULL;
+    hOGRDriver   = NULL;
     papszOptions = NULL;
-    hSpdMemDs = NULL;
-    hDirMemDs = NULL;
-    hDustMemDs = NULL;
+    hSpdMemDs    = NULL;
+    hDirMemDs    = NULL;
+    hDustMemDs   = NULL;
+    hSrcSRS      = NULL;
+    hDestSRS     = NULL;
+    hTransform   = NULL;
+    colors       = NULL;
+    split_vals   = NULL;
+
+    ///_createDefaultStyles();
 }  /* -----  end of method OutputWriter::OutputWriter  (constructor)  ----- */
 
 
@@ -75,11 +82,54 @@ OutputWriter::~OutputWriter ()
     }
     if( NULL != hDataSource )
     {
-        OGR_DS_Destroy( hDataSource );
+        GDALClose( hDataSource );
+    }
+    if( NULL != hSrcSRS )
+    {
+        OSRDestroySpatialReference( hSrcSRS );
+    }
+    if( NULL != hDestSRS )
+    {
+        OSRDestroySpatialReference( hDestSRS );
+    }
+    if( NULL != hTransform )
+    {
+        OCTDestroyCoordinateTransformation( hTransform );
+    }
+    //_destroyDefaultStyles();
+    if( NULL != split_vals )
+    {
+        delete [] split_vals;
     }
 
     return;
 }		/* -----  end of method OutputWriter::~OutputWriter  ----- */
+
+void OutputWriter::_createDefaultStyles()
+{
+    //_destroyDefaultStyles(); 
+    linewidth = 1.0;
+    colors    = new Style*[ NCOLORS ];
+    colors[0] = new Style( "blue"  , 255, 255,  0,   0, linewidth );
+    colors[1] = new Style( "green" , 255, 0,  255,   0, linewidth );
+    colors[2] = new Style( "yellow", 255, 0,  255, 255, linewidth );
+    colors[3] = new Style( "orange", 255, 0,  127, 255, linewidth );
+    colors[4] = new Style( "red"   , 255, 0,    0, 255, linewidth );
+
+    return;
+}
+void OutputWriter::_destroyDefaultStyles()
+{
+    if( NULL != colors )
+    {
+        for( int i = 0; i < NCOLORS; i ++ )
+        {
+            delete colors[i];
+        }
+        delete [] colors;
+    }
+    colors = NULL;
+}
 
 #ifdef EMISSIONS
 void OutputWriter::setDustGrid(AsciiGrid<double> &d)
@@ -108,8 +158,8 @@ void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
               GDALDatasetH hDirMemDs, 
               GDALDatasetH hDustMemDs)
 {
-    this->hSpdMemDs = hSpdMemDs;
-    this->hDirMemDs = hDirMemDs;
+    this->hSpdMemDs  = hSpdMemDs;
+    this->hDirMemDs  = hDirMemDs;
     this->hDustMemDs = hDustMemDs;
 }
 
@@ -163,28 +213,35 @@ OutputWriter::write (std::string outputFilename, std::string driver)
 }		/* -----  end of method OutputWriter::write  ----- */
 
 
+
+
     void
 OutputWriter::_createOGRFileWithFields ()
 {
-    hOGRDriver = OGRGetDriverByName( "Memory" );
+    const char* pszSrcWkt = (char*) spd.prjString.c_str();
+    hSrcSRS = OSRNewSpatialReference( pszSrcWkt );
+
+    hOGRDriver = GDALGetDriverByName( "ESRI Shapefile" );
     if( NULL == hOGRDriver )
     {
         throw std::runtime_error("OutputWriter: Failed to get OGR Memory driver");
     }
 
-    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, OGR_FILE, NULL );
+    hDataSource = GDALCreate( hOGRDriver, OGR_FILE, 0, 0, 0, GDT_Unknown, NULL );
     if( NULL == hDataSource )
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
     }
     
     //Create a new layer for the wind features
-    hLayer = OGR_DS_CreateLayer( hDataSource, "Points", NULL, wkbPoint, NULL );
+    hLayer = GDALDatasetCreateLayer( hDataSource, "Wind Vectors" , hSrcSRS, 
+                                 wkbLineString, NULL );
     if( hLayer == NULL )
     {
-        throw std::runtime_error("OutputWriter: Failed to create point attribute layer");
+        throw std::runtime_error("OutputWriter: Failed to create wind vector layer");
     }
-    
+
+        
     hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
@@ -198,126 +255,206 @@ OutputWriter::_createOGRFileWithFields ()
         throw std::runtime_error("OutputWriter: Create DIR field failed");
     }
     OGR_Fld_Destroy(hFieldDefn);
-
-    hFieldDefn = OGR_Fld_Create( AV_DIR, OFTInteger );
-    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
-    {
-        throw std::runtime_error("OutputWriter: Create AV_DIR field failed");
-    }
-    OGR_Fld_Destroy(hFieldDefn);
-
-    hFieldDefn = OGR_Fld_Create( AM_DIR, OFTInteger );
-    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
-    {
-        throw std::runtime_error("OutputWriter: Create AM_DIR field failed");
-    }
-    OGR_Fld_Destroy(hFieldDefn);
-
-    hFieldDefn = OGR_Fld_Create( QGIS_DIR, OFTInteger );
-    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
-    {
-        throw std::runtime_error("OutputWriter: Create QGIS_DIR field failed");
-    }
-    OGR_Fld_Destroy(hFieldDefn);
-
     return ;
+
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
 
 
-    bool
-OutputWriter::_writePDF (std::string filename)
+/* --------------------------------------------------------------------------*/
+/** 
+ * @brief Creates a GeoPDF file with the given name and opens the dataset
+ * for modification.
+ * @pre The base raster DEM file is specified
+ * @post hTransform contains coordinate transformation (sim SRS -> dem SRS)
+ * @post hDstDS is open and writable
+ * @post hLayer created with associated speed, direction fields
+ * 
+ * @Param outputfn desired output filename
+ * 
+ * @Returns  True if successful. 
+ */
+/* ----------------------------------------------------------------------------*/
+bool OutputWriter::_createPDFFromDEM(std::string outputfn)
 {
-    const char *pszDriverName = "PDF";
-    int ncols, nrows;
-    int nXSize, nYSize;
-    double x, y, z;
-    double mapDir, viewDir, qgisDir;
-    x = y = z = mapDir = viewDir = qgisDir = 0;
+    const char *pszDriverName = "PDF"; 
+    hSrcDS = GDALOpenEx( demFile.c_str(), 0, NULL, NULL, NULL );
 
-    _createOGRFileWithFields();
-
-    //Add the features to the OGR datasource given by the dir and spd grids
-    for( int i = 0; i < spd.get_nRows(); i++ )
+    if( NULL == hSrcDS )
     {
-        for( int j = 0; j < spd.get_nCols(); j++ )
-        {
-            OGRFeatureH hFeature;
-            OGRGeometryH hPt;
-
-            spd.get_cellPosition(i, j, &x, &y);
-            cout << x << "," << y << endl;
-            mapDir    = dir(i,j) + 180.0;
-            viewDir   = qgisDir = mapDir;
-
-            if( qgisDir > 360.0 )
-            {
-                qgisDir -= 360.0;
-                mapDir  -= 360.0;
-                viewDir -= 360.0;
-            }
-
-            viewDir = 360.0 - viewDir;
-            mapDir  = -90.0;
-            if( mapDir < 0.0 )
-            {
-                mapDir += 360.0;
-            }
-
-            hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
-            OGR_F_SetFieldDouble( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED), spd(i,j) );
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR), 
-                                   (int)dir(i,j)+0.5);
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, AV_DIR), 
-                                   (int)viewDir+0.5);
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, AM_DIR), 
-                                   (int)mapDir+0.5);
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, QGIS_DIR),
-                                   (int)qgisDir+0.5);
-
-            hPt = OGR_G_CreateGeometry(wkbPoint);
-            OGR_G_SetPoint_2D(hPt, 0, x, y);
-
-            OGR_F_SetGeometry( hFeature, hPt );
-            OGR_G_DestroyGeometry( hPt );
-            OGR_F_Destroy( hFeature );
-        }
-    }
-    hDriver = GDALGetDriverByName( pszDriverName );
-    
-    if( hDriver == NULL )
-    {
-        throw std::runtime_error("OutputWriter: obtaining output driver failed");
+        std::cout << "opening base PDF file failed\n";
+        throw std::runtime_error("OutputWriter: Failed to open PDF base DEM");
     }
 
-
-    hSrcDS = GDALOpenShared( demFile.c_str(), GA_ReadOnly );
-
-    if( hSrcDS == NULL )
+    const char* pszSrcWkt = (char*) spd.prjString.c_str();
+    /*
+    const char* pszDstWkt = GDALGetProjectionRef( hSrcDS );
+    hSrcSRS = OSRNewSpatialReference( pszSrcWkt );
+    hDestSRS = OSRNewSpatialReference( pszDstWkt );
+    hTransform = OCTNewCoordinateTransformation( hSrcSRS, hDestSRS );
+    if( NULL == hTransform )
     {
-        throw std::runtime_error("OutputWriter: failed to open background file");
+        throw std::runtime_error("OutputWriter: Failed to create coordinate" \
+                                 "transformation for PDF output");
+    }
+  */
+    hDriver = GDALGetDriverByName( "PDF" );
+
+    if( NULL == hDriver )
+    {
+        throw std::runtime_error("OutputWriter: Failed to get OGR PDF driver");
     }
 
-    papszOptions = CSLSetNameValue( papszOptions, "OGR_DATASOURCE", OGR_FILE );
-
-    hDstDS = GDALCreateCopy( hDriver, filename.c_str(), hSrcDS, FALSE, 
+    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
                              papszOptions, NULL, NULL );
-
-
-    GDALClose(hSrcDS);
-    hSrcDS = NULL;
     if( NULL == hDstDS )
     {
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
-    else
+    double adfGeoTransform[6];
+    adfGeoTransform[0] = spd.get_xllCorner();
+    adfGeoTransform[1] = spd.get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -spd.get_cellSize();
+    
+    char* pszDstWKT = (char*)spd.prjString.c_str();
+    GDALSetProjection(hDstDS, pszDstWKT);
+    GDALSetGeoTransform(hDstDS, adfGeoTransform);
+    GDALClose(hSrcDS);
+    
+
+    hLayer = GDALDatasetCreateLayer( hDstDS, "Wind", NULL, 
+                                     wkbLineString, NULL );
+    if( NULL == hLayer )
     {
-        GDALClose(hDstDS);
-        hDstDS = NULL;
+        throw std::runtime_error("OutputWriter: Failed to create wind vector layer");
     }
-    CSLDestroy( papszOptions );
-    papszOptions = NULL;
-    OGR_DS_Destroy( hDataSource );
+
+    hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
+    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
+    {
+        throw std::runtime_error("OutputWriter: Creating SPEED field failed");
+    }
+    OGR_Fld_Destroy(hFieldDefn);
+
+    hFieldDefn = OGR_Fld_Create( DIR, OFTInteger );
+    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
+    {
+        throw std::runtime_error("OutputWriter: Create DIR field failed");
+    }
+    OGR_Fld_Destroy(hFieldDefn);
+    return true;
+
+}
+
+    bool
+OutputWriter::_writePDF (std::string outputfn)
+{
+    int ncols = spd.get_nCols();
+    int nrows = spd.get_nRows();
+    double x     = 0,     y = 0;
+    double interval;
+
+    //@TODO: move to _createSplits( scaleParam ) (and deleteSplits)
+    if( NULL != split_vals )
+    {
+        delete [] split_vals;
+    }
+    split_vals = new double[NCOLORS];
+    interval = spd.get_maxValue()/(float)NCOLORS;
+    for(int i = 0;i < NCOLORS;i++)
+    {
+        split_vals[i] = i * interval;
+    }
+
+    //_createPDFFromDEM( outputfn );
+    _createOGRFileWithFields();
+    //Add the features to the OGR datasource given by the dir and spd grids
+    for( int i = 0; i < nrows; i++ )
+    {
+        for( int j = 0; j < ncols; j++ )
+        {
+            OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+            OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
+            WN_Arrow     arrow;
+
+            spd.get_cellPosition(i, j, &x, &y);
+            arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
+                              split_vals, NCOLORS);
+
+            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED), 
+                                   spd(i,j) );       
+            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR), 
+                                   (int)dir(i,j)+0.5);
+            
+
+            arrow.asGeometry( hLine );
+            OGR_F_SetGeometry( hFeature, hLine );
+            OGR_G_AssignSpatialReference( hLine, hSrcSRS );
+            OGR_F_SetStyleString( hFeature, "PEN(c:#FF0000,w:5px)" );
+
+            if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+            {
+                throw std::runtime_error("OutputWriter: error creating features");
+            } 
+            OGR_G_DestroyGeometry( hLine );
+            OGR_F_Destroy( hFeature );
+        }
+    }
+    OGR_L_SyncToDisk( hLayer );
+    // GDALClose( hDataSource );
+    // hDataSource = NULL;
+    hSrcDS = GDALOpenEx( demFile.c_str(), 0, NULL, NULL, NULL );
+
+    if( NULL == hSrcDS )
+    {
+        std::cout << "opening base PDF file failed\n";
+        throw std::runtime_error("OutputWriter: Failed to open PDF base DEM");
+    }
+    double adfGeoTransform[6];
+    adfGeoTransform[0] = spd.get_xllCorner();
+    adfGeoTransform[1] = spd.get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -spd.get_cellSize();
+    
+    char* pszDstWKT = (char*)spd.prjString.c_str();
+    GDALSetProjection(hSrcDS, pszDstWKT);
+    GDALSetGeoTransform(hSrcDS, adfGeoTransform);
+
+    hDriver = GDALGetDriverByName( "PDF" );
+
+    if( NULL == hDriver )
+    {
+        throw std::runtime_error("OutputWriter: Failed to get OGR PDF driver");
+    }
+
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", OGR_FILE ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
+    papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
+    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
+                             papszOptions, NULL, NULL );
+    if( NULL == hDstDS )
+    {
+        throw std::runtime_error("OutputWriter: Error creating output file");
+    }
+    
+    GDALClose(hSrcDS);
+    GDALClose(hDstDS);
+    hSrcDS = NULL;
+    hDstDS = NULL;
+    GDALClose( hDataSource );
     hDataSource = NULL;
+ 
+    //OCTDestroyCoordinateTransformation( hTransform );
+    if( NULL != papszOptions )
+    {
+        CSLDestroy( papszOptions );
+        papszOptions = NULL;
+    }
+    GDALDeleteDataset( hOGRDriver, OGR_FILE );
 
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */

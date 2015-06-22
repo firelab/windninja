@@ -38,6 +38,7 @@
 #include "EasyBMP_Geometry.h"
 #include "ninjaUnits.h"
 #include "ninjaMathUtility.h"
+#include "wn_Arrow.h"
 
 #include "ogr_spatialref.h"
 #include "ogr_core.h"
@@ -61,7 +62,6 @@
 
 #include "Style.h"
 
-//#include <process.h>
 #include <stdio.h>
 #include <fstream>
 
@@ -105,8 +105,11 @@ class OutputWriter
 
     private:
         /* ====================  METHODS       ======================================= */
+        void _createDefaultStyles();
+        void _destroyDefaultStyles();
         void _createOGRFileWithFields();
-        bool _writePDF(std::string filename);
+        bool _createPDFFromDEM(std::string outputfn);
+        bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
         
         /* ====================  DATA MEMBERS  ======================================= */
@@ -140,24 +143,26 @@ class OutputWriter
         static const char * QGIS_DIR;//   = "QGIS_dir";
         static const char * OGR_FILE;
 
-        double geTheta;
 
-        static const int numColors = 5;
-
-        double *splitValue;
+        static const int NCOLORS = 5; 
+        double *split_vals;
+        Style ** colors;
 
         double northExtent, eastExtent, southExtent, westExtent;
-        double lineWidth;
+        double linewidth;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
         GDALDriverH hDriver;
+        OGRSpatialReferenceH hSrcSRS;
+        OGRSpatialReferenceH hDestSRS;
+        OGRCoordinateTransformationH hTransform;
         unsigned char *pafScanline;
         char** papszOptions;
         OGRLayerH hLayer;
         OGRFieldDefnH hFieldDefn;
         OGRDataSourceH hDataSource;
-        OGRSFDriverH hOGRDriver;
+        GDALDriverH hOGRDriver;
 
 }; /* -----  end of class OutputWriter  ----- */
 
