@@ -107,10 +107,19 @@ class OutputWriter
         /* ====================  METHODS       ======================================= */
         void _createDefaultStyles();
         void _destroyDefaultStyles();
-        void _createOGRFileWithFields();
         bool _createPDFFromDEM(std::string outputfn);
         bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
+        std::string _getStyleFromSpeed( const double & spd );
+        void _closeDatasources();
+        void _closeOGRDatasource();
+        void _destroyOptions();
+        void _deleteSplits();
+        void _createSplits();
+        void _createOGRFile();
+        bool _createLegendBMP();
+        void _destroyLegend();
+
         
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
@@ -142,6 +151,7 @@ class OutputWriter
         static const char * AM_DIR;//     = "AM_dir";
         static const char * QGIS_DIR;//   = "QGIS_dir";
         static const char * OGR_FILE;
+        static const char * LEGEND_FILE;
 
 
         static const int NCOLORS = 5; 
@@ -164,6 +174,8 @@ class OutputWriter
         OGRFieldDefnH hFieldDefn;
         OGRDataSourceH hDataSource;
         GDALDriverH hOGRDriver;
+        double adfGeoTransform[6];
+        
 
 }; /* -----  end of class OutputWriter  ----- */
 
