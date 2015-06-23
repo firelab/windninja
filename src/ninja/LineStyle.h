@@ -44,9 +44,11 @@ public:
 	virtual ~LineStyle();
 
 	bool setHexColor();
+	bool setHexColorRGBA();
 
 	bool printLineStyle();
 	bool writeLineStyle(FILE *fileOut);
+    std::string  asOGRLineStyle();
 
 private:
 	std::string hexColor;

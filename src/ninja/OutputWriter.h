@@ -157,6 +157,7 @@ class OutputWriter
         OGRSpatialReferenceH hSrcSRS;
         OGRSpatialReferenceH hDestSRS;
         OGRCoordinateTransformationH hTransform;
+        OGRStyleTableH hStyleTbl;
         unsigned char *pafScanline;
         char** papszOptions;
         OGRLayerH hLayer;

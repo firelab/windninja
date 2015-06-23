@@ -55,6 +55,10 @@ bool Style::writeStyle(VSILFILE *fileOut)
 	return true;
 }
 
+std::string Style::asOGRStyleString()
+{
+    return asOGRLineStyle(); 
+}
 
 
 

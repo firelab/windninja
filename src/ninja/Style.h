@@ -41,6 +41,7 @@ public:
 
 	bool printStyle();
 	bool writeStyle(FILE *fileOut);
+    std::string asOGRStyleString();
 
 private:
 	std::string label;

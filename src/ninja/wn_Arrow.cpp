@@ -49,10 +49,12 @@ WN_Arrow::~WN_Arrow()
 void WN_Arrow::asGeometry(OGRGeometryH & hLine)
 {
     double z = m_cell_size / 8.0;
+
+    OGR_G_AddPoint_2D( hLine, m_xhead_right, m_yhead_right );
+    OGR_G_AddPoint_2D( hLine, m_xtip       , m_ytip        );
+    OGR_G_AddPoint_2D( hLine, m_xhead_left , m_yhead_left  );
     OGR_G_AddPoint_2D( hLine, m_xtip       , m_ytip        );
     OGR_G_AddPoint_2D( hLine, m_xtail      , m_ytail       );
-    OGR_G_AddPoint_2D( hLine, m_xhead_right, m_yhead_right );
-    OGR_G_AddPoint_2D( hLine, m_xhead_left , m_yhead_left  );
 
     return;
 }
@@ -122,8 +124,18 @@ void WN_Arrow::_computeVectorPoints()
         xpt           = -xpt;
         ypt           =  ypt;
 
-        m_xhead_right = ( xpt * cos_theta ) - ( ypt * sin_theta );
-        m_yhead_right = ( xpt * sin_theta ) + ( ypt * cos_theta );
+        m_xhead_left = ( xpt * cos_theta ) - ( ypt * sin_theta );
+        m_yhead_left = ( xpt * sin_theta ) + ( ypt * cos_theta );
+
+        m_xtip        += m_x;
+        m_ytip        += m_y;
+        m_xtail       += m_x;
+        m_ytail       += m_y;
+        m_xhead_right += m_x;
+        m_yhead_right += m_y;
+        m_xhead_left  += m_x;
+        m_yhead_left  += m_y;
+
     }
 
 }
