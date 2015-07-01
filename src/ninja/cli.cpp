@@ -1040,10 +1040,6 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setFrictionVelocityCalculationMethod( i_,
                         vm["friction_velocity_calculation_method"].as<std::string>() );
             }
-            else{
-                windsim.setFrictionVelocityCalculationMethod( i_,
-                        "logProfile" );
-            }
             #endif
 
             #ifdef EMISSIONS
