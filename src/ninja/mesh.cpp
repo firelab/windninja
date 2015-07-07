@@ -267,6 +267,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 	//Resample DEM to desired computational resolution
      if(meshResolution < input.dem.get_cellSize())    //making the grid finer is not an option yet, so use the DEM resolution
      {
+          meshResolution = input.dem.get_cellSize();
           input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Grid cannot be made finer, using DEM cellsize...");
 								//NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
      }else if(meshResolution > input.dem.get_cellSize())
@@ -290,11 +291,10 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
      NUMEL=(nrows-1)*(ncols-1)*(nlayers-1);  //number of elements
      //hexahedral elements are being used
      NNPE=8;                                 //number of nodes per element
-
+     
 	 XORD.allocate(nrows, ncols, nlayers);
 	 YORD.allocate(nrows, ncols, nlayers);
 	 ZORD.allocate(nrows, ncols, nlayers);
-
 
 	//Set xyz coordinates ---------------------------------------------------------------
 	#pragma omp parallel for default(shared) private(i,j,k)
@@ -324,7 +324,6 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 			}
 		}
 	}
-
 
      if(check_aspect_ratio==1)
           aspect_ratio=get_aspect_ratio(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
