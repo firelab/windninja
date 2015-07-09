@@ -1575,6 +1575,13 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
             ninjas[ nIndex ]->set_pdfResolution( resolution, units ) );
 }
 
+int ninjaArmy::setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_pdfLineWidth( linewidth ) );
+}
+
+
 int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {

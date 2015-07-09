@@ -1120,6 +1120,19 @@ public:
     int setPDFResolution( const int nIndex, const double resolution,
                                      std::string units, char ** papszOptions=NULL );
 
+
+    /* --------------------------------------------------------------------------*/
+    /** 
+     * @brief Configures the PDF output vector line width (defaults to 1.0)
+     * 
+     * @Param nIndex index of a ninja
+     * @Param linewidth value of the desired line width ( > 0.0 )
+     * 
+     * @Returns errval NINJA_SUCCESS if linewidth correctly set
+     */
+    /* ----------------------------------------------------------------------------*/
+    int setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions=NULL );
+
     int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
     /**
     * \brief Returns the output path of a ninja

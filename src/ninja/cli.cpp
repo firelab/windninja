@@ -352,6 +352,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
+                ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
@@ -1401,6 +1402,7 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
+                windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
             }
 
         }   //end for loop over ninjas

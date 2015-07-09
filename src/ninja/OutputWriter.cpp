@@ -29,8 +29,6 @@
 *****************************************************************************/
 
 #include "OutputWriter.h"
-#include <iostream>
-
 
 const char * OutputWriter::SPEED     = "speed";
 const char * OutputWriter::DIR       = "dir";
@@ -62,7 +60,7 @@ OutputWriter::OutputWriter ()
     hTransform   = NULL;
     colors       = NULL;
     split_vals   = NULL;
-    hStyleTbl    = NULL;
+    linewidth    = 1.0;
 
     _createDefaultStyles();
     
@@ -84,10 +82,6 @@ OutputWriter::~OutputWriter ()
     {
         OCTDestroyCoordinateTransformation( hTransform );
     }
-   if( NULL != hStyleTbl )
-    {
-        OGR_STBL_Destroy( hStyleTbl );
-    }
 
     _destroyDefaultStyles();
     _deleteSplits();
@@ -99,7 +93,6 @@ OutputWriter::~OutputWriter ()
 
 void OutputWriter::_createDefaultStyles()
 {
-    linewidth = 1.0;
     colors    = new Style*[ NCOLORS ];
     colors[0] = new Style( "blue"  , 255, 255,  0,   0, linewidth );
     colors[1] = new Style( "green" , 255, 0,  255,   0, linewidth );
@@ -120,6 +113,18 @@ void OutputWriter::_destroyDefaultStyles()
         delete [] colors;
     }
     colors = NULL;
+}
+
+void OutputWriter::setLineWidth( const float w )
+{
+   linewidth = ( w >= 0.0f ) ? w : -w; 
+   if( areEqual( linewidth, 0.0f ) )
+   {
+       linewidth = 1.0f;
+   }
+   _destroyDefaultStyles();
+   _createDefaultStyles();
+   
 }
 
 #ifdef EMISSIONS
@@ -289,7 +294,7 @@ bool OutputWriter::_createLegendBMP()
 	int legendWidth = 180;
 	int legendHeight = int(legendWidth / 0.75);
 	BMP legend;
-	float rescale     = 1.0 / 5.0;
+	float rescale     = 1.0f / 4.0f;
 
 	std::string legendStrings[NCOLORS];
 	ostringstream os;

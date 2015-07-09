@@ -39,6 +39,9 @@
 #include "ninjaUnits.h"
 #include "ninjaMathUtility.h"
 #include "wn_Arrow.h"
+#include "ninjaException.h"
+#include "Style.h"
+
 
 #include "ogr_spatialref.h"
 #include "ogr_core.h"
@@ -57,13 +60,6 @@
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
-#include "ninjaException.h"
-
-
-#include "Style.h"
-
-#include <stdio.h>
-#include <fstream>
 
 
 
@@ -92,6 +88,7 @@ class OutputWriter
         void setNinjaTime(std::string t) {ninjaTime=t;}
         void setRunNumber(int n) {runNumber=n;}
         void setMaxRunNumber(int n) {maxRunNumber=n;}
+        void setLineWidth( const float w );
         
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
@@ -159,7 +156,7 @@ class OutputWriter
         Style ** colors;
 
         double northExtent, eastExtent, southExtent, westExtent;
-        double linewidth;
+        float linewidth;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
@@ -167,7 +164,6 @@ class OutputWriter
         OGRSpatialReferenceH hSrcSRS;
         OGRSpatialReferenceH hDestSRS;
         OGRCoordinateTransformationH hTransform;
-        OGRStyleTableH hStyleTbl;
         unsigned char *pafScanline;
         char** papszOptions;
         OGRLayerH hLayer;

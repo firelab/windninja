@@ -4677,6 +4677,7 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid);
             output.setDEMfile(input.pdfDEMFileName);
+            output.setLineWidth(input.pdfLineWidth);
             output.write(input.pdfFile, "PDF");
 
 
@@ -6138,10 +6139,15 @@ void ninja::set_pdfOutFlag(bool flag)
 
 void ninja::set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units)
 {
-    input.shpUnits = units;
+    input.pdfUnits = units;
     lengthUnits::toBaseUnits(Resolution, units);
 
     input.pdfResolution = Resolution;
+}
+
+void ninja::set_pdfLineWidth(const float w)
+{
+    input.pdfLineWidth = w;
 }
 
 void ninja::set_pdfDEM(std::string dem_file_name)
