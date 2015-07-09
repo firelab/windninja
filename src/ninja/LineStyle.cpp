@@ -98,17 +98,18 @@ bool LineStyle::setHexColorRGBA()
 	if(red == 0)
 		hexColor.append("0");
 
-    b << std::hex << blue << std::flush;
-	hexColor.append(b.str());
-	if(blue == 0)
-		hexColor.append("0");
-
     g << std::hex << green << std::flush;
 	hexColor.append(g.str());
 	if(green == 0)
 		hexColor.append("0");
 	
 
+    b << std::hex << blue << std::flush;
+	hexColor.append(b.str());
+	if(blue == 0)
+		hexColor.append("0");
+
+    
 	a << std::hex << alpha << std::flush;
 	hexColor.append( a.str() );
 	if(alpha == 0)

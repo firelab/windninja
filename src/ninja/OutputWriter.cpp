@@ -598,6 +598,7 @@ OutputWriter::_createOGRFile()
         }
     }
     
+    _closeOGRDatasource();
 
     return ;
 
@@ -624,7 +625,6 @@ OutputWriter::_writePDF (std::string outputfn)
 
     _createSplits();
     _createOGRFile();
-    _closeOGRDatasource();
     _createLegendBMP();
     hDriver = GDALGetDriverByName( "PDF" );
 
