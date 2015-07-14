@@ -361,6 +361,19 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
 
     setAtmFlags();
+   //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+    //fetches PDF base map, temporary hack
+    if(ninjas[0]->input.pdfOutFlag == true )
+    {
+        SURF_FETCH_E retval;
+        SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
+        cout << "dem:"     << ninjas[0]->input.dem.fileName   << endl;
+        cout << "outdem: " << ninjas[0]->input.pdfDEMFileName << endl;
+        retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName, ninjas[0]->input.pdfDEMFileName );
+        cout << "pdf fetch: " << retval << endl;
+        delete fetcher;
+
+    }
 
     if(ninjas.size() == 1)
     {
@@ -426,7 +439,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<std::string>asMessages( numProcessors );
         
         std::vector<boost::local_time::local_date_time> timeList; 
-        
+     
         //create MEM datasets for GTiff output writer
         ninjas[0]->readInputFile();
         ninjas[0]->set_position();
@@ -441,6 +454,8 @@ bool ninjaArmy::startRuns(int numProcessors)
         hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
         hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
         hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+
+        
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp

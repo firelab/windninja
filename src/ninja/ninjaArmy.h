@@ -45,6 +45,7 @@
 #include <algorithm>
 #include "boost/typeof/typeof.hpp"
 #include "WindNinjaInputs.h"
+#include "fetch_factory.h"
 
 /*-----------------------------------------------------------------------------
  *  Helper Macros

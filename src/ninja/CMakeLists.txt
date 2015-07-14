@@ -83,6 +83,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
                   readInputFile.cpp
+                  relief_fetch.cpp
                   scalarTransport.cpp
                   Shade.cpp
                   ShapeVector.cpp

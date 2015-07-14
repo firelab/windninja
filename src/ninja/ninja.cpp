@@ -6152,9 +6152,11 @@ void ninja::set_pdfLineWidth(const float w)
 
 void ninja::set_pdfDEM(std::string dem_file_name)
 {
+    /*
     if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 dem_file_name + " does not exist or may be in use by another program.");
+    */
     input.pdfDEMFileName = dem_file_name;
 }
 
@@ -6436,6 +6438,7 @@ void ninja::keepOutputGridsInMemory(bool flag)
 double ninja::getFuelBedDepth(int fuelModel)
 {	//at this point must be in meters...  could change...
 
+    //TODO: add units info, turn into table so there arent >200 branches
     if(fuelModel == 1)
         return 1.000000;
     else if(fuelModel == 2)
