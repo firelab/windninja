@@ -198,6 +198,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         
         model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
         
+        
         ninjas.resize(wxList.size());
         
         for(unsigned int i = 0; i < wxList.size(); i++)
@@ -215,6 +216,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
             ninjas[i]->setArmySize(wxList.size());
         }       
+        delete model;
     }
     
     
@@ -254,8 +256,8 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
             iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
             i++;*/
         }
+        delete model;
     }
-    //delete model;
 }
 
 void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
@@ -367,10 +369,7 @@ bool ninjaArmy::startRuns(int numProcessors)
     {
         SURF_FETCH_E retval;
         SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
-        cout << "dem:"     << ninjas[0]->input.dem.fileName   << endl;
-        cout << "outdem: " << ninjas[0]->input.pdfDEMFileName << endl;
         retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName, ninjas[0]->input.pdfDEMFileName );
-        cout << "pdf fetch: " << retval << endl;
         delete fetcher;
 
     }

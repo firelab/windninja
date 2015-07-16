@@ -200,8 +200,6 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
         (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panDstBands[0] = 1;
 
-    //psWarpOptions->pfnProgress = GDALTermProgress;
-
     psWarpOptions->pTransformerArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, 
                                          GDALGetProjectionRef(hSrcDS), 
@@ -249,17 +247,17 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile )
 {
     //TODO: check to see if relief of infile already exists
-            /* parse options */
-    GDALResampleAlg eAlg = GRA_NearestNeighbour;
-
+    //
     CPLSetConfigOption("GTIFF_DIRECT_IO", "YES");
 
+    GDALResampleAlg eAlg = GRA_NearestNeighbour;
     GDALDriverH hDriver;
     GDALDatasetH hDstDS;
     GDALDatasetH hSrcDS;
     GDALDatasetH inDS;
     GDALDataType eDT;
     CPLErr eErr;
+
     double src_gt[6], dst_gt[6];
     const char *pszSrcWKT = NULL, *pszDstWKT = NULL;
     unsigned int nbands = 0;
@@ -285,11 +283,8 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile 
     if( NULL ==  pszDstWKT )
     {
         OSRDestroySpatialReference( hSrcSRS );
-        cout << "relief: failed to convert source SRS to OGC WKT" << endl;
         return SURF_FETCH_E_WARPER_ERR;
     }
-
-
     /*finished with the input file */
 
 
@@ -297,24 +292,19 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile 
     hSrcDS = GDALOpen( path.c_str(), GA_ReadOnly );
     if(hSrcDS == NULL)
     {
-
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
     }
     nbands = GDALGetRasterCount( hSrcDS );
     if( nbands == 0 )
     {
-        //add error info detailing incompatible data types
         GDALClose( hSrcDS );
-        cout << "relief: map tile had no bands" << endl;
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
     }
     eDT = GDALGetRasterDataType( GDALGetRasterBand( hSrcDS, 1 ) );
     if( GDT_Byte != eDT )
     {
-        //add error info detailing incompatible data types
-        cout << "relief: server data type was " << eDT << endl;
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -340,8 +330,6 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile 
     {
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
-
-        cout << "couldn't create relief DS" << endl;
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -364,11 +352,9 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile 
                                          FALSE, 0.0, 1 );
 
     psWarpOptions->pfnTransformer = GDALGenImgProjTransform;
-
     psWarpOptions->eResampleAlg = eAlg;
 
     GDALWarpOperation oOperation;
-
     oOperation.Initialize( psWarpOptions );
     eErr = oOperation.ChunkAndWarpImage( 0, 0, 
                                          GDALGetRasterXSize( hDstDS ), 

@@ -86,8 +86,8 @@ OutputWriter::~OutputWriter ()
     _destroyDefaultStyles();
     _deleteSplits();
     _destroyOptions();
-    _closeOGRDatasource();
-    _closeDatasources();
+    _closeOGRFile();
+    _closeDataSets();
     return;
 }		/* -----  end of method OutputWriter::~OutputWriter  ----- */
 
@@ -220,14 +220,14 @@ std::string OutputWriter::_getStyleFromSpeed( const double & spd )
             break;
         }
     }
-    if( style.compare("none") == 0 )
+    if( "none" ==  style)
     {
         style = colors[NCOLORS - 1]->asOGRStyleString();
     }
     return style;
 }
 
-void OutputWriter::_closeDatasources()
+void OutputWriter::_closeDataSets()
 {
     if( NULL != hSrcDS )
     {
@@ -256,7 +256,7 @@ void OutputWriter::_destroyOptions()
     }
 }
 
-void OutputWriter::_closeOGRDatasource()
+void OutputWriter::_closeOGRFile()
 {
     if( NULL != hDataSource )
     {
@@ -288,13 +288,13 @@ void OutputWriter::_createSplits()
 
 
 }
-bool OutputWriter::_createLegendBMP()
+bool OutputWriter::_createLegend()
 {
 	//make bitmap
 	int legendWidth = 180;
-	int legendHeight = int(legendWidth / 0.75);
+	int legendHeight = int(legendWidth / 0.75f);
 	BMP legend;
-	float rescale     = 1.0f / 4.0f;
+	float rescale     = 1.0f / 3.0f;
 
 	std::string legendStrings[NCOLORS];
 	ostringstream os;
@@ -317,19 +317,7 @@ bool OutputWriter::_createLegendBMP()
 	legend.SetSize(legendWidth,legendHeight);
 	legend.SetBitDepth(8);
 
-	//gray legend
-	/*for(int i = 0;i < legendWidth;i++)
-	{
-		for(int j = 0;j < legendHeight;j++)
-		{
-			legend(i,j)->Alpha = 0;
-			legend(i,j)->Blue = 192;
-			legend(i,j)->Green = 192;
-			legend(i,j)->Red = 192;
-		}
-	}*/
-
-	//black legend
+    //black legend
 	for(int i = 0;i < legendWidth;i++)
 	{
 		for(int j = 0;j < legendHeight;j++)
@@ -340,14 +328,7 @@ bool OutputWriter::_createLegendBMP()
 			legend(i,j)->Red = 0;
 		}
     }
-    /*
-	//for black text
-	RGBApixel black;
-	black.Red = 0;
-	black.Green = 0;
-	black.Blue = 0;
-	black.Alpha = 0;
-    */
+    
 	//for white text
 	RGBApixel white;
 	white.Red = 255;
@@ -400,30 +381,13 @@ bool OutputWriter::_createLegendBMP()
 	int textY;
 
 	x = 0.05;
-	//y = 0.10;
 	y = 0.30;
 
 
 	titleX = x * legendWidth;
 	titleY = (y / 3) * legendHeight;
 
-    /*
-	switch(speedUnits)
-	{
-		case velocityUnits::metersPerSecond:	// m/s
-			PrintString(legend,"Wind Speed (m/s)", titleX, titleY, titleTextHeight, white);
-			break;
-		case velocityUnits::milesPerHour:		// mph
-			PrintString(legend,"Wind Speed (mph)", titleX, titleY, titleTextHeight, white);
-			break;
-		case velocityUnits::kilometersPerHour:	// kph
-			PrintString(legend,"Wind Speed (kph)", titleX, titleY, titleTextHeight, white);
-			break;
-		default:				// default is mph
-			PrintString(legend,"Wind Speed (mph)", titleX, titleY, titleTextHeight, white);
-			break;
-	}
-	*/
+    
     //TODO: Add support for configuring wind speed units
     PrintString(legend,"Wind Speed (mph)", titleX, titleY, titleTextHeight, white);
 	for(int i = 0;i < NCOLORS;i++)
@@ -462,6 +426,7 @@ bool OutputWriter::_createLegendBMP()
     {
         throw std::runtime_error("OutputWriter: Failed to legend BMP");
     }
+    _openSrcDataSet();
     GDALGetGeoTransform( hSrcDS, adfGeoTransform );
     //shrink the legend BMP a bit
     adfGeoTransform[1] *= rescale;
@@ -469,9 +434,9 @@ bool OutputWriter::_createLegendBMP()
     GDALSetGeoTransform( hLegend, adfGeoTransform  );
     GDALSetProjection(   hLegend, GDALGetProjectionRef( hSrcDS ) );
     
-    
-    
 	GDALClose( hLegend );
+	_closeDataSets();
+	return true;
 
 }
 
@@ -479,6 +444,17 @@ void OutputWriter::_destroyLegend()
 {
     GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
     GDALDeleteDataset( hLegendDrv, LEGEND_FILE );
+    return;
+}
+
+void OutputWriter::_openSrcDataSet()
+{
+    hSrcDS = GDALOpenEx( demFile.c_str(), 0, NULL, NULL, NULL );
+    if( NULL == hSrcDS )
+    {
+        throw std::runtime_error("OutputWriter: Failed to open PDF base DEM");
+    }
+    return;
 }
 
 /* --------------------------------------------------------------------------*/
@@ -500,12 +476,7 @@ OutputWriter::_createOGRFile()
     int nrows = spd.get_nRows();
     double x  = 0, y = 0;
 
-    hSrcDS = GDALOpenEx( demFile.c_str(), 0, NULL, NULL, NULL );
-
-    if( NULL == hSrcDS )
-    {
-        throw std::runtime_error("OutputWriter: Failed to open PDF base DEM");
-    }
+    _openSrcDataSet(); 
 
     const char* pszSrcWkt = (char*) spd.prjString.c_str();
     const char* pszDstWkt = GDALGetProjectionRef( hSrcDS );
@@ -514,6 +485,7 @@ OutputWriter::_createOGRFile()
     hTransform = OCTNewCoordinateTransformation( hSrcSRS, hDestSRS );
 
     GDALGetGeoTransform( hSrcDS, adfGeoTransform );
+    GDALClose( hSrcDS );
 
     if( NULL == hTransform )
     {
@@ -557,7 +529,7 @@ OutputWriter::_createOGRFile()
     OGR_Fld_Destroy(hFieldDefn);
 
     hFieldDefn = OGR_Fld_Create( "OGR_STYLE", OFTString );
-    OGR_Fld_SetWidth( hFieldDefn, 64 );
+    OGR_Fld_SetWidth( hFieldDefn, 32 );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
         throw std::runtime_error("OutputWriter: Creating SPEED field failed");
@@ -565,6 +537,7 @@ OutputWriter::_createOGRFile()
     OGR_Fld_Destroy(hFieldDefn);
 
     //Add the features to the OGR datasource given by the dir and spd grids
+    std::string style;
     for( int i = 0; i < nrows; i++ )
     {
         for( int j = 0; j < ncols; j++ )
@@ -587,11 +560,11 @@ OutputWriter::_createOGRFile()
             OGR_G_Transform( hLine, hTransform );
             OGR_F_SetGeometry( hFeature, hLine );
             
-            const char * style = _getStyleFromSpeed( spd(i,j) ).c_str();
+            style = _getStyleFromSpeed( spd(i,j) );
             
-            OGR_F_SetStyleString( hFeature, style ); 
+            OGR_F_SetStyleString( hFeature, style.c_str() ); 
             OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"), 
-                                  style );
+                                  style.c_str() );
 
 
             if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
@@ -603,7 +576,7 @@ OutputWriter::_createOGRFile()
         }
     }
     
-    _closeOGRDatasource();
+    _closeOGRFile();
 
     return ;
 
@@ -626,11 +599,11 @@ OutputWriter::_createOGRFile()
     bool
 OutputWriter::_writePDF (std::string outputfn)
 {
-    
-
     _createSplits();
     _createOGRFile();
-    _createLegendBMP();
+    _createLegend();
+    _openSrcDataSet();
+
     hDriver = GDALGetDriverByName( "PDF" );
 
     if( NULL == hDriver )
@@ -644,6 +617,8 @@ OutputWriter::_writePDF (std::string outputfn)
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_RASTERS", LEGEND_FILE );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_RASTERS_LAYER_NAME",
                                     "Legend" );
+    papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
+    papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
     hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )
@@ -651,7 +626,7 @@ OutputWriter::_writePDF (std::string outputfn)
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
     
-    _closeDatasources();
+    _closeDataSets();
     _destroyOptions();
     _destroyLegend();
     

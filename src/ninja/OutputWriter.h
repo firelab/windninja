@@ -104,17 +104,23 @@ class OutputWriter
         /* ====================  METHODS       ======================================= */
         void _createDefaultStyles();
         void _destroyDefaultStyles();
-        bool _createPDFFromDEM(std::string outputfn);
+
         bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
         std::string _getStyleFromSpeed( const double & spd );
-        void _closeDatasources();
-        void _closeOGRDatasource();
-        void _destroyOptions();
-        void _deleteSplits();
-        void _createSplits();
+        void _openSrcDataSet();
+        void _closeDataSets();
+
         void _createOGRFile();
-        bool _createLegendBMP();
+        void _closeOGRFile();
+        void _destroyOGRFile();
+
+        void _destroyOptions();
+
+        void _createSplits();
+        void _deleteSplits();
+
+        bool _createLegend();
         void _destroyLegend();
 
         
@@ -154,9 +160,8 @@ class OutputWriter
         static const int NCOLORS = 5; 
         double *split_vals;
         Style ** colors;
-
-        double northExtent, eastExtent, southExtent, westExtent;
         float linewidth;
+
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
