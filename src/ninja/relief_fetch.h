@@ -1,10 +1,9 @@
 /******************************************************************************
- *
- * $Id$
+ * relief_fetch.h 
  *
  * Project:  WindNinja
- * Purpose:  Surface Fetch factory class for instantiating derived classes 
- * Author:   Levi Malott <lmnn3@mst.edu> 
+ * Purpose:  Downloads relief maps given a bounding box 
+ * Author:   Levi Malott <levi.malott@mst.edu>
  *
  ******************************************************************************
  *
@@ -27,40 +26,38 @@
  *
  *****************************************************************************/
 
-#ifndef FETCH_FACTORY_H
-#define FETCH_FACTORY_H
+#ifndef RELIEFFETCH_H
+#define RELIEFFETCH_H
 
-#include "nomads_wx_init.h"
 #include "surface_fetch.h"
-#include "gdal_fetch.h"
-#include "landfireclient.h"
-#include "relief_fetch.h"
 #include <string>
 
-class FetchFactory
+/**
+ * @brief Downloads relief maps from a tile server
+ */
+class ReliefFetch : public SurfaceFetch
 {
-    public:
-        enum FetchType
-            {
-                US_SRTM,
-                WORLD_SRTM,
-                WORLD_GMTED,
-#ifdef WITH_LCP_CLIENT
-                LCP,
-#endif
-                CUSTOM_GDAL,
-                RELIEF
-            };
-        static const std::string US_SRTM_STR;
-        static const std::string WORLD_SRTM_STR;
-        static const std::string RELIEF_STR;
-#ifdef HAVE_GMTED
-        static const std::string WORLD_GMTED_STR;
-#endif //HAVE_GMTED
+public:
+    /**
+     * Constructor
+     */
+    ReliefFetch();
+    ReliefFetch( std::string path );
+    virtual SURF_FETCH_E FetchBoundingBox(double *bbox, double resolution,
+                                          const char *filename, char ** options );
 
-        static SurfaceFetch* GetSurfaceFetch( FetchType, std::string path="" );
-        static SurfaceFetch* GetSurfaceFetch( std::string type, std::string path="" );
+
+    SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile );
+    /**
+     * Destructor
+     */
+    virtual ~ReliefFetch();
+
+protected:
+    SURF_FETCH_E Initialize();
 
 };
 
-#endif //FETCH_FACTORY_H
+
+
+#endif // RELIEFFETCH_H

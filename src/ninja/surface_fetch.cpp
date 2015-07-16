@@ -76,6 +76,11 @@ std::string SurfaceFetch::GetPath()
     return path;
 }
 
+SURF_FETCH_E SurfaceFetch::makeReliefOf( std::string infile, std::string outfile )
+{
+    return SURF_FETCH_E_NONE;
+}
+
 /**
  * \brief Default implementation of FetchPoint
  *

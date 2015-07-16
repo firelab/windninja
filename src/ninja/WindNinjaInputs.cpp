@@ -103,6 +103,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfOutFlag = false;
     pdfDEMFileName = "!set";
     pdfResolution = -1.0;
+    pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
