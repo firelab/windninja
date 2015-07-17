@@ -198,6 +198,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         
         model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
         
+        
         ninjas.resize(wxList.size());
         
         for(unsigned int i = 0; i < wxList.size(); i++)
@@ -215,6 +216,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
             ninjas[i]->setArmySize(wxList.size());
         }       
+        delete model;
     }
     
     
@@ -254,8 +256,8 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
             iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
             i++;*/
         }
+        delete model;
     }
-    //delete model;
 }
 
 void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
@@ -361,6 +363,16 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
 
     setAtmFlags();
+   //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+    //fetches PDF base map, temporary hack
+    if(ninjas[0]->input.pdfOutFlag == true )
+    {
+        SURF_FETCH_E retval;
+        SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
+        retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName, ninjas[0]->input.pdfDEMFileName );
+        delete fetcher;
+
+    }
 
     if(ninjas.size() == 1)
     {
@@ -426,7 +438,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<std::string>asMessages( numProcessors );
         
         std::vector<boost::local_time::local_date_time> timeList; 
-        
+     
         //create MEM datasets for GTiff output writer
         ninjas[0]->readInputFile();
         ninjas[0]->set_position();
@@ -441,6 +453,8 @@ bool ninjaArmy::startRuns(int numProcessors)
         hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
         hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
         hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+
+        
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -1574,6 +1588,13 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_pdfResolution( resolution, units ) );
 }
+
+int ninjaArmy::setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_pdfLineWidth( linewidth ) );
+}
+
 
 int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )

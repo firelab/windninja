@@ -83,6 +83,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
                   readInputFile.cpp
+                  relief_fetch.cpp
                   scalarTransport.cpp
                   Shade.cpp
                   ShapeVector.cpp
@@ -103,6 +104,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   wn_3dArray.cpp
                   wn_3dScalarField.cpp
                   wn_3dVectorField.cpp
+                  wn_Arrow.cpp
                   wxModelInitialization.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp

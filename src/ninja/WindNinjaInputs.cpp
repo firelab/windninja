@@ -103,6 +103,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfOutFlag = false;
     pdfDEMFileName = "!set";
     pdfResolution = -1.0;
+    pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
     keepOutGridsInMemory = false;
@@ -117,6 +118,11 @@ WindNinjaInputs::WindNinjaInputs()
 #ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
+#endif
+#ifdef FRICTION_VELOCITY
+    frictionVelocityFlag = false; 
+    frictionVelocityCalculationMethod = "!set";
+    ustarFile = "!set";
 #endif
 #ifdef EMISSIONS
     dustFilename = "!set";
@@ -190,14 +196,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   outer_relax = rhs.outer_relax;
   CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
   diurnalWinds = rhs.diurnalWinds;
-#ifdef EMISSIONS
-   dustFlag = rhs.dustFlag;
-   dustFilename = rhs.dustFilename;
-   dustFileOut = rhs.dustFileOut;
-   geotiffOutFlag = rhs.geotiffOutFlag;
-   dustFile = rhs.dustFile;
-   ustarFile = rhs.ustarFile;
-#endif
 #ifdef NINJAFOAM
     nIterations = rhs.nIterations;
     meshCount = rhs.meshCount;
@@ -277,7 +275,11 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   downEntrainmentCoeff = rhs.downDragCoeff;
   upDragCoeff = rhs.upDragCoeff;
   upEntrainmentCoeff = rhs.upEntrainmentCoeff;
-
+#ifdef FRICTION_VELOCITY
+  frictionVelocityFlag = rhs.frictionVelocityFlag; 
+  frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
+  ustarFile = rhs.ustarFile;
+#endif
 #ifdef EMISSIONS
   dustFlag = rhs.dustFlag;
   dustFilename = rhs.dustFilename;
@@ -442,7 +444,11 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       stabilityFlag = rhs.stabilityFlag;
       alphaStability = rhs.alphaStability;
 #endif
-      
+#ifdef FRICTION_VELOCITY
+      frictionVelocityFlag = rhs.frictionVelocityFlag; 
+      frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
+      ustarFile = rhs.ustarFile;
+#endif
 #ifdef SCALAR
       scalarTransportFlag = rhs.scalarTransportFlag;
 #endif
