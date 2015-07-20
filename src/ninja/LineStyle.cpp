@@ -64,7 +64,7 @@ LineStyle::~LineStyle()
 
 bool LineStyle::setHexColor()
 {
-	std::ostringstream a, b, g, r;
+    std::ostringstream a, b, g, r;
 
 	a << std::hex << alpha << std::flush;
 	hexColor = a.str();
@@ -86,6 +86,46 @@ bool LineStyle::setHexColor()
 	if(red == 0)
 		hexColor.append("0");
 	return true;
+}
+
+bool LineStyle::setHexColorRGBA()
+{
+	std::ostringstream a, b, g, r;
+	hexColor.clear();
+
+    r << std::hex << red << std::flush;
+	hexColor = r.str();
+	if(red == 0)
+		hexColor.append("0");
+
+    g << std::hex << green << std::flush;
+	hexColor.append(g.str());
+	if(green == 0)
+		hexColor.append("0");
+	
+
+    b << std::hex << blue << std::flush;
+	hexColor.append(b.str());
+	if(blue == 0)
+		hexColor.append("0");
+
+    
+	a << std::hex << alpha << std::flush;
+	hexColor.append( a.str() );
+	if(alpha == 0)
+		hexColor.append("0");
+
+    	
+	return true;
+   
+}
+
+std::string LineStyle::asOGRLineStyle()
+{
+    std::ostringstream retstr; 
+    setHexColorRGBA();
+    retstr <<  "PEN(c:#" << hexColor << ",w:" << width << "px)" << std::flush; 
+    return retstr.str();
 }
 
 bool LineStyle::printLineStyle()

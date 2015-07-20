@@ -1,11 +1,11 @@
 /******************************************************************************
+ * wn_OGRVector.h
  *
- * $Id$
- *
- * Project:  WindNinja
- * Purpose:  Surface Fetch factory class for instantiating derived classes 
- * Author:   Levi Malott <lmnn3@mst.edu> 
- *
+ * @description :
+ *     Provides a drawable (on GUI) reprentation of simulation data points
+ *     for use in simulation output.
+ * 
+ * @author : Levi Malott <levi.malott@mst.edu>
  ******************************************************************************
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
@@ -27,40 +27,57 @@
  *
  *****************************************************************************/
 
-#ifndef FETCH_FACTORY_H
-#define FETCH_FACTORY_H
+#ifndef WN_ARROW_H
+#define WN_ARROW_H
 
-#include "nomads_wx_init.h"
-#include "surface_fetch.h"
-#include "gdal_fetch.h"
-#include "landfireclient.h"
-#include "relief_fetch.h"
-#include <string>
+#include "ninjaUnits.h"
+#include "ninjaMathUtility.h"
+#include "constants.h"
 
-class FetchFactory
+
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+#include "gdal.h"
+
+/**
+ * @brief Provides the functionality to convert simulation data points into
+ * features or geometries with corresponding styles.
+ */
+class WN_Arrow
 {
-    public:
-        enum FetchType
-            {
-                US_SRTM,
-                WORLD_SRTM,
-                WORLD_GMTED,
-#ifdef WITH_LCP_CLIENT
-                LCP,
-#endif
-                CUSTOM_GDAL,
-                RELIEF
-            };
-        static const std::string US_SRTM_STR;
-        static const std::string WORLD_SRTM_STR;
-        static const std::string RELIEF_STR;
-#ifdef HAVE_GMTED
-        static const std::string WORLD_GMTED_STR;
-#endif //HAVE_GMTED
+public:
+    /**
+     * Constructor
+     */
+    WN_Arrow();
+    WN_Arrow(    const double &x,         const double &y,
+                 const double &speed,     const double &direction,
+                 const double &cell_size, const double *thresholds,
+                 const unsigned int nsplits );
+    void asGeometry( OGRGeometryH & hLine);
 
-        static SurfaceFetch* GetSurfaceFetch( FetchType, std::string path="" );
-        static SurfaceFetch* GetSurfaceFetch( std::string type, std::string path="" );
+    /**
+     * Destructor
+     */
+    ~WN_Arrow();
+
+    
+private:
+    void   _computeVectorPoints();
+
+    double   m_x;
+    double   m_y;
+    double   m_speed;
+    double   m_dir;
+    double   m_cell_size;
+    const double * m_thresholds;
+    unsigned int   m_nsplits;
+    double m_xtip, m_ytip, m_xtail, m_ytail,
+           m_xhead_left,   m_xhead_right, 
+           m_yhead_left,   m_yhead_right;
 
 };
 
-#endif //FETCH_FACTORY_H
+
+
+#endif // WN_ARROW_H

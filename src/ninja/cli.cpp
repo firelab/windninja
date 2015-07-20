@@ -352,6 +352,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
+                ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
@@ -656,6 +657,7 @@ int windNinjaCLI(int argc, char* argv[])
             
                 int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
                                                      new_elev.c_str(), NULL);
+                delete fetch;
                                                      
                 if(nSrtmError < 0)
                 {
@@ -789,6 +791,7 @@ int windNinjaCLI(int argc, char* argv[])
                 nSrtmError = fetch->FetchPoint(center, buffer, buffer_units,
                                                30.0, new_elev.c_str(), NULL);
             }
+            delete fetch;
 
             if(nSrtmError < 0)
             {
@@ -841,6 +844,7 @@ int windNinjaCLI(int argc, char* argv[])
                 GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_ReadOnly);
                 if(poDS == NULL)
                 {
+                    GDALClose((GDALDatasetH)poDS);
                     fprintf(stderr, "Unable to open input DEM\n");
                     return 1;
                 }
@@ -1397,6 +1401,7 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
+                windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
             }
 
         }   //end for loop over ninjas
@@ -1436,190 +1441,6 @@ int windNinjaCLI(int argc, char* argv[])
     return 0;
 }
 
-/*
-//Windninja API Methods
-
-//@brief Sets whether run should write a VTK output file
-//@param bool Determine whether to write VTK
-//
-//@TODO Write combined ascii output method
-
-//@brief Sets whether run should write a VTK output file
-//@param bool Determine whether to write VTK
-//
-void Ninja_WriteVTKOutput(bool choice)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(choice)
-    {
-        vm["write_vtk_output"] = true;
-        windsim.ninjas[i_].set_vtkOutFlag(true);
-    }
-}
-
-//@brief Sets whether to make/use? an ATM file
-//  @TODO Figure out what this is supposed to do
-Ninja_SetFarsiteATMFile(bool choice)
-{
-
-}
-
-
-//@brief Sets whether run should write a Farsite ATM file
-// @param bool Determine whether to write ATM
-
-void Ninja_WriteFarsiteATMFile(bool choice)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(choice)
-    {
-        vm["write_farsite_atm"] = true;
-        option_dependency(vm, "write_farsite_atm", "write_ascii_output");
-        windsim.set_writeFarsiteATMFile(true);
-    }
-}
-
-//@brief Begins a run using number of processors specified in parameter
-// @param int Number of processors to use
-
-void Ninja_StartRuns(int numProcessors)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(!windsim.startRuns(numProcessors);)
-    {
-        cout << "ERROR: The simulations returned a bad value.\n";
-    }
-}
-
-//@brief Begins a run using number of processors specified in the virtual map
-//
-void Ninja_StartRuns()
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(!windsim.startRuns(vm["num_threads"].as<int>()))
-    {
-        cout << "ERROR: The simulations returned a bad value.\n";
-    }
-}
-
-//@brief Determines whether to write ASCIIOutput and what units to use and resolution
-//@param
-//@param
-//@param
-void Ninja_WriteASCIIOutput(bool choice,char units = 'm', double resolution = 200)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-         windsim.ninjas[i_].set_asciiOutFlag(true);
-         option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
-         windsim.ninjas[i_].set_asciiResolution(resolution, units);
-    }
-}
-
-//@brief Determines whether to write Shapefile output and what units to use and resolution
-//@param
-//@param
-//@param
-void Ninja_WriteShapefileOutput(bool choice,char units = 'm', double resolution = 200)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-         windsim.ninjas[i_].set_shpOutFlag(true);
-         option_dependency(vm, "shape_out_resolution", "units_shape_out_resolution");
-         windsim.ninjas[i_].set_shpResolution(resolution, units);
-    }
-}
-
-//@brief Determines whether to write Google output and what units to use and resolution
-//@param
-//@param
-//@param
-void Ninja_WriteGoogleOutput(bool choice,char units = 'm', double resolution = 200)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-         windsim.ninjas[i_].set_googOutFlag(true);
-         option_dependency(vm, "goog_out_resolution", "units_goog_out_resolution");
-         windsim.ninjas[i_].set_googResolution(resolution, units);
-    }
-}
-
-//@brief Determines whether to write weather model Google output
-//@param
-void Ninja_WriteWXGoogleOutput(bool choice)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-         windsim.ninjas[i_].set_wxModelGoogOutFlag(true);
-    }
-}
-
-//@brief Determines whether to write weather model Shapefile output
-//@param
-void Ninja_WriteWXShapefileOutput(bool choice)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-        windsim.ninjas[i_].set_wxModelShpOutFlag(true);
-    }
-}
-
-//@brief Determines whether to write weather model Shapefile output
-//@param
-void Ninja_WriteWXASCIIOutput(bool choice)
-{
-    if(initialized!)
-    {
-        initializeOptions();
-    }
-
-    if(initialized)
-    {
-        windsim.ninjas[i_].set_wxModelAsciiOutFlag(true);
-    }
-}
-  */
 
 
 
