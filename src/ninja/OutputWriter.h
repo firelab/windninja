@@ -37,20 +37,19 @@
 #include "EasyBMP_DataStructures.h"
 #include "EasyBMP_Geometry.h"
 #include "ninjaUnits.h"
+#include "ninja_conv.h"
 #include "ninjaMathUtility.h"
-#include "wn_Arrow.h"
 #include "ninjaException.h"
 #include "Style.h"
-
+#include "wn_Arrow.h"
 
 #include "ogr_spatialref.h"
 #include "ogr_core.h"
+#include "ogr_api.h"
 #include "gdal_version.h"
 #include "cpl_port.h"
-#include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "cpl_vsi.h"
 #include "gdalwarper.h"
 #include "gdal_priv.h"
 #include "gdal.h"
@@ -156,8 +155,10 @@ class OutputWriter
         static const char * OGR_FILE;
         static const char * LEGEND_FILE;
 
+        static const unsigned short NCOLORS = 5; 
+        static const unsigned short LGND_WIDTH = 180;
+        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4; 
 
-        static const int NCOLORS = 5; 
         double *split_vals;
         Style ** colors;
         float linewidth;
@@ -165,6 +166,8 @@ class OutputWriter
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
+        OGRDataSourceH hDataSource;
+        OGRSFDriverH hOGRDriver;
         GDALDriverH hDriver;
         OGRSpatialReferenceH hSrcSRS;
         OGRSpatialReferenceH hDestSRS;
@@ -173,8 +176,7 @@ class OutputWriter
         char** papszOptions;
         OGRLayerH hLayer;
         OGRFieldDefnH hFieldDefn;
-        OGRDataSourceH hDataSource;
-        GDALDriverH hOGRDriver;
+        
         double adfGeoTransform[6];
         
 
