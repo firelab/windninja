@@ -265,10 +265,10 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 		 throw std::range_error("Mesh::buildStandardMesh(WindNinjaInputs& input) detected a bad \"vertGrowth\" value.");
 
 	//Resample DEM to desired computational resolution
-     if(meshResolution < input.dem.get_cellSize())    //making the grid finer is not an option yet, so use the DEM resolution
+     if(meshResolution < input.dem.get_cellSize())
      {
-          meshResolution = input.dem.get_cellSize();
-          input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Grid cannot be made finer, using DEM cellsize...");
+         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0);	//make the grid finer
+         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //make the grid finer
 								//NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
      }else if(meshResolution > input.dem.get_cellSize())
      {
@@ -295,6 +295,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 	 XORD.allocate(nrows, ncols, nlayers);
 	 YORD.allocate(nrows, ncols, nlayers);
 	 ZORD.allocate(nrows, ncols, nlayers);
+
 
 	//Set xyz coordinates ---------------------------------------------------------------
 	#pragma omp parallel for default(shared) private(i,j,k)
