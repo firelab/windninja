@@ -45,6 +45,7 @@
 #include <algorithm>
 #include "boost/typeof/typeof.hpp"
 #include "WindNinjaInputs.h"
+#include "fetch_factory.h"
 
 /*-----------------------------------------------------------------------------
  *  Helper Macros
@@ -869,6 +870,16 @@ public:
      *  Output Parameter Methods
      *-----------------------------------------------------------------------------*/
     /**
+    * \brief Set the output path for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param path path where output will be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setOutputPath( const int nIndex, std::string path,
+                                 char ** papszOptions=NULL );
+    
+    /**
     * \brief Set the percent of output buffer clipping for a ninja
     *
     * \param nIndex index of a ninja
@@ -1109,6 +1120,19 @@ public:
     */
     int setPDFResolution( const int nIndex, const double resolution,
                                      std::string units, char ** papszOptions=NULL );
+
+
+    /* --------------------------------------------------------------------------*/
+    /** 
+     * @brief Configures the PDF output vector line width (defaults to 1.0)
+     * 
+     * @Param nIndex index of a ninja
+     * @Param linewidth value of the desired line width ( > 0.0 )
+     * 
+     * @Returns errval NINJA_SUCCESS if linewidth correctly set
+     */
+    /* ----------------------------------------------------------------------------*/
+    int setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions=NULL );
 
     int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
     /**

@@ -45,8 +45,12 @@ NOMADS Configuration
 * `NOMADS_ENABLE_3D` Attempt to use three-dimensional initialization data.
   Alpha at best.  Not recommended.
 
+* `NOMADS_RTMA` Enable the CONUS RTMA model.  The RTMA is a "past cast", so the
+   duration always defaults to 0.  The most recent forecast hour is always
+   used.
+
 * `NOMADS_EXPER_FORECASTS` Enable some forecasts that may not work under the
-  current implementation.  NARR and RTMA almost fit, but don't with the current
+  current implementation.  NARR and NEST almost fit, but don't with the current
   organization.  Primarily a debugging tool.  Not recommended.
 
 ### GFS horizontal grid resolution
@@ -85,6 +89,11 @@ Known Issues
 The new (2014-01-14) GFS model omits t000 cloud cover data as it is a
 time-averaged variable.  Since no time has passed, it is NULL.  The work around
 is to grab the next time step and use it's cloud cover data.
+
+### RTMA cloud cover data
+
+RTMA cloud cover data is absent in all domains except the conus domain.  Those
+domains are only enabled if `NOMADS_EXPER_FORECASTS` is set to `ON`.
 
 Further Information
 -------------------

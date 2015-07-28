@@ -4671,12 +4671,13 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 			angTempGrid=NULL;
             OutputWriter output;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid);
             output.setDEMfile(input.pdfDEMFileName);
+            output.setLineWidth(input.pdfLineWidth);
             output.write(input.pdfFile, "PDF");
 
 
@@ -5203,6 +5204,10 @@ void ninja::set_MeshCount(int meshCount)
 
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
+    /* Note that these are not final mesh counts, but are the number of 
+     * cells used in the blockMesh. Final total number of cells is larger
+     * due to surface refinement after moveDynamicMesh.
+     */
     if(meshChoice == WindNinjaInputs::coarse){
         input.meshCount = 100000;
     }
@@ -6134,17 +6139,24 @@ void ninja::set_pdfOutFlag(bool flag)
 
 void ninja::set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units)
 {
-    input.shpUnits = units;
+    input.pdfUnits = units;
     lengthUnits::toBaseUnits(Resolution, units);
 
     input.pdfResolution = Resolution;
 }
 
+void ninja::set_pdfLineWidth(const float w)
+{
+    input.pdfLineWidth = w;
+}
+
 void ninja::set_pdfDEM(std::string dem_file_name)
 {
+    /*
     if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 dem_file_name + " does not exist or may be in use by another program.");
+    */
     input.pdfDEMFileName = dem_file_name;
 }
 
@@ -6176,6 +6188,32 @@ void ninja::set_txtOutFlag(bool flag)
 void ninja::set_vtkOutFlag(bool flag)
 {
     input.volVTKOutFlag = flag;
+}
+
+void ninja::set_outputPath(std::string path)
+{
+    VSIStatBufL sStat;
+    VSIStatL( path.c_str(), &sStat );
+    const char *pszTestPath = CPLFormFilename(path.c_str(), "test", "");
+    int nRet;
+    
+    if( VSI_ISDIR( sStat.st_mode ) ){
+        //see if we can write to this path
+        nRet = VSIMkdir(pszTestPath, 0777);
+        if(nRet == 0){
+            VSIRmdir(pszTestPath);
+            input.customOutputPath = path;
+        }
+        else{
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, 
+            CPLSPrintf("Cannot write to path %s. Do you have write permission on this directory? Writing outputs to default location...", path.c_str()));
+        }
+    }
+    else{
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, 
+            CPLSPrintf("The path %s does not exist, writing outputs to default location...", path.c_str()));
+    }
+        
 }
 
 void ninja::set_outputFilenames(double& meshResolution,
@@ -6218,25 +6256,26 @@ void ninja::set_outputFilenames(double& meshResolution,
 #endif
 
     std::string pathName;
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
-    {
-        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-        pathName = CPLGetPath(input.forecastFilename.c_str());
-        
-        //if it's a .tar, write to directory containing the .tar file
-        if( strstr(pathName.c_str(), ".tar") ){
-            pathName.erase( pathName.rfind("/") );
-            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+    std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+    
+    if(input.customOutputPath == "!set"){ // if a custom output path was not specified in the cli
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
+        {
+            pathName = CPLGetPath(input.forecastFilename.c_str());
+            //if it's a .tar, write to directory containing the .tar file
+            if( strstr(pathName.c_str(), ".tar") ){
+                pathName.erase( pathName.rfind("/") );
+            }
+        }else{
+            pathName = CPLGetPath(input.dem.fileName.c_str());
         }
-        else{
-            rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
-        }
-    }else{
-        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-        pathName = CPLGetPath(input.dem.fileName.c_str());
-        rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
     }
-
+    else{ // if a custom output path was specified in the cli
+        pathName = input.customOutputPath;
+    }
+    
+    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+    
     /* set the output path member variable */
     input.outputPath = pathName;
 
@@ -6399,6 +6438,7 @@ void ninja::keepOutputGridsInMemory(bool flag)
 double ninja::getFuelBedDepth(int fuelModel)
 {	//at this point must be in meters...  could change...
 
+    //TODO: add units info, turn into table so there arent >200 branches
     if(fuelModel == 1)
         return 1.000000;
     else if(fuelModel == 2)

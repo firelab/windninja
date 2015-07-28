@@ -72,7 +72,8 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
     firstCellHeight_(ptf.firstCellHeight_)
 {}
 
-
+/* used later in updateCoeffs() --> 
+   this constructor is the one called by simpleFoam */
 logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorField
 (
     const fvPatch& p,
@@ -111,59 +112,67 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 	}
     }
     Pstream::scatter(faceCenterPoints);
+
     forAll(faceCenters, pointI)
 	{
 
 	point currentPt = faceCenters[pointI];
-	// Set to High Values
+	// Set to high values
 	Dist[pointI] = GREAT;
 	label minPointId = -1;
 	forAll(faceCenterPoints, pointJ)
 	{
 	   if(mag(currentPt.z()-faceCenterPoints[pointJ].z()) > .1 )
  	   {
-		scalar checkOrdinate_FC = 0.0, checkOrdinate_CP = 0.0;
-		// Lookup for patch ids and check if its orientation is along west/east/south/north
-		// If current patch is west_face or east_face, check the Y ordinates
-    		const word& curPatchName = patch().name();
-		if(curPatchName == "west_face" || curPatchName == "east_face")
-		{
-		    checkOrdinate_FC = faceCenterPoints[pointJ].y();
-		    checkOrdinate_CP = currentPt.y();
-		}
-		else if(curPatchName == "north_face" || curPatchName == "south_face")
-		     {
-		    	checkOrdinate_FC = faceCenterPoints[pointJ].x() ;
+		    scalar checkOrdinate_FC = 0.0, checkOrdinate_CP = 0.0;
+		    // Lookup patch ids and check if its orientation is along west/east/south/north
+		    // If current patch is west_face or east_face, check the Y ordinates   		
+            const word& curPatchName = patch().name();
+		    if(curPatchName == "west_face" || curPatchName == "east_face")
+		    {
+		        checkOrdinate_FC = faceCenterPoints[pointJ].y();
+		        checkOrdinate_CP = currentPt.y();
+		    }
+		    else if(curPatchName == "north_face" || curPatchName == "south_face")
+		    {
+		        checkOrdinate_FC = faceCenterPoints[pointJ].x() ;
 		    	checkOrdinate_CP = currentPt.x();
-		     }
-		else
-		{
+		    }
+		    else
+		    {
          	    FatalErrorIn("logProfileVelocityInletFvPatchVectorField")
      		       << "Boundary condition applied on incorrect patch"
 		       << abort(FatalError);
-    		}
-		// The bracket for checking the ordinates has been set to 1
-		if( mag(checkOrdinate_FC - checkOrdinate_CP) < 10 )
-	        {
-		    if( faceCenterPoints[pointJ].z() < Dist[pointI] )
-		    {
-			Dist[pointI] = faceCenterPoints[pointJ].z();
-			minPointId = pointJ;
+    	    }
+            // Look for cells close to x or y coord (depending on the face) of currentPt 
+		    if( mag(checkOrdinate_FC - checkOrdinate_CP) < 100 )
+	            {
+                //if we are close in x or y dimension, 
+                //and closer to the ground than the previous iteration, 
+                //calc and store distance to ground for this face
+		        if( faceCenterPoints[pointJ].z() < Dist[pointI] )
+		        {
+                    //update distance to ground if we are in a lower cell than previous iteration
+			        Dist[pointI] = faceCenterPoints[pointJ].z();
+			        minPointId = pointJ; //point with z nearest to ground (the near-ground cell below currentPt)
 	    	    }
-		}
+		    }
 	    }
 	}
 
-	// If no other values are found assuming the bracket range is sufficient
+	// If no other values are found (assuming the bracket range is sufficient)
 	if(Dist[pointI] == GREAT || minPointId == -1 || Dist[pointI] > currentPt.z() )
 	{
 	    Dist[pointI] = currentPt.z();
 	}
-	// Add the half first cell Height read from dictionary
-	Dist[pointI] = currentPt.z() - Dist[pointI] + firstCellHeight_/2;
+
+	// Add the half first cell Height read from dictionary 	
+    Dist[pointI] = currentPt.z() - Dist[pointI] + firstCellHeight_/2;
 	relativeHeight_.setSize(Dist.size());
-	relativeHeight_ = Dist;
+    relativeHeight_ = Dist;
+
 	}
+
     evaluate();
 }
 
@@ -187,34 +196,36 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+//called by simpleFoam
 void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
 {
-    // Caluculate Input Wind Height
-    scalar inputWindHeight = inputWindHeight_Veg_;
-    scalar ustar = log((inputWindHeight_Veg_-Rd_)/z0_);
-    ustar = (UfreeStream_*0.41)/(ustar);
-    //scalar ustar = (UfreeStream_ + log(z0_))*0.41/(log(inputWindHeight_Veg_-Rd_));
+    scalar ustar = UfreeStream_*0.41/Foam::log((inputWindHeight_Veg_-Rd_)/z0_);
     scalar ucalc(0.0);
     vectorField Up(patch().Cf().size(), vector(0.0, 0.0, 0.0));
     vectorField areaN(patch().nf());
-
-
+    
+    scalar uAtCanopyTop(0.0);
+    scalar vegHeight = 1.28 * Rd_;
+    
     // Loop over all the faces in that patch
     forAll(Up, faceI )
     {
-
         // relative height from ground for face lists
-        scalar& AGL = relativeHeight_[faceI] ;
+        scalar& AGL = relativeHeight_[faceI];
 
-        //if we're below the log profile, initialize velocities to zero
-        if (AGL < Rd_ )
+        //log profile goes to 0 at z = Rd_ + z0      
+        //use linear fit in the canopy
+        if (AGL < vegHeight)
         {
-            ucalc = UfreeStream_*AGL/inputWindHeight_Veg_;
+            //calculate speed at top of canopy from log profile
+            uAtCanopyTop = ustar/0.41*log((vegHeight-Rd_)/z0_);
+            //calculate speed at AGL using a linear profile                
+            ucalc = uAtCanopyTop*AGL/(vegHeight);
             Up[faceI] = ucalc*uDirection_;
         }
         else  //Apply the log law equation profile
         {
-            ucalc = ustar/0.41*log((AGL-Rd_)/z0_);
+            ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
             Up[faceI] = ucalc*uDirection_;
         }
     }

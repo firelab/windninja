@@ -350,9 +350,11 @@ public:
     void set_pdfOutFlag(bool flag);
     void set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units);
     void set_pdfDEM(std::string dem_file_name);
+    void set_pdfLineWidth(const float w);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);
+    void set_outputPath(std::string path);
 
     void set_PrjString(std::string prj);
 

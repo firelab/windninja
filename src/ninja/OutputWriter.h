@@ -37,16 +37,19 @@
 #include "EasyBMP_DataStructures.h"
 #include "EasyBMP_Geometry.h"
 #include "ninjaUnits.h"
+#include "ninja_conv.h"
 #include "ninjaMathUtility.h"
+#include "ninjaException.h"
+#include "Style.h"
+#include "wn_Arrow.h"
 
 #include "ogr_spatialref.h"
 #include "ogr_core.h"
+#include "ogr_api.h"
 #include "gdal_version.h"
 #include "cpl_port.h"
-#include "cpl_error.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "cpl_vsi.h"
 #include "gdalwarper.h"
 #include "gdal_priv.h"
 #include "gdal.h"
@@ -56,14 +59,6 @@
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
-#include "ninjaException.h"
-
-
-#include "Style.h"
-
-//#include <process.h>
-#include <stdio.h>
-#include <fstream>
 
 
 
@@ -92,6 +87,7 @@ class OutputWriter
         void setNinjaTime(std::string t) {ninjaTime=t;}
         void setRunNumber(int n) {runNumber=n;}
         void setMaxRunNumber(int n) {maxRunNumber=n;}
+        void setLineWidth( const float w );
         
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
@@ -105,9 +101,27 @@ class OutputWriter
 
     private:
         /* ====================  METHODS       ======================================= */
-        void _createOGRFileWithFields();
-        bool _writePDF(std::string filename);
+        void _createDefaultStyles();
+        void _destroyDefaultStyles();
+
+        bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
+        std::string _getStyleFromSpeed( const double & spd );
+        void _openSrcDataSet();
+        void _closeDataSets();
+
+        void _createOGRFile();
+        void _closeOGRFile();
+        void _destroyOGRFile();
+
+        void _destroyOptions();
+
+        void _createSplits();
+        void _deleteSplits();
+
+        bool _createLegend();
+        void _destroyLegend();
+
         
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
@@ -139,25 +153,32 @@ class OutputWriter
         static const char * AM_DIR;//     = "AM_dir";
         static const char * QGIS_DIR;//   = "QGIS_dir";
         static const char * OGR_FILE;
+        static const char * LEGEND_FILE;
 
-        double geTheta;
+        static const unsigned short NCOLORS = 5; 
+        static const unsigned short LGND_WIDTH = 180;
+        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4; 
 
-        static const int numColors = 5;
+        double *split_vals;
+        Style ** colors;
+        float linewidth;
 
-        double *splitValue;
-
-        double northExtent, eastExtent, southExtent, westExtent;
-        double lineWidth;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
+        OGRDataSourceH hDataSource;
+        OGRSFDriverH hOGRDriver;
         GDALDriverH hDriver;
+        OGRSpatialReferenceH hSrcSRS;
+        OGRSpatialReferenceH hDestSRS;
+        OGRCoordinateTransformationH hTransform;
         unsigned char *pafScanline;
         char** papszOptions;
         OGRLayerH hLayer;
         OGRFieldDefnH hFieldDefn;
-        OGRDataSourceH hDataSource;
-        OGRSFDriverH hOGRDriver;
+        
+        double adfGeoTransform[6];
+        
 
 }; /* -----  end of class OutputWriter  ----- */
 
