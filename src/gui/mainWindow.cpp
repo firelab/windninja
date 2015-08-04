@@ -1246,9 +1246,9 @@ int mainWindow::checkInputFile(QString fileName)
         writeToConsole("Invalid Spatial Reference (prj), "
                        "cannot do a simulation with the supplied DEM", red);
         QMessageBox::warning(this, tr("WindNinja"),
-                             "The DEM does not contain a coordinated "
+                             "The DEM does not contain a proper spatial reference "
                              "system. WindNinja only supports DEM files "
-                             "with projected coordinate systems(ie UTM)",
+                             "with projected coordinate systems (e.g., UTM)",
                              QMessageBox::Ok | QMessageBox::Default);
         GDALClose((GDALDatasetH)poInputDS);
         return -1;
@@ -1264,9 +1264,9 @@ int mainWindow::checkInputFile(QString fileName)
         {
             hasPrj = false;
             QMessageBox::warning(this, tr("WindNinja"),
-                                 "The DEM does not contain a coordinated "
+                                 "The DEM does not contain a proper spatial reference "
                                  "system. WindNinja only supports DEM files "
-                                 "with projected coordinate systems(ie UTM)",
+                                 "with projected coordinate systems (e.g., UTM)",
                                  QMessageBox::Ok | QMessageBox::Default);
             GDALClose((GDALDatasetH)poInputDS);
             return -1;
@@ -1281,7 +1281,7 @@ int mainWindow::checkInputFile(QString fileName)
                                  "The DEM coordinated system is in a "
                                  "geographic projection (latitude/longitude). "
                                  "WindNinja only supports projected "
-                                 "coordinate systems(ie UTM)",
+                                 "coordinate systems (e.g., UTM)",
                                  QMessageBox::Ok | QMessageBox::Default);
             writeToConsole("Invalid Spatial Reference (prj), "
                            "cannot do a simulation with the supplied DEM", red);
