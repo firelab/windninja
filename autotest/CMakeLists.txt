@@ -296,6 +296,10 @@ IF(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/from_iso_invalid_1)
     ADD_TEST(utc_strftime_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/strftime_1)
+    ADD_TEST(utc_copy_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/copy_1)
+    ADD_TEST(utc_copy_2
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/copy_2)
     ADD_TEST(form_name_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/form_name_1)
 ENDIF(WITH_NOMADS_SUPPORT)

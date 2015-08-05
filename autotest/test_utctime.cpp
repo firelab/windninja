@@ -247,5 +247,25 @@ BOOST_AUTO_TEST_CASE( strftime_1 )
     BOOST_CHECK_EQUAL( strcmp( "19700101T00:00:00", s ), 0 );
 }
 
+BOOST_AUTO_TEST_CASE( copy_1 )
+{
+    NomadsUtcNow( u );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    NomadsUtcCopy( v, u );
+    BOOST_CHECK( NomadsUtcCompare( u, v ) == 0 );
+    NomadsUtcFree( v );
+}
+
+BOOST_AUTO_TEST_CASE( copy_2 )
+{
+    NomadsUtcNow( u );
+    nomads_utc *v;
+    NomadsUtcCreate( &v );
+    NomadsUtcCopy( v, u );
+    BOOST_CHECK( u->s != v->s );
+    BOOST_CHECK( strcmp( u->s, v->s ) == 0 );
+    NomadsUtcFree( v );
+}
 BOOST_AUTO_TEST_SUITE_END()
 
