@@ -66,7 +66,6 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
     else if( type == RELIEF )
     {
         p = FindDataPath( "relief.xml" );
-        cout <<"target:" << p << endl;
         return new ReliefFetch( p );
     }
     else

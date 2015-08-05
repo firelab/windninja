@@ -239,11 +239,7 @@ void OutputWriter::_closeDataSets()
         GDALClose(hDstDS);
         hDstDS = NULL;
     }
-    if( NULL != hDataSource )
-    {
-        GDALClose( hDataSource );
-        hDataSource = NULL;
-    }
+    _closeOGRFile(); 
 
 }
 
@@ -260,7 +256,7 @@ void OutputWriter::_closeOGRFile()
 {
     if( NULL != hDataSource )
     {
-        GDALClose( hDataSource );
+        OGR_DS_Destroy( hDataSource );
         hDataSource = NULL;
     }
 }
@@ -291,10 +287,9 @@ void OutputWriter::_createSplits()
 bool OutputWriter::_createLegend()
 {
 	//make bitmap
-	int legendWidth = 180;
-	int legendHeight = int(legendWidth / 0.75f);
+	int legendWidth = LGND_WIDTH;
+	int legendHeight = LGND_HEIGHT;
 	BMP legend;
-	float rescale     = 1.0f / 3.0f;
 
 	std::string legendStrings[NCOLORS];
 	ostringstream os;
@@ -419,24 +414,7 @@ bool OutputWriter::_createLegend()
 
 	legend.WriteToFile( LEGEND_FILE );
 
-	GDALDatasetH hLegend = GDALOpenEx( LEGEND_FILE, GDAL_OF_RASTER | GDAL_OF_UPDATE,
-	                                   NULL, NULL, NULL );
-
-    if( NULL == hLegend )
-    {
-        throw std::runtime_error("OutputWriter: Failed to legend BMP");
-    }
-    _openSrcDataSet();
-    GDALGetGeoTransform( hSrcDS, adfGeoTransform );
-    //shrink the legend BMP a bit
-    adfGeoTransform[1] *= rescale;
-    adfGeoTransform[5] *= rescale;
-    GDALSetGeoTransform( hLegend, adfGeoTransform  );
-    GDALSetProjection(   hLegend, GDALGetProjectionRef( hSrcDS ) );
-    
-	GDALClose( hLegend );
-	_closeDataSets();
-	return true;
+    return true;
 
 }
 
@@ -449,7 +427,7 @@ void OutputWriter::_destroyLegend()
 
 void OutputWriter::_openSrcDataSet()
 {
-    hSrcDS = GDALOpenEx( demFile.c_str(), 0, NULL, NULL, NULL );
+    hSrcDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( NULL == hSrcDS )
     {
         throw std::runtime_error("OutputWriter: Failed to open PDF base DEM");
@@ -498,14 +476,14 @@ OutputWriter::_createOGRFile()
         throw std::runtime_error("OutputWriter: Failed to get OGR Memory driver");
     }
 
-    hDataSource = GDALCreate( hOGRDriver, OGR_FILE, 0, 0, 0, GDT_Unknown, NULL );
+    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, OGR_FILE, NULL );
     if( NULL == hDataSource )
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
     }
     
     //Create a new layer for the wind features
-    hLayer = GDALDatasetCreateLayer( hDataSource, "Wind Vectors" , hDestSRS, 
+    hLayer = OGR_DS_CreateLayer( hDataSource, "Wind Vectors" , hDestSRS, 
                                  wkbLineString, NULL );
     if( hLayer == NULL )
     {
@@ -604,6 +582,9 @@ OutputWriter::_writePDF (std::string outputfn)
     _createLegend();
     _openSrcDataSet();
 
+    std::string tf_logo_path = FindDataPath( "tf-logo.png" );
+    unsigned int out_x_size = GDALGetRasterXSize( hSrcDS );
+    unsigned int out_y_size = GDALGetRasterYSize( hSrcDS );
     hDriver = GDALGetDriverByName( "PDF" );
 
     if( NULL == hDriver )
@@ -611,12 +592,16 @@ OutputWriter::_writePDF (std::string outputfn)
         throw std::runtime_error("OutputWriter: Failed to get OGR PDF driver");
     }
 
+    const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
+    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, LEGEND_FILE, 
+                                             0, out_y_size-LGND_HEIGHT, 1.0f );
+    std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
+    std::string extra_imgs     = extra_img_lgnd + "," + extra_img_logo;
+
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", OGR_FILE ); 
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
-    papszOptions = CSLAddNameValue( papszOptions, "EXTRA_RASTERS", LEGEND_FILE );
-    papszOptions = CSLAddNameValue( papszOptions, "EXTRA_RASTERS_LAYER_NAME",
-                                    "Legend" );
+    papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
     hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
@@ -630,7 +615,7 @@ OutputWriter::_writePDF (std::string outputfn)
     _destroyOptions();
     _destroyLegend();
     
-    GDALDeleteDataset( hOGRDriver, OGR_FILE );
+    OGR_Dr_DeleteDataSource( hOGRDriver, OGR_FILE );
 
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */
