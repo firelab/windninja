@@ -90,9 +90,11 @@ extern "C" {
 #ifdef NOMADS_TEST_PARA
  #define NOMADS_IP                        "140.172.17.38"
  #define NOMADS_HOST                      "para.nomads.ncep.noaa.gov"
+ #define NOMADS_PERL_SCRIPT(s)            s ## _para.pl
 #else /* NOMADS_TEST_PARA */
  #define NOMADS_IP                        "140.90.101.62"
  #define NOMADS_HOST                      "nomads.ncep.noaa.gov"
+ #define NOMADS_PERL_SCRIPT(s)            s ## .pl
 #endif /* NOMADS_TEST_PARA */
 
 /* Host for NOMADS */
