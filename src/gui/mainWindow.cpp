@@ -1598,20 +1598,6 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-    /* INITIALIZE THE ARMY */
-    progressDialog->setValue( 0 );
-    runTime->restart();
-    connect( progressDialog, SIGNAL(canceled() ),
-         this, SLOT( cancelSolve() ) );
-
-    progressDialog->setCancelButtonText( "Cancel" );
-
-    setCursor( Qt::WaitCursor );
-
-    progressDialog->setLabelText( "Initializing runs..." );
-
-    writeToConsole( "Initializing runs..." );
-    
     delete army;
 #ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
@@ -1654,7 +1640,23 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
-        army->makeArmy( weatherFile, timeZone );
+        /* This can throw a badForecastFile */
+        try
+        {
+            army->makeArmy( weatherFile, timeZone );
+        }
+        catch( badForecastFile &e )
+        {
+             QMessageBox::critical( this, tr( "Invalid forecast file." ),
+                                    tr( "The forecast cannot be read." ),
+                                    QMessageBox::Ok | QMessageBox::Default );
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor);
+            tree->weather->checkForModelData();
+            progressDialog->cancel();
+            progressDialog->hide();
+            return false;
+        }
         nRuns = army->getSize();
     }
 
@@ -1873,6 +1875,19 @@ int mainWindow::solve()
     }
     writeToConsole(QString::number( army->getSize() ) + " runs initialized. Starting solver...");
     //sThread->start();
+
+    progressDialog->setValue( 0 );
+    runTime->restart();
+    connect( progressDialog, SIGNAL(canceled() ),
+         this, SLOT( cancelSolve() ) );
+
+    progressDialog->setCancelButtonText( "Cancel" );
+
+    setCursor( Qt::WaitCursor );
+
+    progressDialog->setLabelText( "Initializing runs..." );
+
+    writeToConsole( "Initializing runs..." );
 
     bool ninjaSuccess = false;
     //ninjaSuccess = sThread->run( nThreads, army );
