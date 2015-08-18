@@ -1731,6 +1731,12 @@ double wxModelInitialization::GetWindHeight(std::string varName)
         status = nc_get_var1_double(ncid, height_id, var_index, &d);
     }
 
+    if( status != 0 )
+    {
+        std::string err = "Failed to find height for " + varName;
+        throw badForecastFile( err );
+    }
+
     status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
     units = (char*)malloc(unit_len + 1);
     status = nc_get_att_text(ncid, height_id, "units", units);
