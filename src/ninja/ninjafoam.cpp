@@ -1538,9 +1538,19 @@ int NinjaFoam::RefineSurfaceLayer(){
     const char *pszOutput;
     int nRet;
     
-    //write topoSetDict
+    /*----------------------------------------------*/
+    /*  first refine in all 3 directions            */
+    /*----------------------------------------------*/
+    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
+    
     double finalFirstCellHeight = firstCellHeight;
+    double oldFirstCellHeight = finalFirstCellHeight;
+    
+    double refineDepth = 500.0; //arbitrarily set to 500 m for now
+    double newRefineDepth;
+    
+    //write topoSetDict
     pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
     
@@ -1549,13 +1559,59 @@ int NinjaFoam::RefineSurfaceLayer(){
     CopyFile(pszInput, pszOutput, "$xout$", CPLSPrintf("%.2f", (bbox[0] + 10)));
     CopyFile(pszInput, pszOutput, "$yout$", CPLSPrintf("%.2f", (bbox[1] + 10)));
     CopyFile(pszInput, pszOutput, "$zout$", CPLSPrintf("%.2f", (bbox[5] - 10)));
-    CopyFile(pszInput, pszOutput, "$nearDistance$", CPLSPrintf("%.2f", finalFirstCellHeight));
+    CopyFile(pszInput, pszOutput, "$nearDistance$", CPLSPrintf("%.2f", refineDepth)); //refines cells within this distance from the ground
     
-    double oldFirstCellHeight = finalFirstCellHeight;
-    //refine in all directions until cell height < 50 m
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
-    bool keepRefining = true; //do at least one round of refinement
-    while(keepRefining){ 
+
+    while(finalFirstCellHeight > 50.0){ //cutoff arbitrarily set to 50 m for now
+        CPLDebug("NINJAFOAM", "refineDepth = %f", refineDepth);
+        
+        nRet = TopoSet();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
+            return nRet;
+        }
+        nRet = RefineMesh();
+        if(nRet != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineMesh().");
+            return nRet;
+            
+        }
+        
+        latestTime += 1;
+        finalFirstCellHeight /= 2.0; //keep track of first cell height
+        newRefineDepth = refineDepth/2.0; //reduce refinement depth for next iteration
+        
+        CopyFile(pszInput, pszOutput, 
+                CPLSPrintf("nearDistance    %.2f", refineDepth),
+                CPLSPrintf("nearDistance    %.2f", newRefineDepth));
+                
+        refineDepth = newRefineDepth; //update refinement depth;
+        
+        CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+    }
+    
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
+    
+    /*----------------------------------------------*/
+    /*  refine in z-direction only                  */
+    /*----------------------------------------------*/
+    
+    //rewrite refineMeshDict
+    pszInput = CPLFormFilename(pszTempPath, "system/refineMeshDict_z", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/refineMeshDict", "");
+    CopyFile(pszInput, pszOutput);
+    
+    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    
+    refineDepth = 50.0; //reset refinement depth 
+    CopyFile(pszInput, pszOutput, 
+                CPLSPrintf("nearDistance    %.2f", refineDepth),
+                CPLSPrintf("nearDistance    %.2f", newRefineDepth));
+    
+    while(finalFirstCellHeight > 5.0){ //arbitrarily set to 5 m for now
+        CPLDebug("NINJAFOAM", "refineDepth = %f", refineDepth);
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1568,31 +1624,19 @@ int NinjaFoam::RefineSurfaceLayer(){
             
         }
         latestTime += 1;
-        oldFirstCellHeight = finalFirstCellHeight;
         finalFirstCellHeight /= 2.0;
         
+        newRefineDepth = refineDepth/2.0; //reduce refinement depth for next iteration
+        
         CopyFile(pszInput, pszOutput, 
-                CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
-                CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
+                CPLSPrintf("nearDistance    %.2f", refineDepth),
+                CPLSPrintf("nearDistance    %.2f", newRefineDepth));
         
-        if(finalFirstCellHeight < 50.0)
-            keepRefining = false;
+        refineDepth = newRefineDepth; //update refinement depth;
+            
+        CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
     }
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
-    //refine wall layer in vertical direction only until cell height < 5 m
-    keepRefining = true; //do at least one round of refinement
-    while(keepRefining){ 
-        nRet = RefineWallLayer();
-        if(nRet != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineWallLayer().");
-            return nRet;
-        }
-        latestTime += 1;
-        finalFirstCellHeight /= 4.0;
-        
-        if(finalFirstCellHeight < 5.0)
-            keepRefining = false;
-    }
+    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
@@ -1637,33 +1681,6 @@ int NinjaFoam::RefineSurfaceLayer(){
     pszOutput = CPLFormFilename( pszTempPath, CPLSPrintf("%s/epsilon", boost::lexical_cast<std::string>(latestTime).c_str()),  "" );
     CopyFile(pszInput, pszOutput);
     
-    return nRet;
-}
-
-int NinjaFoam::RefineWallLayer()
-{
-    int nRet = -1;
-     
-    /* 
-     * 0.25 splits near-wall cell into two cells: one is 0.75x and the other
-     * 0.25x the original cell height.
-     * If this value is chagned, edit latestTime dirctory and the calculation for
-     * firstCellHeight.
-     */
-    
-    const char *const papszArgv[] = { "refineWallLayer",
-                                    "-case",
-                                    pszTempPath,
-                                    "minZ", 
-                                    "0.25", 
-                                    NULL};
-    
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.refineWallLayer", ""), "w");
-                                    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-
-    VSIFCloseL(fout);
-
     return nRet;
 }
 
@@ -1712,9 +1729,12 @@ int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
 
+    char* currentDir = CPLGetCurrentDir();
+    
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-                                    pszTempPath,  
+                                    CPLFormFilename(currentDir, pszTempPath, ""),
+                                    //pszTempPath,  
                                     NULL };
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
@@ -1790,6 +1810,7 @@ int NinjaFoam::RenumberMesh()
     const char *const papszArgv[] = { "renumberMesh", 
                                       "-case",
                                       pszTempPath,
+                                      "-latestTime",
                                       "-overwrite", 
                                       NULL };
 

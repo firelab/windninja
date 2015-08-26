@@ -128,7 +128,6 @@ private:
     int SurfaceCheck();
     int RefineSurfaceLayer();
     int MoveDynamicMesh();
-    int RefineWallLayer();
     int TopoSet();
     int RefineMesh();
     int BlockMesh();
