@@ -122,7 +122,8 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 	label minPointId = -1;
 	forAll(faceCenterPoints, pointJ)
 	{
-	   if(mag(currentPt.z()-faceCenterPoints[pointJ].z()) > .1 )
+        //if current point is not the near-wall center point	   
+        if(mag(currentPt.z()-faceCenterPoints[pointJ].z()) > .1 )
  	   {
 		    scalar checkOrdinate_FC = 0.0, checkOrdinate_CP = 0.0;
 		    // Lookup patch ids and check if its orientation is along west/east/south/north
@@ -166,10 +167,16 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 	    Dist[pointI] = currentPt.z();
 	}
 
-	// Add the half first cell Height read from dictionary 	
+	// Add the half first cell Height read from dictionary
+    //Info<<"firstCellHeight_ = "<<firstCellHeight_<<endl;
+
+ 	
     Dist[pointI] = currentPt.z() - Dist[pointI] + firstCellHeight_/2;
 	relativeHeight_.setSize(Dist.size());
     relativeHeight_ = Dist;
+
+    //Info<<"currentPt.z() = "<<currentPt.z()<<endl;    
+    //Info<<"Dist[pointI] = "<<Dist[pointI]<<endl;
 
 	}
 
@@ -228,6 +235,7 @@ void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
             ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
             Up[faceI] = ucalc*uDirection_;
         }
+        //Info<<"Up[faceI] = "<<Up[faceI]<<endl;
     }
 
     operator==(Up);

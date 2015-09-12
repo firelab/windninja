@@ -191,7 +191,8 @@ void logProfileDissipationRateInletFvPatchScalarField::updateCoeffs()
     scalarField epsilonp(patch().Cf().size(), scalar(0));
 
     scalar kappa = 0.4187;
-    scalar ustar = (UfreeStream_ + log(z0_))*0.41/(log(inputWindHeight_Veg_-Rd_));
+    //scalar ustar = (UfreeStream_ + log(z0_))*0.41/(log(inputWindHeight_Veg_-Rd_));
+    scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_-Rd_)/z0_); //natalie
 
     // Loop over all the faces in that patch
     forAll(epsilonp, faceI )
