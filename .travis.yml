@@ -15,7 +15,7 @@ before_install:
 install:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DBUILD_TESTING=ON -DDISABLE_THREDDS_UPDATE=ON -DOPENMP_SUPPORT=ON -DRUN_CLI_TESTS=ON -DSTABILITY=ON -DWITH_LCP_CLIENT=ON -DCMAKE_BUILD_TYPE=debug -DNINJA_CLI=ON  ..
   - make -j3
 
 script:
