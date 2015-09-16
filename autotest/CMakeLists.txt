@@ -157,7 +157,7 @@ ADD_TEST(test_buffer_grid_init
 # landfireclient Test Suite - still experimental
 IF(WITH_LCP_CLIENT)
     ADD_TEST(test_landfireclient_extract
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_.org/test=landfireclient/unzip)
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=landfireclient/unzip)
 ENDIF(WITH_LCP_CLIENT)
 
 # input_points Test Suite
