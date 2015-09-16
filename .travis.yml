@@ -6,7 +6,6 @@ language: cpp
 compiler:
   - gcc
 
-# remove libogdi3.2-dev : it pulls projects.h from PROJ.4 which no longer exists
 before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo apt-get update -qq
