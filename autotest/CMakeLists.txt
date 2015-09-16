@@ -45,7 +45,7 @@ SET(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${CURL_LIBRARIES}
               ${Boost_LIBRARIES})
 
-             
+
 IF(WIN32)
     SET(LINK_LIBS ${LINK_LIBS}
                   ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -157,7 +157,7 @@ ADD_TEST(test_buffer_grid_init
 # landfireclient Test Suite - still experimental
 IF(WITH_LCP_CLIENT)
     ADD_TEST(test_landfireclient_extract
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=landfireclient/unzip)
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_.org/test=landfireclient/unzip)
 ENDIF(WITH_LCP_CLIENT)
 
 # input_points Test Suite
@@ -321,25 +321,29 @@ ADD_TEST(rmtree_sym_3
 # Command Line Interface Testing Section
 # *****************************************************************************
 IF(RUN_CLI_TESTS)
-    INCLUDE(FindPythonInterp)
-    IF(PYTHONINTERP_FOUND)
-        FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/testing.py
-             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-	    FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/output
-             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-             
-        SET( configs cli_domainAverage
-                      cli_domainAverage_diurnal
-                      cli_pointInitialization
-                      cli_pointInitialization_diurnal
-                      cli_wxModelInitialization_local_model
-                      cli_wxModelInitialization_diurnal_local_model
-           )
-             
-         FOREACH( cfg_file ${configs} )
-             ADD_TEST( ${cfg_file} ${PYTHON_EXECUTABLE} testing.py -c ${cfg_file}.cfg )
-         ENDFOREACH( cfg_file )
-           
-    ENDIF(PYTHONINTERP_FOUND)
+    MESSAGE(STATUS "Generating cli tests...")
+    ADD_EXECUTABLE(pc ${PROJECT_SOURCE_DIR}/autotest/config/parse_input.c)
+    FILE(GLOB cfgtests ${PROJECT_SOURCE_DIR}/autotest/config/pass/*.cfg)
+    MESSAGE(STATUS "GLOB: ${cfgtests}")
+    FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config)
+    FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass)
+    FOREACH(cfgtest ${cfgtests})
+        GET_FILENAME_COMPONENT(base ${cfgtest} NAME_WE)
+        FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        FILE(COPY ${cfgtest} DESTINATION ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        MESSAGE(STATUS "COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
+        EXECUTE_PROCESS(WORKING_DIRECTORY . COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
+                                OUTPUT_VARIABLE ELEV_FILE
+                                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        STRING(STRIP ${ELEV_FILE} ELEV_FILE)
+        FILE(COPY ${PROJECT_SOURCE_DIR}/data/${ELEV_FILE} DESTINATION
+             ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        MESSAGE(STATUS "Copying elevation file: ${ELEV_FILE}")
+        ADD_TEST(NAME ${base} COMMAND ${CMAKE_BINARY_DIR}/src/cli/WindNinja_cli ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        SET_TESTS_PROPERTIES(${base} PROPERTIES ENVIRONMENT
+                             "WINDNINJA_DATA=${PROJECT_SOURCE_DIR}/data")
+        MESSAGE(STATUS "Adding CLI test ${base} for ${cfgtest}")
+    ENDFOREACH(cfgtest ${cfgtests})
 ENDIF(RUN_CLI_TESTS)
 

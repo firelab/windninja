@@ -100,7 +100,7 @@ SET(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 # on windows just because it's easier.
 # *****************************************************************************
 INCLUDE(FindBoost)
-SET(Boost_DEBUG ON)
+SET(Boost_DEBUG OFF)
 IF(WIN32)
     SET(Boost_USE_STATIC_LIBS ON)
 ELSE(WIN32)
