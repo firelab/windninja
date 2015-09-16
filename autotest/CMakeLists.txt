@@ -322,7 +322,6 @@ ADD_TEST(rmtree_sym_3
 # *****************************************************************************
 IF(RUN_CLI_TESTS)
     MESSAGE(STATUS "Generating cli tests...")
-    ADD_EXECUTABLE(pc ${PROJECT_SOURCE_DIR}/autotest/config/parse_input.c)
     FILE(GLOB cfgtests ${PROJECT_SOURCE_DIR}/autotest/config/pass/*.cfg)
     MESSAGE(STATUS "GLOB: ${cfgtests}")
     FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config)
@@ -332,7 +331,7 @@ IF(RUN_CLI_TESTS)
         FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
         FILE(COPY ${cfgtest} DESTINATION ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
         MESSAGE(STATUS "COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
-        EXECUTE_PROCESS(WORKING_DIRECTORY . COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
+        EXECUTE_PROCESS(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
                                 OUTPUT_VARIABLE ELEV_FILE
                                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         STRING(STRIP ${ELEV_FILE} ELEV_FILE)
