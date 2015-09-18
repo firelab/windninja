@@ -215,9 +215,9 @@ static const char *apszNomadsKeys[][11] =
     ** HIRES Alaska
     */
     {
-      "hires_alaska",
+      "hires_arw_alaska",
       "filter_hiresak.pl",
-      "akarw.t%02dz.awpregf%02d.grib2",
+      "hiresw.t%02dz.arw_5km.f%02d.ak.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "6:6:0",
@@ -225,15 +225,29 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES Alaska" },
+      "HIRES ARW Alaska" },
+    /*
+    ** HIRES Alaska NMM
+    */
+    {
+      "hires_nmm_alaska",
+      "filter_hiresak.pl",
+      "hiresw.t%02dz.nmmb_5km.f%02d.ak.grib2",
+      "hiresw.%s",
+      NOMADS_GENERIC_DATE,
+      "6:6:0",
+      "0:48:1",
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "5 km",
+      "HIRES NMM Alaska" },
     /*
     ** HIRES CONUS
-    ** Check on what this is.
     */
     {
       "hires_arw_conus",
       "filter_hiresconus.pl",
-      "conusarw.t%02dz.awp5kmf%02d.grib2",
+      "hiresw.t%02dz.arw_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "0:12:12",
@@ -248,7 +262,7 @@ static const char *apszNomadsKeys[][11] =
     {
       "hires_nmm_conus",
       "filter_hiresconus.pl",
-      "conusnmmb.t%02dz.awp5kmf%02d.grib2",
+      "hiresw.t%02dz.nmmb_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "0:12:12",
