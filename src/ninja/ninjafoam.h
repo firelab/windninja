@@ -117,7 +117,7 @@ private:
     std::vector<double> bbox;
     std::vector<int> nCells;
     double side; // length of side of regular hex cell
-    double firstCellHeight; //approx height of near-ground cell after moveDynamicMesh
+    double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
     double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
     double finalFirstCellHeight; //final approx height of near-ground cell after refinement
     int latestTime; //latest time directory 

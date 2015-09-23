@@ -44,7 +44,7 @@ NinjaFoam::NinjaFoam() : ninja()
     inletoutletvalue = "";
     template_ = "";
     
-    firstCellHeight = -1.0;
+    initialFirstCellHeight = -1.0;
     oldFirstCellHeight = -1.0;
     finalFirstCellHeight = -1.0;
     latestTime = 0; 
@@ -1050,7 +1050,7 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
 
-    firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
+    initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
     expansionRatio = 4.0;
 
     CPLFree(data);
@@ -1099,27 +1099,27 @@ int NinjaFoam::readDem(double &expansionRatio)
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
 
-    firstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
+    initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
     expansionRatio = 1.0;
     
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
             CPLFormFilename(pszTempPath, "0/U", ""), 
             "-9999.9", 
-            CPLSPrintf("%.2f", firstCellHeight));
+            CPLSPrintf("%.2f", initialFirstCellHeight));
             
     CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
             CPLFormFilename(pszTempPath, "0/k", ""), 
             "-9999.9", 
-            CPLSPrintf("%.2f", firstCellHeight));
+            CPLSPrintf("%.2f", initialFirstCellHeight));
             
     CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
             CPLFormFilename(pszTempPath, "0/epsilon", ""), 
             "-9999.9", 
-            CPLSPrintf("%.2f", firstCellHeight));
+            CPLSPrintf("%.2f", initialFirstCellHeight));
     
     CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
-    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
     CPLDebug("NINJAFOAM", "side = %f", side);
     CPLDebug("NINJAFOAM", "expansionRatio = %f", expansionRatio);
     
@@ -1283,12 +1283,12 @@ int NinjaFoam::writeMoveDynamicMesh()
      * above may move too quickly toward the surface, casuing cells to get turned
      * inside-out. deltaT is set to 1.0 in controlDict.
      */
-    double displacementVelocity = 0.5 * firstCellHeight;
+    double displacementVelocity = 0.5 * initialFirstCellHeight;
     CopyFile(pszInput, pszOutput, "$vx$", CPLSPrintf("%.2f", displacementVelocity));
     CopyFile(pszInput, pszOutput, "$vy$", CPLSPrintf("%.2f", displacementVelocity));
     CopyFile(pszInput, pszOutput, "$vz$", CPLSPrintf("%.2f", displacementVelocity));
 
-    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
     CPLDebug("NINJAFOAM", "displacementVelocity = %f", displacementVelocity);
     
     return NINJA_SUCCESS;
@@ -1570,7 +1570,7 @@ int NinjaFoam::MoveDynamicMesh()
     
     //update dict files
     latestTime = 50;
-    finalFirstCellHeight = firstCellHeight;
+    finalFirstCellHeight = initialFirstCellHeight;
     oldFirstCellHeight = finalFirstCellHeight;
     UpdateDictFiles();
     
@@ -1681,7 +1681,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
-    CPLDebug("NINJAFOAM", "firstCellHeight = %f", firstCellHeight);
+    CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
     CPLDebug("NINJAFOAM", "finalFirstCellHeight = %f", finalFirstCellHeight);
         
     return nRet;
@@ -1689,20 +1689,20 @@ int NinjaFoam::RefineSurfaceLayer(){
 
 void NinjaFoam::UpdateDictFiles()
 {
-    /* copy files to latestTime and update firstCellHeight */
+    /* copy files to latestTime and update firstCellHeight */   
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
-            CPLSPrintf("firstCellHeight %.2f;", oldFirstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight));
             
     CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/k", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
-            CPLSPrintf("firstCellHeight %.2f;", oldFirstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
     CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/epsilon", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
-            CPLSPrintf("firstCellHeight %.2f;", oldFirstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
     CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
