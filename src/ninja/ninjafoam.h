@@ -117,7 +117,9 @@ private:
     std::vector<double> bbox;
     std::vector<int> nCells;
     double side; // length of side of regular hex cell
-    double firstCellHeight; //height of near-ground cell after moveDynamicMesh
+    double firstCellHeight; //approx height of near-ground cell after moveDynamicMesh
+    double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
+    double finalFirstCellHeight; //final approx height of near-ground cell after refinement
     int latestTime; //latest time directory 
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
@@ -140,6 +142,7 @@ private:
     int SimpleFoam();
     int Sample();
     int ReadStl();
+    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
 
     /* GDAL/OGR output */
     const char *pszVrtMem;
