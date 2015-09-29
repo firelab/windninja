@@ -272,7 +272,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     minY = MIN(corners[3], corners[5]);
     bounds[0] = maxY + GetWxModelBuffer(maxY - minY);
     bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
-    bounds[2] = minY - GetWxModelBuffer(maxX - minX);
+    bounds[2] = minY - GetWxModelBuffer(maxY - minY);
     bounds[3] = minX - GetWxModelBuffer(maxX - minX);
     return 0;
 }
@@ -332,11 +332,6 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     /*
      * Buffer the bounds
      */
-    bounds[0] += 1.0;
-    bounds[1] += 1.0;
-    bounds[2] -= 1.0;
-    bounds[3] -= 1.0;
-
     ComputeWxModelBuffer(poDS, bounds);
 
     GDALClose( (GDALDatasetH)poDS );
