@@ -78,6 +78,16 @@ double ncepNdfdInitialization::Get_Wind_Height()
     return GetWindHeight("height_above_ground1");
 }
 
+/**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepNdfdInitialization::getGridResolution()
+{
+    return 5.0;
+}
+
+
 std::vector<blt::local_date_time> ncepNdfdInitialization::getTimeList(blt::time_zone_ptr timeZonePtr)
 {
     return wxModelInitialization::getTimeList("Total_cloud_cover_entire_atmosphere_single_layer_layer", timeZonePtr);

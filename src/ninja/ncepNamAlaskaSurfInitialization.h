@@ -49,6 +49,7 @@ class ncepNamAlaskaSurfInitialization : public wxModelInitialization
     virtual std::vector<std::string> getVariableList();
     virtual std::string getForecastIdentifier();
 
+    virtual double getGridResolution();
     virtual int getStartHour();
     virtual int getEndHour();
 

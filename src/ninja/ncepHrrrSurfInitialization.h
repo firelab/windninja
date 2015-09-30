@@ -51,6 +51,7 @@ class ncepHrrrSurfInitialization : public wxModelInitialization
     virtual std::string getForecastIdentifier();
 
     virtual std::string getPath();
+    virtual double getGridResolution();
     virtual int getStartHour();
     virtual int getEndHour();
 
