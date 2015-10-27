@@ -5204,10 +5204,6 @@ void ninja::set_MeshCount(int meshCount)
 
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
-    /* Note that these are not final mesh counts, but are the number of 
-     * cells used in the blockMesh. Final total number of cells is larger
-     * due to surface refinement after moveDynamicMesh.
-     */
     if(meshChoice == WindNinjaInputs::coarse){
         input.meshCount = 100000;
     }

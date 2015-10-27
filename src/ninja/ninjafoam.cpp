@@ -47,7 +47,8 @@ NinjaFoam::NinjaFoam() : ninja()
     initialFirstCellHeight = -1.0;
     oldFirstCellHeight = -1.0;
     finalFirstCellHeight = -1.0;
-    latestTime = 0; 
+    latestTime = 0;
+    cellCount = 0; 
 }
 
 /**
@@ -1038,11 +1039,11 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     }
 
     double meshVolume;
-    double cellCount, cellVolume;
+    double cellVolume;
     double side;
 
     meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
-    cellCount = input.meshCount;
+    cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
     cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
 
@@ -1083,16 +1084,15 @@ int NinjaFoam::readDem(double &expansionRatio)
     bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    //bbox.push_back( input.dem.get_maxValue() + dz * 10.5 ); //zmax
     bbox.push_back( input.dem.get_maxValue() + 3000 ); //zmax
 
     double meshVolume;
-    double cellCount, cellVolume;
+    double cellVolume;
     double side;
 
     meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
-    cellCount = input.meshCount;
-    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone
+    cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
+    cellVolume = meshVolume/cellCount; // volume of 1 cell
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
@@ -1499,6 +1499,9 @@ int NinjaFoam::MoveDynamicMesh()
                 }
             }
         }
+        
+        CPLSpawnAsyncCloseInputFileHandle(sp);
+        
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
             //do something
@@ -1549,6 +1552,8 @@ int NinjaFoam::MoveDynamicMesh()
                 }
             }
         }
+        
+        CPLSpawnAsyncCloseInputFileHandle(sp);
         
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
@@ -1611,8 +1616,10 @@ int NinjaFoam::RefineSurfaceLayer(){
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
 
-    while(finalFirstCellHeight > 50.0){ //cutoff arbitrarily set to 50 m for now
-        
+    CPLDebug("NINJAFOAM", "before refinement, cellCount = %d", cellCount);
+    CPLDebug("NINJAFOAM", "target number of cells = %d", input.meshCount);
+    
+    while(finalFirstCellHeight > 50.0 && cellCount < input.meshCount){ //cutoff arbitrarily set to 50 m for now
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1623,6 +1630,7 @@ int NinjaFoam::RefineSurfaceLayer(){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineMesh().");
             return nRet;
         }
+        CheckMesh(); //update cellCount
         
         //update time, near-wall cell height, BC files, topoSetDict file
         latestTime += 1;
@@ -1652,7 +1660,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
     
-    while(finalFirstCellHeight > 10.0){ //arbitrarily set to 10 m for now
+    while(finalFirstCellHeight > 10.0 && cellCount < input.meshCount){ //arbitrarily set to 10 m for now
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1664,6 +1672,7 @@ int NinjaFoam::RefineSurfaceLayer(){
             return nRet;
             
         }
+        CheckMesh(); //update cellCount
         
         //update time, near-wall cell height, BC, topoSetDict file
         latestTime += 1;
@@ -1852,7 +1861,8 @@ int NinjaFoam::CheckMesh()
 {
     int nRet = -1;
 
-    const char *const papszArgv[] = { "checkMesh", 
+    const char *const papszArgv[] = { "checkMesh",
+                                      "-latestTime",
                                       "-case",
                                       pszTempPath,
                                       NULL };
@@ -1862,6 +1872,38 @@ int NinjaFoam::CheckMesh()
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
     VSIFCloseL(fout);
+    
+    //update cellCount from log.checkmesh
+    VSILFILE *fin;
+
+    const char *pszInput;
+
+    pszInput = CPLFormFilename(pszTempPath, "log.checkmesh", "");
+
+    fin = VSIFOpenL( pszInput, "r" );
+
+    char *data;
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    
+    std::string s(data);
+    int pos, endPos;
+    int found;
+    pos = s.find("cells:");
+    if(pos != s.npos){
+        cellCount = atof(s.substr(pos+7, (s.find("\n", pos+7) - (pos+7))).c_str());
+        CPLDebug("NINJAFOAM", "cellCount = %d", cellCount);
+    }
+
+    CPLFree(data);
+    VSIFCloseL(fin);
 
     return nRet;
 }
