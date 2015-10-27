@@ -30,7 +30,7 @@ cd ..
 
 #Get and build GDAL with poppler support
 wget http://download.osgeo.org/gdal/2.0.0/$GDAL.tar.gz
-tar -xvf $GDAL.tar.xz 
+tar -xvf $GDAL.tar.gz 
 cd $GDAL/
 ./configure --prefix=$PREFIX --with-poppler=$PREFIX
 make -j 8
