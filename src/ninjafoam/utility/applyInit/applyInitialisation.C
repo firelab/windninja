@@ -113,17 +113,9 @@ int main(int argc, char *argv[])
 		// relative height from ground for face lists
 		scalar AGL = y[cellI];
 
-		//if we're below the veg height, use linear interpolation to ground
-		if (AGL < Rd_ )
-		{
-			ucalc = UfreeStream_*AGL/inputWindHeight_Veg_;
-			U[cellI] = ucalc*uDirection_;
-		}
-		else  //Apply the log law equation profile
-		{
-			ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
-			U[cellI] = ucalc*uDirection_;
-		}
+		//Apply the log law equation profile
+        ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
+    	U[cellI] = ucalc*uDirection_;
 	}
 
 	U.write();
