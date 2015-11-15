@@ -84,7 +84,7 @@ double ncepNdfdInitialization::Get_Wind_Height()
 */
 double ncepNdfdInitialization::getGridResolution()
 {
-    return 5.0;
+    return 2.5;
 }
 
 
@@ -134,7 +134,7 @@ std::vector<std::string> ncepNdfdInitialization::getVariableList()
 */
 std::string ncepNdfdInitialization::getForecastIdentifier()
 {
-    return std::string( "UCAR-NDFD-CONUS-5-KM" );
+    return std::string( "UCAR-NDFD-CONUS-2.5-KM" );
 }
 
 int ncepNdfdInitialization::getStartHour()

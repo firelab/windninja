@@ -129,7 +129,7 @@ void initializeOptions()
                 ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "Source for downloading elevation data (us_srtm, world_srtm, gmted)")
                 ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; all choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-5-KM, UCAR-RAP-13-KM)")
+                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-2.5-KM, UCAR-RAP-13-KM)")
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
@@ -261,7 +261,7 @@ int windNinjaCLI(int argc, char* argv[])
         */
         std::string osAvailableWx = "type of wx model to download (";
         osAvailableWx += std::string( "UCAR-NAM-CONUS-12-KM, UCAR-NAM-ALASKA-11-KM, " ) +
-                         std::string( "UCAR-NDFD-CONUS-5-KM, UCAR-RAP-CONUS-13-KM, " ) +
+                         std::string( "UCAR-NDFD-CONUS-2.5-KM, UCAR-RAP-CONUS-13-KM, " ) +
                          std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
