@@ -205,13 +205,9 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 //called by simpleFoam
 void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
 {
-    scalar ustar = UfreeStream_*0.41/Foam::log((inputWindHeight_Veg_-Rd_)/z0_);
+    scalar ustar = UfreeStream_*0.41/Foam::log((inputWindHeight_Veg_)/z0_);
     scalar ucalc(0.0);
     vectorField Up(patch().Cf().size(), vector(0.0, 0.0, 0.0));
-    vectorField areaN(patch().nf());
-    
-    scalar uAtCanopyTop(0.0);
-    scalar vegHeight = 1.28 * Rd_;
     
     // Loop over all the faces in that patch
     forAll(Up, faceI )
@@ -219,10 +215,9 @@ void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
         // relative height from ground for face lists
         scalar& AGL = relativeHeight_[faceI];
 
-        //Apply the log law equation profile
-        ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
+        //Apply the log profile
+        ucalc = ustar/0.41*Foam::log((AGL)/z0_);
         Up[faceI] = ucalc*uDirection_;
-        //Info<<"Up[faceI] = "<<Up[faceI]<<endl;
     }
 
     operator==(Up);
