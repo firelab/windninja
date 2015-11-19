@@ -509,7 +509,8 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     ReplaceKeys(s, "$direction$", CPLSPrintf("(%.4lf %.4lf %.4lf)", direction[0],
                                                               direction[1],
                                                               direction[2]));
-    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight + input.surface.Rough_h.get_meanValue()));
+    ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight)); //input wind height in ninjafoam mesh is always height above canopy
+    //ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight + input.surface.Rough_h.get_meanValue()));
     ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
