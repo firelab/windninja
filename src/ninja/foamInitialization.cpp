@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initialing with NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with NinjaFOAM simulations for use with diurnal 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
