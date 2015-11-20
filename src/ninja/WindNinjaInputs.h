@@ -94,7 +94,8 @@ public:
         noInitializationFlag,			//no initialization, used to check if it has been set or not
         domainAverageInitializationFlag,	//single domain-averaged input speed and direction
         pointInitializationFlag,		//single or multiple point inititialization
-        wxModelInitializationFlag	//Weather forecast model initialization
+        wxModelInitializationFlag,	//Weather forecast model initialization
+        foamInitializationFlag
     };
 
     eVegetation vegetation;
@@ -298,6 +299,8 @@ public:
     eNinjafoamMeshChoice ninjafoamMeshChoice; // fine, medium, coarse
     bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
     std::string stlFile; //path/filename of an STL file
+    std::string speedInitGridFilename;
+    std::string dirInitGridFilename;
 #endif
 };
 

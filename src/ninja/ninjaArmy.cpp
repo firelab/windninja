@@ -940,6 +940,15 @@ int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** 
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
 }
 
+int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
+}
+int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dirFile( dirFile ) );
+}
+
 #endif
 
 /*-----------------------------------------------------------------------------
@@ -1038,6 +1047,14 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
             ninjas[ nIndex ]->set_initializationMethod
                 ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
+        }
+#ifdef NINJAFOAM
+        else if( method == "foamInitialization" )
+        {
+            ninjas[ nIndex ]->set_initializationMethod
+                ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
+            retval = NINJA_SUCCESS;
+#endif
         }
         else
         {

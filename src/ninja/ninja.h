@@ -94,6 +94,11 @@
 #include "domainAverageInitialization.h"
 #include "wxModelInitializationFactory.h"
 #include "pointInitialization.h"
+
+#ifdef NINJAFOAM
+#include "foamInitialization.h"
+#endif
+
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
@@ -310,6 +315,8 @@ public:
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_StlFile(std::string stlFile); 
+    void set_speedFile(std::string speedFile);
+    void set_dirFile(std::string dirFile);
 #endif
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees

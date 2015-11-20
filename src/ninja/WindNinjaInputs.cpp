@@ -141,6 +141,8 @@ WindNinjaInputs::WindNinjaInputs()
     ninjafoamMeshChoice = WindNinjaInputs::fine;
     nonEqBc = true;
     stlFile = "!set";
+    speedInitGridFilename = "!set";
+    dirInitGridFilename= "!set";
 #endif
     
     outputPointsFilename = "!set";

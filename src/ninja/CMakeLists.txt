@@ -110,7 +110,9 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   wxStation.cpp
                   windninja.cpp)
 IF(NINJAFOAM)
-    SET(NINJA_SOURCES ${NINJA_SOURCES} ninjafoam.cpp)
+    SET(NINJA_SOURCES ${NINJA_SOURCES} 
+                    ninjafoam.cpp
+                    foamInitialization.cpp)
 ENDIF(NINJAFOAM)
 
 IF(WITH_NOMADS_SUPPORT)

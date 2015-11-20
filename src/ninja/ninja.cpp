@@ -441,7 +441,16 @@ do
 			pointInitialization init;
 			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
-		}else{
+		}
+#ifdef NINJAFOAM
+		else if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag)
+		{
+			foamInitialization init;
+			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+
+		}
+#endif
+		else{
 			 throw std::logic_error("Incorrect wind initialization.");
 		}
 
@@ -5241,6 +5250,16 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
 void ninja::set_StlFile(std::string stlFile)
 {
     input.stlFile = stlFile;
+}
+
+void ninja::set_speedFile(std::string speedFile)
+{
+    input.speedInitGridFilename = speedFile;
+}
+
+void ninja::set_dirFile(std::string dirFile)
+{
+    input.dirInitGridFilename = dirFile;
 }
 
 #endif
