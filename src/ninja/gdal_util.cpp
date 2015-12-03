@@ -209,7 +209,7 @@ bool GDALHasNoData( GDALDataset *poDS, int band )
 	poBand->RasterIO( GF_Read, 0, i, ncols, 1, padfScanline, ncols, 1,
 			  GDT_Float64, 0, 0 );
 	for( int j = 0;j < ncols;j++ ) {
-	    if( padfScanline[j] == nDV )
+	    if( CPLIsEqual( (float)padfScanline[j], (float)nDV ) )
             {
 		hasNDV = true;
                 goto done;
