@@ -1,5 +1,18 @@
 Release Notes
 =============
+WindNinja 2.5.4
+---------------
+
+* Re-enable GMTED as it disables LCP.
+
+WindNinja 2.5.3
+---------------
+
+2015-10-02
+
+* Disable GMTED due to lack of server(#69)
+
+* Fix GFS from thredds(#63)
 
 WindNinja 2.5.2
 ---------------
