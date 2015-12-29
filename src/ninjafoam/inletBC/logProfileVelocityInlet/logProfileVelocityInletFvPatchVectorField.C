@@ -169,7 +169,6 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 
 	// Add the half first cell Height read from dictionary
     //Info<<"firstCellHeight_ = "<<firstCellHeight_<<endl;
-
  	
     Dist[pointI] = currentPt.z() - Dist[pointI] + firstCellHeight_/2;
 	relativeHeight_.setSize(Dist.size());
@@ -206,13 +205,9 @@ logProfileVelocityInletFvPatchVectorField::logProfileVelocityInletFvPatchVectorF
 //called by simpleFoam
 void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
 {
-    scalar ustar = UfreeStream_*0.41/Foam::log((inputWindHeight_Veg_-Rd_)/z0_);
+    scalar ustar = UfreeStream_*0.41/Foam::log((inputWindHeight_Veg_)/z0_);
     scalar ucalc(0.0);
     vectorField Up(patch().Cf().size(), vector(0.0, 0.0, 0.0));
-    vectorField areaN(patch().nf());
-    
-    scalar uAtCanopyTop(0.0);
-    scalar vegHeight = 1.28 * Rd_;
     
     // Loop over all the faces in that patch
     forAll(Up, faceI )
@@ -220,22 +215,9 @@ void logProfileVelocityInletFvPatchVectorField::updateCoeffs()
         // relative height from ground for face lists
         scalar& AGL = relativeHeight_[faceI];
 
-        //log profile goes to 0 at z = Rd_ + z0      
-        //use linear fit in the canopy
-        if (AGL < vegHeight)
-        {
-            //calculate speed at top of canopy from log profile
-            uAtCanopyTop = ustar/0.41*log((vegHeight-Rd_)/z0_);
-            //calculate speed at AGL using a linear profile                
-            ucalc = uAtCanopyTop*AGL/(vegHeight);
-            Up[faceI] = ucalc*uDirection_;
-        }
-        else  //Apply the log law equation profile
-        {
-            ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
-            Up[faceI] = ucalc*uDirection_;
-        }
-        //Info<<"Up[faceI] = "<<Up[faceI]<<endl;
+        //Apply the log profile
+        ucalc = ustar/0.41*Foam::log((AGL)/z0_);
+        Up[faceI] = ucalc*uDirection_;
     }
 
     operator==(Up);

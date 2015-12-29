@@ -50,6 +50,7 @@ class ncepNdfdInitialization : public wxModelInitialization
     virtual std::string getForecastIdentifier();
     virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
 
+    virtual double getGridResolution();
     virtual int getStartHour();
     virtual int getEndHour();
 

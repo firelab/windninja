@@ -79,6 +79,17 @@ double ncepGfsSurfInitialization::Get_Wind_Height()
 {
     return GetWindHeight("height_above_ground4");
 }
+
+/**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepGfsSurfInitialization::getGridResolution()
+{
+    return 0.5;
+}
+
+
 /**
 * @brief Fetch the variable names
 *
