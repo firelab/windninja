@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/bin/bash
 
 # This script downloads and cross compiles zlib.
 #

@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/bin/bash
 
 # Zip all the pertinent binaries and support files.
 #

@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/bin/bash
 
 cd OpenFOAM-2.2.x
 git checkout 8a983dba63b246772c69ed0fa9cc3b3e33a10f92

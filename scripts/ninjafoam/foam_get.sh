@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/bin/bash
 
 # Just call initial clone for the OpenFOAM code
 

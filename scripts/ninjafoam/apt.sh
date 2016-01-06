@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#!/bin/bash
 
 # This script downloads a few required packages for building ninjafoam on
 # win32.  sudo is required.  Add any packages that are apt-get-able here.
