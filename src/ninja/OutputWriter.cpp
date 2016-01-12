@@ -470,7 +470,7 @@ OutputWriter::_createOGRFile()
         throw std::runtime_error("OutputWriter: Failed to create coordinate" \
                                  "transformation for PDF output");
     }
-    hOGRDriver = GDALGetDriverByName( "ESRI Shapefile" );
+    hOGRDriver = OGRGetDriverByName( "ESRI Shapefile" );
     if( NULL == hOGRDriver )
     {
         throw std::runtime_error("OutputWriter: Failed to get OGR Memory driver");
