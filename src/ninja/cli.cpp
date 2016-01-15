@@ -867,7 +867,7 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("pointInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("wxModelInitialization") &&
-                vm["initialization_method"].as<std::string>() != string("foamInitialization"))
+                vm["initialization_method"].as<std::string>() != string("griddedInitialization"))
         {
             cout << "'initialization_method' is not a known type.\n";
             cout << "Choices are domainAverageInitialization, pointInitialization, or wxModelInitialization.\n";
@@ -1273,8 +1273,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 #endif
             }
-#ifdef NINJAFOAM
-            else if(vm["initialization_method"].as<std::string>() == string("foamInitialization"))
+            else if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
             {
                 
                 verify_option_set(vm, "input_speed_grid");
@@ -1286,7 +1285,7 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
 
                 windsim.setInitializationMethod( i_,
-                        WindNinjaInputs::foamInitializationFlag);
+                        WindNinjaInputs::griddedInitializationFlag);
 
                 windsim.setInputWindHeight( i_, vm["input_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_input_wind_height"].as<std::string>() ) );
@@ -1323,7 +1322,6 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
 
             }
-#endif
 
             //check if lcp to determine if surface veg needs to be set or not
             bool isLcp;

@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initializing with NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with gridded speed and direction 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -27,20 +27,18 @@
 *
 *****************************************************************************/
 
-#include "foamInitialization.h"
+#include "griddedInitialization.h"
 
-foamInitialization::foamInitialization() : initialize()
+griddedInitialization::griddedInitialization() : initialize()
 {
 
 }
 
-foamInitialization::~foamInitialization()
+griddedInitialization::~griddedInitialization()
 {
-    CPLDebug("NINJA", "Starting a foamInitialization run.");
-    inputVelocityGrid = -9999.0;
-    inputAngleGrid = -9999.0;    
+    CPLDebug("NINJA", "Starting a griddedInitialization run.");
+	
 }
-
 /**
  * This function initializes the 3d mesh wind field with initial velocity values
  * based on surface (2D) output from a NinjaFOAM soluation.
@@ -53,7 +51,7 @@ foamInitialization::~foamInitialization()
  * @param w0 w component
  * @see WindNinjaInputs, Mesh, wn_3dScalarField
  */
-void foamInitialization::initializeFields(WindNinjaInputs &input,
+void griddedInitialization::initializeFields(WindNinjaInputs &input,
 	Mesh const& mesh,
 	wn_3dScalarField& u0,
 	wn_3dScalarField& v0,
@@ -64,6 +62,7 @@ void foamInitialization::initializeFields(WindNinjaInputs &input,
         AsciiGrid<double>& bl_height)
 {
     int i, j, k;
+
     windProfile profile;
     profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...	
     //make sure rough_h is set to zero if profile switch is 0 or 2
@@ -83,25 +82,48 @@ void foamInitialization::initializeFields(WindNinjaInputs &input,
     AsciiGrid<double> airTempGrid(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, input.dem.get_noDataValue(), input.airTemp);
 	AsciiGrid<double> cloudCoverGrid(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, input.dem.get_noDataValue(), input.cloudCover);
 
-    //Check that the upper right corner is covered by the input grids and buffer if needed
+    CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
+    CPLDebug("NINJA", "input.dirInitGridFilename = %s", input.dirInitGridFilename.c_str());
+        
+    AsciiGrid<double> inputVelocityGrid, inputAngleGrid;
+        
+    GDALDatasetH hSpeedDS, hDirDS;
+    hSpeedDS = GDALOpen( input.speedInitGridFilename.c_str(), GA_ReadOnly );
+    if( hSpeedDS == NULL )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
+        throw std::runtime_error("Can't open input speed grid.");
+    }
+    hDirDS = GDALOpen( input.dirInitGridFilename.c_str(), GA_ReadOnly );
+    if( hDirDS == NULL )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
+        throw std::runtime_error("Can't open input direction grid.");
+    }
+
+    GDAL2AsciiGrid( (GDALDataset *)hSpeedDS, 1, inputVelocityGrid );
+    GDAL2AsciiGrid( (GDALDataset *)hDirDS, 1, inputAngleGrid );
+        
+    GDALClose(hSpeedDS);
+    GDALClose(hDirDS);
+        
+    //Check that the upper right corner covered by the input grids and buffer if needed
+    //NOTE: Right now this is only for input grids with same prj and llcorner as DEM
     double corner2_x = input.dem.get_xllCorner() + input.dem.get_nCols() * input.dem.get_cellSize(); //corner 2
     double corner2_y = input.dem.get_yllCorner() + input.dem.get_nRows() * input.dem.get_cellSize();
-    
-    while( !inputVelocityGrid.check_inBounds(corner2_x, corner2_y) )
-    {
+    while( !inputVelocityGrid.check_inBounds(corner2_x, corner2_y) ){
         inputVelocityGrid.BufferGridInPlace();
         inputAngleGrid.BufferGridInPlace();
-        CPLDebug("NINJA", "Buffering in foamInitialization...");
     }
 
     //Interpolate from input grids to dem coincident grids
     speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
     dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
     
-    CPLDebug("NINJA", "check for coincident grids: speedInitializationGrid = %d", speedInitializationGrid.checkForCoincidentGrids(input.dem));
-   
     //Set windspeed grid for diurnal computation
     input.surface.set_windspeed(speedInitializationGrid);
+    
+    CPLDebug("NINJA", "check for coincident grids: u = %d", speedInitializationGrid.checkForCoincidentGrids(uInitializationGrid));
 
     //set the u and v initialization grids
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {

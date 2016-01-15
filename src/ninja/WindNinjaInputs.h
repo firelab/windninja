@@ -95,6 +95,7 @@ public:
         domainAverageInitializationFlag,	//single domain-averaged input speed and direction
         pointInitializationFlag,		//single or multiple point inititialization
         wxModelInitializationFlag,	//Weather forecast model initialization
+        griddedInitializationFlag,  //gridded speed and direction
         foamInitializationFlag
     };
 
@@ -145,11 +146,6 @@ public:
      *  Surface Properties
      *-----------------------------------------------------------------------------*/
     surfProperties surface;		//surface properties data (roughness, albedo, etc...)
-
-    /*-----------------------------------------------------------------------------
-     *  Stability Properties
-     *-----------------------------------------------------------------------------*/
-    //bool stabilityFlag;  //flag specifying if non-neutral stability parameters should be set
 
     /*-----------------------------------------------------------------------------
      *  Diurnal Inputs

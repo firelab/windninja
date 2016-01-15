@@ -232,7 +232,7 @@ bool NinjaFoam::simulate_wind()
     }
 
 
-	/*-------------------------------------------------------------------*/
+    /*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
 
@@ -403,7 +403,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endSolve = omp_get_wtime();
     startOutputSampling = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
     status = Sample();
@@ -413,9 +413,16 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
 
+    status = SampleRawOutput();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while sampling the raw output.");
+        NinjaUnlinkTree( pszTempPath );
+        return NINJA_E_OTHER;
+    }
+
     #ifdef _OPENMP
     endOutputSampling = omp_get_wtime();
-	#endif
+    #endif
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -425,18 +432,20 @@ bool NinjaFoam::simulate_wind()
     startWriteOut = omp_get_wtime();
     #endif
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
+    if(input.diurnalWinds == false){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
-	status = WriteOutputFiles();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
-        return NINJA_E_OTHER;
+        status = WriteOutputFiles();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
+            return NINJA_E_OTHER;
+        }
     }
-
+            
     #ifdef _OPENMP
     endWriteOut = omp_get_wtime();
     endTotal = omp_get_wtime();
-	#endif
+    #endif
 
     /*----------------------------------------*/
     /*  wrap up                               */
@@ -447,19 +456,23 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output sampling time was %lf seconds.", endOutputSampling-startOutputSampling);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-	#endif
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
 
-    if(!input.keepOutGridsInMemory)
-	{
-        AngleGrid.deallocate();
-	    VelocityGrid.deallocate();
+    if(!input.keepOutGridsInMemory && input.diurnalWinds == false)
+    {
+       AngleGrid.deallocate();
+       VelocityGrid.deallocate();
     }
+
+    if(input.diurnalWinds == true){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding dirunal winds...");
+    }   
 
     return true;
 }
@@ -2493,7 +2506,7 @@ void NinjaFoam::SetOutputFilenames()
 }
 
 
-int NinjaFoam::WriteOutputFiles()
+int NinjaFoam::SampleRawOutput()
 {
     /*-------------------------------------------------------------------*/
     /* convert output from xyz to speed and direction                    */
@@ -2511,7 +2524,6 @@ int NinjaFoam::WriteOutputFiles()
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
     {
-        //do something
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Invalid output written" );
         return false;
     }
@@ -2532,17 +2544,23 @@ int NinjaFoam::WriteOutputFiles()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
-    
+
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::WriteOutputFiles()
+{
+   
     /*-------------------------------------------------------------------*/
     /* prepare output                                                    */
     /*-------------------------------------------------------------------*/
     
     //Clip off bounding doughnut if desired
-	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 
-	//change windspeed units back to what is specified by speed units switch
-	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+    //change windspeed units back to what is specified by speed units switch
+    velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
 
     /*-------------------------------------------------------------------*/
     /* set up filenames                                                  */

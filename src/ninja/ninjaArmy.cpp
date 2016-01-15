@@ -383,7 +383,23 @@ bool ninjaArmy::startRuns(int numProcessors)
         try{
             //start the run
             if(!ninjas[0]->simulate_wind())
-                printf("Return of false from simulate_wind()");
+               printf("Return of false from simulate_wind()");
+#ifdef NINJAFOAM
+            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+            //a ninja run to add diurnal flow after the cfd solution is computed
+            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
+                CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
+                ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
+                diurnal_ninja->set_meshResChoice("fine"); //may not have been set, just always make the diurnal run "fine"
+                diurnal_ninja->AngleGrid = ninjas[0]->AngleGrid; //pass cfd flow field to diurnal run
+                diurnal_ninja->VelocityGrid = ninjas[0]->VelocityGrid; //pass cfd flow field to diurnal run
+                if(!diurnal_ninja->simulate_wind()){
+                    printf("Return of false from simulate_wind()");
+                }
+        } 
+#endif //NINJAFOAM            
 
             #ifdef SCALAR
             if(ninjas[0].input.scalarTransportFlag == true){
@@ -1048,14 +1064,20 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
                 ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
         }
+        else if( method == "griddedInitialization" )
+        {
+            ninjas[ nIndex ]->set_initializationMethod
+                ( WindNinjaInputs::griddedInitializationFlag, matchPoints );
+            retval = NINJA_SUCCESS;
+        }
 #ifdef NINJAFOAM
         else if( method == "foamInitialization" )
         {
             ninjas[ nIndex ]->set_initializationMethod
-                ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
+                ( WindNinjaInputs::foamInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
-#endif
         }
+#endif
         else
         {
             retval = NINJA_E_INVALID;

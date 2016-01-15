@@ -54,6 +54,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   gdal_util.cpp
                   gdal_fetch.cpp
                   genericSurfInitialization.cpp
+                  griddedInitialization.cpp
                   initialize.cpp
                   KmlVector.cpp
                   LineStyle.cpp

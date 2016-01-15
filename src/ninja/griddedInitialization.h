@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initializing with NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with gridded speed and directions 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -27,17 +27,17 @@
 *
 *****************************************************************************/
 
-#ifndef FOAM_INITIALIZATION_H
-#define FOAM_INITIALIZATION_H
+#ifndef GRIDDED_INITIALIZATION_H
+#define GRIDDED_INITIALIZATION_H
 
 #include "initialize.h"
 #include "ascii_grid.h"
 
-class foamInitialization : public initialize
+class griddedInitialization : public initialize
 {
     public:
-        foamInitialization();
-        virtual ~foamInitialization();
+        griddedInitialization();
+        virtual ~griddedInitialization();
     
         virtual void initializeFields(WindNinjaInputs &input,
 		        Mesh const& mesh,
@@ -48,11 +48,8 @@ class foamInitialization : public initialize
 		        AsciiGrid<double>& L,
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
-        
-        AsciiGrid<double> inputVelocityGrid;
-        AsciiGrid<double> inputAngleGrid;
 
     private:
     
 };
-#endif /* FOAM_INITIALIZATION_H */
+#endif /* GRIDDED_INITIALIZATION_H */
