@@ -1328,7 +1328,8 @@ int windNinjaCLI(int argc, char* argv[])
             GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(),
                     GA_ReadOnly);
             if(poDS == NULL) {
-                printf("Cannot open %s for reading, exiting...", vm["elevation_file"].as<std::string>().c_str());
+                fprintf(stderr, "Cannot open %s for reading, exiting...", vm["elevation_file"].as<std::string>().c_str());
+                return -1;
             }
             const char *pszWkt = poDS->GetProjectionRef();
             if( pszWkt == NULL || EQUAL( pszWkt, "" ) )
