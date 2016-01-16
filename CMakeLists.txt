@@ -305,7 +305,7 @@ IF(NOT MSVC)
 ENDIF(NOT MSVC)
 
 OPTION(ENABLE_GMTED "Try to use the GMTED data for DEM fetching.  It has proven
-unreliable and may need to be disabled" OFF)
+unreliable and may need to be disabled" ON)
 IF(ENABLE_GMTED)
     ADD_DEFINITIONS(-DHAVE_GMTED)
 ENDIF(ENABLE_GMTED)
