@@ -878,18 +878,7 @@ int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** 
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
 }
-
-int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
-}
-int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dirFile( dirFile ) );
-}
-
 #endif
-
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
  *-----------------------------------------------------------------------------*/
@@ -946,6 +935,17 @@ int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOp
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
 }
+
+int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
+}
+
+int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dirFile( dirFile ) );
+}
+
 int ninjaArmy::setInitializationMethod( const int nIndex,
                                         const WindNinjaInputs::eInitializationMethod  method,
                                         const bool matchPoints, char ** papszOptions )

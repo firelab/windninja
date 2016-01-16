@@ -123,6 +123,8 @@ public:
     /*-----------------------------------------------------------------------------
      *  Input speed/direction Parameters
      *-----------------------------------------------------------------------------*/
+    std::string speedInitGridFilename;  //raster file of gridded directions speeds 
+    std::string dirInitGridFilename;  //raster file of gridded wind directions
     eInitializationMethod initializationMethod;	//method to initialize WindNinja
     std::string forecastFilename;	//name of coarse weather model initialization file (NDFD, NAM, GFS, RUC, etc.)
     velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
@@ -295,8 +297,6 @@ public:
     eNinjafoamMeshChoice ninjafoamMeshChoice; // fine, medium, coarse
     bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
     std::string stlFile; //path/filename of an STL file
-    std::string speedInitGridFilename;
-    std::string dirInitGridFilename;
 #endif
 };
 
