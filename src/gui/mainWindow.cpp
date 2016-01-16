@@ -1410,7 +1410,7 @@ int mainWindow::solve()
     meshChoice = Mesh::coarse;
     else if( meshIndex == 1 )
     meshChoice = Mesh::medium;
-    else if( meshIndex == 1 )
+    else if( meshIndex == 2 )
     meshChoice = Mesh::fine;
     else {
     meshRes = tree->surface->meshResDoubleSpinBox->value();
