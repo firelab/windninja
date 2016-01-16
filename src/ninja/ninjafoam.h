@@ -73,6 +73,7 @@ public:
     NinjaFoam& operator= ( NinjaFoam const& A );
 
     virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninjafoam");}
 
 private:
 
@@ -149,6 +150,7 @@ private:
     const char *pszVrtMem;
     const char *pszGridFilename;
     
+    int SampleRawOutput();
     int WriteOutputFiles();
     void SetOutputFilenames();
     

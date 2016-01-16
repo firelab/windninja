@@ -54,6 +54,7 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   gdal_util.cpp
                   gdal_fetch.cpp
                   genericSurfInitialization.cpp
+                  griddedInitialization.cpp
                   initialize.cpp
                   KmlVector.cpp
                   LineStyle.cpp
@@ -110,7 +111,9 @@ SET(NINJA_SOURCES addDiurnalFlow.cpp
                   wxStation.cpp
                   windninja.cpp)
 IF(NINJAFOAM)
-    SET(NINJA_SOURCES ${NINJA_SOURCES} ninjafoam.cpp)
+    SET(NINJA_SOURCES ${NINJA_SOURCES} 
+                    ninjafoam.cpp
+                    foamInitialization.cpp)
 ENDIF(NINJAFOAM)
 
 IF(WITH_NOMADS_SUPPORT)

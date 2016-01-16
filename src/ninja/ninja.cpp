@@ -425,7 +425,7 @@ do
 		//initialize
 		if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
 		{
-			//wxModelInitialization* init;
+                    //wxModelInitialization* init;
 		    //wxInit = wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
 
 		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
@@ -433,16 +433,31 @@ do
 
 		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
 		{
-			domainAverageInitialization init;
-			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    domainAverageInitialization init;
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
 		}else if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 		{
-			pointInitialization init;
-			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    pointInitialization init;
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
-		}else{
-			 throw std::logic_error("Incorrect wind initialization.");
+		}
+		else if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
+                {
+                    griddedInitialization init;
+		    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                }
+#ifdef NINJAFOAM
+		else if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag)
+		{
+                    foamInitialization init;
+                    init.inputVelocityGrid= VelocityGrid; //set input grids from cfd solution
+                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+		}
+#endif
+		else{
+                     throw std::logic_error("Incorrect wind initialization.");
 		}
 
 		#ifdef _OPENMP
@@ -5242,9 +5257,24 @@ void ninja::set_StlFile(std::string stlFile)
 {
     input.stlFile = stlFile;
 }
-
 #endif
 
+void ninja::set_speedFile(std::string speedFile)
+{
+    input.speedInitGridFilename = speedFile;
+    if(!CPLCheckForFile((char*)speedFile.c_str(), NULL))
+        throw std::runtime_error(std::string("The file ") +
+                speedFile + " does not exist or may be in use by another program.");
+}
+
+void ninja::set_dirFile(std::string dirFile)
+{
+    input.dirInitGridFilename = dirFile;
+    if(!CPLCheckForFile((char*)dirFile.c_str(), NULL))
+        throw std::runtime_error(std::string("The file ") +
+                dirFile + " does not exist or may be in use by another program.");
+   
+}
 
 void ninja::computeSurfPropForCell
     ( long i, long j, double canopyHeight, lengthUnits::eLengthUnits canopyHeightUnits,

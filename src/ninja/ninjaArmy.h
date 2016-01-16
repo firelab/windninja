@@ -116,9 +116,6 @@ public:
     std::string fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName);
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
-#ifdef NINJAFOAM
-    bool startNinjaFoamRuns(int numProcessors);
-#endif
     bool startRuns(int numProcessors);
     bool startFirstRun();
 
@@ -495,6 +492,24 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded speed file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded direction file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions=NULL );
+    
     /**
     * \brief Set the input speed with units of a ninja
     *

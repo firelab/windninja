@@ -94,6 +94,12 @@
 #include "domainAverageInitialization.h"
 #include "wxModelInitializationFactory.h"
 #include "pointInitialization.h"
+#include "griddedInitialization.h"
+
+#ifdef NINJAFOAM
+#include "foamInitialization.h"
+#endif
+
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
@@ -145,6 +151,7 @@ public:
     ninja &operator=(const ninja &rhs);
 
     virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninja");}
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
 
@@ -311,6 +318,9 @@ public:
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_StlFile(std::string stlFile); 
 #endif
+
+    void set_speedFile(std::string speedFile);
+    void set_dirFile(std::string dirFile);
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
 
