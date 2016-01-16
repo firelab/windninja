@@ -1893,15 +1893,7 @@ int mainWindow::solve()
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-#ifdef NINJAFOAM
-            if(tree->ninjafoam->ninjafoamGroupBox->isChecked()){
-                ninjaSuccess = army->startNinjaFoamRuns( nThreads );
-            }
-            else
-                ninjaSuccess = army->startRuns( nThreads );
-#else
-            ninjaSuccess = army->startRuns( nThreads );
-#endif //NINJAFOAM
+        ninjaSuccess = army->startRuns( nThreads );
     }
     catch (bad_alloc& e)
     {
@@ -2804,10 +2796,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        tree->diurnal->diurnalGroupBox->setCheckable( false );
-        tree->diurnal->diurnalGroupBox->setChecked( false );
-        tree->diurnal->diurnalGroupBox->setHidden( true );
-        tree->diurnal->ninjafoamConflictLabel->setHidden( false );
+        //tree->diurnal->diurnalGroupBox->setCheckable( false );
+        //tree->diurnal->diurnalGroupBox->setChecked( false );
+        //tree->diurnal->diurnalGroupBox->setHidden( true );
+        //tree->diurnal->ninjafoamConflictLabel->setHidden( false );
 
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
