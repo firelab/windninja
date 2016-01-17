@@ -368,12 +368,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file for dust emissions (true, false)")
                 ("geotiff_file", po::value<std::string>(), "output geotiff path/filename (*.tif)")
                 #endif
-                #ifdef SCALAR
-                ("compute_scalar_transport", po::value<bool>()->default_value(false), "compute scalar transport (true, false)")
-                ("scalar_source_strength", po::value<double>()->default_value(-1.0), "source strength in g/s")
-                ("scalar_source_xlocation", po::value<double>()->default_value(-1.0), "longitude of source in decimal degrees")
-                ("scalar_source_ylocation", po::value<double>()->default_value(-1.0), "latitude of source in decimal degrees")
-                #endif
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
@@ -892,9 +886,6 @@ int windNinjaCLI(int argc, char* argv[])
         #ifdef EMISSIONS
         conflicting_options(vm, "momentum_flag", "compute_emissions");
         #endif
-        #ifdef SCALAR
-        conflicting_options(vm, "momentum_flag", "compute_scalar_transport");
-        #endif
         #ifdef STABILITY
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
         #endif
@@ -1117,17 +1108,6 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
-                #ifdef SCALAR
-                //scalar transport stuff
-                if(vm["compute_scalar_transport"].as<bool>())
-                {
-                    windsim.setScalarTransportFlag(i_, true);
-                    windsim.setScalarSourceStrength(i_, vm["scalar_source_strength"].as<double>());
-                    windsim.setScalarXcoord(i_, vm["scalar_source_xlocation"].as<double>());
-                    windsim.setScalarYcoord(i_, vm["scalar_source_ylocation"].as<double>());
-                }
-                #endif //SCALAR
-
                 #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())

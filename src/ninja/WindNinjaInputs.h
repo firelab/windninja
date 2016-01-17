@@ -264,16 +264,6 @@ public:
     bool stabilityFlag;  //flag specifying if non-neutral stability parameters should be set
 #endif
 
-    /*-----------------------------------------------------------------------------
-     *  SCALAR section
-     *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-    bool scalarTransportFlag;  //flag specifiying if scalar transport should be calculated
-    double scalarSourceStrength;
-    double scalarSourceXcoord;  //input long
-    double scalarSourceYcoord;  //input lat
-#endif //SCALAR
-
     std::string outputPointsFilename; //name of file containing output for requested point locations
     std::string inputPointsFilename; // name of file containing locations of specfic points for output
     

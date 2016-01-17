@@ -214,11 +214,6 @@ IF(MOBILE_APP)
     ADD_DEFINITIONS(-DMOBILE_APP)
 ENDIF(MOBILE_APP)
 
-OPTION(SCALAR "Enable scalar transport model" OFF)
-IF(SCALAR)
-    ADD_DEFINITIONS(-DSCALAR)
-ENDIF(SCALAR)
-
 # *****************************************************************************
 # Allow to permanently disable thredds updating in the build
 # *****************************************************************************

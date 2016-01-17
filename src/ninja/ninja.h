@@ -123,10 +123,6 @@
 #include "dust.h"
 #endif
 
-#ifdef SCALAR
-#include "scalarTransport.h"
-#endif
-
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
 #define LENGTH 256
@@ -170,18 +166,6 @@ public:
     #ifdef EMISSIONS
     AsciiGrid<double>DustGrid;
     #endif
-
-    #ifdef SCALAR
-    bool scalarTransportSimulation; // flag identifying if this run is computing scalar or wind fields
-    wn_3dScalarField concentration; // 3d scalar field of concentrations
-    //wn_3dScalarField scalarSource; // 3d scalar field of source terms
-    bool simulate_scalar();  // starts the scalar transport simulation
-    scalarTransport scalar; // stores scalar transport info (diffusivities, concentration field, etc.)
-    void computeScalarField(); // fills in 3d concentration field
-    #endif //SCALAR
-
-
-
 
     /*-----------------------------------------------------------------------------
      *
@@ -299,17 +283,6 @@ public:
     void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
     void set_geotiffOutFlag(bool flag);
 #endif
-#ifdef SCALAR
-    void set_scalarTransportFlag(bool flag);
-    void set_scalarSourceStrength(double source);
-    void set_scalarSourceXcoord(double xCoord);  //input long
-    void set_scalarSourceYcoord(double yCoord);  //input lat
-    double scalarSourceXdem; // x location of scalar source in dem coords
-    double scalarSourceYdem; // y location of scalar source in dem coords
-    double scalarSourceXORD; // x location of scalar source in WN mesh coords
-    double scalarSourceYORD; // y location of scalar source in WN mesh coords
-#endif //SCALAR
-
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
@@ -511,12 +484,12 @@ private:
     //double stability_function(double z_over_L, double L_switch);
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
-    void discretize(bool scalarTransportSimulation); //if true it's a scalar run, if false it's a wind run
+    void discretize(); 
     void setBoundaryConditions();
     void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
-    void writeOutputFiles(bool scalarTransportSimulation); //if true it's a scalar run, if false it's a wind run
+    void writeOutputFiles(); 
     void deleteDynamicMemory();
 };
 

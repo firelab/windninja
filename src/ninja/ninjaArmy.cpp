@@ -324,16 +324,6 @@ bool ninjaArmy::startRuns(int numProcessors)
             } 
 #endif //NINJAFOAM            
 
-            #ifdef SCALAR
-            if(ninjas[0].input.scalarTransportFlag == true){
-                //start the scalar run
-                if(!ninjas[0].simulate_scalar()){
-                    printf("Return of false from simulate_scalar()");
-                }
-            }
-            #endif //SCALAR
-
-
             //write farsite atmosphere file
             writeFarsiteAtmosphereFile();
 
@@ -823,33 +813,6 @@ int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** pap
 
 
 #endif //EMISSIONS
-
-/*-----------------------------------------------------------------------------
- *  Scalar Methods
- *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-int ninjaArmy::setScalarTransportFlag( const int nIndex, const bool flag,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarTransportFlag( flag ) );
-}
-int ninjaArmy::setScalarSourceStrength( const int nIndex, const double source,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceStrength( source ) );
-}
-int ninjaArmy::setScalarXcoord( const int nIndex, const double coord,
-                                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceXcoord( coord ) );
-}
-int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
-                                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceYcoord( coord ) );
-}
-
-#endif //SCALAR
 
 #ifdef NINJAFOAM
 /*-----------------------------------------------------------------------------

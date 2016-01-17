@@ -310,46 +310,6 @@ bool ninja::simulate_wind()
 
 	 //taucs_double *SK;
 
-#ifdef SCALAR
-    //check if source is within WN mesh extents and transform coords
-    if(input.scalarTransportFlag == true){
-
-        //Transform coords from lat/long to DEM space and WN mesh space
-
-        OGRSpatialReference oSRS, *poLatLong;
-        char* dstWKT = (char*)input.dem.prjString.c_str();
-        oSRS.importFromWkt(&dstWKT);
-
-        OGRCoordinateTransformation *poCT;
-        poLatLong = oSRS.CloneGeogCS();
-
-        bool transformed;
-        double xCoord, yCoord;
-        xCoord = input.scalarSourceXcoord;
-        yCoord = input.scalarSourceYcoord;
-
-        poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
-
-        if(poCT==NULL || !poCT->Transform(1, &xCoord, &yCoord))
-            throw std::runtime_error("Coordinate transformation failed when converting scalar source coordinates.\n");
-
-        scalarSourceXdem = xCoord;
-        scalarSourceYdem = yCoord;
-
-        //cout<<"scalar source x, y in dem coords = "<<xCoord<<", "<<yCoord<<endl;
-
-        if(!input.dem.check_inBounds(xCoord, yCoord)){
-            throw std::runtime_error("Scalar source is located outside of the DEM extent.");
-        }
-
-        scalarSourceXORD = xCoord - input.dem.xllCorner + 0.5 * input.dem.cellSize; //double check these conversions
-        scalarSourceYORD = yCoord - input.dem.yllCorner + 0.5 * input.dem.cellSize; //double check these conversions
-
-        cout<<"scalar source x, y in WN coords = "<<scalarSourceXORD<<", "<<scalarSourceYORD<<endl;
-
-    }
-#endif //SCALAR
-
 /*  ----------------------------------------*/
 /*  USER INPUTS                             */
 /*  ----------------------------------------*/
@@ -482,7 +442,7 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
 		//build A arrray
-		discretize(false);
+		discretize();
 
         checkCancel();
 
@@ -649,7 +609,7 @@ if(input.frictionVelocityFlag == 1){
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
 	//write output files
-	writeOutputFiles(false);
+	writeOutputFiles();
 
 	#ifdef _OPENMP
 		endWriteOut = omp_get_wtime();
@@ -703,218 +663,6 @@ if(input.frictionVelocityFlag == 1){
 
      return true;
 }
-//END OF simulate_wind()-------------------------------------------------------
-
-
-#ifdef SCALAR
-/**@brief Method to start a scalar transport simulation.
- *
- * simulate_wind() must be run before this function is called.
- *
- * @return Returns true if simulation completes without error.
- */
-bool ninja::simulate_scalar()
-{
-    checkCancel();
-
-    scalarTransportSimulation = true;
-    concentration.allocate(&mesh);
-
-    for(int i = 0; i < mesh.nrows; i++){
-        for(int j = 0; j < mesh.ncols; j++){
-            for(int k = 0; k < mesh.nlayers; k++){
-                concentration(i,j,k) = 0.0;
-            }
-        }
-    }
-    //cout<<"concentration(0,0,0) = "<<concentration(0,0,0)<<endl;
-    //cout<<"mesh.XORD, mesh.YORD, mesh.ZORD"<<mesh.XORD(0,0,0)<<", "<<mesh.YORD(0,0,0)<<", "<<mesh.ZORD(0,0,0)<<endl;
-
-    #ifdef _OPENMP
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Scalar Transport number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
-    #endif
-
-    #ifdef _OPENMP
-    startTotal = omp_get_wtime();
-    #endif
-
-    #ifdef NINJA_DEBUG
-        #ifdef MKL
-        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals used...");
-        #else
-        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals not available...");
-        #endif //MKL
-    #endif  //NINJA_DEBUG
-
-/*  ----------------------------------------*/
-/*  USER INPUTS                             */
-/*  ----------------------------------------*/
-     int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-     //double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-     //double stop_tol = 2.7E-1;
-     double stop_tol = 0.16;  //works for minres with diffusion...
-     //double stop_tol = 0.1;  //works for BiCG with diffusion...
-     //double stop_tol = 0.4;  //testing
-     int print_iters = 10;          //Iterations to print out
-         //int max_matching_iters = 30;         //maximum number of outer iterations to do (for matching observations)
-
-
-/*  ----------------------------------------*/
-/*  BUILD "A" ARRAY OF AX=B                 */
-/*  ----------------------------------------*/
-                #ifdef _OPENMP
-                        startBuildEq = omp_get_wtime();
-                #endif
-
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building scalar transport equations...");
-
-                //build A arrray
-                discretize(true);
-
-        checkCancel();
-
-/*  ----------------------------------------*/
-/*  SET BOUNDARY CONDITIONS                 */
-/*  ----------------------------------------*/
-
-                //set boundary conditions
-                setBoundaryConditions();
-
-                #define WRITE_A_B
-                #ifdef WRITE_A_B        //used for debugging...
-                         write_A_and_b(1000, SK, col_ind, row_ptr, RHS);
-                #endif
-
-                #ifdef _OPENMP
-                        endBuildEq = omp_get_wtime();
-                #endif
-
-                 checkCancel();
-
-/*  ----------------------------------------*/
-/*  CALL SOLVER                             */
-/*  ----------------------------------------*/
-
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving scalar transport equations...");
-                #ifdef _OPENMP
-                        startSolve = omp_get_wtime();
-                #endif
-
-                //solver
-
-                //BELOW IS GOOD SOLVER
-                //if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-        //use MINRES solver for full matrix (works for diffusion only; also works for full matrix wind flow)
-                if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        throw std::runtime_error("Solver returned false.");
-        //use BiCGSTAB solver since SK in asymmetric for scalar transport
-                //if(solveBiCGSTAB(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-        //if(solveBiCG(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-
-
-                #ifdef _OPENMP
-                        endSolve = omp_get_wtime();
-                #endif
-
-                checkCancel();
-
-
-                 #ifdef MKL
-                 MKL_free(SK);
-                 #else
-                 if(SK)
-                 {
-                        delete[] SK;
-                        SK=NULL;
-                 }
-                 #endif
-
-                 if(col_ind)
-                 {
-                        delete[] col_ind;
-                        col_ind=NULL;
-                 }
-                 if(row_ptr)
-                 {
-                        delete[] row_ptr;
-                        row_ptr=NULL;
-                 }
-                 if(RHS)
-                 {
-                        delete[] RHS;
-                        RHS=NULL;
-                 }
-/*  ----------------------------------------*/
-/*  COMPUTE SCALAR VOLUME FIELD              */
-/*  ----------------------------------------*/
-
-                 //fill in concentration 3d field from phi field
-
-                 computeScalarField();
-
-                 /*checkCancel();
-
-
-/*  ----------------------------------------*/
-/*  PREPARE OUTPUT                          */
-/*  ----------------------------------------*/
-
-                 /*#ifdef _OPENMP
-                        startWriteOut = omp_get_wtime();
-                 #endif
-
-                 //prepare output arrays
-                 prepareOutput();
-
-                 checkCancel();*/
-
-/*  ----------------------------------------*/
-/*  WRITE OUTPUT FILES                      */
-/*  ----------------------------------------*/
-
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing scalar transport output files...");
-
-        //write output files
-        writeOutputFiles(true);
-
-        #ifdef _OPENMP
-                endWriteOut = omp_get_wtime();
-                endTotal = omp_get_wtime();
-        #endif
-/*  ----------------------------------------*/
-/*  WRAP UP...                              */
-/*  ----------------------------------------*/
-
-        //write timers
-        #ifdef _OPENMP
-                        //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
-                        //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-        #endif
-
-
-     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Scalar transport run number %d done!", input.inputsRunNumber);
-
-         /*deleteDynamicMemory();
-         if(!input.keepOutGridsInMemory)
-         {
-             AngleGrid.deallocate();
-             VelocityGrid.deallocate();
-             CloudGrid.deallocate();
-         DustGrid.deallocate();
-         }*/
-
-     return true;
-} //END OF simulate_scalar()-------------------------------------------------------
-#endif //SCALAR
-
-
 
 /**Method used to get the smallest radius of influence from a vector of wxStation.
  *
@@ -2698,14 +2446,8 @@ bool ninja::checkForNullRun()
 
 /**Function to build discretized equations.
  *
- * Discretizes wind flow or scalar transport govering equations. Scalar transport equations must be
- * discretized after the flow field is solved. If scalarTransportSimulation == true, the scalar transport
- * equations will be discretized, otherwise the flow equations will be discretized.
- *
- * @param scalarTransportSimulation flag to indicate whether flow or scalar transport equations should be discretized.
-
  */
-void ninja::discretize(bool scalarTransportSimulation)
+void ninja::discretize()
 {
     //The governing equation to solve is
     //
@@ -2723,23 +2465,6 @@ void ninja::discretize(bool scalarTransportSimulation)
     //    H = ----- + ----- + -----
     //         dx      dy      dz
 
-    /*
-     * Governing equation for scalar transport:
-     *
-     * d       dC      d       dC      d       dC        dC       dC       dC
-     * -- ( Rx -- ) +  -- ( Ry -- ) +  -- ( Rz -- ) + Bx --  + By --  + Bz -- + H = 0
-     * dx      dx      dy      dy      dz      dz        dx       dy       dz
-     *
-     *      1               2               3           4         5        6    7
-     *
-     * Rx, Ry, Rz = eddy diffusivities
-     * Bx = u, By = v, Bz = w
-     * H = volume source term (with units of mass/volume)
-     *
-     * terms 1-3 = diffusion
-     * terms 4-6 = advection
-     *
-     */
 
 	//Set array values to zero----------------------------
 	if(PHI == NULL)
@@ -2752,21 +2477,13 @@ void ninja::discretize(bool scalarTransportSimulation)
                          //NZND is the # of nonzero elements in the SK stiffness array that are stored
      int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+(intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+(intercols*interrows*interlayers)*27;
 
-     #ifdef SCALAR
-     if(scalarTransportSimulation == false){ // if scalar transport run, need to store full matrix since it is asymmetric
-        NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;      //this is because we will only store the upper half of the SK matrix since it's symmetric
-     }
-     #endif //SCALAR
-     #ifndef SCALAR
      NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	//this is because we will only store the upper half of the SK matrix since it's symmetric
-     #endif
 
 	 #ifdef MKL
 	 SK = (double*)MKL_malloc(NZND*sizeof(double),16);
 	 #else
 
-	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric (symmetric if not a scalar transport run)
-
+	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
 	 //SK = new taucs_double[NZND];
 	 #endif
 
@@ -2814,43 +2531,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                               {
                                    for(jj=-1;jj<2;jj++)
                                    {
-                                       #ifdef SCALAR
-                                       if(scalarTransportSimulation == true){
-                                           col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                           temp1++;
-                                       }
-                                       if(scalarTransportSimulation == false){
-                                           col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									       if(col >= row)	//only do if we're on the upper triangular part of SK
-									       {
-											    col_ind[temp1]=col;
-											    temp1++;
-									       }
-                                       }
-                                       #endif //SCALAR
-                                       #ifndef SCALAR
                                        col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                        if(col >= row)	//only do if we're on the upper triangular part of SK
 									   {
                                            col_ind[temp1]=col;
                                            temp1++;
                                        }
-                                       #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+27;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+27;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==1)   //face node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2869,43 +2560,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            temp1++;
-                                        }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)	//only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
                                         col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                         if(col >= row)	//only do if we're on the upper triangular part of SK
                                         {
                                             col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+18;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+18;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==2)   //edge node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2924,43 +2589,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        if(col >= row)	//only do if we're on the upper triangular part of SK
+                                        {
+                                            col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)	//only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
-										col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									    if(col >= row)	//only do if we're on the upper triangular part of SK
-									    {
-											col_ind[temp1]=col;
-											temp1++;
-									    }
-									    #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+12;
-                         }
-                         if(scalarTransportSimulation == false){
-                                                     temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+12;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==3)   //corner node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2979,46 +2618,20 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+					col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        if(col >= row)	//only do if we're on the upper triangular part of SK
+                                        {
+                                            col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)  //only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
-										col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									    if(col >= row)	//only do if we're on the upper triangular part of SK
-									    {
-											col_ind[temp1]=col;
-											temp1++;
-									    }
-									    #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+8;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+8;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }
-					else
-						throw std::logic_error("Error arranging SK array.  Exiting...");
+                    else
+			throw std::logic_error("Error arranging SK array.  Exiting...");
                }
           }
      }
@@ -3145,92 +2758,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 		 int ii, jj, kk;
          double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
 		 #endif
-		 #ifdef SCALAR
-         if(scalarTransportSimulation == true){
-
-            int scalarCell_i, scalarCell_j, scalarCell_k;
-            double scalar_u, scalar_v, scalar_w;
-
-            scalar.allocate(mesh);
-            scalar.computeDiffusivity(input, mesh, u, v);  //creates wn_3dScalarFields scalar.Rx, scalar.Ry, scalar.Rz
-            // add w component and compute shear with normal vector to ground
-
-
-            /*
-             * Find cell where scalar source is located
-             * and compute the volume of this cell.
-             *
-             * This is for a point source (only doing calculations for
-             * one or two cells), for area sources (e.g., PM10 emissions),
-             * this should probably happen below in the loop over the
-             * elements, just looking in each surface element to see
-             * if it is a source cell or not.
-             */
-
-            //get ground elevation at source location
-            double scalarSourceZORD;
-            int scalar_elemNum;
-
-            elem.get_ij(scalarSourceXORD, scalarSourceYORD, scalarCell_i, scalarCell_j);
-            scalar_elemNum = mesh.get_elemNum(scalarCell_i, scalarCell_j, 0);
-            elem.get_uv(scalarSourceXORD, scalarSourceYORD, scalarCell_i, scalarCell_j, scalar_u, scalar_v);
-
-            //get elevation at midpoint betweeen layer 0 and 1 (w=0) in mesh at x,y location
-            elem.get_xyz(scalar_elemNum, scalar_u, scalar_v, 0, scalarSourceXORD, scalarSourceYORD, scalarSourceZORD);
-
-            cout<<"scalarSourceXORD, YORD = "<<scalarSourceXORD<<", "<<scalarSourceYORD<<endl;
-            cout<<"scalarSourceZORD = "<<scalarSourceZORD<<endl;
-
-
-            elem.get_uvw(scalarSourceXORD, scalarSourceYORD, scalarSourceZORD,
-                       scalarCell_i, scalarCell_j, scalarCell_k, scalar_u, scalar_v, scalar_w);
-
-
-            cout<<"cell_i, j, k = "<<scalarCell_i<<", "<<scalarCell_j<<", "<<scalarCell_k<<endl;
-            cout<<"nrows, ncols = "<<mesh.nrows<<", "<<mesh.ncols<<endl;
-            /// the above returns k=3, but should be k=0 ?? I think this is bc of the difference in the
-            /// interpolation methods used above (bilinear) and in get_uvw(). Maybe this is an issue
-            /// in the 3-d interoplations too??
-
-            //compute volume of this cell, make k=0 or 1 no matter what.
-            scalarCell_k = 1; // if source is in 0, ground nodes will be reset in setBoundaryConds(); may not be an issue...
-            scalar.sourceElemNum = mesh.get_elemNum(scalarCell_i, scalarCell_j, scalarCell_k); // set point source cell
-
-            for(j=0;j<elem.NUMQPTV;j++)   //loop over quadrature points in the element
-            {
-                elem.computeJacobianQuadraturePoint(j, scalar.sourceElemNum);
-            }
-
-            scalar.volumeSource = input.scalarSourceStrength / elem.DETJ; // DETJ is ratio of Vxxy/Vuvw--> divide (or multiply ?) by 8
-            cout<<"elem.DETJ = "<<elem.DETJ<<endl;
-            cout<<"scalar.volumeSource = "<<scalar.volumeSource<<endl;
-
-            //testing--------------------------------------------
-            std::string filename;
-            AsciiGrid<double> testGrid;
-            testGrid.set_headerData(input.dem);
-            testGrid.set_noDataValue(-9999.0);
-            int elemNum;
-
-            for(int i = 0; i <mesh.nrows; i++){
-                for(int j = 0; j < mesh.ncols; j++ ){
-                    elemNum = mesh.get_elemNum(i, j, 1);
-
-                    if(elemNum == scalar.sourceElemNum){
-                        cout<<"scalar.sourceElemNum = "<< scalar.sourceElemNum<<endl;
-                        cout<<"making source grid now..."<<endl;
-                        testGrid(i,j) = 1;
-                    }
-                    else{
-                        testGrid(i,j) = 0;
-                    }
-                }
-            }
-            testGrid.write_Grid("source_location", 2);
-            testGrid.deallocate();
-            //end testing:-----------------------------------------------
-        } // end scalar
-        #endif //SCALAR
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -3287,31 +2814,6 @@ void ninja::discretize(bool scalarTransportSimulation)
                  //     Rx = Ry =  ------------          Rz = ------------
                  //                 2*alphaH^2                 2*alphaV^2
 
-                 /*
-				  * Governing equation for scalar transport:
-				  *
-				  * d    Rx dC   + d   Ry dC  + d   Rz dC  + Bx dC + By dC + Bz dC + H = 0
-				  * -- (-------)   -- (-----)   -- (-----)      --      --      --
-				  * dx    dx       dy   dy      dz    dz        dx      dy      dz
-				  *
-				  * set coefficients for scalar transport
-				  *
-				  * Rx = function of Rz
-				  * Ry = function of Rz
-				  * Rz = calculate from mixing length theory (from u*, height above ground, stability)
-				  * for neutral conditions -->
-				  *
-				  * Rz(z) = lm * du/dz
-				  * lm = 0.4 * z where z is distance to the wall
-				  * Rx = Ry = 2 * Rz
-				  *
-				  * Bx = u-component of wind
-				  * By = v-component of wind
-				  * Bz = w-component of wind
-				  *
-                  * H = source term (mass/volume)
-				  */
-
 
 				 elem.HVJ=0.0;
 
@@ -3321,94 +2823,25 @@ void ninja::discretize(bool scalarTransportSimulation)
 				 alphaV = 0;
 				 #endif
 
-				 #ifdef SCALAR
-				 elem.RZ = 0.0;
-				 elem.RX = 0.0;
-				 elem.RY = 0.0;
-
-				 elem.BX = 0.0;
-				 elem.BY = 0.0;
-				 elem.BZ = 0.0;
-				 #endif
-
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
 					 elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
 
-					 #ifdef SCALAR
-					 if(scalarTransportSimulation == true){ // for scalar transport
-
-					     // calculate H (the source term) for area or multiple point sources (do it all here instead of above)
-
-					     //elem.HVJ = elem.HVJ + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.volumeSource;  //if don't assume source is evenly distributed in cell
-
-                         //diffusion terms for scalar equation; need at quad point, only have these at the nodes, so need to sum to get at quad pt.
-                         elem.RX = elem.RX + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Rx(elem.NPK);  //elem.NPK is the global node number
-                         elem.RY = elem.RY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Ry(elem.NPK);
-                         elem.RZ = elem.RY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Rz(elem.NPK);
-
-                         //populate advection terms
-                         elem.BX = elem.BX + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * u(elem.NPK);
-                         elem.BY = elem.BY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * v(elem.NPK);
-                         elem.BZ = elem.BZ + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * w(elem.NPK);
-
-                         /*cout<<"k (local node), j (quad point)"<<k<<", "<<j<<endl;
-                         cout<<"elem.NPK (global node) = "<<elem.NPK<<endl;
-                         cout<<"elemSFV[...] = "<<elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]<<endl;
-                         cout<<"scalar.RX(elem.NPK), scalar.RY, scalar.RZ = "<<scalar.Rx(elem.NPK)<<", "<<scalar.Ry(elem.NPK)<<", "<<scalar.Rz(elem.NPK)<<endl;
-                         cout<<"elem.RX, elem.RY, elem.RZ = "<<elem.RX<<", "<<elem.RY<<", "<<elem.RZ<<endl;
-                         cout<<"elem.BX, elem.BY, elem.BZ = "<<elem.BX<<", "<<elem.BY<<", "<<elem.BZ<<endl;*/
-
-					 }
-					 if(scalarTransportSimulation == false){ // for wind flow
-					     elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
-					 }
-					 #endif
-                     #ifndef SCALAR
 					 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
-					 #endif
 
 					 #ifdef STABILITY
 					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
 					 //cout<<"alphaV = "<<alphaV<<endl;
-                     #endif
+                                         #endif
 				 }                             //End loop over nodes in the element
 				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
 
 				 //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
 
-				 #ifdef SCALAR //scalar
-				 if(scalarTransportSimulation == true){
-
-				     int elemi, elemj, elemk;
-                     mesh.get_elemIndex(i, elemi, elemj, elemk); // i = elemNum
-				     if(i == scalar.sourceElemNum){ //i = elemNum
-                        elem.HVJ = scalar.volumeSource;  //assuming source is evenly distributed in cell; otherwise calc. at quad pt. (above)
-				     }
-				     else if(elemk == 1 && elemi == 85 && elemj == 70){ //testing
-                        //elem.HVJ = scalar.volumeSource;
-                        //elem.HVJ = 0.0001;
-				     }
-				     else{
-                        //elem.HVJ = 0.0;  //0 if not a source cell
-                        //elem.HVJ = 2.0;
-				     }
-				     elem.DV=elem.DETJ;  //DV is the DV for the volume integration
-				 }
-				 if(scalarTransportSimulation == false){  // for wind flow
-                     elem.RX = 1.0/(2.0*alphaH*alphaH);
-                     elem.RY = 1.0/(2.0*alphaH*alphaH);
-                     elem.RZ = 1.0/(2.0*alphaV*alphaV);
-                     elem.DV=elem.DETJ;  //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-                 }
-				 #endif
-				 #ifndef SCALAR
 				 elem.RX = 1.0/(2.0*alphaH*alphaH);
 				 elem.RY = 1.0/(2.0*alphaH*alphaH);
 				 elem.RZ = 1.0/(2.0*alphaV*alphaV);
 				 elem.DV=elem.DETJ;                      //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-				 #endif
-
 
 				 if(elem.NUMQPTV==27)
 				 {
@@ -3433,40 +2866,9 @@ void ninja::discretize(bool scalarTransportSimulation)
 					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
 					 for(l=0;l<mesh.NNPE;l++)
 					 {
-					     #ifdef SCALAR //scalar
-                         if(scalarTransportSimulation == true){  // for scalar transport
-
-
-                             //modify elem.S for scalar equation
-                             // 3 diffusion terms - 3 advection terms ([K] = [S1] - [S2])
-                             elem.S[k*mesh.NNPE+l] = elem.S[k*mesh.NNPE+l]+
-                                                     elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] +
-                                                     elem.DNDY[k]*elem.RY*elem.DNDY[l] +
-                                                     elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV; //- omit advection for now
-                                                     //(elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*(elem.BX*elem.DNDX[l] +
-                                                      //elem.BY*elem.DNDY[l] +
-                                                      //elem.BZ*elem.DNDZ[l])))*elem.DV;
-
-                             /*cout<<"u(elem.NPK), v, w = "<<u(elem.NPK)<<", "<<v(elem.NPK)<<", "<<w(elem.NPK)<<endl;
-                             cout<<"elem.RX, elem.RY, elem.RZ = "<<elem.RX<<", "<<elem.RY<<", "<<elem.RZ<<endl;
-                             cout<<"elem.DNDX[k], elem.DNDX[l] = "<<elem.DNDX[k]<<", "<<elem.DNDX[l]<<endl;
-                             cout<<"elem.DNDY[k], elem.DNDY[l] = "<<elem.DNDY[k]<<", "<<elem.DNDY[l]<<endl;
-                             cout<<"elem.DNDZ[k], elem.DNDZ[l] = "<<elem.DNDZ[k]<<", "<<elem.DNDZ[l]<<endl;
-                             cout<<"elem.DV = "<<elem.DV<<endl;
-                             cout<<"elem.S[...] = "<<elem.S[k*mesh.NNPE+l]<<endl;*/
-
-                         }
-                         if(scalarTransportSimulation == false){  // for wind flow
-                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-					     }
-                         #endif
-                         #ifndef SCALAR
-                         elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-                         #endif
+                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
 					 }
-
 				 }                            //End loop over nodes in the element
-
 			 }                                  //End loop over quadrature points in the element
 
 
@@ -3500,39 +2902,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 				 {
 					 elem.KNP=mesh.get_global_node(k, i);
 
-					 #ifdef SCALAR
-					 if(scalarTransportSimulation == true){ //storing full matrix
-
-                         pos=-1;   //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-                         l=0;      //l increments through col_ind[] starting from where row_ptr[] says until we find the column number we're looking for
-                         do
-                         {
-                             if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP)   //Check if we're at the correct position
-                                 pos=row_ptr[elem.NPK]+l;    //If so, save that position in pos
-                             l++;
-                         }while(pos<0);
-#pragma omp atomic
-                         SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix
-                     }
-                     if(scalarTransportSimulation == false){
-
-					     if(elem.KNP >= elem.NPK)	//do only if we're on the upper triangular region of SK[]
-					     {
-						     pos=-1;                  //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-						     l=0;                     //l increments through col_ind[] starting from where row_ptr[] says until we find the column number we're looking for
-						     do
-						     {
-							     if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP)   //Check if we're at the correct position
-								     pos=row_ptr[elem.NPK]+l;           //If so, save that position in pos
-							     l++;
-						     }while(pos<0);
-
-#pragma omp atomic
-						     SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix in symmetric storage
-					     }
-				     }
-                     #endif
-                     #ifndef SCALAR
 					 if(elem.KNP >= elem.NPK)	//do only if we're on the upper triangular region of SK[]
 					 {
 						 pos=-1;                  //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
@@ -3547,7 +2916,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 #pragma omp atomic
 						 SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix in symmetric storage
 					 }
-					 #endif
 				 }
 
 			 }                             //End loop over nodes in the element
@@ -3627,69 +2995,6 @@ void ninja::setBoundaryConditions()
 	  }
 
 }
-
-/**
- * @brief Computes the scalar concentration volume field.
- *
- */
-#ifdef SCALAR
-void ninja::computeScalarField()
-{
-    //element elem(&mesh);
-    //for(int i = 0; i < mesh.NUMEL; i++){//Start loop over elements^M
-
-        //elem.node0 = mesh.get_node0(i);  //get the global node number of local node 0 of element i
-
-        //for(int j = 0; j < elem.NUMQPTV; j++){  //Start loop over quadrature points in the element
-
-        //for(int k = 0; k < mesh.NNPE; k++){ // start loop over nodes in element
-        for(int k = 0; k < mesh.NUMNP; k++){ // start loop over nodes in mesh
-
-            //elem.NPK=mesh.get_global_node(k, i);  //NPK is the global node number
-            //concentration(elem.NPK) = PHI[elem.NPK];
-            concentration(k) = PHI[k];
-            //cout<<"elem.NPK = "<<elem.NPK<<endl;
-            //cout<<"PHI = "<<PHI[elem.NPK]<<endl;
-
-        } // end loop over nodes
-        //} // end loop over quad points
-    //} // end loop over elements
-
-    // testing: -------------------------------------------------------------------------------
-
-    cout<<"PHI[0] = "<<PHI[0]<<endl;
-    cout<<"PHI[1] = "<<PHI[1]<<endl;
-    cout<<"PHI[1000] = "<<PHI[1000]<<endl;
-    cout<<"PHI[30634] = "<<PHI[30634]<<endl;
-
-
-    cout<<"C(20,20,1) = "<<concentration(30,20,1)<<endl;
-    cout<<"C(12,13,15) = "<<concentration(12,13,15)<<endl;
-    cout<<"C(12,13,0) = "<<concentration(12,13,0)<<endl;
-
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
-
-    for(int i = 0; i < mesh.nrows; i++){
-        for(int j = 0; j < mesh.ncols; j++){
-            testGrid(i,j) = concentration(i,j,10);
-        }
-    }
-    testGrid.write_Grid("concentration_10", 2);
-
-    std::string outFilename = "c10.png";
-    std::string scalarLegendFilename = "c10_legend";
-    std::string legendTitle = "c10";
-    std::string legendUnits = "(g/m3)";
-    bool writeLegend = FALSE;
-
-    testGrid.replaceNan( -9999.0 );
-    testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
-
-    testGrid.deallocate();
-    //end testing-----------------------------------------------------------------------------
-}
-#endif //SCALAR
 
 /**
  * @brief Computes the u,v,w 3d volume wind field.
@@ -4397,7 +3702,7 @@ void ninja::computeDustEmissions()
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
 
-void ninja::writeOutputFiles(bool scalarTransportSimulation)
+void ninja::writeOutputFiles()
 {
     
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
@@ -4416,23 +3721,9 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		}
 	}
 
-
-    #ifdef SCALAR
-    if(input.scalarTransportFlag == false){ // deallocate if don't need for a scalar transport simulation
-        u.deallocate();                 // otherwsie, these are deallocated after scalar equations are discretized
-        v.deallocate();
-        w.deallocate();
-    }
-
-    if(scalarTransportSimulation == true){ //if this iteration through write() is for scalar run
-        scalar.deallocate();
-    }
-    #endif
-    #ifndef SCALAR
 	u.deallocate();
 	v.deallocate();
 	w.deallocate();
-	#endif
 
 	#pragma omp parallel sections
 	{
@@ -5184,28 +4475,6 @@ void ninja::set_alphaStability(double stability_)
     }
 }
 #endif //STABILITY
-
-#ifdef SCALAR
-void ninja::set_scalarTransportFlag(bool flag)
-{
-    input.scalarTransportFlag = flag;
-}
-
-void ninja::set_scalarSourceStrength(double strength)
-{
-    input.scalarSourceStrength = strength;
-}
-
-void ninja::set_scalarSourceXcoord(double xCoord)
-{
-    input.scalarSourceXcoord = xCoord;
-}
-
-void ninja::set_scalarSourceYcoord(double yCoord)
-{
-    input.scalarSourceYcoord = yCoord;
-}
-#endif //SCALAR
 
 #ifdef NINJAFOAM
 void ninja::set_NumberOfIterations(int nIterations)
