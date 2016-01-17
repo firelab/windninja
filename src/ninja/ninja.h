@@ -411,23 +411,13 @@ private:
 
     double getSmallestRadiusOfInfluence();
     void get_rootname(const char *NAME,char *shortname);
-    //void jac_precond_CG(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-    //void jac_precond_CG_MKL(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
     bool solve(double *SK, double *RHS, double *PHI, int *row_ptr,
                int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-    //bool taucs_solve(taucs_double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
 
     /*-----------------------------------------------------------------------------
-     * solvers and methods for non-symmetric matrices (scalar transport)
+     * alternative solvers                                                           
      *-----------------------------------------------------------------------------*/
     bool solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveBiCGSTAB(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveBiCG(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveGMRES(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-
-    void gmresApplyPlaneRotation(double &dx, double &dy, double &cs, double &sn);
-    void gmresGeneratePlaneRotation(double &dx, double &dy, double &cs, double &sn);
-    void gmresUpdate(double *x, int k, double *h, double *s, double *v);
 
     /*-----------------------------------------------------------------------------
      *  MKL Specific Functions
@@ -456,8 +446,6 @@ private:
     /*-----------------------------------------------------------------------------
      *  End MKL Section
      *-----------------------------------------------------------------------------*/
-//	double norm_residual(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
-//	double norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
     void interp_uvw();
 
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
