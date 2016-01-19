@@ -737,6 +737,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
     
     double *padfScanline;
     padfScanline = new double[nXSize];
+    CPLErr eErr = CE_None;
     
     if(runNumber == 0)
     {
@@ -761,7 +762,6 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
         GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
-        
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -783,8 +783,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                 }
                 
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0);
+            assert( eErr == CE_None );
         }
     }
     else if(runNumber < maxRunNumber){
@@ -792,7 +793,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         /*  Add a new band                          */
         /*------------------------------------------*/
         
-        CPLErr eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
+        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
         if(eErr != 0){
             return false;
         }
@@ -823,6 +824,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
+        CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
@@ -842,8 +844,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                     return false;
                 }
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0); 
+            assert( eErr == CE_None );
         }
     }
     else{
@@ -853,7 +856,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         //get start time
         const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
 
-        CPLErr eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
+        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
         if(eErr != 0){
             return false;
         }
@@ -886,6 +889,8 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
+        CPLErr eErr;
+
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
@@ -905,8 +910,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                     return false;
                 }
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0); 
+            assert( eErr == CE_None );
         }
         
         
