@@ -266,83 +266,6 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 }
 
 /**
-* @brief Function to start WindNinja NinjaFoam runs.
-*
-* @param numProcessors Number of processors for OpenFOAM use.
-* @return True if runs complete properly.
-*/
-#ifdef NINJAFOAM
-bool ninjaArmy::startNinjaFoamRuns(int numProcessors)
-{
-    bool status = true;
-
-    if(ninjas.size()<1 || numProcessors<1)
-        return false;
-
-    setAtmFlags();
-
-    for( int i = 0; i < ninjas.size(); i++ )
-    {
-        ninjas[i]->set_numberCPUs(numProcessors);
-        
-        try
-        {                
-            //start the run
-            ninjas[i]->simulate_wind();	
-
-        }catch (bad_alloc& e)
-        {
-            throw;
-        }catch (logic_error& e)
-        {
-            throw;
-        }catch (cancelledByUser& e)
-        {
-            throw;
-        }catch (badForecastFile& e)
-        {
-            throw;
-        }catch (exception& e)
-        {
-            throw;
-        }catch (...)
-        {
-            throw;
-        }
-    }
-    try{
-        //write farsite atmosphere file
-        if(writeFarsiteAtmFile)
-            writeFarsiteAtmosphereFile();
-
-    }catch (bad_alloc& e)
-    {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
-        status = false;
-        throw;
-    }catch (cancelledByUser& e)
-    {
-        std::cout << "Exception caught: " << e.what() << endl;
-        status = false;
-        throw;
-    }catch (exception& e)
-    {
-        std::cout << "Exception caught: " << e.what() << endl;
-        status = false;
-        throw;
-    }catch (...)
-    {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
-        status = false;
-        throw;
-    }
-
-    return status;
-}
-#endif //NINJAFOAM
-
-/**
 * @brief Function to start WindNinja core runs using multiple threads.
 *
 * @param numProcessors Number of processors to use.
@@ -381,17 +304,23 @@ bool ninjaArmy::startRuns(int numProcessors)
         try{
             //start the run
             if(!ninjas[0]->simulate_wind())
-                printf("Return of false from simulate_wind()");
-
-            #ifdef SCALAR
-            if(ninjas[0].input.scalarTransportFlag == true){
-                //start the scalar run
-                if(!ninjas[0].simulate_scalar()){
-                    printf("Return of false from simulate_scalar()");
+               printf("Return of false from simulate_wind()");
+#ifdef NINJAFOAM
+            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+            //a ninja run to add diurnal flow after the cfd solution is computed
+            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
+                CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
+                ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
+                diurnal_ninja->set_meshResChoice("fine"); //may not have been set, just always make the diurnal run "fine"
+                diurnal_ninja->AngleGrid = ninjas[0]->AngleGrid; //pass cfd flow field to diurnal run
+                diurnal_ninja->VelocityGrid = ninjas[0]->VelocityGrid; //pass cfd flow field to diurnal run
+                if(!diurnal_ninja->simulate_wind()){
+                    printf("Return of false from simulate_wind()");
                 }
-            }
-            #endif //SCALAR
-
+            } 
+#endif //NINJAFOAM            
 
             //write farsite atmosphere file
             writeFarsiteAtmosphereFile();
@@ -883,33 +812,6 @@ int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** pap
 
 #endif //EMISSIONS
 
-/*-----------------------------------------------------------------------------
- *  Scalar Methods
- *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-int ninjaArmy::setScalarTransportFlag( const int nIndex, const bool flag,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarTransportFlag( flag ) );
-}
-int ninjaArmy::setScalarSourceStrength( const int nIndex, const double source,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceStrength( source ) );
-}
-int ninjaArmy::setScalarXcoord( const int nIndex, const double coord,
-                                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceXcoord( coord ) );
-}
-int ninjaArmy::setScalarYcoord( const int nIndex, const double coord,
-                                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_scalarSourceYcoord( coord ) );
-}
-
-#endif //SCALAR
-
 #ifdef NINJAFOAM
 /*-----------------------------------------------------------------------------
  *  NinjaFOAM Methods
@@ -937,9 +839,7 @@ int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** 
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
 }
-
 #endif
-
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
  *-----------------------------------------------------------------------------*/
@@ -996,6 +896,17 @@ int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOp
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
 }
+
+int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
+}
+
+int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dirFile( dirFile ) );
+}
+
 int ninjaArmy::setInitializationMethod( const int nIndex,
                                         const WindNinjaInputs::eInitializationMethod  method,
                                         const bool matchPoints, char ** papszOptions )
@@ -1037,6 +948,20 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
                 ( WindNinjaInputs::wxModelInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
         }
+        else if( method == "griddedInitialization" )
+        {
+            ninjas[ nIndex ]->set_initializationMethod
+                ( WindNinjaInputs::griddedInitializationFlag, matchPoints );
+            retval = NINJA_SUCCESS;
+        }
+#ifdef NINJAFOAM
+        else if( method == "foamInitialization" )
+        {
+            ninjas[ nIndex ]->set_initializationMethod
+                ( WindNinjaInputs::foamInitializationFlag, matchPoints );
+            retval = NINJA_SUCCESS;
+        }
+#endif
         else
         {
             retval = NINJA_E_INVALID;

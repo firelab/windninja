@@ -214,11 +214,6 @@ IF(MOBILE_APP)
     ADD_DEFINITIONS(-DMOBILE_APP)
 ENDIF(MOBILE_APP)
 
-OPTION(SCALAR "Enable scalar transport model" OFF)
-IF(SCALAR)
-    ADD_DEFINITIONS(-DSCALAR)
-ENDIF(SCALAR)
-
 # *****************************************************************************
 # Allow to permanently disable thredds updating in the build
 # *****************************************************************************
@@ -305,7 +300,7 @@ IF(NOT MSVC)
 ENDIF(NOT MSVC)
 
 OPTION(ENABLE_GMTED "Try to use the GMTED data for DEM fetching.  It has proven
-unreliable and may need to be disabled" OFF)
+unreliable and may need to be disabled" ON)
 IF(ENABLE_GMTED)
     ADD_DEFINITIONS(-DHAVE_GMTED)
 ENDIF(ENABLE_GMTED)

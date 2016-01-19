@@ -116,9 +116,6 @@ public:
     std::string fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName);
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
-#ifdef NINJAFOAM
-    bool startNinjaFoamRuns(int numProcessors);
-#endif
     bool startRuns(int numProcessors);
     bool startFirstRun();
 
@@ -295,45 +292,6 @@ public:
     int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
-    /*-----------------------------------------------------------------------------
-     *  Scalar Methods
-     *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-    /**
-    * \brief Enable/disable scalar transport for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables scalar transport if ture, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarTransportFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    /**
-    * \brief Set source strength of scalar for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param source source strength of scalar in g/s (check this...)
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarSourceStrength( const int nIndex, const double source, char ** papszOptions=NULL );
-    /**
-    * \brief Set the x-coordinate of scalar source for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param coord Longitude of source location
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarXcoord( const int nIndex, const double coord, char ** papszOptions=NULL );
-    /**
-    * \brief Set the y-coordinate of scalar source for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param coord Latitude of source location
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarYcoord( const int nIndex, const double coord, char ** papszOptions=NULL );
-
-#endif //SCALAR
-
 #ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFOAM Methods
@@ -495,6 +453,24 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded speed file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded direction file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions=NULL );
+    
     /**
     * \brief Set the input speed with units of a ninja
     *

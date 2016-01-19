@@ -132,15 +132,14 @@ WindNinjaInputs::WindNinjaInputs()
     ustarFile = "!set";
     geotiffOutFlag = false;
 #endif
-#ifdef SCALAR
-    scalarTransportFlag = false;
-#endif
 #ifdef NINJAFOAM
     nIterations = 1000;
     meshCount = 1000000;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
     nonEqBc = true;
     stlFile = "!set";
+    speedInitGridFilename = "!set";
+    dirInitGridFilename= "!set";
 #endif
     
     outputPointsFilename = "!set";
@@ -294,10 +293,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   alphaStability = rhs.alphaStability;
 #endif
   
-#ifdef SCALAR
-  scalarTransportFlag = rhs.scalarTransportFlag;
-#endif
-
   outputPath = rhs.outputPath;
 
   //class crap
@@ -448,9 +443,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       frictionVelocityFlag = rhs.frictionVelocityFlag; 
       frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
       ustarFile = rhs.ustarFile;
-#endif
-#ifdef SCALAR
-      scalarTransportFlag = rhs.scalarTransportFlag;
 #endif
 
       outputPath = rhs.outputPath;
