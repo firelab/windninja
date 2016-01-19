@@ -99,11 +99,6 @@ bool OutputWriter::_createTmpFiles()
     pszLegendFile = CPLStrdup( pszTmp );
     CPLDebug( "NINJA", "Using %s for pdf legend dataset", pszLegendFile );
 
-    pszTmp = CPLGenerateTempFilename( NULL );
-    pszTmp = CPLFormFilename( NULL, pszTmp, ".jpg" );
-    pszTmpDemFile = CPLStrdup( pszTmp );
-    CPLDebug( "NINJA", "Using %s for pdf temp DEM dataset", pszTmpDemFile );
-
     return true;
 }
 
@@ -668,6 +663,8 @@ void OutputWriter::_loadDemAs8Bit()
     CPLFree( (void*)padfData );
     CPLFree( (void*)pabyData );
     GDALFlushCache( h8bit );
+    GDALClose( hDS );
+    GDALClose( h8bit );
     demFile = std::string( pszTmpDemFile );
 }
 
