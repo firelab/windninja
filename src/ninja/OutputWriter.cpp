@@ -35,32 +35,34 @@ const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
 const char * OutputWriter::AM_DIR    = "AM_dir";
 const char * OutputWriter::QGIS_DIR  = "QGIS_dir";
-const char * OutputWriter::OGR_FILE  = "/tmp/out.shp";
-const char * OutputWriter::LEGEND_FILE = "/tmp/legend.bmp";
 
 
 OutputWriter::OutputWriter ()
 {
-    OGRRegisterAll();
-    GDALAllRegister();
-    hSrcDS       = NULL;
-    hDstDS       = NULL;
-    hDriver      = NULL;
-    pafScanline  = NULL;
-    hLayer       = NULL;
-    hFieldDefn   = NULL;
-    hDataSource  = NULL;
-    hOGRDriver   = NULL;
-    papszOptions = NULL;
-    hSpdMemDs    = NULL;
-    hDirMemDs    = NULL;
-    hDustMemDs   = NULL;
-    hSrcSRS      = NULL;
-    hDestSRS     = NULL;
-    hTransform   = NULL;
-    colors       = NULL;
-    split_vals   = NULL;
-    linewidth    = 1.0;
+    hSrcDS        = NULL;
+    hDstDS        = NULL;
+    hDriver       = NULL;
+    pafScanline   = NULL;
+    hLayer        = NULL;
+    hFieldDefn    = NULL;
+    hDataSource   = NULL;
+    hOGRDriver    = NULL;
+    papszOptions  = NULL;
+    hSpdMemDs     = NULL;
+    hDirMemDs     = NULL;
+    hDustMemDs    = NULL;
+    hSrcSRS       = NULL;
+    hDestSRS      = NULL;
+    hTransform    = NULL;
+    colors        = NULL;
+    split_vals    = NULL;
+    linewidth     = 1.0;
+
+    pszOgrFile    = NULL;
+    pszLegendFile = NULL;
+    pszTmpDemFile = NULL;
+
+    _createTmpFiles();
 
     _createDefaultStyles();
     
@@ -70,26 +72,53 @@ OutputWriter::OutputWriter ()
 OutputWriter::~OutputWriter ()
 {
     
-    if( NULL != hSrcSRS )
-    {
-        OSRDestroySpatialReference( hSrcSRS );
-    }
-    if( NULL != hDestSRS )
-    {
-        OSRDestroySpatialReference( hDestSRS );
-    }
-    if( NULL != hTransform )
-    {
-        OCTDestroyCoordinateTransformation( hTransform );
-    }
+    OSRDestroySpatialReference( hSrcSRS );
+    OSRDestroySpatialReference( hDestSRS );
+    OCTDestroyCoordinateTransformation( hTransform );
 
     _destroyDefaultStyles();
     _deleteSplits();
     _destroyOptions();
     _closeOGRFile();
     _closeDataSets();
+
+    _deleteTmpFiles();
     return;
 }		/* -----  end of method OutputWriter::~OutputWriter  ----- */
+
+bool OutputWriter::_createTmpFiles()
+{
+    const char *pszTmp = NULL;
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".shp" );
+    pszOgrFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf ogr datasource", pszOgrFile );
+
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".bmp" );
+    pszLegendFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf legend dataset", pszLegendFile );
+
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".jpg" );
+    pszTmpDemFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf temp DEM dataset", pszTmpDemFile );
+
+    return true;
+}
+
+void OutputWriter::_deleteTmpFiles()
+{
+    CPLFree( (void*)pszOgrFile );
+    CPLFree( (void*)pszLegendFile );
+    if( pszTmpDemFile != NULL )
+    {
+        GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
+        assert( hDrv );
+        GDALDeleteDataset( hDrv, pszTmpDemFile );
+    }
+    CPLFree( (void*)pszTmpDemFile );
+}
 
 void OutputWriter::_createDefaultStyles()
 {
@@ -412,7 +441,7 @@ bool OutputWriter::_createLegend()
 		y += 0.15;
 	}
 
-	legend.WriteToFile( LEGEND_FILE );
+	legend.WriteToFile( pszLegendFile );
 
     return true;
 
@@ -421,7 +450,7 @@ bool OutputWriter::_createLegend()
 void OutputWriter::_destroyLegend()
 {
     GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
-    GDALDeleteDataset( hLegendDrv, LEGEND_FILE );
+    GDALDeleteDataset( hLegendDrv, pszLegendFile );
     return;
 }
 
@@ -476,7 +505,7 @@ OutputWriter::_createOGRFile()
         throw std::runtime_error("OutputWriter: Failed to get OGR Memory driver");
     }
 
-    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, OGR_FILE, NULL );
+    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, pszOgrFile, NULL );
     if( NULL == hDataSource )
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
@@ -560,6 +589,87 @@ OutputWriter::_createOGRFile()
 
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
 
+/*
+** We can only use 8-bit based DEM files as a background.  Open our DEM, it is
+** isn't 8 bit, create a temporary dataset, and scale the DEM data to 8 bit.
+** No color table is written, so we'll assume grayscale.
+**
+** Note that we write to a temp file, then set the demFile member to the
+** tempfile name.
+*/
+
+void OutputWriter::_loadDemAs8Bit()
+{
+    GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
+    GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
+    if( hBand == NULL )
+    {
+        GDALClose( hDS );
+        //throw
+    }
+    if( GDALGetRasterDataType( hBand ) == GDT_Byte )
+    {
+        GDALClose( hDS );
+        return;
+    }
+
+    /*
+    ** Allocate and set the tmp DEM file name.  We also use this as a flag to
+    ** see if we need to delete the temp datasource.
+    */
+    const char *pszTmp = NULL;
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".tif" );
+    pszTmpDemFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf temp DEM dataset", pszTmpDemFile );
+
+    // Use tiff by default
+    GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
+    assert( hDrv );
+
+    int nXSize = GDALGetRasterXSize( hDS );
+    int nYSize = GDALGetRasterYSize( hDS );
+
+    GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpDemFile, nXSize, nYSize, 1,
+                                     GDT_Byte, NULL );
+    CPLErr eErr = CE_None;
+    double adfGeoTransform[6];
+    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
+    assert( eErr == CE_None );
+    GDALSetGeoTransform( h8bit, adfGeoTransform );
+
+    GDALSetProjection( h8bit, GDALGetProjectionRef( hDS ) );
+
+    GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
+    float *padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
+    unsigned char *pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( GDT_Byte ) );
+    double dfMax, dfMin;
+    dfMax = GDALGetRasterMaximum( hBand, NULL );
+    dfMin = GDALGetRasterMinimum( hBand, NULL );
+    for( int i = 0; i < nYSize; i++ )
+    {
+        eErr = GDALRasterIO( hBand, GF_Read, 0, i, nXSize, 1, padfData, nXSize,
+                             1, GDT_Float32, 0, 0 );
+        if( eErr != CE_None )
+        {
+            assert( FALSE );
+        }
+        for( int j = 0; j < nXSize; j++ )
+        {
+            pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
+        }
+        eErr = GDALRasterIO( h8bitBand, GF_Write, 0, i, nXSize, 1, pabyData,
+                             nXSize, 1, GDT_Byte, 0, 0 );
+        if( eErr != CE_None )
+        {
+            assert( FALSE );
+        }
+    }
+    CPLFree( (void*)padfData );
+    CPLFree( (void*)pabyData );
+    GDALFlushCache( h8bit );
+    demFile = std::string( pszTmpDemFile );
+}
 
 /* --------------------------------------------------------------------------*/
 /** 
@@ -578,6 +688,7 @@ OutputWriter::_createOGRFile()
 OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
+    _loadDemAs8Bit();
     _createOGRFile();
     _createLegend();
     _openSrcDataSet();
@@ -593,12 +704,12 @@ OutputWriter::_writePDF (std::string outputfn)
     }
 
     const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
-    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, LEGEND_FILE, 
+    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile, 
                                              0, out_y_size-LGND_HEIGHT, 1.0f );
     std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
     std::string extra_imgs     = extra_img_lgnd + "," + extra_img_logo;
 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", OGR_FILE ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
@@ -615,7 +726,7 @@ OutputWriter::_writePDF (std::string outputfn)
     _destroyOptions();
     _destroyLegend();
     
-    OGR_Dr_DeleteDataSource( hOGRDriver, OGR_FILE );
+    OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */

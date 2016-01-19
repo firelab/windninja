@@ -122,7 +122,11 @@ class OutputWriter
         bool _createLegend();
         void _destroyLegend();
 
-        
+        bool _createTmpFiles();
+        void _deleteTmpFiles();
+
+        void _loadDemAs8Bit();
+
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;
@@ -152,8 +156,10 @@ class OutputWriter
         static const char * AV_DIR;//     = "AV_dir";
         static const char * AM_DIR;//     = "AM_dir";
         static const char * QGIS_DIR;//   = "QGIS_dir";
-        static const char * OGR_FILE;
-        static const char * LEGEND_FILE;
+
+        char * pszOgrFile;
+        char * pszLegendFile;
+        char * pszTmpDemFile;
 
         static const unsigned short NCOLORS = 5; 
         static const unsigned short LGND_WIDTH = 180;
