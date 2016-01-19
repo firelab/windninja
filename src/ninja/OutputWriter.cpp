@@ -585,9 +585,9 @@ OutputWriter::_createOGRFile()
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
 
 /*
-** We can only use 8-bit based DEM files as a background.  Open our DEM, it is
-** isn't 8 bit, create a temporary dataset, and scale the DEM data to 8 bit.
-** No color table is written, so we'll assume grayscale.
+** We can only use 8-bit based DEM files as a background in PDF files.  Open our
+** DEM, it is isn't 8 bit, create a temporary dataset, and scale the DEM data to
+** 8 bit. No color table is written, so we'll assume grayscale.
 **
 ** Note that we write to a temp file, then set the demFile member to the
 ** tempfile name.
@@ -652,7 +652,8 @@ void OutputWriter::_loadDemAs8Bit()
         }
         for( int j = 0; j < nXSize; j++ )
         {
-            /* Figure out what is going on here and document it.  It makes a
+            /*
+            ** Figure out what is going on here and document it.  It makes a
             ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
             */
             //double dfMin = GDALGetRasterMinimum( hBand, NULL );
@@ -674,6 +675,7 @@ void OutputWriter::_loadDemAs8Bit()
     GDALFlushCache( h8bit );
     GDALClose( hDS );
     GDALClose( h8bit );
+    /* Make sure we use the temp file for the background */
     demFile = std::string( pszTmpDemFile );
 }
 

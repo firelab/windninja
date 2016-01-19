@@ -1397,7 +1397,13 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["write_pdf_output"].as<bool>())
             {
                 windsim.setPDFOutFlag( i_, true );
-                option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
+                //option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
+                if( !vm.count("pdf_dem_filename") )
+                {
+                    vm.insert(std::make_pair("pdf_dem_filename",
+                              po::variable_value(vm["elevation_file"])));
+                    po::notify(vm);
+                }
                 windsim.setPDFDEM( i_, vm["pdf_dem_filename"].as<std::string>());
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
