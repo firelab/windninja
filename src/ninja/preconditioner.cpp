@@ -98,8 +98,6 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 		preConditionerType = preconditionerType;
 		NUMNP = numnp;
 		
-		std::cout<<"Preconditioner is Jacobi ================================"<<std::endl;
-
 		
 		D = new double[NUMNP];
         if(matdescra[0] == 's'){  //if A is symmetric

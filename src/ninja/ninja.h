@@ -94,6 +94,12 @@
 #include "domainAverageInitialization.h"
 #include "wxModelInitializationFactory.h"
 #include "pointInitialization.h"
+#include "griddedInitialization.h"
+
+#ifdef NINJAFOAM
+#include "foamInitialization.h"
+#endif
+
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
@@ -115,10 +121,6 @@
 
 #ifdef EMISSIONS
 #include "dust.h"
-#endif
-
-#ifdef SCALAR
-#include "scalarTransport.h"
 #endif
 
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
@@ -145,6 +147,7 @@ public:
     ninja &operator=(const ninja &rhs);
 
     virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninja");}
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
 
@@ -163,18 +166,6 @@ public:
     #ifdef EMISSIONS
     AsciiGrid<double>DustGrid;
     #endif
-
-    #ifdef SCALAR
-    bool scalarTransportSimulation; // flag identifying if this run is computing scalar or wind fields
-    wn_3dScalarField concentration; // 3d scalar field of concentrations
-    //wn_3dScalarField scalarSource; // 3d scalar field of source terms
-    bool simulate_scalar();  // starts the scalar transport simulation
-    scalarTransport scalar; // stores scalar transport info (diffusivities, concentration field, etc.)
-    void computeScalarField(); // fills in 3d concentration field
-    #endif //SCALAR
-
-
-
 
     /*-----------------------------------------------------------------------------
      *
@@ -292,17 +283,6 @@ public:
     void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
     void set_geotiffOutFlag(bool flag);
 #endif
-#ifdef SCALAR
-    void set_scalarTransportFlag(bool flag);
-    void set_scalarSourceStrength(double source);
-    void set_scalarSourceXcoord(double xCoord);  //input long
-    void set_scalarSourceYcoord(double yCoord);  //input lat
-    double scalarSourceXdem; // x location of scalar source in dem coords
-    double scalarSourceYdem; // y location of scalar source in dem coords
-    double scalarSourceXORD; // x location of scalar source in WN mesh coords
-    double scalarSourceYORD; // y location of scalar source in WN mesh coords
-#endif //SCALAR
-
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
@@ -311,6 +291,9 @@ public:
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_StlFile(std::string stlFile); 
 #endif
+
+    void set_speedFile(std::string speedFile);
+    void set_dirFile(std::string dirFile);
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
 
@@ -428,23 +411,13 @@ private:
 
     double getSmallestRadiusOfInfluence();
     void get_rootname(const char *NAME,char *shortname);
-    //void jac_precond_CG(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-    //void jac_precond_CG_MKL(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
     bool solve(double *SK, double *RHS, double *PHI, int *row_ptr,
                int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-    //bool taucs_solve(taucs_double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
 
     /*-----------------------------------------------------------------------------
-     * solvers and methods for non-symmetric matrices (scalar transport)
+     * alternative solvers                                                           
      *-----------------------------------------------------------------------------*/
     bool solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveBiCGSTAB(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveBiCG(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-    bool solveGMRES(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol);
-
-    void gmresApplyPlaneRotation(double &dx, double &dy, double &cs, double &sn);
-    void gmresGeneratePlaneRotation(double &dx, double &dy, double &cs, double &sn);
-    void gmresUpdate(double *x, int k, double *h, double *s, double *v);
 
     /*-----------------------------------------------------------------------------
      *  MKL Specific Functions
@@ -473,8 +446,6 @@ private:
     /*-----------------------------------------------------------------------------
      *  End MKL Section
      *-----------------------------------------------------------------------------*/
-//	double norm_residual(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
-//	double norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP);
     void interp_uvw();
 
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
@@ -501,12 +472,12 @@ private:
     //double stability_function(double z_over_L, double L_switch);
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
-    void discretize(bool scalarTransportSimulation); //if true it's a scalar run, if false it's a wind run
+    void discretize(); 
     void setBoundaryConditions();
     void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
-    void writeOutputFiles(bool scalarTransportSimulation); //if true it's a scalar run, if false it's a wind run
+    void writeOutputFiles(); 
     void deleteDynamicMemory();
 };
 

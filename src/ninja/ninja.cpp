@@ -310,46 +310,6 @@ bool ninja::simulate_wind()
 
 	 //taucs_double *SK;
 
-#ifdef SCALAR
-    //check if source is within WN mesh extents and transform coords
-    if(input.scalarTransportFlag == true){
-
-        //Transform coords from lat/long to DEM space and WN mesh space
-
-        OGRSpatialReference oSRS, *poLatLong;
-        char* dstWKT = (char*)input.dem.prjString.c_str();
-        oSRS.importFromWkt(&dstWKT);
-
-        OGRCoordinateTransformation *poCT;
-        poLatLong = oSRS.CloneGeogCS();
-
-        bool transformed;
-        double xCoord, yCoord;
-        xCoord = input.scalarSourceXcoord;
-        yCoord = input.scalarSourceYcoord;
-
-        poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
-
-        if(poCT==NULL || !poCT->Transform(1, &xCoord, &yCoord))
-            throw std::runtime_error("Coordinate transformation failed when converting scalar source coordinates.\n");
-
-        scalarSourceXdem = xCoord;
-        scalarSourceYdem = yCoord;
-
-        //cout<<"scalar source x, y in dem coords = "<<xCoord<<", "<<yCoord<<endl;
-
-        if(!input.dem.check_inBounds(xCoord, yCoord)){
-            throw std::runtime_error("Scalar source is located outside of the DEM extent.");
-        }
-
-        scalarSourceXORD = xCoord - input.dem.xllCorner + 0.5 * input.dem.cellSize; //double check these conversions
-        scalarSourceYORD = yCoord - input.dem.yllCorner + 0.5 * input.dem.cellSize; //double check these conversions
-
-        cout<<"scalar source x, y in WN coords = "<<scalarSourceXORD<<", "<<scalarSourceYORD<<endl;
-
-    }
-#endif //SCALAR
-
 /*  ----------------------------------------*/
 /*  USER INPUTS                             */
 /*  ----------------------------------------*/
@@ -425,7 +385,7 @@ do
 		//initialize
 		if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
 		{
-			//wxModelInitialization* init;
+                    //wxModelInitialization* init;
 		    //wxInit = wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
 
 		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
@@ -433,16 +393,31 @@ do
 
 		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
 		{
-			domainAverageInitialization init;
-			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    domainAverageInitialization init;
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
 		}else if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 		{
-			pointInitialization init;
-			init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    pointInitialization init;
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 
-		}else{
-			 throw std::logic_error("Incorrect wind initialization.");
+		}
+		else if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
+                {
+                    griddedInitialization init;
+		    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                }
+#ifdef NINJAFOAM
+		else if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag)
+		{
+                    foamInitialization init;
+                    init.inputVelocityGrid= VelocityGrid; //set input grids from cfd solution
+                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+		}
+#endif
+		else{
+                     throw std::logic_error("Incorrect wind initialization.");
 		}
 
 		#ifdef _OPENMP
@@ -467,7 +442,7 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
 		//build A arrray
-		discretize(false);
+		discretize();
 
         checkCancel();
 
@@ -500,26 +475,16 @@ do
 
 		//solver
 
-		//jac_precond_CG_MKL(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol);
-		//jac_precond_CG(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol);
-
-		//BELOW IS GOOD SOLVER
+		//if the CG solver diverges, try the minres solver
 		if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+		    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
-
-		//if(taucs_solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-		//{
-		//	input.Com->ninjaCom(ninjaComClass::ninjaFailure, "ERROR!!!  PROBLEM IN SOLVER, RETURN OF FALSE!");
-		//	return false;
-		//}
-
 
 		#ifdef _OPENMP
 			endSolve = omp_get_wtime();
 		#endif
 
 		checkCancel();
-
 
 		 #ifdef MKL
 		 MKL_free(SK);
@@ -634,7 +599,7 @@ if(input.frictionVelocityFlag == 1){
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
 	//write output files
-	writeOutputFiles(false);
+	writeOutputFiles();
 
 	#ifdef _OPENMP
 		endWriteOut = omp_get_wtime();
@@ -688,218 +653,6 @@ if(input.frictionVelocityFlag == 1){
 
      return true;
 }
-//END OF simulate_wind()-------------------------------------------------------
-
-
-#ifdef SCALAR
-/**@brief Method to start a scalar transport simulation.
- *
- * simulate_wind() must be run before this function is called.
- *
- * @return Returns true if simulation completes without error.
- */
-bool ninja::simulate_scalar()
-{
-    checkCancel();
-
-    scalarTransportSimulation = true;
-    concentration.allocate(&mesh);
-
-    for(int i = 0; i < mesh.nrows; i++){
-        for(int j = 0; j < mesh.ncols; j++){
-            for(int k = 0; k < mesh.nlayers; k++){
-                concentration(i,j,k) = 0.0;
-            }
-        }
-    }
-    //cout<<"concentration(0,0,0) = "<<concentration(0,0,0)<<endl;
-    //cout<<"mesh.XORD, mesh.YORD, mesh.ZORD"<<mesh.XORD(0,0,0)<<", "<<mesh.YORD(0,0,0)<<", "<<mesh.ZORD(0,0,0)<<endl;
-
-    #ifdef _OPENMP
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Scalar Transport number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
-    #endif
-
-    #ifdef _OPENMP
-    startTotal = omp_get_wtime();
-    #endif
-
-    #ifdef NINJA_DEBUG
-        #ifdef MKL
-        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals used...");
-        #else
-        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals not available...");
-        #endif //MKL
-    #endif  //NINJA_DEBUG
-
-/*  ----------------------------------------*/
-/*  USER INPUTS                             */
-/*  ----------------------------------------*/
-     int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-     //double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-     //double stop_tol = 2.7E-1;
-     double stop_tol = 0.16;  //works for minres with diffusion...
-     //double stop_tol = 0.1;  //works for BiCG with diffusion...
-     //double stop_tol = 0.4;  //testing
-     int print_iters = 10;          //Iterations to print out
-         //int max_matching_iters = 30;         //maximum number of outer iterations to do (for matching observations)
-
-
-/*  ----------------------------------------*/
-/*  BUILD "A" ARRAY OF AX=B                 */
-/*  ----------------------------------------*/
-                #ifdef _OPENMP
-                        startBuildEq = omp_get_wtime();
-                #endif
-
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building scalar transport equations...");
-
-                //build A arrray
-                discretize(true);
-
-        checkCancel();
-
-/*  ----------------------------------------*/
-/*  SET BOUNDARY CONDITIONS                 */
-/*  ----------------------------------------*/
-
-                //set boundary conditions
-                setBoundaryConditions();
-
-                #define WRITE_A_B
-                #ifdef WRITE_A_B        //used for debugging...
-                         write_A_and_b(1000, SK, col_ind, row_ptr, RHS);
-                #endif
-
-                #ifdef _OPENMP
-                        endBuildEq = omp_get_wtime();
-                #endif
-
-                 checkCancel();
-
-/*  ----------------------------------------*/
-/*  CALL SOLVER                             */
-/*  ----------------------------------------*/
-
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving scalar transport equations...");
-                #ifdef _OPENMP
-                        startSolve = omp_get_wtime();
-                #endif
-
-                //solver
-
-                //BELOW IS GOOD SOLVER
-                //if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-        //use MINRES solver for full matrix (works for diffusion only; also works for full matrix wind flow)
-                if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        throw std::runtime_error("Solver returned false.");
-        //use BiCGSTAB solver since SK in asymmetric for scalar transport
-                //if(solveBiCGSTAB(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-        //if(solveBiCG(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                        //throw std::runtime_error("Solver returned false.");
-
-
-                #ifdef _OPENMP
-                        endSolve = omp_get_wtime();
-                #endif
-
-                checkCancel();
-
-
-                 #ifdef MKL
-                 MKL_free(SK);
-                 #else
-                 if(SK)
-                 {
-                        delete[] SK;
-                        SK=NULL;
-                 }
-                 #endif
-
-                 if(col_ind)
-                 {
-                        delete[] col_ind;
-                        col_ind=NULL;
-                 }
-                 if(row_ptr)
-                 {
-                        delete[] row_ptr;
-                        row_ptr=NULL;
-                 }
-                 if(RHS)
-                 {
-                        delete[] RHS;
-                        RHS=NULL;
-                 }
-/*  ----------------------------------------*/
-/*  COMPUTE SCALAR VOLUME FIELD              */
-/*  ----------------------------------------*/
-
-                 //fill in concentration 3d field from phi field
-
-                 computeScalarField();
-
-                 /*checkCancel();
-
-
-/*  ----------------------------------------*/
-/*  PREPARE OUTPUT                          */
-/*  ----------------------------------------*/
-
-                 /*#ifdef _OPENMP
-                        startWriteOut = omp_get_wtime();
-                 #endif
-
-                 //prepare output arrays
-                 prepareOutput();
-
-                 checkCancel();*/
-
-/*  ----------------------------------------*/
-/*  WRITE OUTPUT FILES                      */
-/*  ----------------------------------------*/
-
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing scalar transport output files...");
-
-        //write output files
-        writeOutputFiles(true);
-
-        #ifdef _OPENMP
-                endWriteOut = omp_get_wtime();
-                endTotal = omp_get_wtime();
-        #endif
-/*  ----------------------------------------*/
-/*  WRAP UP...                              */
-/*  ----------------------------------------*/
-
-        //write timers
-        #ifdef _OPENMP
-                        //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
-                        //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-        #endif
-
-
-     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Scalar transport run number %d done!", input.inputsRunNumber);
-
-         /*deleteDynamicMemory();
-         if(!input.keepOutGridsInMemory)
-         {
-             AngleGrid.deallocate();
-             VelocityGrid.deallocate();
-             CloudGrid.deallocate();
-         DustGrid.deallocate();
-         }*/
-
-     return true;
-} //END OF simulate_scalar()-------------------------------------------------------
-#endif //SCALAR
-
-
 
 /**Method used to get the smallest radius of influence from a vector of wxStation.
  *
@@ -921,485 +674,6 @@ double ninja::getSmallestRadiusOfInfluence()
 }
 
 /*
-void ninja::jac_precond_CG(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol)
-{
-     //This is the Jacobi Preconditioned Conjugate Gradient solver (from Dr. Thompson)
-     int i, j, k;
-     double *r, *p, *D, A_infin_norm, A_infin_norm2, x_infin_norm, r_infin_norm, b_infin_norm, beta, *Ax, res_check;
-     double rAp=0, *Ap, *Anorm, pAp=0., rp=0., s, r_2_norm, residual_percent_complete, time_percent_complete, iter1_residual;
-
- #ifdef NINJA_DEBUG_VERBOSE
-      if((convergence_history = fopen ("convergence_history.txt", "w")) == NULL)
-      {
-           input.Com->ninjaCom(ninjaComClass::ninjaWarning, "A convergence_history file to write to cannot be created.\nIt may be in use by another program.");
-           exit(0);
-      }
-      fprintf(convergence_history,"\nIteration\tr_2_norm\tResidual\tres_check");
-#endif //NINJA_DEBUG_VERBOSE
-     r=new double[NUMNP];
-     p=new double[NUMNP];
-     D=new double[NUMNP];
-     Ap=new double[NUMNP];
-     Anorm=new double[NUMNP];
-	 Ax=new double[NUMNP];
-
-	 //stuff for sparse BLAS MV multiplication
-	 char transa='n';
-	 double one=1.E0, zero=0.E0;
-	 char matdescra[6];
-	 matdescra[0]='s';
-	 matdescra[1]='u';
-	 matdescra[2]='n';
-	 matdescra[3]='c';
-
-
-     b_infin_norm=0.;
-     A_infin_norm=0.;
-     A_infin_norm2=0.;
-
-	#pragma omp parallel default(shared) private(i,j)
-	 {
-	 #pragma omp for
-	 for(i=0;i<NUMNP;i++)
-     {
-          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-          {
-               if(col_ind[j]==i)   //Check if we're on the diagonal
-                    D[i]=1.0/std::sqrt(SK[j]);    //Store the diagonal term
-          }
-          RHS[i]=D[i]*RHS[i];     //condition the RHS also
-     }
-	 #pragma omp single
-	 {
-	 for(i=0;i<NUMNP;i++)
-     {
-          if(fabs(RHS[i])>b_infin_norm)
-               b_infin_norm=fabs(RHS[i]);     //compute the infinity norm of b
-     }
-	 }	//end single region
-
-
-     #pragma omp for
-     for(i=0;i<NUMNP;i++)
-     {
-          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-          {
-               SK[j]=D[i]*SK[j]*D[col_ind[j]];    //condition the SK matrix
-//               if(fabs(SK[j])>A_infin_norm)
-//                    A_infin_norm=fabs(SK[j]);     //Compute the infinity norm of A (incorrect, should add up whole column)
-          }
-     }
-
-
-////////////////////////////////////////////
-     #pragma omp for
-     for(i=0;i<NUMNP;i++)
-          Anorm[i]=0.;
-     #pragma omp single
-	 {
-	 for(i=0;i<NUMNP;i++)
-     {
-          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-          {
-//               Anorm[col_ind[j]]=Anorm[col_ind[j]]+SK[j];
-               Anorm[i] += SK[j];
-			   if(col_ind[j] == i)	//if this is the diagonal, skip next computation
-				   continue;
-			   Anorm[col_ind[j]] += SK[j];	//since only the upper triangle of A is stored, account for this...
-          }
-     }
-	 for(i=0;i<NUMNP;i++)
-	 {
-		  if(fabs(Anorm[i])>A_infin_norm2)
-			   A_infin_norm2=fabs(Anorm[i]); //compute infinity norm of A correctly...
-	 }
-	 }	//end single region
-
-////////////////////////////////////////////
-
-	}	//end parallel region
-
-
-	 //for(i=0;i<NUMNP;i++)
-		//  Ax[i] = 0.;
-
-	 //for(i=0;i<NUMNP;i++)
-  //   {
-  //        for(j=row_ptr[i];j<row_ptr[i+1];j++)
-  //        {
-  //             Ax[i] += SK[j]*PHI[col_ind[j]];
-		//	   if(col_ind[j] == i)	//if this is the diagonal, skip the following computation
-		//		   continue;
-		//	   Ax[col_ind[j]] += SK[j]*PHI[i];
-  //        }
-  //
-  //   }
-
-	 mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], PHI, &zero, Ax);
-
-	 for(i=0;i<NUMNP;i++)
-          r[i]=RHS[i]-Ax[i];                  //calculate the initial residual
-
-     k=0;           //k is the iteration number
-
-     do		//--------------------------begin iteration loops------------------------------------------
-     {
-		  k++;
-
-
-		 if(k==1)
-          {
-			  #pragma omp parallel for default(shared) private(i)
-			  for(i=0;i<NUMNP;i++)
-                    p[i]=r[i];
-          }else
-          {
-               rAp=0.;
-			   #pragma omp parallel for reduction(+:rAp)
-			   for(i=0;i<NUMNP;i++)
-                    rAp += r[i]*Ap[i];
-
-			   beta=rAp/pAp;
-
-			   #pragma omp parallel for default(shared) private(i)
-               for(i=0;i<NUMNP;i++)
-                    p[i]=r[i]-beta*p[i];
-          }
-
-		  rp=0.;
-
-		  #pragma omp parallel for reduction(+:rp)
-          for(i=0;i<NUMNP;i++)
-               rp += r[i]*p[i];
-
-
-		  mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], p, &zero, Ap);
-		  //mv_mult(NUMNP, SK, col_ind, row_ptr, row_ptr+1, p, Ap);	//matrix-vector multiplication!!!!!
-
-     //     for(i=0;i<NUMNP;i++)		//matrix-vector multiplication!!!!!
-     //     {
-     //          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-			  // {
-     //               Ap[i] += SK[j]*p[col_ind[j]];
-					//if(col_ind[j] == i)	//if this is the diagonal, skip the next computation
-					//	continue;
-					//Ap[col_ind[j]] += SK[j]*p[i];
-			  // }
-     //     }
-
-
-		  pAp=0.;
-          x_infin_norm=0.;
-
-	  #pragma omp parallel default(shared) private(i,j)
-	  {
-		  #pragma omp for reduction(+:pAp)
-          for(i=0;i<NUMNP;i++)
-               pAp += p[i]*Ap[i];
-
-		  #pragma omp single
-		  {
-				s=rp/pAp;
-		  }
-
-		  #pragma omp for
-          for(i=0;i<NUMNP;i++)
-          {
-               PHI[i] += s*p[i];
-          }
-
-		  #pragma omp single
-		  {
-		  for(i=0;i<NUMNP;i++)
-		  {
-			   if(fabs(PHI[i])>x_infin_norm)
-					x_infin_norm=fabs(PHI[i]);
-		  }
-		  }
-
-          #pragma omp for
-          for(i=0;i<NUMNP;i++)
-          {
-               r[i]=r[i]-s*Ap[i];
-          }
-
-	  }	//end parallel section
-
-		   r_infin_norm=0.;
-
-		   for(i=0;i<NUMNP;i++)
-		   {
-				if(fabs(r[i])>r_infin_norm)
-					r_infin_norm=fabs(r[i]);
-		   }
-
-		   if(k<(print_iters-1))
-				iter1_residual=r_infin_norm;       //save the residual value for the first iteration to use later for % done computations
-
-		   res_check=stop_tol*(A_infin_norm*x_infin_norm+b_infin_norm);
-
-		   if((k%print_iters)==0)
-		   {
-			   #ifdef NINJA_DEBUG_VERBOSE
-				input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Iteration = %ld\tr_2_norm=%lf\tResidual = %lf\tres_check=%lf",k,r_2_norm,r_infin_norm,res_check);
-				fprintf(convergence_history,"\n%ld\t%lf\t%lf\t%lf",k,r_2_norm,r_infin_norm,res_check);
-			   #endif //NINJA_DEBUG_VERBOSE
-
-				residual_percent_complete=100-100*((r_infin_norm-res_check)/(iter1_residual-res_check));
-				time_percent_complete=0.0000034095*std::pow(residual_percent_complete,4) - 0.0004207753*std::pow(residual_percent_complete,3) + 0.0119452111*std::pow(residual_percent_complete,2) + 0.5394600870*residual_percent_complete;
-				if(time_percent_complete<0)
-					 time_percent_complete=0;
-				//printf("\n%.0lf%% complete...",residual_percent_complete);
-				input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete-0.5));
-
-
-//               input.Com->ninjaCom(ninjaComClass::ninjaDebug, "PHI=%lf\tRHS=%lf",PHI[0*ncols*nrows+20*ncols+20],RHS[0*ncols*nrows+20*ncols+20]);
-//               input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Iteration %ld\tx_infin_=%lf\tr_infin=%lf\tratio=%lf\tx_2=%lf\tb_2=%lf\tr_2=%lf",k,x_infin_norm,r_infin_norm,rbratio,x_2_norm,b_2_norm,r_2_norm);
-		   }
-		   //if(r_infin_norm<=res_check)
-		   //{
-			//   input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Solver done.");
-			//   break;
-		   //}
-
-		   if((k==MAXITS)&&(r_infin_norm>res_check))
-			   input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Solution did not converge.\nMAXITS reached.");
-
-
-		   if(k==NUMNP)40
-			   input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Number of iterations equals the number of unknowns.\nIterations have been stopped...");
-
-
-//          r_2_norm=0;		//jason commented out 10.9.2008
-//          for(i=0;i<NUMNP;i++)
-//               r_2_norm=r_2_norm+r[i]*r[i];
-//          r_2_norm=std::sqrt(r_2_norm);
-
-
-//          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "A=%lf\tx=%lf\tb=%lf");
-
-
-
-
-                         //Check convergence here
-     }while(k<MAXITS && k!=NUMNP && r_infin_norm>=res_check);
-
-
-
-	//if(r_infin_norm<=res_check)
-	//{
-	//	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Solver done.");
-	//}
-
-
-     //Uncondition PHI
-	 #pragma omp parallel for private(i)
-     for(i=0;i<NUMNP;i++)
-     {
-          PHI[i]=PHI[i]*D[i];
-//          fprintf(testt,"%ld\t%lf\n",i,PHI[i]);
-     }
-#ifdef NINJA_DEBUG_VERBOSE
-	 fclose(convergence_history);
-#endif //NINJA_DEBUG_VERBOSE
-
-     delete[] r;
-     delete[] p;
-     delete[] D;
-     delete[] Ap;
-	 delete[] Anorm;
-	 delete[] Ax;
-
-}*/
-
-/*
-void ninja::jac_precond_CG_MKL(double *SK, double *RHS, double *PHI, int *row_ptr, int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol)
-{
-     //This is the Jacobi Preconditioned Conjugate Gradient solver (from Dr. Thompson)
-     int i, j, k;
-     double *r, *p, *D, A_infin_norm, A_infin_norm2, x_infin_norm, r_infin_norm, b_infin_norm, beta, *Ax, res_check;
-     double rAp=0, *Ap, *Anorm, pAp=0., rp=0., s, r_2_norm, residual_percent_complete, time_percent_complete, iter1_residual;
-
-#ifdef NINJA_DEBUG_VERBOSE
-      if((convergence_history = fopen ("convergence_history.txt", "w")) == NULL)
-      {
-           input.Com->ninjaCom(ninjaComClass::ninjaFailure, "A convergence_history file to write to cannot be created.\nIt may be in use by another program.");
-      }
-      fprintf(convergence_history,"\nIteration\tr_2_norm\tResidual\tres_check");
-#endif //NINJA_DEBUG_VERBOSE
-
-     r=new double[NUMNP];
-     p=new double[NUMNP];
-     D=new double[NUMNP];
-     Ap=new double[NUMNP];
-     Anorm=new double[NUMNP];
-	 Ax=new double[NUMNP];
-
-//     for(i=0;i<NUMNP;i++)
-//          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "i=%ld\tRHS=%lf",i,RHS[i]);
-
-	 //stuff for sparse BLAS MV multiplication
-	 char transa='n';
-	 double one=1.E0, zero=0.E0;
-	 char matdescra[6];
-	 matdescra[0]='s';
-	 matdescra[1]='u';
-	 matdescra[2]='n';
-	 matdescra[3]='c';
-
-
-     b_infin_norm=0.;
-     A_infin_norm=0.;
-     A_infin_norm2=0.;
-
-	 #pragma omp parallel for
-	 for(i=0;i<NUMNP;i++)
-     {
-          D[i]=1.0/std::sqrt(SK[row_ptr[i]]);    //Store the diagonal term
-          RHS[i]=D[i]*RHS[i];     //condition the RHS also
-     }
-
-	 j = cblas_idamax(NUMNP,RHS,1);	//find index of largest absolute value element
-	 b_infin_norm = fabs(RHS[j]);	//set to largest value
-
-     #pragma omp parallel for private(i,j)
-     for(i=0;i<NUMNP;i++)
-     {
-          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-               SK[j]=D[i]*SK[j]*D[col_ind[j]];    //condition the SK matrix
-     }
-
-     #pragma omp parallel for
-     for(i=0;i<NUMNP;i++)
-          Anorm[i]=0.;
-	 for(i=0;i<NUMNP;i++)
-     {
-          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-          {
-               Anorm[i] += SK[j];
-			   if(col_ind[j] == i)	//if this is the diagonal, skip next computation
-				   continue;
-			   Anorm[col_ind[j]] += SK[j];	//since only the upper triangle of A is stored, account for this...
-          }
-     }
-	 j = cblas_idamax(NUMNP,Anorm,1);	//find index of largest absolute value element
-	 A_infin_norm2 = fabs(Anorm[j]);	//set to largest value
-
-	 //matrix multiplication
-	 mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], PHI, &zero, Ax);
-
-	 for(i=0;i<NUMNP;i++)
-          r[i]=RHS[i]-Ax[i];                  //calculate the initial residual
-
-     k=0;           //k is the iteration number
-
-     do		//--------------------------begin iteration loops------------------------------------------
-     {
-		  k++;
-
-
-		  if(k==1)
-          {
-			  cblas_dcopy(NUMNP, r, 1, p, 1);	//copy r into p
-          }else
-          {
-
-			   rAp = cblas_ddot(NUMNP, r, 1, Ap, 1);	//compute dot product
-			   beta=rAp/pAp;
-
-			   //cblas_dscal(NUMNP, -beta, p, 1);			//multiply (-beta)*p
-			   //cblas_daxpy(NUMNP, 1., r, 1, p, 1);		//add p and r
-			   #pragma omp parallel for default(shared) private(i)
-               for(i=0;i<NUMNP;i++)
-                    p[i]=r[i]-beta*p[i];
-          }
-
-		  rp = cblas_ddot(NUMNP, r, 1, p, 1);	//dot product of r and p
-
-		  //matrix-vector multiplication!!!!!
-		  mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], p, &zero, Ap);
-
-		  pAp = cblas_ddot(NUMNP, p, 1, Ap, 1);
-
-		  s=rp/pAp;
-
-		  cblas_daxpy(NUMNP, s, p, 1, PHI, 1);	//PHI[] = PHI[] + s*p[]
-
-		  x_infin_norm=0.;
-		  for(i=0;i<NUMNP;i++)
-		  {
-			   if(fabs(PHI[i])>x_infin_norm)
-					x_infin_norm=fabs(PHI[i]);
-		  }
-
-          cblas_daxpy(NUMNP, -s, Ap, 1, r, 1);
-
-		   r_infin_norm=0.;
-		   for(i=0;i<NUMNP;i++)
-		   {
-				if(fabs(r[i])>r_infin_norm)
-					r_infin_norm=fabs(r[i]);
-		   }
-
-		   if(k<(print_iters-1))
-				iter1_residual=r_infin_norm;       //save the residual value for the first iteration to use later for % done computations
-
-		   res_check=stop_tol*(A_infin_norm*x_infin_norm+b_infin_norm);
-
-		   if((k%print_iters)==0)
-		   {
-			   #ifdef NINJA_DEBUG_VERBOSE
-				input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Iteration = %ld\tr_2_norm=%lf\tResidual = %lf\tres_check=%lf",k,r_2_norm,r_infin_norm,res_check);
-				fprintf(convergence_history,"\n%ld\t%lf\t%lf\t%lf",k,r_2_norm,r_infin_norm,res_check);
-			   #endif //NINJA_DEBUG_VERBOSE
-
-				residual_percent_complete=100-100*((r_infin_norm-res_check)/(iter1_residual-res_check));
-				time_percent_complete=0.0000034095*std::pow(residual_percent_complete,4) - 0.0004207753*std::pow(residual_percent_complete,3) + 0.0119452111*std::pow(residual_percent_complete,2) + 0.5394600870*residual_percent_complete;
-				if(time_percent_complete<0)
-					 time_percent_complete=0;
-				//printf("\n%.0lf%% complete...",residual_percent_complete);
-				input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
-
-			}
-
-		   if((k==MAXITS)&&(r_infin_norm>res_check))
-			   input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Solution did not converge.\nMAXITS reached.");
-
-
-		   if(k==NUMNP)
-			   input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Number of iterations equals the number of unknowns.\nIterations have been stopped...");
-
-                         //Check convergence here
-     }while(k<MAXITS && k!=NUMNP && r_infin_norm>=res_check);
-
-
-
-	//if(r_infin_norm<=res_check)
-	//{
-	//	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Solver done.");
-	//}
-
-
-     //Uncondition PHI
-	 #pragma omp parallel for private(i)
-     for(i=0;i<NUMNP;i++)
-     {
-          PHI[i]=PHI[i]*D[i];
-//          fprintf(testt,"%ld\t%lf\n",i,PHI[i]);
-     }
-
-#ifdef NINJA_DEBUG_VERBOSE
-	 fclose(convergence_history);
-#endif //NINJA_DEBUG_VERBOSE
-
-     delete[] r;
-     delete[] p;
-     delete[] D;
-     delete[] Ap;
-	 delete[] Anorm;
-	 delete[] Ax;
-
-}*/
 
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
@@ -1608,7 +882,8 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
   double alpha,malpha,beta,mbeta,ibeta,betaold,eta,c=1.0,ceta,cold=1.0,coold,s=0.0,sold=0.0,soold;
   double rho0,rho1,irho1,rho2,mrho2,rho3,mrho3,dp = 0.0;
   double rnorm, bnorm;
-  double np;	//this is the residual??
+  double np;	//this is the residual
+  double residual_percent_complete_old, residual_percent_complete, time_percent_complete, start_resid;
   double            *R, *Z, *U, *V, *W, *UOLD, *VOLD, *WOLD, *WOOLD;
 
   n = NUMNP;
@@ -1632,6 +907,8 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
   matdescra[1]='u';
   matdescra[2]='n';
   matdescra[3]='c';
+
+  residual_percent_complete_old = -1.;
 
   FILE *convergence_history;
 
@@ -1765,9 +1042,12 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
 
 	  //if(rnorm<tol*bnorm)   break;
 
-	  cout<<"residual = "<<np<<endl;
+	  //cout<<"residual = "<<np<<endl;
 
-	  if(np<tol)   break;
+        if(i==1)
+            start_resid = np;
+	
+        if(np<tol)   break;
 
 	  i++;
 
@@ -1785,18 +1065,18 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
 		fprintf(convergence_history,"\n%d\t%lf\t%lf",i,rnorm/bnorm,tol);
 
 
-	    //residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
-		//if(residual_percent_complete<residual_percent_complete_old)
-			//residual_percent_complete=residual_percent_complete_old;
-		//if(residual_percent_complete<0.)
-			 //residual_percent_complete=0.;
-		//else if(residual_percent_complete>100.)
-			//residual_percent_complete=100.0;
+	    residual_percent_complete=100-100*((np-tol)/(start_resid-tol));
+		if(residual_percent_complete<residual_percent_complete_old)
+			residual_percent_complete=residual_percent_complete_old;
+		if(residual_percent_complete<0.)
+			 residual_percent_complete=0.;
+		else if(residual_percent_complete>100.)
+			residual_percent_complete=100.0;
 
-		//time_percent_complete=1.8*exp(0.0401*residual_percent_complete);
-		//residual_percent_complete_old=residual_percent_complete;
-        //fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
-		//input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
+		time_percent_complete=1.8*exp(0.0401*residual_percent_complete);
+		residual_percent_complete_old=residual_percent_complete;
+                //fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
+		input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
 	  }
 
   }while(i<max_iter);
@@ -1833,376 +1113,6 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
 
   return true;
 
-}
-
-
-/*
-// MINRES from taucs (2 matrix vector products!!!)
-bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol)
-{
-
-  double *Xcg, *R, *V, *VV, *Vold, *Volder, *M, *Mold, *Molder;
-  double tolb, normr, alpha, beta, beta1, betaold;
-  double gamma, gammabar, delta, deltabar, epsilon;
-  double cs,sn,snprod, numer, denom;
-  int    Iter;
-  int    i,n;
-
-  n = NUMNP;
-
-  R      = new double[n];
-  Xcg    = new double[n];
-  VV     = new double[n];
-  V      = new double[n];
-  Vold   = new double[n];
-  Volder = new double[n];
-  M      = new double[n];
-  Mold   = new double[n];
-  Molder = new double[n];
-
-  //stuff for sparse BLAS MV multiplication
-  char transa='n';
-  double one=1.E0, zero=0.E0;
-  char matdescra[6];
-  matdescra[0]='s';
-  matdescra[1]='u';
-  matdescra[2]='n';
-  matdescra[3]='c';
-
-  if((convergence_history = fopen ("convergence_history.txt", "w")) == NULL)
-  {
-	   input.Com->ninjaCom(ninjaComClass::ninjaFailure, "A convergence_history file to write to cannot be created.\nIt may be in use by another program.");
-	   exit(0);
-  }
-  fprintf(convergence_history,"\nIteration\tResidual\tResidual_check");
-
-  Preconditioner precond;
-  if(precond.initialize(n, A, row_ptr, col_ind, precond.SSOR)==false)
-  {
-	  input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of SSOR preconditioner failed, trying Jacobi preconditioner...");
-	  if(precond.initialize(NUMNP, A, row_ptr, col_ind, precond.Jacobi)==false)
-	  {
-		  input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Initialization of Jacobi preconditioner failed, CANNOT SOLVE FOR WINDFLOW!!!");
-		  return false;
-	  }
-  }
-
-  tolb = tol * cblas_dnrm2(n, b, 1);
-  input.Com->ninjaCom(ninjaComClass::ninjaDebug, "solver: residual convergence tolerance %.1e",tolb);
-
-  for (i=0; i<n; i++) x[i] = 0.;    // x = 0
-  for (i=0; i<n; i++) R[i] = b[i];  // r = b-A*x
-
-  normr = cblas_dnrm2(n,R,1);
-  if ( normr == 0.0 ) {
-    input.Com->ninjaCom(ninjaComClass::ninjaFailure, "initial residual == 0");
-    return false;
-  }
-
-  for (i=0; i<n; i++) V[i]    = R[i];    // v = r
-  for (i=0; i<n; i++) Vold[i] = R[i];    // vold = r
-
-  precond.solve(Vold, V, row_ptr, col_ind);	//apply preconditioner   MV = Vold
-
-  beta1 = cblas_ddot(n,Vold,1,V,1);
-  if (beta1 < 0.0) {
-    input.Com->ninjaCom(ninjaComClass::ninjaFailure, "solver: error (1)");
-    return false;
-  }
-  beta1 = std::sqrt(beta1);
-
- // { int flag = 0;
- //   for (i=0; i<n; i++) {
- //     if (taucs_isnan(V[i]) && flag < 10)
-	//input.Com->ninjaCom(ninjaComClass::ninjaWarning, "V has nan's in position %d",i);
- //     flag++;
- //   }
- // }
-
-  snprod = beta1;
-
-  for (i=0; i<n; i++) VV[i] = V[i] / beta1;
-
-  //matrix vector multiplication A*x=Ax
-  mkl_dcsrmv(&transa, &n, &n, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], VV, &zero, V);   // V = A*VV
-
-  alpha = cblas_ddot(n,VV,1,V,1);
-
-  for (i=0; i<n; i++) V[i] -= (alpha/beta1) * Vold[i];
-
-  // local reorthogonalization
-
-  numer = cblas_ddot(n,VV,1,V,1);
-  denom = cblas_ddot(n,VV,1,VV,1);
-
-  for (i=0; i<n; i++) V[i] -= (numer/denom) * VV[i];
-
-  for (i=0; i<n; i++) Volder[i] = Vold[i];
-  for (i=0; i<n; i++) Vold[i]   = V[i];
-
-  //(*precond_fn)(precond_args,V,Vold);
-  precond.solve(Vold, V, row_ptr, col_ind);	//apply preconditioner   MV = Vold
-
-  betaold = beta1;
-  beta = cblas_ddot(n,Vold,1,V,1);
-  if (beta < 0.0) {
-    input.Com->ninjaCom(ninjaComClass::ninjaFailure, "solver: error (2)");
-    return false;
-  }
-  beta = std::sqrt(beta);
-
-  gammabar = alpha;
-  epsilon = 0.0;
-  deltabar = beta;
-  gamma = std::sqrt(gammabar*gammabar + beta*beta);
-
-
-  for (i=0; i<n; i++) Mold[i] = 0.0;
-  for (i=0; i<n; i++) M[i]    = VV[i] / gamma;
-
-  cs = gammabar / gamma;
-  sn = beta / gamma;
-
-
-  for (i=0; i<n; i++) x[i] += snprod*cs*M[i];
-  snprod = snprod * sn;
-
-  // generate CG iterates
-  for (i=0; i<n; i++) Xcg[i] = x[i] + snprod*(sn/cs)*M[i];
-
-  // compute residual again
-
-  //matrix vector multiplication A*x=Ax
-  mkl_dcsrmv(&transa, &n, &n, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, R);   // R = A*x
-  //taucs_ccs_times_vec(A,x,R);
-  for (i=0; i<n; i++) R[i] = b[i] - R[i];  // r = b - A*x
-  normr = cblas_dnrm2(n,R,1);
-
-  input.Com->ninjaCom(ninjaComClass::ninjaDebug, "starting iterations, residual norm is %.1e",normr);
-
-  // Begin iterations
-  for ( Iter=1; Iter <= max_iter; Iter++ ) {
-
-    for (i=0; i<n; i++) VV[i] = V[i] / beta;
-	mkl_dcsrmv(&transa, &n, &n, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], VV, &zero, V);   // V = A*VV
-    //taucs_ccs_times_vec(A,VV,V);
-    for (i=0; i<n; i++) V[i] -= (beta/betaold) * Volder[i];
-    alpha = cblas_ddot(n,VV,1,V,1);
-    for (i=0; i<n; i++) V[i] -= (alpha/beta) * Vold[i];
-
-    for (i=0; i<n; i++) Volder[i] = Vold[i];
-    for (i=0; i<n; i++) Vold  [i] = V   [i];
-
-	//(*precond_fn)(precond_args,V,Vold);
-	precond.solve(Vold, V, row_ptr, col_ind);	//apply preconditioner   MV = Vold
-
-    betaold = beta;
-    beta = cblas_ddot(n,Vold,1,V,1);
-    if (beta < 0.0) {
-      input.Com->ninjaCom(ninjaComClass::ninjaFailure, "solver: error (3)");
-      return false;
-    }
-    beta = std::sqrt(beta);
-
-    delta = cs*deltabar + sn*alpha;
-    for (i=0; i<n; i++) Molder[i] = Mold[i];
-    for (i=0; i<n; i++) Mold  [i] = M   [i];
-    for (i=0; i<n; i++) M[i] = VV[i] - delta*Mold[i] - epsilon*Molder[i];
-    gammabar = sn*deltabar - cs*alpha;
-    epsilon = sn*beta;
-    deltabar = -cs*beta;
-    gamma = std::sqrt(gammabar*gammabar + beta*beta);
-    for (i=0; i<n; i++) M[i] = M[i]/ gamma;
-    cs = gammabar / gamma;
-    sn = beta / gamma;
-
-    // stagnation test; skipped
-
-    for (i=0; i<n; i++) x[i] += snprod*cs*M[i];
-    snprod = snprod*sn;
-    for (i=0; i<n; i++) Xcg[i] = x[i] + snprod*(sn/cs)*M[i];
-
-	mkl_dcsrmv(&transa, &n, &n, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, R);   // R = A*x
-    for (i=0; i<n; i++) R[i] = b[i] - R[i];  // r = b - A*x
-    normr = cblas_dnrm2(n,R,1);
-
-
-	if((Iter%print_iters)==0)
-    {
-#ifdef NINJA_DEBUG_VERBOSE
-		input.Com->ninjaCom(ninjaComClass::ninjaDebug, "solver: n=%d iterations = %d residual norm %12.4e", n,Iter,normr);
-		//input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Iteration = %d\tResidual = %lf\ttol = %lf", i, resid, tol);
-		fprintf(convergence_history,"\n%ld\t%lf\t%lf",Iter,normr,tolb);
-#endif //NINJA_DEBUG_VERBOSE
-
-		input.Com->ninjaCom(ninjaComClass::ninjaDebug, "n=%d iterations = %d residual norm %12.4e", n,Iter,normr);
-		fprintf(convergence_history,"\n%ld\t%lf\t%lf",Iter,normr,tolb);
-
-
-	    //residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
-		//if(residual_percent_complete<residual_percent_complete_old)
-		//	residual_percent_complete=residual_percent_complete_old;
-		//if(residual_percent_complete<0.)
-		//	 residual_percent_complete=0.;
-		//else if(residual_percent_complete>100.)
-		//	residual_percent_complete=100.0;
-
-		//time_percent_complete=1.8*exp(0.0401*residual_percent_complete);
-		//residual_percent_complete_old=residual_percent_complete;
-//fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
-		//input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
-
-	}
-
-    if (normr <= tolb) break;
-  }	// End iterations
-
-  input.Com->ninjaCom(ninjaComClass::ninjaDebug, "solver: done. n=%d iterations = %d residual norm %12.4e", n,Iter,normr);
-
-  fclose(convergence_history);
-
-  delete[] Molder;
-  delete[] Mold;
-  delete[] M;
-  delete[] Volder;
-  delete[] Vold;
-  delete[] V;
-  delete[] VV;
-  delete[] Xcg;
-  delete[] R;
-
-  return true;
-
-}*/
-
-/*bool ninja::taucs_solve(taucs_double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol)
-{
-	int out;
-
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Entering taucs_ccs_create...");
-	taucs_ccs_matrix* pMatrix = taucs_ccs_create(NUMNP, NUMNP, row_ptr[NUMNP], TAUCS_DOUBLE|TAUCS_SYMMETRIC|TAUCS_LOWER);
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Out of taucs_ccs_create, building matrix...");
-
-	pMatrix->values.d = A;
-	pMatrix->rowind = col_ind;
-	pMatrix->colptr = row_ptr;
-
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Matrix built, setting options...");
-
-//	char* options[] = {"taucs.factor.LLT=true", NULL};
-//	char* options[] = {"taucs.factor.LLT=true", "taucs.factor.droptol=0", NULL};
-//	char* options[] = {"taucs.solve.minres=true", "taucs.solve.convergetol=0.01", NULL};
-	char* options[] = {"taucs.solve.minres=true", "taucs.solve.maxits=1000", "taucs.solve.convergetol=1E-1", NULL};
-//	char* options[] = {"taucs.solve.cg=true", NULL};
-//	char* options[] = {"taucs.factor.mf=true", NULL};
-//	char* options[] = {"taucs.solve.minres=true", "taucs.solve.maxits=1000", "taucs.solve.convergetol=1E-10", "taucs.factor.droptol=10000000", "taucs.factor.LLT=true", NULL};
-//	char* options[] = {"taucs.approximate.amwb=true","taucs.approximate.amwb.subgraphs=300","taucs.factor.LLT=true","taucs.solve.minres=true","taucs.solve.maxits=1000", "taucs.solve.convergetol=1E-1", NULL};
-
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Options set, running solver...");
-	out = taucs_linsolve(pMatrix, NULL, 1, x, b, options, NULL);
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Solver done!! Freeing pMatrix...");
-
-	if (out != TAUCS_SUCCESS)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Solver failed");
-		if(out==TAUCS_ERROR)
-			input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error code = TAUCS_ERROR");
-		else if(out==TAUCS_ERROR_NOMEM)
-			input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error code = TAUCS_ERROR");
-		else if(out==TAUCS_ERROR_BADARGS)
-			input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error code = TAUCS_ERROR_BADARGS");
-		else if(out==TAUCS_ERROR_MAXDEPTH)
-			input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error code = TAUCS_ERROR_MAXDEPTH");
-		else if(out==TAUCS_ERROR_INDEFINITE)
-			input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error code = TAUCS_ERROR_INDEFINITE");
-	}
-
-//	taucs_ccs_free(pMatrix);
-
-	input.Com->ninjaCom(ninjaComClass::ninjaDebug, "pMatrix freed, exiting taucs_solver...");
-
-	  //if(resid>tol)
-	  //{
-			//input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Solution did not converge.\nMAXITS reached.");
-			//return false;
-	  //}else{
-			//input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Solver done.");
-			//return true;
-	  //}
-
-
-	return true;
-}*/
-/**
- * @brief Applies a plane rotation for GMRES solver.
- * @param dx Point in Hessenburg matrix
- * @param dy Point in Hessenburg matrix
- * @param cs Vector
- * @param sn Vector
- */
-void ninja::gmresApplyPlaneRotation(double &dx, double &dy, double &cs, double &sn)
-{
-     double temp  =  cs * dx + sn * dy;
-     dy = -sn * dx + cs * dy;
-     dx = temp;
-}
-
-/**
- * @brief Generates a plane rotation for GMRES solver.
- * @param dx Point in Hessenburg matrix
- * @param dy Point in Hessenburg matrix
- * @param cs Vector
- * @param sn Vector
- */
-void ninja::gmresGeneratePlaneRotation(double &dx, double &dy, double &cs, double &sn)
-{
-     if (dy == 0.0) {
-        cs = 1.0;
-        sn = 0.0;
-    } else if (abs(dy) > abs(dx)) {
-        double temp = dx / dy;
-        sn = 1.0 / sqrt( 1.0 + temp*temp );
-        cs = temp * sn;
-    } else {
-        double temp = dy / dx;
-        cs = 1.0 / sqrt( 1.0 + temp*temp );
-        sn = temp * cs;
-    }
-
-}
-/**
- * @brief Update function for GMRES solver.
- * @param dx Point in Hessenburg matrix
- * @param dy Point in Hessenburg matrix
- * @param cs Vector
- * @param sn Vector
- */
-void ninja::gmresUpdate(double *x, int k, double *h, double *s, double *v)
-{
-    double *y, *vTemp;
-    int m = k + 1;  // k = m - 1
-
-    y = new double[m+1];
-
-    // Backsolve:
-    for (int i = k; i >= 0; i--) {
-        y[i] /= h[(i * m) + i];
-        for (int j = i - 1; j >= 0; j--){
-            y[j] -= h[(j * m) + i] * y[i];
-        }
-    }
-
-    for (int j = 0; j <= k; j++){
-        //put col j of v in vTemp
-        for(int jj=0;jj<m;jj++){ // m is nrows in v
-                   vTemp[jj] = v[jj * (m + 1) + j]; // vTemp <- v[k] (put col j of v in vTemp); m+1 = ncols
-        }
-
-        x[j] += vTemp[j] * y[j];
-    }
-
-    if(y)
-        delete[] y;
 }
 
 #ifndef MKL
@@ -2452,68 +1362,6 @@ void ninja::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *
 }
 #endif
 
-//double ninja::norm_residual(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP)
-//{
-//     //Calculates the 2-norm of the residual vector = b - Ax (not formulated for symmetrically stored matrix yet!!!)
-//     double residual=0;
-//     double Axi, *r;
-//     int i, j;
-//
-//     r=new double[NUMNP];
-//
-//     for(i=0;i<NUMNP;i++)
-//     {
-//          r[i]=0.0;
-//     }
-//
-//     for(i=0;i<NUMNP;i++)
-//     {
-//          Axi=0;
-//          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-//               Axi=Axi+SK[j]*PHI[col_ind[j]];     //Multiply Ax
-////          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "2_norm_Axi=%lf",Axi);
-////          inter=(RHS[i]-Axi);
-////          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "inter=%lf",inter);
-//          r[i]=RHS[i]-Axi;
-////          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "r[%ld]=%lf\tRHS=%lf\tAxi=%lf",i,r[i],RHS[i],Axi);
-//          r[i]=r[i]*r[i];
-//     }
-//     for(i=0;i<NUMNP;i++)
-//          residual=residual+r[i];
-//
-//     residual=std::sqrt(residual);
-//
-//	 if(r)
-//	 {
-//		delete[] r;
-//		r=NULL;
-//	 }
-//
-//     return residual;
-//}
-
-//double ninja::norm_residual_infin(double *SK, double *PHI, double *RHS, int *row_ptr, int *col_ind, int NUMNP)
-//{
-//     //Calculates the infinity-norm of the residual vector = b - Ax
-//     double residual=0;
-//     double Axi;
-//     int i, j;
-//     double answer=0;
-//
-//     for(i=0;i<NUMNP;i++)
-//     {
-//          Axi=0;
-//          for(j=row_ptr[i];j<row_ptr[i+1];j++)
-//               Axi=Axi+SK[j]*PHI[col_ind[j]];     //Multiply Ax
-////          ninjaCom(ninjaDebug, "infin_norm_Axi=%lf",Axi);
-//          residual=fabs(RHS[i]-Axi);
-//          if(residual>answer)
-//               answer=residual;
-//     }
-//
-//     return answer;
-//}
-
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
  */
@@ -2683,14 +1531,8 @@ bool ninja::checkForNullRun()
 
 /**Function to build discretized equations.
  *
- * Discretizes wind flow or scalar transport govering equations. Scalar transport equations must be
- * discretized after the flow field is solved. If scalarTransportSimulation == true, the scalar transport
- * equations will be discretized, otherwise the flow equations will be discretized.
- *
- * @param scalarTransportSimulation flag to indicate whether flow or scalar transport equations should be discretized.
-
  */
-void ninja::discretize(bool scalarTransportSimulation)
+void ninja::discretize()
 {
     //The governing equation to solve is
     //
@@ -2708,23 +1550,6 @@ void ninja::discretize(bool scalarTransportSimulation)
     //    H = ----- + ----- + -----
     //         dx      dy      dz
 
-    /*
-     * Governing equation for scalar transport:
-     *
-     * d       dC      d       dC      d       dC        dC       dC       dC
-     * -- ( Rx -- ) +  -- ( Ry -- ) +  -- ( Rz -- ) + Bx --  + By --  + Bz -- + H = 0
-     * dx      dx      dy      dy      dz      dz        dx       dy       dz
-     *
-     *      1               2               3           4         5        6    7
-     *
-     * Rx, Ry, Rz = eddy diffusivities
-     * Bx = u, By = v, Bz = w
-     * H = volume source term (with units of mass/volume)
-     *
-     * terms 1-3 = diffusion
-     * terms 4-6 = advection
-     *
-     */
 
 	//Set array values to zero----------------------------
 	if(PHI == NULL)
@@ -2737,21 +1562,13 @@ void ninja::discretize(bool scalarTransportSimulation)
                          //NZND is the # of nonzero elements in the SK stiffness array that are stored
      int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+(intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+(intercols*interrows*interlayers)*27;
 
-     #ifdef SCALAR
-     if(scalarTransportSimulation == false){ // if scalar transport run, need to store full matrix since it is asymmetric
-        NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;      //this is because we will only store the upper half of the SK matrix since it's symmetric
-     }
-     #endif //SCALAR
-     #ifndef SCALAR
      NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	//this is because we will only store the upper half of the SK matrix since it's symmetric
-     #endif
 
 	 #ifdef MKL
 	 SK = (double*)MKL_malloc(NZND*sizeof(double),16);
 	 #else
 
-	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric (symmetric if not a scalar transport run)
-
+	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
 	 //SK = new taucs_double[NZND];
 	 #endif
 
@@ -2799,43 +1616,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                               {
                                    for(jj=-1;jj<2;jj++)
                                    {
-                                       #ifdef SCALAR
-                                       if(scalarTransportSimulation == true){
-                                           col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                           temp1++;
-                                       }
-                                       if(scalarTransportSimulation == false){
-                                           col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									       if(col >= row)	//only do if we're on the upper triangular part of SK
-									       {
-											    col_ind[temp1]=col;
-											    temp1++;
-									       }
-                                       }
-                                       #endif //SCALAR
-                                       #ifndef SCALAR
                                        col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                        if(col >= row)	//only do if we're on the upper triangular part of SK
 									   {
                                            col_ind[temp1]=col;
                                            temp1++;
                                        }
-                                       #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+27;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+27;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==1)   //face node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2854,43 +1645,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            temp1++;
-                                        }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)	//only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
                                         col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                         if(col >= row)	//only do if we're on the upper triangular part of SK
                                         {
                                             col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+18;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+18;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==2)   //edge node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2909,43 +1674,17 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        if(col >= row)	//only do if we're on the upper triangular part of SK
+                                        {
+                                            col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)	//only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
-										col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									    if(col >= row)	//only do if we're on the upper triangular part of SK
-									    {
-											col_ind[temp1]=col;
-											temp1++;
-									    }
-									    #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+12;
-                         }
-                         if(scalarTransportSimulation == false){
-                                                     temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+12;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }else if(type==3)   //corner node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -2964,46 +1703,20 @@ void ninja::discretize(bool scalarTransportSimulation)
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-                                        #ifdef SCALAR
-                                        if(scalarTransportSimulation == true){
-                                            col_ind[temp1]=(k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+					col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+                                        if(col >= row)	//only do if we're on the upper triangular part of SK
+                                        {
+                                            col_ind[temp1]=col;
                                             temp1++;
                                         }
-                                        if(scalarTransportSimulation == false){
-                                            col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-                                            if(col >= row)  //only do if we're on the upper triangular part of SK
-                                            {
-                                                col_ind[temp1]=col;
-                                                temp1++;
-                                            }
-                                        }
-                                        #endif
-                                        #ifndef SCALAR
-										col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
-									    if(col >= row)	//only do if we're on the upper triangular part of SK
-									    {
-											col_ind[temp1]=col;
-											temp1++;
-									    }
-									    #endif
                                    }
                               }
                          }
-                         #ifdef SCALAR
-                         if(scalarTransportSimulation == true){
-                             temp=temp+8;
-                         }
-                         if(scalarTransportSimulation == false){
-                             temp=temp1;
-                         }
-                         #endif
-                         #ifndef SCALAR
                          //temp=temp+8;
-						 temp=temp1;
-						 #endif
+			 temp=temp1;
                     }
-					else
-						throw std::logic_error("Error arranging SK array.  Exiting...");
+                    else
+			throw std::logic_error("Error arranging SK array.  Exiting...");
                }
           }
      }
@@ -3130,92 +1843,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 		 int ii, jj, kk;
          double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
 		 #endif
-		 #ifdef SCALAR
-         if(scalarTransportSimulation == true){
-
-            int scalarCell_i, scalarCell_j, scalarCell_k;
-            double scalar_u, scalar_v, scalar_w;
-
-            scalar.allocate(mesh);
-            scalar.computeDiffusivity(input, mesh, u, v);  //creates wn_3dScalarFields scalar.Rx, scalar.Ry, scalar.Rz
-            // add w component and compute shear with normal vector to ground
-
-
-            /*
-             * Find cell where scalar source is located
-             * and compute the volume of this cell.
-             *
-             * This is for a point source (only doing calculations for
-             * one or two cells), for area sources (e.g., PM10 emissions),
-             * this should probably happen below in the loop over the
-             * elements, just looking in each surface element to see
-             * if it is a source cell or not.
-             */
-
-            //get ground elevation at source location
-            double scalarSourceZORD;
-            int scalar_elemNum;
-
-            elem.get_ij(scalarSourceXORD, scalarSourceYORD, scalarCell_i, scalarCell_j);
-            scalar_elemNum = mesh.get_elemNum(scalarCell_i, scalarCell_j, 0);
-            elem.get_uv(scalarSourceXORD, scalarSourceYORD, scalarCell_i, scalarCell_j, scalar_u, scalar_v);
-
-            //get elevation at midpoint betweeen layer 0 and 1 (w=0) in mesh at x,y location
-            elem.get_xyz(scalar_elemNum, scalar_u, scalar_v, 0, scalarSourceXORD, scalarSourceYORD, scalarSourceZORD);
-
-            cout<<"scalarSourceXORD, YORD = "<<scalarSourceXORD<<", "<<scalarSourceYORD<<endl;
-            cout<<"scalarSourceZORD = "<<scalarSourceZORD<<endl;
-
-
-            elem.get_uvw(scalarSourceXORD, scalarSourceYORD, scalarSourceZORD,
-                       scalarCell_i, scalarCell_j, scalarCell_k, scalar_u, scalar_v, scalar_w);
-
-
-            cout<<"cell_i, j, k = "<<scalarCell_i<<", "<<scalarCell_j<<", "<<scalarCell_k<<endl;
-            cout<<"nrows, ncols = "<<mesh.nrows<<", "<<mesh.ncols<<endl;
-            /// the above returns k=3, but should be k=0 ?? I think this is bc of the difference in the
-            /// interpolation methods used above (bilinear) and in get_uvw(). Maybe this is an issue
-            /// in the 3-d interoplations too??
-
-            //compute volume of this cell, make k=0 or 1 no matter what.
-            scalarCell_k = 1; // if source is in 0, ground nodes will be reset in setBoundaryConds(); may not be an issue...
-            scalar.sourceElemNum = mesh.get_elemNum(scalarCell_i, scalarCell_j, scalarCell_k); // set point source cell
-
-            for(j=0;j<elem.NUMQPTV;j++)   //loop over quadrature points in the element
-            {
-                elem.computeJacobianQuadraturePoint(j, scalar.sourceElemNum);
-            }
-
-            scalar.volumeSource = input.scalarSourceStrength / elem.DETJ; // DETJ is ratio of Vxxy/Vuvw--> divide (or multiply ?) by 8
-            cout<<"elem.DETJ = "<<elem.DETJ<<endl;
-            cout<<"scalar.volumeSource = "<<scalar.volumeSource<<endl;
-
-            //testing--------------------------------------------
-            std::string filename;
-            AsciiGrid<double> testGrid;
-            testGrid.set_headerData(input.dem);
-            testGrid.set_noDataValue(-9999.0);
-            int elemNum;
-
-            for(int i = 0; i <mesh.nrows; i++){
-                for(int j = 0; j < mesh.ncols; j++ ){
-                    elemNum = mesh.get_elemNum(i, j, 1);
-
-                    if(elemNum == scalar.sourceElemNum){
-                        cout<<"scalar.sourceElemNum = "<< scalar.sourceElemNum<<endl;
-                        cout<<"making source grid now..."<<endl;
-                        testGrid(i,j) = 1;
-                    }
-                    else{
-                        testGrid(i,j) = 0;
-                    }
-                }
-            }
-            testGrid.write_Grid("source_location", 2);
-            testGrid.deallocate();
-            //end testing:-----------------------------------------------
-        } // end scalar
-        #endif //SCALAR
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -3272,31 +1899,6 @@ void ninja::discretize(bool scalarTransportSimulation)
                  //     Rx = Ry =  ------------          Rz = ------------
                  //                 2*alphaH^2                 2*alphaV^2
 
-                 /*
-				  * Governing equation for scalar transport:
-				  *
-				  * d    Rx dC   + d   Ry dC  + d   Rz dC  + Bx dC + By dC + Bz dC + H = 0
-				  * -- (-------)   -- (-----)   -- (-----)      --      --      --
-				  * dx    dx       dy   dy      dz    dz        dx      dy      dz
-				  *
-				  * set coefficients for scalar transport
-				  *
-				  * Rx = function of Rz
-				  * Ry = function of Rz
-				  * Rz = calculate from mixing length theory (from u*, height above ground, stability)
-				  * for neutral conditions -->
-				  *
-				  * Rz(z) = lm * du/dz
-				  * lm = 0.4 * z where z is distance to the wall
-				  * Rx = Ry = 2 * Rz
-				  *
-				  * Bx = u-component of wind
-				  * By = v-component of wind
-				  * Bz = w-component of wind
-				  *
-                  * H = source term (mass/volume)
-				  */
-
 
 				 elem.HVJ=0.0;
 
@@ -3306,94 +1908,25 @@ void ninja::discretize(bool scalarTransportSimulation)
 				 alphaV = 0;
 				 #endif
 
-				 #ifdef SCALAR
-				 elem.RZ = 0.0;
-				 elem.RX = 0.0;
-				 elem.RY = 0.0;
-
-				 elem.BX = 0.0;
-				 elem.BY = 0.0;
-				 elem.BZ = 0.0;
-				 #endif
-
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
 					 elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
 
-					 #ifdef SCALAR
-					 if(scalarTransportSimulation == true){ // for scalar transport
-
-					     // calculate H (the source term) for area or multiple point sources (do it all here instead of above)
-
-					     //elem.HVJ = elem.HVJ + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.volumeSource;  //if don't assume source is evenly distributed in cell
-
-                         //diffusion terms for scalar equation; need at quad point, only have these at the nodes, so need to sum to get at quad pt.
-                         elem.RX = elem.RX + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Rx(elem.NPK);  //elem.NPK is the global node number
-                         elem.RY = elem.RY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Ry(elem.NPK);
-                         elem.RZ = elem.RY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*scalar.Rz(elem.NPK);
-
-                         //populate advection terms
-                         elem.BX = elem.BX + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * u(elem.NPK);
-                         elem.BY = elem.BY + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * v(elem.NPK);
-                         elem.BZ = elem.BZ + elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j] * w(elem.NPK);
-
-                         /*cout<<"k (local node), j (quad point)"<<k<<", "<<j<<endl;
-                         cout<<"elem.NPK (global node) = "<<elem.NPK<<endl;
-                         cout<<"elemSFV[...] = "<<elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]<<endl;
-                         cout<<"scalar.RX(elem.NPK), scalar.RY, scalar.RZ = "<<scalar.Rx(elem.NPK)<<", "<<scalar.Ry(elem.NPK)<<", "<<scalar.Rz(elem.NPK)<<endl;
-                         cout<<"elem.RX, elem.RY, elem.RZ = "<<elem.RX<<", "<<elem.RY<<", "<<elem.RZ<<endl;
-                         cout<<"elem.BX, elem.BY, elem.BZ = "<<elem.BX<<", "<<elem.BY<<", "<<elem.BZ<<endl;*/
-
-					 }
-					 if(scalarTransportSimulation == false){ // for wind flow
-					     elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
-					 }
-					 #endif
-                     #ifndef SCALAR
 					 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
-					 #endif
 
 					 #ifdef STABILITY
 					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
 					 //cout<<"alphaV = "<<alphaV<<endl;
-                     #endif
+                                         #endif
 				 }                             //End loop over nodes in the element
 				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
 
 				 //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
 
-				 #ifdef SCALAR //scalar
-				 if(scalarTransportSimulation == true){
-
-				     int elemi, elemj, elemk;
-                     mesh.get_elemIndex(i, elemi, elemj, elemk); // i = elemNum
-				     if(i == scalar.sourceElemNum){ //i = elemNum
-                        elem.HVJ = scalar.volumeSource;  //assuming source is evenly distributed in cell; otherwise calc. at quad pt. (above)
-				     }
-				     else if(elemk == 1 && elemi == 85 && elemj == 70){ //testing
-                        //elem.HVJ = scalar.volumeSource;
-                        //elem.HVJ = 0.0001;
-				     }
-				     else{
-                        //elem.HVJ = 0.0;  //0 if not a source cell
-                        //elem.HVJ = 2.0;
-				     }
-				     elem.DV=elem.DETJ;  //DV is the DV for the volume integration
-				 }
-				 if(scalarTransportSimulation == false){  // for wind flow
-                     elem.RX = 1.0/(2.0*alphaH*alphaH);
-                     elem.RY = 1.0/(2.0*alphaH*alphaH);
-                     elem.RZ = 1.0/(2.0*alphaV*alphaV);
-                     elem.DV=elem.DETJ;  //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-                 }
-				 #endif
-				 #ifndef SCALAR
 				 elem.RX = 1.0/(2.0*alphaH*alphaH);
 				 elem.RY = 1.0/(2.0*alphaH*alphaH);
 				 elem.RZ = 1.0/(2.0*alphaV*alphaV);
 				 elem.DV=elem.DETJ;                      //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-				 #endif
-
 
 				 if(elem.NUMQPTV==27)
 				 {
@@ -3418,40 +1951,9 @@ void ninja::discretize(bool scalarTransportSimulation)
 					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
 					 for(l=0;l<mesh.NNPE;l++)
 					 {
-					     #ifdef SCALAR //scalar
-                         if(scalarTransportSimulation == true){  // for scalar transport
-
-
-                             //modify elem.S for scalar equation
-                             // 3 diffusion terms - 3 advection terms ([K] = [S1] - [S2])
-                             elem.S[k*mesh.NNPE+l] = elem.S[k*mesh.NNPE+l]+
-                                                     elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] +
-                                                     elem.DNDY[k]*elem.RY*elem.DNDY[l] +
-                                                     elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV; //- omit advection for now
-                                                     //(elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*(elem.BX*elem.DNDX[l] +
-                                                      //elem.BY*elem.DNDY[l] +
-                                                      //elem.BZ*elem.DNDZ[l])))*elem.DV;
-
-                             /*cout<<"u(elem.NPK), v, w = "<<u(elem.NPK)<<", "<<v(elem.NPK)<<", "<<w(elem.NPK)<<endl;
-                             cout<<"elem.RX, elem.RY, elem.RZ = "<<elem.RX<<", "<<elem.RY<<", "<<elem.RZ<<endl;
-                             cout<<"elem.DNDX[k], elem.DNDX[l] = "<<elem.DNDX[k]<<", "<<elem.DNDX[l]<<endl;
-                             cout<<"elem.DNDY[k], elem.DNDY[l] = "<<elem.DNDY[k]<<", "<<elem.DNDY[l]<<endl;
-                             cout<<"elem.DNDZ[k], elem.DNDZ[l] = "<<elem.DNDZ[k]<<", "<<elem.DNDZ[l]<<endl;
-                             cout<<"elem.DV = "<<elem.DV<<endl;
-                             cout<<"elem.S[...] = "<<elem.S[k*mesh.NNPE+l]<<endl;*/
-
-                         }
-                         if(scalarTransportSimulation == false){  // for wind flow
-                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-					     }
-                         #endif
-                         #ifndef SCALAR
-                         elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-                         #endif
+                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
 					 }
-
 				 }                            //End loop over nodes in the element
-
 			 }                                  //End loop over quadrature points in the element
 
 
@@ -3485,39 +1987,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 				 {
 					 elem.KNP=mesh.get_global_node(k, i);
 
-					 #ifdef SCALAR
-					 if(scalarTransportSimulation == true){ //storing full matrix
-
-                         pos=-1;   //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-                         l=0;      //l increments through col_ind[] starting from where row_ptr[] says until we find the column number we're looking for
-                         do
-                         {
-                             if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP)   //Check if we're at the correct position
-                                 pos=row_ptr[elem.NPK]+l;    //If so, save that position in pos
-                             l++;
-                         }while(pos<0);
-#pragma omp atomic
-                         SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix
-                     }
-                     if(scalarTransportSimulation == false){
-
-					     if(elem.KNP >= elem.NPK)	//do only if we're on the upper triangular region of SK[]
-					     {
-						     pos=-1;                  //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-						     l=0;                     //l increments through col_ind[] starting from where row_ptr[] says until we find the column number we're looking for
-						     do
-						     {
-							     if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP)   //Check if we're at the correct position
-								     pos=row_ptr[elem.NPK]+l;           //If so, save that position in pos
-							     l++;
-						     }while(pos<0);
-
-#pragma omp atomic
-						     SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix in symmetric storage
-					     }
-				     }
-                     #endif
-                     #ifndef SCALAR
 					 if(elem.KNP >= elem.NPK)	//do only if we're on the upper triangular region of SK[]
 					 {
 						 pos=-1;                  //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
@@ -3532,7 +2001,6 @@ void ninja::discretize(bool scalarTransportSimulation)
 #pragma omp atomic
 						 SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix in symmetric storage
 					 }
-					 #endif
 				 }
 
 			 }                             //End loop over nodes in the element
@@ -3612,69 +2080,6 @@ void ninja::setBoundaryConditions()
 	  }
 
 }
-
-/**
- * @brief Computes the scalar concentration volume field.
- *
- */
-#ifdef SCALAR
-void ninja::computeScalarField()
-{
-    //element elem(&mesh);
-    //for(int i = 0; i < mesh.NUMEL; i++){//Start loop over elements^M
-
-        //elem.node0 = mesh.get_node0(i);  //get the global node number of local node 0 of element i
-
-        //for(int j = 0; j < elem.NUMQPTV; j++){  //Start loop over quadrature points in the element
-
-        //for(int k = 0; k < mesh.NNPE; k++){ // start loop over nodes in element
-        for(int k = 0; k < mesh.NUMNP; k++){ // start loop over nodes in mesh
-
-            //elem.NPK=mesh.get_global_node(k, i);  //NPK is the global node number
-            //concentration(elem.NPK) = PHI[elem.NPK];
-            concentration(k) = PHI[k];
-            //cout<<"elem.NPK = "<<elem.NPK<<endl;
-            //cout<<"PHI = "<<PHI[elem.NPK]<<endl;
-
-        } // end loop over nodes
-        //} // end loop over quad points
-    //} // end loop over elements
-
-    // testing: -------------------------------------------------------------------------------
-
-    cout<<"PHI[0] = "<<PHI[0]<<endl;
-    cout<<"PHI[1] = "<<PHI[1]<<endl;
-    cout<<"PHI[1000] = "<<PHI[1000]<<endl;
-    cout<<"PHI[30634] = "<<PHI[30634]<<endl;
-
-
-    cout<<"C(20,20,1) = "<<concentration(30,20,1)<<endl;
-    cout<<"C(12,13,15) = "<<concentration(12,13,15)<<endl;
-    cout<<"C(12,13,0) = "<<concentration(12,13,0)<<endl;
-
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
-
-    for(int i = 0; i < mesh.nrows; i++){
-        for(int j = 0; j < mesh.ncols; j++){
-            testGrid(i,j) = concentration(i,j,10);
-        }
-    }
-    testGrid.write_Grid("concentration_10", 2);
-
-    std::string outFilename = "c10.png";
-    std::string scalarLegendFilename = "c10_legend";
-    std::string legendTitle = "c10";
-    std::string legendUnits = "(g/m3)";
-    bool writeLegend = FALSE;
-
-    testGrid.replaceNan( -9999.0 );
-    testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
-
-    testGrid.deallocate();
-    //end testing-----------------------------------------------------------------------------
-}
-#endif //SCALAR
 
 /**
  * @brief Computes the u,v,w 3d volume wind field.
@@ -4382,7 +2787,7 @@ void ninja::computeDustEmissions()
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
 
-void ninja::writeOutputFiles(bool scalarTransportSimulation)
+void ninja::writeOutputFiles()
 {
     
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
@@ -4401,23 +2806,9 @@ void ninja::writeOutputFiles(bool scalarTransportSimulation)
 		}
 	}
 
-
-    #ifdef SCALAR
-    if(input.scalarTransportFlag == false){ // deallocate if don't need for a scalar transport simulation
-        u.deallocate();                 // otherwsie, these are deallocated after scalar equations are discretized
-        v.deallocate();
-        w.deallocate();
-    }
-
-    if(scalarTransportSimulation == true){ //if this iteration through write() is for scalar run
-        scalar.deallocate();
-    }
-    #endif
-    #ifndef SCALAR
 	u.deallocate();
 	v.deallocate();
 	w.deallocate();
-	#endif
 
 	#pragma omp parallel sections
 	{
@@ -5170,28 +3561,6 @@ void ninja::set_alphaStability(double stability_)
 }
 #endif //STABILITY
 
-#ifdef SCALAR
-void ninja::set_scalarTransportFlag(bool flag)
-{
-    input.scalarTransportFlag = flag;
-}
-
-void ninja::set_scalarSourceStrength(double strength)
-{
-    input.scalarSourceStrength = strength;
-}
-
-void ninja::set_scalarSourceXcoord(double xCoord)
-{
-    input.scalarSourceXcoord = xCoord;
-}
-
-void ninja::set_scalarSourceYcoord(double yCoord)
-{
-    input.scalarSourceYcoord = yCoord;
-}
-#endif //SCALAR
-
 #ifdef NINJAFOAM
 void ninja::set_NumberOfIterations(int nIterations)
 {
@@ -5242,9 +3611,24 @@ void ninja::set_StlFile(std::string stlFile)
 {
     input.stlFile = stlFile;
 }
-
 #endif
 
+void ninja::set_speedFile(std::string speedFile)
+{
+    input.speedInitGridFilename = speedFile;
+    if(!CPLCheckForFile((char*)speedFile.c_str(), NULL))
+        throw std::runtime_error(std::string("The file ") +
+                speedFile + " does not exist or may be in use by another program.");
+}
+
+void ninja::set_dirFile(std::string dirFile)
+{
+    input.dirInitGridFilename = dirFile;
+    if(!CPLCheckForFile((char*)dirFile.c_str(), NULL))
+        throw std::runtime_error(std::string("The file ") +
+                dirFile + " does not exist or may be in use by another program.");
+   
+}
 
 void ninja::computeSurfPropForCell
     ( long i, long j, double canopyHeight, lengthUnits::eLengthUnits canopyHeightUnits,
