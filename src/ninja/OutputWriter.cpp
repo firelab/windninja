@@ -610,7 +610,7 @@ void OutputWriter::_loadDemAs8Bit()
 
     /*
     ** Allocate and set the tmp DEM file name.  We also use this as a flag to
-    ** see if we need to delete the temp datasource.
+    ** see if we need to delete the temp datasource from disk.
     */
     const char *pszTmp = NULL;
     pszTmp = CPLGenerateTempFilename( NULL );
@@ -638,9 +638,10 @@ void OutputWriter::_loadDemAs8Bit()
     GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
     float *padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
     unsigned char *pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( GDT_Byte ) );
-    double dfMax, dfMin;
-    dfMax = GDALGetRasterMaximum( hBand, NULL );
-    dfMin = GDALGetRasterMinimum( hBand, NULL );
+    double adfMinMax[2];
+    int bSuccess = TRUE;
+    GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+
     for( int i = 0; i < nYSize; i++ )
     {
         eErr = GDALRasterIO( hBand, GF_Read, 0, i, nXSize, 1, padfData, nXSize,
@@ -651,7 +652,15 @@ void OutputWriter::_loadDemAs8Bit()
         }
         for( int j = 0; j < nXSize; j++ )
         {
-            pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
+            /* Figure out what is going on here and document it.  It makes a
+            ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
+            */
+            //double dfMin = GDALGetRasterMinimum( hBand, NULL );
+            //double dfMax = GDALGetRasterMaximum( hBand, NULL );
+            //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
+
+            /* Normal */
+            pabyData[j] = ((padfData[j] - adfMinMax[0]) / (adfMinMax[1] - adfMinMax[0])) * 255;
         }
         eErr = GDALRasterIO( h8bitBand, GF_Write, 0, i, nXSize, 1, pabyData,
                              nXSize, 1, GDT_Byte, 0, 0 );
