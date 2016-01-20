@@ -129,7 +129,7 @@ bool NinjaFoam::simulate_wind()
     
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
@@ -162,7 +162,7 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     startStlConversion = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
@@ -261,13 +261,15 @@ bool NinjaFoam::simulate_wind()
         return true;
     }
 
+    checkCancel();
+
     /*-------------------------------------------------------------------*/
     /* create the mesh                                                   */
     /*-------------------------------------------------------------------*/
 
     #ifdef _OPENMP
     startMesh = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
 
@@ -278,6 +280,8 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
     
+    checkCancel();
+
     /*refine mesh near the ground */
     status = RefineSurfaceLayer();
     if(status != 0){
@@ -306,6 +310,8 @@ bool NinjaFoam::simulate_wind()
         return true;
     }
 
+    checkCancel();
+
     /*-------------------------------------------------------------------*/
     /* Apply initial conditions                                          */
     /*-------------------------------------------------------------------*/
@@ -313,7 +319,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
@@ -322,6 +328,8 @@ bool NinjaFoam::simulate_wind()
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
     }
+
+    checkCancel();
 
     /*-------------------------------------------------------------------*/
     /* Solve for the flow field                                          */
@@ -332,7 +340,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endInit = omp_get_wtime();
     startSolve = omp_get_wtime();
-	#endif
+    #endif
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
@@ -397,6 +405,8 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+
+    checkCancel();
 
     /*-------------------------------------------------------------------*/
     /* Sample at requested output height                                 */
@@ -1487,6 +1497,7 @@ int NinjaFoam::MoveDynamicMesh()
 
         /* Track progress */
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            checkCancel();
             data[sizeof(data)-1] = '\0';
             CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
             s.append(data);
@@ -1983,6 +1994,7 @@ int NinjaFoam::SimpleFoam()
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            checkCancel();
             data[sizeof(data)-1] = '\0';
             s.append(data);
             CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
