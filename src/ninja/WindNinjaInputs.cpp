@@ -152,10 +152,6 @@ WindNinjaInputs::WindNinjaInputs()
     omp_set_dynamic(false);
 #endif //_OPENMP
 
-#ifdef MKL
-    mkl_set_dynamic(false);
-#endif //MKL
-
 }
 
 WindNinjaInputs::~WindNinjaInputs()
@@ -304,9 +300,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   omp_set_dynamic(false);
 #endif //_OPENMP
 
-#ifdef MKL
-  mkl_set_dynamic(false);
-#endif //MKL
 }
 
 /**
@@ -455,10 +448,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       omp_set_nested(false);
       omp_set_dynamic(false);
 #endif //_OPENMP
-
-#ifdef MKL
-      mkl_set_dynamic(false);
-#endif //MKL
 
     }
   return *this;
