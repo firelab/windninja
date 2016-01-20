@@ -212,19 +212,21 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
-    status = SurfaceCheck();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
-        NinjaUnlinkTree( pszTempPath );
-        return NINJA_E_OTHER;
+    if(input.stlFile != "!set"){ //only need surface check if we're using an stl as input
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
+        status = SurfaceCheck();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
+        }
     }
 
     checkCancel();
 
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
-	#endif
+    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
@@ -252,7 +254,7 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     endFoamFileWriting = omp_get_wtime();
-	#endif
+    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 1. Mesh dict files written.");
