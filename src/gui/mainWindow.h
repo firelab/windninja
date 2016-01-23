@@ -202,6 +202,7 @@ class mainWindow : public QMainWindow
   int checkGoogleItem();
   int checkFbItem();
   int checkShapeItem();
+  int checkPdfItem();
   int checkVtkItem();
   int checkSolveItem();
   int checkAllItems();

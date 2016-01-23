@@ -187,6 +187,9 @@ void WindNinjaTree::createOutputItems()
   shapeItem = new QTreeWidgetItem;
   shapeItem->setText(0, tr("Shape Files"));
   shapeItem->setIcon(0, blue);
+  pdfItem = new QTreeWidgetItem;
+  pdfItem->setText(0, tr("Geospatial PDF Files"));
+  pdfItem->setIcon(0, blue);
   vtkItem = new QTreeWidgetItem;
   vtkItem->setText(0, tr("VTK Files"));
   vtkItem->setIcon(0, blue);
@@ -194,6 +197,7 @@ void WindNinjaTree::createOutputItems()
   outputItem->addChild(googleItem);
   outputItem->addChild(fbItem);
   outputItem->addChild(shapeItem);
+  outputItem->addChild(pdfItem);
   outputItem->addChild(vtkItem); 
 
 }
@@ -217,6 +221,7 @@ void WindNinjaTree::createStack()
   google = new googleOutput;
   fb = new fbOutput;
   shape = new shapeOutput;
+  pdf = new pdfOutput(this);
   vtk = new vtkOutput;
   solve = new solvePage;
   
@@ -239,6 +244,7 @@ void WindNinjaTree::createStack()
   stack->addWidget(google);
   stack->addWidget(fb);
   stack->addWidget(shape);
+  stack->addWidget(pdf);
   stack->addWidget(vtk);
   stack->addWidget(solve);
 
@@ -291,6 +297,8 @@ void WindNinjaTree::updateInterface()
     stack->setCurrentWidget(fb);
   else if(item == shapeItem)
     stack->setCurrentWidget(shape);
+  else if(item == pdfItem)
+    stack->setCurrentWidget(pdf);
   else if(item == vtkItem)
     stack->setCurrentWidget(vtk);
   else if(item == solveItem)

@@ -461,6 +461,8 @@ void mainWindow::createConnections()
       this, SLOT(updateOutRes()));
   connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)),
       this, SLOT(updateOutRes()));
+  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
@@ -526,6 +528,8 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
   connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(checkAllItems()));
   connect(tree->vtk->vtkGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
 
@@ -535,6 +539,8 @@ void mainWindow::createConnections()
   connect(tree->fb->fbResSpinBox, SIGNAL(valueChanged(double)),
       this, SLOT(checkAllItems()));
   connect(tree->shape->shapeResSpinBox, SIGNAL(valueChanged(double)),
+      this, SLOT(checkAllItems()));
+  connect(tree->pdf->pdfResSpinBox, SIGNAL(valueChanged(double)),
       this, SLOT(checkAllItems()));
 
   //check the google res, make sure not bad
@@ -1051,6 +1057,11 @@ void mainWindow::updateOutRes()
     {
       tree->shape->shapeResSpinBox->setValue(resolution);
       tree->shape->shapeMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+    }
+  if(tree->pdf->useMeshResCheckBox->isChecked() == true)
+    {
+      tree->pdf->pdfResSpinBox->setValue(resolution);
+      tree->pdf->pdfMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
     }
 }
 
@@ -1592,6 +1603,15 @@ int mainWindow::solve()
     shapeUnits = lengthUnits::meters;
     else
     shapeUnits = lengthUnits::feet;
+    //pdf
+    bool writePdf = tree->pdf->pdfGroupBox->isChecked();
+    double pdfRes = tree->pdf->pdfResSpinBox->value();
+    double pdfLineWidth = tree->pdf->vectorWidthDoubleSpinBox->value();
+    lengthUnits::eLengthUnits pdfUnits;
+    if(tree->pdf->pdfMetersRadioButton->isChecked())
+        pdfUnits = lengthUnits::meters;
+    else
+        pdfUnits = lengthUnits::feet;
 
     bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
 
@@ -1828,6 +1848,9 @@ int mainWindow::solve()
         army->setGoogSpeedScaling(i,googleScale);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
+        army->setPDFOutFlag      (i,true);
+        army->setPDFResolution   (i,pdfRes,pdfUnits);
+        army->setPDFLineWidth    (i,pdfLineWidth);
         army->setAsciiOutFlag    (i,writeFb);    
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  
@@ -2363,13 +2386,15 @@ int mainWindow::checkOutputItem()
       tree->outputItem->setToolTip(0, "Cannot read input file");
       status = red;
     }
-  if(checkGoogleItem() == blue && checkFbItem() == blue && checkShapeItem() == blue && checkVtkItem() == blue)
+  if(checkGoogleItem() == blue && checkFbItem() == blue && checkShapeItem() == blue && checkVtkItem() == blue &&
+     checkPdfItem() == blue)
     {
       tree->outputItem->setIcon(0, tree->cross);
       tree->outputItem->setToolTip(0, "No outputs selected");
       status = red;
     }
-  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber)
+  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber &&
+     checkPdfItem() == amber)
     {
       if(checkGoogleItem() == amber)
     {
@@ -2387,6 +2412,18 @@ int mainWindow::checkOutputItem()
     {
       tree->outputItem->setIcon(0, tree->check);
       tree->outputItem->setToolTip(0, "Check shape file ouput");
+      status = amber;
+    }
+    if(checkPdfItem() == amber)
+    {
+      tree->outputItem->setIcon(0, tree->check);
+      tree->outputItem->setToolTip(0, "Check pdf file ouput");
+      status = amber;
+    }
+    if(checkPdfItem() == amber)
+    {
+      tree->outputItem->setIcon(0, tree->check);
+      tree->outputItem->setToolTip(0, "Check pdf file ouput");
       status = amber;
     }
       if(checkVtkItem() == amber)
@@ -2531,6 +2568,50 @@ int mainWindow::checkShapeItem()
     {
       tree->shapeItem->setIcon(0, tree->cross);
       tree->shapeItem->setToolTip(0, "Cannot read input file") ;
+      status = red;
+    }
+    }
+  return status;
+}
+
+int mainWindow::checkPdfItem()
+{
+  eInputStatus status = red;
+  if(!tree->pdf->pdfGroupBox->isChecked())
+    {
+      tree->pdfItem->setIcon(0, tree->blue);
+      tree->pdfItem->setToolTip(0, "No output");
+      status = blue;
+    }
+  else
+    {
+      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
+    {
+      /*
+      if((int)meshCellSize > tree->pdf->pdfResSpinBox->value())
+        {
+          tree->pdfItem->setIcon(0, tree->check);
+          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the computational mesh");
+          status = amber;
+        }
+      */
+      if((int)GDALCellSize > tree->pdf->pdfResSpinBox->value())
+        {
+          tree->pdfItem->setIcon(0, tree->caution);
+          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
+          status = amber;
+        }
+      else
+        {
+          tree->pdfItem->setIcon(0, tree->check);
+          tree->pdfItem->setToolTip(0, "Valid");
+          status = green;
+        }
+    }
+      else
+    {
+      tree->pdfItem->setIcon(0, tree->cross);
+      tree->pdfItem->setToolTip(0, "Cannot read input file") ;
       status = red;
     }
     }
@@ -2688,6 +2769,13 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       else
     tree->shape->shapeGroupBox->setChecked(true);
     }
+  else if(item == tree->pdfItem)
+  {
+      if(tree->pdf->pdfGroupBox->isChecked())
+        tree->pdf->pdfGroupBox->setChecked(false);
+      else
+        tree->pdf->pdfGroupBox->setChecked(true);
+  }
   else if(item == tree->vtkItem)
     {
       if(tree->vtk->vtkGroupBox->isChecked())
