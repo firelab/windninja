@@ -91,8 +91,7 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
-    /* if pszTmpColorRelief == NULL, CPLStrdup returns "" */
-    pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
+    copyLocalData( A );
 }
 
 /**
@@ -120,7 +119,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
     {
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
-        pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
+        copyLocalData( A );
     }
     return *this;
 }
@@ -1670,6 +1669,12 @@ void ninjaArmy::initLocalData(void)
     pszTmp = CPLGenerateTempFilename( NULL );
     pszTmp = CPLFormFilename( NULL, pszTmp, ".tif" );
     pszTmpColorRelief = CPLStrdup( pszTmp );
+}
+
+void ninjaArmy::copyLocalData( const ninjaArmy &A )
+{
+    CPLFree( (void*)pszTmpColorRelief );
+    pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
 }
 
 void ninjaArmy::destoryLocalData(void)

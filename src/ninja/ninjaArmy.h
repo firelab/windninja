@@ -1146,6 +1146,7 @@ protected:
     */
     void initLocalData(void);
     void destoryLocalData(void);
+    void copyLocalData( const ninjaArmy &A );
 
 private:
     char *pszTmpColorRelief;
