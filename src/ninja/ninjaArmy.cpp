@@ -91,6 +91,8 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
+    /* if pszTmpColorRelief == NULL, CPLStrdup returns "" */
+    pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
 }
 
 /**
@@ -118,6 +120,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
     {
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
+        pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
     }
     return *this;
 }
