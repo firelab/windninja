@@ -1671,11 +1671,13 @@ void ninjaArmy::initLocalData(void)
 
 void ninjaArmy::destoryLocalData(void)
 {
-    if( GDALOpen( pszTmpColorRelief, GA_ReadOnly ) != NULL )
+    GDALDatasetH hDS = GDALOpen( pszTmpColorRelief, GA_ReadOnly );
+    if( hDS != NULL )
     {
         GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
         assert( hDrv );
         GDALDeleteDataset( hDrv, pszTmpColorRelief );
     }
+    GDALClose( hDS );
     CPLFree( (void*)pszTmpColorRelief );
 }
