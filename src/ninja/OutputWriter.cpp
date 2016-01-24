@@ -584,101 +584,6 @@ OutputWriter::_createOGRFile()
 
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
 
-/*
-** We can only use 8-bit based DEM files as a background in PDF files.  Open our
-** DEM, it is isn't 8 bit, create a temporary dataset, and scale the DEM data to
-** 8 bit. No color table is written, so we'll assume grayscale.
-**
-** Note that we write to a temp file, then set the demFile member to the
-** tempfile name.
-*/
-
-void OutputWriter::_loadDemAs8Bit()
-{
-    GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
-    GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
-    if( hBand == NULL )
-    {
-        GDALClose( hDS );
-        //throw
-    }
-    if( GDALGetRasterDataType( hBand ) == GDT_Byte )
-    {
-        GDALClose( hDS );
-        return;
-    }
-
-    /*
-    ** Allocate and set the tmp DEM file name.  We also use this as a flag to
-    ** see if we need to delete the temp datasource from disk.
-    */
-    const char *pszTmp = NULL;
-    pszTmp = CPLGenerateTempFilename( NULL );
-    pszTmp = CPLFormFilename( NULL, pszTmp, ".tif" );
-    pszTmpDemFile = CPLStrdup( pszTmp );
-    CPLDebug( "NINJA", "Using %s for pdf temp DEM dataset", pszTmpDemFile );
-
-    // Use tiff by default
-    GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
-    assert( hDrv );
-
-    int nXSize = GDALGetRasterXSize( hDS );
-    int nYSize = GDALGetRasterYSize( hDS );
-
-    GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpDemFile, nXSize, nYSize, 1,
-                                     GDT_Byte, NULL );
-    CPLErr eErr = CE_None;
-    double adfGeoTransform[6];
-    eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
-    assert( eErr == CE_None );
-    GDALSetGeoTransform( h8bit, adfGeoTransform );
-
-    GDALSetProjection( h8bit, GDALGetProjectionRef( hDS ) );
-
-    GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
-    float *padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
-    unsigned char *pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( GDT_Byte ) );
-    double adfMinMax[2];
-    int bSuccess = TRUE;
-    GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
-
-    for( int i = 0; i < nYSize; i++ )
-    {
-        eErr = GDALRasterIO( hBand, GF_Read, 0, i, nXSize, 1, padfData, nXSize,
-                             1, GDT_Float32, 0, 0 );
-        if( eErr != CE_None )
-        {
-            assert( FALSE );
-        }
-        for( int j = 0; j < nXSize; j++ )
-        {
-            /*
-            ** Figure out what is going on here and document it.  It makes a
-            ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
-            */
-            //double dfMin = GDALGetRasterMinimum( hBand, NULL );
-            //double dfMax = GDALGetRasterMaximum( hBand, NULL );
-            //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
-
-            /* Normal */
-            pabyData[j] = ((padfData[j] - adfMinMax[0]) / (adfMinMax[1] - adfMinMax[0])) * 255;
-        }
-        eErr = GDALRasterIO( h8bitBand, GF_Write, 0, i, nXSize, 1, pabyData,
-                             nXSize, 1, GDT_Byte, 0, 0 );
-        if( eErr != CE_None )
-        {
-            assert( FALSE );
-        }
-    }
-    CPLFree( (void*)padfData );
-    CPLFree( (void*)pabyData );
-    GDALFlushCache( h8bit );
-    GDALClose( hDS );
-    GDALClose( h8bit );
-    /* Make sure we use the temp file for the background */
-    demFile = std::string( pszTmpDemFile );
-}
-
 /* --------------------------------------------------------------------------*/
 /** 
  * @brief Creates a new PDF file from the base DEM and simulation output
@@ -696,7 +601,6 @@ void OutputWriter::_loadDemAs8Bit()
 OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
-    _loadDemAs8Bit();
     _createOGRFile();
     _createLegend();
     _openSrcDataSet();

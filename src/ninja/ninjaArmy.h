@@ -1137,8 +1137,18 @@ protected:
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
-    
-    
+
+    /*
+    ** This function initializes various data for the lifetime of the
+    ** ninjaArmy.  This should be used for various tasks, such as downloading
+    ** the color relief for the background of the PDF file.  It is the same for
+    ** all runs, is the same for all runs.
+    */
+    void initLocalData(void);
+    void destoryLocalData(void);
+
+private:
+    char *pszTmpColorRelief;
 };
 
 #endif /* NINJA_ARMY_H */

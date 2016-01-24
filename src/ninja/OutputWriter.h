@@ -125,8 +125,6 @@ class OutputWriter
         bool _createTmpFiles();
         void _deleteTmpFiles();
 
-        void _loadDemAs8Bit();
-
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;

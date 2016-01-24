@@ -351,7 +351,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
-                ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
                 ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
@@ -1429,14 +1428,6 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["write_pdf_output"].as<bool>())
             {
                 windsim.setPDFOutFlag( i_, true );
-                //option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
-                if( !vm.count("pdf_dem_filename") )
-                {
-                    vm.insert(std::make_pair("pdf_dem_filename",
-                              po::variable_value(vm["elevation_file"])));
-                    po::notify(vm);
-                }
-                windsim.setPDFDEM( i_, vm["pdf_dem_filename"].as<std::string>());
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
