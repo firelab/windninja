@@ -1628,9 +1628,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     CopyFile(pszInput, pszOutput, "$zout$", CPLSPrintf("%.2f", (bbox[5] - 10)));
     CopyFile(pszInput, pszOutput, "$nearDistance$", CPLSPrintf("%.2f", finalFirstCellHeight)); //refines cells within this distance from the ground
     
-    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
-    
     
     /*----------------------------------------------*/
     /*  first refine in all 3 directions            */
@@ -1649,7 +1647,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     CPLDebug("NINJAFOAM", "before refinement, cellCount = %d", cellCount);
     CPLDebug("NINJAFOAM", "target number of cells = %d", input.meshCount);
     
-    while(finalFirstCellHeight > 50.0 && cellCount < input.meshCount){ //cutoff arbitrarily set to 50 m for now
+    while(cellCount < input.meshCount){ 
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1674,50 +1672,10 @@ int NinjaFoam::RefineSurfaceLayer(){
                 CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
         
         CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
-    
-    /*----------------------------------------------*/
-    /*  refine in z-direction only                  */
-    /*----------------------------------------------*/
-    
-    //rewrite refineMeshDict
-    pszInput = CPLFormFilename(pszTempPath, "system/refineMeshDict_z", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/refineMeshDict", "");
-    CopyFile(pszInput, pszOutput);
-    
-    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    
-    while(finalFirstCellHeight > 10.0 && cellCount < input.meshCount){ //arbitrarily set to 10 m for now
-        nRet = TopoSet();
-        if(nRet != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
-            return nRet;
-        }
-        nRet = RefineMesh();
-        if(nRet != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineMesh().");
-            return nRet;
-            
-        }
-        CheckMesh(); //update cellCount
-        
-        //update time, near-wall cell height, BC, topoSetDict file
-        latestTime += 1;
-        oldFirstCellHeight = finalFirstCellHeight;
-        finalFirstCellHeight /= 2.0;
-        
-        UpdateDictFiles();
-        
-        CopyFile(pszInput, pszOutput, 
-                CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
-                CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
-            
-        CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
-    }
-    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
