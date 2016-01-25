@@ -1631,7 +1631,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
     
     /*----------------------------------------------*/
-    /*  first refine in all 3 directions            */
+    /*  refine in all 3 directions                  */
     /*----------------------------------------------*/
     
     //write refineMeshDict for 3-D
@@ -1647,6 +1647,8 @@ int NinjaFoam::RefineSurfaceLayer(){
     CPLDebug("NINJAFOAM", "before refinement, cellCount = %d", cellCount);
     CPLDebug("NINJAFOAM", "target number of cells = %d", input.meshCount);
     
+    double percentDone = 0.0;
+
     while(cellCount < input.meshCount){ 
         nRet = TopoSet();
         if(nRet != 0){
@@ -1673,7 +1675,11 @@ int NinjaFoam::RefineSurfaceLayer(){
         
         CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
 
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
+        percentDone = 100.0 - double(input.meshCount - cellCount) / double(input.meshCount) * 100.0;
+
+        if(percentDone < 100.0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) %.0f%% complete...", percentDone);
+        }
     }
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
