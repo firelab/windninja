@@ -308,6 +308,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         /* If we fail, copy the dem into the file as an 8 bit GeoTiff */
         if( retval != SURF_FETCH_E_NONE )
         {
+            CPLDebug( "NINJA", "Failed to download relief, creating hillshade" );
             GDALDatasetH hDS = NULL;
             GDALRasterBandH hBand = NULL;
             GDALDriverH hDrv = NULL;
@@ -317,6 +318,8 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             hDS = GDALOpen( ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly );
             assert( hDS );
+            hBand = GDALGetRasterBand( hDS, 1 );
+            assert( hBand );
 
             int nXSize = GDALGetRasterXSize( hDS );
             int nYSize = GDALGetRasterYSize( hDS );
@@ -332,8 +335,10 @@ bool ninjaArmy::startRuns(int numProcessors)
             GDALSetProjection( h8bit, GDALGetProjectionRef( hDS ) );
 
             GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
-            float *padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
-            unsigned char *pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( GDT_Byte ) );
+            float *padfData = NULL;
+            padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
+            unsigned char *pabyData = NULL;
+            pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( unsigned char* ) );
             double adfMinMax[2];
             int bSuccess = TRUE;
             GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
@@ -1679,6 +1684,7 @@ void ninjaArmy::copyLocalData( const ninjaArmy &A )
 
 void ninjaArmy::destoryLocalData(void)
 {
+    CPLPushErrorHandler( CPLQuietErrorHandler );
     GDALDatasetH hDS = GDALOpen( pszTmpColorRelief, GA_ReadOnly );
     if( hDS != NULL )
     {
@@ -1688,4 +1694,5 @@ void ninjaArmy::destoryLocalData(void)
     }
     GDALClose( hDS );
     CPLFree( (void*)pszTmpColorRelief );
+    CPLPopErrorHandler();
 }
