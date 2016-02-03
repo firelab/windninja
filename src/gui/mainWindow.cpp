@@ -1848,7 +1848,7 @@ int mainWindow::solve()
         army->setGoogSpeedScaling(i,googleScale);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
-        army->setPDFOutFlag      (i,true);
+        army->setPDFOutFlag      (i,writePdf);
         army->setPDFResolution   (i,pdfRes,pdfUnits);
         army->setPDFLineWidth    (i,pdfLineWidth);
         army->setAsciiOutFlag    (i,writeFb);    
