@@ -384,10 +384,10 @@ bool OutputWriter::_createLegend()
 
 	int arrowLength = 40;	//pixels;
 	int arrowHeadLength = 10; // pixels;
-	int textHeight = 12;	//pixels- 10 for maximum speed of "999.99 - 555.55";
-							//12 for normal double digits
+	int textHeight = 10;	//pixels- 8 for maximum speed of "999.99 - 555.55";
+							//10 for normal double digits
 	if(split_vals[NCOLORS-1] >= 100)
-		textHeight = 10;
+		textHeight = 8;
 	int titleTextHeight = int(1.2 * textHeight);
 	int titleX, titleY;
 
