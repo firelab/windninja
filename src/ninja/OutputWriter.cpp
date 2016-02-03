@@ -605,7 +605,7 @@ OutputWriter::_writePDF (std::string outputfn)
     _createLegend();
     _openSrcDataSet();
 
-    std::string tf_logo_path = FindDataPath( "tf-logo.png" );
+    std::string tf_logo_path = FindDataPath( "topofire_logo.png" );
     unsigned int out_x_size = GDALGetRasterXSize( hSrcDS );
     unsigned int out_y_size = GDALGetRasterYSize( hSrcDS );
     hDriver = GDALGetDriverByName( "PDF" );
@@ -618,9 +618,28 @@ OutputWriter::_writePDF (std::string outputfn)
     const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
     std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile, 
                                              0, out_y_size-LGND_HEIGHT, 1.0f );
-    std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
-    std::string extra_imgs     = extra_img_lgnd + "," + extra_img_logo;
+    /*
+    ** This sucks.  It isn't a very good check.  Relief files will be rgb, dem
+    ** generated will be single band.
+    */
+    int bUseLogo = FALSE;
+    { /* Scoped on purpose */
+        GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
+        assert( hDS );
+        int nBands = GDALGetRasterCount( hDS );
+        if( nBands > 1 )
+        {
+            bUseLogo = TRUE;
+        }
+        GDALClose( hDS );
+    } /* End scoped */
 
+    std::string extra_imgs = extra_img_lgnd;
+    if( bUseLogo )
+    {
+        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
+        extra_imgs = extra_imgs + "," + extra_img_logo;
+    }
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
