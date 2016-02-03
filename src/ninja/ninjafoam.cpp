@@ -129,7 +129,7 @@ bool NinjaFoam::simulate_wind()
     
     #ifdef _OPENMP
     startFoamFileWriting = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
@@ -162,7 +162,7 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     startStlConversion = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
@@ -212,19 +212,21 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
-    status = SurfaceCheck();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
-        NinjaUnlinkTree( pszTempPath );
-        return NINJA_E_OTHER;
+    if(input.stlFile != "!set"){ //only need surface check if we're using an stl as input
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
+        status = SurfaceCheck();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
+            NinjaUnlinkTree( pszTempPath );
+            return NINJA_E_OTHER;
+        }
     }
 
     checkCancel();
 
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
-	#endif
+    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
@@ -252,12 +254,14 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     endFoamFileWriting = omp_get_wtime();
-	#endif
+    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 1. Mesh dict files written.");
         return true;
     }
+
+    checkCancel();
 
     /*-------------------------------------------------------------------*/
     /* create the mesh                                                   */
@@ -265,7 +269,7 @@ bool NinjaFoam::simulate_wind()
 
     #ifdef _OPENMP
     startMesh = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
 
@@ -276,6 +280,8 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
     
+    checkCancel();
+
     /*refine mesh near the ground */
     status = RefineSurfaceLayer();
     if(status != 0){
@@ -304,6 +310,8 @@ bool NinjaFoam::simulate_wind()
         return true;
     }
 
+    checkCancel();
+
     /*-------------------------------------------------------------------*/
     /* Apply initial conditions                                          */
     /*-------------------------------------------------------------------*/
@@ -311,7 +319,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
-	#endif
+    #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
     status = ApplyInit();
@@ -320,6 +328,8 @@ bool NinjaFoam::simulate_wind()
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
     }
+
+    checkCancel();
 
     /*-------------------------------------------------------------------*/
     /* Solve for the flow field                                          */
@@ -330,7 +340,7 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endInit = omp_get_wtime();
     startSolve = omp_get_wtime();
-	#endif
+    #endif
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
@@ -395,6 +405,8 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+
+    checkCancel();
 
     /*-------------------------------------------------------------------*/
     /* Sample at requested output height                                 */
@@ -1485,6 +1497,7 @@ int NinjaFoam::MoveDynamicMesh()
 
         /* Track progress */
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            checkCancel();
             data[sizeof(data)-1] = '\0';
             CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
             s.append(data);
@@ -1615,12 +1628,10 @@ int NinjaFoam::RefineSurfaceLayer(){
     CopyFile(pszInput, pszOutput, "$zout$", CPLSPrintf("%.2f", (bbox[5] - 10)));
     CopyFile(pszInput, pszOutput, "$nearDistance$", CPLSPrintf("%.2f", finalFirstCellHeight)); //refines cells within this distance from the ground
     
-    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refining surface cells in mesh...");
     
-    
     /*----------------------------------------------*/
-    /*  first refine in all 3 directions            */
+    /*  refine in all 3 directions                  */
     /*----------------------------------------------*/
     
     //write refineMeshDict for 3-D
@@ -1636,7 +1647,9 @@ int NinjaFoam::RefineSurfaceLayer(){
     CPLDebug("NINJAFOAM", "before refinement, cellCount = %d", cellCount);
     CPLDebug("NINJAFOAM", "target number of cells = %d", input.meshCount);
     
-    while(finalFirstCellHeight > 50.0 && cellCount < input.meshCount){ //cutoff arbitrarily set to 50 m for now
+    double percentDone = 0.0;
+
+    while(cellCount < input.meshCount){ 
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1661,50 +1674,14 @@ int NinjaFoam::RefineSurfaceLayer(){
                 CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
         
         CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
+
+        percentDone = 100.0 - double(input.meshCount - cellCount) / double(input.meshCount) * 100.0;
+
+        if(percentDone < 100.0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) %.0f%% complete...", percentDone);
+        }
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 50%% complete...");
-    
-    /*----------------------------------------------*/
-    /*  refine in z-direction only                  */
-    /*----------------------------------------------*/
-    
-    //rewrite refineMeshDict
-    pszInput = CPLFormFilename(pszTempPath, "system/refineMeshDict_z", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/refineMeshDict", "");
-    CopyFile(pszInput, pszOutput);
-    
-    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    
-    while(finalFirstCellHeight > 10.0 && cellCount < input.meshCount){ //arbitrarily set to 10 m for now
-        nRet = TopoSet();
-        if(nRet != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
-            return nRet;
-        }
-        nRet = RefineMesh();
-        if(nRet != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineMesh().");
-            return nRet;
-            
-        }
-        CheckMesh(); //update cellCount
-        
-        //update time, near-wall cell height, BC, topoSetDict file
-        latestTime += 1;
-        oldFirstCellHeight = finalFirstCellHeight;
-        finalFirstCellHeight /= 2.0;
-        
-        UpdateDictFiles();
-        
-        CopyFile(pszInput, pszOutput, 
-                CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
-                CPLSPrintf("nearDistance    %.2f", finalFirstCellHeight));
-            
-        CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
-    }
-    
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 99%% complete...");
     
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
@@ -1981,6 +1958,7 @@ int NinjaFoam::SimpleFoam()
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            checkCancel();
             data[sizeof(data)-1] = '\0';
             s.append(data);
             CPLDebug("NINJAFOAM", "simpleFoam: %s", data);

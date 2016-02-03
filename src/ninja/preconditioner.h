@@ -40,10 +40,6 @@
 
 #include "ninjaException.h"
 
-#ifdef MKL
-#include "mkl.h"
-#include "mkl_spblas.h"
-#endif //MKL
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -83,11 +79,8 @@ private:
 	char U_transa;	//solve using regular matrix (not transpose) y := alpha*inv(A)*x
 	char U_matdescra[6];
 
-	#ifndef MKL
 	void mkl_dcsrsv(char *transa, int *m, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *y);
 	void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
-	#endif //MKL
-
 };
 
 #endif	//PRECONDITIONER_H

@@ -58,12 +58,7 @@
 #include <omp.h>
 #endif
 
-#ifdef MKL
-#include "mkl.h"
-#include "mkl_spblas.h"
-#endif //MKL
 //#include "taucsaddon.h"
-
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -422,7 +417,6 @@ private:
     /*-----------------------------------------------------------------------------
      *  MKL Specific Functions
      *-----------------------------------------------------------------------------*/
-#ifndef MKL
     void cblas_dcopy(const int N, const double *X, const int incX,
                                         double *Y, const int incY);
 
@@ -440,8 +434,6 @@ private:
 
     void cblas_dscal(const int N, const double alpha, double *X, const int incX);
     void mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
-
-#endif //MKL
 
     /*-----------------------------------------------------------------------------
      *  End MKL Section

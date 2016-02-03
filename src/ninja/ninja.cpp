@@ -300,14 +300,6 @@ bool ninja::simulate_wind()
 		startTotal = omp_get_wtime();
 	#endif
 
-	#ifdef NINJA_DEBUG
-		#ifdef MKL
-		input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals used...");
-		#else
-		input.Com->ninjaCom(ninjaComClass::ninjaDebug, "MKL computational kernals not available...");
-		#endif //MKL
-	#endif	//NINJA_DEBUG
-
 	 //taucs_double *SK;
 
 /*  ----------------------------------------*/
@@ -486,15 +478,11 @@ do
 
 		checkCancel();
 
-		 #ifdef MKL
-		 MKL_free(SK);
-		 #else
 		 if(SK)
 		 {
 			delete[] SK;
 			SK=NULL;
 		 }
-		 #endif
 
 		 if(col_ind)
 		 {
@@ -1115,7 +1103,6 @@ bool ninja::solveMinres(double *A, double *b, double *x, int *row_ptr, int *col_
 
 }
 
-#ifndef MKL
 /**@brief Performs the calculation X = alpha * X.
  * X is an N-element vector and alpha is a scalar.
  * A limited version of the BLAS function dscal().
@@ -1136,10 +1123,7 @@ void ninja::cblas_dscal(const int N, const double alpha, double *X, const int in
          ix    += incX;
      }
 }
-#endif	//MKL
 
-
-#ifndef MKL
 /**Copies values from the X vector to the Y vector.
  * A limited version of the BLAS function dcopy().
  * @param N Size of vectors.
@@ -1154,9 +1138,7 @@ void ninja::cblas_dcopy(const int N, const double *X, const int incX, double *Y,
 	for(i=0; i<N; i++)
 		Y[i] = X[i];
 }
-#endif	//MKL
 
-#ifndef MKL
 /**Performs the dot product X*Y.
  * A limited version of the BLAS function ddot().
  * @param N Size of vectors.
@@ -1177,9 +1159,7 @@ double ninja::cblas_ddot(const int N, const double *X, const int incX, const dou
 
 	return val;
 }
-#endif	//MKL
 
-#ifndef MKL
 /**Performs the calculation Y = Y + alpha * X.
  * A limited version of the BLAS function daxpy().
  * @param N Size of vectors.
@@ -1197,9 +1177,7 @@ void ninja::cblas_daxpy(const int N, const double alpha, const double *X, const 
 	for(i=0; i<N; i++)
 		Y[i] += alpha*X[i];
 }
-#endif	//MKL
 
-#ifndef MKL
 /**Computes the 2-norm of X.
  * A limited version of the BLAS function dnrm2().
  * @param N Size of X.
@@ -1219,9 +1197,7 @@ double ninja::cblas_dnrm2(const int N, const double *X, const int incX)
 
 	return val;
 }
-#endif	//MKL
 
-#ifndef MKL
 /**
  * @brief Computes the vector-matrix product A*x=y.
  *
@@ -1288,9 +1264,7 @@ void ninja::mkl_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdes
         }
     }
 }
-#endif
 
-#ifndef MKL
 /**
  * @brief Computes the vector-matrix product A^T*x=y.
  *
@@ -1360,7 +1334,6 @@ void ninja::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *
     if(temp)
         delete[] temp;
 }
-#endif
 
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
@@ -1564,13 +1537,8 @@ void ninja::discretize()
 
      NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	//this is because we will only store the upper half of the SK matrix since it's symmetric
 
-	 #ifdef MKL
-	 SK = (double*)MKL_malloc(NZND*sizeof(double),16);
-	 #else
-
 	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
 	 //SK = new taucs_double[NZND];
-	 #endif
 
 	 col_ind=new int[NZND];      //This holds the global column number of the corresponding element in the CRS storage
 	 row_ptr=new int[mesh.NUMNP+1];     //This holds the element number in the SK array (CRS) of the first non-zero entry for the global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how many non-zero elements are in the last node)
@@ -4395,17 +4363,11 @@ void ninja::set_numberCPUs(int CPUs)
             //omp_set_nested(false);
             //omp_set_dynamic(true);
             omp_set_num_threads(1);
-            #ifdef MKL
-            mkl_set_num_threads(1);
-            #endif //MKL
             //ninjaCom(ninjaComClass::ninjaDebug, "IN OMP PARALLEL REGION AND SHOULDN'T BE!!!!");
         }else{
             //omp_set_nested(true);
             //omp_set_dynamic(true);
             omp_set_num_threads(numberCPUs);
-            //#ifdef MKL
-            //mkl_set_num_threads(numberCPUs);
-            //#endif //MKL
             //ninjaCom(ninjaComClass::ninjaDebug, "Max number of threads = %d\nDynamic = %d\nNested = %d", omp_get_max_threads(), omp_get_dynamic(), omp_get_nested());
         }
     */
