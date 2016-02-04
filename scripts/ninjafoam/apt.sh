@@ -6,3 +6,4 @@
 # Prerequesites: none
 
 sudo apt-get install g++-mingw-w64-x86-64 p7zip-full
+sudo apt-get install p7zip-full

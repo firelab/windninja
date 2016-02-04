@@ -1,12 +1,12 @@
 #!/bin/bash
 
 cd OpenFOAM-2.2.x
-git checkout 8a983dba63b246772c69ed0fa9cc3b3e33a10f92
-wget http://www.symscape.com/files/articles/openfoam22x-windows/v3-mingw-openfoam-2-2-x.patch.zip
-unzip v3-mingw-openfoam-2-2-x.patch.zip
-patch -p0 < v3-mingw-openfoam-2-2-x.patch
-rm v3-mingw-openfoam-2-2-x.patch*
-# Fix paths...
+#git checkout 8a983dba63b246772c69ed0fa9cc3b3e33a10f92
+#wget http://www.symscape.com/files/articles/openfoam22x-windows/v3-mingw-openfoam-2-2-x.patch.zip
+#unzip v3-mingw-openfoam-2-2-x.patch.zip
+#patch -p0 < v3-mingw-openfoam-2-2-x.patch
+#rm v3-mingw-openfoam-2-2-x.patch*
+git checkout patched
 export FOAM_INST_DIR="$HOME/src/openfoam/mingw";
 source $FOAM_INST_DIR/OpenFOAM-2.2.x/etc/bashrc \
        WM_OSTYPE=MSwindows \
