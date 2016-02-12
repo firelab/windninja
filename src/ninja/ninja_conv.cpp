@@ -150,9 +150,9 @@ std::string FindDataPath(std::string file)
 ** Manually define it here if that's the case.  It is used in LandfireClient
 ** and NomadsWxModel.
 */
-#ifdef WITH_NOMADS_SUPPORT
-#ifdef USE_MANUAL_VSIREAD_DIR_RECURSIVE
-char **VSIReadDirRecursive( const char *pszPathIn )
+//#ifdef WITH_NOMADS_SUPPORT
+//#ifdef USE_MANUAL_VSIREAD_DIR_RECURSIVE
+char **NinjaVSIReadDirRecursive( const char *pszPathIn )
 {
     CPLStringList oFiles = NULL;
     char **papszFiles = NULL;
@@ -179,6 +179,10 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
         for ( ; i < nCount; i++ )
         {
+			if( EQUAL( ".", papszFiles[i] ) || EQUAL( "..", papszFiles[i] ) )
+			{
+				continue;
+			}
             // build complete file name for stat
             osTemp1.clear();
             osTemp1.append( pszPath );
@@ -269,8 +273,8 @@ char **VSIReadDirRecursive( const char *pszPathIn )
 
     return oFiles.StealList();
 }
-#endif /* USE_MANUAL_VSIREAD_DIR_RECURSIVE */
-#endif /* WITH_NOMADS_SUPPORT */
+//#endif /* USE_MANUAL_VSIREAD_DIR_RECURSIVE */
+//#endif /* WITH_NOMADS_SUPPORT */
 
 static int NinjaUnlinkTreeRecurse( const char *pszPath )
 {
