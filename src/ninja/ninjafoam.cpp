@@ -723,7 +723,8 @@ int NinjaFoam::WriteFoamFiles()
     //write temporary OpenFOAM directories
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
-    papszFileList = VSIReadDirRecursive( pszArchive );
+    //papszFileList = VSIReadDirRecursive( pszArchive );
+    papszFileList = NinjaVSIReadDirRecursive( pszArchive );
     for(int i = 0; i < CSLCount( papszFileList ); i++){
         pszFilename = CPLGetFilename(papszFileList[i]);
         osFullPath = papszFileList[i];
@@ -1756,12 +1757,9 @@ int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
 
-    char* currentDir = CPLGetCurrentDir();
-    
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-                                    CPLFormFilename(currentDir, pszTempPath, ""),
-                                    //pszTempPath,  
+                                    pszTempPath,  
                                     NULL };
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
