@@ -1756,10 +1756,14 @@ int NinjaFoam::RefineMesh()
 int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
-
+    char* currentDir = CPLGetCurrentDir();
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-                                    pszTempPath,  
+#ifdef WIN32
+                                    pszTempPath,
+#else
+                                    CPLFormFilename(currentDir, pszTempPath, ""),
+#endif
                                     NULL };
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
