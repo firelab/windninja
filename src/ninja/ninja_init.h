@@ -37,6 +37,8 @@
 #include "cpl_multiproc.h"
 #include "cpl_http.h"
 
+#include <stdlib.h>
+
 int NinjaInitialize();
 
 #endif /* NINJA_INIT_H_ */
