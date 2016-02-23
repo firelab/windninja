@@ -123,6 +123,7 @@ private:
     double finalFirstCellHeight; //final approx height of near-ground cell after refinement
     int latestTime; //latest time directory
     int cellCount; //total cell count in the mesh 
+    int simpleFoamWriteInterval; //set to last time directory
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
@@ -145,6 +146,7 @@ private:
     int Sample();
     int ReadStl();
     void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateSimpleFoamWriteInterval();
 
     /* GDAL/OGR output */
     const char *pszVrtMem;

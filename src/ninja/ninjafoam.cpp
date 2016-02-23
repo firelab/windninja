@@ -49,6 +49,7 @@ NinjaFoam::NinjaFoam() : ninja()
     finalFirstCellHeight = -1.0;
     latestTime = 0;
     cellCount = 0; 
+    simpleFoamWriteInterval = 1000; //initial value in controlDict_simpleFoam
 }
 
 /**
@@ -369,6 +370,10 @@ bool NinjaFoam::simulate_wind()
             }
             latestTime -= 1;
             CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+
+            /* update simpleFoam controlDict writeInterval */
+            UpdateSimpleFoamWriteInterval();
+
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
             status = ApplyInit();
             if(status != 0){
@@ -1537,11 +1542,6 @@ int NinjaFoam::MoveDynamicMesh()
             //do something
         }
 
-        //re-write controlDict for flow
-        pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
-        pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
-        CopyFile(pszInput, pszOutput);
-
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
         nRet = ReconstructPar();
         if(nRet != 0){
@@ -1589,11 +1589,6 @@ int NinjaFoam::MoveDynamicMesh()
         if(nRet != 0){
             //do something
         }
-
-        //re-write controlDict for flow solution
-        pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
-        pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
-        CopyFile(pszInput, pszOutput);
     }
     
     // write moveDynamicMesh stdout to a log file 
@@ -1603,12 +1598,18 @@ int NinjaFoam::MoveDynamicMesh()
     VSIFWriteL(d, nSize, 1, fout);
     VSIFCloseL(fout);
     
+    //re-write controlDict for flow
+    pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
+    pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    CopyFile(pszInput, pszOutput); 
+    
     //update dict files
     latestTime = 50;
     finalFirstCellHeight = initialFirstCellHeight;
     oldFirstCellHeight = finalFirstCellHeight;
+    UpdateSimpleFoamWriteInterval();
     UpdateDictFiles();
-    
+
     return nRet;
 }
 
@@ -1692,6 +1693,9 @@ int NinjaFoam::RefineSurfaceLayer(){
 
 void NinjaFoam::UpdateDictFiles()
 {
+    /* update simpleFoam controlDict writeInterval */
+    UpdateSimpleFoamWriteInterval();
+
     /* copy files to latestTime and update firstCellHeight */   
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
@@ -1710,6 +1714,19 @@ void NinjaFoam::UpdateDictFiles()
             
     CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+}
+
+void NinjaFoam::UpdateSimpleFoamWriteInterval()
+{
+    int oldSimpleFoamWriteInterval = simpleFoamWriteInterval; 
+    simpleFoamWriteInterval = latestTime + input.nIterations; //only write final timestep
+    CPLDebug("NINJAFOAM", "simpleFoamWriteInterval = %d", simpleFoamWriteInterval);
+    const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    CopyFile(pszInput, pszOutput, 
+        CPLSPrintf("writeInterval   %d", oldSimpleFoamWriteInterval),
+        CPLSPrintf("writeInterval   %d", simpleFoamWriteInterval));
+
 }
 
 int NinjaFoam::TopoSet()
