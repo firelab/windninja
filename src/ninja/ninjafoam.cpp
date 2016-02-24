@@ -1851,9 +1851,6 @@ int NinjaFoam::ReconstructPar()
 
 int NinjaFoam::RenumberMesh()
 {
-#ifdef WIN32
-    return 0;
-#endif
     int nRet = -1;
 
     const char *const papszArgv[] = { "renumberMesh", 
