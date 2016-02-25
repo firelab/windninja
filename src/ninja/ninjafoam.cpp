@@ -49,7 +49,7 @@ NinjaFoam::NinjaFoam() : ninja()
     finalFirstCellHeight = -1.0;
     latestTime = 0;
     cellCount = 0; 
-    simpleFoamWriteInterval = 1000; //initial value in controlDict_simpleFoam
+    simpleFoamEndTime = 1000; //initial value in controlDict_simpleFoam
 }
 
 /**
@@ -298,6 +298,7 @@ bool NinjaFoam::simulate_wind()
         NinjaUnlinkTree( pszTempPath );
         return NINJA_E_OTHER;
     }
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
     status = CheckMesh();
     if(status != 0){
@@ -372,7 +373,7 @@ bool NinjaFoam::simulate_wind()
             CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
 
             /* update simpleFoam controlDict writeInterval */
-            UpdateSimpleFoamWriteInterval();
+            UpdateSimpleFoamControlDict();
 
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
             status = ApplyInit();
@@ -674,7 +675,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         #else
         ReplaceKeys(s, "$lib$", "libWindNinja.so");
         #endif
-        ReplaceKeys(s, "$finaltime$",boost::lexical_cast<std::string>(input.nIterations));
+        ReplaceKeys(s, "$nIterations$",boost::lexical_cast<std::string>(input.nIterations));
         const char * d = s.c_str();
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
@@ -1607,7 +1608,7 @@ int NinjaFoam::MoveDynamicMesh()
     latestTime = 50;
     finalFirstCellHeight = initialFirstCellHeight;
     oldFirstCellHeight = finalFirstCellHeight;
-    UpdateSimpleFoamWriteInterval();
+    UpdateSimpleFoamControlDict();
     UpdateDictFiles();
 
     return nRet;
@@ -1694,7 +1695,7 @@ int NinjaFoam::RefineSurfaceLayer(){
 void NinjaFoam::UpdateDictFiles()
 {
     /* update simpleFoam controlDict writeInterval */
-    UpdateSimpleFoamWriteInterval();
+    UpdateSimpleFoamControlDict();
 
     /* copy files to latestTime and update firstCellHeight */   
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
@@ -1716,16 +1717,17 @@ void NinjaFoam::UpdateDictFiles()
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
 
-void NinjaFoam::UpdateSimpleFoamWriteInterval()
+void NinjaFoam::UpdateSimpleFoamControlDict()
 {
-    int oldSimpleFoamWriteInterval = simpleFoamWriteInterval; 
-    simpleFoamWriteInterval = latestTime + input.nIterations; //only write final timestep
-    CPLDebug("NINJAFOAM", "simpleFoamWriteInterval = %d", simpleFoamWriteInterval);
+    int oldSimpleFoamEndTime = simpleFoamEndTime; 
+    simpleFoamEndTime = latestTime + input.nIterations; //only write final timestep
+    CPLDebug("NINJAFOAM", "simpleFoamEndTime = %d", simpleFoamEndTime);
     const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict", "");
     const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    //update endTime based on latestTime
     CopyFile(pszInput, pszOutput, 
-        CPLSPrintf("writeInterval   %d", oldSimpleFoamWriteInterval),
-        CPLSPrintf("writeInterval   %d", simpleFoamWriteInterval));
+        CPLSPrintf("endTime         %d", oldSimpleFoamEndTime),
+        CPLSPrintf("endTime         %d", simpleFoamEndTime));
 
 }
 
@@ -1985,7 +1987,8 @@ int NinjaFoam::SimpleFoam()
                 pos = s.rfind("Time = ", startPos);
                 if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
                     t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                    p = atof(t.c_str()) / input.nIterations * 100;
+                    //number of iterations is set equal to the write interval
+                    p = atof(t.c_str()) / simpleFoamEndTime * 100;
                     input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d", (int)p);
                 }
             }
@@ -2010,7 +2013,8 @@ int NinjaFoam::SimpleFoam()
                 pos = s.rfind("Time = ", startPos);
                 if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
                     t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
-                    p = atof(t.c_str()) / input.nIterations * 100;
+                    //number of iterations is set equal to the write interval
+                    p = atof(t.c_str()) / simpleFoamEndTime * 100;
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
                 }
             }
