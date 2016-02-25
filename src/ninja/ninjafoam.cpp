@@ -299,14 +299,6 @@ bool NinjaFoam::simulate_wind()
         return NINJA_E_OTHER;
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking mesh...");
-    status = CheckMesh();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during checkMesh().");
-        NinjaUnlinkTree( pszTempPath );
-        return NINJA_E_OTHER;
-    }
-
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 2){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 2. Mesh written.");
         return true;
