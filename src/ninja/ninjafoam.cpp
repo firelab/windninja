@@ -374,8 +374,8 @@ bool NinjaFoam::simulate_wind()
                 NinjaUnlinkTree( pszTempPath );
                 return NINJA_E_OTHER;
             }
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
             if(input.numberCPUs > 1){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
                 status = DecomposePar();
                 if(status != 0){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar()");
