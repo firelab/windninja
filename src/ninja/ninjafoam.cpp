@@ -169,16 +169,14 @@ bool NinjaFoam::simulate_wind()
 
     const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
     const char *pszStlPath = CPLStrdup( CPLSPrintf("%s/constant/triSurface/", pszTempPath) );
-    const char *pszStlFileName = CPLFormFilename(pszStlPath, pszShortName, ".stl");
+    const char *pszStlFileName = CPLStrdup( CPLFormFilename(pszStlPath, pszShortName, ".stl") );
 
     int nBand = 1;
     const char * inFile = input.dem.fileName.c_str();
-    const char * outFile = pszStlFileName;
-
     CPLErr eErr;
 
     eErr = NinjaElevationToStl(inFile,
-                        outFile,
+                        pszStlFileName,
                         nBand,
                         NinjaStlBinary,
                         //NinjaStlAscii,
