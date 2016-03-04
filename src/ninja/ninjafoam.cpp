@@ -496,20 +496,19 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
 
     if(template_ == ""){
         if(gammavalue != ""){
-            pszTemplate = CPLStrdup("genericTypeVal.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericTypeVal.tmp");
         }
         else if(inletoutletvalue != ""){
-            pszTemplate = CPLStrdup("genericType.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType.tmp");
         }
         else{
-            pszTemplate = CPLStrdup("genericType-kep.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType-kep.tmp");
         }
     }
     else{
-        pszTemplate = CPLStrdup(template_.c_str());
+        pszPathToFile = CPLSPrintf("ninjafoam/0/%s", template_.c_str());
     }
 
-    pszPathToFile = CPLSPrintf("ninjafoam/0/%s", pszTemplate);
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
 
     char *data;
@@ -2063,7 +2062,6 @@ int NinjaFoam::SanitizeOutput()
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
-    const char *pszRaw;
     const char *pszMem;
     std::string s;
 
@@ -2072,12 +2070,14 @@ int NinjaFoam::SanitizeOutput()
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
 
     char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
+    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath) );
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
+            fin = VSIFOpen(CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+                            pszTempPath, 
+                            papszOutputSurfacePath[i]), "r");
             break;
         }
         else{
@@ -2085,7 +2085,6 @@ int NinjaFoam::SanitizeOutput()
         }
     }
 
-    fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     if( !fin )
