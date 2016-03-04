@@ -69,6 +69,12 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     useMeshResCheckBox = new QCheckBox(tr("Use Mesh Resolution"));
     useMeshResCheckBox->setChecked(true);
 
+    backgroundLabel = new QLabel("Background image for pdf", this);
+
+    backgroundComboBox = new QComboBox(this);
+    backgroundComboBox->addItem("Hillshade");
+    backgroundComboBox->addItem("TopoFire topo maps");
+
     //connect checkbox with spin box
     connect(useMeshResCheckBox, SIGNAL(toggled(bool)), 
       pdfResSpinBox, SLOT(setDisabled(bool)));
@@ -77,6 +83,10 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     connect(useMeshResCheckBox, SIGNAL(toggled(bool)), 
       pdfMetersRadioButton, SLOT(setDisabled(bool)));
 
+    backgroundLayout = new QHBoxLayout;
+    backgroundLayout->addWidget(backgroundLabel);
+    backgroundLayout->addWidget(backgroundComboBox);
+    backgroundLayout->addStretch();
 
     resLayout = new QGridLayout;
     resLayout->addWidget(pdfResSpinBox, 0, 0);
@@ -88,6 +98,7 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
 
     pageLayout = new QVBoxLayout;
     pageLayout->addWidget(vectorGroupBox);
+    pageLayout->addLayout(backgroundLayout);
     pageLayout->addWidget(pdfResGroupBox);
     pageLayout->addStretch();
 

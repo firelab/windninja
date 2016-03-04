@@ -33,6 +33,7 @@
 #include <QRadioButton>
 #include <QLabel>
 #include <QDoubleSpinBox>
+#include <QComboBox>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -52,10 +53,13 @@ public:
     QDoubleSpinBox *pdfResSpinBox;
     QRadioButton *pdfMetersRadioButton, *pdfFeetRadioButton;
     QCheckBox *useMeshResCheckBox;
+    QLabel *backgroundLabel;
+    QComboBox *backgroundComboBox;
 
     QHBoxLayout *vectorLayout;
     QVBoxLayout *optionLayout;
     QGridLayout *resLayout;
+    QHBoxLayout *backgroundLayout;
     QVBoxLayout *pageLayout;
     QVBoxLayout *mainLayout;
 };
