@@ -1099,19 +1099,12 @@ int NinjaFoam::readDem(double &expansionRatio)
     xBuffer = dx*0.01; // buffers for MDM
     yBuffer = dy*0.01;
     
-    if(dz == 0.0){ 
-        if(dx * dy < 1000)
-            dz = 0.5 * dx * dy; //min value allowed for dz 
-        else
-            dz = 1000; //min value allowed for dz 
-    }
-            
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
     bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + 1000 ); //zmax
+    bbox.push_back( input.dem.get_maxValue() + max((0.1 * max(dx, dy)), (dz + 0.1 *dz)) ); //zmax
 
     double meshVolume;
     double cellVolume;
