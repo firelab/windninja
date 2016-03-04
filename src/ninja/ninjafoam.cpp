@@ -167,9 +167,9 @@ bool NinjaFoam::simulate_wind()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
-    const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
-    const char *pszStlPath = CPLStrdup( CPLSPrintf("%s/constant/triSurface/", pszTempPath) );
-    const char *pszStlFileName = CPLStrdup( CPLFormFilename(pszStlPath, pszShortName, ".stl") );
+    const char *pszStlFileName = CPLStrdup(CPLFormFilename(
+                (CPLSPrintf("%s/constant/triSurface/", pszTempPath)),
+                CPLGetBasename(input.dem.fileName.c_str()), ".stl"));
 
     int nBand = 1;
     const char * inFile = input.dem.fileName.c_str();
@@ -181,6 +181,8 @@ bool NinjaFoam::simulate_wind()
                         NinjaStlBinary,
                         //NinjaStlAscii,
                         NULL);
+
+    CPLFree((void*)pszStlFileName);
 
     if(eErr != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while converting DEM to STL format.");
