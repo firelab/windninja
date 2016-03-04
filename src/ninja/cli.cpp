@@ -371,7 +371,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
-                ("number_of_iterations", po::value<int>()->default_value(2000), "number of iterations for momentum solver (must be a multiple of 100)") 
+                ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
                 ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
@@ -961,10 +961,6 @@ int windNinjaCLI(int argc, char* argv[])
                 }
             
                 if(vm.count("number_of_iterations")){
-                    if((vm["number_of_iterations"].as<int>() % 100) != 0){
-                        cout<<"'number_of_iterations' must be a multiptle of 100."<<endl;
-                        return -1;
-                    }
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
