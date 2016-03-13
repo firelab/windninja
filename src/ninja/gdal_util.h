@@ -42,6 +42,8 @@
 
 #include "ascii_grid.h"
 
+double GDALGetMax( GDALDataset *poDS );
+double GDALGetMin( GDALDataset *poDS );
 bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat );
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
 bool GDALTestSRS( GDALDataset *poDS );
