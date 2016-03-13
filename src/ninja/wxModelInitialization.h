@@ -106,6 +106,7 @@ class wxModelInitialization : public initialize
 
     //Pure virtual functions defined in subclasses
     virtual bool identify( std::string fileName ) = 0;
+    virtual double getGridResolution() = 0;
     virtual std::vector<std::string> getVariableList() = 0;
     virtual std::string getForecastIdentifier() = 0;
     virtual std::string getForecastReadable( const char bySwapWithSpace=' ');

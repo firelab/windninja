@@ -90,11 +90,6 @@ The new (2014-01-14) GFS model omits t000 cloud cover data as it is a
 time-averaged variable.  Since no time has passed, it is NULL.  The work around
 is to grab the next time step and use it's cloud cover data.
 
-### RTMA cloud cover data
-
-RTMA cloud cover data is absent in all domains except the conus domain.  Those
-domains are only enabled if `NOMADS_EXPER_FORECASTS` is set to `ON`.
-
 Further Information
 -------------------
 

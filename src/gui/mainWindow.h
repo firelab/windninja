@@ -126,6 +126,7 @@ class mainWindow : public QMainWindow
   double GDALCenterLon;
   int GDALXSize, GDALYSize;
   double GDALCellSize, GDALNoData;
+  double GDALMaxValue, GDALMinValue;
 
   //threshold for no-googling = 400000
 

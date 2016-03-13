@@ -1150,18 +1150,23 @@ double mainWindow::computeCellSize(int index)
 #ifdef NINJAFOAM  
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
+
     double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
     double YLength = (GDALYSize + 1) * GDALCellSize + 200;
-    double ZLength = 2450; //bottom face is 50 m above terrain max, top face is 2500 m above terrain max
   
+    double dz = GDALMaxValue - GDALMinValue;
+    double zMin = GDALMaxValue * 1.1;
+    double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
+    double ZLength = zMax - zMin; 
+
     double volume1;
     double cellCount1;
     double cellVolume1;
     
     volume1 = XLength * YLength * ZLength; //volume near terrain
     cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in blockMesh
+    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of cell in blockMesh 
   }
   else{
     /* native windninja mesh */
@@ -1339,6 +1344,10 @@ int mainWindow::checkInputFile(QString fileName)
         }
     }
 
+    //get min/max values
+    GDALMaxValue = GDALGetMax(poInputDS);
+    GDALMinValue = GDALGetMin(poInputDS);
+
     GDALClose( (GDALDatasetH)poInputDS );
 
     double XLength = (GDALXSize + 1) * GDALCellSize;
@@ -1410,7 +1419,7 @@ int mainWindow::solve()
     meshChoice = Mesh::coarse;
     else if( meshIndex == 1 )
     meshChoice = Mesh::medium;
-    else if( meshIndex == 1 )
+    else if( meshIndex == 2 )
     meshChoice = Mesh::fine;
     else {
     meshRes = tree->surface->meshResDoubleSpinBox->value();
@@ -1598,20 +1607,6 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-    /* INITIALIZE THE ARMY */
-    progressDialog->setValue( 0 );
-    runTime->restart();
-    connect( progressDialog, SIGNAL(canceled() ),
-         this, SLOT( cancelSolve() ) );
-
-    progressDialog->setCancelButtonText( "Cancel" );
-
-    setCursor( Qt::WaitCursor );
-
-    progressDialog->setLabelText( "Initializing runs..." );
-
-    writeToConsole( "Initializing runs..." );
-    
     delete army;
 #ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
@@ -1654,7 +1649,23 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
-        army->makeArmy( weatherFile, timeZone );
+        /* This can throw a badForecastFile */
+        try
+        {
+            army->makeArmy( weatherFile, timeZone );
+        }
+        catch( badForecastFile &e )
+        {
+             QMessageBox::critical( this, tr( "Invalid forecast file." ),
+                                    tr( "The forecast cannot be read." ),
+                                    QMessageBox::Ok | QMessageBox::Default );
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor);
+            tree->weather->checkForModelData();
+            progressDialog->cancel();
+            progressDialog->hide();
+            return false;
+        }
         nRuns = army->getSize();
     }
 
@@ -1874,19 +1885,24 @@ int mainWindow::solve()
     writeToConsole(QString::number( army->getSize() ) + " runs initialized. Starting solver...");
     //sThread->start();
 
+    progressDialog->setValue( 0 );
+    runTime->restart();
+    connect( progressDialog, SIGNAL(canceled() ),
+         this, SLOT( cancelSolve() ) );
+
+    progressDialog->setCancelButtonText( "Cancel" );
+
+    setCursor( Qt::WaitCursor );
+
+    progressDialog->setLabelText( "Initializing runs..." );
+
+    writeToConsole( "Initializing runs..." );
+
     bool ninjaSuccess = false;
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-#ifdef NINJAFOAM
-            if(tree->ninjafoam->ninjafoamGroupBox->isChecked()){
-                ninjaSuccess = army->startNinjaFoamRuns( nThreads );
-            }
-            else
-                ninjaSuccess = army->startRuns( nThreads );
-#else
-            ninjaSuccess = army->startRuns( nThreads );
-#endif //NINJAFOAM
+        ninjaSuccess = army->startRuns( nThreads );
     }
     catch (bad_alloc& e)
     {
@@ -2789,10 +2805,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        tree->diurnal->diurnalGroupBox->setCheckable( false );
-        tree->diurnal->diurnalGroupBox->setChecked( false );
-        tree->diurnal->diurnalGroupBox->setHidden( true );
-        tree->diurnal->ninjafoamConflictLabel->setHidden( false );
+        //tree->diurnal->diurnalGroupBox->setCheckable( false );
+        //tree->diurnal->diurnalGroupBox->setChecked( false );
+        //tree->diurnal->diurnalGroupBox->setHidden( true );
+        //tree->diurnal->ninjafoamConflictLabel->setHidden( false );
 
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );

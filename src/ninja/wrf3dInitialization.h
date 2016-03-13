@@ -47,6 +47,7 @@ class wrf3dInitialization : public wrfSurfInitialization
     wrf3dInitialization& operator= ( wrf3dInitialization const& m );
 
     virtual bool identify( std::string fileName );
+    virtual double getGridResolution();
     virtual std::vector<std::string> get3dVariableList();
     virtual std::string getForecastIdentifier();
 

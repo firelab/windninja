@@ -73,6 +73,7 @@ int NinjaInitialize()
 {
     GDALAllRegister();
     OGRRegisterAll();
+	int rc = 0;
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
     std::string osGdalData;
@@ -89,6 +90,32 @@ int NinjaInitialize()
         CPLDebug( "WINDNINJA", "Setting GDAL_DATA from user environment..." );
     }
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
+#if defined(NINJAFOAM) && defined(NOT)
+    char *pszExecPath;
+    const char *pszFoamPath;
+    const char *pszFoamLibPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/lib";
+    const char *pszFoamBinPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/bin";
+    const char *pszTmp;
+
+    pszExecPath = (char*)CPLMalloc( 8192 );
+    rc = CPLGetExecPath( pszExecPath, 8192 );
+    /*
+    ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
+    ** and platforms folders
+    */
+    pszFoamPath = CPLFormFilename( CPLGetPath( pszExecPath ), "OpenFOAM-2.2.x", NULL );
+    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", pszFoamPath ) );
+
+    /*
+    ** Set the PATH variable to point to the lib and bin folders in the open
+    ** foam installation.
+    */
+    pszTmp = CPLSPrintf( "PATH=%s;%s;%PATH%",
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
+    rc = _putenv( pszTmp );
+#endif /* defined(NINJAFOAM) */
+
 #endif
     /*
     ** Set windninja data if it isn't set.
@@ -102,7 +129,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
-    int rc = TRUE;
+    rc = TRUE;
 #ifndef DISABLE_THREDDS_UPDATE
     /*
     ** Disable VSI caching, this breaks nomads downloader if it's on.

@@ -186,6 +186,15 @@ ENDIF(WITH_NOMADS_SUPPORT)
 OPTION(NINJAFOAM "Enable OpenFOAM solver" OFF)
 IF(NINJAFOAM)
     ADD_DEFINITIONS(-DNINJAFOAM)
+    IF(WIN32 AND FIRELAB_PACKAGE)
+        FIND_PATH(FOAM_MINGW_PATH OpenFOAM-2.2.x
+                  DOC "Path to x-compiled OpenFOAM directory")
+        IF(FOAM_MINGW_PATH-NOTFOUND)
+            MESSAGE(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
+        ENDIF(FOAM_MINGW_PATH-NOTFOUND)
+        #get_filename_component(FOAM_MINGW_PATH_VERSION ${FOAM_MINGW_PATH} NAME)
+        #ADD_DEFINITIONS(-DFOAM_MINGW_PATH_VERSION "${FOAM_MINGW_PATH_VERSION}")
+    ENDIF(WIN32 AND FIRELAB_PACKAGE)
 ENDIF(NINJAFOAM)
 
 OPTION(NINJA_SPEED_TESTING "Enable initialization speed dampening" OFF)
@@ -209,10 +218,10 @@ IF(STABILITY)
     ADD_DEFINITIONS(-DSTABILITY)
 ENDIF(STABILITY)
 
-OPTION(SCALAR "Enable scalar transport model" OFF)
-IF(SCALAR)
-    ADD_DEFINITIONS(-DSCALAR)
-ENDIF(SCALAR)
+OPTION(MOBILE_APP "Enable optoins for mobile app" OFF)
+IF(MOBILE_APP)
+    ADD_DEFINITIONS(-DMOBILE_APP)
+ENDIF(MOBILE_APP)
 
 # *****************************************************************************
 # Allow to permanently disable thredds updating in the build
@@ -300,7 +309,7 @@ IF(NOT MSVC)
 ENDIF(NOT MSVC)
 
 OPTION(ENABLE_GMTED "Try to use the GMTED data for DEM fetching.  It has proven
-unreliable and may need to be disabled" OFF)
+unreliable and may need to be disabled" ON)
 IF(ENABLE_GMTED)
     ADD_DEFINITIONS(-DHAVE_GMTED)
 ENDIF(ENABLE_GMTED)
@@ -309,6 +318,7 @@ OPTION(WITH_LCP_CLIENT "Allow LCP downloading" OFF)
 IF(WITH_LCP_CLIENT)
     ADD_DEFINITIONS(-DWITH_LCP_CLIENT)
 ENDIF(WITH_LCP_CLIENT)
+
 
 OPTION(WITH_NOMADS_SUPPORT "Use NOMADS server support" ON)
 IF(WITH_NOMADS_SUPPORT)
@@ -493,6 +503,11 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
     INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/data/" DESTINATION share/windninja/gdal-data/data)
 ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
+
+# OpenFOAM related binaries
+IF(WIN32 AND FIRELAB_PACKAGE AND NINJAFOAM)
+    INSTALL(DIRECTORY "${FOAM_MINGW_PATH}" DESTINATION bin)
+ENDIF(WIN32 AND FIRELAB_PACKAGE AND NINJAFOAM)
 
 IF(BUILD_TYPE MATCHES "debug")
     IF(PACKAGE_DEBUG)

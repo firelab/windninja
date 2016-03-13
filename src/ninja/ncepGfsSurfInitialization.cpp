@@ -35,7 +35,7 @@
 */
 ncepGfsSurfInitialization::ncepGfsSurfInitialization() : wxModelInitialization()
 {
-    heightVarName = "height_above_ground1";
+    heightVarName = "height_above_ground4";
     path = "/thredds/ncss/grib/NCEP/GFS/Global_0p5deg/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
     LoadFromCsv();
 }
@@ -77,8 +77,19 @@ ncepGfsSurfInitialization& ncepGfsSurfInitialization::operator= (ncepGfsSurfInit
 */
 double ncepGfsSurfInitialization::Get_Wind_Height()
 {
-    return GetWindHeight("height_above_ground1");
+    return GetWindHeight("height_above_ground4");
 }
+
+/**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepGfsSurfInitialization::getGridResolution()
+{
+    return 0.5;
+}
+
+
 /**
 * @brief Fetch the variable names
 *

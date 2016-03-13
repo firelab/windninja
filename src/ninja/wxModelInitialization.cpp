@@ -266,14 +266,69 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     double corners[8];
     GDALGetCorners( poDS, corners );
     double maxX, maxY, minX, minY;
+    
+    //max/min of DEM in degrees
     maxX = MAX(corners[0], corners[2]);
     maxY = MAX(corners[1], corners[7]);
     minX = MIN(corners[4], corners[6]);
     minY = MIN(corners[3], corners[5]);
+        
+#ifdef MOBILE_APP
+    CPLDebug("MOBILE_APP", "grid resolution = %f", this->getGridResolution());
+    if(this->getGridResolution() == -1.0){ //if don't know the resolution
+        bounds[0] = maxY + GetWxModelBuffer(maxY - minY);
+        bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
+        bounds[2] = minY - GetWxModelBuffer(maxY - minY);
+        bounds[3] = minX - GetWxModelBuffer(maxX - minX);
+        
+        CPLDebug("MOBILE_APP", "Y buffer = %f", GetWxModelBuffer(maxY - minY));
+        CPLDebug("MOBILE_APP", "X buffer = %f", GetWxModelBuffer(maxX - minX));
+    }
+    else{//compute buffer based on wx grid size
+        double projMaxX = maxX;
+        double projMinX = minX;
+        double projMaxY = maxY;
+        double projMinY = minY;
+    
+        double wxMaxX, wxMaxY, wxMinX, wxMinY;
+        double xBuffer, yBuffer;
+        
+        //convert to meters
+        GDALPointFromLatLon( projMaxX, projMaxY, poDS, "WGS84");
+        GDALPointFromLatLon( projMinX, projMinY, poDS, "WGS84");
+        
+        //buffer 3 times the wx model grid resolution
+        if(this->getGridResolution() > 1.0){ //units are km (projected)
+            wxMaxX = projMaxX + ( this->getGridResolution() * 1000 * 3 );
+            wxMaxY = projMaxY + ( this->getGridResolution() * 1000 * 3 );
+            
+            //convert to degrees
+            GDALPointToLatLon( wxMinX, wxMinY, poDS, "WGS84");
+            GDALPointToLatLon( wxMaxX, wxMaxY, poDS, "WGS84");
+        
+            xBuffer = wxMaxX - maxX; //in degrees
+            yBuffer = wxMaxY - maxY; //in degrees
+        }
+        else{ //units are deg (lat/lon)
+            xBuffer = this->getGridResolution() * 3; //in degrees
+            yBuffer = this->getGridResolution() * 3; //in degrees
+        }
+        
+        CPLDebug("MOBILE_APP", "Y buffer = %f", xBuffer);
+        CPLDebug("MOBILE_APP", "X buffer = %f", yBuffer);
+    
+        bounds[0] = maxY + yBuffer;
+        bounds[1] = maxX + xBuffer;
+        bounds[2] = minY - yBuffer;
+        bounds[3] = minX - xBuffer;
+    }
+#else
     bounds[0] = maxY + GetWxModelBuffer(maxY - minY);
     bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
-    bounds[2] = minY - GetWxModelBuffer(maxX - minX);
+    bounds[2] = minY - GetWxModelBuffer(maxY - minY);
     bounds[3] = minX - GetWxModelBuffer(maxX - minX);
+#endif
+    
     return 0;
 }
 
@@ -289,7 +344,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
 double wxModelInitialization::GetWxModelBuffer(double delta)
 {
     double buffer = delta * 0.2;
-    return buffer > 1.0 ? buffer : 1.0;
+    return buffer > 1.0 ? buffer : 1.0;        
 }
 
 /**
@@ -332,10 +387,6 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     /*
      * Buffer the bounds
      */
-    bounds[0] += 1.0;
-    bounds[1] += 1.0;
-    bounds[2] -= 1.0;
-    bounds[3] -= 1.0;
 
     ComputeWxModelBuffer(poDS, bounds);
 
@@ -1729,6 +1780,12 @@ double wxModelInitialization::GetWindHeight(std::string varName)
     if(status == 0)
     {
         status = nc_get_var1_double(ncid, height_id, var_index, &d);
+    }
+
+    if( status != 0 )
+    {
+        std::string err = "Failed to find height for " + varName;
+        throw badForecastFile( err );
     }
 
     status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
