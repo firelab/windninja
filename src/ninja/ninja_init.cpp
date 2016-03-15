@@ -90,11 +90,13 @@ int NinjaInitialize()
         CPLDebug( "WINDNINJA", "Setting GDAL_DATA from user environment..." );
     }
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
-#if defined(NINJAFOAM) && defined(NOT)
+#if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
     char *pszExecPath;
     const char *pszFoamPath;
-    const char *pszFoamLibPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/lib";
-    const char *pszFoamBinPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/bin";
+    //const char *pszFoamLibPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/lib";
+    //const char *pszFoamBinPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/bin";
+    const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
+    const char *pszFoamBinPath = "platforms/linux64mingw-w64DPOpt/bin";
     const char *pszTmp;
 
     pszExecPath = (char*)CPLMalloc( 8192 );
@@ -114,7 +116,8 @@ int NinjaInitialize()
                          CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
                          CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
     rc = _putenv( pszTmp );
-#endif /* defined(NINJAFOAM) */
+    CPLFree( (void*)pszExecPath );
+#endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
 #endif
     /*
