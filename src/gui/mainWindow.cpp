@@ -2422,13 +2422,7 @@ int mainWindow::checkOutputItem()
       tree->outputItem->setToolTip(0, "Check pdf file ouput");
       status = amber;
     }
-    if(checkPdfItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Check pdf file ouput");
-      status = amber;
-    }
-      if(checkVtkItem() == amber)
+    if(checkVtkItem() == amber)
     {
       tree->outputItem->setIcon(0, tree->check);
       tree->outputItem->setToolTip(0, "Check vtk file ouput");
