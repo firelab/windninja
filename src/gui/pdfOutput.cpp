@@ -69,7 +69,7 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     useMeshResCheckBox = new QCheckBox(tr("Use Mesh Resolution"));
     useMeshResCheckBox->setChecked(true);
 
-    backgroundLabel = new QLabel("Background image for pdf", this);
+    backgroundLabel = new QLabel("Basemap", this);
 
     backgroundComboBox = new QComboBox(this);
     backgroundComboBox->addItem("Hillshade");
