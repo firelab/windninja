@@ -2395,7 +2395,7 @@ int mainWindow::checkOutputItem()
       tree->outputItem->setToolTip(0, "No outputs selected");
       status = red;
     }
-  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber &&
+  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber ||
      checkPdfItem() == amber)
     {
       if(checkGoogleItem() == amber)
@@ -2441,7 +2441,6 @@ int mainWindow::checkOutputItem()
 int mainWindow::checkGoogleItem()
 {
   eInputStatus status = red;
-
   if(!tree->google->googleGroupBox->isChecked())
     {
       tree->googleItem->setIcon(0, tree->blue);
