@@ -298,15 +298,22 @@ bool ninjaArmy::startRuns(int numProcessors)
     ** initLocalData().  If we fail, clean up properly so we can save a
     ** hillshade file at that location.
     */
-    if(ninjas[0]->input.pdfOutFlag == true )
+    if(ninjas[0]->input.pdfOutFlag == true)
     {
-        SURF_FETCH_E retval;
-        SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
-        retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName,
-                                        pszTmpColorRelief );
-        delete fetcher;
-        /* If we fail, copy the dem into the file as an 8 bit GeoTiff */
-        if( retval != SURF_FETCH_E_NONE )
+        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
+        {
+            SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
+            retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName,
+                                            pszTmpColorRelief );
+            delete fetcher;
+        }
+        /*
+        ** If we fail, or the user wants a hillshade, copy the dem into the
+        ** file as an 8 bit GeoTiff
+        */
+        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::HILLSHADE ||
+            retval != SURF_FETCH_E_NONE )
         {
             CPLDebug( "NINJA", "Failed to download relief, creating hillshade" );
             GDALDatasetH hDS = NULL;
@@ -1627,6 +1634,12 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
        }
    }
    return retval;
+}
+
+int ninjaArmy::setPDFBaseMap( const int nIndex,
+                              const int eType )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfBaseMap( eType ) );
 }
 
 int ninjaArmy::setPDFDEM

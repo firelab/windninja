@@ -4492,6 +4492,11 @@ void ninja::set_pdfLineWidth(const float w)
     input.pdfLineWidth = w;
 }
 
+void ninja::set_pdfBaseMap(const int b)
+{
+    input.pdfBaseType = (WindNinjaInputs::ePDFBaseMap)b;
+}
+
 void ninja::set_pdfDEM(std::string dem_file_name)
 {
     /*

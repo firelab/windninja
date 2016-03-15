@@ -352,6 +352,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
                 ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
+                ("pdf_basemap", po::value<std::string>()->default_value("topofire"), "background image of the geospatial pdf, default is topo map")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
@@ -1428,6 +1429,21 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
+                std::string pbm = vm["pdf_basemap"].as<std::string>();
+                int pbs = 0;
+                if( pbm == "hillshade" )
+                {
+                    pbs = 0;
+                }
+                else if( pbm == "topofire" )
+                {
+                    pbs = 1;
+                }
+                else
+                {
+                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'";
+                }
+                windsim.setPDFBaseMap( i_, pbs );
             }
 
         }   //end for loop over ninjas

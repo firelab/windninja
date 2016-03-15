@@ -106,6 +106,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
+    pdfBaseType = HILLSHADE;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING

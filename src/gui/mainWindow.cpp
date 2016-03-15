@@ -1612,6 +1612,7 @@ int mainWindow::solve()
         pdfUnits = lengthUnits::meters;
     else
         pdfUnits = lengthUnits::feet;
+    int pdfBase = tree->pdf->backgroundComboBox->currentIndex();
 
     bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
 
@@ -1851,6 +1852,7 @@ int mainWindow::solve()
         army->setPDFOutFlag      (i,writePdf);
         army->setPDFResolution   (i,pdfRes,pdfUnits);
         army->setPDFLineWidth    (i,pdfLineWidth);
+        army->setPDFBaseMap      (i,pdfBase);
         army->setAsciiOutFlag    (i,writeFb);    
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  

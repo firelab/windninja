@@ -329,6 +329,7 @@ public:
     void set_pdfResolution(double Resolution, lengthUnits::eLengthUnits units);
     void set_pdfDEM(std::string dem_file_name);
     void set_pdfLineWidth(const float w);
+    void set_pdfBaseMap(const int b);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);
