@@ -24,17 +24,10 @@
 # * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # * DEALINGS IN THE SOFTWARE.
-# *
-# ****************************************************************************/
-# This is set arbitrarily at 2.6.  If there is proof that it works better, 
-# set it.  Also set all sub CMakeLists.txt
-# *****************************************************************************
+
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(WindNinja)
 
-# *****************************************************************************
-# Add our cmake directory to the path for netcdf, gdal and proj
-# *****************************************************************************
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 # *****************************************************************************
@@ -94,11 +87,6 @@ ENDIF(GENERATE_VERSION_INFO)
 SET(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
 SET(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 
-# *****************************************************************************
-# Find boost libs, required for all builds.  1.41.1 may be arbitrary.
-# Have to check docs for actual support of our features.  We use static libs
-# on windows just because it's easier.
-# *****************************************************************************
 INCLUDE(FindBoost)
 SET(Boost_DEBUG ON)
 IF(WIN32)
@@ -110,42 +98,56 @@ SET(Boost_USE_MULTITHREAD OFF)
 FIND_PACKAGE(Boost 1.41.1 COMPONENTS date_time program_options
                                      unit_test_framework REQUIRED)
 
-# *****************************************************************************
-# We now use gdals internal zlib
-# Find zlib, required for all builds
-# *****************************************************************************
-#INCLUDE(FindZLIB)
-#FIND_PACKAGE(ZLIB REQUIRED)
+# All GIS related libs.  Windows uses GIS_INTERNALS_HOME
+IF(WIN32)
+    OPTION(USE_GIS_INTERNALS "Use dependencies (as many as possible) from gisinternals.com" OFF)
+    IF(USE_GIS_INTERNALS)
+        FIND_PATH(GIS_INTERNALS_HOME gdal CACHE PATH)
+    ENDIF(USE_GIS_INTERNALS)
+ENDIF(WIN32)
 
-# *****************************************************************************
-# We must now check for curl support in GDAL, don't know how yet.
-# Find curl, required for all builds
-# *****************************************************************************
-#INCLUDE(FindCURL)
-#FIND_PACKAGE(CURL REQUIRED)
-
-# *****************************************************************************
-# Find netcdf, we use the netcdf api directly to query wx model files.  See
-# cmake/Modules/FindNetCDF.cmake for more info.
-# *****************************************************************************
 INCLUDE(FindNetCDF)
+IF(WIN32)
 FIND_PACKAGE(NetCDF REQUIRED)
+    IF(NOT GIS_INTERNALS_HOME)
+        FIND_PACKAGE(NetCDF REQUIRED)
+    ELSE(NOT GIS_INTERNALS_HOME)
+        FIND_PACKAGE(NetCDF)
+    ENDIF(NOT GIS_INTERNALS_HOME)
+ELSE(WIN32)
+    FIND_PACKAGE(NetCDF REQUIRED)
+ENDIF(WIN32)
 
-# *****************************************************************************
-# Find gdal, version must be 1.8.1+ right now.  Have NOT tested 1.9,
-# and significant changes were made in the netcdf driver.  I *think* as long
-# as we warp the data, the units issue is okay.  Stick w/1.8.1 for now.
-# *****************************************************************************
+IF(WIN32)
+    IF(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
+        SET(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
+        SET(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
+        SET(NETCDF_LIBRARIES_C ${GIS_INTERNALS_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
+        SET(NETCDF_INCLUDES-FOUND TRUE)
+        SET(NETCDF_LIBRARIES_C-FOUND TRUE)
+   ENDIF(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
+ENDIF(WIN32)
+
 INCLUDE(FindGDAL)
+IF(WIN32)
 FIND_PACKAGE(GDAL REQUIRED)
+    IF(NOT GIS_INTERNALS_HOME)
+        FIND_PACKAGE(GDAL REQUIRED)
+    ELSE(NOT GIS_INTERNALS_HOME)
+        FIND_PACKAGE(GDAL)
+    ENDIF(NOT GIS_INTERNALS_HOME)
+ELSE(WIN32)
+    FIND_PACKAGE(GDAL REQUIRED)
+ENDIF(WIN32)
 
-# *****************************************************************************
-# We don't link to proj directly, but gdal must have proj support to perform
-# warping.  A better test would be to go through gdal and check for proj 
-# support.  I am not completely sure how to do this.
-# *****************************************************************************
-#INCLUDE(FindProj)
-#FIND_PACKAGE(Proj)
+IF(WIN32)
+    IF(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
+        SET(GDAL_INCLUDE_DIR ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
+        SET(GDAL_LIBRARY ${GIS_INTERNALS_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
+        SET(GDAL_INCLUDE_DIR-FOUND TRUE)
+        SET(GDAL_LIBRARY-FOUND TRUE)
+    ENDIF(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
+ENDIF(WIN32)
 
 IF(WITH_NOMADS_SUPPORT )
     INCLUDE(CheckFunctionExists)
@@ -339,12 +341,6 @@ SET(GRID_INTERP_TIMEOUT 1 CACHE INTEGER "Timeout for grid resampling tests")
 MARK_AS_ADVANCED(GRID_INTERP_TIMEOUT)
 
 # *****************************************************************************
-# *****************************************************************************
-# END OF OPTIONS
-# *****************************************************************************
-# *****************************************************************************
-
-# *****************************************************************************
 # Show some information related to the package being built.
 # *****************************************************************************
 OPTION(PACKAGE_DEBUG "Show some information about the package" OFF)
@@ -373,6 +369,7 @@ ELSE(CMAKE_SIZEOF_VOID_P MATCHES "8")
     ENDIF(PACKAGE_DEBUG)
 ENDIF(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
+#
 SET(FIRELAB_DEPEND_ROOT "C:/Users/ksshannon/Desktop/FS_SOFTWARE_BUILD")
 SET(FIRELAB_DEPEND_ROOT_QT "${FIRELAB_DEPEND_ROOT}/qt-everywhere-opensource-src-4.8.5")
 IF(BUILD_64)
@@ -398,10 +395,6 @@ ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 # Option for creating the installer with all the dlls from the firelab machine.
 # If build type not explicity set, then we set it to release for dll builds
 # *****************************************************************************
-IF(FIRELAB_PACKAGE)
-    SET(NINJA_QTGUI ON)
-    SET(NINJA_CLI ON)
-ENDIF(FIRELAB_PACKAGE)
 
 IF(NOT CMAKE_BUILD_TYPE AND NOT MSVC_IDE)
     SET(CMAKE_BUILD_TYPE "debug")
@@ -520,20 +513,6 @@ ENDIF(BUILD_TYPE MATCHES "debug")
 # CPack
 # *****************************************************************************
 INCLUDE(InstallRequiredSystemLibraries)
-# *****************************************************************************
-# CPack Debian
-# *****************************************************************************
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Kyle Shannon kyle@pobox.com")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS libnetcdf libgdal libcurl
-                                 libboost_program_options libboost_date_time)
-IF(NINJA_QTGUI)
-    SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${CPACK_DEBIAN_PACKAGE_DEPENDS} 
-                                     libqtgui4 libqtcore4)
-ENDIF(NINJA_QTGUI)
-
-# *****************************************************************************
-# CPack variables
-# *****************************************************************************
 SET(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION_NAME})
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
 # version
@@ -557,8 +536,7 @@ CMAKE_POLICY(POP)
 # NSIS Specific stuff
 # *****************************************************************************
 SET(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
-SET(CPACK_NSIS_INSTALLED_ICON_NAME 
-    "${CMAKE_SOURCE_DIR}/images/icons/wn-desktop.ico")
+SET(CPACK_NSIS_INSTALLED_ICON_NAME "${CMAKE_SOURCE_DIR}/images/icons/wn-desktop.ico")
 
 SET(CPACK_CREATE_DESKTOP_LINKS WindNinja)
 SET(CPACK_NSIS_MODIFY_PATH WindNinja)
@@ -593,30 +571,27 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 # *****************************************************************************
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 # *****************************************************************************
-IF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/gdal111.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/proj.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/netcdf.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geos_c.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/geos.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/libcurl.dll" DESTINATION bin COMPONENT apps)
-    INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT}/bin/zlib.dll" DESTINATION bin COMPONENT apps)
+IF(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
+    FILE(GLOB dlls ${GIS_INTERNALS_HOME}/*.dll)
+    FOREACH(dll ${dlls})
+        INSTALL(PROGRAMS ${GIS_INTERNALS_HOME}/${dll} DESTINATION bin COMPONENT apps)
+    ENDFOREACH()
+    GET_FILENAME_COMPONENT(qtbin ${QT_QMAKE_EXECUTABLE} DIRECTORY)
     IF(BUILD_TYPE MATCHES "release")
-        MESSAGE("IN RELEASE PACKAGE MODE")
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtgui4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtcore4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtwebkit4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/phonon4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT_PLUGIN}/qjpeg4.dll" DESTINATION bin/imageformats)
+        INSTALL(PROGRAMS "${qtbin}/qtgui4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtcore4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtwebkit4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/phonon4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/dll" DESTINATION bin/imageformats)
     ELSE(BUILD_TYPE MATCHES "release")
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtguid4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtcored4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtwebkitd4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/phonond4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT}/bin/qtnetworkd4.dll" DESTINATION bin COMPONENT apps)
-        INSTALL(PROGRAMS "${FIRELAB_DEPEND_ROOT_QT_PLUGIN}/qjpegd4.dll" DESTINATION bin/imageformats)
+        INSTALL(PROGRAMS "${qtbin}/qtguid4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtcored4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtwebkitd4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/phonond4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${qtbin}/qtnetworkd4.dll" DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS "${QT_PLUGINS_DIR}/imageformats/qjpegd4.dll" DESTINATION bin/imageformats)
     ENDIF(BUILD_TYPE MATCHES "release")
     # HACK FOR OPENMP
     IF(BUILD_64)
@@ -624,7 +599,7 @@ IF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
     ELSE(BUILD_64)
         INSTALL(PROGRAMS ${MSVC10_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
     ENDIF(BUILD_64)
-ENDIF(FIRELAB_PACKAGE AND WIN32 AND MSVC)
+ENDIF()
 SET(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 SET(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
 SET(CPACK_COMPONENT_LIBS_DISABLED TRUE)
