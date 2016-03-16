@@ -8,16 +8,13 @@ compiler:
 
 before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
-  - sudo add-apt-repository -y ppa:george-edison55/cmake-3.x
   - sudo apt-get update -qq
   - sudo apt-get install cmake python libgdal-dev libnetcdf-dev libboost-date-time-dev libboost-program-options-dev libboost-test-dev
 
 install:
   - mkdir build
   - cd build
-  - cmake --version
-  - which cmake
-  - cmake -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON  ..
+  - cmake -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON  ..
   - make -j3
 
 script:
