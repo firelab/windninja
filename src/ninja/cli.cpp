@@ -492,7 +492,7 @@ int windNinjaCLI(int argc, char* argv[])
 
         if (vm.count("version")) {
             cout << "WindNinja version: " << NINJA_VERSION_STRING << "\n";
-            cout << "SVN version: " << NINJA_SCM_VERSION << "\n";
+            cout << "SCM version: " << NINJA_SCM_VERSION << "\n";
             cout << "Release date: " << NINJA_RELEASE_DATE << "\n";
             return 0;
         }
