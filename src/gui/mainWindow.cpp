@@ -80,7 +80,7 @@ mainWindow::mainWindow(QWidget *parent)
 
     meshCellSize = 200.0;
 
-    QString v(VERSION);
+    QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
 
@@ -998,11 +998,11 @@ void mainWindow::bugReport()
 void mainWindow::aboutWindNinja()
 {
   QString aboutText = "<h2>WindNinja</h2>\n";
-  aboutText.append("<p><h4>Version:</h4>" + QString(VERSION) + "</p>");
+  aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
 
-  aboutText.append("<p><h4>SVN Version:</h4>" + QString(SVN_VERSION) + "</p>");
+  aboutText.append("<p><h4>SVN Version:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
 
-  aboutText.append("<p><h4>Release Date:</h4>" + QString(RELEASE_DATE) + "</p>");
+  aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br /> " \
                                                "Kyle Shannon<br /> " \
                                                "Bret Butler<br /> " \

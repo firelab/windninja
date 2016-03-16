@@ -54,7 +54,7 @@
 #include "gdal_util.h"
 #include "startRuns.h"
 #include "ninja.h"
-#include "version.h"
+#include "ninja_version.h"
 #include "WindNinjaTree.h"
 #include "consoleDockWidget.h"
 #include "solveThread.h"

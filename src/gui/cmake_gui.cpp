@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     QPixmap smallSplashPixmap;
     smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
                          Qt::KeepAspectRatioByExpanding);
-    QString ver = VERSION;
+    QString ver = NINJA_VERSION_STRING;
     QStringList list;
     list << "Loading the WindNinja " + ver + "...";
     list << "Loading mesh generator...";
