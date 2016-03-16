@@ -393,6 +393,10 @@ ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 # Option for creating the installer with all the dlls from the firelab machine.
 # If build type not explicity set, then we set it to release for dll builds
 # *****************************************************************************
+IF(FIRELAB_PACKAGE)
+    SET(NINJA_QTGUI ON)
+    SET(NINJA_CLI ON)
+ENDIF(FIRELAB_PACKAGE)
 
 IF(NOT CMAKE_BUILD_TYPE AND NOT MSVC_IDE)
     SET(CMAKE_BUILD_TYPE "debug")
