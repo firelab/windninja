@@ -252,7 +252,7 @@ endif(OPENMP_SUPPORT)
 
 option(MAKE_DOCS "Build pdf documents using LaTeX" OFF)
 if(MAKE_DOCS)
-    ADD_SUBDIRECTORY(doc)
+    add_subdirectory(doc)
 endif(MAKE_DOCS)
 
 # *****************************************************************************
