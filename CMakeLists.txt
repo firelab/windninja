@@ -108,7 +108,6 @@ ENDIF(WIN32)
 
 INCLUDE(FindNetCDF)
 IF(WIN32)
-FIND_PACKAGE(NetCDF REQUIRED)
     IF(NOT GIS_INTERNALS_HOME)
         FIND_PACKAGE(NetCDF REQUIRED)
     ELSE(NOT GIS_INTERNALS_HOME)
@@ -130,7 +129,6 @@ ENDIF(WIN32)
 
 INCLUDE(FindGDAL)
 IF(WIN32)
-FIND_PACKAGE(GDAL REQUIRED)
     IF(NOT GIS_INTERNALS_HOME)
         FIND_PACKAGE(GDAL REQUIRED)
     ELSE(NOT GIS_INTERNALS_HOME)
@@ -493,7 +491,7 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 # data folder
 #INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data DESTINATION share/windninja)
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
-    INSTALL(DIRECTORY "${FIRELAB_DEPEND_ROOT}/data/" DESTINATION share/windninja/gdal-data/data)
+    INSTALL(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
 ENDIF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
 
 # OpenFOAM related binaries
@@ -572,9 +570,9 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 # *****************************************************************************
 IF(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
-    FILE(GLOB dlls ${GIS_INTERNALS_HOME}/*.dll)
+    FILE(GLOB dlls ${GIS_INTERNALS_HOME}/bin/*.dll)
     FOREACH(dll ${dlls})
-        INSTALL(PROGRAMS ${GIS_INTERNALS_HOME}/${dll} DESTINATION bin COMPONENT apps)
+        INSTALL(PROGRAMS ${dll} DESTINATION bin COMPONENT apps)
     ENDFOREACH()
     GET_FILENAME_COMPONENT(qtbin ${QT_QMAKE_EXECUTABLE} DIRECTORY)
     IF(BUILD_TYPE MATCHES "release")
