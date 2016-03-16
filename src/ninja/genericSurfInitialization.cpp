@@ -77,6 +77,15 @@ double genericSurfInitialization::Get_Wind_Height()
 }
 
 /**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double genericSurfInitialization::getGridResolution()
+{
+    return -1.0;
+}
+
+/**
 * Fetch the variable names
 *
 * @return a vector of variable names

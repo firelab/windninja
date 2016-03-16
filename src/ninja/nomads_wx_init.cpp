@@ -176,6 +176,34 @@ int NomadsWxModel::getStartHour()
     return nHour;
 }
 
+/**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double NomadsWxModel::getGridResolution()
+{
+    double resolution = -1.0;
+    
+    if(getForecastReadable('-').find("0.25-DEG") != getForecastReadable('-').npos)
+        resolution = 0.25;
+    else if(getForecastReadable('-').find("2.5-KM") != getForecastReadable('-').npos)
+        resolution = 2.5;
+    else if(getForecastReadable('-').find("3-KM") != getForecastReadable('-').npos)
+        resolution = 3.0;
+    else if(getForecastReadable('-').find("5-KM") != getForecastReadable('-').npos)
+        resolution = 5.0;
+    else if(getForecastReadable('-').find("11.25-KM") != getForecastReadable('-').npos)
+        resolution = 11.25;
+    else if(getForecastReadable('-').find("12-KM") != getForecastReadable('-').npos)
+        resolution = 12.0;
+    else if(getForecastReadable('-').find("13-KM") != getForecastReadable('-').npos)
+        resolution = 13.0;
+    else if(getForecastReadable('-').find("32-KM") != getForecastReadable('-').npos)
+        resolution = 32.0;
+    
+    return resolution;
+}
+
 std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
 {
     if( !ppszModelData )
@@ -183,7 +211,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
         throw badForecastFile( "Model not found" );
     }
     GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
-
+    
     double adfNESW[4], adfWENS[4];
     ComputeWxModelBuffer( (GDALDataset*)hDS, adfNESW );
     /* Different order for nomads */

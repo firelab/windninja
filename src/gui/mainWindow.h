@@ -54,7 +54,7 @@
 #include "gdal_util.h"
 #include "startRuns.h"
 #include "ninja.h"
-#include "version.h"
+#include "ninja_version.h"
 #include "WindNinjaTree.h"
 #include "consoleDockWidget.h"
 #include "solveThread.h"
@@ -126,6 +126,7 @@ class mainWindow : public QMainWindow
   double GDALCenterLon;
   int GDALXSize, GDALYSize;
   double GDALCellSize, GDALNoData;
+  double GDALMaxValue, GDALMinValue;
 
   //threshold for no-googling = 400000
 

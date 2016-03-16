@@ -79,6 +79,15 @@ double ncepNamSurfInitialization::Get_Wind_Height()
 }
 
 /**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepNamSurfInitialization::getGridResolution()
+{
+    return 12.0;
+}
+
+/**
 * Fetch the variable names
 *
 * @return a vector of variable names

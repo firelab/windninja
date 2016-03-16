@@ -132,15 +132,14 @@ WindNinjaInputs::WindNinjaInputs()
     ustarFile = "!set";
     geotiffOutFlag = false;
 #endif
-#ifdef SCALAR
-    scalarTransportFlag = false;
-#endif
 #ifdef NINJAFOAM
     nIterations = 1000;
     meshCount = 1000000;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
     nonEqBc = true;
     stlFile = "!set";
+    speedInitGridFilename = "!set";
+    dirInitGridFilename= "!set";
 #endif
     
     outputPointsFilename = "!set";
@@ -152,10 +151,6 @@ WindNinjaInputs::WindNinjaInputs()
     omp_set_nested(false);
     omp_set_dynamic(false);
 #endif //_OPENMP
-
-#ifdef MKL
-    mkl_set_dynamic(false);
-#endif //MKL
 
 }
 
@@ -294,10 +289,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   alphaStability = rhs.alphaStability;
 #endif
   
-#ifdef SCALAR
-  scalarTransportFlag = rhs.scalarTransportFlag;
-#endif
-
   outputPath = rhs.outputPath;
 
   //class crap
@@ -309,9 +300,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   omp_set_dynamic(false);
 #endif //_OPENMP
 
-#ifdef MKL
-  mkl_set_dynamic(false);
-#endif //MKL
 }
 
 /**
@@ -449,9 +437,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
       ustarFile = rhs.ustarFile;
 #endif
-#ifdef SCALAR
-      scalarTransportFlag = rhs.scalarTransportFlag;
-#endif
 
       outputPath = rhs.outputPath;
 
@@ -463,10 +448,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       omp_set_nested(false);
       omp_set_dynamic(false);
 #endif //_OPENMP
-
-#ifdef MKL
-      mkl_set_dynamic(false);
-#endif //MKL
 
     }
   return *this;

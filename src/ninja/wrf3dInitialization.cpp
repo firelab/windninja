@@ -75,6 +75,15 @@ wrf3dInitialization& wrf3dInitialization::operator= (wrf3dInitialization const& 
     return *this;
 }
 
+/**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepGfsSurfInitialization::getGridResolution()
+{
+    return -1.0;
+}
+
 
 /**
  * Fetch the 3d variable names

@@ -73,6 +73,7 @@ public:
     NinjaFoam& operator= ( NinjaFoam const& A );
 
     virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninjafoam");}
 
 private:
 
@@ -115,10 +116,14 @@ private:
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
     std::vector<double> bbox;
-    std::vector<int> nCells;
+    std::vector<int> nCells; //number of cells in x,y,z directions of blockMesh
     double side; // length of side of regular hex cell
-    double firstCellHeight; //height of near-ground cell after moveDynamicMesh
-    int latestTime; //latest time directory 
+    double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
+    double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
+    double finalFirstCellHeight; //final approx height of near-ground cell after refinement
+    int latestTime; //latest time directory
+    int cellCount; //total cell count in the mesh 
+    int simpleFoamEndTime; //set to last time directory
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
@@ -140,11 +145,14 @@ private:
     int SimpleFoam();
     int Sample();
     int ReadStl();
+    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateSimpleFoamControlDict();
 
     /* GDAL/OGR output */
     const char *pszVrtMem;
     const char *pszGridFilename;
     
+    int SampleRawOutput();
     int WriteOutputFiles();
     void SetOutputFilenames();
     

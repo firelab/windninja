@@ -54,6 +54,7 @@ public:
     virtual std::vector<std::string> getVariableList();
     virtual std::string getForecastIdentifier();
     virtual std::string getForecastReadable( const char bySwapWithSpace=' ' );
+    virtual double getGridResolution();
     virtual int getStartHour();
     virtual int getEndHour();
     virtual void checkForValidData();

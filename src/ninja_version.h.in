@@ -1,10 +1,8 @@
 /******************************************************************************
  *
- * $Id:$
- *
  * Project:  WindNinja
- * Purpose:  Class for storing scalar transport info.
- * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
+ * Purpose:  general disclaimer for windninja
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -27,41 +25,15 @@
  *
  *****************************************************************************/
 
-#ifndef SCALAR_TRANSPORT_H
-#define SCALAR_TRANSPORT_H
+#ifndef NINJA_VERSION_H_
+#define NINJA_VERSION_H_
 
-#include "ascii_grid.h"
-#include "WindNinjaInputs.h"
-#include "mesh.h"
-#include "wn_3dScalarField.h"
-#include "wn_3dVectorField.h"
+#define NINJA_VERSION_MAJOR @VER_MAJ@
+#define NINJA_VERSION_MINOR @VER_MIN@
+#define NINJA_VERSION_PATCH @VER_PATCH@
+#define NINJA_VERSION_STRING "@VER_STR@"
+#define NINJA_SCM_VERSION "@SCM_REV@"
+#define NINJA_RELEASE_DATE "@DATE@"
 
-class scalarTransport
-{
-	public:
-		scalarTransport();	  //Default constructor
-		~scalarTransport();   // Destructor
-		
-        wn_3dScalarField Rx, Ry, Rz;    // eddy diffusivities
-        double volumeSource; // volume source used as source term (H) in govering equation
-        double sourceElemNum; // elemnent number of scalar source (for a point source)
-        
-        void allocate(Mesh const& mesh);
-        void deallocate();
-        
-        void computeDiffusivity(WindNinjaInputs &input,
-                                const Mesh &mesh, 
-                                const wn_3dScalarField &u,
-                                const wn_3dScalarField &v);
+#endif /* NINJA_VERSION_H_ */
 
-
-	private:
-        wn_3dScalarField heightAboveGround;
-        wn_3dScalarField windVelocity;
-        wn_3dVectorField velocityGradients;
-
-};
-
-
-
-#endif /* SCALAR_TRANPSORT_H */
