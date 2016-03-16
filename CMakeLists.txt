@@ -63,7 +63,7 @@ set(VER_STR ${VER_MAJ}.${VER_MIN}.${VER_PATCH})
 configure_file(${CMAKE_SOURCE_DIR}/src/ninja_version.h.in
                ${CMAKE_BINARY_DIR}/ninja_version.h)
 include_directories(${CMAKE_BINARY_DIR})
-set(WINDNINJA_VERSION ${WINDNINJA_VERSION_MAJOR}.${WINDNINJA_VERSION_MINOR}.${WINDNINJA_VERSION_PATCH})
+set(WINDNINJA_VERSION ${VER_MAJ}.${VER_MIN}.${VER_PATCH})
 set(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 
 include(FindBoost)
@@ -119,6 +119,12 @@ if(WIN32)
     endif(NOT GDAL_include_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
 endif(WIN32)
 
+
+option(WITH_NOMADS_SUPPORT "Use NOMADS server support" ON)
+if(WITH_NOMADS_SUPPORT)
+    add_definitionS(-DWITH_NOMADS_SUPPORT)
+endif(WITH_NOMADS_SUPPORT)
+
 if(WITH_NOMADS_SUPPORT)
     include(CheckFunctionExists)
     CHECK_FUNCTION_EXISTS(timegm HAVE_TIMEGM)
@@ -163,7 +169,7 @@ if(NINJAFOAM)
         find_path(foaM_MINGW_PATH OpenFOAM-2.2.x
                   DOC "Path to x-compiled OpenFOAM directory")
         if(FOAM_MINGW_PATH-NOTFOUND)
-            MESSAGE(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
+            message(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
         endif(FOAM_MINGW_PATH-NOTFOUND)
     endif(WIN32 AND FIRELAB_PACKAGE)
 endif(NINJAFOAM)
@@ -206,7 +212,7 @@ endif(DISABLE_THREDDS_UPDATE)
 # If the gui is to be built, check for Qt.  Add the definition to force 
 # ninjaCom to compile with Qt support
 # *****************************************************************************
-option(NINJA_QTGUI "Build Qt GUI" OFF)
+option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
     include(FindQt4)
@@ -228,7 +234,7 @@ endif(NINJA_QTGUI)
 # *****************************************************************************
 # Build the cli executable
 # *****************************************************************************
-option(NINJA_CLI "Build Command Line Interface" OFF)
+option(NINJA_CLI "Build Command Line Interface" ON)
 
 # *****************************************************************************
 # Enable support for openmp.
@@ -240,7 +246,7 @@ if(OPENMP_SUPPORT)
     if(OPENMP_FOUND)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     else(OPENMP_FOUND)
-        MESSAGE("OpenMP could not be found on your system, disabling support")
+        message(STATUS "OpenMP could not be found on your system, disabling support")
     endif(OPENMP_FOUND)
 endif(OPENMP_SUPPORT)
 
@@ -285,16 +291,10 @@ if(ENABLE_GMTED)
     add_definitionS(-DHAVE_GMTED)
 endif(ENABLE_GMTED)
 
-option(WITH_LCP_CLIENT "Allow LCP downloading" OFF)
+option(WITH_LCP_CLIENT "Allow LCP downloading" ON)
 if(WITH_LCP_CLIENT)
     add_definitionS(-DWITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
-
-
-option(WITH_NOMADS_SUPPORT "Use NOMADS server support" ON)
-if(WITH_NOMADS_SUPPORT)
-    add_definitionS(-DWITH_NOMADS_SUPPORT)
-endif(WITH_NOMADS_SUPPORT)
 
 if(NOT WIN32)
     option(ENABLE_PROFILER "Write gprof data on execution" OFF)
@@ -317,19 +317,19 @@ if(CMAKE_SIZEOF_VOID_P MATCHES "8")
     set(BUILD_64 TRUE)
     add_definitionS(-DNINJA_64BIT=1)
     if(PACKAGE_DEBUG)
-        MESSAGE("Building 64-bit installer")
+        message(STATUS "Building 64-bit installer")
     endif(PACKAGE_DEBUG)
 elseif(CMAKE_SIZEOF_VOID_P MATCHES "4")
     set(BUILD_64 FALSE)
     add_definitionS(-DNINJA_32BIT=1)
     if(PACKAGE_DEBUG)
-        MESSAGE("Building 32-bit installer")
+        message(STATUS "Building 32-bit installer")
     endif(PACKAGE_DEBUG)
 else(CMAKE_SIZEOF_VOID_P MATCHES "8")
     set(BUILD_64 FALSE)
     add_definitionS(-DNINJA_32BIT=1)
     if(PACKAGE_DEBUG)
-        MESSAGE("Cannot determine architecture, using 32-bit by default")
+        message(STATUS "Cannot determine architecture, using 32-bit by default")
     endif(PACKAGE_DEBUG)
 endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
@@ -431,7 +431,7 @@ endif(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
 
 if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
-        MESSAGE("Copying boost date time file into build/src/gui and build/src/cli")
+        message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
     FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
     FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
