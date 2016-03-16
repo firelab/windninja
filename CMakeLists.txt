@@ -376,7 +376,6 @@ endif(BUILD_TESTING)
 add_subdirectory(src)
 
 option(RUN_SLOW_TESTS "Run slower tests, such as srtm fetching" OFF)
-option(RUN_CLI_TESTS "Enable Command Line Interface Tests" OFF )
 
 if(BUILD_TESTING)
     add_subdirectory(autotest)
