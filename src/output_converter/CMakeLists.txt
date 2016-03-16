@@ -24,7 +24,8 @@ include_directories(${PROJECT_SOURCE_DIR}/src
                     ${GDAL_INCLUDE_DIR})
 
 set(LINK_LIBS ${NETCDF_LIBRARIES_C}
-              ${GDAL_LIBRARY})
+              ${GDAL_LIBRARY}
+              ${Boost_LIBRARIES})
 
 set(STL_SOURCES convert_output.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
