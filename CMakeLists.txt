@@ -24,6 +24,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)
 
+if(FIRELAB_PACKAGE)
+    set(NINJA_QTGUI ON)
+    set(NINJA_CLI ON)
+endif(FIRELAB_PACKAGE)
+
 # Generate a current version file derived from VERSION
 file(READ ${CMAKE_SOURCE_DIR}/VERSION V)
 string(REPLACE "\n" "" V ${V})
@@ -66,6 +71,7 @@ include_directories(${CMAKE_BINARY_DIR})
 set(WINDNINJA_VERSION ${VER_MAJ}.${VER_MIN}.${VER_PATCH})
 set(WINDNINJA_VERSION_NAME WindNinja-${WINDNINJA_VERSION})
 
+# Locate third party libs
 include(FindBoost)
 set(Boost_DEBUG ON)
 if(WIN32)
@@ -119,7 +125,26 @@ if(WIN32)
     endif(NOT GDAL_include_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
 endif(WIN32)
 
+# Ninja executables
+option(NINJA_QTGUI "Build Qt GUI" ON)
+if(NINJA_QTGUI)
+    set(QT_USE_QTMAIN_LIBRARY 1)
+    include(FindQt4)
+    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
+    include(${QT_USE_FILE})
+    add_definitions(-DNINJA_GUI)
+    if(WIN32)
+        option(ENABLE_CONSOLE "Show the console for CLI/GUI runs" OFF)
+        option(ENABLE_FIDDLER "Use Fiddler2 proxy to monitor web traffic" OFF)
+    endif(WIN32)
+    if(ENABLE_FIDDLER)
+        add_definitionS(-DENABLE_FIDDLER)
+    endif(ENABLE_FIDDLER)
+endif(NINJA_QTGUI)
 
+option(NINJA_CLI "Build Command Line Interface" ON)
+
+# Weather related options
 option(WITH_NOMADS_SUPPORT "Use NOMADS server support" ON)
 if(WITH_NOMADS_SUPPORT)
     add_definitionS(-DWITH_NOMADS_SUPPORT)
@@ -161,6 +186,23 @@ if(WITH_NOMADS_SUPPORT)
     endif(NOMADS_TEST_PARA)
 endif(WITH_NOMADS_SUPPORT)
 
+option(DISABLE_THREDDS_UPDATE "Don't connect to server for thredds updates" OFF)
+if(DISABLE_THREDDS_UPDATE)
+    add_definitionS(-DDISABLE_THREDDS_UPDATE)
+endif(DISABLE_THREDDS_UPDATE)
+
+# Surface related options
+option(ENABLE_GMTED "Try to use the GMTED data for DEM fetching" ON)
+if(ENABLE_GMTED)
+    add_definitionS(-DHAVE_GMTED)
+endif(ENABLE_GMTED)
+
+option(WITH_LCP_CLIENT "Allow LCP downloading" ON)
+if(WITH_LCP_CLIENT)
+    add_definitionS(-DWITH_LCP_CLIENT)
+endif(WITH_LCP_CLIENT)
+
+# OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" OFF)
 if(NINJAFOAM)
     add_definitions(-DNINJAFOAM)
@@ -174,6 +216,7 @@ if(NINJAFOAM)
     endif(WIN32 AND FIRELAB_PACKAGE)
 endif(NINJAFOAM)
 
+# Miscellaneous options
 option(NINJA_SPEED_TESTING "Enable initialization speed dampening" OFF)
 if(NINJA_SPEED_TESTING)
     add_definitionS(-DNINJA_SPEED_TESTING)
@@ -200,45 +243,6 @@ if(MOBILE_APP)
     add_definitionS(-DMOBILE_APP)
 endif(MOBILE_APP)
 
-# *****************************************************************************
-# Allow to permanently disable thredds updating in the build
-# *****************************************************************************
-option(DISABLE_THREDDS_UPDATE "Don't connect to server for thredds updates" OFF)
-if(DISABLE_THREDDS_UPDATE)
-    add_definitionS(-DDISABLE_THREDDS_UPDATE)
-endif(DISABLE_THREDDS_UPDATE)
-
-# *****************************************************************************
-# If the gui is to be built, check for Qt.  Add the definition to force 
-# ninjaCom to compile with Qt support
-# *****************************************************************************
-option(NINJA_QTGUI "Build Qt GUI" ON)
-if(NINJA_QTGUI)
-    set(QT_USE_QTMAIN_LIBRARY 1)
-    include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
-    include(${QT_USE_FILE})
-    add_definitions(-DNINJA_GUI)
-# *****************************************************************************
-# Enable the command prompt for cli builds
-# *****************************************************************************
-    if(WIN32)
-        option(ENABLE_CONSOLE "Show the console for CLI/GUI runs" OFF)
-        option(ENABLE_FIDDLER "Use Fiddler2 proxy to monitor web traffic" OFF)
-    endif(WIN32)
-    if(ENABLE_FIDDLER)
-        add_definitionS(-DENABLE_FIDDLER)
-    endif(ENABLE_FIDDLER)
-endif(NINJA_QTGUI)
-
-# *****************************************************************************
-# Build the cli executable
-# *****************************************************************************
-option(NINJA_CLI "Build Command Line Interface" ON)
-
-# *****************************************************************************
-# Enable support for openmp.
-# *****************************************************************************
 option(OPENMP_SUPPORT "Build with OpenMP support" ON)
 if(OPENMP_SUPPORT)
     include(FindOpenMP)
@@ -255,14 +259,8 @@ if(MAKE_DOCS)
     add_subdirectory(doc)
 endif(MAKE_DOCS)
 
-# *****************************************************************************
-# Suppress warnings, cleaner
-# *****************************************************************************
 option(SUPRESS_WARNINGS "Supress known compiler warnings that don't seem to affect the build" OFF)
 
-# *****************************************************************************
-# Show all warnings, update for other compilers.
-# *****************************************************************************
 option(VERBOSE_WARNINGS "Show lots of warnings, supercedes SUPPRESS_WARNINGS" OFF)
 if(VERBOSE_WARNINGS)
     if(MSVC)
@@ -285,17 +283,6 @@ if(NOT MSVC)
     endif(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif(NOT MSVC)
 
-option(ENABLE_GMTED "Try to use the GMTED data for DEM fetching.  It has proven
-unreliable and may need to be disabled" ON)
-if(ENABLE_GMTED)
-    add_definitionS(-DHAVE_GMTED)
-endif(ENABLE_GMTED)
-
-option(WITH_LCP_CLIENT "Allow LCP downloading" ON)
-if(WITH_LCP_CLIENT)
-    add_definitionS(-DWITH_LCP_CLIENT)
-endif(WITH_LCP_CLIENT)
-
 if(NOT WIN32)
     option(ENABLE_PROFILER "Write gprof data on execution" OFF)
     if(ENABLE_PROFILER)
@@ -304,15 +291,29 @@ if(NOT WIN32)
     endif(ENABLE_PROFILER)
 endif(NOT WIN32)
 
-# *****************************************************************************
-# Show some information related to the package being built.
-# *****************************************************************************
-option(PACKAGE_DEBUG "Show some information about the package" OFF)
-MARK_AS_ADVANCED(PACKAGE_DEBUG)
+# Optional utilities
+option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
+option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
+option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
+mark_as_advanced(BUILD_SOLAR_GRID)
 
-# *****************************************************************************
-# Check installer version.
-# *****************************************************************************
+# Recurse into subdirectories
+add_subdirectory(src)
+
+if(BUILD_TESTING)
+    add_definitions(-DNINJA_BUILD_TESTING)
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+endif(BUILD_TESTING)
+option(RUN_SLOW_TESTS "Run slower tests, such as srtm fetching" OFF)
+if(BUILD_TESTING)
+    add_subdirectory(autotest)
+endif(BUILD_TESTING)
+
+# Package related options and settings.
+option(PACKAGE_DEBUG "Show some information about the package" OFF)
+mark_as_advanced(PACKAGE_DEBUG)
+
 if(CMAKE_SIZEOF_VOID_P MATCHES "8")
     set(BUILD_64 TRUE)
     add_definitionS(-DNINJA_64BIT=1)
@@ -333,15 +334,6 @@ else(CMAKE_SIZEOF_VOID_P MATCHES "8")
     endif(PACKAGE_DEBUG)
 endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
-# *****************************************************************************
-# Option for creating the installer with all the dlls from the firelab machine.
-# If build type not explicity set, then we set it to release for dll builds
-# *****************************************************************************
-if(FIRELAB_PACKAGE)
-    set(NINJA_QTGUI ON)
-    set(NINJA_CLI ON)
-endif(FIRELAB_PACKAGE)
-
 if(NOT CMAKE_BUILD_TYPE AND NOT MSVC_IDE)
     set(CMAKE_BUILD_TYPE "debug")
 endif(NOT CMAKE_BUILD_TYPE AND NOT MSVC_IDE)
@@ -353,33 +345,10 @@ if(NOT MSVC_IDE)
     STRING(TOLOWER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
 endif(NOT MSVC_IDE)
 
-# *****************************************************************************
-# For debugging the cmake script
-# *****************************************************************************
 option(VERBOSE_CMAKE "Show system information gathered by cmake, useful for debugging" OFF)
 if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
-
-# Optional utilities
-option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
-option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
-option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
-option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
-MARK_AS_ADVANCED(BUILD_SOLAR_GRID)
-
-if(BUILD_TESTING)
-    add_definitions(-DNINJA_BUILD_TESTING)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
-endif(BUILD_TESTING)
-
-add_subdirectory(src)
-
-option(RUN_SLOW_TESTS "Run slower tests, such as srtm fetching" OFF)
-
-if(BUILD_TESTING)
-    add_subdirectory(autotest)
-endif(BUILD_TESTING)
 
 # install target related files
 set(example_files mackay.tif
@@ -437,7 +406,7 @@ if(BUILD_TYPE MATCHES "debug")
     FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
-# CPack
+# CPack related scripting
 include(InstallRequiredSystemLibraries)
 set(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION_NAME})
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
