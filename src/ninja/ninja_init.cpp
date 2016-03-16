@@ -105,7 +105,7 @@ int NinjaInitialize()
     ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
     ** and platforms folders
     */
-    pszFoamPath = CPLFormFilename( CPLGetPath( pszExecPath ), "OpenFOAM-2.2.x", NULL );
+    pszFoamPath = CPLFormFilename( CPLGetPath( pszExecPath ), NULL, NULL );
     rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", pszFoamPath ) );
 
     /*
