@@ -208,7 +208,7 @@ if(NINJAFOAM)
     add_definitions(-DNINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
         add_definitions(-DFIRELAB_PACKAGE)
-        find_path(foaM_MINGW_PATH OpenFOAM-2.2.x
+        find_path(FOAM_MINGW_PATH OpenFOAM-2.2.x
                   DOC "Path to x-compiled OpenFOAM directory")
         if(FOAM_MINGW_PATH-NOTFOUND)
             message(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
