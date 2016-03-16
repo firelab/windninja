@@ -488,6 +488,9 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/doc/tutorials/WindNinja_tutorial3.pdf DESTINAT
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/doc/tutorials/WindNinja_tutorial4.pdf DESTINATION share/windninja/doc/tutorials COMPONENT apps)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 
+# Install the ninjafoam data
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION /share/windninja/)
+
 # data folder
 #INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data DESTINATION share/windninja)
 IF(WIN32 AND FIRELAB_PACKAGE AND MSVC)
