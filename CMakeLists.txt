@@ -489,7 +489,7 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/doc/tutorials/WindNinja_tutorial4.pdf DESTINAT
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION share/windninja/doc)
 
 # Install the ninjafoam data
-INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja/)
+INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
 
 # data folder
 #INSTALL(DIRECTORY ${CMAKE_SOURCE_DIR}/data DESTINATION share/windninja)
