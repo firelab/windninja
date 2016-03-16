@@ -24,6 +24,8 @@ notifications:
   email:
     recipients:
       - kyle@pobox.com
+      - nwagenbrenner@gmail.com
+      - jforthofer@gmail.com
 
   irc:
     channels:
