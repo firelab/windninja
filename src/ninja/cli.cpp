@@ -1466,7 +1466,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else if(pdfSize == "legal")
                     {
-                        pdfHeight = 17.0;
+                        pdfHeight = 14.0;
                         pdfWidth = 8.5;
                     }
                     else if(pdfSize == "tabloid")
