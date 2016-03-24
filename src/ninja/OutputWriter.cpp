@@ -655,6 +655,7 @@ OutputWriter::_writePDF (std::string outputfn)
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
+    papszOptions = CSLAddNameValue( papszOptions, "DPI", "150" );
     hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )

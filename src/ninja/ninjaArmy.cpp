@@ -339,16 +339,15 @@ bool ninjaArmy::startRuns(int numProcessors)
             dfHeight = ninjas[0]->input.pdfHeight;
             dfWidth = ninjas[0]->input.pdfWidth;
             nDPI = ninjas[0]->input.pdfDPI;
-            double dfRatio;
-            /* We can only match the long edge */
-            if( dfHeight > dfWidth )
-            {
-                dfRatio = dfHeight * nDPI / nYSize;
-            }
+            double dfRatio, dfRatioH, dfRatioW;
+
+            dfRatioH = dfHeight * nDPI / nYSize;
+            dfRatioW = dfWidth * nDPI / nXSize;
+
+            if(dfRatioH > dfRatioW)
+                dfRatio = dfRatioW;
             else
-            {
-                dfRatio = dfWidth * nDPI / nXSize;
-            }
+                dfRatio = dfRatioH;
 
             int nNewXSize = nXSize * dfRatio;
             int nNewYSize = nYSize * dfRatio;
