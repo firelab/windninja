@@ -69,11 +69,31 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     useMeshResCheckBox = new QCheckBox(tr("Use Mesh Resolution"));
     useMeshResCheckBox->setChecked(true);
 
-    backgroundLabel = new QLabel("Basemap", this);
+    backgroundLabel = new QLabel(tr("Basemap"), this);
 
     backgroundComboBox = new QComboBox(this);
-    backgroundComboBox->addItem("Hillshade");
-    backgroundComboBox->addItem("TopoFire topo maps");
+    backgroundComboBox->addItem(tr("Hillshade"));
+    backgroundComboBox->addItem(tr("TopoFire topo maps"));
+
+    // Size names dictated by https://en.wikipedia.org/wiki/Paper_size
+    sizeLabel = new QLabel(tr("Size"), this);
+    sizeComboBox = new QComboBox(this);
+    sizeComboBox->addItem(tr("Letter-8 1/2 x 11"));
+    sizeComboBox->addItem(tr("Legal - 8 1/2 x 14"));
+    sizeComboBox->addItem(tr("Tabloid - 11 x 17"));
+
+    portraitRadioButton = new QRadioButton(tr("Portrait"), this);
+    landscapeRadioButton = new QRadioButton(tr("Landscape"), this);
+    portraitRadioButton->setChecked(true);
+
+    orientLayout = new QVBoxLayout;
+    orientLayout->addWidget(portraitRadioButton);
+    orientLayout->addWidget(landscapeRadioButton);
+
+    sizeLayout = new QHBoxLayout;
+    sizeLayout->addWidget(sizeLabel);
+    sizeLayout->addWidget(sizeComboBox);
+    sizeLayout->addLayout(orientLayout);
 
     //connect checkbox with spin box
     connect(useMeshResCheckBox, SIGNAL(toggled(bool)), 
@@ -99,6 +119,7 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     pageLayout = new QVBoxLayout;
     pageLayout->addWidget(vectorGroupBox);
     pageLayout->addLayout(backgroundLayout);
+    pageLayout->addLayout(sizeLayout);
     pageLayout->addWidget(pdfResGroupBox);
     pageLayout->addStretch();
 

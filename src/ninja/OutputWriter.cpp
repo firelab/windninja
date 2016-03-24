@@ -609,6 +609,12 @@ OutputWriter::_writePDF (std::string outputfn)
     std::string wn_logo_path = FindDataPath( "wn-splash.png" );
     unsigned int out_x_size = GDALGetRasterXSize( hSrcDS );
     unsigned int out_y_size = GDALGetRasterYSize( hSrcDS );
+    /*
+    ** This sucks.  It isn't a very good check.  Relief files will be rgb, dem
+    ** generated will be single band.  We also need the X and Y dimensions to
+    ** scale the legend and the logos.
+    */
+    int bUseLogo = GDALGetRasterCount( hSrcDS ) > 1 ? TRUE : FALSE;
     hDriver = GDALGetDriverByName( "PDF" );
 
     if( NULL == hDriver )
@@ -617,8 +623,10 @@ OutputWriter::_writePDF (std::string outputfn)
     }
 
     const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
+    int nLegendHeight = out_y_size * 0.15;
     std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
-                                             0, out_y_size-LGND_HEIGHT, 1.0f );
+                                             0, out_y_size-nLegendHeight,
+                                             (double)nLegendHeight / LGND_HEIGHT );
     /* We need the dimension to push it against the edge of the page */
     int nNinjaLogoXSize = 0;
     { /* Scoped on purpose */
@@ -628,27 +636,13 @@ OutputWriter::_writePDF (std::string outputfn)
         GDALClose( hDS );
     }
 
+    int nLogoWidth = out_x_size * 0.20;
     std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
-                                           out_x_size - (int)(nNinjaLogoXSize * 0.1),
-                                           //out_x_size / 2,
-                                           0, 0.1f );
+                                           out_x_size - nLogoWidth,
+                                           //out_x_size - (int)(nNinjaLogoXSize * 0.1),
+                                           //0, 0.20 );
+                                           0, (double)nLogoWidth / nNinjaLogoXSize );
     std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
-    /*
-    ** This sucks.  It isn't a very good check.  Relief files will be rgb, dem
-    ** generated will be single band.
-    */
-    int bUseLogo = FALSE;
-    /* See above on scoping */
-    {
-        GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
-        assert( hDS );
-        int nBands = GDALGetRasterCount( hDS );
-        if( nBands > 1 )
-        {
-            bUseLogo = TRUE;
-        }
-        GDALClose( hDS );
-    } /* End scoped */
     if( bUseLogo )
     {
         std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );

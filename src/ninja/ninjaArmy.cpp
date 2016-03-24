@@ -330,54 +330,71 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             int nXSize = GDALGetRasterXSize( hDS );
             int nYSize = GDALGetRasterYSize( hDS );
+            /*
+            ** Figure out How big we need to make our raster, given a width,
+            ** height and dpi.
+            */
+            double dfWidth, dfHeight;
+            unsigned short nDPI;
+            dfHeight = ninjas[0]->input.pdfHeight;
+            dfWidth = ninjas[0]->input.pdfWidth;
+            nDPI = ninjas[0]->input.pdfDPI;
+            double dfRatio;
+            /* We can only match the long edge */
+            if( dfHeight > dfWidth )
+            {
+                dfRatio = dfHeight * nDPI / nYSize;
+            }
+            else
+            {
+                dfRatio = dfWidth * nDPI / nXSize;
+            }
 
-            GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpColorRelief, nXSize,
-                                             nYSize, 1, GDT_Byte, NULL );
+            int nNewXSize = nXSize * dfRatio;
+            int nNewYSize = nYSize * dfRatio;
+
+            GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpColorRelief, nNewXSize,
+                                             nNewYSize, 1, GDT_Byte, NULL );
             CPLErr eErr = CE_None;
             double adfGeoTransform[6];
             eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
             assert( eErr == CE_None );
+            adfGeoTransform[1] /= dfRatio;
+            adfGeoTransform[5] /= dfRatio;
             GDALSetGeoTransform( h8bit, adfGeoTransform );
 
             GDALSetProjection( h8bit, GDALGetProjectionRef( hDS ) );
 
             GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
             float *padfData = NULL;
-            padfData = (float*)CPLMalloc( nXSize * sizeof( GDT_Float32 ) );
+            padfData = (float*)CPLMalloc( nNewXSize * nNewYSize * sizeof( GDT_Float32 ) );
             unsigned char *pabyData = NULL;
-            pabyData = (unsigned char*)CPLMalloc( nXSize * sizeof( unsigned char* ) );
+            pabyData = (unsigned char*)CPLMalloc( nNewXSize * nNewYSize * sizeof( unsigned char* ) );
             double adfMinMax[2];
             int bSuccess = TRUE;
             GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
 
-            for( int i = 0; i < nYSize; i++ )
+            eErr = GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, nYSize,
+                                 padfData, nNewXSize, nNewYSize,
+                                 GDT_Float32, 0, 0 );
+            assert( eErr == CE_None );
+            for( int i = 0; i < nNewXSize * nNewYSize; i++ )
             {
-                eErr = GDALRasterIO( hBand, GF_Read, 0, i, nXSize, 1, padfData,
-                                     nXSize, 1, GDT_Float32, 0, 0 );
-                if( eErr != CE_None )
-                {
-                    assert( FALSE );
-                }
-                for( int j = 0; j < nXSize; j++ )
-                {
-                    /*
-                    ** Figure out what is going on here and document it.  It makes a
-                    ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
-                    */
-                    //double dfMin = GDALGetRasterMinimum( hBand, NULL );
-                    //double dfMax = GDALGetRasterMaximum( hBand, NULL );
-                    //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
+                /*
+                ** Figure out what is going on here and document it.  It makes a
+                ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
+                */
+                //double dfMin = GDALGetRasterMinimum( hBand, NULL );
+                //double dfMax = GDALGetRasterMaximum( hBand, NULL );
+                //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
 
-                    /* Normal */
-                    pabyData[j] = ((padfData[j] - adfMinMax[0]) / (adfMinMax[1] - adfMinMax[0])) * 255;
-                }
-                eErr = GDALRasterIO( h8bitBand, GF_Write, 0, i, nXSize, 1, pabyData,
-                                     nXSize, 1, GDT_Byte, 0, 0 );
-                if( eErr != CE_None )
-                {
-                    assert( FALSE );
-                }
+                /* Normal */
+                pabyData[i] = ((padfData[i] - adfMinMax[0]) / (adfMinMax[1] - adfMinMax[0])) * 255;
             }
+            eErr = GDALRasterIO( h8bitBand, GF_Write, 0, 0, nNewXSize,
+                                 nNewYSize, pabyData, nNewXSize, nNewYSize,
+                                 GDT_Byte, 0, 0 );
+            assert( eErr == CE_None );
             CPLFree( (void*)padfData );
             CPLFree( (void*)pabyData );
             GDALFlushCache( h8bit );
@@ -1646,6 +1663,12 @@ int ninjaArmy::setPDFDEM
 ( const int nIndex, const std::string dem_filename, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_pdfDEM( dem_filename ) );
+}
+
+int ninjaArmy::setPDFSize( const int nIndex, const double height, const double width,
+                           const unsigned short dpi )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )

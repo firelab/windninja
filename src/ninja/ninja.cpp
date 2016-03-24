@@ -4497,6 +4497,13 @@ void ninja::set_pdfBaseMap(const int b)
     input.pdfBaseType = (WindNinjaInputs::ePDFBaseMap)b;
 }
 
+void ninja::set_pdfSize( const double height, const double width, const unsigned short dpi )
+{
+    input.pdfHeight = height;
+    input.pdfWidth = width;
+    input.pdfDPI = dpi;
+}
+
 void ninja::set_pdfDEM(std::string dem_file_name)
 {
     /*

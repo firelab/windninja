@@ -56,10 +56,17 @@ public:
     QLabel *backgroundLabel;
     QComboBox *backgroundComboBox;
 
+    QLabel *sizeLabel;
+    QComboBox *sizeComboBox;
+    QRadioButton *portraitRadioButton;
+    QRadioButton *landscapeRadioButton;
+
     QHBoxLayout *vectorLayout;
     QVBoxLayout *optionLayout;
     QGridLayout *resLayout;
     QHBoxLayout *backgroundLayout;
+    QVBoxLayout *orientLayout;
+    QHBoxLayout *sizeLayout;
     QVBoxLayout *pageLayout;
     QVBoxLayout *mainLayout;
 };

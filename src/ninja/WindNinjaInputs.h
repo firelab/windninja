@@ -227,6 +227,8 @@ public:
     double      pdfResolution;
     double      pdfLineWidth;
     lengthUnits::eLengthUnits pdfUnits;
+    double pdfWidth, pdfHeight; // in inches
+    unsigned short pdfDPI;
 
     std::string customOutputPath; //user-specified path for output
 

@@ -1614,6 +1614,34 @@ int mainWindow::solve()
         pdfUnits = lengthUnits::feet;
     int pdfBase = tree->pdf->backgroundComboBox->currentIndex();
 
+    double pdfHeight, pdfWidth;
+    int pdfSize = tree->pdf->sizeComboBox->currentIndex();
+    // Letter
+    if( pdfSize == 0 )
+    {
+        pdfHeight = 11.0;
+        pdfWidth = 8.5;
+    }
+    // Legal
+    else if( pdfSize == 1 )
+    {
+        pdfHeight = 14.0;
+        pdfWidth = 8.5;
+    }
+    // Tabloid
+    else if( pdfSize == 2 )
+    {
+        pdfHeight = 17.0;
+        pdfWidth = 11.0;
+    }
+    if( tree->pdf->landscapeRadioButton->isChecked() )
+    {
+        double tmp;
+        tmp = pdfWidth;
+        pdfWidth = pdfHeight;
+        pdfHeight = tmp;
+    }
+
     bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
 
     //number of processors
@@ -1853,6 +1881,7 @@ int mainWindow::solve()
         army->setPDFResolution   (i,pdfRes,pdfUnits);
         army->setPDFLineWidth    (i,pdfLineWidth);
         army->setPDFBaseMap      (i,pdfBase);
+        army->setPDFSize         (i,pdfHeight,pdfWidth,150);
         army->setAsciiOutFlag    (i,writeFb);    
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  
