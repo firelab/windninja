@@ -229,6 +229,7 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
+    double pdfMargin;  // in inches
 
     std::string customOutputPath; //user-specified path for output
 

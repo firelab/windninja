@@ -336,8 +336,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             */
             double dfWidth, dfHeight;
             unsigned short nDPI;
-            dfHeight = ninjas[0]->input.pdfHeight;
-            dfWidth = ninjas[0]->input.pdfWidth;
+            dfHeight = ninjas[0]->input.pdfHeight - 3.0*ninjas[0]->input.pdfMargin; //3.0 because margin on bottom is double size
+            dfWidth = ninjas[0]->input.pdfWidth - 2.0*ninjas[0]->input.pdfMargin;
             nDPI = ninjas[0]->input.pdfDPI;
             double dfRatio, dfRatioH, dfRatioW;
 
@@ -1665,9 +1665,9 @@ int ninjaArmy::setPDFDEM
 }
 
 int ninjaArmy::setPDFSize( const int nIndex, const double height, const double width,
-                           const unsigned short dpi )
+                           const unsigned short dpi, const double margin )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi, margin ));
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )

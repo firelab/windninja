@@ -88,6 +88,8 @@ class OutputWriter
         void setRunNumber(int n) {runNumber=n;}
         void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
+        void setDPI( const unsigned short d );
+        void setMargin( const double m );
         
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
@@ -166,6 +168,8 @@ class OutputWriter
         double *split_vals;
         Style ** colors;
         float linewidth;
+        unsigned short dpi;
+        double margin;
 
 
         GDALDatasetH hSrcDS;

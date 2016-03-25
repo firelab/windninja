@@ -1881,7 +1881,7 @@ int mainWindow::solve()
         army->setPDFResolution   (i,pdfRes,pdfUnits);
         army->setPDFLineWidth    (i,pdfLineWidth);
         army->setPDFBaseMap      (i,pdfBase);
-        army->setPDFSize         (i,pdfHeight,pdfWidth,150);
+        army->setPDFSize         (i,pdfHeight,pdfWidth,150,0.5);
         army->setAsciiOutFlag    (i,writeFb);    
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  
