@@ -371,7 +371,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             pabyData = (unsigned char*)CPLMalloc( nNewXSize * nNewYSize * sizeof( unsigned char* ) );
             double adfMinMax[2];
             int bSuccess = TRUE;
-            GDALComputeRasterMinMax( hBand, TRUE, adfMinMax );
+            double dfMin, dfMax, dfMean, dfStdDev;
+            GDALComputeRasterStatistics( hBand, FALSE, &dfMin, &dfMax, &dfMean, &dfStdDev, NULL, NULL );
 
             eErr = GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, nYSize,
                                  padfData, nNewXSize, nNewYSize,
@@ -388,7 +389,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
 
                 /* Normal */
-                pabyData[i] = ((padfData[i] - adfMinMax[0]) / (adfMinMax[1] - adfMinMax[0])) * 255;
+                pabyData[i] = ((padfData[i] - dfMin) / (dfMax - dfMin)) * 255;
             }
             eErr = GDALRasterIO( h8bitBand, GF_Write, 0, 0, nNewXSize,
                                  nNewYSize, pabyData, nNewXSize, nNewYSize,
