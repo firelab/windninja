@@ -52,17 +52,16 @@ omp_lock_t netCDF_lock;
 #endif
 int main(int argc, char *argv[])
 {
-    NinjaInitialize();
-    int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
-
     if(argc > 1)
     {
         CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
         return windNinjaCLI(argc, argv);
     }
+    NinjaInitialize();
+    int result;
+#ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+#endif
 
     QApplication app(argc, argv);
 
