@@ -31,6 +31,36 @@
 
 #include "ninja_conv.h"
 
+/** Fetch the max value of a dataset.
+ * Fetch the max value from any valid GDAL dataset
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @return max value 
+ */
+double GDALGetMax( GDALDataset *poDS )
+{
+    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    double adfMinMax[2];
+
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+    return adfMinMax[1];
+}
+
+/** Fetch the min value of a dataset.
+ * Fetch the min value from any valid GDAL dataset
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @return min value 
+ */
+double GDALGetMin( GDALDataset *poDS )
+{
+    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    double adfMinMax[2];
+
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+    return adfMinMax[0];
+}
+
 /** Fetch the center of a domain.
  * Fetch the center of a domain from any valid GDAL dataset
  * @param poDS a pointer to a valid GDAL Dataset

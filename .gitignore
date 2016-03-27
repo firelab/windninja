@@ -28,13 +28,13 @@
 *.app
 
 # Build folder
-build*
-vs-build*
+*build*
 debug*
 
 # vim
 *.swo
 *.swp
+*~
 
 # Qt Creator files
 *.config

@@ -294,7 +294,7 @@ void weatherModel::getData()
 #if defined(WIN32) && defined(NINJA_32BIT)
         model->SetProgressFunc( NULL );
         QCoreApplication::processEvents();
-#else /* defined(WIN32) && !defined(NINJA_64BIT) */
+#else /* defined(WIN32) && defined(NINJA_32BIT) */
         progressDialog->reset();
         progressDialog->setRange( 0, 100 );
         model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
@@ -325,13 +325,15 @@ void weatherModel::getData()
         return;
     }
 
-#if defined(NINJA_64BIT)
+#if !defined(NINJA_32BIT)
     if( modelChoice > 4 )
     {
         progressDialog->setRange( 0, 100 );
         progressDialog->setValue( 100 );
         progressDialog->setLabelText( "Done" );
         progressDialog->setCancelButtonText( "Close" );
+        /* Should we autoclose, or ask user to close */
+        progressDialog->close();
     }
 #endif /* defined(NINJA_64BIT) */
 

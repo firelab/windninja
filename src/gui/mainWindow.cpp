@@ -80,7 +80,7 @@ mainWindow::mainWindow(QWidget *parent)
 
     meshCellSize = 200.0;
 
-    QString v(VERSION);
+    QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
 
@@ -1004,11 +1004,11 @@ void mainWindow::bugReport()
 void mainWindow::aboutWindNinja()
 {
   QString aboutText = "<h2>WindNinja</h2>\n";
-  aboutText.append("<p><h4>Version:</h4>" + QString(VERSION) + "</p>");
+  aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
 
-  aboutText.append("<p><h4>SVN Version:</h4>" + QString(SVN_VERSION) + "</p>");
+  aboutText.append("<p><h4>SVN Version:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
 
-  aboutText.append("<p><h4>Release Date:</h4>" + QString(RELEASE_DATE) + "</p>");
+  aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br /> " \
                                                "Kyle Shannon<br /> " \
                                                "Bret Butler<br /> " \
@@ -1161,18 +1161,23 @@ double mainWindow::computeCellSize(int index)
 #ifdef NINJAFOAM  
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
+
     double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
     double YLength = (GDALYSize + 1) * GDALCellSize + 200;
-    double ZLength = 2450; //bottom face is 50 m above terrain max, top face is 2500 m above terrain max
   
+    double dz = GDALMaxValue - GDALMinValue;
+    double zMin = GDALMaxValue * 1.1;
+    double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
+    double ZLength = zMax - zMin; 
+
     double volume1;
     double cellCount1;
     double cellVolume1;
     
     volume1 = XLength * YLength * ZLength; //volume near terrain
     cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    cellVolume1 = volume1/cellCount1; // volume of 1 cell in blockMesh
+    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of cell in blockMesh 
   }
   else{
     /* native windninja mesh */
@@ -1349,6 +1354,10 @@ int mainWindow::checkInputFile(QString fileName)
             return -1;
         }
     }
+
+    //get min/max values
+    GDALMaxValue = GDALGetMax(poInputDS);
+    GDALMinValue = GDALGetMin(poInputDS);
 
     GDALClose( (GDALDatasetH)poInputDS );
 

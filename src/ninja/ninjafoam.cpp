@@ -167,22 +167,22 @@ bool NinjaFoam::simulate_wind()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
-    const char *pszShortName = CPLGetBasename(input.dem.fileName.c_str());
-    const char *pszStlPath = CPLStrdup( CPLSPrintf("%s/constant/triSurface/", pszTempPath) );
-    const char *pszStlFileName = CPLFormFilename(pszStlPath, pszShortName, ".stl");
+    const char *pszStlFileName = CPLStrdup(CPLFormFilename(
+                (CPLSPrintf("%s/constant/triSurface/", pszTempPath)),
+                CPLGetBasename(input.dem.fileName.c_str()), ".stl"));
 
     int nBand = 1;
     const char * inFile = input.dem.fileName.c_str();
-    const char * outFile = pszStlFileName;
-
     CPLErr eErr;
 
     eErr = NinjaElevationToStl(inFile,
-                        outFile,
+                        pszStlFileName,
                         nBand,
                         NinjaStlBinary,
                         //NinjaStlAscii,
                         NULL);
+
+    CPLFree((void*)pszStlFileName);
 
     if(eErr != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while converting DEM to STL format.");
@@ -496,20 +496,19 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
 
     if(template_ == ""){
         if(gammavalue != ""){
-            pszTemplate = CPLStrdup("genericTypeVal.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericTypeVal.tmp");
         }
         else if(inletoutletvalue != ""){
-            pszTemplate = CPLStrdup("genericType.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType.tmp");
         }
         else{
-            pszTemplate = CPLStrdup("genericType-kep.tmp");
+            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType-kep.tmp");
         }
     }
     else{
-        pszTemplate = CPLStrdup(template_.c_str());
+        pszPathToFile = CPLSPrintf("ninjafoam/0/%s", template_.c_str());
     }
 
-    pszPathToFile = CPLSPrintf("ninjafoam/0/%s", pszTemplate);
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
 
     char *data;
@@ -1099,19 +1098,12 @@ int NinjaFoam::readDem(double &expansionRatio)
     xBuffer = dx*0.01; // buffers for MDM
     yBuffer = dy*0.01;
     
-    if(dz == 0.0){ 
-        if(dx * dy < 1000)
-            dz = 0.5 * dx * dy; //min value allowed for dz 
-        else
-            dz = 1000; //min value allowed for dz 
-    }
-            
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
     bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + 1000 ); //zmax
+    bbox.push_back( input.dem.get_maxValue() + max((0.1 * max(dx, dy)), (dz + 0.1 *dz)) ); //zmax
 
     double meshVolume;
     double cellVolume;
@@ -2070,7 +2062,6 @@ int NinjaFoam::SanitizeOutput()
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
-    const char *pszRaw;
     const char *pszMem;
     std::string s;
 
@@ -2079,12 +2070,14 @@ int NinjaFoam::SanitizeOutput()
     pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
 
     char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir( CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath)) );
+    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath) );
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            pszRaw = CPLStrdup( CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", pszTempPath, papszOutputSurfacePath[i]) );
+            fin = VSIFOpen(CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+                            pszTempPath, 
+                            papszOutputSurfacePath[i]), "r");
             break;
         }
         else{
@@ -2092,7 +2085,6 @@ int NinjaFoam::SanitizeOutput()
         }
     }
 
-    fin = VSIFOpen( pszRaw, "r" );
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     if( !fin )

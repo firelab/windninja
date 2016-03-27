@@ -90,11 +90,10 @@ int NinjaInitialize()
         CPLDebug( "WINDNINJA", "Setting GDAL_DATA from user environment..." );
     }
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
-#if defined(NINJAFOAM) && defined(NOT)
+#if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
     char *pszExecPath;
-    const char *pszFoamPath;
-    const char *pszFoamLibPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/lib";
-    const char *pszFoamBinPath = "OpenFOAM-2.2.x/platforms/linux64mingw-w64SPOpt/bin";
+    const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
+    const char *pszFoamBinPath = "platforms/linux64mingw-w64DPOpt/bin";
     const char *pszTmp;
 
     pszExecPath = (char*)CPLMalloc( 8192 );
@@ -103,8 +102,7 @@ int NinjaInitialize()
     ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
     ** and platforms folders
     */
-    pszFoamPath = CPLFormFilename( CPLGetPath( pszExecPath ), "OpenFOAM-2.2.x", NULL );
-    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", pszFoamPath ) );
+    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", CPLGetPath( pszExecPath ) ) );
 
     /*
     ** Set the PATH variable to point to the lib and bin folders in the open
@@ -114,7 +112,8 @@ int NinjaInitialize()
                          CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
                          CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
     rc = _putenv( pszTmp );
-#endif /* defined(NINJAFOAM) */
+    CPLFree( (void*)pszExecPath );
+#endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
 #endif
     /*
