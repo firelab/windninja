@@ -18,7 +18,7 @@ install:
   - make -j3
 
 script:
-  - ctest -R config
+  - ctest -E 'gmted|landfire' -j 3
 
 notifications:
   email:
