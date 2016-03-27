@@ -28,8 +28,7 @@
 *.app
 
 # Build folder
-build*
-vs-build*
+*build*
 debug*
 
 # vim
