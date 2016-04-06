@@ -1811,8 +1811,15 @@ int mainWindow::solve()
         else
         {
 #ifdef NINJAFOAM
-            if(useNinjaFoam)
+            if(useNinjaFoam){
                 army->setMeshCount( i, ninjafoamMeshChoice );
+                if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
+                    army->setNumberOfIterations( i, 200);
+                if(ninjafoamMeshChoice == WindNinjaInputs::medium)
+                    army->setNumberOfIterations( i, 500);
+                if(ninjafoamMeshChoice == WindNinjaInputs::fine)
+                    army->setNumberOfIterations( i, 1000);
+            }
             else
                 army->setMeshResolutionChoice( i, meshChoice );
 #else
