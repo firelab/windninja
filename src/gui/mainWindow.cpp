@@ -1003,12 +1003,12 @@ void mainWindow::aboutWindNinja()
   aboutText.append("<p><h4>SVN Version:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
 
   aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
-  aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br /> " \
-                                               "Kyle Shannon<br /> " \
-                                               "Bret Butler<br /> " \
-                                               "Natalie Wagenbrenner <br /> " \
-                                               "Cody Posey<br /> " \
-                                               "Levi Malott</p>");
+  aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
+                                               "Kyle Shannon<br/>" \
+                                               "Natalie Wagenbrenner<br/>" \
+                                               "Bret Butler<br/>" \
+                                               "Levi Malott<br/>" \
+                                               "Cody Posey<p/>");
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
