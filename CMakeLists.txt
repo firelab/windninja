@@ -364,7 +364,7 @@ set(etc_files mackay.tif
                   example_lcp.prj
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
-                  cli_poinInitialization_diurnal.cfg
+                  cli_pointInitialization_diurnal.cfg
                   cli_wxModelInitialization_diurnal.cfg
                   cli_momentumSolver_diurnal.cfg
                   mackay_wx_stations.csv)
