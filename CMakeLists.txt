@@ -360,10 +360,14 @@ endif(VERBOSE_CMAKE)
 
 # install target related files
 set(etc_files mackay.tif
-                  example_lcp.*
-                  *.cfg
-                  mackay_wx_stations.csv
-                  example_weather.atm)
+                  example_lcp.lcp
+                  example_lcp.prj
+                  cli_domainAverage.cfg
+                  cli_domainAverage_diurnal.cfg
+                  cli_poinInitialization_diurnal.cfg
+                  cli_wxModelInitialization_diurnal.cfg
+                  cli_momentumSolver_diurnal.cfg
+                  mackay_wx_stations.csv)
 foreach(f ${etc_files})
     install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
             etc/windninja/example-files COMPONENT apps)
