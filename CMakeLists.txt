@@ -359,7 +359,7 @@ if(VERBOSE_CMAKE)
 endif(VERBOSE_CMAKE)
 
 # install target related files
-set(example_files mackay.tif
+set(etc_files mackay.tif
                   example_lcp.*
                   *.cfg
                   mackay_wx_stations.csv
