@@ -1816,9 +1816,9 @@ int mainWindow::solve()
                 if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
                     army->setNumberOfIterations( i, 200);
                 if(ninjafoamMeshChoice == WindNinjaInputs::medium)
-                    army->setNumberOfIterations( i, 500);
+                    army->setNumberOfIterations( i, 350);
                 if(ninjafoamMeshChoice == WindNinjaInputs::fine)
-                    army->setNumberOfIterations( i, 1000);
+                    army->setNumberOfIterations( i, 500);
             }
             else
                 army->setMeshResolutionChoice( i, meshChoice );
