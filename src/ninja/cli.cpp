@@ -1481,7 +1481,7 @@ int windNinjaCLI(int argc, char* argv[])
                     cerr << "Please enter a valid pdf height and width" << endl;
                     return 1;
                 }
-                windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150, 0.5);
+                windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150);
             }
 
         }   //end for loop over ninjas

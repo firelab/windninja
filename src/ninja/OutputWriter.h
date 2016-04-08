@@ -89,12 +89,16 @@ class OutputWriter
         void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
         void setDPI( const unsigned short d );
-        void setMargin( const double m );
+        void setSize( const double w, const double h );
         
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
+
+        static const double BOTTOM_MARGIN = 1.0;
+        static const double TOP_MARGIN = 0.5;
+        static const double SIDE_MARGIN = 0.5;
 
     protected:
         /* ====================  METHODS       ======================================= */
@@ -170,6 +174,7 @@ class OutputWriter
         float linewidth;
         unsigned short dpi;
         double margin;
+        double height, width;
 
 
         GDALDatasetH hSrcDS;

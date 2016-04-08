@@ -3038,7 +3038,7 @@ void ninja::writeOutputFiles()
             output.setDEMfile(input.pdfDEMFileName);
             output.setLineWidth(input.pdfLineWidth);
             output.setDPI(input.pdfDPI);
-            output.setMargin(input.pdfMargin);
+            output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
 
 
@@ -4499,12 +4499,11 @@ void ninja::set_pdfBaseMap(const int b)
     input.pdfBaseType = (WindNinjaInputs::ePDFBaseMap)b;
 }
 
-void ninja::set_pdfSize( const double height, const double width, const unsigned short dpi, const double margin )
+void ninja::set_pdfSize( const double height, const double width, const unsigned short dpi )
 {
     input.pdfHeight = height;
     input.pdfWidth = width;
     input.pdfDPI = dpi;
-    input.pdfMargin = margin;
 }
 
 void ninja::set_pdfDEM(std::string dem_file_name)

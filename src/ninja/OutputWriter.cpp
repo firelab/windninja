@@ -156,9 +156,10 @@ void OutputWriter::setDPI( const unsigned short d )
     dpi = d;
 }
 
-void OutputWriter::setMargin( const double m )
+void OutputWriter::setSize( const double w, const double h )
 {
-    margin = m;
+    width = w;
+    height = h;
 }
 
 #ifdef EMISSIONS
@@ -639,12 +640,16 @@ OutputWriter::_writePDF (std::string outputfn)
                                              (double)nLegendHeight / LGND_HEIGHT );
     /* We need the dimension to push it against the edge of the page */
     int nNinjaLogoXSize = 0;
+    int nNinjaLogoYSize = 0;
     { /* Scoped on purpose */
         GDALDatasetH hDS = GDALOpen( wn_logo_path.c_str(), GA_ReadOnly );
         assert( hDS );
         nNinjaLogoXSize = GDALGetRasterXSize( hDS );
+        nNinjaLogoYSize = GDALGetRasterYSize( hDS );
         GDALClose( hDS );
     }
+       
+
 
     int nLogoWidth = out_x_size * 0.20;
     std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
@@ -659,35 +664,40 @@ OutputWriter::_writePDF (std::string outputfn)
         extra_imgs = extra_imgs + "," + extra_img_logo;
     }
 
-    //Useful information about the units in these pdfs for use in the code below.
-    //    user units = DPI / 72    This has something to do with a historical thing where DPI was always 72 or something?
-    //    see here for more info --> http://lists.osgeo.org/pipermail/gdal-dev/2015-May/041793.html
-    //    margins are specified in user units
-    double userUnits = dpi / 72.0;
-    double marginUserUnits = margin * dpi / userUnits;
-    stringstream stream;
-    stream << dpi;
-    std::string dpi_ =  stream.str();
-
-    stream.str("");
-    stream.clear();
-    stream << ((int) marginUserUnits);
-    std::string margin_ = stream.str();
-
-    stream.str("");
-    stream.clear();
-    stream << ((int) 2.0*marginUserUnits);   //make bottom margin twice as big, hard coded here, must match code in ninjaArmy where base map is made so final page size works out
-    std::string bottom_margin_ = stream.str();
-
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
-    papszOptions = CSLAddNameValue( papszOptions, "DPI", dpi_.c_str());
-    papszOptions = CSLAddNameValue( papszOptions, "MARGIN", margin_.c_str() );
-    papszOptions = CSLAddNameValue( papszOptions, "BOTTOM_MARGIN", bottom_margin_.c_str() );
+    papszOptions = CSLAddNameValue( papszOptions, "DPI", CPLSPrintf("%d", dpi) );
+
+    /* User unit is 1/72" */
+
+    int xMargin = SIDE_MARGIN * 72.0;
+    int topMargin = TOP_MARGIN * 72.0;
+    int bottomMargin = BOTTOM_MARGIN * 72.0;
+
+    double xRatio = (double)out_x_size / width;
+    double yRatio = (double)out_y_size / height;
+    if( fabs( xRatio ) < fabs( yRatio ) )
+    {
+        double xWidth = (double)out_x_size / (double)dpi;
+        xMargin = (width - xWidth) / 2.0 * 72.0;
+    }
+    else if( fabs( xRatio ) > fabs( yRatio ) )
+    {
+        double yHeight = (double)out_y_size / (double)dpi;
+        topMargin = (height - yHeight) / 2.0 * 72.0;
+        bottomMargin = topMargin;
+        //topMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
+        //bottomMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
+    }
+    papszOptions = CSLAddNameValue( papszOptions, "LEFT_MARGIN", CPLSPrintf( "%d", xMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "RIGHT_MARGIN", CPLSPrintf( "%d", xMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "TOP_MARGIN", CPLSPrintf( "%d", topMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "BOTTOM_MARGIN", CPLSPrintf( "%d", bottomMargin ) );
+
     hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )

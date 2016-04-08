@@ -1124,7 +1124,7 @@ public:
     int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
 
     int setPDFSize( const int nIndex, const double height, const double width,
-                    const unsigned short dpi, const double margin );
+                    const unsigned short dpi );
     /**
     * \brief Returns the output path of a ninja
     *
