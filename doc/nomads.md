@@ -22,6 +22,12 @@ NOMADS is the National Weather Service data dissemination server/service.  WindN
   <tr><td>RAP North America</td><td>32 km</td><td>North America</td></tr>
 </table>
 
+NOMADS Dependencies
+-------------------
+
+Due to a bug in the vsizip package in GDAL, version 1.11.1 or newer is
+required.  See http://trac.osgeo.org/gdal/ticket/5530.
+
 NOMADS Configuration
 --------------------
 
