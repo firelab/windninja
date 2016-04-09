@@ -768,8 +768,14 @@ int NinjaFoam::WriteFoamFiles()
 
 int NinjaFoam::GenerateTempDirectory()
 {
-    pszTempPath = CPLStrdup( CPLGenerateTempFilename( "NINJAFOAM_" ) );
+    //force temp dir to DEM location
+    CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+    CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+    CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
+
+    pszTempPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
     VSIMkdir( pszTempPath, 0777 );
+
     return NINJA_SUCCESS;
 }
 
@@ -1762,11 +1768,7 @@ int NinjaFoam::BlockMesh()
     char* currentDir = CPLGetCurrentDir();
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-#ifdef WIN32
                                     pszTempPath,
-#else
-                                    CPLFormFilename(currentDir, pszTempPath, ""),
-#endif
                                     NULL };
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
