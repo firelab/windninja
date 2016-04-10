@@ -633,11 +633,6 @@ OutputWriter::_writePDF (std::string outputfn)
         throw std::runtime_error("OutputWriter: Failed to get OGR PDF driver");
     }
 
-    const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
-    int nLegendHeight = out_y_size * 0.15;
-    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
-                                             0, out_y_size-nLegendHeight,
-                                             (double)nLegendHeight / LGND_HEIGHT );
     /* We need the dimension to push it against the edge of the page */
     int nNinjaLogoXSize = 0;
     int nNinjaLogoYSize = 0;
@@ -649,7 +644,7 @@ OutputWriter::_writePDF (std::string outputfn)
         GDALClose( hDS );
     }
 
-    //dpi = 72;
+    const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
 
     /* User unit is 1/72" */
     int xMargin = SIDE_MARGIN * 72.0;
@@ -667,16 +662,25 @@ OutputWriter::_writePDF (std::string outputfn)
         double yHeight = (double)out_y_size / (double)dpi;
         topMargin = (height - yHeight) / 2.0 * 72.0;
         bottomMargin = topMargin;
-        //topMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
-        //bottomMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
     }
+    double dfImageYBound = 0.0;
     /* Make the same as the default margin */
-    int nLogoTargetYSize = dpi * BOTTOM_MARGIN;
+    dfImageYBound = MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );
+    int nLogoTargetYSize = dpi * dfImageYBound;
     double dfLogoRatio = (double)nLogoTargetYSize / (double)nNinjaLogoYSize;
     double dfLogoWidth = dfLogoRatio * (double)nNinjaLogoXSize / (double)dpi;
     int nXLogoOffset = (width - dfLogoWidth) * 72;
     std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
-                                           nXLogoOffset, 0, dfLogoRatio * 0.9);
+                                           nXLogoOffset, 0, dfLogoRatio );
+    /* Legend */
+    /* Make the same as the default margin */
+    
+    int nLegendTargetYSize = dpi * dfImageYBound;
+    double dfLegendRatio = (double)nLegendTargetYSize / (double)LGND_HEIGHT;
+    double dfLegendWidth = dfLegendRatio * (double)LGND_WIDTH / (double)dpi;
+    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
+                                             0, 0, dfLegendRatio );
+
     std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
     if( bUseLogo )
     {
