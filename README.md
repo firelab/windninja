@@ -25,11 +25,12 @@ Directories:
  * src         -> source files
 
 Dependencies (versions are versions we build against):
- * Boost 1.4.6:
+ * Boost 1.46:
     * boost_date_time
     * boost_program_options
+    * boost_test
  * NetCDF 4.1.1
- * GDAL 1.10.1
+ * GDAL 1.11.1
     * NetCDF support
     * PROJ.4 support
     * GEOS support
