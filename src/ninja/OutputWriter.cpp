@@ -648,36 +648,13 @@ OutputWriter::_writePDF (std::string outputfn)
         nNinjaLogoYSize = GDALGetRasterYSize( hDS );
         GDALClose( hDS );
     }
-       
 
-
-    int nLogoWidth = out_x_size * 0.20;
-    std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
-                                           out_x_size - nLogoWidth,
-                                           //out_x_size - (int)(nNinjaLogoXSize * 0.1),
-                                           //0, 0.20 );
-                                           0, (double)nLogoWidth / nNinjaLogoXSize );
-    std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
-    if( bUseLogo )
-    {
-        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
-        extra_imgs = extra_imgs + "," + extra_img_logo;
-    }
-
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
-    papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
-    papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
-    papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
-    papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
-    papszOptions = CSLAddNameValue( papszOptions, "DPI", CPLSPrintf("%d", dpi) );
+    //dpi = 72;
 
     /* User unit is 1/72" */
-
     int xMargin = SIDE_MARGIN * 72.0;
     int topMargin = TOP_MARGIN * 72.0;
     int bottomMargin = BOTTOM_MARGIN * 72.0;
-
     double xRatio = (double)out_x_size / width;
     double yRatio = (double)out_y_size / height;
     if( fabs( xRatio ) < fabs( yRatio ) )
@@ -693,6 +670,27 @@ OutputWriter::_writePDF (std::string outputfn)
         //topMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
         //bottomMargin = (yHeight / 2.0) * 72.0 / 2.0 / 2.0;
     }
+    /* Make the same as the default margin */
+    int nLogoTargetYSize = dpi * BOTTOM_MARGIN;
+    double dfLogoRatio = (double)nLogoTargetYSize / (double)nNinjaLogoYSize;
+    double dfLogoWidth = dfLogoRatio * (double)nNinjaLogoXSize / (double)dpi;
+    int nXLogoOffset = (width - dfLogoWidth) * 72;
+    std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
+                                           nXLogoOffset, 0, dfLogoRatio * 0.9);
+    std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
+    if( bUseLogo )
+    {
+        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
+        extra_imgs = extra_imgs + "," + extra_img_logo;
+    }
+
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
+    papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
+    papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
+    papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
+    papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
+    papszOptions = CSLAddNameValue( papszOptions, "DPI", CPLSPrintf("%d", dpi) );
     papszOptions = CSLAddNameValue( papszOptions, "LEFT_MARGIN", CPLSPrintf( "%d", xMargin ) );
     papszOptions = CSLAddNameValue( papszOptions, "RIGHT_MARGIN", CPLSPrintf( "%d", xMargin ) );
     papszOptions = CSLAddNameValue( papszOptions, "TOP_MARGIN", CPLSPrintf( "%d", topMargin ) );
