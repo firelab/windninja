@@ -1671,7 +1671,7 @@ int mainWindow::solve()
 
     progressDialog->setValue( 0 );
     //set progress dialog and initial value
-    progressDialog->setRange(0, nRuns * 100);
+    progressDialog->setRange(0, nRuns * 99);
     runProgress = new int[nRuns];
 
     //fill in the values
@@ -1901,7 +1901,7 @@ int mainWindow::solve()
 
     setCursor( Qt::WaitCursor );
 
-    progressDialog->setLabelText( "Initializing runs..." );
+    progressDialog->setLabelText( "Running..." );
 
     writeToConsole( "Initializing runs..." );
 
