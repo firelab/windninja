@@ -1671,7 +1671,7 @@ int mainWindow::solve()
 
     progressDialog->setValue( 0 );
     //set progress dialog and initial value
-    progressDialog->setRange(0, nRuns * 99);
+    progressDialog->setRange(0, nRuns * 100);
     runProgress = new int[nRuns];
 
     //fill in the values
