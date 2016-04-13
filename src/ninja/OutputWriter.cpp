@@ -652,16 +652,16 @@ OutputWriter::_writePDF (std::string outputfn)
     int bottomMargin = BOTTOM_MARGIN * 72.0;
     double xRatio = (double)out_x_size / width;
     double yRatio = (double)out_y_size / height;
+    double xWidth = (double)out_x_size / (double)dpi;
+    double yHeight = (double)out_y_size / (double)dpi;
     if( fabs( xRatio ) < fabs( yRatio ) )
     {
-        double xWidth = (double)out_x_size / (double)dpi;
         xMargin = (width - xWidth) / 2.0 * 72.0;
     }
     else if( fabs( xRatio ) > fabs( yRatio ) )
     {
-        double yHeight = (double)out_y_size / (double)dpi;
-        topMargin = (height - yHeight) / 2.0 * 72.0;
-        bottomMargin = topMargin;
+        bottomMargin = (height - yHeight) / 2.0 * 72.0;
+        topMargin = bottomMargin;
     }
     double dfImageYBound = 0.0;
     /* Make the same as the default margin */
@@ -672,19 +672,31 @@ OutputWriter::_writePDF (std::string outputfn)
     int nXLogoOffset = (width - dfLogoWidth) * 72;
     std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
                                            nXLogoOffset, 0, dfLogoRatio );
-    /* Legend */
-    /* Make the same as the default margin */
-    
+
+
     int nLegendTargetYSize = dpi * dfImageYBound;
     double dfLegendRatio = (double)nLegendTargetYSize / (double)LGND_HEIGHT;
     double dfLegendWidth = dfLegendRatio * (double)LGND_WIDTH / (double)dpi;
+    /* Legend goes in the center */
+    /* center of the page */
+    double dfXCenter = width / 2.0;
+    /* subtract legend width in inches */
+    dfXCenter -= (double)LGND_WIDTH / (double)dpi;
+    int nXCenter = dfXCenter * 72.0;
     std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
-                                             0, 0, dfLegendRatio );
+                                             nXCenter, 0, dfLegendRatio );
 
     std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
     if( bUseLogo )
     {
-        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
+        int nTopoTargetYSize = dpi * dfImageYBound;
+        GDALDatasetH hDS = GDALOpen( tf_logo_path.c_str(), GA_ReadOnly );
+        assert( hDS );
+        int nTopoYSize = GDALGetRasterYSize( hDS );
+        GDALClose( hDS );
+
+        double dfTopoRatio = (double)nTopoTargetYSize / (double)nTopoYSize;
+        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, dfTopoRatio );
         extra_imgs = extra_imgs + "," + extra_img_logo;
     }
 
