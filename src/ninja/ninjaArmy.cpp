@@ -96,8 +96,6 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    GDALDriverH hDriver = GDALGetDriverByName("JPG"); 
-    GDALDeleteDataset( hDriver, ninjas[0]->input.pdfDEMFileName.c_str() );
     for(unsigned int i = 0; i < ninjas.size(); i++)
     {
        delete ninjas[i];
