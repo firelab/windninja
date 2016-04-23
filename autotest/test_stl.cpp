@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( stl_2 )
 
     BOOST_CHECK( CPLIsEqual( dfCoarseEdge, 90.0 ) );
     BOOST_CHECK( nTris > nCoarseTris );
-    BOOST_CHECK( fabs( adfCoarseTri[3] - adfTri[3] ) < 45.0 );
+    BOOST_CHECK( fabs( adfCoarseTri[3] - adfTri[3] ) <= 90.0 );
     VSIFCloseL( fin );
 
     if( CPLCheckForFile( (char*)"test.stl", NULL ) )
