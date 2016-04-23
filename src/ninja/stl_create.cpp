@@ -53,6 +53,8 @@ static StlPosition StlComputeNormal( StlPosition *v1,  StlPosition *v2 )
  * \param pszInput file to read and convert
  * \param pszOutput file to write (stl)
  * \param nBand band to treat as elevation
+ * \param dfTargetCellSize the absolute resolution for dx/dy in DEM units.  Any
+ *        value <= 0.0 is native resolution.
  * \param eType type of stl file to create, ascii or binary.  Currently only
  *              binary is supported
  * \param pfnProgress a pointer to a progress function
@@ -61,16 +63,20 @@ static StlPosition StlComputeNormal( StlPosition *v1,  StlPosition *v2 )
 CPLErr NinjaElevationToStl( const char *pszInput,
                             const char *pszOutput,
                             int nBand,
+                            double dfTargetCellSize,
                             NinjaStlType eType,
                             GDALProgressFunc pfnProgress )
 {
     GDALDatasetH hDS;
     GDALRasterBandH hBand;
     double adfGeoTransform[6];
+    double dfXRes, dfYRes;
     int nXSize, nYSize, nBandCount;
     float *pafScanline;
     unsigned int nTriCount;
     unsigned short nAttrCount;
+
+    int nOutXSize, nOutYSize;
 
     VSILFILE *fout;
 
@@ -135,18 +141,32 @@ CPLErr NinjaElevationToStl( const char *pszInput,
         GDALClose( hDS );
         return CE_Failure;
     }
-
-    char nil[80];
-    memset( nil, '\0', 80 );
-
-    nTriCount = (nXSize-1) * (nYSize-1) * 2; //cell centers are vertices
-    nAttrCount = 0;
-
+    if( dfTargetCellSize <= 0.0 )
+    {
+        nOutXSize = nXSize;
+        nOutYSize = nYSize;
+        dfXRes = adfGeoTransform[1];
+        dfYRes = adfGeoTransform[5];
+    }
+    else
+    {
+        nOutXSize = nXSize * (adfGeoTransform[1] / dfTargetCellSize);
+        nOutYSize = nYSize * (fabs( adfGeoTransform[5] ) / dfTargetCellSize);
+        dfXRes = dfTargetCellSize;
+        dfYRes = -dfTargetCellSize;
+    }
     float fXOffset, fYOffset;
     fXOffset = adfGeoTransform[1] * 0.5;
     fYOffset = adfGeoTransform[5] * 0.5;
 
-    pafScanline = (float*)VSIMalloc3( nXSize, 2, sizeof( float ) );
+    char nil[80];
+    memset( nil, '\0', 80 );
+
+    nTriCount = (nOutXSize-1) * (nOutYSize-1) * 2; //cell centers are vertices
+    nAttrCount = 0;
+
+
+    pafScanline = (float*)VSIMalloc3( nXSize, nYSize, sizeof( float ) );
     if( pafScanline == NULL )
     {
         CPLError( CE_Failure, CPLE_OutOfMemory,
@@ -173,27 +193,33 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     {
         pfnProgress( 0.0, NULL, NULL );
     }
-    for( i = 0 ; i < nYSize - 1; i++ )
+    eErr = GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, nYSize,
+                         pafScanline, nOutXSize, nOutYSize, GDT_Float32, 0, 0 );
+    if( eErr != CE_None )
     {
-        eErr = GDALRasterIO( hBand, GF_Read, 0, i, nXSize, 2,
-                             pafScanline, nXSize, 2, GDT_Float32, 0, 0 );
-        for( j = 0; j < nXSize - 1; j++ )
+        CPLFree( pafScanline );
+        GDALClose( hDS );
+        return eErr;
+    }
+    for( i = 0 ; i < nOutYSize - 1; i++ )
+    {
+        for( j = 0; j < nOutXSize - 1; j++ )
         {
-            a.x = adfGeoTransform[0] + j * adfGeoTransform[1] + fXOffset;
-            a.y = adfGeoTransform[3] + i * adfGeoTransform[5] + fYOffset;
+            a.x = adfGeoTransform[0] + j * dfXRes + fXOffset;
+            a.y = adfGeoTransform[3] + i * dfYRes + fYOffset;
             a.z = pafScanline[j];
 
-            b.x = adfGeoTransform[0] + ( j + 1 ) * adfGeoTransform[1] + fXOffset;
+            b.x = adfGeoTransform[0] + ( j + 1 ) * dfXRes + fXOffset;
             b.y = a.y;
             b.z = pafScanline[j + 1];
 
             c.x = a.x;
-            c.y = adfGeoTransform[3] + ( i + 1 ) * adfGeoTransform[5] + fYOffset;
-            c.z = pafScanline[j + nXSize];
+            c.y = adfGeoTransform[3] + ( i + 1 ) * dfYRes + fYOffset;
+            c.z = pafScanline[j + nOutXSize];
 
             d.x = b.x;
             d.y = c.y;
-            d.z = pafScanline[j + nXSize + 1];
+            d.z = pafScanline[j + nOutXSize + 1];
 
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;

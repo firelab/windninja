@@ -178,6 +178,7 @@ bool NinjaFoam::simulate_wind()
     eErr = NinjaElevationToStl(inFile,
                         pszStlFileName,
                         nBand,
+                        input.dem.get_cellSize(),
                         NinjaStlBinary,
                         //NinjaStlAscii,
                         NULL);
