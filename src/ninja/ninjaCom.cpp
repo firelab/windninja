@@ -145,8 +145,13 @@ void ninjaDefaultComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComM
             fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
 #endif //NINJA_DEBUG
         else if(eMsg == ninjaSolverProgress)	//Solver progress (%complete)
-        {    if(printSolverProgress)
-                fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+        {    if(printSolverProgress){
+                if(atoi(ninjaComMsg) > 99){
+                    fprintf(fpLog, "Run %d (solver): 99%% complete\n", *runNumber);
+                }
+                else
+                    fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+              }
         }
         else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
             fprintf(fpLog, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
