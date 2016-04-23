@@ -41,7 +41,7 @@ void NinjaCheckThreddsData( void *rc )
     }
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     CPLHTTPResult *poResult;
-    poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?thredds=1", NULL );
+    poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?thredds=1", NULL );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
@@ -152,7 +152,7 @@ int NinjaInitialize()
         if( rc == TRUE )
         {
             CPLHTTPResult *poResult;
-            poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
+            poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?visit=1", NULL );
             CPLHTTPDestroyResult( poResult );
         }
     }

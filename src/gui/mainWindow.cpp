@@ -1955,7 +1955,7 @@ int mainWindow::solve()
 
     setCursor( Qt::WaitCursor );
 
-    progressDialog->setLabelText( "Initializing runs..." );
+    progressDialog->setLabelText( "Running..." );
 
     writeToConsole( "Initializing runs..." );
 
