@@ -300,12 +300,44 @@ bool ninjaArmy::startRuns(int numProcessors)
     */
     if(ninjas[0]->input.pdfOutFlag == true)
     {
+        GDALDatasetH hDS = NULL;
+        GDALRasterBandH hBand = NULL;
+
+        hDS = GDALOpen( ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly );
+        assert( hDS );
+        hBand = GDALGetRasterBand( hDS, 1 );
+        assert( hBand );
+
+        int nXSize = GDALGetRasterXSize( hDS );
+        int nYSize = GDALGetRasterYSize( hDS );
+        /*
+        ** Figure out How big we need to make our raster, given a width,
+        ** height and dpi.
+        */
+        double dfWidth, dfHeight;
+        unsigned short nDPI;
+        dfHeight = ninjas[0]->input.pdfHeight - OutputWriter::TOP_MARGIN - OutputWriter::BOTTOM_MARGIN;
+        dfWidth = ninjas[0]->input.pdfWidth - 2.0*OutputWriter::SIDE_MARGIN;
+        nDPI = ninjas[0]->input.pdfDPI;
+        double dfRatio, dfRatioH, dfRatioW;
+
+        dfRatioH = dfHeight * nDPI / nYSize;
+        dfRatioW = dfWidth * nDPI / nXSize;
+
+        if(dfRatioH > dfRatioW)
+            dfRatio = dfRatioW;
+        else
+            dfRatio = dfRatioH;
+
+        int nNewXSize = nXSize * dfRatio;
+        int nNewYSize = nYSize * dfRatio;
+
         SURF_FETCH_E retval = SURF_FETCH_E_NONE;
         if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
         {
             SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
             retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName,
-                                            pszTmpColorRelief );
+                                            pszTmpColorRelief, nNewXSize, nNewYSize );
             delete fetcher;
         }
         /*
@@ -316,41 +348,10 @@ bool ninjaArmy::startRuns(int numProcessors)
             retval != SURF_FETCH_E_NONE )
         {
             CPLDebug( "NINJA", "Failed to download relief, creating hillshade" );
-            GDALDatasetH hDS = NULL;
-            GDALRasterBandH hBand = NULL;
             GDALDriverH hDrv = NULL;
             hDrv = GDALGetDriverByName( "GTiff" );
             assert( hDrv );
             GDALDeleteDataset( hDrv, pszTmpColorRelief );
-
-            hDS = GDALOpen( ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly );
-            assert( hDS );
-            hBand = GDALGetRasterBand( hDS, 1 );
-            assert( hBand );
-
-            int nXSize = GDALGetRasterXSize( hDS );
-            int nYSize = GDALGetRasterYSize( hDS );
-            /*
-            ** Figure out How big we need to make our raster, given a width,
-            ** height and dpi.
-            */
-            double dfWidth, dfHeight;
-            unsigned short nDPI;
-            dfHeight = ninjas[0]->input.pdfHeight - OutputWriter::TOP_MARGIN - OutputWriter::BOTTOM_MARGIN;
-            dfWidth = ninjas[0]->input.pdfWidth - 2.0*OutputWriter::SIDE_MARGIN;
-            nDPI = ninjas[0]->input.pdfDPI;
-            double dfRatio, dfRatioH, dfRatioW;
-
-            dfRatioH = dfHeight * nDPI / nYSize;
-            dfRatioW = dfWidth * nDPI / nXSize;
-
-            if(dfRatioH > dfRatioW)
-                dfRatio = dfRatioW;
-            else
-                dfRatio = dfRatioH;
-
-            int nNewXSize = nXSize * dfRatio;
-            int nNewYSize = nYSize * dfRatio;
 
             GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpColorRelief, nNewXSize,
                                              nNewYSize, 1, GDT_Byte, NULL );

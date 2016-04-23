@@ -677,7 +677,7 @@ OutputWriter::_writePDF (std::string outputfn)
     int nLegendTargetYSize = dpi * dfImageYBound;
     double dfLegendRatio = (double)nLegendTargetYSize / (double)LGND_HEIGHT;
     std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
-                                             xMargin, 0, dfLegendRatio );
+                                             36, 0, dfLegendRatio );
 
     std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
     if( bUseLogo )

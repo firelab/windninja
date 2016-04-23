@@ -47,7 +47,7 @@ public:
                                           const char *filename, char ** options );
 
 
-    SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile );
+    SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize );
     /**
      * Destructor
      */
