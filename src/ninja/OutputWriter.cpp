@@ -673,30 +673,33 @@ OutputWriter::_writePDF (std::string outputfn)
     std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
                                            nXLogoOffset, 0, dfLogoRatio );
 
-
+    /* Place the legend at the right margin */
     int nLegendTargetYSize = dpi * dfImageYBound;
     double dfLegendRatio = (double)nLegendTargetYSize / (double)LGND_HEIGHT;
-    double dfLegendWidth = dfLegendRatio * (double)LGND_WIDTH / (double)dpi;
-    /* Legend goes in the center */
-    /* center of the page */
-    double dfXCenter = width / 2.0;
-    /* subtract legend width in inches */
-    dfXCenter -= (double)LGND_WIDTH / (double)dpi;
-    int nXCenter = dfXCenter * 72.0;
     std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
-                                             nXCenter, 0, dfLegendRatio );
+                                             xMargin, 0, dfLegendRatio );
 
     std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
     if( bUseLogo )
     {
-        int nTopoTargetYSize = dpi * dfImageYBound;
+        // Center the topo fire logo between the other two, also make it about
+        // half the size
+        // We need to keep track of the legend width in user units for the topo
+        double dfLegendWidth = dfLegendRatio * (double)LGND_WIDTH / (double)dpi;
+        double dfXCenter = width / 2.0;
+        int nXCenter = dfXCenter * 72.0;
+        int nTopoTargetYSize = dpi * dfImageYBound * 0.5;
         GDALDatasetH hDS = GDALOpen( tf_logo_path.c_str(), GA_ReadOnly );
         assert( hDS );
+        int nTopoXSize = GDALGetRasterXSize( hDS );
         int nTopoYSize = GDALGetRasterYSize( hDS );
         GDALClose( hDS );
-
         double dfTopoRatio = (double)nTopoTargetYSize / (double)nTopoYSize;
-        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, dfTopoRatio );
+        int nTopoWidth = dfTopoRatio * (double)nTopoXSize;
+        dfXCenter -= ((double)nTopoWidth / (double)dpi) / 2.0;
+        //int nTopoOffset = xMargin + (dfLegendWidth * 72.0);
+        int nTopoOffset = dfXCenter * 72.0;
+        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), nTopoOffset, 0, dfTopoRatio );
         extra_imgs = extra_imgs + "," + extra_img_logo;
     }
 
