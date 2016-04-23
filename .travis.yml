@@ -9,7 +9,7 @@ compiler:
 before_install:
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo apt-get update -qq
-  - sudo apt-get install cmake python libgdal-dev libnetcdf-dev libboost-date-time-dev libboost-program-options-dev libboost-test-dev
+  - sudo apt-get install cmake python libgdal1h libgdal-dev libnetcdf-dev libboost-date-time-dev libboost-program-options-dev libboost-test-dev
 
 install:
   - export WINDNINJA_DATA=$PWD/data
@@ -19,7 +19,7 @@ install:
   - make -j3
 
 script:
-  - ctest -E 'gmted|landfire|nomads'
+  - ctest -E 'gmted|landfire'
 
 notifications:
   email:
