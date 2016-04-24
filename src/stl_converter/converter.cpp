@@ -27,7 +27,7 @@ int main( int argc, char* argv[] )
     int i = 1;
     while( i < argc )
     {
-        if( strcmp( argv[i], "-r" ) == 0 && i + 1 < argc - 1 )
+        if( strcmp( argv[i], "-r" ) == 0 && i + 1 < argc )
         {
             dfRes = atof( argv[++i] );
         }
