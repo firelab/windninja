@@ -30,11 +30,6 @@ set(STL_SOURCES converter.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/stl_create.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp)
-option(USE_OLD_STL_CREATE "Use the original implementation of the stl generation code" OFF)
-if(USE_OLD_STL_CREATE)
-    add_definitions(-DUSE_OLD_STL_CREATE)
-endif(USE_OLD_STL_CREATE)
-mark_as_advanced(USE_OLD_STL_CREATE)
 
 add_executable(stl_converter ${STL_SOURCES})
 target_link_libraries(stl_converter ${LINK_LIBS})

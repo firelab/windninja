@@ -2797,6 +2797,12 @@ void ninja::writeOutputFiles()
 
 			AsciiGrid<double> tempCloud(CloudGrid);
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+                        //ensure grids cover original DEM extents for FARSITE
+                        tempCloud.BufferGridInPlace();
+                        angTempGrid->BufferGridInPlace();
+                        velTempGrid->BufferGridInPlace();
+
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
 			velTempGrid->write_Grid(input.velFile.c_str(), 2);
