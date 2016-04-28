@@ -323,11 +323,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         dfRatioH = dfHeight * nDPI / nYSize;
         dfRatioW = dfWidth * nDPI / nXSize;
-
-        if(dfRatioH > dfRatioW)
-            dfRatio = dfRatioW;
-        else
-            dfRatio = dfRatioH;
+        dfRatio = MIN( dfRatioH, dfRatioW );
 
         int nNewXSize = nXSize * dfRatio;
         int nNewYSize = nYSize * dfRatio;

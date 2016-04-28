@@ -2716,7 +2716,11 @@ int NinjaFoam::WriteOutputFiles()
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid);
             output.setDEMfile(input.pdfDEMFileName);
+            output.setLineWidth(input.pdfLineWidth);
+            output.setDPI(input.pdfDPI);
+            output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
+
 
 			if(angTempGrid)
 			{
