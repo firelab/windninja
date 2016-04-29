@@ -2532,6 +2532,8 @@ int NinjaFoam::SampleRawOutput()
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
 
+    GDALClose( hDS );
+
     return NINJA_SUCCESS;
 }
 
