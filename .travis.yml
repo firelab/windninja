@@ -19,7 +19,7 @@ install:
   - make -j3
 
 script:
-  - ctest -E 'gmted|landfire|nomads'
+  - ctest -E 'landfire|nomads'
 
 notifications:
   email:
