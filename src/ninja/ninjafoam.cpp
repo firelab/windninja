@@ -2737,10 +2737,10 @@ int NinjaFoam::WriteOutputFiles()
 		}
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
 	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
 	if(input.volVTKOutFlag==false)

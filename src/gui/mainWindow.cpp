@@ -1656,7 +1656,6 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-    delete army;
 #ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
 #else
@@ -1713,6 +1712,7 @@ int mainWindow::solve()
             tree->weather->checkForModelData();
             progressDialog->cancel();
             progressDialog->hide();
+            delete army;
             return false;
         }
         nRuns = army->getSize();
@@ -1755,6 +1755,7 @@ int mainWindow::solve()
                     setCursor(Qt::ArrowCursor);
                     tree->weather->checkForModelData();
                     progressDialog->cancel();
+                    delete army;
                     return false;
             }
         }
@@ -1974,6 +1975,7 @@ int mainWindow::solve()
 
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (cancelledByUser& e)
@@ -1984,6 +1986,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (exception& e)
@@ -1994,6 +1997,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (...)
@@ -2004,6 +2008,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
 
@@ -2028,6 +2033,7 @@ int mainWindow::solve()
 
     setCursor(Qt::ArrowCursor);
 
+    delete army;
     return ninjaSuccess;
 }
 
