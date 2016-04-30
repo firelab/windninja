@@ -88,11 +88,17 @@ class OutputWriter
         void setRunNumber(int n) {runNumber=n;}
         void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
+        void setDPI( const unsigned short d );
+        void setSize( const double w, const double h );
         
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
+
+        static const double BOTTOM_MARGIN = 1.5;
+        static const double TOP_MARGIN = 0.5;
+        static const double SIDE_MARGIN = 0.5;
 
     protected:
         /* ====================  METHODS       ======================================= */
@@ -122,7 +128,9 @@ class OutputWriter
         bool _createLegend();
         void _destroyLegend();
 
-        
+        bool _createTmpFiles();
+        void _deleteTmpFiles();
+
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;
@@ -152,16 +160,21 @@ class OutputWriter
         static const char * AV_DIR;//     = "AV_dir";
         static const char * AM_DIR;//     = "AM_dir";
         static const char * QGIS_DIR;//   = "QGIS_dir";
-        static const char * OGR_FILE;
-        static const char * LEGEND_FILE;
+
+        char * pszOgrFile;
+        char * pszLegendFile;
+        char * pszTmpDemFile;
 
         static const unsigned short NCOLORS = 5; 
-        static const unsigned short LGND_WIDTH = 180;
+        static const unsigned short LGND_WIDTH = 160;
         static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4; 
 
         double *split_vals;
         Style ** colors;
         float linewidth;
+        unsigned short dpi;
+        double margin;
+        double height, width;
 
 
         GDALDatasetH hSrcDS;

@@ -90,6 +90,11 @@ public:
         ASCII
     };
 
+    enum ePDFBaseMap {
+        HILLSHADE,
+        TOPOFIRE
+    };
+
     enum eInitializationMethod{
         noInitializationFlag,			//no initialization, used to check if it has been set or not
         domainAverageInitializationFlag,	//single domain-averaged input speed and direction
@@ -218,9 +223,13 @@ public:
     bool        pdfOutFlag;
     std::string pdfDEMFileName;
     std::string pdfFile;
+    ePDFBaseMap pdfBaseType;
     double      pdfResolution;
     double      pdfLineWidth;
     lengthUnits::eLengthUnits pdfUnits;
+    double pdfWidth, pdfHeight; // in inches
+    unsigned short pdfDPI;
+    double pdfMargin;  // in inches
 
     std::string customOutputPath; //user-specified path for output
 

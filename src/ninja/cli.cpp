@@ -351,8 +351,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
-                ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
                 ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
+                ("pdf_basemap", po::value<std::string>()->default_value("topofire"), "background image of the geospatial pdf, default is topo map")
+                ("pdf_height", po::value<double>(), "height of geospatial pdf")
+                ("pdf_width", po::value<double>(), "width of geospatial pdf")
+                ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
@@ -1425,12 +1428,60 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["write_pdf_output"].as<bool>())
             {
                 windsim.setPDFOutFlag( i_, true );
-                option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
-                windsim.setPDFDEM( i_, vm["pdf_dem_filename"].as<std::string>());
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
+                std::string pbm = vm["pdf_basemap"].as<std::string>();
+                int pbs = 0;
+                if( pbm == "hillshade" )
+                {
+                    pbs = 0;
+                }
+                else if( pbm == "topofire" )
+                {
+                    pbs = 1;
+                }
+                else
+                {
+                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'";
+                }
+                windsim.setPDFBaseMap( i_, pbs );
+                conflicting_options(vm, "pdf_size", "pdf_height");
+                conflicting_options(vm, "pdf_size", "pdf_width");
+                option_dependency(vm, "pdf_height", "pdf_width");
+                double pdfHeight, pdfWidth;
+                if(vm.count("pdf_height"))
+                {
+                    pdfHeight = vm["pdf_height"].as<double>();
+                    pdfWidth = vm["pdf_width"].as<double>();
+                }
+                else if(vm.count("pdf_size"))
+                {
+                    std::string pdfSize = vm["pdf_size"].as<std::string>();
+                    if(pdfSize == "letter")
+                    {
+                        pdfHeight = 11.0;
+                        pdfWidth = 8.5;
+                    }
+                    else if(pdfSize == "legal")
+                    {
+                        pdfHeight = 14.0;
+                        pdfWidth = 8.5;
+                    }
+                    else if(pdfSize == "tabloid")
+                    {
+                        pdfHeight = 17.0;
+                        pdfWidth = 11.0;
+                    }
+                }
+                if(pdfHeight < 1 || pdfHeight > 256 ||
+                   pdfWidth < 1 || pdfWidth > 256)
+                {
+                    cerr << "Please enter a valid pdf height and width" << endl;
+                    return 1;
+                }
+                windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150);
             }
 
         }   //end for loop over ninjas

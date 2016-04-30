@@ -244,7 +244,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 }
 
 
-SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile )
+SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize )
 {
     //TODO: check to see if relief of infile already exists
     //
@@ -313,12 +313,20 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile 
     GDALGetGeoTransform( hSrcDS, src_gt );
 
     /*we want to keep the pixel resolution from hSrcDS*/
-    ncols = int( xsize * dst_gt[1] / src_gt[1] + 0.5 ); /* ( xsize * old_pixel_width ) / new_pixel_width */
-    nrows = int( ysize * fabs(dst_gt[5]) / fabs(src_gt[5]) + 0.5 );/* ( ysize * old_pixel_height ) / new_pixel_height */
-    dst_gt[1] = src_gt[1]; /* pixel width */
-    dst_gt[5] = src_gt[5]; /* pixel height */
-
-
+    if( nXSize <= 0 || nYSize <= 0 )
+    {
+        ncols = int( xsize * dst_gt[1] / src_gt[1] + 0.5 ); /* ( xsize * old_pixel_width ) / new_pixel_width */
+        nrows = int( ysize * fabs(dst_gt[5]) / fabs(src_gt[5]) + 0.5 );/* ( ysize * old_pixel_height ) / new_pixel_height */
+        dst_gt[1] = src_gt[1]; /* pixel width */
+        dst_gt[5] = src_gt[5]; /* pixel height */
+    }
+    else
+    {
+        ncols = nXSize;
+        nrows = nYSize;
+        dst_gt[1] = (double)xsize * (double)dst_gt[1] / (double)nXSize;
+        dst_gt[5] = -dst_gt[1];
+    }
 
     /* configure the output ds before warping */ 
     hDriver = GDALGetDriverByName("GTiff");

@@ -1,9 +1,8 @@
 /******************************************************************************
- * relief_fetch.h 
  *
- * Project:  WindNinja
- * Purpose:  Downloads relief maps given a bounding box 
- * Author:   Levi Malott <levi.malott@mst.edu>
+ * Project:  WindNinja Qt GUI
+ * Purpose:  PDF output selection widgetx
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -26,38 +25,50 @@
  *
  *****************************************************************************/
 
-#ifndef RELIEFFETCH_H
-#define RELIEFFETCH_H
+#ifndef PDFOUTPUT_H
+#define PDFOUTPUT_H
 
-#include "surface_fetch.h"
-#include <string>
+#include <QGroupBox>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QLabel>
+#include <QDoubleSpinBox>
+#include <QComboBox>
 
-/**
- * @brief Downloads relief maps from a tile server
- */
-class ReliefFetch : public SurfaceFetch
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+
+class pdfOutput : public QWidget
 {
+Q_OBJECT
+
 public:
-    /**
-     * Constructor
-     */
-    ReliefFetch();
-    ReliefFetch( std::string path );
-    virtual SURF_FETCH_E FetchBoundingBox(double *bbox, double resolution,
-                                          const char *filename, char ** options );
+    pdfOutput(QWidget *parent = 0);
 
+    QGroupBox *pdfGroupBox;
+    QGroupBox *vectorGroupBox;
+    QLabel *vectorWidthLabel;
+    QDoubleSpinBox *vectorWidthDoubleSpinBox;
+    QGroupBox *pdfResGroupBox;
+    QDoubleSpinBox *pdfResSpinBox;
+    QRadioButton *pdfMetersRadioButton, *pdfFeetRadioButton;
+    QCheckBox *useMeshResCheckBox;
+    QLabel *backgroundLabel;
+    QComboBox *backgroundComboBox;
 
-    SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize );
-    /**
-     * Destructor
-     */
-    virtual ~ReliefFetch();
+    QLabel *sizeLabel;
+    QComboBox *sizeComboBox;
+    QRadioButton *portraitRadioButton;
+    QRadioButton *landscapeRadioButton;
 
-protected:
-    SURF_FETCH_E Initialize();
-
+    QHBoxLayout *vectorLayout;
+    QVBoxLayout *optionLayout;
+    QGridLayout *resLayout;
+    QHBoxLayout *backgroundLayout;
+    QVBoxLayout *orientLayout;
+    QHBoxLayout *sizeLayout;
+    QVBoxLayout *pageLayout;
+    QVBoxLayout *mainLayout;
 };
 
-
-
-#endif // RELIEFFETCH_H
+#endif /* PDFOUTPUT_H */

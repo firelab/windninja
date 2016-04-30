@@ -1110,7 +1110,21 @@ public:
     /* ----------------------------------------------------------------------------*/
     int setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions=NULL );
 
+    /**
+     * \brief Set the background image of the PDF (default is attempt at topo
+     *        map)
+     *
+     * \param nIndex index of a ninja
+     * \param eType 0->hillshade, 1->topo map
+     * \return NINJA_SUCCESS if valid type is provided.
+     */
+    int setPDFBaseMap( const int nIndex,
+                       const int linewidth );
+
     int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
+
+    int setPDFSize( const int nIndex, const double height, const double width,
+                    const unsigned short dpi );
     /**
     * \brief Returns the output path of a ninja
     *
@@ -1137,8 +1151,19 @@ protected:
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
-    
-    
+
+    /*
+    ** This function initializes various data for the lifetime of the
+    ** ninjaArmy.  This should be used for various tasks, such as downloading
+    ** the color relief for the background of the PDF file.  It is the same for
+    ** all runs, is the same for all runs.
+    */
+    void initLocalData(void);
+    void destoryLocalData(void);
+    void copyLocalData( const ninjaArmy &A );
+
+private:
+    char *pszTmpColorRelief;
 };
 
 #endif /* NINJA_ARMY_H */

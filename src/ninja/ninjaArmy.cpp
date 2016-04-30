@@ -37,6 +37,7 @@ ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
     ninjas.push_back(new ninja());
+    initLocalData();
 }
 
 /**
@@ -59,6 +60,7 @@ ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
              ninjas[i] = new ninja();
         }
     }
+    initLocalData();
 }
 #endif
 
@@ -76,6 +78,7 @@ ninjaArmy::ninjaArmy(int numNinjas)
     {
         ninjas[i] = new ninja();
     }
+    initLocalData();
 }
 #endif
 
@@ -88,6 +91,7 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
+    copyLocalData( A );
 }
 
 /**
@@ -100,6 +104,7 @@ ninjaArmy::~ninjaArmy()
     {
        delete ninjas[i];
     }
+    destoryLocalData();
 }
 
 /**
@@ -114,6 +119,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
     {
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
+        copyLocalData( A );
     }
     return *this;
 }
@@ -287,14 +293,116 @@ bool ninjaArmy::startRuns(int numProcessors)
 
     setAtmFlags();
    //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
-    //fetches PDF base map, temporary hack
-    if(ninjas[0]->input.pdfOutFlag == true )
+    /*
+    ** Download a color relief file as the temp file allocated in
+    ** initLocalData().  If we fail, clean up properly so we can save a
+    ** hillshade file at that location.
+    */
+    if(ninjas[0]->input.pdfOutFlag == true)
     {
-        SURF_FETCH_E retval;
-        SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
-        retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName, ninjas[0]->input.pdfDEMFileName );
-        delete fetcher;
+        GDALDatasetH hDS = NULL;
+        GDALRasterBandH hBand = NULL;
 
+        hDS = GDALOpen( ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly );
+        assert( hDS );
+        hBand = GDALGetRasterBand( hDS, 1 );
+        assert( hBand );
+
+        int nXSize = GDALGetRasterXSize( hDS );
+        int nYSize = GDALGetRasterYSize( hDS );
+        /*
+        ** Figure out How big we need to make our raster, given a width,
+        ** height and dpi.
+        */
+        double dfWidth, dfHeight;
+        unsigned short nDPI;
+        dfHeight = ninjas[0]->input.pdfHeight - OutputWriter::TOP_MARGIN - OutputWriter::BOTTOM_MARGIN;
+        dfWidth = ninjas[0]->input.pdfWidth - 2.0*OutputWriter::SIDE_MARGIN;
+        nDPI = ninjas[0]->input.pdfDPI;
+        double dfRatio, dfRatioH, dfRatioW;
+
+        dfRatioH = dfHeight * nDPI / nYSize;
+        dfRatioW = dfWidth * nDPI / nXSize;
+        dfRatio = MIN( dfRatioH, dfRatioW );
+
+        int nNewXSize = nXSize * dfRatio;
+        int nNewYSize = nYSize * dfRatio;
+
+        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
+        {
+            SurfaceFetch * fetcher = FetchFactory::GetSurfaceFetch( "relief" );
+            retval = fetcher->makeReliefOf( ninjas[0]->input.dem.fileName,
+                                            pszTmpColorRelief, nNewXSize, nNewYSize );
+            delete fetcher;
+        }
+        /*
+        ** If we fail, or the user wants a hillshade, copy the dem into the
+        ** file as an 8 bit GeoTiff
+        */
+        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::HILLSHADE ||
+            retval != SURF_FETCH_E_NONE )
+        {
+            CPLDebug( "NINJA", "Failed to download relief, creating hillshade" );
+            GDALDriverH hDrv = NULL;
+            hDrv = GDALGetDriverByName( "GTiff" );
+            assert( hDrv );
+            GDALDeleteDataset( hDrv, pszTmpColorRelief );
+
+            GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpColorRelief, nNewXSize,
+                                             nNewYSize, 1, GDT_Byte, NULL );
+            CPLErr eErr = CE_None;
+            double adfGeoTransform[6];
+            eErr = GDALGetGeoTransform( hDS, adfGeoTransform );
+            assert( eErr == CE_None );
+            adfGeoTransform[1] /= dfRatio;
+            adfGeoTransform[5] /= dfRatio;
+            GDALSetGeoTransform( h8bit, adfGeoTransform );
+
+            GDALSetProjection( h8bit, GDALGetProjectionRef( hDS ) );
+
+            GDALRasterBandH h8bitBand = GDALGetRasterBand( h8bit, 1 );
+            float *padfData = NULL;
+            padfData = (float*)CPLMalloc( nNewXSize * nNewYSize * sizeof( float ) );
+            unsigned char *pabyData = NULL;
+            pabyData = (unsigned char*)CPLMalloc( nNewXSize * nNewYSize * sizeof( unsigned char* ) );
+            double adfMinMax[2];
+            int bSuccess = TRUE;
+            double dfMin, dfMax, dfMean, dfStdDev;
+            GDALComputeRasterStatistics( hBand, FALSE, &dfMin, &dfMax, &dfMean, &dfStdDev, NULL, NULL );
+
+            eErr = GDALRasterIO( hBand, GF_Read, 0, 0, nXSize, nYSize,
+                                 padfData, nNewXSize, nNewYSize,
+                                 GDT_Float32, 0, 0 );
+            assert( eErr == CE_None );
+            for( int i = 0; i < nNewXSize * nNewYSize; i++ )
+            {
+                /*
+                ** Figure out what is going on here and document it.  It makes a
+                ** potentially useful map whern dfMax=BIG and dfMin=-BIG.
+                */
+                //double dfMin = GDALGetRasterMinimum( hBand, NULL );
+                //double dfMax = GDALGetRasterMaximum( hBand, NULL );
+                //pabyData[j] = (unsigned char)(padfData[j] * (dfMax - dfMin) / (dfMax - dfMin)) * 255;
+
+                /* Normal */
+                pabyData[i] = ((padfData[i] - dfMin) / (dfMax - dfMin)) * 255;
+            }
+            eErr = GDALRasterIO( h8bitBand, GF_Write, 0, 0, nNewXSize,
+                                 nNewYSize, pabyData, nNewXSize, nNewYSize,
+                                 GDT_Byte, 0, 0 );
+            assert( eErr == CE_None );
+            CPLFree( (void*)padfData );
+            CPLFree( (void*)pabyData );
+            GDALFlushCache( h8bit );
+            GDALClose( hDS );
+            GDALClose( h8bit );
+        }
+        /* Make sure all runs point to the proper DEM file */
+        for(unsigned int i = 0; i < ninjas.size(); i++)
+        {
+            ninjas[i]->input.pdfDEMFileName = pszTmpColorRelief;
+        }
     }
 
     if(ninjas.size() == 1)
@@ -1542,10 +1650,22 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
    return retval;
 }
 
+int ninjaArmy::setPDFBaseMap( const int nIndex,
+                              const int eType )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfBaseMap( eType ) );
+}
+
 int ninjaArmy::setPDFDEM
 ( const int nIndex, const std::string dem_filename, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_pdfDEM( dem_filename ) );
+}
+
+int ninjaArmy::setPDFSize( const int nIndex, const double height, const double width,
+                           const unsigned short dpi )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
@@ -1581,3 +1701,31 @@ void ninjaArmy::cancelAndReset()
     reset();
 }
 
+void ninjaArmy::initLocalData(void)
+{
+    const char *pszTmp = NULL;
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".tif" );
+    pszTmpColorRelief = CPLStrdup( pszTmp );
+}
+
+void ninjaArmy::copyLocalData( const ninjaArmy &A )
+{
+    CPLFree( (void*)pszTmpColorRelief );
+    pszTmpColorRelief = CPLStrdup( A.pszTmpColorRelief );
+}
+
+void ninjaArmy::destoryLocalData(void)
+{
+    CPLPushErrorHandler( CPLQuietErrorHandler );
+    GDALDatasetH hDS = GDALOpen( pszTmpColorRelief, GA_ReadOnly );
+    if( hDS != NULL )
+    {
+        GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
+        assert( hDrv );
+        GDALDeleteDataset( hDrv, pszTmpColorRelief );
+    }
+    GDALClose( hDS );
+    CPLFree( (void*)pszTmpColorRelief );
+    CPLPopErrorHandler();
+}
