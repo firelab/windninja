@@ -1389,10 +1389,14 @@ bool mainWindow::getLatLon()
 void mainWindow::openOutputPath()
 {
     if( outputPath.isEmpty() || outputPath == "!set" )
-    return;
+    {
+        return;
+    }
     else
-    QDesktopServices::openUrl( QUrl ( "file:///" + outputPath,
-                      QUrl::TolerantMode ) );
+    {
+        QDesktopServices::openUrl( QUrl ( "file:///" + outputPath,
+                                   QUrl::TolerantMode ) );
+    }
 }
 
 int mainWindow::solve()

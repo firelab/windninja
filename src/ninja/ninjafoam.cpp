@@ -2430,6 +2430,7 @@ void NinjaFoam::SetOutputFilenames()
 
     /* set the output path member variable */
     input.outputPath = pathName;
+    set_outputPath(pathName);
 
     mesh_units = "m";
     kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
