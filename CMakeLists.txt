@@ -65,7 +65,7 @@ if(NOT SKIP_GETDATE)
     GET_DATE()
     set(DATE ${GD_YEAR}/${GD_MONTH}/${GD_DAY})
 else(NOT SKIP_GETDATE)
-    set(DATE "1970\01\01")
+    set(DATE "1970/01/01")
 endif(NOT SKIP_GETDATE)
 
 set(VER_STR ${VER_MAJ}.${VER_MIN}.${VER_PATCH})
