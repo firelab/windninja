@@ -3,6 +3,8 @@ env:
 
 language: cpp
 
+dist: trusty
+
 compiler:
   - gcc
 
