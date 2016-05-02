@@ -80,7 +80,6 @@ public:
     QHBoxLayout *timeZoneLayout;
     QVBoxLayout *mainLayout;
     
-    QLabel *ninjafoamConflictLabel;
 signals:
     void writeToMainConsole(QString message);
 
