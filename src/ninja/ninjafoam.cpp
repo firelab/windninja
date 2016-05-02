@@ -477,6 +477,7 @@ bool NinjaFoam::simulate_wind()
 
     if(!input.keepOutGridsInMemory && input.diurnalWinds == false)
     {
+       CloudGrid.deallocate();
        AngleGrid.deallocate();
        VelocityGrid.deallocate();
     }
@@ -2481,6 +2482,7 @@ void NinjaFoam::SetOutputFilenames()
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
 
+    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
@@ -2568,14 +2570,38 @@ int NinjaFoam::WriteOutputFiles()
 			velTempGrid=NULL;
 			angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
+                                                             AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
+                                                             AsciiGrid<double>::order0));
+                        
+                        //Set cloud grid
+                        int longEdge = input.dem.get_nRows();
+                        if(input.dem.get_nRows() < input.dem.get_nCols())
+                            longEdge = input.dem.get_nCols();
+                        double tempCloudCover;
+                        if(input.cloudCover < 0){
+                            tempCloudCover = 0.0;
+                        }
+                        else{
+                            tempCloudCover = input.cloudCover;
+                        }
 
+                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
+                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
+                                -9999.0, tempCloudCover, input.dem.prjString);
+
+			AsciiGrid<double> tempCloud(CloudGrid);
+			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+                        //ensure grids cover original DEM extents for FARSITE
+                        tempCloud.BufferGridInPlace();
+                        angTempGrid->BufferGridInPlace();
+                        velTempGrid->BufferGridInPlace();
+
+			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
 			velTempGrid->write_Grid(input.velFile.c_str(), 2);
-
-            //angTempGrid->write_Grid("angle.asc", 0);
-			//velTempGrid->write_Grid("vel.asc", 2);
 
 			if(angTempGrid)
 			{
