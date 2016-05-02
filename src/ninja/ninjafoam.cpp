@@ -1473,7 +1473,6 @@ int NinjaFoam::MoveDynamicMesh()
                                       "-parallel",
                                       NULL };
 #else
-        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
