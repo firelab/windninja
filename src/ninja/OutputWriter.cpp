@@ -36,6 +36,10 @@ const char * OutputWriter::AV_DIR    = "AV_dir";
 const char * OutputWriter::AM_DIR    = "AM_dir";
 const char * OutputWriter::QGIS_DIR  = "QGIS_dir";
 
+const double OutputWriter::BOTTOM_MARGIN = 1.5;
+const double OutputWriter::TOP_MARGIN = 0.5;
+const double OutputWriter::SIDE_MARGIN = 0.5;
+
 
 OutputWriter::OutputWriter ()
 {

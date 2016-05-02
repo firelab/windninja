@@ -96,9 +96,9 @@ class OutputWriter
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
 
-        static const double BOTTOM_MARGIN = 1.5;
-        static const double TOP_MARGIN = 0.5;
-        static const double SIDE_MARGIN = 0.5;
+        static const double BOTTOM_MARGIN;
+        static const double TOP_MARGIN;
+        static const double SIDE_MARGIN;
 
     protected:
         /* ====================  METHODS       ======================================= */
