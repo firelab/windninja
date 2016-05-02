@@ -2958,7 +2958,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( true );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
-        tree->surface->timeZoneGroupBox->setHidden( true );
+        tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
