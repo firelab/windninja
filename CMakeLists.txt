@@ -413,6 +413,9 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja
 # We need the splash screen for pdf output
 install(FILES ${CMAKE_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja)
 
+# We need relief.xml pdf output
+install(FILES ${CMAKE_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
+
 # GDAL data
 if(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
     INSTALL(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
