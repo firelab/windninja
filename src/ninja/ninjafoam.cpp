@@ -452,6 +452,9 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+    else{
+        NinjaUnlinkTree( pszTempPath );
+    }
             
     #ifdef _OPENMP
     endWriteOut = omp_get_wtime();
