@@ -642,7 +642,10 @@ OutputWriter::_writePDF (std::string outputfn)
     int nNinjaLogoYSize = 0;
     { /* Scoped on purpose */
         GDALDatasetH hDS = GDALOpen( wn_logo_path.c_str(), GA_ReadOnly );
-        assert( hDS );
+        if( hDS == NULL )
+        {
+            throw std::runtime_error("OutputWriter: Failed to open windninja logo");
+        }
         nNinjaLogoXSize = GDALGetRasterXSize( hDS );
         nNinjaLogoYSize = GDALGetRasterYSize( hDS );
         GDALClose( hDS );
