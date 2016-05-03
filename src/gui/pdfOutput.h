@@ -1,10 +1,8 @@
 /******************************************************************************
  *
- * $Id$
- *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles surface inputs for the domain
- * Author:   Kyle Shannon <ksshannon@gmail.com>
+ * Purpose:  PDF output selection widgetx
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -27,63 +25,50 @@
  *
  *****************************************************************************/
 
-#ifndef SURFACEINPUT_H_
-#define SURFACEINPUT_H_
+#ifndef PDFOUTPUT_H
+#define PDFOUTPUT_H
 
 #include <QGroupBox>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QComboBox>
-#include <QSpinBox>
-#include <QFileDialog>
-#include <QLabel>
+#include <QCheckBox>
 #include <QRadioButton>
-#include <QObject>
-#include <QMessageBox>
-#include <QHBoxLayout>
+#include <QLabel>
+#include <QDoubleSpinBox>
+#include <QComboBox>
+
 #include <QVBoxLayout>
-#include <QGridLayout>
+#include <QHBoxLayout>
 
-#include "WindNinjaInputs.h"
-#include "timeZoneWidget.h"
-#include "WidgetDownloadDEM.h"
-
-class surfaceInput : public QWidget
+class pdfOutput : public QWidget
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-    surfaceInput(QWidget *parent = 0);
+    pdfOutput(QWidget *parent = 0);
 
-    QGroupBox *inputFileGroupBox;
+    QGroupBox *pdfGroupBox;
+    QGroupBox *vectorGroupBox;
+    QLabel *vectorWidthLabel;
+    QDoubleSpinBox *vectorWidthDoubleSpinBox;
+    QGroupBox *pdfResGroupBox;
+    QDoubleSpinBox *pdfResSpinBox;
+    QRadioButton *pdfMetersRadioButton, *pdfFeetRadioButton;
+    QCheckBox *useMeshResCheckBox;
+    QLabel *backgroundLabel;
+    QComboBox *backgroundComboBox;
 
-    QLineEdit *inputFileLineEdit;
-    QToolButton *inputFileOpenToolButton;
-    QToolButton *downloadDEMButton;
+    QLabel *sizeLabel;
+    QComboBox *sizeComboBox;
+    QRadioButton *portraitRadioButton;
+    QRadioButton *landscapeRadioButton;
 
-    QGroupBox *roughnessGroupBox;
-    QComboBox *roughnessComboBox;
-    QLabel *roughnessLabel;
-
-    QGroupBox *meshResGroupBox;
-    QComboBox *meshResComboBox;
-    QDoubleSpinBox *meshResDoubleSpinBox;
-    QRadioButton *meshMetersRadioButton, *meshFeetRadioButton;
-
-    QGroupBox *timeZoneGroupBox;
-    timeZoneWidget *timeZone;
-
-    QHBoxLayout *inputLayout;
-    QHBoxLayout *roughnessLayout;
-    QHBoxLayout *roughnessLabelLayout;
-    QHBoxLayout *meshResLayout;
-    QHBoxLayout *timeZoneLayout;
+    QHBoxLayout *vectorLayout;
+    QVBoxLayout *optionLayout;
+    QGridLayout *resLayout;
+    QHBoxLayout *backgroundLayout;
+    QVBoxLayout *orientLayout;
+    QHBoxLayout *sizeLayout;
+    QVBoxLayout *pageLayout;
     QVBoxLayout *mainLayout;
-    
-signals:
-    void writeToMainConsole(QString message);
-
 };
 
-#endif /* SURFACEINPUT_H_ */
-
+#endif /* PDFOUTPUT_H */

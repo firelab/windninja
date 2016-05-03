@@ -72,7 +72,7 @@ public:
                                     double *southwest, double *northwest);
     virtual double GetXRes();
     virtual double GetYRes();
-    virtual SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile );
+    virtual SURF_FETCH_E makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize );
 
 #ifdef WITH_LCP_CLIENT
     int ExtractFileFromZip( const char *pszArchive,

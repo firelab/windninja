@@ -168,7 +168,7 @@ if(WITH_NOMADS_SUPPORT)
     if(NOMADS_USE_VSI_READ)
         add_definitions(-DNOMADS_USE_VSI_READ)
     endif(NOMADS_USE_VSI_READ)
-    option(NOMADS_RTMA "Enable the RTMA forecasts" ON)
+    option(NOMADS_RTMA "Enable the RTMA forecasts" OFF)
     if(NOMADS_RTMA)
         add_definitions(-DNOMADS_RTMA)
     endif(NOMADS_RTMA)
@@ -392,15 +392,20 @@ set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf
               displaying_wind_vectors_in_ArcView.pdf
               download_elevation_file.pdf
-              fetch_dem_instructions.pdf
-              tutorials/WindNinja_tutorial1.pdf
-              tutorials/WindNinja_tutorial2.pdf
-              tutorials/WindNinja_tutorial3.pdf
-              tutorials/WindNinja_tutorial4.pdf)
+              fetch_dem_instructions.pdf)
 foreach(f ${doc_files})
     install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
             share/windninja/doc COMPONENT apps)
 endforeach(f ${doc_files})
+
+set(tutorials tutorials/WindNinja_tutorial1.pdf
+              tutorials/WindNinja_tutorial2.pdf
+              tutorials/WindNinja_tutorial3.pdf
+              tutorials/WindNinja_tutorial4.pdf)
+foreach(f ${tutorials})
+    install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
+            share/windninja/doc/tutorials COMPONENT apps)
+endforeach(f ${tutorials})
 
 # Install the ninjafoam data
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)

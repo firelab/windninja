@@ -47,7 +47,7 @@ set(TEST_SOURCES test_main.cpp
                  test_init.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
-                 test_stl
+                 test_stl.cpp
                  test_rmtree.cpp)
 if(WITH_LCP_CLIENT)
     set(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
@@ -270,6 +270,10 @@ endif(WITH_NOMADS_SUPPORT)
 if(NINJAFOAM)
     #add_test(sample_cloud_1
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=ninjafoam/sample_cloud_1)
+    add_test(stl_1
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=stl/stl_1)
+    add_test(stl_2
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=stl/stl_2)
 endif(NINJAFOAM)
 
 add_test(rmtree_1

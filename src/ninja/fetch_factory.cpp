@@ -53,8 +53,7 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
         else if(type == WORLD_SRTM)
             pszPath = CPLFormFilename(pszPath, "world", ".vrt");
         else if(type == WORLD_GMTED)
-            pszPath = CPLFormFilename(pszPath, "gmted_2", ".vrt");
-            //pszPath = CPLFormFilename(pszPath, "gmted/all075", ".vrt");
+            pszPath = CPLFormFilename(pszPath, "gmted", ".vrt");
         return new GDALFetch(std::string(pszPath));
     }
 #ifdef WITH_LCP_CLIENT

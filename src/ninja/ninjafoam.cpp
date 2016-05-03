@@ -178,6 +178,7 @@ bool NinjaFoam::simulate_wind()
     eErr = NinjaElevationToStl(inFile,
                         pszStlFileName,
                         nBand,
+                        input.dem.get_cellSize(),
                         NinjaStlBinary,
                         //NinjaStlAscii,
                         NULL);
@@ -476,6 +477,7 @@ bool NinjaFoam::simulate_wind()
 
     if(!input.keepOutGridsInMemory && input.diurnalWinds == false)
     {
+       CloudGrid.deallocate();
        AngleGrid.deallocate();
        VelocityGrid.deallocate();
     }
@@ -768,8 +770,14 @@ int NinjaFoam::WriteFoamFiles()
 
 int NinjaFoam::GenerateTempDirectory()
 {
-    pszTempPath = CPLStrdup( CPLGenerateTempFilename( "NINJAFOAM_" ) );
+    //force temp dir to DEM location
+    CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+    CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+    CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
+
+    pszTempPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
     VSIMkdir( pszTempPath, 0777 );
+
     return NINJA_SUCCESS;
 }
 
@@ -1466,7 +1474,6 @@ int NinjaFoam::MoveDynamicMesh()
                                       "-parallel",
                                       NULL };
 #else
-        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
@@ -1762,11 +1769,7 @@ int NinjaFoam::BlockMesh()
     char* currentDir = CPLGetCurrentDir();
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-#ifdef WIN32
                                     pszTempPath,
-#else
-                                    CPLFormFilename(currentDir, pszTempPath, ""),
-#endif
                                     NULL };
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
@@ -2427,6 +2430,7 @@ void NinjaFoam::SetOutputFilenames()
 
     /* set the output path member variable */
     input.outputPath = pathName;
+    set_outputPath(pathName);
 
     mesh_units = "m";
     kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
@@ -2478,6 +2482,7 @@ void NinjaFoam::SetOutputFilenames()
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
 
+    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
@@ -2529,6 +2534,8 @@ int NinjaFoam::SampleRawOutput()
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
 
+    GDALClose( hDS );
+
     return NINJA_SUCCESS;
 }
 
@@ -2563,14 +2570,38 @@ int NinjaFoam::WriteOutputFiles()
 			velTempGrid=NULL;
 			angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
+                                                             AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
+                                                             AsciiGrid<double>::order0));
+                        
+                        //Set cloud grid
+                        int longEdge = input.dem.get_nRows();
+                        if(input.dem.get_nRows() < input.dem.get_nCols())
+                            longEdge = input.dem.get_nCols();
+                        double tempCloudCover;
+                        if(input.cloudCover < 0){
+                            tempCloudCover = 0.0;
+                        }
+                        else{
+                            tempCloudCover = input.cloudCover;
+                        }
 
+                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
+                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
+                                -9999.0, tempCloudCover, input.dem.prjString);
+
+			AsciiGrid<double> tempCloud(CloudGrid);
+			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+                        //ensure grids cover original DEM extents for FARSITE
+                        tempCloud.BufferGridInPlace();
+                        angTempGrid->BufferGridInPlace();
+                        velTempGrid->BufferGridInPlace();
+
+			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
 			velTempGrid->write_Grid(input.velFile.c_str(), 2);
-
-            //angTempGrid->write_Grid("angle.asc", 0);
-			//velTempGrid->write_Grid("vel.asc", 2);
 
 			if(angTempGrid)
 			{
@@ -2713,7 +2744,11 @@ int NinjaFoam::WriteOutputFiles()
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid);
             output.setDEMfile(input.pdfDEMFileName);
+            output.setLineWidth(input.pdfLineWidth);
+            output.setDPI(input.pdfDPI);
+            output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
+
 
 			if(angTempGrid)
 			{
@@ -2728,10 +2763,10 @@ int NinjaFoam::WriteOutputFiles()
 		}
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
 	/* keep pszTempPath and OpenFOAM files if vtk output is requested */
 	if(input.volVTKOutFlag==false)

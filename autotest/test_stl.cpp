@@ -40,11 +40,72 @@ BOOST_AUTO_TEST_CASE( stl_1 )
     const char *pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     BOOST_REQUIRE( pszPath );
     const char *pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
-    rc = NinjaElevationToStl( pszFilename, "test.stl", 1, NinjaStlBinary, NULL );
+    const char *pszTmpFile = CPLFormFilename( NULL, CPLGenerateTempFilename( NULL ), ".stl" );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, NULL );
     BOOST_CHECK( !rc );
-    if( CPLCheckForFile( (char*)"test.stl", NULL ) )
+    if( CPLCheckForFile( (char*)pszTmpFile, NULL ) )
+        VSIUnlink( pszTmpFile );
+}
+
+BOOST_AUTO_TEST_CASE( stl_2 )
+{
+    GDALAllRegister();
+    int rc;
+    const char *pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
+    BOOST_REQUIRE( pszPath );
+    const char *pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
+    const char *pszTmpFile = CPLFormFilename( NULL, CPLGenerateTempFilename( NULL ), ".stl" );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, NULL );
+    BOOST_CHECK( !rc );
+    VSILFILE *fin = VSIFOpenL( pszTmpFile, "rb" );
+    BOOST_REQUIRE( fin );
+    float adfTri[12];
+    double dfEdge = 0.0;
+    int nTris = 0;
+    VSIFSeekL( fin, 80, SEEK_SET );
+    VSIFReadL( &nTris, sizeof( int ), 1, fin );
+    VSIFReadL( adfTri, sizeof( adfTri ), 1, fin );
+
+    // x coords are 3, 6, and 9
+    dfEdge = fabs( adfTri[3] - adfTri[6] );
+    if( fabs( adfTri[6] - adfTri[9] ) < dfEdge && adfTri[6] != adfTri[9] )
+    {
+        dfEdge = fabs( adfTri[6] - adfTri[9] );
+    }
+    BOOST_CHECK( CPLIsEqual( dfEdge, 30.0 ) );
+    VSIFCloseL( fin );
+
+    if( CPLCheckForFile( (char*)pszTmpFile, NULL ) )
+        VSIUnlink( "test.stl" );
+
+    pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, 90.0, NinjaStlBinary, NULL );
+    BOOST_CHECK( !rc );
+    fin = VSIFOpenL( pszTmpFile, "rb" );
+    BOOST_REQUIRE( fin );
+    float adfCoarseTri[12];
+    double dfCoarseEdge = 0.0;
+    int nCoarseTris = 0;
+    VSIFSeekL( fin, 80, SEEK_SET );
+    VSIFReadL( &nCoarseTris, sizeof( int ), 1, fin );
+    VSIFReadL( adfCoarseTri, sizeof( adfCoarseTri ), 1, fin );
+
+    // x coords are 3, 6, and 9
+    dfCoarseEdge = fabs( adfCoarseTri[3] - adfCoarseTri[6] );
+    if( fabs( adfCoarseTri[6] - adfCoarseTri[9] ) < dfCoarseEdge && adfTri[6] != adfTri[9] )
+    {
+        dfCoarseEdge = fabs( adfCoarseTri[6] - adfCoarseTri[9] );
+    }
+
+    BOOST_CHECK( CPLIsEqual( dfCoarseEdge, 90.0 ) );
+    BOOST_CHECK( nTris > nCoarseTris );
+    BOOST_CHECK( fabs( adfCoarseTri[3] - adfTri[3] ) <= 90.0 );
+    VSIFCloseL( fin );
+
+    if( CPLCheckForFile( (char*)pszTmpFile, NULL ) )
         VSIUnlink( "test.stl" );
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

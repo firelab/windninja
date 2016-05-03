@@ -106,6 +106,10 @@ WindNinjaInputs::WindNinjaInputs()
     pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
+    pdfBaseType = HILLSHADE;
+    pdfWidth = 8.5;
+    pdfHeight = 11.0;
+    pdfDPI = 150;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -228,6 +232,16 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
   wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
   shpOutFlag = rhs.shpOutFlag;
+  pdfOutFlag = rhs.pdfOutFlag;
+  pdfDEMFileName = rhs.pdfDEMFileName;
+  pdfResolution = rhs.pdfResolution;
+  pdfLineWidth  = rhs.pdfLineWidth ;
+  pdfUnits = rhs.pdfUnits;
+  pdfFile = rhs.pdfFile;
+  pdfBaseType = rhs.pdfBaseType;
+  pdfWidth = rhs.pdfWidth;
+  pdfHeight = rhs.pdfHeight;
+  pdfDPI = rhs.pdfDPI;
   asciiOutFlag = rhs.asciiOutFlag;
   wxModelShpOutFlag = rhs.wxModelShpOutFlag;
   wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
@@ -245,6 +259,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   wxModelDbfFile = rhs.wxModelDbfFile;
   shpResolution = rhs.shpResolution;
   shpUnits = rhs.shpUnits;
+
+
   cldFile = rhs.cldFile;
   velFile = rhs.velFile;
   wxModelCldFile = rhs.wxModelCldFile;
@@ -402,6 +418,16 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       wxModelDbfFile = rhs.wxModelDbfFile;
       shpResolution = rhs.shpResolution;
       shpUnits = rhs.shpUnits;
+      pdfOutFlag = rhs.pdfOutFlag;
+      pdfDEMFileName = rhs.pdfDEMFileName;
+      pdfResolution = rhs.pdfResolution;
+      pdfLineWidth  = rhs.pdfLineWidth ;
+      pdfUnits = rhs.pdfUnits;
+      pdfFile = rhs.pdfFile;
+      pdfBaseType = rhs.pdfBaseType;
+      pdfWidth = rhs.pdfWidth;
+      pdfHeight = rhs.pdfHeight;
+      pdfDPI = rhs.pdfDPI;
       cldFile = rhs.cldFile;
       velFile = rhs.velFile;
       wxModelCldFile = rhs.wxModelCldFile;

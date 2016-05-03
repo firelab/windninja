@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="/">
-    <file alias="wn-splash.png">images/wn-splash.png</file>
+    <file alias="wn-splash.png">data/wn-splash.png</file>
     <file alias="wn-icon.png">images/icons/wn-icon.png</file>
     <file alias="wn-desktop.ico">images/icons/wn-desktop.ico</file>
     <file alias="resample.png">images/icons/resample.png</file>

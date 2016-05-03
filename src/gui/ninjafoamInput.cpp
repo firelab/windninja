@@ -45,7 +45,7 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
                 "CFD toolbox. This solver should give more accurate wind predictions in regions where\n"
                 "momentum effects are important, such as on the lee side of terrain obstacles. Because\n"
                 "this solver is more computationally intensive than the conservation of mass solver,\n"
-                "simulation times will be longer. Typcial simulation times for this solver are on the\n"
+                "simulation times will be longer. Typical simulation times for this solver are on the\n"
                 "order of 1-2 hours, but will depend on your domain, resolution, and computational\n"
                 "resources. Note that some options (e.g., weather model initialization and non-neutral\n"
                 "stability) are not available for this solver at this time. We plan to make these options\n"
