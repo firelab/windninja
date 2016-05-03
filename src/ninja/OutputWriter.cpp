@@ -658,15 +658,9 @@ OutputWriter::_writePDF (std::string outputfn)
     double yRatio = (double)out_y_size / height;
     double xWidth = (double)out_x_size / (double)dpi;
     double yHeight = (double)out_y_size / (double)dpi;
-    if( fabs( xRatio ) < fabs( yRatio ) )
-    {
-        xMargin = (width - xWidth) / 2.0 * 72.0;
-    }
-    else if( fabs( xRatio ) > fabs( yRatio ) )
-    {
-        bottomMargin = (height - yHeight) / 2.0 * 72.0;
-        topMargin = bottomMargin;
-    }
+    xMargin = (width - xWidth) / 2.0 * 72.0;
+    bottomMargin = (height - yHeight) / 2.0 * 72.0;
+    topMargin = bottomMargin;
     double dfImageYBound = 0.0;
     /* Make the same as the default margin */
     dfImageYBound = MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );
