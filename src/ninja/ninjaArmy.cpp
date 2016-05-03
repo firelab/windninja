@@ -347,7 +347,9 @@ bool ninjaArmy::startRuns(int numProcessors)
             GDALDriverH hDrv = NULL;
             hDrv = GDALGetDriverByName( "GTiff" );
             assert( hDrv );
+            CPLSetErrorHandler( CPLQuietErrorHandler );
             GDALDeleteDataset( hDrv, pszTmpColorRelief );
+            CPLPopErrorHandler();
 
             GDALDatasetH h8bit = GDALCreate( hDrv, pszTmpColorRelief, nNewXSize,
                                              nNewYSize, 1, GDT_Byte, NULL );
