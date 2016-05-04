@@ -400,6 +400,7 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+    CPLDebug("NINJAFOAM", "meshResolution= %d", meshResolution);
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");

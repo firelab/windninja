@@ -423,9 +423,10 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
                 diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
-                diurnal_ninja->set_meshResChoice("fine"); //may not have been set, just always make the diurnal run "fine"
+                diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
                 diurnal_ninja->AngleGrid = ninjas[0]->AngleGrid; //pass cfd flow field to diurnal run
                 diurnal_ninja->VelocityGrid = ninjas[0]->VelocityGrid; //pass cfd flow field to diurnal run
+                diurnal_ninja->CloudGrid = ninjas[0]->CloudGrid; //pass cfd cloud grid to diurnal run
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()");
                 }
