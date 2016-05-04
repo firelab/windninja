@@ -4676,7 +4676,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
-    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag )
+    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
+        input.initializationMethod == WindNinjaInputs::foamInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
