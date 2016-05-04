@@ -4207,6 +4207,11 @@ void ninja::set_meshResolution( double resolution, lengthUnits::eLengthUnits uni
     mesh.set_meshResolution( resolution, units );
 }
 
+double ninja::get_meshResolution()
+{
+    return mesh.meshResolution;
+}
+
 void ninja::set_numVertLayers( const int nLayers )
 {
     mesh.set_numVertLayers( nLayers );

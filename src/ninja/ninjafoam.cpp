@@ -83,6 +83,11 @@ NinjaFoam::~NinjaFoam()
     CPLFree( (void*)pszGridFilename );
 }
 
+double NinjaFoam::get_meshResolution()
+{
+    return meshResolution;
+}
+
 bool NinjaFoam::simulate_wind()
 {
     #ifdef _OPENMP
@@ -1083,6 +1088,7 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
     cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+    meshResolution = side;
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
@@ -1124,6 +1130,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
     cellVolume = meshVolume/cellCount; // volume of 1 cell
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+    meshResolution = side;
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
@@ -1662,6 +1669,7 @@ int NinjaFoam::RefineSurfaceLayer(){
         latestTime += 1;
         oldFirstCellHeight = finalFirstCellHeight;
         finalFirstCellHeight /= 2.0; //keep track of first cell height
+        meshResolution /= 2.0;
         
         UpdateDictFiles();
         

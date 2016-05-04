@@ -75,6 +75,8 @@ public:
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
+    double get_meshResolution();
+
 private:
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
@@ -117,7 +119,7 @@ private:
     std::vector<std::string> cellField;
     std::vector<double> bbox;
     std::vector<int> nCells; //number of cells in x,y,z directions of blockMesh
-    double side; // length of side of regular hex cell
+    double meshResolution; // mesh resolution
     double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
     double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
     double finalFirstCellHeight; //final approx height of near-ground cell after refinement
