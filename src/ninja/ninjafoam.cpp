@@ -368,6 +368,7 @@ bool NinjaFoam::simulate_wind()
                 }
             }
             latestTime -= 1;
+            meshResolution *= 2.0;
             CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
 
             /* update simpleFoam controlDict writeInterval */
