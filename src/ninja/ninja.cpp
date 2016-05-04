@@ -2285,6 +2285,22 @@ void ninja::prepareOutput()
 	
 	if(!isNullRun)
 		interp_uvw();
+ 
+        if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag){
+            //Set cloud grid
+            int longEdge = input.dem.get_nRows();
+            if(input.dem.get_nRows() < input.dem.get_nCols())
+                    longEdge = input.dem.get_nCols();
+            double tempCloudCover;
+            if(input.cloudCover < 0)
+                tempCloudCover = 0.0;
+            else
+                tempCloudCover = input.cloudCover;
+            CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(), 
+                    input.dem.get_yllCorner(),
+                    (longEdge * input.dem.cellSize), 
+                    -9999.0, tempCloudCover, input.dem.prjString);
+        }
 
 	//Clip off bounding doughnut if desired
 	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
