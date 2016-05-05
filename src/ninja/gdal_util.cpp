@@ -721,13 +721,13 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
 int NinjaOGRContain(const char *pszWkt, const char *pszFile,
                     const char *pszLayer)
 {
-    CPLDebug( "WINDNINJA", "Checking for containment of %s in %s:%s",
-              pszWkt, pszFile, pszLayer ? pszLayer : "" );
     int bContains = FALSE;
     if( pszWkt == NULL || pszFile == NULL )
     {
         return FALSE;
     }
+    CPLDebug( "WINDNINJA", "Checking for containment of %s in %s:%s",
+              pszWkt, pszFile, pszLayer ? pszLayer : "" );
     OGRGeometryH hTestGeometry = NULL;
     int err = OGR_G_CreateFromWkt( (char**)&pszWkt, NULL, &hTestGeometry );
     if( hTestGeometry == NULL || err != CE_None )
