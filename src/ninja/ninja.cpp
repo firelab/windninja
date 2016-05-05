@@ -2285,6 +2285,22 @@ void ninja::prepareOutput()
 	
 	if(!isNullRun)
 		interp_uvw();
+ 
+        if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag){
+            //Set cloud grid
+            int longEdge = input.dem.get_nRows();
+            if(input.dem.get_nRows() < input.dem.get_nCols())
+                    longEdge = input.dem.get_nCols();
+            double tempCloudCover;
+            if(input.cloudCover < 0)
+                tempCloudCover = 0.0;
+            else
+                tempCloudCover = input.cloudCover;
+            CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(), 
+                    input.dem.get_yllCorner(),
+                    (longEdge * input.dem.cellSize), 
+                    -9999.0, tempCloudCover, input.dem.prjString);
+        }
 
 	//Clip off bounding doughnut if desired
 	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
@@ -4207,6 +4223,11 @@ void ninja::set_meshResolution( double resolution, lengthUnits::eLengthUnits uni
     mesh.set_meshResolution( resolution, units );
 }
 
+double ninja::get_meshResolution()
+{
+    return mesh.meshResolution;
+}
+
 void ninja::set_numVertLayers( const int nLayers )
 {
     mesh.set_numVertLayers( nLayers );
@@ -4671,7 +4692,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
-    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag )
+    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
+        input.initializationMethod == WindNinjaInputs::foamInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);

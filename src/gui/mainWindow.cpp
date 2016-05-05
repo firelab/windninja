@@ -1162,22 +1162,23 @@ double mainWindow::computeCellSize(int index)
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
 
-    double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
-    double YLength = (GDALYSize + 1) * GDALCellSize + 200;
-  
+    double XLength = (GDALXSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01); //buffer for MDM
+    double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
+
     double dz = GDALMaxValue - GDALMinValue;
     double zMin = GDALMaxValue * 1.1;
     double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
     double ZLength = zMax - zMin; 
 
-    double volume1;
-    double cellCount1;
-    double cellVolume1;
+    double volume;
+    double cellCount;
+    double cellVolume;
     
-    volume1 = XLength * YLength * ZLength; //volume near terrain
-    cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in blockMesh
-    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of cell in blockMesh 
+    volume = XLength * YLength * ZLength; //volume of blockMesh
+    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+    meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
+    meshResolution /= 4.0; //assume 2 rounds of refinement at surface
   }
   else{
     /* native windninja mesh */
