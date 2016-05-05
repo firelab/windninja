@@ -464,20 +464,16 @@ bool ninjaArmy::startRuns(int numProcessors)
 #ifdef _OPENMP
         omp_set_num_threads(numProcessors);
 #endif
-        std::vector<int> anErrors( numProcessors);
-        std::vector<std::string>asMessages( numProcessors );
-        
-        std::vector<boost::local_time::local_date_time> timeList; 
-
-        try{
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
+        for(unsigned int i = 0; i < ninjas.size(); i++)
+        {
+            try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
         
                 //start the run
-                if(!ninjas[i]->simulate_wind())
-                   printf("Return of false from simulate_wind()");
+                if(!ninjas[i]->simulate_wind()){
+                    throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
+                }
                 //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
                 //a ninja run to add diurnal flow after the cfd solution is computed
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
@@ -489,33 +485,30 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->AngleGrid = ninjas[i]->AngleGrid; //pass cfd flow field to diurnal run
                     diurnal_ninja->VelocityGrid = ninjas[i]->VelocityGrid; //pass cfd flow field to diurnal run
                     if(!diurnal_ninja->simulate_wind()){
-                        printf("Return of false from simulate_wind()");
+                        throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
                 } 
                 //write farsite atmosphere file
                 writeFarsiteAtmosphereFile();
+            
+            }catch (bad_alloc& e)
+            {
+                std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+                std::cout << "WindNinja appears to have run out of memory." << endl;
+                status = false;
+            }catch (cancelledByUser& e)
+            {
+                std::cout << "Exception caught: " << e.what() << endl;
+                status = false;
+            }catch (exception& e)
+            {
+                std::cout << "Exception caught: " << e.what() << endl;
+                status = false;
+            }catch (...)
+            {
+                std::cout << "Exception caught: Cannot determine exception type." << endl;
+                status = false;
             }
-        }catch (bad_alloc& e)
-        {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
-            status = false;
-            throw;
-        }catch (cancelledByUser& e)
-        {
-            std::cout << "Exception caught: " << e.what() << endl;
-            status = false;
-            throw;
-        }catch (exception& e)
-        {
-            std::cout << "Exception caught: " << e.what() << endl;
-            status = false;
-            throw;
-        }catch (...)
-        {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
-            status = false;
-            throw;
         }
     }
 #endif //NINJAFOAM            
