@@ -3,15 +3,16 @@ Release Notes
 
 WindNinja 3.0.0
 
-* Add OpenFOAM based momentum solver( #41, #43, #44, #45, #47, #48, #52, #54,
-#55, #62, #71, #73, #75, #77, #83, #90, #106, #115, #116, #123, #124, #127, #132
+* Add OpenFOAM based momentum solver( \#41, \#43, \#44, \#45, \#47, \#48, \#52,
+\#54, \#55, \#62, \#71, \#73, \#75, \#77, \#83, \#90, \#106, \#115, \#116,
+\#123, \#124, \#127, \#132)
 
-* Add Geospatial PDF output(#75, #87, #88, #91, #92, #100, #101, #115, #123,
- #127)
+* Add Geospatial PDF output(\#75, \#87, \#88, \#91, \#92, \#100, \#101, \#115,
+\#123, \#127)
 
-* Fix segfault in DEM reading in CLI (#86)
+* Fix segfault in DEM reading in CLI (\#86)
 
-* Fix GMTED elevation source (#69, #78)
+* Fix GMTED elevation source (\#69, \#78)
 
 WindNinja 2.5.4
 ---------------
