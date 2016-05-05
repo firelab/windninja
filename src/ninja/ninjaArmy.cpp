@@ -328,6 +328,8 @@ bool ninjaArmy::startRuns(int numProcessors)
         int nNewXSize = nXSize * dfRatio;
         int nNewYSize = nYSize * dfRatio;
 
+        CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
+
         SURF_FETCH_E retval = SURF_FETCH_E_NONE;
         if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
         {
@@ -405,6 +407,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             ninjas[i]->input.pdfDEMFileName = pszTmpColorRelief;
         }
+        CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
     if(ninjas.size() == 1)
