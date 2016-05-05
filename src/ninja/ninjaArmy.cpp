@@ -429,6 +429,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()");
                 }
+                //set output path on original ninja for the GUI
+                ninjas[0]->input.outputPath = diurnal_ninja->input.outputPath;
             } 
 #endif //NINJAFOAM            
 
@@ -487,6 +489,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
+                    //set output path on original ninja for the GUI
+                    ninjas[i]->input.outputPath = diurnal_ninja->input.outputPath;
                 } 
                 //write farsite atmosphere file
                 writeFarsiteAtmosphereFile();
