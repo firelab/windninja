@@ -457,8 +457,68 @@ bool ninjaArmy::startRuns(int numProcessors)
             status = false;
             throw;
         }
-
     }
+#ifdef NINJAFOAM
+    else if(ninjas.size() > 1 & ninjas[0]->identify() =="ninjafoam")
+    {
+#ifdef _OPENMP
+        omp_set_num_threads(numProcessors);
+#endif
+        std::vector<int> anErrors( numProcessors);
+        std::vector<std::string>asMessages( numProcessors );
+        
+        std::vector<boost::local_time::local_date_time> timeList; 
+
+        try{
+            for(unsigned int i = 0; i < ninjas.size(); i++)
+            {
+                //set number of threads for the run
+                ninjas[i]->set_numberCPUs( numProcessors );
+        
+                //start the run
+                if(!ninjas[i]->simulate_wind())
+                   printf("Return of false from simulate_wind()");
+                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+                //a ninja run to add diurnal flow after the cfd solution is computed
+                if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
+                    CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
+                    ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                    diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
+                    diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                    diurnal_ninja->AngleGrid = ninjas[i]->AngleGrid; //pass cfd flow field to diurnal run
+                    diurnal_ninja->VelocityGrid = ninjas[i]->VelocityGrid; //pass cfd flow field to diurnal run
+                    if(!diurnal_ninja->simulate_wind()){
+                        printf("Return of false from simulate_wind()");
+                    }
+                } 
+                //write farsite atmosphere file
+                writeFarsiteAtmosphereFile();
+            }
+        }catch (bad_alloc& e)
+        {
+            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+            std::cout << "WindNinja appears to have run out of memory." << endl;
+            status = false;
+            throw;
+        }catch (cancelledByUser& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (exception& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (...)
+        {
+            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            status = false;
+            throw;
+        }
+    }
+#endif //NINJAFOAM            
     else
     {
         for(unsigned int i = 0; i < ninjas.size(); i++)
@@ -493,8 +553,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
         hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-        
-
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
         for( int i = 0; i < ninjas.size(); i++ )
@@ -518,23 +576,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
-#ifdef NINJAFOAM
-                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
-                //a ninja run to add diurnal flow after the cfd solution is computed
-                if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
-                    CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
-                    ninja* diurnal_ninja = new ninja(*ninjas[i]);
-                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
-                    diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
-                    diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(),
-                                                    lengthUnits::getUnit("m")); 
-                    diurnal_ninja->AngleGrid = ninjas[i]->AngleGrid; //pass cfd flow field to diurnal run
-                    diurnal_ninja->VelocityGrid = ninjas[i]->VelocityGrid; //pass cfd flow field to diurnal run
-                    if(!diurnal_ninja->simulate_wind()){
-                        printf("Return of false from simulate_wind()");
-                    }
-                } 
-#endif //NINJAFOAM            
                
                 if( wxList.size() > 1 )
                 {
