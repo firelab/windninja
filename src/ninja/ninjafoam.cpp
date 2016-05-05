@@ -493,7 +493,7 @@ bool NinjaFoam::simulate_wind()
     }
 
     if(input.diurnalWinds == true){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding dirunal winds...");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding diurnal winds...");
     }   
 
     return true;
