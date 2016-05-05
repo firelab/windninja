@@ -328,8 +328,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         int nNewXSize = nXSize * dfRatio;
         int nNewYSize = nYSize * dfRatio;
 
-        CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
-
         SURF_FETCH_E retval = SURF_FETCH_E_NONE;
         if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
         {
@@ -407,7 +405,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             ninjas[i]->input.pdfDEMFileName = pszTmpColorRelief;
         }
-        CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
     if(ninjas.size() == 1)
@@ -521,6 +518,23 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+#ifdef NINJAFOAM
+                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+                //a ninja run to add diurnal flow after the cfd solution is computed
+                if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
+                    CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
+                    ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                    diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
+                    diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(),
+                                                    lengthUnits::getUnit("m")); 
+                    diurnal_ninja->AngleGrid = ninjas[i]->AngleGrid; //pass cfd flow field to diurnal run
+                    diurnal_ninja->VelocityGrid = ninjas[i]->VelocityGrid; //pass cfd flow field to diurnal run
+                    if(!diurnal_ninja->simulate_wind()){
+                        printf("Return of false from simulate_wind()");
+                    }
+                } 
+#endif //NINJAFOAM            
                
                 if( wxList.size() > 1 )
                 {
