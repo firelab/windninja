@@ -722,7 +722,7 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
                     const char *pszLayer)
 {
     CPLDebug( "WINDNINJA", "Checking for containment of %s in %s:%s",
-              pszWkt, pszFile, pszLayer );
+              pszWkt, pszFile, pszLayer ? pszLayer : "" );
     int bContains = FALSE;
     if( pszWkt == NULL || pszFile == NULL )
     {
