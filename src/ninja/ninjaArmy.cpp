@@ -404,7 +404,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             /* delete stats file */
             if( CPLCheckForFile( (char*)CPLSPrintf("%s.aux.xml", ninjas[0]->input.dem.fileName.c_str()), NULL ) ){
-                unlink( CPLSPrintf("%s.aux.xml", ninjas[0]->input.dem.fileName.c_str()) );
+                VSIUnlink( CPLSPrintf("%s.aux.xml", ninjas[0]->input.dem.fileName.c_str()) );
             }
         }
         /* Make sure all runs point to the proper DEM file */
