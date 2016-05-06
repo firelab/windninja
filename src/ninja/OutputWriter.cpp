@@ -642,7 +642,10 @@ OutputWriter::_writePDF (std::string outputfn)
     int nNinjaLogoYSize = 0;
     { /* Scoped on purpose */
         GDALDatasetH hDS = GDALOpen( wn_logo_path.c_str(), GA_ReadOnly );
-        assert( hDS );
+        if( hDS == NULL )
+        {
+            throw std::runtime_error("OutputWriter: Failed to open windninja logo");
+        }
         nNinjaLogoXSize = GDALGetRasterXSize( hDS );
         nNinjaLogoYSize = GDALGetRasterYSize( hDS );
         GDALClose( hDS );
@@ -658,15 +661,9 @@ OutputWriter::_writePDF (std::string outputfn)
     double yRatio = (double)out_y_size / height;
     double xWidth = (double)out_x_size / (double)dpi;
     double yHeight = (double)out_y_size / (double)dpi;
-    if( fabs( xRatio ) < fabs( yRatio ) )
-    {
-        xMargin = (width - xWidth) / 2.0 * 72.0;
-    }
-    else if( fabs( xRatio ) > fabs( yRatio ) )
-    {
-        bottomMargin = (height - yHeight) / 2.0 * 72.0;
-        topMargin = bottomMargin;
-    }
+    xMargin = (width - xWidth) / 2.0 * 72.0;
+    bottomMargin = (height - yHeight) / 2.0 * 72.0;
+    topMargin = bottomMargin;
     double dfImageYBound = 0.0;
     /* Make the same as the default margin */
     dfImageYBound = MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );

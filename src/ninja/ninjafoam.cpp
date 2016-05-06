@@ -83,6 +83,11 @@ NinjaFoam::~NinjaFoam()
     CPLFree( (void*)pszGridFilename );
 }
 
+double NinjaFoam::get_meshResolution()
+{
+    return meshResolution;
+}
+
 bool NinjaFoam::simulate_wind()
 {
     #ifdef _OPENMP
@@ -363,6 +368,7 @@ bool NinjaFoam::simulate_wind()
                 }
             }
             latestTime -= 1;
+            meshResolution *= 2.0;
             CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
 
             /* update simpleFoam controlDict writeInterval */
@@ -394,6 +400,7 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+    CPLDebug("NINJAFOAM", "meshResolution= %d", meshResolution);
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
@@ -452,6 +459,9 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
+    else{
+        NinjaUnlinkTree( pszTempPath );
+    }
             
     #ifdef _OPENMP
     endWriteOut = omp_get_wtime();
@@ -483,7 +493,7 @@ bool NinjaFoam::simulate_wind()
     }
 
     if(input.diurnalWinds == true){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding dirunal winds...");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding diurnal winds...");
     }   
 
     return true;
@@ -1080,6 +1090,7 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
     cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+    meshResolution = side;
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
@@ -1121,6 +1132,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
     cellVolume = meshVolume/cellCount; // volume of 1 cell
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+    meshResolution = side;
 
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
@@ -1659,6 +1671,7 @@ int NinjaFoam::RefineSurfaceLayer(){
         latestTime += 1;
         oldFirstCellHeight = finalFirstCellHeight;
         finalFirstCellHeight /= 2.0; //keep track of first cell height
+        meshResolution /= 2.0;
         
         UpdateDictFiles();
         
