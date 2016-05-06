@@ -401,6 +401,11 @@ bool ninjaArmy::startRuns(int numProcessors)
             GDALFlushCache( h8bit );
             GDALClose( hDS );
             GDALClose( h8bit );
+
+            /* delete stats file */
+            if( CPLCheckForFile( (char*)CPLSPrintf("%s.aux.xml", ninjas[0]->input.dem.fileName.c_str()), NULL ) ){
+                unlink( CPLSPrintf("%s.aux.xml", ninjas[0]->input.dem.fileName.c_str()) );
+            }
         }
         /* Make sure all runs point to the proper DEM file */
         for(unsigned int i = 0; i < ninjas.size(); i++)
