@@ -427,8 +427,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                 diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
                 diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
-                diurnal_ninja->AngleGrid = ninjas[0]->AngleGrid; //pass cfd flow field to diurnal run
-                diurnal_ninja->VelocityGrid = ninjas[0]->VelocityGrid; //pass cfd flow field to diurnal run
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()");
                 }
@@ -487,8 +485,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(), lengthUnits::getUnit("m")); 
-                    diurnal_ninja->AngleGrid = ninjas[i]->AngleGrid; //pass cfd flow field to diurnal run
-                    diurnal_ninja->VelocityGrid = ninjas[i]->VelocityGrid; //pass cfd flow field to diurnal run
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
