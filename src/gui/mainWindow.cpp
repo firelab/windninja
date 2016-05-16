@@ -1921,8 +1921,7 @@ int mainWindow::solve()
         army->setNinjaComNumRuns( i, nRuns );
     }
 
-
-    army->set_writeFarsiteAtmFile( writeAtm );
+    army->set_writeFarsiteAtmFile( writeAtm && writeFb );
 
     for( unsigned int i = 0; i < army->getSize(); i++ )
     {
@@ -2551,6 +2550,7 @@ int mainWindow::checkFbItem()
     {
       tree->fbItem->setIcon(0, tree->blue);
       tree->fbItem->setToolTip(0, "No output");
+      tree->fb->atmFileCheckBox->setChecked(false);
       status = blue;
     }
   else
