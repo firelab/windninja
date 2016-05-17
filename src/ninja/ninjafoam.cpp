@@ -2751,8 +2751,8 @@ int NinjaFoam::WriteOutputFiles()
 			angTempGrid=NULL;
             OutputWriter output;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid);
