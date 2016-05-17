@@ -2550,7 +2550,6 @@ int mainWindow::checkFbItem()
     {
       tree->fbItem->setIcon(0, tree->blue);
       tree->fbItem->setToolTip(0, "No output");
-      tree->fb->atmFileCheckBox->setChecked(false);
       status = blue;
     }
   else
