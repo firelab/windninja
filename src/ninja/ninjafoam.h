@@ -79,6 +79,8 @@ public:
 
 private:
 
+    double foamRoughness; //roughness value used in OpenFOAM
+
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs; 

@@ -44,6 +44,8 @@ NinjaFoam::NinjaFoam() : ninja()
     inletoutletvalue = "";
     template_ = "";
     
+    foamRoughness = 0.01; 
+
     initialFirstCellHeight = -1.0;
     oldFirstCellHeight = -1.0;
     finalFirstCellHeight = -1.0;
@@ -400,7 +402,7 @@ bool NinjaFoam::simulate_wind()
             return NINJA_E_OTHER;
         }
     }
-    CPLDebug("NINJAFOAM", "meshResolution= %d", meshResolution);
+    CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
     if(input.numberCPUs > 1){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
@@ -548,7 +550,14 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight)); //input wind height in ninjafoam mesh is always height above canopy
-    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
+
+    /*
+     * set roughness to 0.01 regardless of veg type until we fix how roughness
+     * is handled in the OpenFOAM BCs and turbulence model
+     */
+    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( foamRoughness ));
+    //ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
+
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
 
