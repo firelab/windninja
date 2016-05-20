@@ -1,7 +1,7 @@
 WindNinja
 =========
 
-WindNinja is a mass consistent wind model developed for use in fire modeling.
+WindNinja is a diagnostic wind model developed for use in fire modeling.
 
 Web:
 http://firelab.org/project/windninja
