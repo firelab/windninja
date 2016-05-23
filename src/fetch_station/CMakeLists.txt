@@ -17,26 +17,26 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory(ninja)
+include_directories(${PROJECT_SOURCE_DIR}/src
+                    ${PROJECT_SOURCE_DIR}/src/ninja
+                    ${Boost_INCLUDE_DIRS}
+                    ${NETCDF_INCLUDES}
+                    ${GDAL_INCLUDE_DIR})
 
-if(NINJA_QTGUI)
-    add_subdirectory(gui)
-endif(NINJA_QTGUI)
-if(NINJA_CLI)
-    add_subdirectory(cli)
-endif(NINJA_CLI)
-if(BUILD_FETCH_DEM)
-    add_subdirectory(fetch_dem)
-endif(BUILD_FETCH_DEM)
-if(BUILD_FETCH_STATION)
-    add_subdirectory(fetch_station)
-endif(BUILD_FETCH_STATION)
-if(BUILD_SOLAR_GRID)
-    add_subdirectory(solar_grid)
-endif(BUILD_SOLAR_GRID)
-if(BUILD_STL_CONVERTER)
-    add_subdirectory(stl_converter)
-endif(BUILD_STL_CONVERTER)
-if(BUILD_CONVERT_OUTPUT)
-    add_subdirectory(output_converter)
-endif(BUILD_CONVERT_OUTPUT)
+set(LINK_LIBS ${Boost_LIBRARIES}
+              ${GDAL_LIBRARY}
+              ${NETCDF_LIBRARIES_C})
+
+if(WIN32)
+    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
+else(WIN32)
+    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
+endif(WIN32)
+
+add_executable(fetch_station fetch_station.cpp)
+
+target_link_libraries(fetch_station ${LINK_LIBS})
+add_dependencies(fetch_station ninja)
+
+install(TARGETS fetch_station DESTINATION bin COMPONENT apps)
+
