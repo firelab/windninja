@@ -12,6 +12,10 @@ https://github.com/firelab/windninja
 IRC:
 irc://irc.freenode.net/#windninja
 
+| Version  | DOI           |
+| -------- |:-------------:|
+| 3.0.0    | [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja) |
+
 Legacy hosting/wiki:
 https://collab.firelab.org/software/projects/windninja
 https://collab.firelab.org/svn/windninja
