@@ -62,7 +62,9 @@ extern "C" {
 #define NOMADS_YMIN 3
 #define NOMADS_YMAX 2
 
+#ifndef SKIP_DOT_AND_DOTDOT
 #define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
+#endif
 
 /*
 ** We can't do threaded download on older GDAL versions (pre-1.10.0) due to
