@@ -867,7 +867,8 @@ int windNinjaCLI(int argc, char* argv[])
                 vm["initialization_method"].as<std::string>() != string("griddedInitialization"))
         {
             cout << "'initialization_method' is not a known type.\n";
-            cout << "Choices are domainAverageInitialization, pointInitialization, or wxModelInitialization.\n";
+            cout << "Choices are domainAverageInitialization, pointInitialization,\
+                     wxModelInitialization, or griddedInitialization.\n";
             return -1;
         }
         
