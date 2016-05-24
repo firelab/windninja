@@ -807,6 +807,9 @@ int windNinjaCLI(int argc, char* argv[])
         int bFillNoData =
             CSLTestBoolean( CPLGetConfigOption( "NINJA_FILL_DEM_NO_DATA",
                                                 "NO" ) );
+#ifdef MOBILE_APP
+        bFillNoData = TRUE;
+#endif //MOBILE_APP
         /* If we downloaded from our fetcher, we fill */
         if( vm.count("fetch_elevation" ) )
             bFillNoData = TRUE;
