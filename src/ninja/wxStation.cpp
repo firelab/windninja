@@ -111,6 +111,18 @@ wxStation::~wxStation()
 
 }
 /**
+ *@brief Fetches station data from a known station id
+ *@param station_id Known station id
+ *@param nHours Duration of data to fetch in hours
+ *@return void
+ */
+void wxStation::fetchStation(std::string station_id, int nHours)
+{
+    CPLDebug("STATION_FETCH", "station_id = %s", station_id.c_str());
+    CPLDebug("STATION_FETCH", "nHours = %d", nHours);
+}
+
+/**
  * Initialize a wxStation object with default values
  */
 void wxStation::initialize()

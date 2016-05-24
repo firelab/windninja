@@ -62,6 +62,8 @@ class wxStation
 		      NAD83,
 		      NAD27 };
 
+    void fetchStation(std::string station_id, int nHours);
+
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }
     void set_location_projected( double Xord, double Yord, std::string demFile );

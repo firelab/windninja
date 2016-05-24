@@ -316,6 +316,10 @@ int windNinjaCLI(int argc, char* argv[])
                 ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
+//STATION_FETCH
+                ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
+                ("fetch_station_name", po::value<std::string>(), "station identifier")
+//STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
                 ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
@@ -925,6 +929,39 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(), osTimeZone);
             }
         }
+//STATION_FETCH
+        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
+        {
+            conflicting_options(vm, "fetch_station_name", "wx_station_filename");
+            option_dependency(vm, "fetch_station", "fetch_station_name");
+            option_dependency(vm, "fetch_station", "forecast_duration");
+
+            if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
+            {
+                wxStation *station;
+                station->fetchStation( vm["fetch_station_name"].as<std::string>(),
+                                       vm["forecast_duration"].as<int>() );
+                return(0); //temporary for STATION_FETCH
+                try
+                {
+//                    windsim.makeArmy( station->fetchStation( vm["fetch_station_name"].as<std::string>(),
+//                                                             vm["forecast_duration"].as<int>() ),
+//                                                             osTimeZone );
+                }
+                catch(... )
+                {
+                    cout << "'fetch_station_name' is not valid" << "\n";
+                    return -1;
+                }
+            }
+
+            option_dependency(vm, "forecast_filename", "time_zone");
+            if(vm.count("wx_station_filename"))   //if a station file already exists
+            {
+                windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
+            }
+        }
+//STATION_FETCH
 
         /*
         windsim.Com = new ninjaCLIComHandler();
@@ -1150,7 +1187,8 @@ int windNinjaCLI(int argc, char* argv[])
                 #endif //STABILITY
             }else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
-                verify_option_set(vm, "wx_station_filename");
+//STATION_FETCH
+                //verify_option_set(vm, "wx_station_filename");
                 option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
                 windsim.setInitializationMethod( i_,
