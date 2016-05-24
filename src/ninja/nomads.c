@@ -29,20 +29,20 @@
 
 const char ** NomadsFindModel( const char *pszKey )
 {
-    int i = 0;
-    const char **ppszKey = NULL;
-    while( apszNomadsKeys[i][0] != NULL )
-    {
-        if( EQUAL( pszKey, apszNomadsKeys[i][0] ) )
+        int i = 0;
+        const char **ppszKey = NULL;
+        while( apszNomadsKeys[i][0] != NULL )
         {
-            ppszKey = apszNomadsKeys[i];
-            CPLDebug( "NOMADS", "Found model key: %s",
-                      ppszKey[NOMADS_NAME] );
-            return ppszKey;
+            if( EQUAL( pszKey, apszNomadsKeys[i][0] ) )
+            {
+                ppszKey = apszNomadsKeys[i];
+                CPLDebug( "NOMADS", "Found model key: %s",
+                          ppszKey[NOMADS_NAME] );
+                return ppszKey;
+            }
+            i++;
         }
-        i++;
-    }
-    return ppszKey;
+        return ppszKey;
 }
 
 /*
