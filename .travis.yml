@@ -21,7 +21,7 @@ install:
   - make -j3
 
 script:
-  - ctest -E 'landfire'
+  - ctest -E 'landfire|rtma'
 
 notifications:
   email:
