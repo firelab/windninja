@@ -1,6 +1,6 @@
 WindNinja
 =========
-![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)
+[![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
 
 WindNinja is a diagnostic wind model developed for use in fire modeling.
 
