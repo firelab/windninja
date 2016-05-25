@@ -52,3 +52,6 @@ See CREDITS for authors
 
 See NEWS for release information
 
+=========
+<img src="images/bsb.jpg" alt="Example output"  />
+
