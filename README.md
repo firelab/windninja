@@ -21,6 +21,11 @@ Legacy hosting/wiki:
 https://collab.firelab.org/software/projects/windninja
 https://collab.firelab.org/svn/windninja
 
+
+[Building on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
+
+[Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
+
 Directories:
  * autotest    -> testing suite
  * cmake       -> cmake support scripts
