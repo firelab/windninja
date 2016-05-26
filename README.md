@@ -1,4 +1,4 @@
-WindNinja
+[WindNinja](http://firelab.org/project/windninja) 
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
 
@@ -45,6 +45,7 @@ Dependencies (versions are versions we build against):
     * QtCore
     * QtNetwork/Phonon
     * QtWebKit
+ * [OpenFOAM 2.2.x](https://github.com/OpenFOAM/OpenFOAM-2.2.x)
 
 See INSTALL for more information (coming soon)
 
