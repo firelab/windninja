@@ -78,7 +78,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
 
     int nOutXSize, nOutYSize;
 
-    VSILFILE *fout;
+    FILE *fout;
 
     VALIDATE_POINTER1( pszInput, "NinjaElevationToStl()", CE_Failure );
     VALIDATE_POINTER1( pszOutput, "NinjaElevationToStl()", CE_Failure );
@@ -128,11 +128,11 @@ CPLErr NinjaElevationToStl( const char *pszInput,
 
     if( eType == NinjaStlBinary )
     {
-        fout = VSIFOpenL( pszOutput, "wb" );
+        fout = fopen( pszOutput, "wb" );
     }
     else
     {
-        fout = VSIFOpenL( pszOutput, "w" );
+        fout = fopen( pszOutput, "w" );
     }
     if( fout == NULL )
     {
@@ -172,7 +172,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Could not allocate buffer" );
         GDALClose( hDS );
-        VSIFCloseL( fout );
+        fclose( fout );
         return CE_Failure;
     }
 
@@ -182,12 +182,12 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     StlPosition v1, v2, norm;
     if( eType == NinjaStlBinary )
     {
-        VSIFWriteL( nil, 1, 80, fout );
-        VSIFWriteL( &nTriCount, sizeof( unsigned int ), 1, fout );
+        fwrite( nil, 1, 80, fout );
+        fwrite( &nTriCount, sizeof( unsigned int ), 1, fout );
     }
     else
     {
-        VSIFPrintfL( fout, "solid NAME\n" );
+        fprintf( fout, "solid NAME\n" );
     }
     if( pfnProgress )
     {
@@ -233,31 +233,31 @@ CPLErr NinjaElevationToStl( const char *pszInput,
 
             if( eType == NinjaStlBinary )
             {
-                VSIFWriteL( &norm.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &norm.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &norm.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &a.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &a.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &a.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &nAttrCount, sizeof( unsigned short ), 1, fout );
+                fwrite( &norm.x, sizeof( float ), 1, fout );
+                fwrite( &norm.y, sizeof( float ), 1, fout );
+                fwrite( &norm.z, sizeof( float ), 1, fout );
+                fwrite( &b.x, sizeof( float ), 1, fout );
+                fwrite( &b.y, sizeof( float ), 1, fout );
+                fwrite( &b.z, sizeof( float ), 1, fout );
+                fwrite( &a.x, sizeof( float ), 1, fout );
+                fwrite( &a.y, sizeof( float ), 1, fout );
+                fwrite( &a.z, sizeof( float ), 1, fout );
+                fwrite( &c.x, sizeof( float ), 1, fout );
+                fwrite( &c.y, sizeof( float ), 1, fout );
+                fwrite( &c.z, sizeof( float ), 1, fout );
+                fwrite( &nAttrCount, sizeof( unsigned short ), 1, fout );
             }
             else
             {
-                VSIFPrintfL( fout, "facet normal %e %e %e\n",
+                fprintf( fout, "facet normal %e %e %e\n",
                              norm.x, norm.y, norm.z );
 
-                VSIFPrintfL( fout, "    outer loop\n" );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", a.x, a.y, a.z );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
-                VSIFPrintfL( fout, "    endloop\n" );
-                VSIFPrintfL( fout, "endfacet\n" );
+                fprintf( fout, "    outer loop\n" );
+                fprintf( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
+                fprintf( fout, "        vertex %e %e %e\n", a.x, a.y, a.z );
+                fprintf( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
+                fprintf( fout, "    endloop\n" );
+                fprintf( fout, "endfacet\n" );
             }
 
             v1.x = b.x - d.x;
@@ -271,31 +271,31 @@ CPLErr NinjaElevationToStl( const char *pszInput,
             norm = StlComputeNormal( &v1, &v2 );
             if( eType == NinjaStlBinary )
             {
-                VSIFWriteL( &norm.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &norm.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &norm.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &d.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &d.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &d.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &b.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.x, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.y, sizeof( float ), 1, fout );
-                VSIFWriteL( &c.z, sizeof( float ), 1, fout );
-                VSIFWriteL( &nAttrCount, sizeof( unsigned short ), 1, fout );
+                fwrite( &norm.x, sizeof( float ), 1, fout );
+                fwrite( &norm.y, sizeof( float ), 1, fout );
+                fwrite( &norm.z, sizeof( float ), 1, fout );
+                fwrite( &d.x, sizeof( float ), 1, fout );
+                fwrite( &d.y, sizeof( float ), 1, fout );
+                fwrite( &d.z, sizeof( float ), 1, fout );
+                fwrite( &b.x, sizeof( float ), 1, fout );
+                fwrite( &b.y, sizeof( float ), 1, fout );
+                fwrite( &b.z, sizeof( float ), 1, fout );
+                fwrite( &c.x, sizeof( float ), 1, fout );
+                fwrite( &c.y, sizeof( float ), 1, fout );
+                fwrite( &c.z, sizeof( float ), 1, fout );
+                fwrite( &nAttrCount, sizeof( unsigned short ), 1, fout );
             }
             else
             {
-                VSIFPrintfL( fout, "facet normal %e %e %e\n",
+                fprintf( fout, "facet normal %e %e %e\n",
                             norm.x, norm.y, norm.z );
 
-                VSIFPrintfL( fout, "    outer loop\n" );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", d.x, d.y, d.z );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
-                VSIFPrintfL( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
-                VSIFPrintfL( fout, "    endloop\n" );
-                VSIFPrintfL( fout, "endfacet\n" );
+                fprintf( fout, "    outer loop\n" );
+                fprintf( fout, "        vertex %e %e %e\n", d.x, d.y, d.z );
+                fprintf( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
+                fprintf( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
+                fprintf( fout, "    endloop\n" );
+                fprintf( fout, "endfacet\n" );
             }
         }
         if( pfnProgress )
@@ -305,7 +305,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
     }
     if( eType == NinjaStlAscii )
     {
-        VSIFPrintfL( fout, "endsolid %s\n", CPLGetBasename( pszInput ) );
+        fprintf( fout, "endsolid %s\n", CPLGetBasename( pszInput ) );
     }
     if( pfnProgress )
     {
@@ -314,7 +314,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
 
     VSIFree( pafScanline );
     GDALClose( hDS );
-    VSIFCloseL( fout );
+    fclose( fout );
 
     return eErr;
 }
