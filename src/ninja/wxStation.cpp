@@ -32,7 +32,7 @@
  * @author Kyle Shannon <ksshannon@gmail.com>
  */
 #include "wxStation.h"
-#include "ogrsf_frmts.h"
+#include "ogr_api.h"
 
 
 /**
@@ -215,7 +215,6 @@ const char* wxStation::urlbuilder(std::string token, std::string station_id, std
    svarfull="&vars="+svar;
    output="&output=geojson";
 
-   VSIInstallCurlFileHandler();
 
    url=eburl+stidfull+svarfull+timesand+output+tokfull;
 
@@ -238,18 +237,77 @@ void wxStation::fetchStation(std::string station_id, int nHours)
     const char* pszvtry=wxStation::urlbuilder(dtoken,dstation,"wind_speed,wind_direction,air_temp,solar_radiation","2016","05","10","1300","2016","05","11","1300");
     cout<<pszvtry<<endl;
 
+    OGRRegisterAll();
+
     OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
     hDS=OGROpen(pszvtry,0,NULL);
-//    if (hDS==NULL)
-//    {
-//        printf("miserable failure \n");
-//    }
+    if (hDS==NULL)
+    {
+        printf("miserable failure \n");
+    }
 
     cout<<hDS<<endl;
     cout<<&hDS<<endl;
 
-}
+    hLayer = OGR_DS_GetLayerByName( hDS,"Point");
+    cout<<" "<<endl;
 
+    cout<<"hLayer "<<hLayer<<endl; //shows as 0 or NULL
+    cout<<&hLayer<<endl;
+
+    //EVERYTHING THAT IS COMMENTED RETURNS THE FOLLOWING ERRORS
+    //ERROR 10: Pointer 'hLayer' is NULL in 'OGR_L_ResetReading'.
+
+    //ERROR 10: Pointer 'hLayer' is NULL in 'OGR_L_GetNextFeature'.
+
+
+
+//    OGR_L_ResetReading(hLayer);
+//    while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
+//    {
+//        OGRFeatureDefnH hFDefn;
+//        int iField;
+//        OGRGeometryH hGeometry;
+
+//        hFDefn = OGR_L_GetLayerDefn(hLayer);
+
+//        for( iField = 0; iField < OGR_FD_GetFieldCount(hFDefn); iField++ )
+//        {
+//            OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn( hFDefn, iField );
+
+//            if( OGR_Fld_GetType(hFieldDefn) == OFTInteger )
+//                printf( "%d,", OGR_F_GetFieldAsInteger( hFeature, iField ) );
+//            else if( OGR_Fld_GetType(hFieldDefn) == OFTReal )
+//                printf( "%.3f,", OGR_F_GetFieldAsDouble( hFeature, iField) );
+//            else if( OGR_Fld_GetType(hFieldDefn) == OFTString )
+//                printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
+//            else
+//                printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
+//        }
+
+//        hGeometry = OGR_F_GetGeometryRef(hFeature);
+//        if( hGeometry != NULL
+//            && wkbFlatten(OGR_G_GetGeometryType(hGeometry)) == wkbPoint )
+//        {
+//            printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0), OGR_G_GetY(hGeometry, 0) );
+//        }
+//        else
+//        {
+//            printf( "no point geometry\n" );
+//        }
+
+//        OGR_F_Destroy( hFeature );
+//    }
+
+//    OGR_DS_Destroy( hDS );
+
+
+
+
+}
 /**
  * Initialize a wxStation object with default values
  */
