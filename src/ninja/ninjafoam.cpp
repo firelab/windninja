@@ -209,6 +209,10 @@ bool NinjaFoam::simulate_wind()
         }
     }
 
+    #ifdef _OPENMP
+    endStlConversion = omp_get_wtime();
+    #endif
+
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
@@ -233,15 +237,11 @@ bool NinjaFoam::simulate_wind()
 
     checkCancel();
 
-    #ifdef _OPENMP
-    endStlConversion = omp_get_wtime();
-    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
         return true;
     }
-
 
     /*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
