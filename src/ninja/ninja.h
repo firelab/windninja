@@ -128,6 +128,7 @@
 #define WINDNINJA_API
 #endif
 
+
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
@@ -408,7 +409,7 @@ private:
     void get_rootname(const char *NAME,char *shortname);
     bool solve(double *SK, double *RHS, double *PHI, int *row_ptr,
                int *col_ind, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-
+    // kk
     /*-----------------------------------------------------------------------------
      * alternative solvers                                                           
      *-----------------------------------------------------------------------------*/
@@ -438,6 +439,19 @@ private:
     /*-----------------------------------------------------------------------------
      *  End MKL Section
      *-----------------------------------------------------------------------------*/
+    
+
+    /* ----------------------------------------------------------------------------
+     *  VDSpM  section
+     *-----------------------------------------------------------------------------*/	
+     void csr2vdspm (int *row_ptr, int *col_ind, double *data, int *numRows, int *elements, int *values,  int **start, int *numDiag, double ***diagonals);
+     void vdspm_mv (int size, int *numRows, int *start, double **diagonals, double *p, double *w);
+    /*-----------------------------------------------------------------------------
+     *  End VDSpM Section
+     *-----------------------------------------------------------------------------*/
+
+
+
     void interp_uvw();
 
     void write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);

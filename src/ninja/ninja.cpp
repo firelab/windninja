@@ -684,6 +684,7 @@ double ninja::getSmallestRadiusOfInfluence()
 bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, int NUMNP, int max_iter, int print_iters, double tol)
 {
     //stuff for sparse BLAS MV multiplication
+    
     char transa='n';
     double one=1.E0, zero=0.E0;
     char matdescra[6];
@@ -750,6 +751,17 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
         max_iter = 0;
         return true;
     }
+#ifdef VDSpM
+    
+    double **diagonals;
+    int *elements, *values, *start, numDiag;
+    elements = (int *)malloc(sizeof(int) * NUMNP);
+    values = (int *)malloc(sizeof(int) * NUMNP);
+    // convert matrix A from CSR format to VDSpM
+    
+    csr2vdspm (row_ptr, col_ind, A, &NUMNP, elements, values, &start, &numDiag, &diagonals);
+    
+#endif
 
     //start iterating---------------------------------------------------------------------------------------
     for (int i = 1; i <= max_iter; i++)
@@ -772,9 +784,14 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
                 p[j] = z[j] + beta*p[j];
         }
 
+#ifdef VDSpM
+	
+	vdspm_mv (numDiag, &NUMNP, start, diagonals, p, q);
+	
+#else
         //matrix vector multiplication!!!		q = A*p;
         mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
-
+#endif
         alpha = rho / cblas_ddot(NUMNP, p, 1, q, 1);
         //alpha = rho / dot(NUMNP, p, q);
 
@@ -1196,6 +1213,150 @@ double ninja::cblas_dnrm2(const int N, const double *X, const int incX)
 	val = std::sqrt(val);
 
 	return val;
+}
+
+
+/**
+ * @brief Transform a matrix allocated in CSR format to VDSpM (Vectorization of Diagonal Sparse Matrix).
+ *
+ * @note Only works if A is a symmetric matrix.
+ *
+ * @param row_ptr CSR row pointer array (array of ints).
+ * @param col_ind CSR column index pointer array.
+ * @param data CSR data array.
+ * @param numRows Number of rows of the dense matrix.
+ * @param elements Array with the number of elements in each diagonal.
+ * @param values   
+ * @param start Location of the diagonal inside the matrix.
+ * @param numDiag Number of diagonals with elements different from zero.
+ * @param diagonals Matrix with the VDSpM representation. 
+ */
+void ninja::csr2vdspm (int *row_ptr, int *col_ind, double *data, int *numrows, int *elements, int *values,  int **start, int *numDiag, double ***diagonals)
+{	int numRows = *numrows;	
+	
+	for(int i = 0; i < numRows; i++)
+	{	
+		elements[i]=0;
+		values[i]=0;
+	}
+	
+	for(int i = 0; i < numRows - 1; i++)
+	{	
+		values[i] = row_ptr[i + 1] - row_ptr[i] + 1;
+		//#pragma omp parallel for private (j)
+		for(int j = row_ptr[i]; j < row_ptr[i + 1]; j++)
+		{	elements[col_ind[j] - i] += 1;
+			values[col_ind[j]] += 1;	
+		}
+	}
+	
+	*start = (int *)malloc(sizeof(int) * 17);
+	int sum = 0;
+	int k = 0;
+	int maxim = 0;
+	for(int i = 0; i < numRows; i++)
+	{	if(elements[i] != 0)
+		{	double a = 0.0;
+			a = elements[i];
+			maxim=i;
+			if((a / (numRows - i)) > 0.85)
+			{	(*start)[k]=i;
+				k++;
+				sum = sum + elements[i];	
+			}
+		}
+	}
+		
+	*numDiag = k;
+	*diagonals = (double**) malloc(k * sizeof(double*));  
+	for (int i = 0; i < k; i++)  
+	{
+		(*diagonals)[i] = (double*) malloc((numRows-(*start)[i])*sizeof(double));  
+	}
+	for (int i = 0; i<k; i++)
+	{
+	for (int j = 0; j< numRows-(*start)[i]; j++)
+		
+		{
+		  (*diagonals)[i][j]=0;
+		}
+	}
+	 int i, t, j;
+	 #pragma omp parallel for private (i,j,t)
+	for(i=0; i<numRows; i++)
+	{	for(t = row_ptr[i]; t<row_ptr[i+1]; t++)
+		{	for(j=0;j<k;j++)
+			{	if((col_ind[t]-i)==(*start)[j])
+				{
+					(*diagonals)[j][i]=data[t]; 
+				}
+			}
+		}
+	}	
+}
+
+/**
+ * @brief Computes the vector-matrix product A*x=y using VDSpM representation for the matrix A.
+ *
+ * @note Only works if A is a symmetric matrix.
+ *
+ * @param size Number of diagonals with elements differents of 0
+ * @param numRows Number of rows in "A" matrix. 
+ * @param start Vector containing the position of the diagonal within the matrix A.
+ * @param diagonals Matrix containing the elements of the matrix A. Each row represent a diagonal and have a different size.
+ * @param p Vector of size numRows. Is the x vector in the A*x = y computation.
+ * @param w Vector of size numRows. Is the y vector in the A*x = y computation.
+ */
+void ninja::vdspm_mv (int size, int *numrows, int *start, double **diagonals, double *p, double *w)
+{
+  int numRows = *numrows;
+int j, i; 
+int a=0;
+int chunk= 5000;
+
+#pragma omp parallel for default(shared) private(j)
+for(j=0; j< numRows; j++)
+	{
+		w[j]=0.0;
+	
+	}
+	#pragma omp parallel for schedule(static,chunk) private (j)
+	for(j=0; j< numRows; j++)
+	{
+		w[j]+=diagonals[0][j]*p[j];
+	}
+
+	//#pragma omp parallel for private (i,j)
+	for (i=1; i<size; i++)
+	{
+		a=start[i];
+	#pragma omp parallel for default(shared) schedule(static,chunk) private (j)
+		for (j=0; j< a; j++)
+		{
+			w[j]+=diagonals[i][j]*p[j+a];
+		
+		}
+	}
+	
+		for (i=1; i<size; i++)
+	{
+		a=start[i];
+	#pragma omp parallel for default(shared) schedule(static,chunk) private (j)
+		for (j=a; j< numRows-a; j++)
+		{
+			w[j]+=diagonals[i][j]*p[j+a]+diagonals[i][j-a]*p[j-a];
+		}
+	}
+	
+			for (i=1; i<size; i++)
+	{
+		a=start[i];
+	#pragma omp parallel for default(shared) schedule(static,chunk) private (j)
+		for (j=numRows-a; j< numRows; j++)
+		{
+			w[j]+=diagonals[i][j-a]*p[j-a];
+		}
+	}
 }
 
 /**
