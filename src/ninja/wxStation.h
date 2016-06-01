@@ -43,6 +43,11 @@
 #include "ninjaUnits.h"
 #include "ninjaException.h"
 
+#include "cpl_port.h"
+#include "cpl_error.h"
+#include "cpl_http.h"
+#include "cpl_multiproc.h"
+
 /** Class representing a weather station
  */
 class wxStation
@@ -61,6 +66,9 @@ class wxStation
     enum eDatumType { WGS84,
 		      NAD83,
 		      NAD27 };
+
+    string sand(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
+    const char* urlbuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
 
     void fetchStation(std::string station_id, int nHours);
 

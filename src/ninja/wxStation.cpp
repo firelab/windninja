@@ -32,14 +32,23 @@
  * @author Kyle Shannon <ksshannon@gmail.com>
  */
 #include "wxStation.h"
+#include "ogrsf_frmts.h"
+
+
 /**
  * Default constructor for wxStation class populated with default values
  * @see wxStation::initialize
  */
+
+#define dtoken "33e3c8ee12dc499c86de1f2076a9e9d4"
+#define dstation "kmso" //Missoula International Airport
+#define altstation "TR266" //FIRELAB Fire Raws
+
 wxStation::wxStation()
 {
     initialize();
 }
+
 /**
  * Copy Constructor for wxStation
  * @param m right hand side wxStation object
@@ -68,6 +77,7 @@ wxStation::wxStation( wxStation const& m )
     influenceRadiusUnits = m.influenceRadiusUnits;
     datumType = m.datumType;
     coordType = m.coordType;
+
 }
 
 /**
@@ -116,10 +126,128 @@ wxStation::~wxStation()
  *@param nHours Duration of data to fetch in hours
  *@return void
  */
+
+
+
+// builds the time component of the url
+string wxStation::sand(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1)
+{
+    std::string start;
+    std::string end;
+    std::string y20;
+    std::string m20;
+    std::string d20;
+    std::string c20;
+    std::string y21;
+    std::string m21;
+    std::string d21;
+    std::string c21;
+    std::string twofull;
+    std::string timemainfull;
+    std::string estartfull;
+    std::string eendfull;
+    std::string startfull;
+    std::string endfull;
+
+    start="&start=";
+    y20="2016";
+    m20="05";
+    d20="22";
+    c20="1000";
+    estartfull=start+y20+m20+d20+c20;
+    end="&end=";
+    y21="2016";
+    m21="05";
+    d21="23";
+    c21="1000";
+    eendfull=end+y21+m21+d21+c21;
+
+    twofull=estartfull+eendfull;
+
+    startfull=start+year_0+month_0+day_0+clock_0;
+    endfull=end+year_1+month_1+day_1+clock_1;
+
+    timemainfull=startfull+endfull;
+
+    return timemainfull;
+}
+
+// builds the rest of the url+time
+const char* wxStation::urlbuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+{
+   std::string etoken;
+   std::string eburl;
+   std::string etokfull;
+   std::string estid;
+   std::string et01;
+   std::string et11;
+   std::string esvar;
+   std::string eurl;
+   std::string verify;
+
+   // default url
+
+   etoken="33e3c8ee12dc499c86de1f2076a9e9d4";
+   eburl="http://api.mesowest.net/v2/stations/timeseries?";
+   etokfull="&token="+token;
+   estid="stid=kmso";
+   et01="&start=201605221000";
+   et11="&end=201605231000";
+   esvar="&vars=wind_speed";
+   eurl=eburl+estid+esvar+et01+et11+etokfull;
+
+   const char* a=eurl.c_str();
+
+   std::string url;
+   std::string tokfull;
+   std::string stidfull;
+   std::string svarfull;
+   std::string timestart1;
+   std::string timestop1;
+   std::string timefull;
+   std::string timesand;
+   std::string output;
+
+   timesand=wxStation::sand(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+   tokfull="&token="+token;
+   stidfull="stid="+station_id;
+   svarfull="&vars="+svar;
+   output="&output=geojson";
+
+   VSIInstallCurlFileHandler();
+
+   url=eburl+stidfull+svarfull+timesand+output+tokfull;
+
+   const char* charurl=url.c_str();
+
+   return charurl;
+
+}
+
+
+
 void wxStation::fetchStation(std::string station_id, int nHours)
 {
+
     CPLDebug("STATION_FETCH", "station_id = %s", station_id.c_str());
     CPLDebug("STATION_FETCH", "nHours = %d", nHours);
+
+    const char* newtest = "testfile";
+    //calls url from above
+    const char* pszvtry=wxStation::urlbuilder(dtoken,dstation,"wind_speed,wind_direction,air_temp,solar_radiation","2016","05","10","1300","2016","05","11","1300");
+    cout<<pszvtry<<endl;
+
+    OGRDataSourceH hDS;
+    hDS=OGROpen(pszvtry,0,NULL);
+//    if (hDS==NULL)
+//    {
+//        printf("miserable failure \n");
+//    }
+
+    cout<<hDS<<endl;
+    cout<<&hDS<<endl;
+
 }
 
 /**
@@ -304,6 +432,7 @@ void wxStation::set_location_projected( double Xord, double Yord,
 {
     projXord = Xord;
     projYord = Yord;
+
 
     if( demFile.empty() || demFile == "" )
     return;
