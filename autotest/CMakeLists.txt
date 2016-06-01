@@ -302,11 +302,11 @@ if(RUN_CFG_TESTS)
         file(COPY ${PROJECT_SOURCE_DIR}/data/${ELEV_FILE} DESTINATION
              ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
         message(STATUS "Copying elevation file: ${ELEV_FILE}")
-        add_test(NAME ${base} COMMAND ${CMAKE_BINARY_DIR}/src/cli/WindNinja_cli ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
+        add_test(NAME cfg_${base} COMMAND ${CMAKE_BINARY_DIR}/src/cli/WindNinja_cli ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
-        set_tests_properties(${base} PROPERTIES ENVIRONMENT
+        set_tests_properties(cfg_${base} PROPERTIES ENVIRONMENT
                              "WINDNINJA_DATA=${PROJECT_SOURCE_DIR}/data")
-        message(STATUS "Adding CLI test ${base} for ${cfgtest}")
+        message(STATUS "Adding CLI test cfg_${base} for ${cfgtest}")
     endforeach(cfgtest ${cfgtests})
 endif(RUN_CFG_TESTS)
 

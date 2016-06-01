@@ -1,4 +1,4 @@
-WindNinja
+[WindNinja](http://firelab.org/project/windninja) 
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
 
@@ -20,6 +20,11 @@ irc://irc.freenode.net/#windninja
 Legacy hosting/wiki:
 https://collab.firelab.org/software/projects/windninja
 https://collab.firelab.org/svn/windninja
+
+
+[Building on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
+
+[Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
 
 Directories:
  * autotest    -> testing suite
@@ -45,6 +50,7 @@ Dependencies (versions are versions we build against):
     * QtCore
     * QtNetwork/Phonon
     * QtWebKit
+ * [OpenFOAM 2.2.x](https://github.com/OpenFOAM/OpenFOAM-2.2.x)
 
 See INSTALL for more information (coming soon)
 
