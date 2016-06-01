@@ -1719,6 +1719,20 @@ int mainWindow::solve()
             progressDialog->hide();
             delete army;
             return false;
+        } catch (...) {
+            QMessageBox::critical(
+                this, tr("Failure."),
+                tr("An unknown error occurred in makeArmy().  This is usually "
+                   "due to a failure in reading the weather model file"),
+                QMessageBox::Ok | QMessageBox::Default);
+            disconnect(progressDialog, SIGNAL(canceled()), this,
+                       SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor);
+            tree->weather->checkForModelData();
+            progressDialog->cancel();
+            progressDialog->hide();
+            delete army;
+            return false;
         }
         nRuns = army->getSize();
     }
@@ -3021,4 +3035,3 @@ void mainWindow::SetConfigOption()
     pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
     CPLSetConfigOption( pszKey, pszVal );
 }
-
