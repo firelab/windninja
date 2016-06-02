@@ -755,8 +755,10 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     
     double **diagonals;
     int *elements, *values, *start, numDiag;
-    elements = (int *)malloc(sizeof(int) * NUMNP);
-    values = (int *)malloc(sizeof(int) * NUMNP);
+    elements = new int[NUMNP];
+    values = new int[NUMNP];
+//    elements = (int *)malloc(sizeof(int) * NUMNP);
+//    values = (int *)malloc(sizeof(int) * NUMNP);
     // convert matrix A from CSR format to VDSpM
     
     csr2vdspm (row_ptr, col_ind, A, &NUMNP, elements, values, &start, &numDiag, &diagonals);
@@ -1268,10 +1270,13 @@ void ninja::csr2vdspm (int *row_ptr, int *col_ind, double *data, int *numrows, i
 	}
 		
 	*numDiag = k;
-	*diagonals = (double**) malloc(k * sizeof(double*));  
+	*diagonals = new double* [k];
+	// *diagonals = (double**) malloc(k * sizeof(double*));  
 	for (int i = 0; i < k; i++)  
 	{
-		(*diagonals)[i] = (double*) malloc((numRows-(*start)[i])*sizeof(double));  
+		
+//		(*diagonals)[i] = (double*) malloc((numRows-(*start)[i])*sizeof(double));
+		(*diagonals)[i] = new double [(numRows-(*start)[i])];    
 	}
 	for (int i = 0; i<k; i++)
 	{
