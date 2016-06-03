@@ -1119,12 +1119,12 @@ int NinjaFoam::readDem(double &expansionRatio)
     
     // get some info from the DEM
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
-    double dx = ( input.dem.get_xllCorner() + input.dem.get_xDimension() ) - input.dem.get_xllCorner();
-    double dy = ( input.dem.get_yllCorner() + input.dem.get_yDimension() ) - input.dem.get_yllCorner();
+    double dx = input.dem.get_xDimension();
+    double dy = input.dem.get_yDimension();
     double xBuffer, yBuffer;
     
-    xBuffer = dx*0.01; // buffers for MDM
-    yBuffer = dy*0.01;
+    xBuffer = input.dem.get_cellSize(); // buffers for MDM
+    yBuffer = input.dem.get_cellSize();
     
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
@@ -1181,7 +1181,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     CPLDebug("NINJAFOAM", "xmax = %f", bbox[3]);
     CPLDebug("NINJAFOAM", "ymax = %f", bbox[4]);
     CPLDebug("NINJAFOAM", "zmax = %f", bbox[5]);
-    
+
     return NINJA_SUCCESS;
 }
 
