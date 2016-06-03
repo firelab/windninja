@@ -33,7 +33,11 @@
  */
 #include "wxStation.h"
 #include "ogr_api.h"
-
+#include "sstream"
+#include "algorithm"
+#include "iterator"
+#include "string"
+#include "iostream"
 
 /**
  * Default constructor for wxStation class populated with default values
@@ -173,7 +177,7 @@ string wxStation::sand(std::string year_0,std::string month_0, std::string day_0
 }
 
 // builds the rest of the url+time
-const char* wxStation::urlbuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* wxStation::singlebuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
 {
    std::string etoken;
    std::string eburl;
@@ -223,49 +227,249 @@ const char* wxStation::urlbuilder(std::string token, std::string station_id, std
    return charurl;
 
 }
+const char* wxStation::multibuilder(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+{
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+
+    timesand=wxStation::sand(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+token;
+    stidfull="stid="+station_ids;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
 
 
+    url=eburl+stidfull+svarfull+timesand+output+tokfull;
 
-void wxStation::fetchStation(std::string station_id, int nHours)
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
+const char* wxStation::radiusbuilder(std::string token, std::string station_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+{
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string limiter;
+
+    timesand=wxStation::sand(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="stid="+station_id+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
+
+
+    url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
+const char* wxStation::latlonrad(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+{
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string limiter;
+
+    timesand=wxStation::sand(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="&radius"+lat+","+lon+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
+
+
+    url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
+const char* wxStation::bboxbuilder(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+{
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string bbox;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+
+
+    timesand=wxStation::sand(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+token;
+    bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
+
+
+    url=eburl+bbox+svarfull+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
+
+vector<string> wxStation::split(char* str,const char* delim)
+{
+    char* saveptr;
+    char* token = strtok_r(str,delim,&saveptr);
+
+    vector<string> result;
+
+    while(token != NULL)
+    {
+        result.push_back(token);
+        token = strtok_r(NULL,delim,&saveptr);
+    }
+    return result;
+}
+
+void wxStation::chameleon(const char* url)
+{
+//    OGRDataSourceH hDS;
+//    OGRLayerH hLayer;
+//    OGRFeatureH hFeature;
+
+//    hDS=OGROpen(url,0,NULL);
+//    if (hDS==NULL)
+//        printf("miserable failure \n");
+//    OGRLayerH hLayer;
+//    OGRFeatureH hFeature;
+//    hLayer = OGR_DS_GetLayerByName( url,"OGRGeoJSON");
+
+//    OGR_L_ResetReading(hLayer);
+//    int idx=0;
+//    int idx2=0;
+//    int idx3=0;
+//    int idx4=0;
+//    std::string windat;
+//    std::string wdirdat;
+//    std::string atdat;
+//    std::string srdat;
+//    while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
+//    {
+//        idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+//        windat=OGR_F_GetFieldAsString(hFeature,idx);
+//        idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+//        wdirdat=OGR_F_GetFieldAsString(hFeature,idx2);
+//        idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+//        atdat=OGR_F_GetFieldAsString(hFeature,idx3);
+//        idx4=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+//        srdat=OGR_F_GetFieldasString(hFeature,idx4);
+//    }
+//    printf("\n\n");
+
+
+//    std::string winstr;
+//    std::string wdirstr;
+//    std::string atstr;
+//    std::string srstr;
+
+//    winstr=windat.substr(4,windat.size()-9);
+//    wdirstr=wdirdat.substr(4,wdirdat.size()-9);
+//    atstr=atdat.substr(4,atdat.size()-9);
+//    srstr=srdat.substr(4,srdat.size()-9);
+
+
+//    char *winstr2=&winstr[0u];
+//    char *wdirstr2=&wdirstr[0u];
+//    char *atstr2=&atstr[0u];
+//    char *srstr2=&srstr[0u];
+
+//    const char* delim(",");
+
+//    vector<string> wincata;
+//    vector<string> wdircata;
+//    vector<string> atcata;
+//    vector<string> srcata;
+
+//    wincata=split(winstr2,delim);
+//    wdircata=split(wdirstr2,delim);
+//    atcata=split(atstr2,delim);
+//    srcata=split(srstr2,delim);
+//    return wincata;
+//    return wdircata;
+//    return atcata;
+//    return srcata;
+
+}
+
+void wxStation::nardis(const char* variable)
+{
+
+}
+
+
+void wxStation::cataclysm(std::vector<std::string> cata,std::string name)
+{
+    cout<<"vector of whatever ("<<name<<")"<<endl;
+    int i=0;
+    for (std::vector<string>::const_iterator i = cata.begin(); i != cata.end(); ++i)
+        std::cout << *i << ' ';
+//    for (int x=0; x!=cata.size();++x)
+//    {
+//        cout<<cata[x]<<endl;
+//    }
+
+    printf("\n");
+    int veclen;
+    veclen=cata.size();
+    cout<<"length of vector "<<veclen<<endl;
+    printf("\n");
+
+}
+
+
+void wxStation::singlestation_fetch(std::string station_id, int nHours)
 {
 
     CPLDebug("STATION_FETCH", "station_id = %s", station_id.c_str());
     CPLDebug("STATION_FETCH", "nHours = %d", nHours);
 
     const char* newtest = "testfile";
-    //calls url from above
-    const char* pszvtry=wxStation::urlbuilder(dtoken,dstation,"wind_speed,wind_direction,air_temp,solar_radiation","2016","05","10","1300","2016","05","11","1300");
+    printf("\n");
+    const char* pszvtry=wxStation::singlebuilder(dtoken,altstation,"wind_speed,wind_direction,air_temp,solar_radiation","2016","06","01","1200","2016","06","02","1200");
     cout<<pszvtry<<endl;
-
-    OGRRegisterAll();
+    printf("\n");
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
     hDS=OGROpen(pszvtry,0,NULL);
+//    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
     if (hDS==NULL)
-    {
         printf("miserable failure \n");
-    }
-
-    cout<<hDS<<endl;
-    cout<<&hDS<<endl;
-
-    hLayer = OGR_DS_GetLayerByName( hDS,"Point");
-    cout<<" "<<endl;
-
-    cout<<"hLayer "<<hLayer<<endl; //shows as 0 or NULL
-    cout<<&hLayer<<endl;
-
-    //EVERYTHING THAT IS COMMENTED RETURNS THE FOLLOWING ERRORS
-    //ERROR 10: Pointer 'hLayer' is NULL in 'OGR_L_ResetReading'.
-
-    //ERROR 10: Pointer 'hLayer' is NULL in 'OGR_L_GetNextFeature'.
 
 
+//    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
 
-//    OGR_L_ResetReading(hLayer);
 //    while( (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL )
 //    {
 //        OGRFeatureDefnH hFDefn;
@@ -288,26 +492,119 @@ void wxStation::fetchStation(std::string station_id, int nHours)
 //                printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
 //        }
 
-//        hGeometry = OGR_F_GetGeometryRef(hFeature);
-//        if( hGeometry != NULL
-//            && wkbFlatten(OGR_G_GetGeometryType(hGeometry)) == wkbPoint )
-//        {
-//            printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0), OGR_G_GetY(hGeometry, 0) );
-//        }
-//        else
-//        {
-//            printf( "no point geometry\n" );
-//        }
-
-//        OGR_F_Destroy( hFeature );
 //    }
 
-//    OGR_DS_Destroy( hDS );
+
+    printf("\n\n\n\n");
+
+
+
+
+
+    int idx=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    std::string windat;
+    std::string wdirdat;
+    std::string atdat;
+    std::string srdat;
+    while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
+    {
+        idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+        windat=OGR_F_GetFieldAsString(hFeature,idx);
+
+        idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+        wdirdat=OGR_F_GetFieldAsString(hFeature,idx2);
+
+        idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+        atdat=OGR_F_GetFieldAsString(hFeature,idx3);
+
+        idx4=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+        srdat=OGR_F_GetFieldAsString(hFeature,idx4);
+    }
+    printf("\n\n");
+
+
+    std::string winstr;
+    std::string wdirstr;
+    std::string atstr;
+    std::string srstr;
+
+    winstr=windat.substr(0,windat.size());
+    wdirstr=wdirdat.substr(0,wdirdat.size());
+    atstr=atdat.substr(0,atdat.size());
+    srstr=srdat.substr(0,srdat.size());
+
+    printf("\n raw stuff pre vector \n");
+    cout<<winstr<<endl;
+    cout<<wdirstr<<endl;
+    cout<<atstr<<endl;
+    cout<<srstr<<endl;
+    printf("\n");
+
+
+    char *winstr2=&winstr[0u];
+    char *wdirstr2=&wdirstr[0u];
+    char *atstr2=&atstr[0u];
+    char *srstr2=&srstr[0u];
+
+    const char* delim(",");
+
+    vector<string> wincata;
+    vector<string> wdircata;
+    vector<string> atcata;
+    vector<string> srcata;
+
+    wincata=split(winstr2,delim);
+    wdircata=split(wdirstr2,delim);
+    atcata=split(atstr2,delim);
+    srcata=split(srstr2,delim);
+
+
+    cataclysm(wincata,"wind_speed");
+    cataclysm(wdircata,"wind_direction");
+    cataclysm(atcata,"air_temp");
+    cataclysm(srcata,"solar_radiation");
+
+
 
 
 
 
 }
+
+
+void wxStation::multistation_fetch(std::string station_id, int nHours)
+{
+
+}
+void wxStation::radiusstation_fetch(std::string station_id, int nHours)
+{
+
+}
+void wxStation::radiuslatlon_fetch(std::string station_id, int nHours)
+{
+
+}
+void wxStation::bbox_fetch(std::string station_id, int nHours)
+{
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Initialize a wxStation object with default values
  */

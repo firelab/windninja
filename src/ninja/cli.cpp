@@ -939,7 +939,7 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
             {
                 wxStation *station;
-                station->fetchStation( vm["fetch_station_name"].as<std::string>(),
+                station->singlestation_fetch( vm["fetch_station_name"].as<std::string>(),
                                        vm["forecast_duration"].as<int>() );
                 return(0); //temporary for STATION_FETCH
                 try

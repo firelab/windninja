@@ -68,9 +68,21 @@ class wxStation
 		      NAD27 };
 
     string sand(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
-    const char* urlbuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    const char* singlebuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    const char* multibuilder(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    const char* radiusbuilder(std::string token, std::string staion_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    const char* latlonrad(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    const char* bboxbuilder(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+    vector<string> split(char* str,const char* delim);
+    void chameleon(const char* url);
+    void nardis(const char* variable);
+    void cataclysm(vector<string> cata,std::string name);
 
-    void fetchStation(std::string station_id, int nHours);
+    void singlestation_fetch(std::string station_id, int nHours);
+    void multistation_fetch(std::string station_id, int nHours);
+    void radiusstation_fetch(std::string station_id, int nHours);
+    void radiuslatlon_fetch(std::string station_id, int nHours);
+    void bbox_fetch(std::string station_id, int nHours);
 
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }
