@@ -38,6 +38,7 @@
 #include "iterator"
 #include "string"
 #include "iostream"
+#include "fstream"
 
 /**
  * Default constructor for wxStation class populated with default values
@@ -350,96 +351,35 @@ vector<string> wxStation::split(char* str,const char* delim)
 
 void wxStation::chameleon(const char* url)
 {
-//    OGRDataSourceH hDS;
-//    OGRLayerH hLayer;
-//    OGRFeatureH hFeature;
 
-//    hDS=OGROpen(url,0,NULL);
-//    if (hDS==NULL)
-//        printf("miserable failure \n");
-//    OGRLayerH hLayer;
-//    OGRFeatureH hFeature;
-//    hLayer = OGR_DS_GetLayerByName( url,"OGRGeoJSON");
-
-//    OGR_L_ResetReading(hLayer);
-//    int idx=0;
-//    int idx2=0;
-//    int idx3=0;
-//    int idx4=0;
-//    std::string windat;
-//    std::string wdirdat;
-//    std::string atdat;
-//    std::string srdat;
-//    while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
-//    {
-//        idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-//        windat=OGR_F_GetFieldAsString(hFeature,idx);
-//        idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-//        wdirdat=OGR_F_GetFieldAsString(hFeature,idx2);
-//        idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-//        atdat=OGR_F_GetFieldAsString(hFeature,idx3);
-//        idx4=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-//        srdat=OGR_F_GetFieldasString(hFeature,idx4);
-//    }
-//    printf("\n\n");
-
-
-//    std::string winstr;
-//    std::string wdirstr;
-//    std::string atstr;
-//    std::string srstr;
-
-//    winstr=windat.substr(4,windat.size()-9);
-//    wdirstr=wdirdat.substr(4,wdirdat.size()-9);
-//    atstr=atdat.substr(4,atdat.size()-9);
-//    srstr=srdat.substr(4,srdat.size()-9);
-
-
-//    char *winstr2=&winstr[0u];
-//    char *wdirstr2=&wdirstr[0u];
-//    char *atstr2=&atstr[0u];
-//    char *srstr2=&srstr[0u];
-
-//    const char* delim(",");
-
-//    vector<string> wincata;
-//    vector<string> wdircata;
-//    vector<string> atcata;
-//    vector<string> srcata;
-
-//    wincata=split(winstr2,delim);
-//    wdircata=split(wdirstr2,delim);
-//    atcata=split(atstr2,delim);
-//    srcata=split(srstr2,delim);
-//    return wincata;
-//    return wdircata;
-//    return atcata;
-//    return srcata;
 
 }
 
-void wxStation::nardis(const char* variable)
+void wxStation::nardis(char **redman, int counter, std::string name)
 {
+    cout<<name<<endl;
+    for(int i=0;i<counter;i++)
+    {
+        printf("%s, ",redman[i]);
+    }
+    printf("\n");
+    cout<<"count of char: "<<counter<<endl;
+    printf("\n");
+
 
 }
 
 
-void wxStation::cataclysm(std::vector<std::string> cata,std::string name)
+void wxStation::cataclysm(const double *data, int counter,std::string name)
 {
-    cout<<"vector of whatever ("<<name<<")"<<endl;
-    int i=0;
-    for (std::vector<string>::const_iterator i = cata.begin(); i != cata.end(); ++i)
-        std::cout << *i << ' ';
-//    for (int x=0; x!=cata.size();++x)
-//    {
-//        cout<<cata[x]<<endl;
-//    }
-
-    printf("\n");
-    int veclen;
-    veclen=cata.size();
-    cout<<"length of vector "<<veclen<<endl;
-    printf("\n");
+        cout<<"("<<name<<")"<<endl;
+        for(int i=0;i<counter;i++)
+        {
+            printf("%.3f, ",data[i]);
+        }
+        printf("\n");
+        cout<<"count of doubles: "<<counter<<endl;
+        printf("\n");
 
 }
 
@@ -492,12 +432,18 @@ void wxStation::singlestation_fetch(std::string station_id, int nHours)
 //                printf( "%s,", OGR_F_GetFieldAsString( hFeature, iField) );
 //        }
 
+//        hGeometry = OGR_F_GetGeometryRef(hFeature);
+//        if( hGeometry != NULL
+//            && wkbFlatten(OGR_G_GetGeometryType(hGeometry)) == wkbPoint )
+//        {
+//            printf( "%.3f,%3.f\n", OGR_G_GetX(hGeometry, 0), OGR_G_GetY(hGeometry, 0) );
+//        }
+//        else
+//        {
+//            printf( "no point geometry\n");
+
+//        }
 //    }
-
-
-    printf("\n\n\n\n");
-
-
 
 
 
@@ -505,75 +451,90 @@ void wxStation::singlestation_fetch(std::string station_id, int nHours)
     int idx2=0;
     int idx3=0;
     int idx4=0;
-    std::string windat;
-    std::string wdirdat;
-    std::string atdat;
-    std::string srdat;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int count1=0;
+    int count2=0;
+    int count3=0;
+    int count4=0;
+    int countstat=0;
+    int countlat=0;
+    int countlon=0;
+    int countdate=0;
+    const double *windspd;
+    const double *winddir;
+    const double *airtemp;
+    const double *solrad;
+    double latitude;
+    double longitude;
+    std::string station;
+    char **datetime;
+
+
+//    const double *data;
+
     while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
     {
+//       idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+//       data=OGR_F_GetFieldAsDoubleList(hFeature,idx,&count);
+
         idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-        windat=OGR_F_GetFieldAsString(hFeature,idx);
+        windspd=OGR_F_GetFieldAsDoubleList(hFeature,idx,&count1);
 
         idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-        wdirdat=OGR_F_GetFieldAsString(hFeature,idx2);
+        winddir=OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2);
 
         idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-        atdat=OGR_F_GetFieldAsString(hFeature,idx3);
+        airtemp=OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3);
 
         idx4=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-        srdat=OGR_F_GetFieldAsString(hFeature,idx4);
+        solrad=OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4);
+
+        idx5=OGR_F_GetFieldIndex(hFeature, "LATITUDE");
+        latitude=OGR_F_GetFieldAsDouble(hFeature,idx5);
+
+        idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+        longitude=OGR_F_GetFieldAsDouble(hFeature,idx6);
+
+        idx7=OGR_F_GetFieldIndex(hFeature,"NAME");
+        station=OGR_F_GetFieldAsString(hFeature,idx7);
+
+        idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+        datetime=OGR_F_GetFieldAsStringList(hFeature,idx8);
+        //note: Mesowest data downloaded as GEOJson names date n time data as "date_times", Mewsowest data using
+        // Json names time data as date_time!!!!!!
+
+
     }
     printf("\n\n");
 
 
-    std::string winstr;
-    std::string wdirstr;
-    std::string atstr;
-    std::string srstr;
+    cataclysm(windspd,count1,"wind_speed");
+    cataclysm(winddir,count2,"wind_direction");
+    cataclysm(airtemp,count3,"air_temp");
+    cataclysm(solrad,count4,"solar_radiation");
+    nardis(datetime,count1,"date_time");
 
-    winstr=windat.substr(0,windat.size());
-    wdirstr=wdirdat.substr(0,wdirdat.size());
-    atstr=atdat.substr(0,atdat.size());
-    srstr=srdat.substr(0,srdat.size());
-
-    printf("\n raw stuff pre vector \n");
-    cout<<winstr<<endl;
-    cout<<wdirstr<<endl;
-    cout<<atstr<<endl;
-    cout<<srstr<<endl;
-    printf("\n");
+    cout<<"LATITUDE: "<<latitude<<endl;
+    cout<<"LONGITUDE: "<<longitude<<endl;
+    cout<<"STATION NAME: "<<station<<endl;
 
 
-    char *winstr2=&winstr[0u];
-    char *wdirstr2=&wdirstr[0u];
-    char *atstr2=&atstr[0u];
-    char *srstr2=&srstr[0u];
+ofstream tsetse;
+tsetse.open("singlestation_fetch.csv");
+tsetse << "Station_Name,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
-    const char* delim(",");
+tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[0]<<",m/s,"<<winddir[0]<<","<<airtemp[0]<<",C,"<<solrad[0]<<",,,"<<datetime[0]<<endl;
 
-    vector<string> wincata;
-    vector<string> wdircata;
-    vector<string> atcata;
-    vector<string> srcata;
-
-    wincata=split(winstr2,delim);
-    wdircata=split(wdirstr2,delim);
-    atcata=split(atstr2,delim);
-    srcata=split(srstr2,delim);
-
-
-    cataclysm(wincata,"wind_speed");
-    cataclysm(wdircata,"wind_direction");
-    cataclysm(atcata,"air_temp");
-    cataclysm(srcata,"solar_radiation");
-
-
-
-
+for(int q=1;q<count1;q++)
+{
+    tsetse<<",,,,,,,"<<windspd[q]<<",,"<<winddir[q]<<","<<airtemp[q]<<",,"<<solrad[q]<<",,,"<<datetime[q]<<endl;
+}
 
 
 }
-
 
 void wxStation::multistation_fetch(std::string station_id, int nHours)
 {

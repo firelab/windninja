@@ -75,8 +75,8 @@ class wxStation
     const char* bboxbuilder(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
     vector<string> split(char* str,const char* delim);
     void chameleon(const char* url);
-    void nardis(const char* variable);
-    void cataclysm(vector<string> cata,std::string name);
+    void nardis(char **redman, int counter, std::string name);
+    void cataclysm(const double *data, int counter,std::string name);
 
     void singlestation_fetch(std::string station_id, int nHours);
     void multistation_fetch(std::string station_id, int nHours);
