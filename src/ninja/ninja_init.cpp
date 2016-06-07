@@ -77,19 +77,10 @@ int NinjaInitialize()
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
     std::string osGdalData;
-    const char *pszGdalData = CPLGetConfigOption( "GDAL_DATA", NULL );
-    if( pszGdalData == NULL )
-    {
-        osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
-        pszGdalData = CPLGetPath( osGdalData.c_str() );
-        CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-        CPLSetConfigOption( "GDAL_DATA", pszGdalData );
-    }
-    else
-    {
-        CPLDebug( "WINDNINJA", "Setting GDAL_DATA from user environment..." );
-    }
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
+    osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
+    const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
     char *pszExecPath;
     const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
