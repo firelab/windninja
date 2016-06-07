@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+WindNinja 3.0.1
+---------------
+
+2016-06-07
+
+* Fix GFS issue related to time variable (\#149)
+
+* Speed up STL file writing (\#147)
+
+* Fix a bug related to OpenFOAM meshing on small domains (\#152)
+
 WindNinja 3.0.0
 ---------------
 
