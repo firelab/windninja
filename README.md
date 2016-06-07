@@ -1,6 +1,7 @@
 [WindNinja](http://firelab.org/project/windninja) 
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
+[![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
 WindNinja is a diagnostic wind model developed for use in fire modeling.
 
@@ -12,10 +13,6 @@ https://github.com/firelab/windninja
 
 IRC:
 irc://irc.freenode.net/#windninja
-
-| Version  | DOI           |
-| -------- |:-------------:|
-| 3.0.0    | [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja) |
 
 Legacy hosting/wiki:
 https://collab.firelab.org/software/projects/windninja
