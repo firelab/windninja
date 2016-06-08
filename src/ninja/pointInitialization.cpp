@@ -672,6 +672,12 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
        esvar="&vars=wind_speed";
        eurl=eburl+estid+esvar+et01+et11+etokfull;
 
+       std::string network;
+       std::string goatnetwork;
+       network="1,2";
+       goatnetwork="&network="+network;
+
+
        const char* a=eurl.c_str();
 
        std::string url;
@@ -692,7 +698,7 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
        output="&output=geojson";
 
 
-       url=eburl+stidfull+svarfull+timesand+output+tokfull;
+       url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
 
        const char* charurl=url.c_str();
 
@@ -713,6 +719,12 @@ const char* pointInitialization::latestsingle(std::string token, std::string sta
         int pasthour;
         int hour=60;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         pasthour=past*hour;
         pasthourstr=pointInitialization::diversify(pasthour);
 
@@ -723,7 +735,7 @@ const char* pointInitialization::latestsingle(std::string token, std::string sta
         output="&output=geojson";
         timesand="&recent="+pasthourstr;
 
-        url=eburl+stidfull+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -740,6 +752,12 @@ const char* pointInitialization::multibuilder(std::string token,std::string stat
         std::string timesand;
         std::string output;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -749,7 +767,7 @@ const char* pointInitialization::multibuilder(std::string token,std::string stat
         output="&output=geojson";
 
 
-        url=eburl+stidfull+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -769,6 +787,12 @@ const char* pointInitialization::latestmulti(std::string token, std::string stat
         int pasthour;
         int hour=60;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         pasthour=past*hour;
         pasthourstr=pointInitialization::diversify(pasthour);
 
@@ -780,7 +804,7 @@ const char* pointInitialization::latestmulti(std::string token, std::string stat
         output="&output=geojson";
 
 
-        url=eburl+stidfull+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -802,6 +826,12 @@ const char* pointInitialization::latestradius(std::string token, std::string sta
         int pasthour;
         int hour=60;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         pasthour=past*hour;
         pasthourstr=pointInitialization::diversify(pasthour);
 
@@ -813,7 +843,7 @@ const char* pointInitialization::latestradius(std::string token, std::string sta
         svarfull="&vars="+svar;
         output="&output=geojson";
 
-        url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -832,6 +862,12 @@ const char* pointInitialization::radiusbuilder(std::string token, std::string st
         std::string output;
         std::string limiter;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -842,7 +878,7 @@ const char* pointInitialization::radiusbuilder(std::string token, std::string st
         output="&output=geojson";
 
 
-        url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -859,6 +895,12 @@ const char* pointInitialization::latlonrad(std::string token,std::string lat, st
         std::string output;
         std::string limiter;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -869,7 +911,7 @@ const char* pointInitialization::latlonrad(std::string token,std::string lat, st
         output="&output=geojson";
 
 
-        url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -888,6 +930,12 @@ const char* pointInitialization::latestlatlon(std::string token,std::string lat,
         std::string limiter;
         std::string pasthourstr;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         int pasthour;
         int hour=60;
 
@@ -903,7 +951,7 @@ const char* pointInitialization::latestlatlon(std::string token,std::string lat,
         output="&output=geojson";
 
 
-        url=eburl+stidfull+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -920,6 +968,12 @@ const char* pointInitialization::bboxbuilder(std::string token,std::string lat1,
         std::string timesand;
         std::string output;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -929,7 +983,7 @@ const char* pointInitialization::bboxbuilder(std::string token,std::string lat1,
         output="&output=geojson";
 
 
-        url=eburl+bbox+svarfull+timesand+output+tokfull;
+        url=eburl+bbox+goatnetwork+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -949,6 +1003,12 @@ const char* pointInitialization::latestbbox(std::string token,std::string lat1,s
         int pasthour;
         int hour=60;
 
+        std::string network;
+        std::string goatnetwork;
+        network="1,2";
+        goatnetwork="&network="+network;
+
+
         pasthour=past*hour;
         pasthourstr=pointInitialization::diversify(pasthour);
 
@@ -959,7 +1019,7 @@ const char* pointInitialization::latestbbox(std::string token,std::string lat1,s
         svarfull="&vars="+svar;
         output="&output=geojson";
 
-        url=eburl+bbox+svarfull+timesand+output+tokfull;
+        url=eburl+bbox+goatnetwork+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -1197,7 +1257,11 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
         hDS=OGROpen(lemon,0,NULL);
     //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
         if (hDS==NULL)
+        {
             printf("miserable failure \n");
+            printf("likely causes:\n station outside network\n no data for station\n mesowest is offline\n you picked Goat Haunt Mountain GTOM8 as your station\n\n");
+            exit(1);
+        }
 
 
     //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
@@ -1316,6 +1380,11 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
         floatprinter(winddir,count2,"wind_direction");
         floatprinter(airtemp,count3,"air_temp");
 
+        if (windspd==NULL)
+            cout<<"stations lacking wind speed are automatically disregared"<<endl;
+
+
+
         int dinfluence=-1;
         std::string diu="miles";
         const char* csvname="singlestation_fetch.csv";
@@ -1329,6 +1398,27 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
             //floatprinter(solrad,count4,"cloud_layer_1_code");
             vector<string> solrad2;
             solrad2=ameliorate(solrad,count4);
+            if(cloud==NULL)
+            {
+                std::string baddata="nodata";
+
+                cout<<"LATITUDE: "<<latitude<<endl;
+                cout<<"LONGITUDE: "<<longitude<<endl;
+                cout<<"STATION_ID: "<<station<<endl;
+                cout<<"data saved to: "<<csvname<<endl;
+
+                ofstream tsetse;
+                tsetse.open(csvname);
+                tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+
+                for(int q=0;q<count1;q++)
+                {
+                    tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                }
+
+            }
+            else
+            {
             vectorprinter(solrad2,"cloud_cover(%)");
 
             stringprinter(datetime,count1,"date_time");
@@ -1345,6 +1435,7 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
             for(int q=0;q<count1;q++)
             {
                 tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<solrad2[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+            }
             }
 
         }
