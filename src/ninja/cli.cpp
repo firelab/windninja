@@ -319,6 +319,17 @@ int windNinjaCLI(int argc, char* argv[])
 //STATION_FETCH
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
                 ("fetch_station_name", po::value<std::string>(), "station identifier")
+                ("latest",po::value<bool>(),"get latest data")
+                ("fetch_type",po::value<std::string>(),"type of fetch")
+                ("time_1_yr",po::value<std::string>(),"initial time year")
+                ("time_1_mo",po::value<std::string>(),"initial time month")
+                ("time_1_day",po::value<std::string>(),"initial time day")
+                ("time_1_clock",po::value<std::string>(),"initial time clock")
+                ("time_2_yr",po::value<std::string>(),"final time year")
+                ("time_2_mo",po::value<std::string>(),"final time month")
+                ("time_2_day",po::value<std::string>(),"final time day")
+                ("time_2_clock",po::value<std::string>(),"final time clock")
+
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
@@ -930,17 +941,73 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 //STATION_FETCH
+//        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
+//        {
+//            conflicting_options(vm, "fetch_station_name", "wx_station_filename");
+//            option_dependency(vm, "fetch_station", "fetch_station_name");
+//            option_dependency(vm, "fetch_station", "forecast_duration");
+
+//            if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
+//            {
+//                wxStation *station;
+//               // singlestation_fetch(std::string token, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+//               // station->singlestation_fetch( vm["token"].as<std::string>(),vm["fetch_station_name"].as<std::string>(),vm["specified_variables"].as<std::string>(),vm["date_1_year"].as<std::string>(),vm["date_1_month"].as<std::string>(),vm["date_1_day"].as<std::string>(),vm["date_1_clock"].as<std::string>(),vm["date_2_year"].as<std::string>(),vm["date_2_month"].as<std::string>(),vm["date_2_day"].as<std::string>(),vm["date_2_clock"].as<std::string>() );
+//                station->stationcaller( vm["fetch_station_name"].as<std::string>(),
+//                                       vm["forecast_duration"].as<int>() );
+
+
+
+//                return(0); //temporary for STATION_FETCH
+//                try
+//                {
+////                    windsim.makeArmy( station->fetchStation( vm["fetch_station_name"].as<std::string>(),
+////                                                             vm["forecast_duration"].as<int>() ),
+////                                                             osTimeZone );
+//                }
+//                catch(... )
+//                {
+//                    cout << "'fetch_station_name' is not valid" << "\n";
+//                    return -1;
+//                }
+//            }
+
+//            option_dependency(vm, "forecast_filename", "time_zone");
+//            if(vm.count("wx_station_filename"))   //if a station file already exists
+//            {
+//                windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
+//            }
+//        }
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
             conflicting_options(vm, "fetch_station_name", "wx_station_filename");
             option_dependency(vm, "fetch_station", "fetch_station_name");
             option_dependency(vm, "fetch_station", "forecast_duration");
+            option_dependency(vm, "fetch_station", "latest");
+            option_dependency(vm, "fetch_station","fetch_type");
+            option_dependency(vm, "fetch_station", "time_1_yr");
+            option_dependency(vm, "fetch_station", "time_1_mo");
+            option_dependency(vm, "fetch_station", "time_1_day");
+            option_dependency(vm, "fetch_station", "time_1_clock");
+            option_dependency(vm, "fetch_station", "time_2_yr");
+            option_dependency(vm, "fetch_station", "time_2_mo");
+            option_dependency(vm, "fetch_station", "time_2_day");
+            option_dependency(vm, "fetch_station", "time_2_clock");
 
             if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
             {
-                wxStation *station;
-                station->singlestation_fetch( vm["fetch_station_name"].as<std::string>(),
-                                       vm["forecast_duration"].as<int>() );
+                pointInitialization *station;
+                station->stationcaller( vm["fetch_station_name"].as<std::string>(),
+                        vm["forecast_duration"].as<int>(),
+                        vm["latest"].as<bool>(),
+                        vm["fetch_type"].as<std::string>(),
+                        vm["time_1_yr"].as<std::string>(),
+                        vm["time_1_mo"].as<std::string>(),
+                        vm["time_1_day"].as<std::string>(),
+                        vm["time_1_clock"].as<std::string>(),
+                        vm["time_2_yr"].as<std::string>(),
+                        vm["time_2_mo"].as<std::string>(),
+                        vm["time_2_day"].as<std::string>(),
+                        vm["time_2_clock"].as<std::string>() );
                 return(0); //temporary for STATION_FETCH
                 try
                 {
@@ -961,6 +1028,28 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //STATION_FETCH
 
         /*

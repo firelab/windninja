@@ -36,6 +36,24 @@
 
 #include <limits>	//for large number
 
+#include "ogr_api.h"
+#include "sstream"
+#include "algorithm"
+#include "iterator"
+#include "string"
+#include "iostream"
+#include "fstream"
+
+#define dtoken "33e3c8ee12dc499c86de1f2076a9e9d4"
+#define dstation "kmso" //Missoula International Airport
+#define altstation "TR266" //FIRELAB Fire Raws
+#define latest "latest"
+#define start_stop "0"
+#define mstation "kmso,TR266"
+#define dvar "wind_speed,wind_direction,air_temp,solar_radiation"
+#define drad "20"
+#define dlim "15"
+
 class pointInitialization : public initialize
 {
 	public:
@@ -58,7 +76,33 @@ class pointInitialization : public initialize
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
 
+        void stationcaller(std::string station_id,int nHours, bool btype,std::string fetcher, std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void singlestation_fetch(std::string token,bool type,int nHours, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void multistation_fetch(std::string token,bool type,int nHours, std::string station_ids, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void radiusstation_fetch(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+        void radiuslatlon_fetch(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void bbox_fetch(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+
 	private:
+                string sandbuild(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
+                string diversify(int a);
+                vector<string> split(char* str,const char* delim);
+                vector<string>  ameliorate(const double *puce,int counter);
+                void stringprinter(char **redclay, int counter, std::string name);
+                void floatprinter(const double *data, int counter,std::string name);
+                void vectorprinter(std::vector<std::string> cata,std::string name);
+
+                const char* singlebuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* latestsingle(std::string token, std::string station_id,std::string svar,int past);
+                const char* multibuilder(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* latestmulti(std::string token, std::string station_ids,std::string svar,int past);
+                const char* latestradius(std::string token, std::string station_id,std::string radius,std::string limit,std::string svar,int past);
+                const char* radiusbuilder(std::string token, std::string staion_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* latlonrad(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* latestlatlon(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past);
+                const char* bboxbuilder(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* latestbbox(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);
+
                 double dfInvDistWeight;
 
 };
