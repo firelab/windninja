@@ -97,7 +97,7 @@ std::vector<std::string> ncepHrrrSurfInitialization::getVariableList()
     varList.push_back( "2t" );
     varList.push_back( "10v" );
     varList.push_back( "10u" );
-    varList.push_back( "gh" ); // Geopotential cloud top height
+    varList.push_back( "tcc" ); // Total cloud cover 
     return varList;
 }
 
@@ -250,8 +250,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "Temperature [K]" ) != bandName.npos ){
-                    bandList.push_back( j );  // 2t 
-                    break;
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "2-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 2t 
+                        break;
+                    }
                 }
             }
             for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
@@ -261,8 +265,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "v-component of wind [m/s]" ) != bandName.npos ){
-                    bandList.push_back( j );  // 10v
-                    break;
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "10-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 10v
+                        break;
+                    }
                 }
             }
             for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
@@ -272,8 +280,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "u-component of wind [m/s]" ) != bandName.npos ){
-                    bandList.push_back( j );  // 10u
-                    break;
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "10-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 10u
+                        break;
+                    }
                 }
             }
             for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
@@ -283,12 +295,21 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
-                    bandList.push_back( j );  // Total cloud cover in % 
-                    break;
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "0-RESERVED" ) != bandName.npos ){
+                        bandList.push_back( j );  // Total cloud cover in % 
+                        break;
+                    }
                 }
             }
         }
     }
+
+    CPLDebug("HRRR", "2t: bandList[0] = %d", bandList[0]);
+    CPLDebug("HRRR", "10v: bandList[1] = %d", bandList[1]);
+    CPLDebug("HRRR", "10u: bandList[2] = %d", bandList[2]);
+    CPLDebug("HRRR", "tcc: bandList[3] = %d", bandList[3]);
 
     if(bandList.size() < 4)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
@@ -373,7 +394,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 uGrid.replaceNan( -9999.0 );
             }
         }
-        else if( varList[i] == "gh" ) {
+        else if( varList[i] == "tcc" ) {
             GDAL2AsciiGrid( wrpDS, i+1, cloudGrid );
             if( CPLIsNan( dfNoData ) ) {
                 cloudGrid.set_noDataValue( -9999.0 );
