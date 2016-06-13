@@ -337,8 +337,6 @@ bool NinjaFoam::simulate_wind()
     /* Solve for the flow field                                          */
     /*-------------------------------------------------------------------*/
 
-    VSILFILE *fout;
-
     #ifdef _OPENMP
     endInit = omp_get_wtime();
     startSolve = omp_get_wtime();
@@ -506,7 +504,6 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     const char *pszPath =  CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     const char *pszTemplateFile;
     const char *pszPathToFile;
-    const char *pszTemplate;
 
     if(template_ == ""){
         if(gammavalue != ""){
@@ -652,8 +649,6 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
 
 int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
-    int pos;
-    int len;
     char *data;
 
     vsi_l_offset offset;
@@ -706,7 +701,6 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
 
 int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
-    int pos;
     char *data;
 
     vsi_l_offset offset;
@@ -1052,7 +1046,7 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     data[offset] = '\0';
 
     std::string s(data);
-    std:string ss;
+    std::string ss;
     int pos, pos2, pos3, pos4, pos5;
     int found;
     pos = s.find("Bounding Box");
