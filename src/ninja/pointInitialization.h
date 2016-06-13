@@ -43,6 +43,7 @@
 #include "string"
 #include "iostream"
 #include "fstream"
+#include "math.h"
 
 #define dtoken "33e3c8ee12dc499c86de1f2076a9e9d4"
 #define dstation "kmso" //Missoula International Airport
@@ -50,7 +51,7 @@
 #define latest "latest"
 #define start_stop "0"
 #define mstation "kmso,TR266"
-#define dvar "wind_speed,wind_direction,air_temp,solar_radiation"
+#define dvar "wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code"
 #define drad "20"
 #define dlim "15"
 
@@ -76,7 +77,7 @@ class pointInitialization : public initialize
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
 
-        void stationcaller(std::string station_id,int nHours, bool btype,std::string fetcher, std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void stationcaller(std::string station_id,int nHours, bool btype,std::string fetcher,std::string radius, std::string limit, std::string pLat, std::string pLon, std::string LLLat, std::string LLLon, std::string URLat, std::string URLon , std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void singlestation_fetch(std::string token,bool type,int nHours, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void multistation_fetch(std::string token,bool type,int nHours, std::string station_ids, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void radiusstation_fetch(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
@@ -87,10 +88,14 @@ class pointInitialization : public initialize
                 string sandbuild(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
                 string diversify(int a);
                 vector<string> split(char* str,const char* delim);
+                vector<string> stringtoaster(const double *puce, int counter);
                 vector<string>  ameliorate(const double *puce,int counter);
+                vector<vector<string> > vector_ameliorate(vector<const double*>puce,int smallcount, int largecount);
                 void stringprinter(char **redclay, int counter, std::string name);
                 void floatprinter(const double *data, int counter,std::string name);
                 void vectorprinter(std::vector<std::string> cata,std::string name);
+                void doublevectorprinter(vector<const double*> cata,std::string name,int counter);
+                void irradiate(const double* solrad, int largecount);
 
                 const char* singlebuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 const char* latestsingle(std::string token, std::string station_id,std::string svar,int past);

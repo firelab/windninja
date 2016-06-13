@@ -321,6 +321,14 @@ int windNinjaCLI(int argc, char* argv[])
                 ("fetch_station_name", po::value<std::string>(), "station identifier")
                 ("latest",po::value<bool>(),"get latest data")
                 ("fetch_type",po::value<std::string>(),"type of fetch")
+                ("radius",po::value<std::string>(),"radius of fetch")
+                ("station_limit",po::value<std::string>(),"limit number of stations for rad/latlon")
+                ("point_latitude",po::value<std::string>(),"latitude component for lat/lon")
+                ("point_longitude",po::value<std::string>(),"longitude component for lat/lon")
+                ("box_lower_left_latitude",po::value<std::string>(),"bbox LL lat coord")
+                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
+                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
+                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
                 ("time_1_yr",po::value<std::string>(),"initial time year")
                 ("time_1_mo",po::value<std::string>(),"initial time month")
                 ("time_1_day",po::value<std::string>(),"initial time day")
@@ -977,6 +985,19 @@ int windNinjaCLI(int argc, char* argv[])
 //                windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
 //            }
 //        }
+
+
+        /*
+         *                 ("radius",po::value<std::string>(),"radius of fetch")
+                ("station_limit",po::value<std::string>(),"limit number of stations for rad/latlon")
+                ("point_latitude",po::value<std::string>(),"latitude component for lat/lon")
+                ("point_longitude",po::value<std::string>(),"longitude component for lat/lon")
+                ("box_lower_left_latitude",po::value<std::string>(),"bbox LL lat coord")
+                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
+                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
+                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
+
+         * */
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
             conflicting_options(vm, "fetch_station_name", "wx_station_filename");
@@ -984,6 +1005,14 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "fetch_station", "forecast_duration");
             option_dependency(vm, "fetch_station", "latest");
             option_dependency(vm, "fetch_station","fetch_type");
+            option_dependency(vm, "fetch_station", "radius");
+            option_dependency(vm, "fetch_station", "station_limit");
+            option_dependency(vm, "fetch_station", "point_latitude");
+            option_dependency(vm, "fetch_station", "point_longitude");
+            option_dependency(vm, "fetch_station", "box_lower_left_latitude");
+            option_dependency(vm, "fetch_station", "box_lower_left_longitude");
+            option_dependency(vm, "fetch_station", "box_upper_right_latitude");
+            option_dependency(vm, "fetch_station", "box_upper_right_longitude");
             option_dependency(vm, "fetch_station", "time_1_yr");
             option_dependency(vm, "fetch_station", "time_1_mo");
             option_dependency(vm, "fetch_station", "time_1_day");
@@ -993,6 +1022,9 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "fetch_station", "time_2_day");
             option_dependency(vm, "fetch_station", "time_2_clock");
 
+
+
+
             if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
             {
                 pointInitialization *station;
@@ -1000,6 +1032,14 @@ int windNinjaCLI(int argc, char* argv[])
                         vm["forecast_duration"].as<int>(),
                         vm["latest"].as<bool>(),
                         vm["fetch_type"].as<std::string>(),
+                        vm["radius"].as<std::string>(),
+                        vm["station_limit"].as<std::string>(),
+                        vm["point_latitude"].as<std::string>(),
+                        vm["point_longitude"].as<std::string>(),
+                        vm["box_lower_left_latitude"].as<std::string>(),
+                        vm["box_lower_left_longitude"].as<std::string>(),
+                        vm["box_upper_right_latitude"].as<std::string>(),
+                        vm["box_upper_right_longitude"].as<std::string>(),
                         vm["time_1_yr"].as<std::string>(),
                         vm["time_1_mo"].as<std::string>(),
                         vm["time_1_day"].as<std::string>(),
