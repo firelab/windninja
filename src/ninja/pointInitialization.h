@@ -83,6 +83,7 @@ class pointInitialization : public initialize
         void radiusstation_fetch(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
         void radiuslatlon_fetch(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void bbox_fetch(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void auto_bbox_fetch(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
 
 	private:
                 string sandbuild(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
