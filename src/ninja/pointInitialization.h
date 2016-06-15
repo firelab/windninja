@@ -79,13 +79,16 @@ class pointInitialization : public initialize
 
         void stationcaller(std::string station_id,int nHours, bool btype,std::string fetcher,std::string radius, std::string limit, std::string pLat, std::string pLon, std::string LLLat, std::string LLLon, std::string URLat, std::string URLon , std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void singlestation_fetch(std::string token,bool type,int nHours, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void test_function(std::string token,bool type,int nHours, std::string station_id, std::string svar);
         void multistation_fetch(std::string token,bool type,int nHours, std::string station_ids, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void radiusstation_fetch(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
         void radiuslatlon_fetch(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void bbox_fetch(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-        void auto_bbox_fetch(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
+        void auto_bbox_fetch(AsciiGrid<double> dem, std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar);
+        void new_auto(AsciiGrid<double> &dem);
 
-	private:
+
+    private:
                 string sandbuild(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1);
                 string diversify(int a);
                 vector<string> split(char* str,const char* delim);
@@ -99,7 +102,7 @@ class pointInitialization : public initialize
                 void irradiate(const double* solrad, int largecount);
 
                 const char* singlebuilder(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                const char* latestsingle(std::string token, std::string station_id,std::string svar,int past);
+                const char* latestsingle(std::string token, std::string station_id,std::string svar,int past, bool extendnetwork,std::string netids);
                 const char* multibuilder(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 const char* latestmulti(std::string token, std::string station_ids,std::string svar,int past);
                 const char* latestradius(std::string token, std::string station_id,std::string radius,std::string limit,std::string svar,int past);
