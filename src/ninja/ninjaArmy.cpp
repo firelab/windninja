@@ -279,8 +279,8 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 */
 bool ninjaArmy::startRuns(int numProcessors)
 {
-    pointInitialization *point;
-    point->new_auto(ninjas[0]->input.dem);
+//    pointInitialization *point;
+//    point->fetchAutoBbox(ninjas[0]->input);
 
     //something goes here
 

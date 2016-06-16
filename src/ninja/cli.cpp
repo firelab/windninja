@@ -1001,6 +1001,7 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
             conflicting_options(vm, "fetch_station_name", "wx_station_filename");
+//            option_dependency(vm, "fetch_station");
             option_dependency(vm, "fetch_station", "fetch_station_name");
             option_dependency(vm, "fetch_station", "forecast_duration");
             option_dependency(vm, "fetch_station", "latest");
@@ -1028,7 +1029,8 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
             {
                 pointInitialization *station;
-                station->stationcaller( vm["fetch_station_name"].as<std::string>(),
+                station->stationCliCaller( vm["fetch_station"].as<bool>(),
+                        vm["fetch_station_name"].as<std::string>(),
                         vm["forecast_duration"].as<int>(),
                         vm["latest"].as<bool>(),
                         vm["fetch_type"].as<std::string>(),

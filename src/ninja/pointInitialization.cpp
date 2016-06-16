@@ -600,7 +600,10 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 }
 
-string pointInitialization::sandbuild(std::string year_0,std::string month_0, std::string day_0,std::string clock_0,std::string year_1,std::string month_1,std::string day_1,std::string clock_1)
+string pointInitialization::BuildTime(std::string year_0,std::string month_0,
+                                      std::string day_0,std::string clock_0,
+                                      std::string year_1,std::string month_1,
+                                      std::string day_1,std::string clock_1)
     {
     //builds the time component of a url
         std::string start;
@@ -643,15 +646,25 @@ string pointInitialization::sandbuild(std::string year_0,std::string month_0, st
         return timemainfull;
     }
 
-string pointInitialization::diversify(int a)
+string pointInitialization::IntConvert(int a)
     {
     //converts int to string for "latest" functions
-    ostringstream ska;
-    ska<<a;
-    return ska.str();
+    ostringstream time;
+    time<<a;
+    return time.str();
     }
 
-const char* pointInitialization::singlebuilder(std::string token,std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* pointInitialization::BuildSingleUrl(std::string token,
+                                                std::string station_id,
+                                                std::string svar,
+                                                std::string yearx,
+                                                std::string monthx,
+                                                std::string dayx,
+                                                std::string clockx,
+                                                std::string yeary,
+                                                std::string monthy,
+                                                std::string dayy,
+                                                std::string clocky)
     {
     //builds a url for a single timeseries station with specific start and stop times
        std::string etoken;
@@ -675,9 +688,9 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
        eurl=eburl+estid+esvar+et01+et11+etokfull;
 
        std::string network;
-       std::string goatnetwork;
+       std::string nEtworkFull;
        network="1,2";
-       goatnetwork="&network="+network;
+       nEtworkFull="&network="+network;
 
 
        const char* a=eurl.c_str();
@@ -692,7 +705,7 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
        std::string timesand;
        std::string output;
 
-       timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+       timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
        tokfull="&token="+token;
        stidfull="stid="+station_id;
@@ -700,7 +713,7 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
        output="&output=geojson";
 
 
-       url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
+       url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
        const char* charurl=url.c_str();
 
@@ -708,7 +721,10 @@ const char* pointInitialization::singlebuilder(std::string token,std::string sta
 
     }
 
-const char* pointInitialization::latestsingle(std::string token, std::string station_id,std::string svar,int past, bool extendnetwork,std::string netids)
+const char* pointInitialization::BuildSingleLatest(std::string token, std::string station_id,
+                                                   std::string svar,
+                                                   int past, bool extendnetwork,
+                                                   std::string netids)
     {
     //builds a url for single time series with the latest data for the past n hours
         std::string eburl;
@@ -723,21 +739,21 @@ const char* pointInitialization::latestsingle(std::string token, std::string sta
         int hour=60;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
 
         if (extendnetwork==true)
         {
         network="1,2"+netids;
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
         }
         else
         {
             network="1,2";
-            goatnetwork="&network="+network;
+            nEtworkFull="&network="+network;
         }
 
         pasthour=past*hour;
-        pasthourstr=pointInitialization::diversify(pasthour);
+        pasthourstr=pointInitialization::IntConvert(pasthour);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
         tokfull="&token="+token;
@@ -746,14 +762,24 @@ const char* pointInitialization::latestsingle(std::string token, std::string sta
         output="&output=geojson";
         timesand="&recent="+pasthourstr;
 
-        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
 
-const char* pointInitialization::multibuilder(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* pointInitialization::BuildMultiUrl(std::string token,
+                                               std::string station_ids,
+                                               std::string svar,
+                                               std::string yearx,
+                                               std::string monthx,
+                                               std::string dayx,
+                                               std::string clockx,
+                                               std::string yeary,
+                                               std::string monthy,
+                                               std::string dayy,
+                                               std::string clocky)
     {
     // builds a url for multiple known stations for a specific start and stop time
         std::string eburl;
@@ -765,12 +791,12 @@ const char* pointInitialization::multibuilder(std::string token,std::string stat
         std::string output;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
-        timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
         tokfull="&token="+token;
@@ -779,14 +805,16 @@ const char* pointInitialization::multibuilder(std::string token,std::string stat
         output="&output=geojson";
 
 
-        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
 
-const char* pointInitialization::latestmulti(std::string token, std::string station_ids,std::string svar,int past)
+const char* pointInitialization::BuildMultiLatest(std::string token,
+                                                  std::string station_ids,
+                                                  std::string svar,int past)
     {
     //builds a url for multiple known stations for the latest n hours
         std::string eburl;
@@ -801,13 +829,13 @@ const char* pointInitialization::latestmulti(std::string token, std::string stat
         int hour=60;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
         pasthour=past*hour;
-        pasthourstr=pointInitialization::diversify(pasthour);
+        pasthourstr=pointInitialization::IntConvert(pasthour);
 
         timesand="&recent="+pasthourstr;
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -817,14 +845,18 @@ const char* pointInitialization::latestmulti(std::string token, std::string stat
         output="&output=geojson";
 
 
-        url=eburl+stidfull+goatnetwork+svarfull+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
 
     }
-const char* pointInitialization::latestradius(std::string token, std::string station_id,std::string radius,std::string limit,std::string svar,int past)
+const char* pointInitialization::BuildRadiusLatest(std::string token,
+                                                   std::string station_id,
+                                                   std::string radius,
+                                                   std::string limit,
+                                                   std::string svar,int past)
     {
     //builds a url fetching all stations within x miles of a known station for last n hours specified
 
@@ -841,13 +873,13 @@ const char* pointInitialization::latestradius(std::string token, std::string sta
         int hour=60;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
         pasthour=past*hour;
-        pasthourstr=pointInitialization::diversify(pasthour);
+        pasthourstr=pointInitialization::IntConvert(pasthour);
 
         timesand="&recent="+pasthourstr;
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -857,7 +889,7 @@ const char* pointInitialization::latestradius(std::string token, std::string sta
         svarfull="&vars="+svar;
         output="&output=geojson";
 
-        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
@@ -865,7 +897,19 @@ const char* pointInitialization::latestradius(std::string token, std::string sta
 
     }
 
-const char* pointInitialization::radiusbuilder(std::string token, std::string station_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* pointInitialization::BuildRadiusUrl(std::string token,
+                                                std::string station_id,
+                                                std::string radius,
+                                                std::string limit,
+                                                std::string svar,
+                                                std::string yearx,
+                                                std::string monthx,
+                                                std::string dayx,
+                                                std::string clockx,
+                                                std::string yeary,
+                                                std::string monthy,
+                                                std::string dayy,
+                                                std::string clocky)
     {
     //builds a url for a radius around a known station with a specific start and stop time
         std::string eburl;
@@ -878,12 +922,12 @@ const char* pointInitialization::radiusbuilder(std::string token, std::string st
         std::string limiter;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
-        timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
         limiter="&limit="+limit;
@@ -893,13 +937,26 @@ const char* pointInitialization::radiusbuilder(std::string token, std::string st
         output="&output=geojson";
 
 
-        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
-const char* pointInitialization::latlonrad(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* pointInitialization::BuildLatLonUrl(std::string token,
+                                                std::string lat,
+                                                std::string lon,
+                                                std::string radius,
+                                                std::string limit,
+                                                std::string svar,
+                                                std::string yearx,
+                                                std::string monthx,
+                                                std::string dayx,
+                                                std::string clockx,
+                                                std::string yeary,
+                                                std::string monthy,
+                                                std::string dayy,
+                                                std::string clocky)
     {
     //builds a url for a given latitude longitude location and grabs all stations within x miles and limited to y stations.
         std::string eburl;
@@ -912,12 +969,12 @@ const char* pointInitialization::latlonrad(std::string token,std::string lat, st
         std::string limiter;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
-        timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
         limiter="&limit="+limit;
@@ -927,14 +984,20 @@ const char* pointInitialization::latlonrad(std::string token,std::string lat, st
         output="&output=geojson";
 
 
-        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
 
-const char* pointInitialization::latestlatlon(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past)
+const char* pointInitialization::BuildLatLonLatest(std::string token,
+                                                   std::string lat,
+                                                   std::string lon,
+                                                   std::string radius,
+                                                   std::string limit,
+                                                   std::string svar,
+                                                   int past)
     {
     //builds a url for a given lat/lon coordinate for the most recent n Hours
         std::string eburl;
@@ -948,16 +1011,16 @@ const char* pointInitialization::latestlatlon(std::string token,std::string lat,
         std::string pasthourstr;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
         int pasthour;
         int hour=60;
 
         pasthour=past*hour;
-        pasthourstr=pointInitialization::diversify(pasthour);
+        pasthourstr=pointInitialization::IntConvert(pasthour);
 
         timesand="&recent="+pasthourstr;
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -968,14 +1031,27 @@ const char* pointInitialization::latestlatlon(std::string token,std::string lat,
         output="&output=geojson";
 
 
-        url=eburl+stidfull+goatnetwork+svarfull+limiter+timesand+output+tokfull;
+        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
 
-const char* pointInitialization::bboxbuilder(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+const char* pointInitialization::BuildBboxUrl(std::string token,
+                                              std::string lat1,
+                                              std::string lon1,
+                                              std::string lat2,
+                                              std::string lon2,
+                                              std::string svar,
+                                              std::string yearx,
+                                              std::string monthx,
+                                              std::string dayx,
+                                              std::string clockx,
+                                              std::string yeary,
+                                              std::string monthy,
+                                              std::string dayy,
+                                              std::string clocky)
     {
     //builds a url for a given box of latitude longitude coordinates
         std::string eburl;
@@ -987,12 +1063,12 @@ const char* pointInitialization::bboxbuilder(std::string token,std::string lat1,
         std::string output;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
-        timesand=pointInitialization::sandbuild(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
         tokfull="&token="+token;
@@ -1001,14 +1077,20 @@ const char* pointInitialization::bboxbuilder(std::string token,std::string lat1,
         output="&output=geojson";
 
 
-        url=eburl+bbox+goatnetwork+svarfull+timesand+output+tokfull;
+        url=eburl+bbox+nEtworkFull+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
     }
 
-const char* pointInitialization::latestbbox(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past)
+const char* pointInitialization::BuildBboxLatest(std::string token,
+                                                 std::string lat1,
+                                                 std::string lon1,
+                                                 std::string lat2,
+                                                 std::string lon2,
+                                                 std::string svar,
+                                                 int past)
     {
     //builds a url for a bounding box within the latest n hours
         std::string eburl;
@@ -1023,13 +1105,13 @@ const char* pointInitialization::latestbbox(std::string token,std::string lat1,s
         int hour=60;
 
         std::string network;
-        std::string goatnetwork;
+        std::string nEtworkFull;
         network="1,2";
-        goatnetwork="&network="+network;
+        nEtworkFull="&network="+network;
 
 
         pasthour=past*hour;
-        pasthourstr=pointInitialization::diversify(pasthour);
+        pasthourstr=pointInitialization::IntConvert(pasthour);
 
         timesand="&recent="+pasthourstr;
         eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -1038,16 +1120,16 @@ const char* pointInitialization::latestbbox(std::string token,std::string lat1,s
         svarfull="&vars="+svar;
         output="&output=geojson";
 
-        url=eburl+bbox+goatnetwork+svarfull+timesand+output+tokfull;
+        url=eburl+bbox+nEtworkFull+svarfull+timesand+output+tokfull;
 
         const char* charurl=url.c_str();
 
         return charurl;
 
     }
-vector<string> pointInitialization::split(char* str,const char* delim)
+vector<string> pointInitialization::Split(char* str,const char* delim)
     {
-    //splits strings into vectors of strings based on a delimiter, a "," is used for most functions
+    //Splits strings into vectors of strings based on a delimiter, a "," is used for most functions
         char* saveptr;
         char* token = strtok_r(str,delim,&saveptr);
 
@@ -1060,26 +1142,26 @@ vector<string> pointInitialization::split(char* str,const char* delim)
         }
         return result;
     }
-vector<string> pointInitialization::stringtoaster(const double *puce, int counter)
-{
-    //this isn't used right now....
-    std::string sa;
-    std::ostringstream ss;
+//vector<string> pointInitialization::stringtoaster(const double *puce, int counter)
+//{
+//    //this isn't used right now....
+//    std::string sa;
+//    std::ostringstream ss;
 
-    for(int i=0;i<counter;i++)
-    {
+//    for(int i=0;i<counter;i++)
+//    {
 
-        ss<<puce[i]<<",";
-        sa=(ss.str());
+//        ss<<puce[i]<<",";
+//        sa=(ss.str());
 
-    }
-    const char* delim(",");
-    char *strom=&sa[0u];
-    vector<string> cata;
-    cata=split(strom,delim);
-    return cata;
+//    }
+//    const char* delim(",");
+//    char *strom=&sa[0u];
+//    vector<string> cata;
+//    cata=Split(strom,delim);
+//    return cata;
 
-}
+//}
 
 /*
  * A bit about how the function below works:
@@ -1139,7 +1221,7 @@ vector<string> pointInitialization::stringtoaster(const double *puce, int counte
  *
  * */
 
-vector<string> pointInitialization::ameliorate(const double *puce,int counter)
+vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int counter)
     {
     //converts NWS/FAA cloud information to %cloud cover for a single station
 
@@ -1152,7 +1234,7 @@ vector<string> pointInitialization::ameliorate(const double *puce,int counter)
     for(int i=0;i<counter;i++)
     {
 
-        ss<<puce[i]<<",";
+        ss<<dbCloud[i]<<",";
         sa=(ss.str());
         //cout<<sa<<endl;
         //sb=sa.substr(sa.size()-2);
@@ -1163,8 +1245,8 @@ vector<string> pointInitialization::ameliorate(const double *puce,int counter)
     const char* delim(",");
     char *cloudstr=&sa[0u];
     vector<string> cloudcata;
-    cloudcata=split(cloudstr,delim);
-    //vectorprinter(cloudcata,"clouds");
+    cloudcata=Split(cloudstr,delim);
+    //VectorPrinter(cloudcata,"clouds");
 
     vector<string> cloudcatb;
 
@@ -1177,7 +1259,7 @@ vector<string> pointInitialization::ameliorate(const double *puce,int counter)
 
     //cout<<sb<<endl;
     char *cloudstrb=&sb[0u];
-    cloudcatb=split(cloudstrb,delim);
+    cloudcatb=Split(cloudstrb,delim);
     //vectorprinter(cloudcatb,"mesowest cat is watching you");
 
     std::string few="25";
@@ -1226,7 +1308,8 @@ vector<string> pointInitialization::ameliorate(const double *puce,int counter)
 
 
 
-vector<vector<string> > pointInitialization::vector_ameliorate(vector<const double*>puce,int smallcount, int largecount)
+vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<const double*>dbCloud,
+                                                                       int smallcount, int largecount)
         {
     //converts NWS/FAA cloud data to %cloud cover for any given number of stations
     // used by multi, radius, lat/lon,bbox
@@ -1244,7 +1327,7 @@ vector<vector<string> > pointInitialization::vector_ameliorate(vector<const doub
             for(int j=0;j<largecount;j++)
             {
 
-                ss<<puce[jj][j]<<",";
+                ss<<dbCloud[jj][j]<<",";
                 sa=(ss.str());
                 //cout<<sa<<endl;
                 //sb=sa.substr(sa.size()-2);
@@ -1254,9 +1337,9 @@ vector<vector<string> > pointInitialization::vector_ameliorate(vector<const doub
          const char* delim(",");
          char *cloudstr=&sa[0u];
          vector<string> cloudcata;
-         cloudcata=split(cloudstr,delim);
+         cloudcata=Split(cloudstr,delim);
 
-         //vectorprinter(cloudcata,"clouds");
+         //VectorPrinter(cloudcata,"clouds");
 
          std::string clouda;
          vector<string> cloudcatb;
@@ -1270,8 +1353,8 @@ vector<vector<string> > pointInitialization::vector_ameliorate(vector<const doub
 
          //cout<<sb<<endl;
          char *cloudstrb=&sb[0u];
-         cloudcatb=split(cloudstrb,delim);
-         //vectorprinter(cloudcatb,"mesowest cat is watching you");
+         cloudcatb=Split(cloudstrb,delim);
+         //VectorPrinter(cloudcatb,"mesowest cat is watching you");
 
          std::string few="25";
          std::string sct="50";
@@ -1312,18 +1395,18 @@ vector<vector<string> > pointInitialization::vector_ameliorate(vector<const doub
                  lowclouddat.push_back(clr);
              }
          }
-         //vectorprinter(lowclouddat,"lowclouds");
+         //VectorPrinter(lowclouddat,"lowclouds");
          newcloudcat.push_back(lowclouddat);
 
 
         }
 
-//        vectorprinter(newcloudcat[0],"set 1");
-//        vectorprinter(newcloudcat[1],"set 2");
+//        VectorPrinter(newcloudcat[0],"set 1");
+//        VectorPrinter(newcloudcat[1],"set 2");
 
         return newcloudcat;
 }
-void pointInitialization::stringprinter(char **stringdat, int counter, std::string name)
+void pointInitialization::StringPrinter(char **stringdat, int counter, std::string name)
     {
     //prints a list of strings as a string with a comma delim
         cout<<name<<endl;
@@ -1339,7 +1422,7 @@ void pointInitialization::stringprinter(char **stringdat, int counter, std::stri
     }
 
 
-void pointInitialization::floatprinter(const double *data, int counter,std::string name)
+void pointInitialization::FloatPrinter(const double *data, int counter,std::string name)
     {
     //prints a list of floating point numbers with a comma delim
             cout<<name<<endl;
@@ -1352,32 +1435,32 @@ void pointInitialization::floatprinter(const double *data, int counter,std::stri
             printf("\n");
 
     }
-void pointInitialization::vectorprinter(std::vector<std::string> cata,std::string name)
+void pointInitialization::VectorPrinter(std::vector<std::string> stData,std::string name)
 {
     //prints a vector of strings with a comma delim
        cout<<name<<endl;
        int i=0;
-       for (std::vector<string>::const_iterator i = cata.begin(); i != cata.end(); ++i)
+       for (std::vector<string>::const_iterator i = stData.begin(); i != stData.end(); ++i)
            std::cout << *i << ',';
 
        printf("\n");
        int veclen;
-       veclen=cata.size();
+       veclen=stData.size();
        cout<<"length of vector "<<veclen<<endl;
        printf("\n");
 }
 
-void pointInitialization::doublevectorprinter(vector<const double*> cata,std::string name, int counter)
+void pointInitialization::doubleVectorPrinter(vector<const double*> stData,std::string name, int counter)
 {
     //prints a vector of floats witha  comma delimiter
     cout<<name<<endl;
     int i=0;
     int veclen;
-    veclen=cata.size();
+    veclen=stData.size();
     for (int k=0;k<veclen;k++)
     {
         const double* data;
-        data=cata[k];
+        data=stData[k];
         for(int j=0;j<counter;j++)
         {
             printf("%.3f, ",data[j]);
@@ -1399,7 +1482,7 @@ void pointInitialization::doublevectorprinter(vector<const double*> cata,std::st
 
 }
 
-void pointInitialization::irradiate(const double* solrad, int largecount)
+void pointInitialization::Irradiate(const double* solrad, int largecount)
 {
     //will eventually convert solar radiation to cloud cover, this function doesn't work yet.
 
@@ -1436,24 +1519,40 @@ void pointInitialization::irradiate(const double* solrad, int largecount)
 
 }
 
-void pointInitialization::singlestation_fetch(std::string token,bool type,int nHours,std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
+void pointInitialization::fetchSingleStation(std::string token,
+                                              bool type,
+                                              int nHours,
+                                              std::string station_id,
+                                              std::string svar,
+                                              std::string yeara,
+                                              std::string montha,
+                                              std::string daya,
+                                              std::string clocka,
+                                              std::string yearb,
+                                              std::string monthb,
+                                              std::string dayb,
+                                              std::string clockb)
     {
 
-    const char* lemon;
+    const char* lmUrl;
 
     if(type==true)
     {
-        lemon=pointInitialization::latestsingle(token,station_id,svar,nHours,false,"0");//builds url for past n Hours
+        lmUrl=pointInitialization::BuildSingleLatest(token,station_id,
+                                                     svar,nHours,false,"0");
+        //builds url for past n Hours
     }
 
     else
     {
         //builds url with given time period
-        //const char* pszvtry=pointInitialization::singlebuilder(dtoken,altstation,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
-        lemon=pointInitialization::singlebuilder(token,station_id,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+        //const char* pszvtry=pointInitialization::BuildSingleUrl(dtoken,altstation,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
+        lmUrl=pointInitialization::BuildSingleUrl(token,station_id,svar,
+                                                  yeara,montha,daya,clocka,
+                                                  yearb,monthb,dayb,clockb);
     }
 
-    //cout<<lemon<<endl;
+    //cout<<lmUrl<<endl;
 
     //printf("\n\n");
 
@@ -1461,12 +1560,12 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
-    hDS=OGROpen(lemon,0,NULL);//fetches url using OGR
+    hDS=OGROpen(lmUrl,0,NULL);//fetches url using OGR
 //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
     if (hDS==NULL)
     {
         printf("miserable failure \n");
-        printf("likely causes:\n station outside network\n no data for station\n mesowest is offline\n you picked Goat Haunt Mountain GTOM8 as your station\n\n");
+        printf("likely causes:\n station outside network\n no data for station\n mesowest is offline\n");
         exit(1);
     }
 
@@ -1532,7 +1631,6 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
 
         idx4=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
         solrad=OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4);
-
         }
 
         idx5=OGR_F_GetFieldIndex(hFeature, "LATITUDE");
@@ -1546,7 +1644,8 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
 
         idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
         datetime=OGR_F_GetFieldAsStringList(hFeature,idx8);
-        //note: Mesowest data downloaded as GEOJson names date and time data as "date_times", Mewsowest data using
+        //note: Mesowest data downloaded as GEOJson names date and time data
+        //as "date_times", Mewsowest data using
         // Json names time data as date_time!!!!!!
 
 
@@ -1557,22 +1656,22 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
 //        cout<<mnetid<<endl;
 
 
-    double mojo=1.00000;
-    const double* quaff;
-    quaff=&mojo;
+    double filler=1.00000;
+    const double* zeros;
+    zeros=&filler;
 
 //        cout<<winddir<<endl;
 
-//    floatprinter(winddir,count2,"wind_direction");
+//    FloatPrinter(winddir,count2,"wind_direction");
     if (winddir==NULL)
     {
-        winddir=quaff;
+        winddir=zeros;
     }
 
 
-//        floatprinter(windspd,count1,"wind_speed");
-//        floatprinter(winddir,count2,"wind_direction");
-//        floatprinter(airtemp,count3,"air_temp");
+//        FloatPrinter(windspd,count1,"wind_speed");
+//        FloatPrinter(winddir,count2,"wind_direction");
+//        FloatPrinter(airtemp,count3,"air_temp");
 
     int dinfluence=-1;
     std::string diu="kilometres";
@@ -1588,7 +1687,7 @@ void pointInitialization::singlestation_fetch(std::string token,bool type,int nH
 if (mnetid==1)
 {
 
-        solrad2=ameliorate(solrad,count4);
+        solrad2=InterpretCloudData(solrad,count4);
         if (solrad==NULL)// if airport lacks any cloud data due to bad instrumentation or something
         {
             for(int q=0;q<count1;q++)
@@ -1629,27 +1728,37 @@ if (mnetid==2)
 
     }
 
-void pointInitialization::multistation_fetch(std::string token,bool type, int nHours, std::string station_ids, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
+void pointInitialization::fetchMultiStation(std::string token,bool type,
+                                            int nHours,
+                                            std::string station_ids,
+                                            std::string svar,std::string yeara,
+                                            std::string montha, std::string daya,
+                                            std::string clocka,std::string yearb,
+                                            std::string monthb,std::string dayb,
+                                            std::string clockb)
     {
     //fetches data for multiple known stations
-        const char* lemon;
+        const char* lmUrl;
         if(type==true)//build url based on desired info
         {
-            lemon=pointInitialization::latestmulti(token,station_ids,svar,nHours);
+            lmUrl=pointInitialization::BuildMultiLatest(token,station_ids,svar,nHours);
         }
 
         else
         {
-            lemon=pointInitialization::multibuilder(token,station_ids,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            lmUrl=pointInitialization::BuildMultiUrl(token,station_ids,
+                                                     svar,yeara,montha,
+                                                     daya,clocka,yearb,
+                                                     monthb,dayb,clockb);
         }
 
-        //cout<<lemon<<endl;
+        //cout<<lmUrl<<endl;
 
         OGRDataSourceH hDS;
         OGRLayerH hLayer;
         OGRFeatureH hFeature;
 
-        hDS=OGROpen(lemon,0,NULL); //fetches data
+        hDS=OGROpen(lmUrl,0,NULL); //fetches data
         //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
         if (hDS==NULL)
             printf("I am broken, so very broken \n");
@@ -1762,7 +1871,7 @@ void pointInitialization::multistation_fetch(std::string token,bool type, int nH
 
                     vector<string>cloudkappa;
                     int smallcloud=count4;
-                    cloudkappa=ameliorate(metarcloud,smallcloud);
+                    cloudkappa=InterpretCloudData(metarcloud,smallcloud);
 
 
                     for(int ez=0;ez<count1;ez++)
@@ -1803,13 +1912,13 @@ void pointInitialization::multistation_fetch(std::string token,bool type, int nH
                     idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
                     rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-                    const double* mojo;
-                    mojo=0;
+                    const double* aZero;
+                    aZero=0;
 
 
                         for (int ez=0;ez<count9;ez++)
                         {
-                        if (rawssolrad==mojo)
+                        if (rawssolrad==aZero)
                         {
                             std::string baddata="nodata";
                             tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
@@ -1825,25 +1934,40 @@ void pointInitialization::multistation_fetch(std::string token,bool type, int nH
         }
     }
 
-void pointInitialization::radiusstation_fetch(std::string token, bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
+void pointInitialization::fetchPointRadiusStation(std::string token, bool type,
+                                                  int nHours, std::string station_id,
+                                                  std::string radius,
+                                                  std::string limit,
+                                                  std::string svar,
+                                                  std::string yeara,
+                                                  std::string montha,
+                                                  std::string daya,
+                                                  std::string clocka,
+                                                  std::string yearb,
+                                                  std::string monthb,
+                                                  std::string dayb,std::string clockb)
     {
     //fetches data for known station and radius around it
 
-        const char* lemon;
+        const char* lmUrl;
         if(type==true)//builds url
         {
 
-            lemon=pointInitialization::latestradius(token,station_id,radius,limit,svar,nHours);
-//            lemon=pointInitialization::latestmulti(token,station_id,svar,nHours);
+            lmUrl=pointInitialization::BuildRadiusLatest(token,station_id,radius,limit,svar,nHours);
+//            lmUrl=pointInitialization::BuildMultiLatest(token,station_id,svar,nHours);
 
         }
 
         else
         {
-            lemon=pointInitialization::radiusbuilder(token,station_id,radius,limit,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            lmUrl=pointInitialization::BuildRadiusUrl(token,station_id,
+                                                      radius,limit,svar,
+                                                      yeara,montha,daya,
+                                                      clocka,yearb,monthb,
+                                                      dayb,clockb);
         }
 
-        //cout<<lemon<<endl;
+        //cout<<lmUrl<<endl;
 
         OGRDataSourceH hDS;
         OGRLayerH hLayer;
@@ -1852,7 +1976,7 @@ void pointInitialization::radiusstation_fetch(std::string token, bool type,int n
         const char* csvname="point.csv";
 
 
-        hDS=OGROpen(lemon,0,NULL);//fetches data
+        hDS=OGROpen(lmUrl,0,NULL);//fetches data
         //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
         if (hDS==NULL)
             printf("I am broken, so very broken \n");
@@ -1952,7 +2076,7 @@ void pointInitialization::radiusstation_fetch(std::string token, bool type,int n
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=ameliorate(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
@@ -1993,13 +2117,13 @@ void pointInitialization::radiusstation_fetch(std::string token, bool type,int n
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
                 rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-                const double* mojo;
-                mojo=0;
+                const double* aZero;
+                aZero=0;
 
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==mojo)
+                    if (rawssolrad==aZero)
                     {
                         std::string baddata="nodata";
                         tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
@@ -2017,24 +2141,31 @@ void pointInitialization::radiusstation_fetch(std::string token, bool type,int n
 
 
 
-void pointInitialization::radiuslatlon_fetch(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
+void pointInitialization::fetchLatLonStation(std::string token, bool type,
+                                             int nHours, std::string lat,
+                                             std::string lon, std::string radius,
+                                             std::string limit, std::string svar,
+                                             std::string yeara,std::string montha,
+                                             std::string daya,std::string clocka,
+                                             std::string yearb,std::string monthb,
+                                             std::string dayb,std::string clockb)
     {
     //fetches data based on a coordinate and radius
 
-        const char* lemon;
+        const char* lmUrl;
         if (type==true)
         {
 
-            lemon=pointInitialization::latestlatlon(token,lat,lon,radius,limit,svar,nHours);
+            lmUrl=pointInitialization::BuildLatLonLatest(token,lat,lon,radius,limit,svar,nHours);
 
         }
 
         else
         {
-            lemon=pointInitialization::latlonrad(token,lat,lon,radius,limit,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            lmUrl=pointInitialization::BuildLatLonUrl(token,lat,lon,radius,limit,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
         }
 
-        //cout<<lemon<<endl;
+        //cout<<lmUrl<<endl;
 
         OGRDataSourceH hDS;
         OGRLayerH hLayer;
@@ -2042,7 +2173,7 @@ void pointInitialization::radiuslatlon_fetch(std::string token, bool type,int nH
 
         const char* csvname="latlon.csv";
 
-        hDS=OGROpen(lemon,0,NULL);//reading data
+        hDS=OGROpen(lmUrl,0,NULL);//reading data
         //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
         if (hDS==NULL)
             printf("I am broken, so very broken \n");
@@ -2141,7 +2272,7 @@ void pointInitialization::radiuslatlon_fetch(std::string token, bool type,int nH
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=ameliorate(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
@@ -2182,13 +2313,13 @@ void pointInitialization::radiuslatlon_fetch(std::string token, bool type,int nH
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
                 rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-                const double* mojo;
-                mojo=0;
+                const double* aZero;
+                aZero=0;
 
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==mojo)
+                    if (rawssolrad==aZero)
                     {
                         std::string baddata="nodata";
                         tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
@@ -2205,22 +2336,34 @@ void pointInitialization::radiuslatlon_fetch(std::string token, bool type,int nH
 }
 
 
-void pointInitialization::bbox_fetch(std::string token,bool type,int nHours, std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
+void pointInitialization::fetchBboxStation(std::string token,bool type,int nHours,
+                                           std::string lat1,
+                                           std::string lon1,std::string lat2,
+                                           std::string lon2,std::string svar,
+                                           std::string yeara,
+                                           std::string montha,
+                                           std::string daya,
+                                           std::string clocka,
+                                           std::string yearb,
+                                           std::string monthb,
+                                           std::string dayb,std::string clockb)
     {
     //fetches data based on a bounding box
     //the bounding box is specified by
     // lower left (lon,lat) to upper right (lon,lat)
 
-        const char* lemon;
+        const char* lmUrl;
         if (type==true)
         {
-            lemon=pointInitialization::latestbbox(token,lat1,lon1,lat2,lon2,svar,nHours);
+            lmUrl=pointInitialization::BuildBboxLatest(token,lat1,lon1,lat2,lon2,svar,nHours);
         }
         else
         {
-            lemon=pointInitialization::bboxbuilder(token,lat1,lon1,lat2,lon2,svar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            lmUrl=pointInitialization::BuildBboxUrl(token,lat1,lon1,lat2,lon2,svar,
+                                                    yeara,montha,daya,clocka,
+                                                    yearb,monthb,dayb,clockb);
         }
-        //cout<<lemon<<endl;
+        //cout<<lmUrl<<endl;
         OGRDataSourceH hDS;
         OGRLayerH hLayer;
         OGRFeatureH hFeature;
@@ -2228,7 +2371,7 @@ void pointInitialization::bbox_fetch(std::string token,bool type,int nHours, std
         const char* csvname="box.csv";
 
 
-        hDS=OGROpen(lemon,0,NULL);
+        hDS=OGROpen(lmUrl,0,NULL);
         //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
         if (hDS==NULL)
             printf("i be broken mon \n");
@@ -2326,7 +2469,7 @@ void pointInitialization::bbox_fetch(std::string token,bool type,int nHours, std
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=ameliorate(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
@@ -2367,13 +2510,13 @@ void pointInitialization::bbox_fetch(std::string token,bool type,int nHours, std
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
                 rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-                const double* mojo;
-                mojo=0;
+                const double* aZero;
+                aZero=0;
 
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==mojo)
+                    if (rawssolrad==aZero)
                     {
                         std::string baddata="nodata";
                         tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
@@ -2391,7 +2534,7 @@ void pointInitialization::bbox_fetch(std::string token,bool type,int nHours, std
 
 }
 
-void pointInitialization::new_auto(AsciiGrid<double> &dem)
+void pointInitialization::newAuto(AsciiGrid<double> &dem)
 {
     double dz=dem.get_maxValue();
     cout<<"test"<<endl;
@@ -2399,11 +2542,10 @@ void pointInitialization::new_auto(AsciiGrid<double> &dem)
 
 }
 
-void pointInitialization::auto_bbox_fetch(AsciiGrid<double> dem, std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar)
+void pointInitialization::fetchAutoBbox(AsciiGrid<double> &input)
 {
-    cout<<"watch this space"<<endl<<"token: "<<token<<endl<<"type: "<<type<<endl;
-    double dz=dem.get_maxValue();
-    cout<<&dz<<endl;
+//    double dz=dem.get_maxValue();
+//    cout<<&dz<<endl;
 
 
 
@@ -2411,52 +2553,72 @@ void pointInitialization::auto_bbox_fetch(AsciiGrid<double> dem, std::string tok
 
 }
 
-void pointInitialization::test_function(std::string token,bool type,int nHours,std::string station_id, std::string svar)
+void pointInitialization::fetchTest(std::string station_id)
     {
         cout<<"DEM"<<endl;
 
 
+
     }
 
 
 
-void pointInitialization::stationcaller(std::string station_id,int nHours, bool btype,std::string fetcher,std::string radius, std::string limit, std::string pLat, std::string pLon, std::string LLLat, std::string LLLon, std::string URLat, std::string URLon , std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb)
-    {
-
-    if (fetcher=="single")
-    {
-        //singlestation_fetch(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
-        singlestation_fetch(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-    }
-    if (fetcher=="multi")
-    {
-        multistation_fetch(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-    }
-    if (fetcher=="point")
-    {
-        radiusstation_fetch("33e3c8ee12dc499c86de1f2076a9e9d4",btype,nHours,station_id,radius,limit,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-    }
-    if (fetcher=="latlon")
-    {
-        radiuslatlon_fetch(dtoken,btype,nHours,pLat,pLon,radius,limit,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-
-    }
-    if (fetcher=="box")
-    {
-        bbox_fetch(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        //bbox is the following
-        // lower left to upper right
-    }
-    if (fetcher=="auto")
-    {
-//        auto_bbox_fetch(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-    }
-
-    if (fetcher=="test")
+void pointInitialization::stationCliCaller(bool station_fetch, std::string station_id,int nHours, bool btype,
+                                           std::string fetcher,std::string radius,
+                                           std::string limit, std::string pLat,
+                                           std::string pLon, std::string LLLat,
+                                           std::string LLLon, std::string URLat,
+                                           std::string URLon , std::string yeara,
+                                           std::string montha, std::string daya,
+                                           std::string clocka,std::string yearb,
+                                           std::string monthb,std::string dayb,
+                                           std::string clockb)
 
     {
-        test_function(dtoken,true,nHours,station_id,dvar);
+    if(station_fetch==true)
+    {
+        cout<<"true"<<endl;
+//        fetchAutoBbox();
     }
+    else
+    {
+        {
 
+        if (fetcher=="single")
+        {
+            //FetchSingleStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
+            fetchSingleStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+        }
+        if (fetcher=="multi")
+        {
+            fetchMultiStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+        }
+        if (fetcher=="point")
+        {
+            fetchPointRadiusStation("33e3c8ee12dc499c86de1f2076a9e9d4",btype,nHours,station_id,radius,limit,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+        }
+        if (fetcher=="latlon")
+        {
+            fetchLatLonStation(dtoken,btype,nHours,pLat,pLon,radius,limit,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+
+        }
+        if (fetcher=="box")
+        {
+            fetchBboxStation(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            //bbox is the following
+            // lower left to upper right
+        }
+        if (fetcher=="auto")
+        {
+    //        auto_bbox_fetch(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+        }
+
+        if (fetcher=="test")
+
+        {
+    //        fetchTest(dtoken,true,nHours,station_id,dvar);
+        }
+        }
+    }
     cout<<"WIP!"<<endl;
     }
