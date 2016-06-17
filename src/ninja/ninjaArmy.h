@@ -224,6 +224,12 @@ public:
     int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
 
+    int setStationFlag(bool flag, int nHours);
+//    int setForecastDuration(int nHours);
+
+
+
+
     /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/

@@ -31,6 +31,10 @@
 #include "pointInitialization.h"
 
 
+ const std::string pointInitialization::dtoken="33e3c8ee12dc499c86de1f2076a9e9d4";
+ const std::string pointInitialization::dvar="wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code";
+
+
 
 
 
@@ -1142,26 +1146,11 @@ vector<string> pointInitialization::Split(char* str,const char* delim)
         }
         return result;
     }
-//vector<string> pointInitialization::stringtoaster(const double *puce, int counter)
-//{
-//    //this isn't used right now....
-//    std::string sa;
-//    std::ostringstream ss;
+void pointInitialization::stringtoaster(int null)
+{
+cout<<null<<endl;
 
-//    for(int i=0;i<counter;i++)
-//    {
-
-//        ss<<puce[i]<<",";
-//        sa=(ss.str());
-
-//    }
-//    const char* delim(",");
-//    char *strom=&sa[0u];
-//    vector<string> cata;
-//    cata=Split(strom,delim);
-//    return cata;
-
-//}
+}
 
 /*
  * A bit about how the function below works:
@@ -1680,9 +1669,9 @@ void pointInitialization::fetchSingleStation(std::string token,
     vector<string> solrad2;
 
 
-    ofstream tsetse;
-    tsetse.open(csvname);
-    tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+    ofstream tsetseWrite;
+    tsetseWrite.open(csvname);
+    tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 if (mnetid==1)
 {
@@ -1692,14 +1681,14 @@ if (mnetid==1)
         {
             for(int q=0;q<count1;q++)
             {
-                tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
         else
         {
             for(int q=0;q<count1;q++)
             {
-                tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<solrad2[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<solrad2[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
 
         }
@@ -1711,14 +1700,14 @@ if (mnetid==2)
         {
             for(int q=0;q<count1;q++)
             {
-                tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
         else
         {
             for(int q=0;q<count1;q++)
             {
-                tsetse<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<solrad[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<winddir[q]<<","<<airtemp[q]<<",C,"<<solrad[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
 
@@ -1796,23 +1785,23 @@ void pointInitialization::fetchMultiStation(std::string token,bool type,
 
             vector<int> mnetid;
 
-            const double* rawswind;
-            const double* rawsdir;
-            const double* rawssolrad;
-            const double* rawstemp;
-            double rawslatitude;
-            double rawslongitude;
-            const char* rawsstation;
-            char** rawsdatetime;
+            const double* rawsWind;
+            const double* rawsDir;
+            const double* rawsSolrad;
+            const double* rawsTemp;
+            double rawsLatitude;
+            double rawsLongitude;
+            const char* rawsStation;
+            char** rawsDateTime;
 
-            const double* metarwind;
-            const double* metardir;
-            const double* metartemp;
-            const double* metarcloud;
-            double metarlatitude;
-            double  metarlongitude;
-            const char* metarstation;
-            char** metardatetime;
+            const double* metarWind;
+            const double* metarDir;
+            const double* metarTemp;
+            const double* metarCloud;
+            double metarLatitude;
+            double  metarLongitude;
+            const char* metarStation;
+            char** metarDateTime;
 
 
             const char* csvname="multi.csv";
@@ -1824,10 +1813,10 @@ void pointInitialization::fetchMultiStation(std::string token,bool type,
 
             //parses data based on mesonet id, 1=NWS/FAA, 2=RAWS
 
-            ofstream tsetse;//writing to csv
-            tsetse.open(csvname);
+            ofstream tsetseWrite;//writing to csv
+            tsetseWrite.open(csvname);
             cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-            tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+            tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 
             for (int ex=0;ex<fCount;ex++)
@@ -1846,37 +1835,37 @@ void pointInitialization::fetchMultiStation(std::string token,bool type,
                     int count4=0;
 
                     idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                    metarwind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
+                    metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
                     idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                    metardir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
+                    metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
                     idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                    metartemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
+                    metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
                     idx4=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                    metarcloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
+                    metarCloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
 
                     idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                    metarlatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
+                    metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
                     idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                    metarlongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
+                    metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
                     idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                    metarstation=(OGR_F_GetFieldAsString(hFeature,idx7));
+                    metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
                     idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                    metardatetime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
+                    metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
                     vector<string>cloudkappa;
                     int smallcloud=count4;
-                    cloudkappa=InterpretCloudData(metarcloud,smallcloud);
+                    cloudkappa=InterpretCloudData(metarCloud,smallcloud);
 
 
                     for(int ez=0;ez<count1;ez++)
                     {
-                     tsetse<<metarstation<<",GEOCS,"<<"WGS84,"<<metarlatitude<<","<<metarlongitude<<",10,"<<"m,"<<metarwind[ez]<<",m/s,"<<metardir[ez]<<","<<metartemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metardatetime[ez]<<endl;
+                     tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarDir[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                     }
 
                 }
@@ -1889,28 +1878,28 @@ void pointInitialization::fetchMultiStation(std::string token,bool type,
                     int count12=0;
 
                     idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                    rawswind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+                    rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
 
                     idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                    rawsdir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+                    rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
 
                     idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                    rawstemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+                    rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
 
                     idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                    rawssolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+                    rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
 
                     idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                    rawslatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+                    rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
 
                     idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                    rawslongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+                    rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
 
                     idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                    rawsstation=(OGR_F_GetFieldAsString(hFeature,idx15));
+                    rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
 
                     idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                    rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+                    rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
                     const double* aZero;
                     aZero=0;
@@ -1918,14 +1907,14 @@ void pointInitialization::fetchMultiStation(std::string token,bool type,
 
                         for (int ez=0;ez<count9;ez++)
                         {
-                        if (rawssolrad==aZero)
+                        if (rawsSolrad==aZero)
                         {
                             std::string baddata="nodata";
-                            tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                            tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                         }
                         else
                         {
-                            tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<rawssolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                            tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                         }
 
                         }
@@ -2006,33 +1995,33 @@ void pointInitialization::fetchPointRadiusStation(std::string token, bool type,
 
         vector<int> mnetid;
 
-        const double* rawswind;
-        const double* rawsdir;
-        const double* rawssolrad;
-        const double* rawstemp;
-        double rawslatitude;
-        double rawslongitude;
-        const char* rawsstation;
-        char** rawsdatetime;
+        const double* rawsWind;
+        const double* rawsDir;
+        const double* rawsSolrad;
+        const double* rawsTemp;
+        double rawsLatitude;
+        double rawsLongitude;
+        const char* rawsStation;
+        char** rawsDateTime;
 
-        const double* metarwind;
-        const double* metardir;
-        const double* metartemp;
-        const double* metarcloud;
-        double metarlatitude;
-        double  metarlongitude;
-        const char* metarstation;
-        char** metardatetime;
+        const double* metarWind;
+        const double* metarDir;
+        const double* metarTemp;
+        const double* metarCloud;
+        double metarLatitude;
+        double  metarLongitude;
+        const char* metarStation;
+        char** metarDateTime;
 
 
 
 
         int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-        ofstream tsetse;//writing to csv
-        tsetse.open(csvname);
+        ofstream tsetseWrite;//writing to csv
+        tsetseWrite.open(csvname);
         cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 //        cout<<fCount<<endl;
         for (int ex=0;ex<fCount;ex++)
@@ -2051,37 +2040,37 @@ void pointInitialization::fetchPointRadiusStation(std::string token, bool type,
                 int count4=0;
 
                 idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarwind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
+                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
                 idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metardir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
+                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
                 idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metartemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
+                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
                 idx4=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                metarcloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
+                metarCloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
 
                 idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarlatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
+                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
                 idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarlongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
+                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
                 idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarstation=(OGR_F_GetFieldAsString(hFeature,idx7));
+                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
                 idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metardatetime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
+                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarCloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
                 {
-                 tsetse<<metarstation<<",GEOCS,"<<"WGS84,"<<metarlatitude<<","<<metarlongitude<<",10,"<<"m,"<<metarwind[ez]<<",m/s,"<<metardir[ez]<<","<<metartemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metardatetime[ez]<<endl;
+                 tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarDir[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                 }
 
             }
@@ -2094,28 +2083,28 @@ void pointInitialization::fetchPointRadiusStation(std::string token, bool type,
                 int count12=0;
 
                 idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawswind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
 
                 idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsdir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
 
                 idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawstemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
 
                 idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawssolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
 
                 idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawslatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
 
                 idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawslongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
 
                 idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsstation=(OGR_F_GetFieldAsString(hFeature,idx15));
+                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
 
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
                 const double* aZero;
                 aZero=0;
@@ -2123,14 +2112,14 @@ void pointInitialization::fetchPointRadiusStation(std::string token, bool type,
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==aZero)
+                    if (rawsSolrad==aZero)
                     {
                         std::string baddata="nodata";
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
                     else
                     {
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<rawssolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
 
                     }
@@ -2203,32 +2192,32 @@ void pointInitialization::fetchLatLonStation(std::string token, bool type,
 
         vector<int> mnetid;
 
-        const double* rawswind;
-        const double* rawsdir;
-        const double* rawssolrad;
-        const double* rawstemp;
-        double rawslatitude;
-        double rawslongitude;
-        const char* rawsstation;
-        char** rawsdatetime;
+        const double* rawsWind;
+        const double* rawsDir;
+        const double* rawsSolrad;
+        const double* rawsTemp;
+        double rawsLatitude;
+        double rawsLongitude;
+        const char* rawsStation;
+        char** rawsDateTime;
 
-        const double* metarwind;
-        const double* metardir;
-        const double* metartemp;
-        const double* metarcloud;
-        double metarlatitude;
-        double  metarlongitude;
-        const char* metarstation;
-        char** metardatetime;
+        const double* metarWind;
+        const double* metarDir;
+        const double* metarTemp;
+        const double* metarCloud;
+        double metarLatitude;
+        double  metarLongitude;
+        const char* metarStation;
+        char** metarDateTime;
 
         int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
         //parsing
 
-        ofstream tsetse;//writing to csv
-        tsetse.open(csvname);
+        ofstream tsetseWrite;//writing to csv
+        tsetseWrite.open(csvname);
         cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 
         for (int ex=0;ex<fCount;ex++)
@@ -2247,37 +2236,37 @@ void pointInitialization::fetchLatLonStation(std::string token, bool type,
                 int count4=0;
 
                 idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarwind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
+                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
                 idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metardir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
+                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
                 idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metartemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
+                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
                 idx4=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                metarcloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
+                metarCloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
 
                 idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarlatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
+                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
                 idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarlongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
+                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
                 idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarstation=(OGR_F_GetFieldAsString(hFeature,idx7));
+                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
                 idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metardatetime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
+                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarCloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
                 {
-                 tsetse<<metarstation<<",GEOCS,"<<"WGS84,"<<metarlatitude<<","<<metarlongitude<<",10,"<<"m,"<<metarwind[ez]<<",m/s,"<<metardir[ez]<<","<<metartemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metardatetime[ez]<<endl;
+                 tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarDir[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                 }
 
             }
@@ -2290,28 +2279,28 @@ void pointInitialization::fetchLatLonStation(std::string token, bool type,
                 int count12=0;
 
                 idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawswind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
 
                 idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsdir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
 
                 idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawstemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
 
                 idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawssolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
 
                 idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawslatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
 
                 idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawslongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
 
                 idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsstation=(OGR_F_GetFieldAsString(hFeature,idx15));
+                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
 
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
                 const double* aZero;
                 aZero=0;
@@ -2319,14 +2308,14 @@ void pointInitialization::fetchLatLonStation(std::string token, bool type,
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==aZero)
+                    if (rawsSolrad==aZero)
                     {
                         std::string baddata="nodata";
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
                     else
                     {
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<rawssolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
 
                     }
@@ -2403,30 +2392,30 @@ void pointInitialization::fetchBboxStation(std::string token,bool type,int nHour
 
         vector<int> mnetid;
 
-        const double* rawswind;
-        const double* rawsdir;
-        const double* rawssolrad;
-        const double* rawstemp;
-        double rawslatitude;
-        double rawslongitude;
-        const char* rawsstation;
-        char** rawsdatetime;
+        const double* rawsWind;
+        const double* rawsDir;
+        const double* rawsSolrad;
+        const double* rawsTemp;
+        double rawsLatitude;
+        double rawsLongitude;
+        const char* rawsStation;
+        char** rawsDateTime;
 
-        const double* metarwind;
-        const double* metardir;
-        const double* metartemp;
-        const double* metarcloud;
-        double metarlatitude;
-        double  metarlongitude;
-        const char* metarstation;
-        char** metardatetime;
+        const double* metarWind;
+        const double* metarDir;
+        const double* metarTemp;
+        const double* metarCloud;
+        double metarLatitude;
+        double  metarLongitude;
+        const char* metarStation;
+        char** metarDateTime;
 
         int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-        ofstream tsetse;//writing to csv
-        tsetse.open(csvname);
+        ofstream tsetseWrite;//writing to csv
+        tsetseWrite.open(csvname);
         cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetse << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
         for (int ex=0;ex<fCount;ex++)
         {
@@ -2444,37 +2433,37 @@ void pointInitialization::fetchBboxStation(std::string token,bool type,int nHour
                 int count4=0;
 
                 idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarwind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
+                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
                 idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metardir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
+                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
                 idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metartemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
+                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
                 idx4=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                metarcloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
+                metarCloud=(OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4));
 
                 idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarlatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
+                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
                 idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarlongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
+                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
                 idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarstation=(OGR_F_GetFieldAsString(hFeature,idx7));
+                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
                 idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metardatetime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
+                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
                 vector<string>cloudkappa;
                 int smallcloud=count4;
-                cloudkappa=InterpretCloudData(metarcloud,smallcloud);
+                cloudkappa=InterpretCloudData(metarCloud,smallcloud);
 
 
                 for(int ez=0;ez<count1;ez++)
                 {
-                 tsetse<<metarstation<<",GEOCS,"<<"WGS84,"<<metarlatitude<<","<<metarlongitude<<",10,"<<"m,"<<metarwind[ez]<<",m/s,"<<metardir[ez]<<","<<metartemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metardatetime[ez]<<endl;
+                 tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarDir[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                 }
 
             }
@@ -2487,28 +2476,28 @@ void pointInitialization::fetchBboxStation(std::string token,bool type,int nHour
                 int count12=0;
 
                 idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawswind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
 
                 idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsdir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
 
                 idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawstemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
 
                 idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawssolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
 
                 idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawslatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
 
                 idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawslongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
 
                 idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsstation=(OGR_F_GetFieldAsString(hFeature,idx15));
+                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
 
                 idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsdatetime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
                 const double* aZero;
                 aZero=0;
@@ -2516,14 +2505,14 @@ void pointInitialization::fetchBboxStation(std::string token,bool type,int nHour
 
                     for (int ez=0;ez<count9;ez++)
                     {
-                    if (rawssolrad==aZero)
+                    if (rawsSolrad==aZero)
                     {
                         std::string baddata="nodata";
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
                     else
                     {
-                        tsetse<<rawsstation<<",GEOCS,"<<"WGS84,"<<rawslatitude<<","<<rawslongitude<<",10,"<<"m,"<<rawswind[ez]<<",m/s,"<<rawsdir[ez]<<","<<rawstemp[ez]<<",C,"<<rawssolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsdatetime[ez]<<endl;
+                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsDir[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
 
                     }
@@ -2534,6 +2523,15 @@ void pointInitialization::fetchBboxStation(std::string token,bool type,int nHour
 
 }
 
+int pointInitialization::storeHour(int nHours)
+{
+    int storage=nHours;
+    return storage;
+}
+
+
+
+
 void pointInitialization::newAuto(AsciiGrid<double> &dem)
 {
     double dz=dem.get_maxValue();
@@ -2542,10 +2540,44 @@ void pointInitialization::newAuto(AsciiGrid<double> &dem)
 
 }
 
-void pointInitialization::fetchAutoBbox(AsciiGrid<double> &input)
+void pointInitialization::fetchAutoBbox(AsciiGrid<double> input, int nHours)
 {
-//    double dz=dem.get_maxValue();
-//    cout<<&dz<<endl;
+    cout<<"accessed the function"<<endl;
+    cout<<"forecast duration: "<<nHours<<endl;
+
+    string dummyLLLat="46.71915";
+    string dummyLLLon="-115.09250";
+    string dummyURLat="47.29879";
+    string dummyURLon="-110.755519";
+
+    const char* lmUrl=BuildBboxLatest(dtoken,dummyLLLat,dummyLLLon,dummyURLat,dummyURLon,dvar,nHours);
+    cout<<lmUrl<<endl;
+
+    const char* csvname="automatica.csv";
+
+//    hDS=OGROpen(lmUrl,0,NULL);
+//    if (hDS==NULL)
+//        printf("miserable failure \n");
+//    hLayer=OGR_DS_GetLayer(hDS,0);
+//    OGR_L_ResetReading(hLayer);
+
+
+
+
+
+
+
+
+    cout<<input.get_xllCorner()<<endl;
+    cout<<input.get_yllCorner()<<endl;
+
+    cout<<input.get_xDimension()<<endl;
+    cout<<input.get_yDimension()<<endl;
+
+    cout<<input.get_cellSize()<<endl;
+    cout<<input.get_maxValue()<<endl;
+
+
 
 
 
@@ -2563,7 +2595,7 @@ void pointInitialization::fetchTest(std::string station_id)
 
 
 
-void pointInitialization::stationCliCaller(bool station_fetch, std::string station_id,int nHours, bool btype,
+void pointInitialization::stationCliCaller(bool station_fetch, std::string station_id, int nHours, bool btype,
                                            std::string fetcher,std::string radius,
                                            std::string limit, std::string pLat,
                                            std::string pLon, std::string LLLat,
@@ -2578,33 +2610,44 @@ void pointInitialization::stationCliCaller(bool station_fetch, std::string stati
     if(station_fetch==true)
     {
         cout<<"true"<<endl;
-//        fetchAutoBbox();
+        storeHour(nHours);
+
     }
     else
     {
+        exit(1);
         {
 
         if (fetcher=="single")
         {
             //FetchSingleStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
-            fetchSingleStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            fetchSingleStation(dtoken,btype,nHours,station_id,
+                               "wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",
+                               yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
         }
         if (fetcher=="multi")
         {
-            fetchMultiStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            fetchMultiStation(dtoken,btype,nHours,station_id,
+                              "wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",
+                              yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
         }
         if (fetcher=="point")
         {
-            fetchPointRadiusStation("33e3c8ee12dc499c86de1f2076a9e9d4",btype,nHours,station_id,radius,limit,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code",yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            fetchPointRadiusStation(dtoken,btype,nHours,station_id,
+                                    radius,limit,
+                                    dvar,
+                                    yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
         }
         if (fetcher=="latlon")
         {
-            fetchLatLonStation(dtoken,btype,nHours,pLat,pLon,radius,limit,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            fetchLatLonStation(dtoken,btype,nHours,pLat,pLon,radius,limit,dvar,yeara,montha,
+                               daya,clocka,yearb,monthb,dayb,clockb);
 
         }
         if (fetcher=="box")
         {
-            fetchBboxStation(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+            fetchBboxStation(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,
+                             yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
             //bbox is the following
             // lower left to upper right
         }
@@ -2620,5 +2663,6 @@ void pointInitialization::stationCliCaller(bool station_fetch, std::string stati
         }
         }
     }
+//    cout<<wastedHours<<endl;
     cout<<"WIP!"<<endl;
     }

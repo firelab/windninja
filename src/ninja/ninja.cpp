@@ -3355,6 +3355,18 @@ void ninja::set_upEntrainmentCoeff(double coeff)
 }
 #endif
 
+void ninja::set_stationFetch(bool flag,int nHours)
+{
+    cout<<"ninja: set_stationFetch==True"<<endl;
+//    cout<<nHours<<endl;
+    input.stationFetch=flag;
+    pointInitialization *point;
+    point->fetchAutoBbox(input.dem,nHours);
+//    point->fetchAutoBbox(point->);
+}
+
+
+
 #ifdef FRICTION_VELOCITY
 void ninja::set_frictionVelocityFlag(bool flag)
 {

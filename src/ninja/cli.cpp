@@ -1028,6 +1028,7 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
             {
+                windsim.setStationFlag(vm["fetch_station"].as<bool>(),vm["forecast_duration"].as<int>());
                 pointInitialization *station;
                 station->stationCliCaller( vm["fetch_station"].as<bool>(),
                         vm["fetch_station_name"].as<std::string>(),

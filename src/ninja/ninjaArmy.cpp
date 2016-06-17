@@ -872,6 +872,23 @@ void ninjaArmy::setSize( int nSize, bool momentumFlag )
 #endif
     }
 }
+
+int ninjaArmy::setStationFlag(bool flag,int nHours)
+{
+    if (flag==true)
+        cout<<"ninjaArmy: setStationFlag: flag==true"<<endl;
+    ninjas[0]->set_stationFetch(flag,nHours);
+        pointInitialization *point;
+//        point->fetchAutoBbox(ninjas[0]->input.dem.AsciiGrid);
+}
+//int ninjaArmy::setForecastDuration(int nHours)
+//{
+//    ninjas[0]->
+//}
+
+
+
+
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/

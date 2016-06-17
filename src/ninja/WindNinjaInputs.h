@@ -140,6 +140,7 @@ public:
     double inputWindHeight;		//height of input wind above the top of the vegetation (always stored in meters!)
     lengthUnits::eLengthUnits outputWindHeightUnits;	//units of outputWindHeight when read in (always stored in meters!)
     double outputWindHeight;		//height of output wind above the top of the vegetation (always stored in meters!)
+    bool stationFetch;
     std::vector<wxStation> stations;		//array of weather stations used in point initialization
     std::string wxStationFilename;	//filename of a weather station(s) file
     std::vector<wxStation> stationsScratch;		//scratch space for a copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
