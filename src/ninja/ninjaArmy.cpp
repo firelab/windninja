@@ -135,51 +135,6 @@ int ninjaArmy::getSize()
 }
 
 /**
- * @brief Fetches a weather model forecast from the Internet
- *
- * @param modelType Type of weather model to fetch.
- * @param nDays Number of forecast days to fetch.
- *
- * @return ????
- */
-std::string ninjaArmy::fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName)
-{
-    std::cout << "Downloading the weather forecast file...\n";
-    if(modelType == ninjaArmy::ncepNdfd)
-    {
-        ncepNdfdInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else if(modelType == ninjaArmy::ncepNamSurf)
-    {
-        ncepNamSurfInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else if(modelType == ninjaArmy::ncepRapSurf)
-    {
-        ncepRapSurfInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else if(modelType == ninjaArmy::ncepDgexSurf)
-    {
-        ncepDgexSurfInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else if(modelType == ninjaArmy::ncepNamAlaskaSurf)
-    {
-        ncepNamAlaskaSurfInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else if(modelType == ninjaArmy::ncepGfsSurf)
-    {
-        ncepGfsSurfInitialization model;
-        return model.fetchForecast(demFileName, nHours);
-    }
-    else
-        throw std::runtime_error("Can't determine weather model forecast type to download.");
-}
-
-/**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
  * @param forecastFilename Name of forecast file.
@@ -204,7 +159,6 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         
         model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
         
-        
         ninjas.resize(wxList.size());
         
         for(unsigned int i = 0; i < wxList.size(); i++)
@@ -224,7 +178,6 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         }       
         delete model;
     }
-    
     
     //Factory function that identifies the type of forecast file and makes appropriate class.
     else{
