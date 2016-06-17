@@ -873,22 +873,6 @@ void ninjaArmy::setSize( int nSize, bool momentumFlag )
     }
 }
 
-int ninjaArmy::setStationFlag(bool flag,int nHours)
-{
-    if (flag==true)
-        cout<<"ninjaArmy: setStationFlag: flag==true"<<endl;
-    ninjas[0]->set_stationFetch(flag,nHours);
-        pointInitialization *point;
-//        point->fetchAutoBbox(ninjas[0]->input.dem.AsciiGrid);
-}
-//int ninjaArmy::setForecastDuration(int nHours)
-//{
-//    ninjas[0]->
-//}
-
-
-
-
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
@@ -1080,6 +1064,15 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->readInputFile() );
 }
+
+/*-----------------------------------------------------------------------------
+ * Station Fetch Methods 
+ *-----------------------------------------------------------------------------*/
+int ninjaArmy::setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_stationFetchFlag( flag ) );
+}
+
 /*-----------------------------------------------------------------------------
  *  Simulation Parameter Methods
  *-----------------------------------------------------------------------------*/

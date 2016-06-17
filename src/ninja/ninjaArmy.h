@@ -223,13 +223,7 @@ public:
     */
     int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
-
-    int setStationFlag(bool flag, int nHours);
-//    int setForecastDuration(int nHours);
-
-
-
-
+    
     /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/
@@ -395,7 +389,6 @@ public:
     /**
     * \brief Set the output points filename for a ninja
     *
-    *
     * \param nIndex index of a ninja
     * \param filename location of the output points file
     * \return errval Returns NINJA_SUCCESS upon success
@@ -405,7 +398,6 @@ public:
     /**
     * \brief Enable/disable output points for a ninja
     *
-    *
     * \param nIndex index of a ninja
     * \param flag Enables output points if true, disables if false
     * \return errval Returns NINJA_SUCCESS upon success
@@ -414,6 +406,20 @@ public:
                              char ** papszOptions=NULL);
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
+
+    /*-----------------------------------------------------------------------------
+     * Station Fetch Methods 
+     *-----------------------------------------------------------------------------*/
+
+    /**
+    * \brief Enable/disable weather station fetching 
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables station fetch if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
     /*-----------------------------------------------------------------------------
      *  Simulation Parameter Methods
      *-----------------------------------------------------------------------------*/

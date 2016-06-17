@@ -3355,18 +3355,6 @@ void ninja::set_upEntrainmentCoeff(double coeff)
 }
 #endif
 
-void ninja::set_stationFetch(bool flag,int nHours)
-{
-    cout<<"ninja: set_stationFetch==True"<<endl;
-//    cout<<nHours<<endl;
-    input.stationFetch=flag;
-    pointInitialization *point;
-    point->fetchAutoBbox(input.dem,nHours);
-//    point->fetchAutoBbox(point->);
-}
-
-
-
 #ifdef FRICTION_VELOCITY
 void ninja::set_frictionVelocityFlag(bool flag)
 {
@@ -4146,6 +4134,16 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
     input.hSpdMemDs = hSpdMemDs;
     input.hDirMemDs = hDirMemDs;
     input.hDustMemDs = hDustMemDs;
+}
+
+/**
+ * Sets the flag indicating whether station fetch is on or off 
+ * @param flag true if station fetch is enbaled, otherwise false 
+ */
+void ninja::set_stationFetchFlag(bool flag)
+{
+    cout<<"ninja: set_stationFetch=="<<flag<<endl;
+    input.stationFetch=flag;
 }
 
 /**

@@ -250,10 +250,9 @@ public:
     void set_wxModelFilename(const std::string& forecast_initialization_filename);	//sets the surface wind field initialization file (such as NDFD, etc.)
     void set_wxStationFilename(std::string station_filename);	//sets the weather station(s) filename (for use in point initialization)
     void set_wxStations(std::vector<wxStation> &wxStations);
-    //stationFetch
-    void set_stationFetch(bool flag,int nHours);
-//    void set_ForecastDuraction(int nHours);
-    //stationFetch
+//stationFetch
+    void set_stationFetchFlag( bool flag );
+//stationFetch
     std::vector<wxStation> get_wxStations();
     void set_meshResChoice( std::string choice );
     void set_meshResChoice( const Mesh::eMeshChoice );
