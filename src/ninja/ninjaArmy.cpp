@@ -994,11 +994,6 @@ int ninjaArmy::setOutputPointsFilename( const int nIndex, const std::string file
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputPointsFilename( filename ) );
 }
-/*  couldn't find equivalent in ninja.cpp, maybe still in windninjainputs?? */
-int ninjaArmy::setOutputPointsFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
- return 0;
-}
 
 int ninjaArmy::readInputFile( const int nIndex, const std::string filename, char ** papszOptions )
 {

@@ -395,16 +395,7 @@ public:
     */
     int setOutputPointsFilename( const int nIndex, const std::string filename,
                                 char **papszOptions=NULL);
-    /**
-    * \brief Enable/disable output points for a ninja
-    *
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables output points if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setOutputPointsFlag( const int nIndex, const bool flag,
-                             char ** papszOptions=NULL);
+
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
     /*-----------------------------------------------------------------------------
