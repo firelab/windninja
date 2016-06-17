@@ -2540,49 +2540,63 @@ void pointInitialization::newAuto(AsciiGrid<double> &dem)
 
 }
 
-void pointInitialization::fetchAutoBbox(AsciiGrid<double> input, int nHours)
+/**@brief Builds the time list for a pointInitialization run.
+ *
+ * @param startYear Start year for the simulation.
+ * @param startMonth Start month for the simulation.
+ * @param startDay Start day for the simulation.
+ * @param startHour Start hour for the simulation.
+ * @param startMinute Start minute for the simulation.
+ * @param endYear End year for the simulation.
+ * @param endMonth End month for the simulation.
+ * @param endDay End day for the simulation.
+ * @param endHour End hour for the simulation.
+ * @param endMinute End minute for the simulation.
+ * @param nTimeSteps Number of time steps for the simulation.
+ * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
+ * @return Vector of datetimes in UTC.
+ */
+std::vector<boost::local_time::local_date_time>
+pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
+                                        int startHour, int startMinute, int endYear,
+                                        int endMonth, int endDay, int endHour, int endMinute,
+                                        int nTimeSteps, std::string timeZone )
+{
+    std::vector<boost::local_time::local_date_time> timeList;
+
+    //fetchStationFromBbox needs times in UTC
+    //start/end times input by user are in timeZone, so convert to UTC here 
+
+    return timeList;
+}
+
+/**@brief Fetches station data from bounding box.
+ *
+ * @param stationFilename Filename/path where the station csv will be written.
+ * @param demFile Filename/path to the DEM on disk.
+ * @param timeList Vector of datetimes in UTC for the simulation.
+ */
+void pointInitialization::fetchStationFromBbox(std::string stationFilename,
+                                    std::string demFile, 
+                                    std::vector<boost::local_time::local_date_time> timeList) 
 {
     cout<<"accessed the function"<<endl;
-    cout<<"forecast duration: "<<nHours<<endl;
 
     string dummyLLLat="46.71915";
     string dummyLLLon="-115.09250";
     string dummyURLat="47.29879";
     string dummyURLon="-110.755519";
 
-    const char* lmUrl=BuildBboxLatest(dtoken,dummyLLLat,dummyLLLon,dummyURLat,dummyURLon,dvar,nHours);
-    cout<<lmUrl<<endl;
+//    const char* lmUrl=BuildBboxLatest(dtoken,dummyLLLat,dummyLLLon,dummyURLat,dummyURLon,dvar,nHours);
+//    cout<<lmUrl<<endl;
 
-    const char* csvname="automatica.csv";
+    //const char* csvname="automatica.csv";
 
 //    hDS=OGROpen(lmUrl,0,NULL);
 //    if (hDS==NULL)
 //        printf("miserable failure \n");
 //    hLayer=OGR_DS_GetLayer(hDS,0);
 //    OGR_L_ResetReading(hLayer);
-
-
-
-
-
-
-
-
-    cout<<input.get_xllCorner()<<endl;
-    cout<<input.get_yllCorner()<<endl;
-
-    cout<<input.get_xDimension()<<endl;
-    cout<<input.get_yDimension()<<endl;
-
-    cout<<input.get_cellSize()<<endl;
-    cout<<input.get_maxValue()<<endl;
-
-
-
-
-
-
-
 }
 
 void pointInitialization::fetchTest(std::string station_id, int nHours, std::string svar)

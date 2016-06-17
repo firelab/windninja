@@ -318,25 +318,29 @@ int windNinjaCLI(int argc, char* argv[])
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
 //STATION_FETCH
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
+                ("fetch_station_filename", po::value<std::string>(), "path/filename where the downloaded station file will be written")
                 ("fetch_station_name", po::value<std::string>(), "station identifier")
-                ("latest",po::value<bool>(),"get latest data")
-                ("fetch_type",po::value<std::string>(),"type of fetch")
-                ("radius",po::value<std::string>(),"radius of fetch")
-                ("station_limit",po::value<std::string>(),"limit number of stations for rad/latlon")
-                ("point_latitude",po::value<std::string>(),"latitude component for lat/lon")
-                ("point_longitude",po::value<std::string>(),"longitude component for lat/lon")
-                ("box_lower_left_latitude",po::value<std::string>(),"bbox LL lat coord")
-                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
-                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
-                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
-                ("time_1_yr",po::value<std::string>(),"initial time year")
-                ("time_1_mo",po::value<std::string>(),"initial time month")
-                ("time_1_day",po::value<std::string>(),"initial time day")
-                ("time_1_clock",po::value<std::string>(),"initial time clock")
-                ("time_2_yr",po::value<std::string>(),"final time year")
-                ("time_2_mo",po::value<std::string>(),"final time month")
-                ("time_2_day",po::value<std::string>(),"final time day")
-                ("time_2_clock",po::value<std::string>(),"final time clock")
+//                ("latest",po::value<bool>(),"get latest data")
+//                ("fetch_type",po::value<std::string>(),"type of fetch")
+//                ("radius",po::value<std::string>(),"radius of fetch")
+//                ("station_limit",po::value<std::string>(),"limit number of stations for rad/latlon")
+//                ("point_latitude",po::value<std::string>(),"latitude component for lat/lon")
+//                ("point_longitude",po::value<std::string>(),"longitude component for lat/lon")
+//                ("box_lower_left_latitude",po::value<std::string>(),"bbox LL lat coord")
+//                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
+//                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
+//                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
+                ("start_year",po::value<std::string>(),"start year for simulation")
+                ("start_month",po::value<std::string>(),"start month for simulation")
+                ("start_day",po::value<std::string>(),"start day for simulation")
+                ("start_hour",po::value<std::string>(),"start hour for simulation")
+                ("start_minute",po::value<std::string>(),"start minute for simulation")
+                ("end_year",po::value<std::string>(),"end year for simulation")
+                ("end_month",po::value<std::string>(),"end month for simulation")
+                ("end_day",po::value<std::string>(),"end day for simulation")
+                ("end_hour",po::value<std::string>(),"end hour for simulation")
+                ("end_minute",po::value<std::string>(),"end minute for simulation")
+                ("number_time_steps",po::value<std::string>(),"number of timesteps for simulation")
 
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
@@ -954,31 +958,63 @@ int windNinjaCLI(int argc, char* argv[])
         }
 //STATION_FETCH
         //---------------------------------------------------------------------
-        // Make army for pointInitialization if necessary 
+        // Make army for pointInitialization  
         //---------------------------------------------------------------------
         
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
             conflicting_options(vm, "fetch_station", "wx_station_filename");
 
+            std::vector<boost::local_time::local_date_time> timeList;
+
             if(vm.count("fetch_station")) //download station and make appropriate size ninjaArmy
             {
-                return(0); //temporary for STATION_FETCH
+                option_dependency(vm, "fetch_station", "fetch_station_filename");
+                option_dependency(vm, "fetch_station", "start_year");
+                option_dependency(vm, "fetch_station", "start_month");
+                option_dependency(vm, "fetch_station", "start_day");
+                option_dependency(vm, "fetch_station", "start_hour");
+                option_dependency(vm, "fetch_station", "start_minute");
+                option_dependency(vm, "fetch_station", "end_year");
+                option_dependency(vm, "fetch_station", "end_month");
+                option_dependency(vm, "fetch_station", "end_day");
+                option_dependency(vm, "fetch_station", "end_hour");
+                option_dependency(vm, "fetch_station", "end_minute");
+                option_dependency(vm, "fetch_station", "number_time_steps");
+                
+                timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                     vm["start_month"].as<int>(),
+                                                     vm["start_day"].as<int>(),
+                                                     vm["start_hour"].as<int>(),
+                                                     vm["start_minute"].as<int>(),
+                                                     vm["end_year"].as<int>(),
+                                                     vm["end_month"].as<int>(),
+                                                     vm["end_day"].as<int>(),
+                                                     vm["end_hour"].as<int>(),
+                                                     vm["end_minute"].as<int>(),
+                                                     vm["number_time_steps"].as<int>(),
+                                                     osTimeZone );
                 try
                 {
-                    //windsim.makeStationArmy();
+                    pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
+                                                            vm["elevation_file"].as<std::string>(),
+                                                            timeList );
+
+                    //make the army for a fetched station
+                    windsim.makeStationArmy( timeList );
                 }
-                catch(... )
+                catch(...)
                 {
                     cout << "Problem fetching station." << "\n";
                     return -1;
                 }
-            }
-
-            if(vm.count("wx_station_filename"))   //if a station file already exists
+            }        
+            else if(vm.count("wx_station_filename"))   //if a station file already exists
             {
-                windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
+                //make the army for a user-supplied station
+                windsim.makeStationArmy( timeList );
             }
+            return(0); //temporary for STATION_FETCH
         }
 
 //        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))

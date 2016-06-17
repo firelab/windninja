@@ -135,6 +135,16 @@ int ninjaArmy::getSize()
 }
 
 /**
+ * @brief Makes an army (array) of ninjas for a point initialization run.
+ *
+ * @param timeList Vector of times.
+ */
+void ninjaArmy::makeStationArmy( std::vector<boost::local_time::local_date_time> timeList )
+{
+
+}
+
+/**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
  * @param forecastFilename Name of forecast file.

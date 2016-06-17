@@ -76,7 +76,16 @@ class pointInitialization : public initialize
         void fetchPointRadiusStation(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
         void fetchLatLonStation(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void fetchBboxStation(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-        void fetchAutoBbox(AsciiGrid<double> input, int nHours);
+        
+        static void fetchStationFromBbox(std::string stationFilename,
+                                    std::string demFile, 
+                                    std::vector<boost::local_time::local_date_time> timeList);
+
+        static std::vector<boost::local_time::local_date_time> getTimeList( int startYear, int startMonth,
+                                                int startDay, int startHour, int startMinute, int endYear,
+                                                int endMonth, int endDay, int endHour, int endMinute,
+                                                int nTimeSteps, std::string timeZone );
+
         void newAuto(AsciiGrid<double> &dem);
         int storeHour(int nHours);
 
