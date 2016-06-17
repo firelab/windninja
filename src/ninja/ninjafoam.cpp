@@ -209,6 +209,10 @@ bool NinjaFoam::simulate_wind()
         }
     }
 
+    #ifdef _OPENMP
+    endStlConversion = omp_get_wtime();
+    #endif
+
     /*-------------------------------------------------------------------*/
     /*  write output stl and run surfaceCheck on original stl            */
     /*-------------------------------------------------------------------*/
@@ -233,15 +237,11 @@ bool NinjaFoam::simulate_wind()
 
     checkCancel();
 
-    #ifdef _OPENMP
-    endStlConversion = omp_get_wtime();
-    #endif
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
         return true;
     }
-
 
     /*-------------------------------------------------------------------*/
     /*  write necessary mesh file(s)                                     */
@@ -336,8 +336,6 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* Solve for the flow field                                          */
     /*-------------------------------------------------------------------*/
-
-    VSILFILE *fout;
 
     #ifdef _OPENMP
     endInit = omp_get_wtime();
@@ -506,7 +504,6 @@ int NinjaFoam::AddBcBlock(std::string &dataString)
     const char *pszPath =  CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     const char *pszTemplateFile;
     const char *pszPathToFile;
-    const char *pszTemplate;
 
     if(template_ == ""){
         if(gammavalue != ""){
@@ -652,8 +649,6 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
 
 int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
-    int pos;
-    int len;
     char *data;
 
     vsi_l_offset offset;
@@ -706,7 +701,6 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
 
 int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename)
 {
-    int pos;
     char *data;
 
     vsi_l_offset offset;
@@ -1052,7 +1046,7 @@ int NinjaFoam::readLogFile(double &expansionRatio)
     data[offset] = '\0';
 
     std::string s(data);
-    std:string ss;
+    std::string ss;
     int pos, pos2, pos3, pos4, pos5;
     int found;
     pos = s.find("Bounding Box");
@@ -1119,19 +1113,21 @@ int NinjaFoam::readDem(double &expansionRatio)
     
     // get some info from the DEM
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
-    double dx = ( input.dem.get_xllCorner() + input.dem.get_xDimension() ) - input.dem.get_xllCorner();
-    double dy = ( input.dem.get_yllCorner() + input.dem.get_yDimension() ) - input.dem.get_yllCorner();
+    double dx = input.dem.get_xDimension();
+    double dy = input.dem.get_yDimension();
     double xBuffer, yBuffer;
     
-    xBuffer = dx*0.01; // buffers for MDM
-    yBuffer = dy*0.01;
+    xBuffer = input.dem.get_cellSize(); // buffers for MDM
+    yBuffer = input.dem.get_cellSize();
     
+    double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
+
     bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
     bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-    bbox.push_back( input.dem.get_maxValue() * 1.1 ); //zmin (should be above highest point in DEM for MDM)
+    bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
     bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + max((0.1 * max(dx, dy)), (dz + 0.1 *dz)) ); //zmax
+    bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
 
     double meshVolume;
     double cellVolume;
@@ -1181,7 +1177,7 @@ int NinjaFoam::readDem(double &expansionRatio)
     CPLDebug("NINJAFOAM", "xmax = %f", bbox[3]);
     CPLDebug("NINJAFOAM", "ymax = %f", bbox[4]);
     CPLDebug("NINJAFOAM", "zmax = %f", bbox[5]);
-    
+
     return NINJA_SUCCESS;
 }
 

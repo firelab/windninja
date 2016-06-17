@@ -211,7 +211,7 @@ if(WITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
 
 # OpenFOAM related options
-option(NINJAFOAM "Enable OpenFOAM solver" OFF)
+option(NINJAFOAM "Enable OpenFOAM solver" ON)
 if(NINJAFOAM)
     add_definitions(-DNINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
@@ -242,7 +242,7 @@ if(EMISSIONS)
     set(FRICTION_VELOCITY ON CACHE BOOL "Enable friction velocity calculations" FORCE)
 endif(EMISSIONS)
 
-option(STABILITY "Enable atmospheric stability model" OFF)
+option(STABILITY "Enable atmospheric stability model" ON)
 if(STABILITY)
     add_definitions(-DSTABILITY)
 endif(STABILITY)

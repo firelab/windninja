@@ -97,7 +97,7 @@ std::vector<std::string> ncepHrrrSurfInitialization::getVariableList()
     varList.push_back( "2t" );
     varList.push_back( "10v" );
     varList.push_back( "10u" );
-    varList.push_back( "gh" ); // Geopotential cloud top height
+    varList.push_back( "tcc" ); // Total cloud cover 
     return varList;
 }
 
@@ -151,7 +151,6 @@ void ncepHrrrSurfInitialization::checkForValidData()
 
 bool ncepHrrrSurfInitialization::identify( std::string fileName )
 {
-
     bool identified = true;
 
     if( fileName.find("nam") != fileName.npos ) {
@@ -190,10 +189,14 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
             gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
             bandName = gc;
             if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-                identified = false;
+                poBand = srcDS->GetRasterBand( 53 ); //2013 files have different structure
+                gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
+                bandName = gc;
+                if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
+                    identified = false;
+                }
             }
         }
-
     }
     GDALClose( (GDALDatasetH)srcDS );
 
@@ -227,10 +230,8 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 "Bad forecast file" );
     }
 
-    GDALRasterBand *poBand = srcDS->GetRasterBand( 49 );
+    GDALRasterBand *poBand;
     const char *gc;
-    gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-    std::string bandName( gc );
 
     //get time list
     std::vector<boost::local_time::local_date_time> timeList( getTimeList( input.ninjaTimeZone ) );
@@ -242,41 +243,73 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     {
         if(input.ninjaTime == timeList[i])
         {
-            //check which HRRR format we have
-            if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){ //if band 49 isn't u10, it's either 2010 or 2012 format
-                GDALRasterBand *poBand = srcDS->GetRasterBand( 50 );
-                const char *gc;
+            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            { 
+                poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
                 std::string bandName( gc );
-                if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){ //if band 50 isn't u10, it's the 2010 format
-                    bandList.push_back( 29 ); // 2t
-                    bandList.push_back( 34 ); // 10v
-                    bandList.push_back( 33 );  // 10u
-                    bandList.push_back( 52 ); // geopotential height at cloud top
-                }
-                else{
-                    bandList.push_back( 45 ); // 2t
-                    bandList.push_back( 51 ); // 10v
-                    bandList.push_back( 50 );  // 10u
-                    bandList.push_back( 78 ); // geopotential height at cloud top
+
+                if( bandName.find( "Temperature [K]" ) != bandName.npos ){
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "2-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 2t 
+                        break;
+                    }
                 }
             }
-            else{ //otherwise, should be 2011 format, but check for u10 band to be sure
-                poBand = srcDS->GetRasterBand( 44 );
+            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            { 
+                poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-                bandName = gc;
-                if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-                    CPLDebug( "ncepHRRRSurfaceInitialization::identify()",
-                              "Can't find the u-10 band in the forecast file." );
+                std::string bandName( gc );
+
+                if( bandName.find( "v-component of wind [m/s]" ) != bandName.npos ){
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "10-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 10v
+                        break;
+                    }
                 }
-                bandList.push_back( 44 ); // 2t
-                bandList.push_back( 50 ); // 10v
-                bandList.push_back( 49 );  // 10u
-                bandList.push_back( 73 ); // geopotential height at cloud top
             }
-            break;
+            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            { 
+                poBand = srcDS->GetRasterBand( j );
+                gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
+                std::string bandName( gc );
+
+                if( bandName.find( "u-component of wind [m/s]" ) != bandName.npos ){
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "10-HTGL" ) != bandName.npos ){
+                        bandList.push_back( j );  // 10u
+                        break;
+                    }
+                }
+            }
+            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            { 
+                poBand = srcDS->GetRasterBand( j );
+                gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
+                std::string bandName( gc );
+
+                if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
+                    gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
+                    std::string bandName( gc );
+                    if( bandName.find( "0-RESERVED" ) != bandName.npos ){
+                        bandList.push_back( j );  // Total cloud cover in % 
+                        break;
+                    }
+                }
+            }
         }
     }
+
+    CPLDebug("HRRR", "2t: bandList[0] = %d", bandList[0]);
+    CPLDebug("HRRR", "10v: bandList[1] = %d", bandList[1]);
+    CPLDebug("HRRR", "10u: bandList[2] = %d", bandList[2]);
+    CPLDebug("HRRR", "tcc: bandList[3] = %d", bandList[3]);
 
     if(bandList.size() < 4)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
@@ -361,7 +394,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 uGrid.replaceNan( -9999.0 );
             }
         }
-        else if( varList[i] == "gh" ) {
+        else if( varList[i] == "tcc" ) {
             GDAL2AsciiGrid( wrpDS, i+1, cloudGrid );
             if( CPLIsNan( dfNoData ) ) {
                 cloudGrid.set_noDataValue( -9999.0 );

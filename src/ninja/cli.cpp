@@ -400,7 +400,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
-                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
+                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
                 ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
                 ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
                 ("input_dir_grid", po::value<std::string>(), "path/filename of input raster dir file (*.asc)")
@@ -830,6 +830,9 @@ int windNinjaCLI(int argc, char* argv[])
         int bFillNoData =
             CSLTestBoolean( CPLGetConfigOption( "NINJA_FILL_DEM_NO_DATA",
                                                 "NO" ) );
+#ifdef MOBILE_APP
+        bFillNoData = TRUE;
+#endif //MOBILE_APP
         /* If we downloaded from our fetcher, we fill */
         if( vm.count("fetch_elevation" ) )
             bFillNoData = TRUE;
@@ -890,7 +893,8 @@ int windNinjaCLI(int argc, char* argv[])
                 vm["initialization_method"].as<std::string>() != string("griddedInitialization"))
         {
             cout << "'initialization_method' is not a known type.\n";
-            cout << "Choices are domainAverageInitialization, pointInitialization, or wxModelInitialization.\n";
+            cout << "Choices are domainAverageInitialization, pointInitialization,\
+                     wxModelInitialization, or griddedInitialization.\n";
             return -1;
         }
         

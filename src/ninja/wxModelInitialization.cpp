@@ -1846,7 +1846,25 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
 
     status = nc_open(wxModelFileName.c_str(), 0, &ncid);
     status = nc_inq(ncid, &ndims, &nvars, &ngatts, &unlimdimid);
+    /*
+    ** If we are looking for just a 'time' var, it may or may not be 'time'.
+    ** In order to bandage #149, we'll check for time, time0, time1, time2...
+    */
     status = nc_inq_varid(ncid, pszVariable, &varid);
+    if (status != NC_NOERR && EQUALN(pszVariable, "time", strlen("time"))) {
+        const char *pszT = NULL;
+        int iSuffix = 0;
+        while (status != NC_NOERR && iSuffix < 5) {
+            pszT = CPLSPrintf("time%d", iSuffix);
+            status = nc_inq_varid(ncid, pszT, &varid);
+            iSuffix++;
+        }
+    }
+    if (status != NC_NOERR) {
+        nc_close(ncid);
+        throw badForecastFile(CPLSPrintf(
+            "Could not identify time dimension for variable: %s", pszVariable));
+    }
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
     for(int i = 0; i < varndims; i++) {
         status = nc_inq_dimname(ncid, vardimids[i], timename);
@@ -1932,4 +1950,3 @@ std::string wxModelInitialization::getForecastReadable( const char bySwapWithSpa
     free( s );
     return os;
 }
-
