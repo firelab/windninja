@@ -1,0 +1,212 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.2.0                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      RASProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+RASModel    myKEpsilonNonEq;
+
+turbulence          on;
+
+printCoeffs         on;
+
+laminarCoeffs
+{
+}
+       myKEpsilonNonEqCoeffs
+        {
+            Cmu         0.09;
+            C1          1.44;
+            C2          1.92;
+            C3          -0.33;  // only for compressible
+            alphak      1.0;    // only for compressible
+            alphaEps    0.76923;
+            alphah      1.0;    // only for compressible
+        }
+kEpsilonCoeffs
+{
+    Cmu              0.09; // 0.09;
+    C1               1.44; //1.44;
+    C2               1.92; //1.92;
+    alphak           1.0; //1.0;
+    alphaEps         0.76923; //0.76923;
+}
+
+RNGkEpsilonCoeffs
+{
+    Cmu              0.0845; //1.0; 
+    C1               1.142; //1.0;
+    C2               1.68; //1.0;
+    alphak           1.39; //1.0;
+    alphaEps         1.39; //1.0; 
+    eta0             4.38; //1.0; 
+    beta             0.012; //1.0;
+}
+
+realizableKECoeffs
+{
+    Cmu              1.0; //0.09;
+    A0               1.0; //4.0;
+    C2               1.0; //1.9;
+    alphak           1.0; //1;
+    alphaEps         1.0; //0.833333;
+}
+
+kOmegaSSTCoeffs
+{
+    alphaK1          1.0; //0.85034;
+    alphaK2          1.0; //1.0;
+    alphaOmega1      1.0; //0.5;
+    alphaOmega2      1.0; //0.85616;
+    gamma1           1.0; //0.5532;
+    gamma2           1.0; //0.4403;
+    beta1            1.0; //0.0750;
+    beta2            1.0; //0.0828;
+    betaStar         1.0; //0.09;
+    a1               1.0; //0.31;
+    c1               1.0; //10;
+    Cmu              1.0; //0.09;
+}
+
+SpalartAllmarasCoeffs
+{
+    alphaNut         1.0; //1.5;
+    Cb1              1.0; //0.1355;
+    Cb2              1.0; //0.622;
+    Cw2              1.0; //0.3;
+    Cw3              1.0; //2;
+    Cv1              1.0; //7.1;
+    Cv2              1.0; //5.0;
+}
+
+wallFunctionCoeffs
+{
+    kappa            0.4187;
+    E                9.0;
+}
+
+// Non supported Models
+NonlinearKEShihCoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphak           1;
+    alphaEps         0.76932;
+    A1               1.25;
+    A2               1000;
+    Ctau1            -4;
+    Ctau2            13;
+    Ctau3            -2;
+    alphaKsi         0.9;
+}
+
+LienCubicKECoeffs
+{
+    C1               1.44;
+    C2               1.92;
+    alphak           1;
+    alphaEps         0.76923;
+    A1               1.25;
+    A2               1000;
+    Ctau1            -4;
+    Ctau2            13;
+    Ctau3            -2;
+    alphaKsi         0.9;
+}
+
+QZetaCoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphaZeta        0.76923;
+    anisotropic     no;
+}
+
+LaunderSharmaKECoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphaEps         0.76923;
+}
+
+LamBremhorstKECoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphaEps         0.76923;
+}
+
+LienCubicKELowReCoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphak           1;
+    alphaEps         0.76923;
+    A1               1.25;
+    A2               1000;
+    Ctau1            -4;
+    Ctau2            13;
+    Ctau3            -2;
+    alphaKsi         0.9;
+    Am               0.016;
+    Aepsilon         0.263;
+    Amu              0.00222;
+}
+
+LienLeschzinerLowReCoeffs
+{
+    Cmu              0.09;
+    C1               1.44;
+    C2               1.92;
+    alphak           1;
+    alphaEps         0.76923;
+    Am               0.016;
+    Aepsilon         0.263;
+    Amu              0.00222;
+}
+
+LRRCoeffs
+{
+    Cmu              0.09;
+    Clrr1            1.8;
+    Clrr2            0.6;
+    C1               1.44;
+    C2               1.92;
+    Cs               0.25;
+    Ceps             0.15;
+    alphaEps         0.76923;
+}
+
+LaunderGibsonRSTMCoeffs
+{
+    Cmu              0.09;
+    Clg1             1.8;
+    Clg2             0.6;
+    C1               1.44;
+    C2               1.92;
+    C1Ref            0.5;
+    C2Ref            0.3;
+    Cs               0.25;
+    Ceps             0.15;
+    alphaEps         0.76923;
+    alphaR           1.22;
+}
+
+
+
+// ************************************************************************* //

@@ -113,12 +113,8 @@ public:
         ncepGfsSurf
     };
 
-    std::string fetch_wxForecast(eWxModelType modelType, int nHours, std::string demFileName);
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
-#ifdef NINJAFOAM
-    bool startNinjaFoamRuns(int numProcessors);
-#endif
     bool startRuns(int numProcessors);
     bool startFirstRun();
 
@@ -295,45 +291,6 @@ public:
     int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
-    /*-----------------------------------------------------------------------------
-     *  Scalar Methods
-     *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-    /**
-    * \brief Enable/disable scalar transport for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables scalar transport if ture, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarTransportFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    /**
-    * \brief Set source strength of scalar for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param source source strength of scalar in g/s (check this...)
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarSourceStrength( const int nIndex, const double source, char ** papszOptions=NULL );
-    /**
-    * \brief Set the x-coordinate of scalar source for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param coord Longitude of source location
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarXcoord( const int nIndex, const double coord, char ** papszOptions=NULL );
-    /**
-    * \brief Set the y-coordinate of scalar source for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param coord Latitude of source location
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setScalarYcoord( const int nIndex, const double coord, char ** papszOptions=NULL );
-
-#endif //SCALAR
-
 #ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFOAM Methods
@@ -438,16 +395,7 @@ public:
     */
     int setOutputPointsFilename( const int nIndex, const std::string filename,
                                 char **papszOptions=NULL);
-    /**
-    * \brief Enable/disable output points for a ninja
-    *
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables output points if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setOutputPointsFlag( const int nIndex, const bool flag,
-                             char ** papszOptions=NULL);
+
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
     /*-----------------------------------------------------------------------------
@@ -495,6 +443,24 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded speed file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal
+    *
+    * \param nIndex index of a ninja
+    * \param stlFile path/filename of gridded direction file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions=NULL );
+    
     /**
     * \brief Set the input speed with units of a ninja
     *
@@ -1134,7 +1100,21 @@ public:
     /* ----------------------------------------------------------------------------*/
     int setPDFLineWidth( const int nIndex, const float linewidth, char ** papszOptions=NULL );
 
+    /**
+     * \brief Set the background image of the PDF (default is attempt at topo
+     *        map)
+     *
+     * \param nIndex index of a ninja
+     * \param eType 0->hillshade, 1->topo map
+     * \return NINJA_SUCCESS if valid type is provided.
+     */
+    int setPDFBaseMap( const int nIndex,
+                       const int linewidth );
+
     int setPDFDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
+
+    int setPDFSize( const int nIndex, const double height, const double width,
+                    const unsigned short dpi );
     /**
     * \brief Returns the output path of a ninja
     *
@@ -1161,8 +1141,19 @@ protected:
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
-    
-    
+
+    /*
+    ** This function initializes various data for the lifetime of the
+    ** ninjaArmy.  This should be used for various tasks, such as downloading
+    ** the color relief for the background of the PDF file.  It is the same for
+    ** all runs, is the same for all runs.
+    */
+    void initLocalData(void);
+    void destoryLocalData(void);
+    void copyLocalData( const ninjaArmy &A );
+
+private:
+    char *pszTmpColorRelief;
 };
 
 #endif /* NINJA_ARMY_H */

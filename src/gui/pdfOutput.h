@@ -1,10 +1,8 @@
 /******************************************************************************
  *
- * $Id:$
- *
- * Project:  WindNinja
- * Purpose:  Class for storing scalar transport info.
- * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
+ * Project:  WindNinja Qt GUI
+ * Purpose:  PDF output selection widgetx
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -27,41 +25,50 @@
  *
  *****************************************************************************/
 
-#ifndef SCALAR_TRANSPORT_H
-#define SCALAR_TRANSPORT_H
+#ifndef PDFOUTPUT_H
+#define PDFOUTPUT_H
 
-#include "ascii_grid.h"
-#include "WindNinjaInputs.h"
-#include "mesh.h"
-#include "wn_3dScalarField.h"
-#include "wn_3dVectorField.h"
+#include <QGroupBox>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QLabel>
+#include <QDoubleSpinBox>
+#include <QComboBox>
 
-class scalarTransport
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+
+class pdfOutput : public QWidget
 {
-	public:
-		scalarTransport();	  //Default constructor
-		~scalarTransport();   // Destructor
-		
-        wn_3dScalarField Rx, Ry, Rz;    // eddy diffusivities
-        double volumeSource; // volume source used as source term (H) in govering equation
-        double sourceElemNum; // elemnent number of scalar source (for a point source)
-        
-        void allocate(Mesh const& mesh);
-        void deallocate();
-        
-        void computeDiffusivity(WindNinjaInputs &input,
-                                const Mesh &mesh, 
-                                const wn_3dScalarField &u,
-                                const wn_3dScalarField &v);
+Q_OBJECT
 
+public:
+    pdfOutput(QWidget *parent = 0);
 
-	private:
-        wn_3dScalarField heightAboveGround;
-        wn_3dScalarField windVelocity;
-        wn_3dVectorField velocityGradients;
+    QGroupBox *pdfGroupBox;
+    QGroupBox *vectorGroupBox;
+    QLabel *vectorWidthLabel;
+    QDoubleSpinBox *vectorWidthDoubleSpinBox;
+    QGroupBox *pdfResGroupBox;
+    QDoubleSpinBox *pdfResSpinBox;
+    QRadioButton *pdfMetersRadioButton, *pdfFeetRadioButton;
+    QCheckBox *useMeshResCheckBox;
+    QLabel *backgroundLabel;
+    QComboBox *backgroundComboBox;
 
+    QLabel *sizeLabel;
+    QComboBox *sizeComboBox;
+    QRadioButton *portraitRadioButton;
+    QRadioButton *landscapeRadioButton;
+
+    QHBoxLayout *vectorLayout;
+    QVBoxLayout *optionLayout;
+    QGridLayout *resLayout;
+    QHBoxLayout *backgroundLayout;
+    QVBoxLayout *orientLayout;
+    QHBoxLayout *sizeLayout;
+    QVBoxLayout *pageLayout;
+    QVBoxLayout *mainLayout;
 };
 
-
-
-#endif /* SCALAR_TRANPSORT_H */
+#endif /* PDFOUTPUT_H */

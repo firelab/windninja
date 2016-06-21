@@ -90,11 +90,18 @@ public:
         ASCII
     };
 
+    enum ePDFBaseMap {
+        HILLSHADE,
+        TOPOFIRE
+    };
+
     enum eInitializationMethod{
         noInitializationFlag,			//no initialization, used to check if it has been set or not
         domainAverageInitializationFlag,	//single domain-averaged input speed and direction
         pointInitializationFlag,		//single or multiple point inititialization
-        wxModelInitializationFlag	//Weather forecast model initialization
+        wxModelInitializationFlag,	//Weather forecast model initialization
+        griddedInitializationFlag,  //gridded speed and direction
+        foamInitializationFlag
     };
 
     eVegetation vegetation;
@@ -121,6 +128,8 @@ public:
     /*-----------------------------------------------------------------------------
      *  Input speed/direction Parameters
      *-----------------------------------------------------------------------------*/
+    std::string speedInitGridFilename;  //raster file of gridded directions speeds 
+    std::string dirInitGridFilename;  //raster file of gridded wind directions
     eInitializationMethod initializationMethod;	//method to initialize WindNinja
     std::string forecastFilename;	//name of coarse weather model initialization file (NDFD, NAM, GFS, RUC, etc.)
     velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
@@ -144,11 +153,6 @@ public:
      *  Surface Properties
      *-----------------------------------------------------------------------------*/
     surfProperties surface;		//surface properties data (roughness, albedo, etc...)
-
-    /*-----------------------------------------------------------------------------
-     *  Stability Properties
-     *-----------------------------------------------------------------------------*/
-    //bool stabilityFlag;  //flag specifying if non-neutral stability parameters should be set
 
     /*-----------------------------------------------------------------------------
      *  Diurnal Inputs
@@ -219,9 +223,12 @@ public:
     bool        pdfOutFlag;
     std::string pdfDEMFileName;
     std::string pdfFile;
+    ePDFBaseMap pdfBaseType;
     double      pdfResolution;
     double      pdfLineWidth;
     lengthUnits::eLengthUnits pdfUnits;
+    double pdfWidth, pdfHeight; // in inches
+    unsigned short pdfDPI;
 
     std::string customOutputPath; //user-specified path for output
 
@@ -264,16 +271,6 @@ public:
     double alphaStability;
     bool stabilityFlag;  //flag specifying if non-neutral stability parameters should be set
 #endif
-
-    /*-----------------------------------------------------------------------------
-     *  SCALAR section
-     *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-    bool scalarTransportFlag;  //flag specifiying if scalar transport should be calculated
-    double scalarSourceStrength;
-    double scalarSourceXcoord;  //input long
-    double scalarSourceYcoord;  //input lat
-#endif //SCALAR
 
     std::string outputPointsFilename; //name of file containing output for requested point locations
     std::string inputPointsFilename; // name of file containing locations of specfic points for output

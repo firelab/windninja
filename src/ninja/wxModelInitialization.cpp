@@ -266,14 +266,69 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     double corners[8];
     GDALGetCorners( poDS, corners );
     double maxX, maxY, minX, minY;
+    
+    //max/min of DEM in degrees
     maxX = MAX(corners[0], corners[2]);
     maxY = MAX(corners[1], corners[7]);
     minX = MIN(corners[4], corners[6]);
     minY = MIN(corners[3], corners[5]);
+        
+#ifdef MOBILE_APP
+    CPLDebug("MOBILE_APP", "grid resolution = %f", this->getGridResolution());
+    if(this->getGridResolution() == -1.0){ //if don't know the resolution
+        bounds[0] = maxY + GetWxModelBuffer(maxY - minY);
+        bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
+        bounds[2] = minY - GetWxModelBuffer(maxY - minY);
+        bounds[3] = minX - GetWxModelBuffer(maxX - minX);
+        
+        CPLDebug("MOBILE_APP", "Y buffer = %f", GetWxModelBuffer(maxY - minY));
+        CPLDebug("MOBILE_APP", "X buffer = %f", GetWxModelBuffer(maxX - minX));
+    }
+    else{//compute buffer based on wx grid size
+        double projMaxX = maxX;
+        double projMinX = minX;
+        double projMaxY = maxY;
+        double projMinY = minY;
+    
+        double wxMaxX, wxMaxY, wxMinX, wxMinY;
+        double xBuffer, yBuffer;
+        
+        //convert to meters
+        GDALPointFromLatLon( projMaxX, projMaxY, poDS, "WGS84");
+        GDALPointFromLatLon( projMinX, projMinY, poDS, "WGS84");
+        
+        //buffer 3 times the wx model grid resolution
+        if(this->getGridResolution() > 1.0){ //units are km (projected)
+            wxMaxX = projMaxX + ( this->getGridResolution() * 1000 * 3 );
+            wxMaxY = projMaxY + ( this->getGridResolution() * 1000 * 3 );
+            
+            //convert to degrees
+            GDALPointToLatLon( wxMinX, wxMinY, poDS, "WGS84");
+            GDALPointToLatLon( wxMaxX, wxMaxY, poDS, "WGS84");
+        
+            xBuffer = wxMaxX - maxX; //in degrees
+            yBuffer = wxMaxY - maxY; //in degrees
+        }
+        else{ //units are deg (lat/lon)
+            xBuffer = this->getGridResolution() * 3; //in degrees
+            yBuffer = this->getGridResolution() * 3; //in degrees
+        }
+        
+        CPLDebug("MOBILE_APP", "Y buffer = %f", xBuffer);
+        CPLDebug("MOBILE_APP", "X buffer = %f", yBuffer);
+    
+        bounds[0] = maxY + yBuffer;
+        bounds[1] = maxX + xBuffer;
+        bounds[2] = minY - yBuffer;
+        bounds[3] = minX - xBuffer;
+    }
+#else
     bounds[0] = maxY + GetWxModelBuffer(maxY - minY);
     bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
-    bounds[2] = minY - GetWxModelBuffer(maxX - minX);
+    bounds[2] = minY - GetWxModelBuffer(maxY - minY);
     bounds[3] = minX - GetWxModelBuffer(maxX - minX);
+#endif
+    
     return 0;
 }
 
@@ -289,7 +344,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
 double wxModelInitialization::GetWxModelBuffer(double delta)
 {
     double buffer = delta * 0.2;
-    return buffer > 1.0 ? buffer : 1.0;
+    return buffer > 1.0 ? buffer : 1.0;        
 }
 
 /**
@@ -332,10 +387,6 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     /*
      * Buffer the bounds
      */
-    bounds[0] += 1.0;
-    bounds[1] += 1.0;
-    bounds[2] -= 1.0;
-    bounds[3] -= 1.0;
 
     ComputeWxModelBuffer(poDS, bounds);
 
@@ -1731,6 +1782,12 @@ double wxModelInitialization::GetWindHeight(std::string varName)
         status = nc_get_var1_double(ncid, height_id, var_index, &d);
     }
 
+    if( status != 0 )
+    {
+        std::string err = "Failed to find height for " + varName;
+        throw badForecastFile( err );
+    }
+
     status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
     units = (char*)malloc(unit_len + 1);
     status = nc_get_att_text(ncid, height_id, "units", units);
@@ -1789,7 +1846,25 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
 
     status = nc_open(wxModelFileName.c_str(), 0, &ncid);
     status = nc_inq(ncid, &ndims, &nvars, &ngatts, &unlimdimid);
+    /*
+    ** If we are looking for just a 'time' var, it may or may not be 'time'.
+    ** In order to bandage #149, we'll check for time, time0, time1, time2...
+    */
     status = nc_inq_varid(ncid, pszVariable, &varid);
+    if (status != NC_NOERR && EQUALN(pszVariable, "time", strlen("time"))) {
+        const char *pszT = NULL;
+        int iSuffix = 0;
+        while (status != NC_NOERR && iSuffix < 5) {
+            pszT = CPLSPrintf("time%d", iSuffix);
+            status = nc_inq_varid(ncid, pszT, &varid);
+            iSuffix++;
+        }
+    }
+    if (status != NC_NOERR) {
+        nc_close(ncid);
+        throw badForecastFile(CPLSPrintf(
+            "Could not identify time dimension for variable: %s", pszVariable));
+    }
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
     for(int i = 0; i < varndims; i++) {
         status = nc_inq_dimname(ncid, vardimids[i], timename);
@@ -1875,4 +1950,3 @@ std::string wxModelInitialization::getForecastReadable( const char bySwapWithSpa
     free( s );
     return os;
 }
-

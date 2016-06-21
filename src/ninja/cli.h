@@ -36,10 +36,9 @@
 
 #include "ninjaArmy.h"
 #include "ninja.h"
-#include "version.h"
+#include "ninja_version.h"
 #include "gdal_util.h"
 #include "ninjaUnits.h"
-#include "version.h"
 #include "gdal_util.h"
 #include "fetch_factory.h"
 namespace po = boost::program_options;

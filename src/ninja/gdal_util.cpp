@@ -31,6 +31,36 @@
 
 #include "ninja_conv.h"
 
+/** Fetch the max value of a dataset.
+ * Fetch the max value from any valid GDAL dataset
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @return max value 
+ */
+double GDALGetMax( GDALDataset *poDS )
+{
+    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    double adfMinMax[2];
+
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+    return adfMinMax[1];
+}
+
+/** Fetch the min value of a dataset.
+ * Fetch the min value from any valid GDAL dataset
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @return min value 
+ */
+double GDALGetMin( GDALDataset *poDS )
+{
+    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    double adfMinMax[2];
+
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+
+    return adfMinMax[0];
+}
+
 /** Fetch the center of a domain.
  * Fetch the center of a domain from any valid GDAL dataset
  * @param poDS a pointer to a valid GDAL Dataset
@@ -209,7 +239,7 @@ bool GDALHasNoData( GDALDataset *poDS, int band )
 	poBand->RasterIO( GF_Read, 0, i, ncols, 1, padfScanline, ncols, 1,
 			  GDT_Float64, 0, 0 );
 	for( int j = 0;j < ncols;j++ ) {
-	    if( padfScanline[j] == nDV )
+	    if( CPLIsEqual( (float)padfScanline[j], (float)nDV ) )
             {
 		hasNDV = true;
                 goto done;
@@ -691,13 +721,13 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
 int NinjaOGRContain(const char *pszWkt, const char *pszFile,
                     const char *pszLayer)
 {
-    CPLDebug( "WINDNINJA", "Checking for containment of %s in %s:%s",
-              pszWkt, pszFile, pszLayer );
     int bContains = FALSE;
     if( pszWkt == NULL || pszFile == NULL )
     {
         return FALSE;
     }
+    CPLDebug( "WINDNINJA", "Checking for containment of %s in %s:%s",
+              pszWkt, pszFile, pszLayer ? pszLayer : "" );
     OGRGeometryH hTestGeometry = NULL;
     int err = OGR_G_CreateFromWkt( (char**)&pszWkt, NULL, &hTestGeometry );
     if( hTestGeometry == NULL || err != CE_None )

@@ -41,7 +41,7 @@ void NinjaCheckThreddsData( void *rc )
     }
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     CPLHTTPResult *poResult;
-    poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?thredds=1", NULL );
+    poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?thredds=1", NULL );
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
@@ -73,22 +73,39 @@ int NinjaInitialize()
 {
     GDALAllRegister();
     OGRRegisterAll();
+	int rc = 0;
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
     std::string osGdalData;
-    const char *pszGdalData = CPLGetConfigOption( "GDAL_DATA", NULL );
-    if( pszGdalData == NULL )
-    {
-        osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
-        pszGdalData = CPLGetPath( osGdalData.c_str() );
-        CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-        CPLSetConfigOption( "GDAL_DATA", pszGdalData );
-    }
-    else
-    {
-        CPLDebug( "WINDNINJA", "Setting GDAL_DATA from user environment..." );
-    }
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA to %s", pszGdalData );
+    osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
+    const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+#if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
+    char *pszExecPath;
+    const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
+    const char *pszFoamBinPath = "platforms/linux64mingw-w64DPOpt/bin";
+    const char *pszTmp;
+
+    pszExecPath = (char*)CPLMalloc( 8192 );
+    rc = CPLGetExecPath( pszExecPath, 8192 );
+    /*
+    ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
+    ** and platforms folders
+    */
+    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", CPLGetPath( pszExecPath ) ) );
+
+    /*
+    ** Set the PATH variable to point to the lib and bin folders in the open
+    ** foam installation.
+    */
+    pszTmp = CPLSPrintf( "PATH=%s;%s;%PATH%",
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
+    rc = _putenv( pszTmp );
+    CPLFree( (void*)pszExecPath );
+#endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
+
 #endif
     /*
     ** Set windninja data if it isn't set.
@@ -102,7 +119,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
-    int rc = TRUE;
+    rc = TRUE;
 #ifndef DISABLE_THREDDS_UPDATE
     /*
     ** Disable VSI caching, this breaks nomads downloader if it's on.
@@ -126,7 +143,7 @@ int NinjaInitialize()
         if( rc == TRUE )
         {
             CPLHTTPResult *poResult;
-            poResult = CPLHTTPFetch( "http://marblerye.org/cgi-bin/ninjavisit?visit=1", NULL );
+            poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?visit=1", NULL );
             CPLHTTPDestroyResult( poResult );
         }
     }

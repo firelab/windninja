@@ -35,32 +35,38 @@ const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
 const char * OutputWriter::AM_DIR    = "AM_dir";
 const char * OutputWriter::QGIS_DIR  = "QGIS_dir";
-const char * OutputWriter::OGR_FILE  = "/tmp/out.shp";
-const char * OutputWriter::LEGEND_FILE = "/tmp/legend.bmp";
+
+const double OutputWriter::BOTTOM_MARGIN = 1.5;
+const double OutputWriter::TOP_MARGIN = 0.5;
+const double OutputWriter::SIDE_MARGIN = 0.5;
 
 
 OutputWriter::OutputWriter ()
 {
-    OGRRegisterAll();
-    GDALAllRegister();
-    hSrcDS       = NULL;
-    hDstDS       = NULL;
-    hDriver      = NULL;
-    pafScanline  = NULL;
-    hLayer       = NULL;
-    hFieldDefn   = NULL;
-    hDataSource  = NULL;
-    hOGRDriver   = NULL;
-    papszOptions = NULL;
-    hSpdMemDs    = NULL;
-    hDirMemDs    = NULL;
-    hDustMemDs   = NULL;
-    hSrcSRS      = NULL;
-    hDestSRS     = NULL;
-    hTransform   = NULL;
-    colors       = NULL;
-    split_vals   = NULL;
-    linewidth    = 1.0;
+    hSrcDS        = NULL;
+    hDstDS        = NULL;
+    hDriver       = NULL;
+    pafScanline   = NULL;
+    hLayer        = NULL;
+    hFieldDefn    = NULL;
+    hDataSource   = NULL;
+    hOGRDriver    = NULL;
+    papszOptions  = NULL;
+    hSpdMemDs     = NULL;
+    hDirMemDs     = NULL;
+    hDustMemDs    = NULL;
+    hSrcSRS       = NULL;
+    hDestSRS      = NULL;
+    hTransform    = NULL;
+    colors        = NULL;
+    split_vals    = NULL;
+    linewidth     = 1.0;
+
+    pszOgrFile    = NULL;
+    pszLegendFile = NULL;
+    pszTmpDemFile = NULL;
+
+    _createTmpFiles();
 
     _createDefaultStyles();
     
@@ -70,26 +76,48 @@ OutputWriter::OutputWriter ()
 OutputWriter::~OutputWriter ()
 {
     
-    if( NULL != hSrcSRS )
-    {
-        OSRDestroySpatialReference( hSrcSRS );
-    }
-    if( NULL != hDestSRS )
-    {
-        OSRDestroySpatialReference( hDestSRS );
-    }
-    if( NULL != hTransform )
-    {
-        OCTDestroyCoordinateTransformation( hTransform );
-    }
+    OSRDestroySpatialReference( hSrcSRS );
+    OSRDestroySpatialReference( hDestSRS );
+    OCTDestroyCoordinateTransformation( hTransform );
 
     _destroyDefaultStyles();
     _deleteSplits();
     _destroyOptions();
     _closeOGRFile();
     _closeDataSets();
+
+    _deleteTmpFiles();
     return;
 }		/* -----  end of method OutputWriter::~OutputWriter  ----- */
+
+bool OutputWriter::_createTmpFiles()
+{
+    const char *pszTmp = NULL;
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".shp" );
+    pszOgrFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf ogr datasource", pszOgrFile );
+
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".bmp" );
+    pszLegendFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for pdf legend dataset", pszLegendFile );
+
+    return true;
+}
+
+void OutputWriter::_deleteTmpFiles()
+{
+    CPLFree( (void*)pszOgrFile );
+    CPLFree( (void*)pszLegendFile );
+    if( pszTmpDemFile != NULL )
+    {
+        GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
+        assert( hDrv );
+        GDALDeleteDataset( hDrv, pszTmpDemFile );
+    }
+    CPLFree( (void*)pszTmpDemFile );
+}
 
 void OutputWriter::_createDefaultStyles()
 {
@@ -125,6 +153,17 @@ void OutputWriter::setLineWidth( const float w )
    _destroyDefaultStyles();
    _createDefaultStyles();
    
+}
+
+void OutputWriter::setDPI( const unsigned short d )
+{
+    dpi = d;
+}
+
+void OutputWriter::setSize( const double w, const double h )
+{
+    width = w;
+    height = h;
 }
 
 #ifdef EMISSIONS
@@ -360,10 +399,10 @@ bool OutputWriter::_createLegend()
 
 	int arrowLength = 40;	//pixels;
 	int arrowHeadLength = 10; // pixels;
-	int textHeight = 12;	//pixels- 10 for maximum speed of "999.99 - 555.55";
-							//12 for normal double digits
+	int textHeight = 10;	//pixels- 8 for maximum speed of "999.99 - 555.55";
+							//10 for normal double digits
 	if(split_vals[NCOLORS-1] >= 100)
-		textHeight = 10;
+		textHeight = 8;
 	int titleTextHeight = int(1.2 * textHeight);
 	int titleX, titleY;
 
@@ -412,7 +451,7 @@ bool OutputWriter::_createLegend()
 		y += 0.15;
 	}
 
-	legend.WriteToFile( LEGEND_FILE );
+	legend.WriteToFile( pszLegendFile );
 
     return true;
 
@@ -421,7 +460,7 @@ bool OutputWriter::_createLegend()
 void OutputWriter::_destroyLegend()
 {
     GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
-    GDALDeleteDataset( hLegendDrv, LEGEND_FILE );
+    GDALDeleteDataset( hLegendDrv, pszLegendFile );
     return;
 }
 
@@ -470,13 +509,13 @@ OutputWriter::_createOGRFile()
         throw std::runtime_error("OutputWriter: Failed to create coordinate" \
                                  "transformation for PDF output");
     }
-    hOGRDriver = GDALGetDriverByName( "ESRI Shapefile" );
+    hOGRDriver = OGRGetDriverByName( "ESRI Shapefile" );
     if( NULL == hOGRDriver )
     {
         throw std::runtime_error("OutputWriter: Failed to get OGR Memory driver");
     }
 
-    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, OGR_FILE, NULL );
+    hDataSource = OGR_Dr_CreateDataSource( hOGRDriver, pszOgrFile, NULL );
     if( NULL == hDataSource )
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
@@ -560,7 +599,6 @@ OutputWriter::_createOGRFile()
 
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
 
-
 /* --------------------------------------------------------------------------*/
 /** 
  * @brief Creates a new PDF file from the base DEM and simulation output
@@ -582,9 +620,16 @@ OutputWriter::_writePDF (std::string outputfn)
     _createLegend();
     _openSrcDataSet();
 
-    std::string tf_logo_path = FindDataPath( "tf-logo.png" );
+    std::string tf_logo_path = FindDataPath( "topofire_logo.png" );
+    std::string wn_logo_path = FindDataPath( "wn-splash.png" );
     unsigned int out_x_size = GDALGetRasterXSize( hSrcDS );
     unsigned int out_y_size = GDALGetRasterYSize( hSrcDS );
+    /*
+    ** This sucks.  It isn't a very good check.  Relief files will be rgb, dem
+    ** generated will be single band.  We also need the X and Y dimensions to
+    ** scale the legend and the logos.
+    */
+    int bUseLogo = GDALGetRasterCount( hSrcDS ) > 1 ? TRUE : FALSE;
     hDriver = GDALGetDriverByName( "PDF" );
 
     if( NULL == hDriver )
@@ -592,18 +637,85 @@ OutputWriter::_writePDF (std::string outputfn)
         throw std::runtime_error("OutputWriter: Failed to get OGR PDF driver");
     }
 
-    const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
-    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, LEGEND_FILE, 
-                                             0, out_y_size-LGND_HEIGHT, 1.0f );
-    std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), 0, 0, 1.0f );
-    std::string extra_imgs     = extra_img_lgnd + "," + extra_img_logo;
+    /* We need the dimension to push it against the edge of the page */
+    int nNinjaLogoXSize = 0;
+    int nNinjaLogoYSize = 0;
+    { /* Scoped on purpose */
+        GDALDatasetH hDS = GDALOpen( wn_logo_path.c_str(), GA_ReadOnly );
+        if( hDS == NULL )
+        {
+            throw std::runtime_error("OutputWriter: Failed to open windninja logo");
+        }
+        nNinjaLogoXSize = GDALGetRasterXSize( hDS );
+        nNinjaLogoYSize = GDALGetRasterYSize( hDS );
+        GDALClose( hDS );
+    }
 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", OGR_FILE ); 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");	
+    const char * EXTRA_IMG_FRMT = "%s,%d,%d,%f";
+
+    /* User unit is 1/72" */
+    int xMargin = SIDE_MARGIN * 72.0;
+    int topMargin = TOP_MARGIN * 72.0;
+    int bottomMargin = BOTTOM_MARGIN * 72.0;
+    double xRatio = (double)out_x_size / width;
+    double yRatio = (double)out_y_size / height;
+    double xWidth = (double)out_x_size / (double)dpi;
+    double yHeight = (double)out_y_size / (double)dpi;
+    xMargin = (width - xWidth) / 2.0 * 72.0;
+    bottomMargin = (height - yHeight) / 2.0 * 72.0;
+    topMargin = bottomMargin;
+    double dfImageYBound = 0.0;
+    /* Make the same as the default margin */
+    dfImageYBound = MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );
+    int nLogoTargetYSize = dpi * dfImageYBound;
+    double dfLogoRatio = (double)nLogoTargetYSize / (double)nNinjaLogoYSize;
+    double dfLogoWidth = dfLogoRatio * (double)nNinjaLogoXSize / (double)dpi;
+    int nXLogoOffset = (width - dfLogoWidth) * 72;
+    std::string extra_img_wn = CPLSPrintf( EXTRA_IMG_FRMT, wn_logo_path.c_str(),
+                                           nXLogoOffset, 0, dfLogoRatio );
+
+    /* Place the legend at the right margin */
+    int nLegendTargetYSize = dpi * dfImageYBound;
+    double dfLegendRatio = (double)nLegendTargetYSize / (double)LGND_HEIGHT;
+    std::string extra_img_lgnd = CPLSPrintf( EXTRA_IMG_FRMT, pszLegendFile,
+                                             36, 0, dfLegendRatio );
+
+    std::string extra_imgs = extra_img_lgnd + "," + extra_img_wn;
+    if( bUseLogo )
+    {
+        // Center the topo fire logo between the other two, also make it about
+        // half the size
+        // We need to keep track of the legend width in user units for the topo
+        double dfLegendWidth = dfLegendRatio * (double)LGND_WIDTH / (double)dpi;
+        double dfXCenter = width / 2.0;
+        int nXCenter = dfXCenter * 72.0;
+        int nTopoTargetYSize = dpi * dfImageYBound * 0.5;
+        GDALDatasetH hDS = GDALOpen( tf_logo_path.c_str(), GA_ReadOnly );
+        assert( hDS );
+        int nTopoXSize = GDALGetRasterXSize( hDS );
+        int nTopoYSize = GDALGetRasterYSize( hDS );
+        GDALClose( hDS );
+        double dfTopoRatio = (double)nTopoTargetYSize / (double)nTopoYSize;
+        int nTopoWidth = dfTopoRatio * (double)nTopoXSize;
+        dfXCenter -= ((double)nTopoWidth / (double)dpi) / 2.0;
+        //int nTopoOffset = xMargin + (dfLegendWidth * 72.0);
+        int nTopoOffset = dfXCenter * 72.0;
+        std::string extra_img_logo = CPLSPrintf( EXTRA_IMG_FRMT, tf_logo_path.c_str(), nTopoOffset, 0, dfTopoRatio );
+        extra_imgs = extra_imgs + "," + extra_img_logo;
+    }
+
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "TILED", "YES" );
     papszOptions = CSLAddNameValue( papszOptions, "PREDICTOR", "2" );
+    papszOptions = CSLAddNameValue( papszOptions, "DPI", CPLSPrintf("%d", dpi) );
+    papszOptions = CSLAddNameValue( papszOptions, "LEFT_MARGIN", CPLSPrintf( "%d", xMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "RIGHT_MARGIN", CPLSPrintf( "%d", xMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "TOP_MARGIN", CPLSPrintf( "%d", topMargin ) );
+    papszOptions = CSLAddNameValue( papszOptions, "BOTTOM_MARGIN", CPLSPrintf( "%d", bottomMargin ) );
+
     hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )
@@ -615,7 +727,7 @@ OutputWriter::_writePDF (std::string outputfn)
     _destroyOptions();
     _destroyLegend();
     
-    OGR_Dr_DeleteDataSource( hOGRDriver, OGR_FILE );
+    OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */
@@ -629,6 +741,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
     
     double *padfScanline;
     padfScanline = new double[nXSize];
+    CPLErr eErr = CE_None;
     
     if(runNumber == 0)
     {
@@ -653,7 +766,6 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
         GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
-        
 
         for(int i=nYSize-1; i>=0; i--)
         {
@@ -675,8 +787,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                 }
                 
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                             1, GDT_Float64, 0, 0);
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0);
+            assert( eErr == CE_None );
         }
     }
     else if(runNumber < maxRunNumber){
@@ -684,7 +797,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         /*  Add a new band                          */
         /*------------------------------------------*/
         
-        CPLErr eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
+        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
         if(eErr != 0){
             return false;
         }
@@ -715,6 +828,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
+        CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
@@ -734,8 +848,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                     return false;
                 }
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0); 
+            assert( eErr == CE_None );
         }
     }
     else{
@@ -745,7 +860,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         //get start time
         const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
 
-        CPLErr eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
+        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
         if(eErr != 0){
             return false;
         }
@@ -778,6 +893,8 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         
         GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
+        CPLErr eErr;
+
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
@@ -797,8 +914,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
                     return false;
                 }
             }
-            GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                                1, GDT_Float64, 0, 0); 
+            assert( eErr == CE_None );
         }
         
         

@@ -79,6 +79,15 @@ double ncepNamAlaskaSurfInitialization::Get_Wind_Height()
 }
 
 /**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double ncepNamAlaskaSurfInitialization::getGridResolution()
+{
+    return 11.0;
+}
+
+/**
 * Fetch the variable names
 *
 * @return a vector of variable names

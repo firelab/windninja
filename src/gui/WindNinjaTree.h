@@ -54,6 +54,7 @@
 #include "googleOutput.h"
 #include "fbOutput.h"
 #include "shapeOutput.h"
+#include "pdfOutput.h"
 #include "vtkOutput.h"
 #include "solvePage.h"
 
@@ -96,6 +97,7 @@ class WindNinjaTree : public QWidget
   QTreeWidgetItem *googleItem;
   QTreeWidgetItem *fbItem;
   QTreeWidgetItem *shapeItem;
+  QTreeWidgetItem *pdfItem;
   QTreeWidgetItem *vtkItem;
 
   QTreeWidgetItem *solveItem;
@@ -128,6 +130,7 @@ class WindNinjaTree : public QWidget
   googleOutput *google;
   fbOutput *fb;
   shapeOutput *shape;
+  pdfOutput *pdf;
   vtkOutput *vtk;
   solvePage *solve;
 

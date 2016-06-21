@@ -129,7 +129,7 @@ void initializeOptions()
                 ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "Source for downloading elevation data (us_srtm, world_srtm, gmted)")
                 ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; all choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-5-KM, UCAR-RAP-13-KM)")
+                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-2.5-KM, UCAR-RAP-13-KM)")
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
@@ -261,7 +261,7 @@ int windNinjaCLI(int argc, char* argv[])
         */
         std::string osAvailableWx = "type of wx model to download (";
         osAvailableWx += std::string( "UCAR-NAM-CONUS-12-KM, UCAR-NAM-ALASKA-11-KM, " ) +
-                         std::string( "UCAR-NDFD-CONUS-5-KM, UCAR-RAP-CONUS-13-KM, " ) +
+                         std::string( "UCAR-NDFD-CONUS-2.5-KM, UCAR-RAP-CONUS-13-KM, " ) +
                          std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
@@ -351,8 +351,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
                 ("units_pdf_out_resolution", po::value<std::string>()->default_value("m"), "units of PDF resolution (ft, m)")
-                ("pdf_dem_filename", po::value<std::string>(), "path/filename of an already downloaded 8-bit DEM file")
                 ("pdf_linewidth", po::value<double>()->default_value(1.0), "width of PDF vectors (in pixels)")
+                ("pdf_basemap", po::value<std::string>()->default_value("topofire"), "background image of the geospatial pdf, default is topo map")
+                ("pdf_height", po::value<double>(), "height of geospatial pdf")
+                ("pdf_width", po::value<double>(), "width of geospatial pdf")
+                ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
@@ -368,20 +371,16 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file for dust emissions (true, false)")
                 ("geotiff_file", po::value<std::string>(), "output geotiff path/filename (*.tif)")
                 #endif
-                #ifdef SCALAR
-                ("compute_scalar_transport", po::value<bool>()->default_value(false), "compute scalar transport (true, false)")
-                ("scalar_source_strength", po::value<double>()->default_value(-1.0), "source strength in g/s")
-                ("scalar_source_xlocation", po::value<double>()->default_value(-1.0), "longitude of source in decimal degrees")
-                ("scalar_source_ylocation", po::value<double>()->default_value(-1.0), "latitude of source in decimal degrees")
-                #endif
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
-                ("number_of_iterations", po::value<int>()->default_value(2000), "number of iterations for momentum solver (must be a multiple of 100)") 
+                ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
-                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(false), "use non-equilibrium boundary conditions for a momentum solver run (ture, false)")
+                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
                 ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
+                ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
+                ("input_dir_grid", po::value<std::string>(), "path/filename of input raster dir file (*.asc)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -495,9 +494,9 @@ int windNinjaCLI(int argc, char* argv[])
         }
 
         if (vm.count("version")) {
-            cout << "WindNinja version: " << VERSION << "\n";
-            cout << "SVN version: " << SVN_VERSION << "\n";
-            cout << "Release date: " << RELEASE_DATE << "\n";
+            cout << "WindNinja version: " << NINJA_VERSION_STRING << "\n";
+            cout << "SCM version: " << NINJA_SCM_VERSION << "\n";
+            cout << "Release date: " << NINJA_RELEASE_DATE << "\n";
             return 0;
         }
 
@@ -808,6 +807,9 @@ int windNinjaCLI(int argc, char* argv[])
         int bFillNoData =
             CSLTestBoolean( CPLGetConfigOption( "NINJA_FILL_DEM_NO_DATA",
                                                 "NO" ) );
+#ifdef MOBILE_APP
+        bFillNoData = TRUE;
+#endif //MOBILE_APP
         /* If we downloaded from our fetcher, we fill */
         if( vm.count("fetch_elevation" ) )
             bFillNoData = TRUE;
@@ -864,10 +866,12 @@ int windNinjaCLI(int argc, char* argv[])
 
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("pointInitialization") &&
-                vm["initialization_method"].as<std::string>() != string("wxModelInitialization"))
+                vm["initialization_method"].as<std::string>() != string("wxModelInitialization") &&
+                vm["initialization_method"].as<std::string>() != string("griddedInitialization"))
         {
             cout << "'initialization_method' is not a known type.\n";
-            cout << "Choices are domainAverageInitialization, pointInitialization, or wxModelInitialization.\n";
+            cout << "Choices are domainAverageInitialization, pointInitialization,\
+                     wxModelInitialization, or griddedInitialization.\n";
             return -1;
         }
         
@@ -881,16 +885,13 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "'initialization_method' must be 'domainAverageInitialization' if the momentum solver is enabled.\n";
             return -1;
         }
-        conflicting_options(vm, "momentum_flag", "diurnal_winds");
+        //conflicting_options(vm, "momentum_flag", "diurnal_winds");
         conflicting_options(vm, "momentum_flag", "input_points_file");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
         #ifdef EMISSIONS
         conflicting_options(vm, "momentum_flag", "compute_emissions");
-        #endif
-        #ifdef SCALAR
-        conflicting_options(vm, "momentum_flag", "compute_scalar_transport");
         #endif
         #ifdef STABILITY
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
@@ -968,10 +969,6 @@ int windNinjaCLI(int argc, char* argv[])
                 }
             
                 if(vm.count("number_of_iterations")){
-                    if((vm["number_of_iterations"].as<int>() % 100) != 0){
-                        cout<<"'number_of_iterations' must be a multiptle of 100."<<endl;
-                        return -1;
-                    }
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
@@ -1114,17 +1111,6 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
-                #ifdef SCALAR
-                //scalar transport stuff
-                if(vm["compute_scalar_transport"].as<bool>())
-                {
-                    windsim.setScalarTransportFlag(i_, true);
-                    windsim.setScalarSourceStrength(i_, vm["scalar_source_strength"].as<double>());
-                    windsim.setScalarXcoord(i_, vm["scalar_source_xlocation"].as<double>());
-                    windsim.setScalarYcoord(i_, vm["scalar_source_ylocation"].as<double>());
-                }
-                #endif //SCALAR
-
                 #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
@@ -1270,13 +1256,63 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 #endif
             }
+            else if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
+            {
+                
+                verify_option_set(vm, "input_speed_grid");
+                verify_option_set(vm, "input_dir_grid");
+                
+                verify_option_set(vm, "input_wind_height");
+                verify_option_set(vm, "output_wind_height");
+                option_dependency(vm, "input_wind_height", "units_input_wind_height");
+                option_dependency(vm, "output_wind_height", "units_output_wind_height");
+
+                windsim.setInitializationMethod( i_,
+                        WindNinjaInputs::griddedInitializationFlag);
+
+                windsim.setInputWindHeight( i_, vm["input_wind_height"].as<double>(),
+                        lengthUnits::getUnit(vm["units_input_wind_height"].as<std::string>() ) );
+
+                windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
+                        lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
+                
+
+                if(vm["diurnal_winds"].as<bool>())
+                {
+                    option_dependency(vm, "diurnal_winds", "uni_air_temp");
+                    option_dependency(vm, "uni_air_temp", "air_temp_units");
+                    option_dependency(vm, "diurnal_winds", "uni_cloud_cover");
+                    option_dependency(vm, "uni_cloud_cover", "cloud_cover_units");
+                    option_dependency(vm, "diurnal_winds", "year");
+                    option_dependency(vm, "diurnal_winds", "month");
+                    option_dependency(vm, "diurnal_winds", "day");
+                    option_dependency(vm, "diurnal_winds", "hour");
+                    option_dependency(vm, "diurnal_winds", "minute");
+                    option_dependency(vm, "diurnal_winds", "time_zone");
+
+                    windsim.setDiurnalWinds( i_, true);
+                    windsim.setUniAirTemp( i_, vm["uni_air_temp"].as<double>(),
+                            temperatureUnits::getUnit(vm["air_temp_units"].as<std::string>())); //for average speed and direction initialization
+                    windsim.setUniCloudCover( i_, vm["uni_cloud_cover"].as<double>(),
+                            coverUnits::getUnit(vm["cloud_cover_units"].as<std::string>()));
+                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                        vm["day"].as<int>(), vm["hour"].as<int>(),
+                                        vm["minute"].as<int>(), 0.0,
+                                        osTimeZone);
+                }
+                
+                windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>());
+                windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
+
+            }
 
             //check if lcp to determine if surface veg needs to be set or not
             bool isLcp;
             GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(),
                     GA_ReadOnly);
             if(poDS == NULL) {
-                printf("Cannot open %s for reading, exiting...", vm["elevation_file"].as<std::string>().c_str());
+                fprintf(stderr, "Cannot open %s for reading, exiting...", vm["elevation_file"].as<std::string>().c_str());
+                return -1;
             }
             const char *pszWkt = poDS->GetProjectionRef();
             if( pszWkt == NULL || EQUAL( pszWkt, "" ) )
@@ -1396,12 +1432,60 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["write_pdf_output"].as<bool>())
             {
                 windsim.setPDFOutFlag( i_, true );
-                option_dependency(vm, "write_pdf_output", "pdf_dem_filename");
-                windsim.setPDFDEM( i_, vm["pdf_dem_filename"].as<std::string>());
                 option_dependency(vm, "pdf_out_resolution", "units_pdf_out_resolution");
                 windsim.setPDFResolution( i_, vm["pdf_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_pdf_out_resolution"].as<std::string>()));
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
+                std::string pbm = vm["pdf_basemap"].as<std::string>();
+                int pbs = 0;
+                if( pbm == "hillshade" )
+                {
+                    pbs = 0;
+                }
+                else if( pbm == "topofire" )
+                {
+                    pbs = 1;
+                }
+                else
+                {
+                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'";
+                }
+                windsim.setPDFBaseMap( i_, pbs );
+                conflicting_options(vm, "pdf_size", "pdf_height");
+                conflicting_options(vm, "pdf_size", "pdf_width");
+                option_dependency(vm, "pdf_height", "pdf_width");
+                double pdfHeight, pdfWidth;
+                if(vm.count("pdf_height"))
+                {
+                    pdfHeight = vm["pdf_height"].as<double>();
+                    pdfWidth = vm["pdf_width"].as<double>();
+                }
+                else if(vm.count("pdf_size"))
+                {
+                    std::string pdfSize = vm["pdf_size"].as<std::string>();
+                    if(pdfSize == "letter")
+                    {
+                        pdfHeight = 11.0;
+                        pdfWidth = 8.5;
+                    }
+                    else if(pdfSize == "legal")
+                    {
+                        pdfHeight = 14.0;
+                        pdfWidth = 8.5;
+                    }
+                    else if(pdfSize == "tabloid")
+                    {
+                        pdfHeight = 17.0;
+                        pdfWidth = 11.0;
+                    }
+                }
+                if(pdfHeight < 1 || pdfHeight > 256 ||
+                   pdfWidth < 1 || pdfWidth > 256)
+                {
+                    cerr << "Please enter a valid pdf height and width" << endl;
+                    return 1;
+                }
+                windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150);
             }
 
         }   //end for loop over ninjas

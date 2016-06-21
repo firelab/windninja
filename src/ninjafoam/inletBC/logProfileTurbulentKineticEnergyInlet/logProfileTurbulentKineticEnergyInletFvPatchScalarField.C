@@ -123,31 +123,31 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 		scalar checkOrdinate_FC = 0.0, checkOrdinate_CP = 0.0;
 		// Lookup for patch ids and check if its orientation is along west/east/south/north
 		// If current patch is west_face or east_face, check the Y ordinates
-    		const word& curPatchName = patch().name();
+    	const word& curPatchName = patch().name();
 		if(curPatchName == "west_face" || curPatchName == "east_face")
 		{
 		    checkOrdinate_FC = faceCenterPoints[pointJ].y();
 		    checkOrdinate_CP = currentPt.y();
 		}
 		else if(curPatchName == "north_face" || curPatchName == "south_face")
-		     {
-		    	checkOrdinate_FC = faceCenterPoints[pointJ].x() ;
-		    	checkOrdinate_CP = currentPt.x();
-		     }
+		{
+		    checkOrdinate_FC = faceCenterPoints[pointJ].x() ;
+		    checkOrdinate_CP = currentPt.x();
+		}
 		else
 		{
-         	    FatalErrorIn("logProfileVelocityInletFvPatchVectorField")
+            FatalErrorIn("logProfileVelocityInletFvPatchVectorField")
      		       << "Boundary condition applied on incorrect patch"
 		       << abort(FatalError);
     		}
 		// The bracket for checking the ordinates has been set to 1
 		if( mag(checkOrdinate_FC - checkOrdinate_CP) < 10 )
-	        {
+	    {
 		    if( faceCenterPoints[pointJ].z() < Dist[pointI] )
 		    {
-			Dist[pointI] = faceCenterPoints[pointJ].z();
-			minPointId = pointJ;
-	    	    }
+			    Dist[pointI] = faceCenterPoints[pointJ].z();
+			    minPointId = pointJ;
+	    	}
 		}
 	    }
 	}
@@ -164,9 +164,6 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 	}
     evaluate();
 }
-
-
-
 
 logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKineticEnergyInletFvPatchScalarField
 (
@@ -189,13 +186,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
 {
     // Caluculate Input Wind Height
-    scalar inputWindHeight = inputWindHeight_Veg_;
     scalarField Kp(patch().Cf().size(), scalar(0));
-
-    Info<< "logProfileTKE inputWindHeight_Veg_ = " <<inputWindHeight_Veg_<< endl;
-    Info<< "logProfileTKE Rd_ = " <<Rd_<< endl;
-    Info<< "logProfileTKE z0_ = " <<z0_<< endl;
-    Info<< "logProfileTKE UfreeStream_ = " <<UfreeStream_<< endl;
 
     //const RASModel& rasModel = db().lookupObject<RASModel>("RASProperties");
     //const incompressible::RASModel& rasModel = db().lookupObject<incompressible::RASModel>("RASProperties");
@@ -204,9 +195,8 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
     //scalar Cmu = readScalar(rasModel.coeffDict().lookup("Cmu"));
     //scalar kappa = rasModel.kappa().value();
     scalar Cmu = 0.09;
-    scalar kappa = 0.4187;
 
-    scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_-Rd_)/z0_);
+    scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_)/z0_);
 
     // Loop over all the faces in that patch
     forAll(Kp, faceI )

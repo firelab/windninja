@@ -267,8 +267,8 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 	//Resample DEM to desired computational resolution
      if(meshResolution < input.dem.get_cellSize())
      {
-         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0);	//make the grid finer
-         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //make the grid finer
+         input.dem.resample_Grid_in_place(meshResolution, Elevation::order1);	//make the grid finer
+         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
 								//NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
      }else if(meshResolution > input.dem.get_cellSize())
      {

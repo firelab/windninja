@@ -76,7 +76,7 @@ std::string SurfaceFetch::GetPath()
     return path;
 }
 
-SURF_FETCH_E SurfaceFetch::makeReliefOf( std::string infile, std::string outfile )
+SURF_FETCH_E SurfaceFetch::makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize )
 {
     return SURF_FETCH_E_NONE;
 }

@@ -187,14 +187,13 @@ logProfileDissipationRateInletFvPatchScalarField::logProfileDissipationRateInlet
 void logProfileDissipationRateInletFvPatchScalarField::updateCoeffs()
 {
     // Caluculate Input Wind Height
-    scalar inputWindHeight = inputWindHeight_Veg_;
     scalarField epsilonp(patch().Cf().size(), scalar(0));
 
     scalar kappa = 0.4187;
-    scalar ustar = (UfreeStream_ + log(z0_))*0.41/(log(inputWindHeight_Veg_-Rd_));
+    scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_)/z0_);
 
     // Loop over all the faces in that patch
-    forAll(epsilonp, faceI )
+    forAll(epsilonp, faceI)
     {
         // relative height from ground for face lists
         scalar& AGL = relativeHeight_[faceI];
