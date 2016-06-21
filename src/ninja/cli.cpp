@@ -330,17 +330,17 @@ int windNinjaCLI(int argc, char* argv[])
 //                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
 //                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
 //                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
-                ("start_year",po::value<std::string>(),"start year for simulation")
-                ("start_month",po::value<std::string>(),"start month for simulation")
-                ("start_day",po::value<std::string>(),"start day for simulation")
-                ("start_hour",po::value<std::string>(),"start hour for simulation")
-                ("start_minute",po::value<std::string>(),"start minute for simulation")
-                ("end_year",po::value<std::string>(),"end year for simulation")
-                ("end_month",po::value<std::string>(),"end month for simulation")
-                ("end_day",po::value<std::string>(),"end day for simulation")
-                ("end_hour",po::value<std::string>(),"end hour for simulation")
-                ("end_minute",po::value<std::string>(),"end minute for simulation")
-                ("number_time_steps",po::value<std::string>(),"number of timesteps for simulation")
+                ("start_year",po::value<int>(),"start year for simulation")
+                ("start_month",po::value<int>(),"start month for simulation")
+                ("start_day",po::value<int>(),"start day for simulation")
+                ("start_hour",po::value<int>(),"start hour for simulation")
+                ("start_minute",po::value<int>(),"start minute for simulation")
+                ("end_year",po::value<int>(),"end year for simulation")
+                ("end_month",po::value<int>(),"end month for simulation")
+                ("end_day",po::value<int>(),"end day for simulation")
+                ("end_hour",po::value<int>(),"end hour for simulation")
+                ("end_minute",po::value<int>(),"end minute for simulation")
+                ("number_time_steps",po::value<int>(),"number of timesteps for simulation")
 
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
@@ -965,7 +965,7 @@ int windNinjaCLI(int argc, char* argv[])
         {
             conflicting_options(vm, "fetch_station", "wx_station_filename");
 
-            std::vector<boost::local_time::local_date_time> timeList;
+            std::vector<boost::posix_time::ptime> timeList;
 
             if(vm.count("fetch_station")) //download station and make appropriate size ninjaArmy
             {

@@ -139,7 +139,7 @@ int ninjaArmy::getSize()
  *
  * @param timeList Vector of times.
  */
-void ninjaArmy::makeStationArmy( std::vector<boost::local_time::local_date_time> timeList )
+void ninjaArmy::makeStationArmy( std::vector<boost::posix_time::ptime> timeList )
 {
 
 }
