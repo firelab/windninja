@@ -1953,9 +1953,9 @@ int mainWindow::solve()
     */
     for( unsigned int i = 0; i < army->getSize(); i++ ) 
     {
-//        connect( army->getNinjaCom( i ),
-//                 SIGNAL( sendMessage( QString, QColor ) ), this,
-//                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
+        connect( army->getNinjaCom( i ),
+                 SIGNAL( sendMessage( QString, QColor ) ), this,
+                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
 
         connect( army->getNinjaCom( i ),
                  SIGNAL( sendProgress( int, int ) ), this,
