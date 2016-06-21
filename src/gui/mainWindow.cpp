@@ -1953,8 +1953,12 @@ int mainWindow::solve()
     */
     for( unsigned int i = 0; i < army->getSize(); i++ ) 
     {
+//        connect( army->getNinjaCom( i ),
+//                 SIGNAL( sendMessage( QString, QColor ) ), this,
+//                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
+
         connect( army->getNinjaCom( i ),
-                 SIGNAL( sendProgress( int, int) ), this,
+                 SIGNAL( sendProgress( int, int ) ), this,
                  SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
 
         connect( army->getNinjaCom( i ),
@@ -2055,13 +2059,19 @@ int mainWindow::solve()
     return ninjaSuccess;
 }
 
+void mainWindow::updateProgress(const QString message)
+{
+  progressDialog->setLabelText(message);
+}
+
 void mainWindow::updateProgress(int run, int progress)
 {
   runProgress[run] = progress;
   totalProgress = 0;
 
-  for(int i = 0;i < nRuns;i++)
+  for(int i = 0;i < nRuns;i++){
     totalProgress += runProgress[i];
+  }
 
   progressDialog->setValue(totalProgress);
 }

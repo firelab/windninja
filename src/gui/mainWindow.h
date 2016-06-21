@@ -93,6 +93,7 @@ class mainWindow : public QMainWindow
 
   public slots:
    void updateProgress(int run, int progress);
+   void updateProgress(const QString message);
    void updateTimer();
    void openDEMDownloader();
 
