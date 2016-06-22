@@ -61,6 +61,7 @@ public:
 
     WindNinjaInputs(const WindNinjaInputs &rhs);
     WindNinjaInputs &operator=(const WindNinjaInputs &rhs);
+    bool operator==(const WindNinjaInputs &rhs);
 
 
     /*-----------------------------------------------------------------------------

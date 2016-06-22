@@ -319,6 +319,33 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 }
 
 /**
+ * Comparison operator.
+ * For use in detecting duplicate runs. Only a subset
+ * of inputs (those necessary to ID duplicate runs from
+ * the GUI) are checked.
+ * @param rhs WindNinjaInputs object to compare with.
+ * @return true if objects are equal, otherwise false.
+ */
+bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
+{
+    if( inputSpeed == rhs.inputSpeed &&
+        inputSpeedUnits == rhs.inputSpeedUnits &&
+        inputDirection == rhs.inputDirection &&
+        airTemp == rhs.airTemp &&
+        airTempUnits == rhs.airTempUnits &&
+        cloudCover == rhs.cloudCover &&
+        cloudCoverUnits == rhs.cloudCoverUnits &&
+        ninjaTime == rhs.ninjaTime &&
+        diurnalWinds == rhs.diurnalWinds)
+    {
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+/**
  * Equals operator.
  * @param rhs WindNinjaInputs object to set equal to.
  * @return A referece to a copied rhs.

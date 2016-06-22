@@ -232,12 +232,22 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 */
 bool ninjaArmy::startRuns(int numProcessors)
 {
-    //Com->ninjaCom(ninjaComClass::ninjaNone, "Jason Sucks!");
     int j;
     bool status = true;
 
     if(ninjas.size()<1 || numProcessors<1)
         return false;
+
+    //check for duplicate runs before we start the simulations 
+    if(ninjas.size() > 1){
+        for(unsigned int i=0; i<ninjas.size()-1; i++){
+            for(unsigned int j=i+1; j<ninjas.size(); j++){
+                if(ninjas[i]->input == ninjas[j]->input){
+                    throw std::runtime_error("Multiple runs were requested with the same input paramters.");
+                }
+            }
+        }
+    }
 
 #ifdef _OPENMP
     omp_set_nested(false);
