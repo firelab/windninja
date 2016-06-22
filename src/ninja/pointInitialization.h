@@ -94,7 +94,7 @@ class pointInitialization : public initialize
         void fetchLatLonStation(bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void fetchBboxStation(bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
 
-        static void fetchStationFromBbox(std::string stationFilename,
+        static bool fetchStationFromBbox(std::string stationFilename,
                                     std::string demFile, 
                                     std::vector<boost::posix_time::ptime> timeList);
 
@@ -110,6 +110,7 @@ class pointInitialization : public initialize
 
     private:
 
+
                 static const std::string dtoken;
                 static const std::string dvar;
                 static const std::string ndvar;
@@ -123,7 +124,7 @@ class pointInitialization : public initialize
                 static vector<string> CompareClouds(vector<string>low,vector<string>med,vector<string>high,int countlow,int countmed, int counthigh);
                 static vector<string> UnifyClouds(const double *dvCloud,const double *dwCloud,const double *dxCloud,int count1,int count2,int count3,int backupcount);
                 static void StringPrinter(char **stringdat, int counter, std::string name);
-                void FloatPrinter(const double *data, int counter,std::string name);
+                static void FloatPrinter(const double *data, int counter,std::string name);
                 static void VectorPrinter(std::vector<std::string> cata,std::string name);
                 void doubleVectorPrinter(vector<const double*> cata,std::string name,int counter);
                 void Irradiate(const double* solrad, int largecount);
@@ -140,7 +141,7 @@ class pointInitialization : public initialize
                 const char* BuildLatLonLatest(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past);
                 static std::string BuildBboxUrl(std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 std::string BuildBboxLatest(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);
-                std::string BuildUnifiedBbox(int floor);
+                static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
 
                 //                const char* BuildBboxUrl(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 //                const char* BuildBboxLatest(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);

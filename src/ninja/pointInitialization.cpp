@@ -1170,13 +1170,31 @@ std::string pointInitialization::BuildBboxLatest(std::string token,
         return url;
 
     }
-std::string pointInitialization::BuildUnifiedBbox(int floor)
+std::string pointInitialization::BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
 {
     std::string workUrl="WIP";
 
+//    double dURLat=lat2;
+//    double dURLon=lon2;
+//    double dLLLat=lat1;
+//    double dLLLon=lon1;
+    std::string URLat;
+    std::string URLon;
+    std::string LLLat;
+    std::string LLLon;
 
+    URLat=CPLSPrintf("%.6f",lat2);
+    URLon=CPLSPrintf("%.6f",lon2);
+    LLLat=CPLSPrintf("%.6f",lat1);
+    LLLon=CPLSPrintf("%.6f",lon1);
 
-    return workUrl;
+//    cout<<URLat<<endl<<URLon<<endl<<LLLat<<endl<<LLLon<<endl;
+
+    std::string URL;
+
+    URL=BuildBboxUrl(LLLat,LLLon,URLat,URLon,yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+
+    return URL;
 }
 
 vector<string> pointInitialization::Split(char* str,const char* delim)
@@ -2955,15 +2973,11 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
  * @param demFile Filename/path to the DEM on disk.
  * @param timeList Vector of datetimes in UTC for the simulation.
  */
-void pointInitialization::fetchStationFromBbox(std::string stationFilename,
+bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
                                     std::string demFile, 
                                     std::vector<boost::posix_time::ptime> timeList)
 {
-//    cout<<"accessed the function"<<endl;
-
-
-
-    vector<string>timeUTC;
+    vector<std::string>timeUTC;
     timeUTC=UnifyTime(timeList);
 //    cout<<timeUTC[0]<<endl;//year_0
 //    cout<<timeUTC[1]<<endl;//month_0
@@ -2974,89 +2988,54 @@ void pointInitialization::fetchStationFromBbox(std::string stationFilename,
 //    cout<<timeUTC[6]<<endl;//day_1
 //    cout<<timeUTC[7]<<endl;//clock_1
 
-
-
-    const char* pdemFile=demFile.c_str();
-
-
-    string dummyLLLat="46.71915";
-    string dummyLLLon="-115.09250";
-    string dummyURLat="47.29879";
-    string dummyURLon="-110.755519";
-
     GDALDataset  *poDS;
-    GDALAllRegister();
-    poDS = (GDALDataset *) GDALOpen( pdemFile, GA_ReadOnly );
-    if( poDS == NULL )
+    poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
+    if (poDS==NULL)
     {
-        cout<<"error"<<endl;
+        cout<<"Could not read DEM file, GDALDataset Null"<<endl;
+        cout<<false<<endl;
+        return false;
     }
 
-    double skaWGSBounds[4];
+    double bounds[4];
     bool boundCheck;
 
-    boundCheck=GDAL_UTIL_H::GDALGetBounds(poDS,skaWGSBounds);
-//    cout<<skaWGSBounds[0]<<endl;//UR Lat
-//    cout<<skaWGSBounds[1]<<endl;// UR Lon
-//    cout<<skaWGSBounds[2]<<endl;//LL Lat
-//    cout<<skaWGSBounds[3]<<endl;//LL Lon
+    boundCheck=GDAL_UTIL_H::GDALGetBounds(poDS,bounds);
+    if (boundCheck==false)
+    {
+        cout<<"GDALGetBounds returned false, DEM file is lacking readable data.";
+        cout<<false<<endl;       
+        return false;
 
-    double dURLat;
-    double dURLon;
-    double dLLLat;
-    double dLLLon;
-    stringstream dtosURLat;
-    stringstream dtosURLon;
-    stringstream dtosLLLat;
-    stringstream dtosLLLon;
-    std::string URLat;
-    std::string URLon;
-    std::string LLLat;
-    std::string LLLon;
+    }
+//    cout<<bounds[0]<<endl;//UR Lat
+//    cout<<bounds[1]<<endl;// UR Lon
+//    cout<<bounds[2]<<endl;//LL Lat
+//    cout<<bounds[3]<<endl;//LL Lon
 
-    dURLat=skaWGSBounds[0];
-    dURLon=skaWGSBounds[1];
-    dLLLat=skaWGSBounds[2];
-    dLLLon=skaWGSBounds[3];
-    dtosURLat<<dURLat;
-    dtosURLon<<dURLon;
-    dtosLLLat<<dLLLat;
-    dtosLLLon<<dLLLon;
+    std::string URL;
+    URL=BuildUnifiedBbox(bounds[2],bounds[3],bounds[0],
+            bounds[1], timeUTC[0],timeUTC[1],timeUTC[2],
+            timeUTC[3],timeUTC[4],timeUTC[5],
+            timeUTC[6],timeUTC[7]);
 
-    URLat=dtosURLat.str();
-    URLon=dtosURLon.str();
-    LLLat=dtosLLLat.str();
-    LLLon=dtosLLLon.str();
-
-//    cout<<"Lower Left: "<<LLLat<<LLLon<<endl;
-//    cout<<"Upper Right: "<<URLat<<URLon<<endl;
-
-
-    const char* lmUrl;
-    std::string tempUrl;
-
-    tempUrl=BuildBboxUrl(LLLat,LLLon,URLat,URLon,
-                         timeUTC[0],timeUTC[1],timeUTC[2],
-                         timeUTC[3],timeUTC[4],timeUTC[5],
-                         timeUTC[6],timeUTC[7]);
-    lmUrl=tempUrl.c_str();
-
-    std::string sName=stationFilename+".csv";
-
-    const char* csvname=sName.c_str();
-
-//    cout<<lmUrl<<endl;
+    std::string csvname=stationFilename+".csv";
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
-    hDS=OGROpen(lmUrl,0,NULL);
+    hDS=OGROpen(URL.c_str(),0,NULL);
     CPLGetLastErrorMsg();
-    //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
     if (hDS==NULL)
-        printf("I am broken, so very broken... \n");
-    printf("\n\n");
+    {
+        cout<<URL<<endl;
+        printf("OGROpen could not read file\n try running again ");
+        cout<<"if persists: check URL, possibly no stations exist for given parameters."<<endl;
+        cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
+        cout<<false<<endl;
+        return false;
+    }
 
     //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
     hLayer=OGR_DS_GetLayer(hDS,0);
@@ -3109,7 +3088,7 @@ void pointInitialization::fetchStationFromBbox(std::string stationFilename,
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
     ofstream tsetseWrite;//writing to csv
-    tsetseWrite.open(csvname);
+    tsetseWrite.open(csvname.c_str());
     cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
     tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
@@ -3160,16 +3139,25 @@ void pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
             idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
             metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-            vector<string>cloudkappa;
+            
+//            FloatPrinter(metarWind,count1,"metarwind");
+//            FloatPrinter(metarDir,count2,"metardir");
+//            FloatPrinter(metarTemp,count3,"metartemp");
+//            FloatPrinter(cloudlow,countxx1,"cloudll");
+//            FloatPrinter(cloudmed,countxx2,"cloudmm");
+//            FloatPrinter(cloudhigh,countxx3,"cloudhh");
+ 
+            vector<std::string>cloudkappa;
             cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-            vector<string>metarWindDirection;
+            vector<std::string>metarWindDirection;
+            vector<std::string>metarTemperature;
             metarWindDirection=fixWindDir(metarDir,"0",count1);
+            metarTemperature=fixWindDir(metarTemp,"-9999",count1);
 
 
             for(int ez=0;ez<count1;ez++)
             {
-             tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+             tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
             }
 
         }
@@ -3204,6 +3192,11 @@ void pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
             idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
             rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+            
+//            FloatPrinter(rawsWind,count9,"rawswind");
+//            FloatPrinter(rawsDir,count10,"rawsdir");
+//            FloatPrinter(rawsTemp,count11,"rawstemp");
+//            FloatPrinter(rawsSolrad,count12,"rawssol");
 
             const double* aZero;
             aZero=0;
@@ -3228,6 +3221,8 @@ void pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
         }
     }
+    cout<<"returned true: "<<true<<endl;
+    return true;
 }
 
 void pointInitialization::fetchTest(std::string station_id, int nHours)
