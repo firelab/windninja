@@ -1,3 +1,12 @@
+---
+layout: post
+title:  "WindNinja Readme"
+color:  blue
+width:   3
+height:  1
+date:   2016-03-30 11:31:49 +0200
+categories: main
+---
 [WindNinja](http://firelab.org/project/windninja) 
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
