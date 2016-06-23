@@ -29,14 +29,13 @@ the default category to use is "main".
 Color width and heigh affect how the post is displayed on the main page. If you don't care, just leave them as red, 3, 1.
 
 
-
-
 #### 3.Save markdown file in the following format
 YYYY-MM-DD-NAME.md
 
 for example:
 
 2016-06-23-rooter.markdown
+
 #### 4. Save File in `_posts` Directory
 
 #### 5. Commit changes to Windninja/gh-pages!
