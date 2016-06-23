@@ -243,7 +243,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         for(unsigned int i=0; i<ninjas.size()-1; i++){
             for(unsigned int j=i+1; j<ninjas.size(); j++){
                 if(ninjas[i]->input == ninjas[j]->input){
-                    throw std::runtime_error("Multiple runs were requested with the same input paramters.");
+                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
         }
