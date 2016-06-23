@@ -1,28 +1,28 @@
 -   id: C++
     descr: C++
-    xp: 8.7
+    xp: 9
 -   id: C
     descr: C
     color: teal
-    xp: .7
+    xp: 1
 -   id: Python
     descr: Python
-    xp: .01
+    xp: 1
 -   id: HTML
     descr: HTML
-    xp: .01
+    xp: 1
 -   id: Objective-C
     descr: Objective-C
-    xp: .01
+    xp: 1
 -   id: Ruby
     descr: sass
-    xp: 0
+    xp: 1
 -   id: other
     descr: jquery
-    xp: .02
+    xp: 2
 -   id: FORTRAN
     descr: node.js
-    xp: 0
+    xp: 1
 -   id: php
     descr: php
-    xp: 0
+    xp: 1
