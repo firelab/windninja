@@ -1,105 +1,61 @@
-<!DOCTYPE html>
-<html>
+---
+layout: default
+---
 
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="WindNinja : WindNinja is a diagnostic wind model developed for use in wildland fire modeling.">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Windninja</title>
-  </head>
-
-  <body>
-
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/firelab/windninja">View on GitHub</a>
-
-          <h1 id="project_title">Windninja</h1>
-          <h2 id="project_tagline">WindNinja is a diagnostic wind model developed for use in wildland fire modeling.</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/firelab/windninja/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/firelab/windninja/tarball/master">Download this project as a tar.gz file</a>
-              <p>TEST</p>
-            </section>
-        </header>
+<div class="home">
+  
+  
+ <div class="col col-12">
+      <div class="col col-3">
+          <div class="block glass"  style="background-image:url(assets/avatar.jpg)">      
+          </div>
+      </div>
+      <div class="col col-9">
+        <div class="block glass">
+            <div class="block-body">
+                <h2>Yo, I'm Dude Labouwski</h2>
+                <p class="grey-text">Aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores ausLorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus</p>
+            </div>
+        </div>
+      </div>  
+  </div>
+  <div class="col col-12">
+    {% for port in site.data.portfolio %}
+      <div class="col col-{{port.width}}">
+        <div class="block" style="background-image:url(assets/{{port.img}})">
+            <div class="block-body height-{{port.height}}">              
+                <h2 class="align-bottom-right">
+                  {{ port.title }}
+                </h2>
+            </div>
+        </div>
+      </div>
+    {% endfor %}
     </div>
+  <div class="col col-9">
+    {% for post in site.posts %}
+      <div class="col col-{{post.width}}">
+        <div class="block {{post.color}}">
+            <div class="block-body height-{{post.height}}">
+                <span class="post-meta white-text">{{ post.date | date: "%b %-d, %Y" }}</span>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <p>Web:
-<a href="http://firelab.org/project/windninja">http://firelab.org/project/windninja</a></p>
-
-<p>Source &amp; wiki:
-<a href="https://github.com/firelab/windninja">https://github.com/firelab/windninja</a></p>
-
-<p>IRC:
-irc://irc.freenode.net/#windninja</p>
-
-<p><a href="https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux">Building on Linux</a></p>
-
-<p><a href="https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies">Building on Windows</a></p>
-
-<p>Directories:</p>
-
-<ul>
-<li>autotest    -&gt; testing suite</li>
-<li>cmake       -&gt; cmake support scripts</li>
-<li>data        -&gt; testing data</li>
-<li>doc         -&gt; documentation</li>
-<li>images      -&gt; splash image and icons for gui</li>
-<li>src         -&gt; source files</li>
-</ul>
-
-<p>Dependencies (versions are versions we build against):</p>
-
-<ul>
-<li>Boost 1.46:
-
-<ul>
-<li>boost_date_time</li>
-<li>boost_program_options</li>
-<li>boost_test</li>
-</ul>
-</li>
-<li>NetCDF 4.1.1</li>
-<li>GDAL 1.11.1
-
-<ul>
-<li>NetCDF support</li>
-<li>PROJ.4 support</li>
-<li>GEOS support</li>
-<li>CURL support</li>
-</ul>
-</li>
-<li>Qt 4.7.4
-
-<ul>
-<li>QtGui</li>
-<li>QtCore</li>
-<li>QtNetwork/Phonon</li>
-<li>QtWebKit</li>
-</ul>
-</li>
-<li><a href="https://github.com/OpenFOAM/OpenFOAM-2.2.x">OpenFOAM 2.2.x</a></li>
-</ul>
-      </section>
+                <h2>
+                  <a class="post-link white-text" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+                </h2>
+            </div>
+        </div>
+      </div>
+    {% endfor %}
     </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">WindNinja maintained by <a href="https://github.com/firelab">firelab</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
-      </footer>
+    <div class="col col-3">
+        <div class="block glass">
+            <div class="block-body">
+                <h3 class="margin-bot">Skills</h3>                
+                {% for skill in site.data.skills %}
+                <span class="post-meta white-text">{{skill.descr}}</span>
+                <div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>                
+                {% endfor %}
+            </div>
+        </div>
     </div>
-
-
-
-  </body>
-</html>
+</div>

@@ -1,0 +1,46 @@
+/**
+ * Margins
+ */
+
+.margin-bot-big{
+    margin-bottom: $spacing-unit * 10;
+}
+
+.margin-bot{
+    margin-bottom: $spacing-unit;
+}
+
+.no-pad{
+    padding: 0px;
+}
+
+/**
+ * Borders
+ */
+
+.round-top-left{
+    border-top-left-radius: $border-radius;
+}
+
+.round-top-right{
+    border-top-right-radius: $border-radius;
+}
+
+.round-bottom-left{
+    border-bottom-left-radius: $border-radius;
+}
+
+.round-bottom-right{
+    border-bottom-right-radius: $border-radius;
+}
+
+/**
+ * Text align
+ */
+
+.align-bottom-right{
+    position:absolute;
+    bottom:0;
+    right: 0;
+    text-align: right;
+}
