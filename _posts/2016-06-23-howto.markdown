@@ -1,0 +1,60 @@
+---
+layout: post
+title:  "Making A Post"
+color: red
+width:   3 
+height:  1
+date:   2016-06-23 13:45:49 +0200
+categories: main
+---
+
+#### 1.Use a Markdown Editor
+such as Haroopad or the github wiki
+#### 2. At the top of the page insert,
+```
+---
+layout: post
+title:  "Making A Post"
+color: red
+width:   3 
+height:  1
+date:   2016-06-23 11:31:49 +0200
+categories: main
+---
+```
+These options are specific to the current WindNinja Website,
+make sure the date matched the file name,
+the default category to use is "main".
+
+Color width and heigh affect how the post is displayed on the main page. If you don't care, just leave them as red, 3, 1.
+
+
+
+
+#### 3.Save markdown file in the following format
+YYYY-MM-DD-NAME.md
+
+for example:
+
+2016-06-23-rooter.markdown
+#### 4. Save File in `_posts` Directory
+
+#### 5. Commit changes to Windninja/gh-pages!
+
+
+If you have downloaded this, below is an example of a link.
+
+
+ABSTRACT
+
+Many physicists would agree that, had it not been for
+congestion control, the evaluation of web browsers might never
+have occurred. In fact, few hackers worldwide would disagree
+with the essential unification of voice-over-IP and public-
+private key pair. In order to solve this riddle, we confirm that
+SMPs can be made stochastic, cacheable, and interposable.
+
+[Link to PDF of Paper](https://github.com/firelab/windninja/blob/gh-pages/rooter.pdf)
+
+
+
