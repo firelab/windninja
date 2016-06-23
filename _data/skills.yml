@@ -15,14 +15,14 @@
     descr: Objective-C
     xp: 1
 -   id: Ruby
-    descr: sass
+    descr: Ruby
     xp: 1
 -   id: other
-    descr: jquery
+    descr: other
     xp: 2
 -   id: FORTRAN
-    descr: node.js
+    descr: FORTRAN
     xp: 1
--   id: php
-    descr: php
+-   id: Perl
+    descr: Perl
     xp: 1
