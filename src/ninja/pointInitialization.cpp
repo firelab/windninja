@@ -3005,6 +3005,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     {
         cout<<"GDALGetBounds returned false, DEM file is lacking readable data.";
         cout<<false<<endl;       
+        throw std::runtime_error("GDALGetBounds returned false, DEM file is lacking readable data.");
         return false;
 
     }
@@ -3034,6 +3035,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
         cout<<"if persists: check URL, possibly no stations exist for given parameters."<<endl;
         cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
         cout<<false<<endl;
+        throw std::runtime_error("OGROpen could not read file\nif persists:check URL, possibly not stations\nexist for given parameters,\nIf ERROR is HTTP, check internet connection and server status.");
         return false;
     }
 
