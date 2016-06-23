@@ -3,27 +3,27 @@ layout: default
 ---
 
 <div class="home">
-  
-  
+
+
  <div class="col col-12">
       <div class="col col-3">
-          <div class="block glass"  style="background-image:url(assets/avatar.jpg)">      
+          <div class="block glass"  style="background-image:url(assets/avatar.jpg)">
           </div>
       </div>
       <div class="col col-9">
         <div class="block glass">
             <div class="block-body">
-                <h2>Yo, I'm Dude Labouwski</h2>
-                <p class="grey-text">Aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores ausLorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus Lorepsum ipsum lores aus</p>
+                <h2>WindNinja</h2>
+                <p class="grey-text">WindNinja is a diagnostic wind model developed for use in wildland fire modeling.</p>
             </div>
         </div>
-      </div>  
+      </div>
   </div>
   <div class="col col-12">
     {% for port in site.data.portfolio %}
       <div class="col col-{{port.width}}">
         <div class="block" style="background-image:url(assets/{{port.img}})">
-            <div class="block-body height-{{port.height}}">              
+            <div class="block-body height-{{port.height}}">
                 <h2 class="align-bottom-right">
                   {{ port.title }}
                 </h2>
@@ -50,10 +50,10 @@ layout: default
     <div class="col col-3">
         <div class="block glass">
             <div class="block-body">
-                <h3 class="margin-bot">Skills</h3>                
+                <h3 class="margin-bot">Skills</h3>
                 {% for skill in site.data.skills %}
                 <span class="post-meta white-text">{{skill.descr}}</span>
-                <div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>                
+                <div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>
                 {% endfor %}
             </div>
         </div>
