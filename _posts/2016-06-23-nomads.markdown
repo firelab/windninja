@@ -2,9 +2,9 @@
 layout: post
 title:  "Nomads Weather Model Information"
 color:  teal
-width:   3 
+width:   6 
 height:  1
-date:   2016-06-23 11:31:49 +0200
+date:   2016-06-22 11:31:49 +0200
 categories: main
 ---
 
