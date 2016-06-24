@@ -1,7 +1,6 @@
 ---
 layout: hydepost
 title: NinjaFOAM Overview
-permalink: /hyde/foamveriew/
 ---
 
 This page documents the individual steps in a NinjaFOAM simulation. These steps are executed in `ninjafoam::simulate_wind()`. Output from each OpenFOAM call is written to a log file (e.g., `log.checkMesh`) in the temporary directory.
