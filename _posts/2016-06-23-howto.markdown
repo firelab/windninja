@@ -43,7 +43,24 @@ for example:
 #### 5. Commit changes to Windninja/gh-pages!
 
 
-If you have downloaded this, below is an example of a link.
+If you have downloaded this, below is an example of a link
+
+
+
+
+##### List of Available Colors
+
+white
+grey
+teal
+green
+lime
+yellow
+orange
+red
+pink
+purple
+blue
 
 
 ABSTRACT

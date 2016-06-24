@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Building WindNinja on Linux"
-color: red
+color: lime
 width:   3 
 height:  1
 date:   2016-06-23 11:31:49 +0200
