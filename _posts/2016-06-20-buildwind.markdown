@@ -2,7 +2,7 @@
 layout: post
 title:  "Building WindNinja on Windows"
 color: purple
-width:   3 
+width:   6
 height:  1
 date:   2016-06-20 11:31:49 +0200
 categories: main
@@ -105,7 +105,7 @@ For 32-bit, run
 `Nmake –f Makefile.vc mode=dll WITH_ZLIB=dll WITH_DEVEL=C:\src\x86 DEBUG=no MACHINE=x86`
 
 For 64-bit, run
- 
+
 `Nmake –f Makefile.vc mode=dll WITH_ZLIB=dll WITH_DEVEL=C:\src\x64 DEBUG=no MACHINE=x64`
 
 The `WITH_DEVEL` flag tells cURL where to find zlib.
@@ -193,7 +193,7 @@ Then do configure and generate and close the window.  Run
 
 Open `C:\src\x86\src\gdal-1.11.1\nmake.opt` and uncomment and edit the following lines:
 
-    GDAL_HOME = "C:\src\x86"	
+    GDAL_HOME = "C:\src\x86"
     NETCDF_PLUGIN = NO
     NETCDF_SETTING=yes
     NETCDF_LIB=C:\src\x86\lib\netcdf.lib

@@ -2,7 +2,7 @@
 layout: post
 title:  "Making A Post"
 color: red
-width:   3 
+width:   3
 height:  1
 date:   2016-06-23 13:45:49 +0200
 categories: main
@@ -18,7 +18,7 @@ such as Haroopad or the github wiki
 layout: post
 title:  "Making A Post"
 color: red
-width:   3 
+width:   3
 height:  1
 date:   2016-06-23 11:31:49 +0200
 categories: main
@@ -51,16 +51,27 @@ If you have downloaded this, below is an example of a link
 ##### List of Available Colors
 
 white
+
 grey
+
 teal
+
 green
+
 lime
+
 yellow
+
 orange
+
 red
+
 pink
+
 purple
+
 blue
+
 
 
 ABSTRACT
@@ -73,6 +84,3 @@ private key pair. In order to solve this riddle, we confirm that
 SMPs can be made stochastic, cacheable, and interposable.
 
 [Link to PDF of Paper](https://github.com/firelab/windninja/blob/gh-pages/rooter.pdf)
-
-
-

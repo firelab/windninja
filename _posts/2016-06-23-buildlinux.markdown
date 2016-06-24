@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Building WindNinja on Linux"
-color: orange
+color: green
 width:   3 
 height:  1
 date:   2016-06-23 11:31:49 +0200
@@ -10,7 +10,7 @@ categories: main
 
 ## Get WindNinja Source
 
-    git clone https://github.com/firelab/windninja.git 
+    git clone https://github.com/firelab/windninja.git
 
 ## Install Third-Party Libraries
 
@@ -52,7 +52,7 @@ The CMake build has several other general options which can be set:
 
 **Third-party libraries:**
 
-CMake will attempt to find all of the third party libraries needed for WindNinja. All are required with the exception of Qt, if the gui is not being built. CMake has default methods for handling libraries. It will usually ask for a path to a lib, a path to an include directory, and possibly a path to a binary that can specify some configuration values for the install. Since all of the libraries are required, the CMake configuration fails when one is not found. This means you must find the paths for each lib in order, as CMake fails each time you click "Configure" on the next unfound lib. After everything is found and set, click "Generate". 
+CMake will attempt to find all of the third party libraries needed for WindNinja. All are required with the exception of Qt, if the gui is not being built. CMake has default methods for handling libraries. It will usually ask for a path to a lib, a path to an include directory, and possibly a path to a binary that can specify some configuration values for the install. Since all of the libraries are required, the CMake configuration fails when one is not found. This means you must find the paths for each lib in order, as CMake fails each time you click "Configure" on the next unfound lib. After everything is found and set, click "Generate".
 
 ##Build WindNinja
 
