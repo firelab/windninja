@@ -1936,9 +1936,9 @@ void pointInitialization::fetchSingleStation( bool type,
     vector<string> cloudData;
 
 
-    ofstream tsetseWrite;
-    tsetseWrite.open(csvname);
-    tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+    ofstream outFile;
+    outFile.open(csvname);
+    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 if (mnetid==1)
 {
@@ -1951,14 +1951,14 @@ if (mnetid==1)
         {
             for(int q=0;q<count1;q++)
             {
-                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                outFile<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
         else
         {
             for(int q=0;q<count1;q++)
             {
-                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<cloudData[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                outFile<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<cloudData[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
 }
@@ -1968,14 +1968,14 @@ if (mnetid==2)
         {
             for(int q=0;q<count1;q++)
             {
-                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                outFile<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<baddata<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
         else
         {
             for(int q=0;q<count1;q++)
             {
-                tsetseWrite<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<solrad[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
+                outFile<<station<<",GEOCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<solrad[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
 }
@@ -2084,10 +2084,10 @@ void pointInitialization::fetchMultiStation(bool type,
 
             //parses data based on mesonet id, 1=NWS/FAA, 2=RAWS
 
-            ofstream tsetseWrite;//writing to csv
-            tsetseWrite.open(csvname);
+            ofstream outFile;//writing to csv
+            outFile.open(csvname);
             cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-            tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+            outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 
             for (int ex=0;ex<fCount;ex++)
@@ -2146,7 +2146,7 @@ void pointInitialization::fetchMultiStation(bool type,
 
                     for(int ez=0;ez<count1;ez++)
                     {
-                     tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+                     outFile<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                     }
 
                 }
@@ -2193,11 +2193,11 @@ void pointInitialization::fetchMultiStation(bool type,
                         {
                         if (rawsSolrad==aZero)
                         {
-                            tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                            outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                         }
                         else
                         {
-                            tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                            outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                         }
 
                         }
@@ -2307,10 +2307,10 @@ void pointInitialization::fetchPointRadiusStation(bool type,
 
         int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-        ofstream tsetseWrite;//writing to csv
-        tsetseWrite.open(csvname);
+        ofstream outFile;//writing to csv
+        outFile.open(csvname);
         cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+        outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
 //        cout<<fCount<<endl;
         for (int ex=0;ex<fCount;ex++)
@@ -2370,7 +2370,7 @@ void pointInitialization::fetchPointRadiusStation(bool type,
 
                 for(int ez=0;ez<count1;ez++)
                 {
-                 tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+                 outFile<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
                 }
 
             }
@@ -2417,11 +2417,11 @@ void pointInitialization::fetchPointRadiusStation(bool type,
                     {
                     if (rawsSolrad==aZero)
                     {
-                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                        outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
                     else
                     {
-                        tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                        outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                     }
 
                     }
@@ -2992,16 +2992,16 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
     if (poDS==NULL)
     {
-        cout<<"Could not read DEM file, GDALDataset Null"<<endl;
+        cout<<"Could not read DEM file for station fetching"<<endl;
         cout<<false<<endl;
         return false;
     }
 
     double bounds[4];
-    bool boundCheck;
+    bool bRet;
 
-    boundCheck=GDAL_UTIL_H::GDALGetBounds(poDS,bounds);
-    if (boundCheck==false)
+    bRet=GDALGetBounds(poDS,bounds);
+    if (bRet==false)
     {
         cout<<"GDALGetBounds returned false, DEM file is lacking readable data.";
         cout<<false<<endl;       
@@ -3019,8 +3019,18 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
             bounds[1], timeUTC[0],timeUTC[1],timeUTC[2],
             timeUTC[3],timeUTC[4],timeUTC[5],
             timeUTC[6],timeUTC[7]);
-
-    std::string csvname=stationFilename+".csv";
+    
+    std::string csvName;
+    if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
+    {
+    csvName=stationFilename;
+    cout<<".csv exists in stationFilename"<<endl;
+    }
+    else
+    {
+    csvName=stationFilename+".csv";
+    cout<<"adding .csv to stationFilename"<<endl;
+    }
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
@@ -3089,10 +3099,10 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    ofstream tsetseWrite;//writing to csv
-    tsetseWrite.open(csvname.c_str());
-    cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-    tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+    ofstream outFile;//writing to csv
+    outFile.open(csvName.c_str());
+    cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
+    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
     for (int ex=0;ex<fCount;ex++)
     {
@@ -3159,7 +3169,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
             for(int ez=0;ez<count1;ez++)
             {
-             tsetseWrite<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+             outFile<<metarStation<<",GEOCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
             }
 
         }
@@ -3212,11 +3222,11 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
                 if (rawsSolrad==aZero)
                 {
 
-                    tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                    outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                 }
                 else
                 {
-                    tsetseWrite<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                    outFile<<rawsStation<<",GEOCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
                 }
 
                 }
