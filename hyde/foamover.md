@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: hydepost
 title: NinjaFOAM Overview
 permalink: /hyde/foamveriew/
 ---
