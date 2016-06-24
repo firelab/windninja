@@ -83,4 +83,4 @@ with the essential unification of voice-over-IP and public-
 private key pair. In order to solve this riddle, we confirm that
 SMPs can be made stochastic, cacheable, and interposable.
 
-[Link to PDF of Paper](https://firelab.github.io/windninja/rooter.pdf)
+[Link to PDF of Paper](https://firelab.github.io/pdf/rooter.pdf)
