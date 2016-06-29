@@ -50,5 +50,15 @@ layout: default
       </div>
     {% endfor %}
     </div>
-
+    <div class="col col-3">
+        <div class="block glass">
+            <div class="block-body">
+                <h3 class="margin-bot">Code Composition</h3>
+                {% for skill in site.data.skills %}
+                <span class="post-meta white-text">{{skill.descr}}</span>
+                <div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
