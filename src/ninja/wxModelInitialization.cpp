@@ -1926,6 +1926,7 @@ int wxModelInitialization::LoadFromCsv()
             CSLDestroy( papszTokens );
             break;
         }
+        CSLDestroy( papszTokens );
     }
     CSLDestroy( papszLines );
     return 0;
