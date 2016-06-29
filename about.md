@@ -22,7 +22,7 @@ WindNinja is a computer program that computes spatially varying wind fields for 
 
 
 
-###For Incident Support
+### For Incident Support
 
 
 see [FAQ](http://firelab.github.io/windninja/about/),
