@@ -62,17 +62,10 @@ Preconditioner::~Preconditioner()
 	if(D)
 		delete[] D;
 
-	#ifdef MKL
-	if(Lt)
-		MKL_free(Lt);
-	if(U)
-		MKL_free(U);
-	#else
 	if(Lt)
 		delete[] Lt;
 	if(U)
 		delete[] U;
-	#endif
 
 	if(scratch)
 		delete[] scratch;
@@ -98,8 +91,6 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 		preConditionerType = preconditionerType;
 		NUMNP = numnp;
 		
-		std::cout<<"Preconditioner is Jacobi ================================"<<std::endl;
-
 		
 		D = new double[NUMNP];
         if(matdescra[0] == 's'){  //if A is symmetric
@@ -137,16 +128,9 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 		}
 		
 		//Allocate matrix storage;
-		#ifdef MKL
-		Lt = (double*)MKL_malloc((count-NUMNP)*sizeof(double),16);	//(count-NUMNP) because diagonal is not stored because it's 1;NOTE storing transpose of lower, hence L"t"
-		U = (double*)MKL_malloc(count*sizeof(double),16);
-		if(Lt==NULL || U ==NULL)
-			return false;
-		#else
 
 		Lt = new double[count-NUMNP];
 		U = new double[count];
-		#endif
 
 		scratch = new double[NUMNP];
 		L_row_ptr = new int[NUMNP+1]; //+1 since we need to store the location of the end of Lt also (in mkl_dcsrsv() need pntre)
@@ -229,7 +213,6 @@ bool Preconditioner::solve(double *r, double *z, int *row_ptr, int *col_ind)
 	return false;
 }
 
-#ifndef MKL
 void Preconditioner::mkl_dcsrsv(char *transa, int *m, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *y)
 {	// My version of the mkl_dcsrsv() function; solves val*y=x
 	// Only works for my specific settings
@@ -277,13 +260,10 @@ void Preconditioner::mkl_dcsrsv(char *transa, int *m, double *alpha, char *matde
 	}else
 		throw std::logic_error("ERROR IN PRECONDITIONER: TRIANGULAR SOLVER FAILED");
 }
-#endif //MKL
 
-#ifndef MKL
 void Preconditioner::cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY)
 {	// My version of cblas_dcopy, only works for incX==1 and incY==1
 	int i;
 	for(i=0; i<N; i++)
 		Y[i] = X[i];
 }
-#endif	//MKL

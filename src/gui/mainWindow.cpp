@@ -80,7 +80,7 @@ mainWindow::mainWindow(QWidget *parent)
 
     meshCellSize = 200.0;
 
-    QString v(VERSION);
+    QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
 
@@ -461,6 +461,8 @@ void mainWindow::createConnections()
       this, SLOT(updateOutRes()));
   connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)),
       this, SLOT(updateOutRes()));
+  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
@@ -526,6 +528,8 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
   connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(checkAllItems()));
   connect(tree->vtk->vtkGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
 
@@ -535,6 +539,8 @@ void mainWindow::createConnections()
   connect(tree->fb->fbResSpinBox, SIGNAL(valueChanged(double)),
       this, SLOT(checkAllItems()));
   connect(tree->shape->shapeResSpinBox, SIGNAL(valueChanged(double)),
+      this, SLOT(checkAllItems()));
+  connect(tree->pdf->pdfResSpinBox, SIGNAL(valueChanged(double)),
       this, SLOT(checkAllItems()));
 
   //check the google res, make sure not bad
@@ -998,17 +1004,17 @@ void mainWindow::bugReport()
 void mainWindow::aboutWindNinja()
 {
   QString aboutText = "<h2>WindNinja</h2>\n";
-  aboutText.append("<p><h4>Version:</h4>" + QString(VERSION) + "</p>");
+  aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
 
-  aboutText.append("<p><h4>SVN Version:</h4>" + QString(SVN_VERSION) + "</p>");
+  aboutText.append("<p><h4>Git Commit:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
 
-  aboutText.append("<p><h4>Release Date:</h4>" + QString(RELEASE_DATE) + "</p>");
-  aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br /> " \
-                                               "Kyle Shannon<br /> " \
-                                               "Bret Butler<br /> " \
-                                               "Natalie Wagenbrenner <br /> " \
-                                               "Cody Posey<br /> " \
-                                               "Levi Malott</p>");
+  aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
+  aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
+                                               "Kyle Shannon<br/>" \
+                                               "Natalie Wagenbrenner<br/>" \
+                                               "Bret Butler<br/>" \
+                                               "Levi Malott<br/>" \
+                                               "Cody Posey<p/>");
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
@@ -1051,6 +1057,11 @@ void mainWindow::updateOutRes()
     {
       tree->shape->shapeResSpinBox->setValue(resolution);
       tree->shape->shapeMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+    }
+  if(tree->pdf->useMeshResCheckBox->isChecked() == true)
+    {
+      tree->pdf->pdfResSpinBox->setValue(resolution);
+      tree->pdf->pdfMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
     }
 }
 
@@ -1150,18 +1161,24 @@ double mainWindow::computeCellSize(int index)
 #ifdef NINJAFOAM  
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
-    double XLength = (GDALXSize + 1) * GDALCellSize + 200; //100 m buffer on all sides for MDM
-    double YLength = (GDALYSize + 1) * GDALCellSize + 200;
-    double ZLength = 2450; //bottom face is 50 m above terrain max, top face is 2500 m above terrain max
-  
-    double volume1;
-    double cellCount1;
-    double cellVolume1;
+
+    double XLength = (GDALXSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01); //buffer for MDM
+    double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
+
+    double dz = GDALMaxValue - GDALMinValue;
+    double zMin = GDALMaxValue * 1.1;
+    double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
+    double ZLength = zMax - zMin; 
+
+    double volume;
+    double cellCount;
+    double cellVolume;
     
-    volume1 = XLength * YLength * ZLength; //volume near terrain
-    cellCount1 = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume1 = volume1/cellCount1; // volume of 1 cell in zone1
-    meshResolution = std::pow(cellVolume1, (1.0/3.0)); // length of side of regular hex cell in zone1
+    volume = XLength * YLength * ZLength; //volume of blockMesh
+    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+    meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
+    meshResolution /= 4.0; //assume 2 rounds of refinement at surface
   }
   else{
     /* native windninja mesh */
@@ -1246,9 +1263,9 @@ int mainWindow::checkInputFile(QString fileName)
         writeToConsole("Invalid Spatial Reference (prj), "
                        "cannot do a simulation with the supplied DEM", red);
         QMessageBox::warning(this, tr("WindNinja"),
-                             "The DEM does not contain a coordinated "
+                             "The DEM does not contain a proper spatial reference "
                              "system. WindNinja only supports DEM files "
-                             "with projected coordinate systems(ie UTM)",
+                             "with projected coordinate systems (e.g., UTM)",
                              QMessageBox::Ok | QMessageBox::Default);
         GDALClose((GDALDatasetH)poInputDS);
         return -1;
@@ -1264,9 +1281,9 @@ int mainWindow::checkInputFile(QString fileName)
         {
             hasPrj = false;
             QMessageBox::warning(this, tr("WindNinja"),
-                                 "The DEM does not contain a coordinated "
+                                 "The DEM does not contain a proper spatial reference "
                                  "system. WindNinja only supports DEM files "
-                                 "with projected coordinate systems(ie UTM)",
+                                 "with projected coordinate systems (e.g., UTM)",
                                  QMessageBox::Ok | QMessageBox::Default);
             GDALClose((GDALDatasetH)poInputDS);
             return -1;
@@ -1281,7 +1298,7 @@ int mainWindow::checkInputFile(QString fileName)
                                  "The DEM coordinated system is in a "
                                  "geographic projection (latitude/longitude). "
                                  "WindNinja only supports projected "
-                                 "coordinate systems(ie UTM)",
+                                 "coordinate systems (e.g., UTM)",
                                  QMessageBox::Ok | QMessageBox::Default);
             writeToConsole("Invalid Spatial Reference (prj), "
                            "cannot do a simulation with the supplied DEM", red);
@@ -1339,6 +1356,10 @@ int mainWindow::checkInputFile(QString fileName)
         }
     }
 
+    //get min/max values
+    GDALMaxValue = GDALGetMax(poInputDS);
+    GDALMinValue = GDALGetMin(poInputDS);
+
     GDALClose( (GDALDatasetH)poInputDS );
 
     double XLength = (GDALXSize + 1) * GDALCellSize;
@@ -1369,10 +1390,14 @@ bool mainWindow::getLatLon()
 void mainWindow::openOutputPath()
 {
     if( outputPath.isEmpty() || outputPath == "!set" )
-    return;
+    {
+        return;
+    }
     else
-    QDesktopServices::openUrl( QUrl ( "file:///" + outputPath,
-                      QUrl::TolerantMode ) );
+    {
+        QDesktopServices::openUrl( QUrl ( "file:///" + outputPath,
+                                   QUrl::TolerantMode ) );
+    }
 }
 
 int mainWindow::solve()
@@ -1410,7 +1435,7 @@ int mainWindow::solve()
     meshChoice = Mesh::coarse;
     else if( meshIndex == 1 )
     meshChoice = Mesh::medium;
-    else if( meshIndex == 1 )
+    else if( meshIndex == 2 )
     meshChoice = Mesh::fine;
     else {
     meshRes = tree->surface->meshResDoubleSpinBox->value();
@@ -1592,27 +1617,50 @@ int mainWindow::solve()
     shapeUnits = lengthUnits::meters;
     else
     shapeUnits = lengthUnits::feet;
+    //pdf
+    bool writePdf = tree->pdf->pdfGroupBox->isChecked();
+    double pdfRes = tree->pdf->pdfResSpinBox->value();
+    double pdfLineWidth = tree->pdf->vectorWidthDoubleSpinBox->value();
+    lengthUnits::eLengthUnits pdfUnits;
+    if(tree->pdf->pdfMetersRadioButton->isChecked())
+        pdfUnits = lengthUnits::meters;
+    else
+        pdfUnits = lengthUnits::feet;
+    int pdfBase = tree->pdf->backgroundComboBox->currentIndex();
+
+    double pdfHeight, pdfWidth;
+    int pdfSize = tree->pdf->sizeComboBox->currentIndex();
+    // Letter
+    if( pdfSize == 0 )
+    {
+        pdfHeight = 11.0;
+        pdfWidth = 8.5;
+    }
+    // Legal
+    else if( pdfSize == 1 )
+    {
+        pdfHeight = 14.0;
+        pdfWidth = 8.5;
+    }
+    // Tabloid
+    else if( pdfSize == 2 )
+    {
+        pdfHeight = 17.0;
+        pdfWidth = 11.0;
+    }
+    if( tree->pdf->landscapeRadioButton->isChecked() )
+    {
+        double tmp;
+        tmp = pdfWidth;
+        pdfWidth = pdfHeight;
+        pdfHeight = tmp;
+    }
 
     bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
 
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-    /* INITIALIZE THE ARMY */
-    progressDialog->setValue( 0 );
-    runTime->restart();
-    connect( progressDialog, SIGNAL(canceled() ),
-         this, SLOT( cancelSolve() ) );
-
-    progressDialog->setCancelButtonText( "Cancel" );
-
-    setCursor( Qt::WaitCursor );
-
-    progressDialog->setLabelText( "Initializing runs..." );
-
-    writeToConsole( "Initializing runs..." );
-    
-    delete army;
 #ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
 #else
@@ -1654,7 +1702,38 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
-        army->makeArmy( weatherFile, timeZone );
+        /* This can throw a badForecastFile */
+        try
+        {
+            army->makeArmy( weatherFile, timeZone );
+        }
+        catch( badForecastFile &e )
+        {
+             QMessageBox::critical( this, tr( "Invalid forecast file." ),
+                                    tr( "The forecast cannot be read." ),
+                                    QMessageBox::Ok | QMessageBox::Default );
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor);
+            tree->weather->checkForModelData();
+            progressDialog->cancel();
+            progressDialog->hide();
+            delete army;
+            return false;
+        } catch (...) {
+            QMessageBox::critical(
+                this, tr("Failure."),
+                tr("An unknown error occurred in makeArmy().  This is usually "
+                   "due to a failure in reading the weather model file"),
+                QMessageBox::Ok | QMessageBox::Default);
+            disconnect(progressDialog, SIGNAL(canceled()), this,
+                       SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor);
+            tree->weather->checkForModelData();
+            progressDialog->cancel();
+            progressDialog->hide();
+            delete army;
+            return false;
+        }
         nRuns = army->getSize();
     }
 
@@ -1695,6 +1774,7 @@ int mainWindow::solve()
                     setCursor(Qt::ArrowCursor);
                     tree->weather->checkForModelData();
                     progressDialog->cancel();
+                    delete army;
                     return false;
             }
         }
@@ -1800,8 +1880,15 @@ int mainWindow::solve()
         else
         {
 #ifdef NINJAFOAM
-            if(useNinjaFoam)
+            if(useNinjaFoam){
                 army->setMeshCount( i, ninjafoamMeshChoice );
+                if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
+                    army->setNumberOfIterations( i, 200);
+                if(ninjafoamMeshChoice == WindNinjaInputs::medium)
+                    army->setNumberOfIterations( i, 350);
+                if(ninjafoamMeshChoice == WindNinjaInputs::fine)
+                    army->setNumberOfIterations( i, 500);
+            }
             else
                 army->setMeshResolutionChoice( i, meshChoice );
 #else
@@ -1826,6 +1913,11 @@ int mainWindow::solve()
         army->setGoogSpeedScaling(i,googleScale);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
+        army->setPDFOutFlag      (i,writePdf);
+        army->setPDFResolution   (i,pdfRes,pdfUnits);
+        army->setPDFLineWidth    (i,pdfLineWidth);
+        army->setPDFBaseMap      (i,pdfBase);
+        army->setPDFSize         (i,pdfHeight,pdfWidth,150);
         army->setAsciiOutFlag    (i,writeFb);    
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  
@@ -1843,8 +1935,7 @@ int mainWindow::solve()
         army->setNinjaComNumRuns( i, nRuns );
     }
 
-
-    army->set_writeFarsiteAtmFile( writeAtm );
+    army->set_writeFarsiteAtmFile( writeAtm && writeFb );
 
     for( unsigned int i = 0; i < army->getSize(); i++ )
     {
@@ -1863,7 +1954,11 @@ int mainWindow::solve()
     for( unsigned int i = 0; i < army->getSize(); i++ ) 
     {
         connect( army->getNinjaCom( i ),
-                 SIGNAL( sendProgress( int, int) ), this,
+                 SIGNAL( sendMessage( QString, QColor ) ), this,
+                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
+
+        connect( army->getNinjaCom( i ),
+                 SIGNAL( sendProgress( int, int ) ), this,
                  SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
 
         connect( army->getNinjaCom( i ),
@@ -1874,19 +1969,24 @@ int mainWindow::solve()
     writeToConsole(QString::number( army->getSize() ) + " runs initialized. Starting solver...");
     //sThread->start();
 
+    progressDialog->setValue( 0 );
+    runTime->restart();
+    connect( progressDialog, SIGNAL(canceled() ),
+         this, SLOT( cancelSolve() ) );
+
+    progressDialog->setCancelButtonText( "Cancel" );
+
+    setCursor( Qt::WaitCursor );
+
+    progressDialog->setLabelText( "Running..." );
+
+    writeToConsole( "Initializing runs..." );
+
     bool ninjaSuccess = false;
     //ninjaSuccess = sThread->run( nThreads, army );
     //start the army
     try {
-#ifdef NINJAFOAM
-            if(tree->ninjafoam->ninjafoamGroupBox->isChecked()){
-                ninjaSuccess = army->startNinjaFoamRuns( nThreads );
-            }
-            else
-                ninjaSuccess = army->startRuns( nThreads );
-#else
-            ninjaSuccess = army->startRuns( nThreads );
-#endif //NINJAFOAM
+        ninjaSuccess = army->startRuns( nThreads );
     }
     catch (bad_alloc& e)
     {
@@ -1897,6 +1997,7 @@ int mainWindow::solve()
 
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (cancelledByUser& e)
@@ -1907,6 +2008,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (exception& e)
@@ -1917,6 +2019,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
     catch (...)
@@ -1927,6 +2030,7 @@ int mainWindow::solve()
                              QMessageBox::Ok | QMessageBox::Default);
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        delete army;
         return false;
     }
 
@@ -1951,7 +2055,13 @@ int mainWindow::solve()
 
     setCursor(Qt::ArrowCursor);
 
+    delete army;
     return ninjaSuccess;
+}
+
+void mainWindow::updateProgress(const QString message)
+{
+  progressDialog->setLabelText(message);
 }
 
 void mainWindow::updateProgress(int run, int progress)
@@ -1959,8 +2069,9 @@ void mainWindow::updateProgress(int run, int progress)
   runProgress[run] = progress;
   totalProgress = 0;
 
-  for(int i = 0;i < nRuns;i++)
+  for(int i = 0;i < nRuns;i++){
     totalProgress += runProgress[i];
+  }
 
   progressDialog->setValue(totalProgress);
 }
@@ -2356,13 +2467,15 @@ int mainWindow::checkOutputItem()
       tree->outputItem->setToolTip(0, "Cannot read input file");
       status = red;
     }
-  if(checkGoogleItem() == blue && checkFbItem() == blue && checkShapeItem() == blue && checkVtkItem() == blue)
+  if(checkGoogleItem() == blue && checkFbItem() == blue && checkShapeItem() == blue && checkVtkItem() == blue &&
+     checkPdfItem() == blue)
     {
       tree->outputItem->setIcon(0, tree->cross);
       tree->outputItem->setToolTip(0, "No outputs selected");
       status = red;
     }
-  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber)
+  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber ||
+     checkPdfItem() == amber)
     {
       if(checkGoogleItem() == amber)
     {
@@ -2382,7 +2495,13 @@ int mainWindow::checkOutputItem()
       tree->outputItem->setToolTip(0, "Check shape file ouput");
       status = amber;
     }
-      if(checkVtkItem() == amber)
+    if(checkPdfItem() == amber)
+    {
+      tree->outputItem->setIcon(0, tree->check);
+      tree->outputItem->setToolTip(0, "Check pdf file ouput");
+      status = amber;
+    }
+    if(checkVtkItem() == amber)
     {
       tree->outputItem->setIcon(0, tree->check);
       tree->outputItem->setToolTip(0, "Check vtk file ouput");
@@ -2401,7 +2520,6 @@ int mainWindow::checkOutputItem()
 int mainWindow::checkGoogleItem()
 {
   eInputStatus status = red;
-
   if(!tree->google->googleGroupBox->isChecked())
     {
       tree->googleItem->setIcon(0, tree->blue);
@@ -2524,6 +2642,50 @@ int mainWindow::checkShapeItem()
     {
       tree->shapeItem->setIcon(0, tree->cross);
       tree->shapeItem->setToolTip(0, "Cannot read input file") ;
+      status = red;
+    }
+    }
+  return status;
+}
+
+int mainWindow::checkPdfItem()
+{
+  eInputStatus status = red;
+  if(!tree->pdf->pdfGroupBox->isChecked())
+    {
+      tree->pdfItem->setIcon(0, tree->blue);
+      tree->pdfItem->setToolTip(0, "No output");
+      status = blue;
+    }
+  else
+    {
+      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
+    {
+      /*
+      if((int)meshCellSize > tree->pdf->pdfResSpinBox->value())
+        {
+          tree->pdfItem->setIcon(0, tree->check);
+          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the computational mesh");
+          status = amber;
+        }
+      */
+      if((int)GDALCellSize > tree->pdf->pdfResSpinBox->value())
+        {
+          tree->pdfItem->setIcon(0, tree->caution);
+          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
+          status = amber;
+        }
+      else
+        {
+          tree->pdfItem->setIcon(0, tree->check);
+          tree->pdfItem->setToolTip(0, "Valid");
+          status = green;
+        }
+    }
+      else
+    {
+      tree->pdfItem->setIcon(0, tree->cross);
+      tree->pdfItem->setToolTip(0, "Cannot read input file") ;
       status = red;
     }
     }
@@ -2681,6 +2843,13 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       else
     tree->shape->shapeGroupBox->setChecked(true);
     }
+  else if(item == tree->pdfItem)
+  {
+      if(tree->pdf->pdfGroupBox->isChecked())
+        tree->pdf->pdfGroupBox->setChecked(false);
+      else
+        tree->pdf->pdfGroupBox->setChecked(true);
+  }
   else if(item == tree->vtkItem)
     {
       if(tree->vtk->vtkGroupBox->isChecked())
@@ -2789,10 +2958,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        tree->diurnal->diurnalGroupBox->setCheckable( false );
-        tree->diurnal->diurnalGroupBox->setChecked( false );
-        tree->diurnal->diurnalGroupBox->setHidden( true );
-        tree->diurnal->ninjafoamConflictLabel->setHidden( false );
+        //tree->diurnal->diurnalGroupBox->setCheckable( false );
+        //tree->diurnal->diurnalGroupBox->setChecked( false );
+        //tree->diurnal->diurnalGroupBox->setHidden( true );
+        //tree->diurnal->ninjafoamConflictLabel->setHidden( false );
 
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
@@ -2813,9 +2982,8 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( true );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
-        tree->surface->timeZoneGroupBox->setHidden( true );
+        tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
-        tree->surface->ninjafoamConflictLabel->setHidden( false );
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
@@ -2847,7 +3015,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
-        tree->surface->ninjafoamConflictLabel->setHidden( true );
         
         tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkLabel->setHidden( false );
@@ -2878,4 +3045,3 @@ void mainWindow::SetConfigOption()
     pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
     CPLSetConfigOption( pszKey, pszVal );
 }
-

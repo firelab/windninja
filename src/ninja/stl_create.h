@@ -56,6 +56,7 @@ typedef enum
 CPLErr NinjaElevationToStl( const char *pszInput,
                             const char *pszOutput,
                             int nBand,
+                            double dfTargetCellSize,
                             NinjaStlType eType,
                             GDALProgressFunc pfnProgress );
 

@@ -34,6 +34,7 @@
 #include "surface_fetch.h"
 #include "gdal_fetch.h"
 #include "landfireclient.h"
+#include "relief_fetch.h"
 #include <string>
 
 class FetchFactory
@@ -47,10 +48,12 @@ class FetchFactory
 #ifdef WITH_LCP_CLIENT
                 LCP,
 #endif
-                CUSTOM_GDAL
+                CUSTOM_GDAL,
+                RELIEF
             };
         static const std::string US_SRTM_STR;
         static const std::string WORLD_SRTM_STR;
+        static const std::string RELIEF_STR;
 #ifdef HAVE_GMTED
         static const std::string WORLD_GMTED_STR;
 #endif //HAVE_GMTED

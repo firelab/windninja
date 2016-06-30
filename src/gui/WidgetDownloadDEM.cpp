@@ -39,6 +39,8 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     setupGM();
     initializeGoogleMapsInterface();
     connectInputs();
+    cbSelectionMethod->setCurrentIndex(1);
+    cbSelectionMethod->setCurrentIndex(0);
     this->readSettings();
     updateGUI();
     

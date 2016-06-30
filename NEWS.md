@@ -1,8 +1,51 @@
 Release Notes
 =============
 
+WindNinja 3.0.1
+---------------
+
+2016-06-07
+
+* Fix GFS issue related to time variable (\#149)
+
+* Speed up STL file writing (\#147)
+
+* Fix a bug related to OpenFOAM meshing on small domains (\#152)
+
+WindNinja 3.0.0
+---------------
+
+* Add OpenFOAM based momentum solver( \#41, \#43, \#44, \#45, \#47, \#48, \#52,
+\#54, \#55, \#62, \#71, \#73, \#75, \#77, \#83, \#90, \#106, \#115, \#116,
+\#123, \#124, \#127, \#132)
+
+* Add Geospatial PDF output(\#75, \#87, \#88, \#91, \#92, \#100, \#101, \#115,
+\#123, \#127)
+
+* Fix segfault in DEM reading in CLI (\#86)
+
+* Fix GMTED elevation source (\#69, \#78)
+
+WindNinja 2.5.4
+---------------
+
+2015-10-06
+
+* Re-enable GMTED as it disables LCP.
+
+WindNinja 2.5.3
+---------------
+
+2015-10-02
+
+* Disable GMTED due to lack of server(#69)
+
+* Fix GFS from thredds(#63)
+
 WindNinja 2.5.2
 ---------------
+
+2015-02-18
 
 * Fixed bug where nomads forecasts wouldn't download properly due to a missing
   drive letter in the path.  This was only present when the working directory
@@ -14,6 +57,8 @@ WindNinja 2.5.2
 
 WindNinja 2.5.1
 ---------------
+
+2015-02-11
 
 WindNinja 2.5.0 had a major bug that crashed the application when more than one
 domain average initialization was run.  All users are encouraged to upgrade
@@ -28,6 +73,8 @@ immediately.
 
 WindNinja 2.5.0
 ---------------
+
+2015-01-23
 
 * Add NOMADS server as a coarse scale weather model data source.
 
@@ -51,6 +98,8 @@ WindNinja 2.5.0
 
 WindNinja 2.4.1
 ---------------
+
+2015-01-24
 
 * Unreleased version with bug fixes from 2.5.0, but without NOMADS support.
 

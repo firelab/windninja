@@ -100,30 +100,21 @@ int main(int argc, char *argv[])
 	const vector uDirection_(dict.lookup("uDirection"));
 	const scalar inputWindHeight_Veg_(readScalar(dict.lookup("inputWindHeight_Veg")));
 	const scalar z0_(readScalar(dict.lookup("z0")));
-	const scalar Rd_(readScalar(dict.lookup("Rd")));
-	scalar ustar = Foam::log((inputWindHeight_Veg_-Rd_)/z0_);
+	//const scalar Rd_(readScalar(dict.lookup("Rd")));
+	scalar ustar = Foam::log((inputWindHeight_Veg_)/z0_);
 	ustar = (UfreeStream_*0.41)/(ustar);
 	scalar ucalc(0.0);
 
 	// Loop over all the faces in the patch
 	// and initialize the log profile
-    
 	forAll(y,cellI)
 	{
 		// relative height from ground for face lists
 		scalar AGL = y[cellI];
 
-		//if we're below the veg height, use linear interpolation to ground
-		if (AGL < Rd_ )
-		{
-			ucalc = UfreeStream_*AGL/inputWindHeight_Veg_;
-			U[cellI] = ucalc*uDirection_;
-		}
-		else  //Apply the log law equation profile
-		{
-			ucalc = ustar/0.41*Foam::log((AGL-Rd_)/z0_);
-			U[cellI] = ucalc*uDirection_;
-		}
+		//Apply the log law equation profile
+        ucalc = ustar/0.41*Foam::log((AGL)/z0_);
+    	U[cellI] = ucalc*uDirection_;
 	}
 
 	U.write();

@@ -173,8 +173,8 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
 void Dust::ComputePM10(AsciiGrid<double> &grid_ustar, AsciiGrid<double> &grid_dust)
 {
     int i, j;
-    const double ustar_threshold = 0.22;  //threshold friction velocity for burned soil
-    const double K = 0.0007; //PM10 release factor for burned soil, units are 1/m (0.004)
+    const double ustar_threshold = 0.22;  //0.22 paper; //0.20 fall value //0.55 spring value //threshold friction velocity for burned soil
+    const double K = 0.0007; //0.0066 fall value; //0.0003 spring value //PM10 release factor for burned soil, units are 1/m (0.004)
     const double rho_ = 1.164*1000000; //convert units from kg/m^3 to mg/m^3
     const double g = 9.81; //acceleration of gravity (m/s2)
     

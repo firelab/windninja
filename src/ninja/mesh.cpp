@@ -265,9 +265,10 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 		 throw std::range_error("Mesh::buildStandardMesh(WindNinjaInputs& input) detected a bad \"vertGrowth\" value.");
 
 	//Resample DEM to desired computational resolution
-     if(meshResolution < input.dem.get_cellSize())    //making the grid finer is not an option yet, so use the DEM resolution
+     if(meshResolution < input.dem.get_cellSize())
      {
-          input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Grid cannot be made finer, using DEM cellsize...");
+         input.dem.resample_Grid_in_place(meshResolution, Elevation::order1);	//make the grid finer
+         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
 								//NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
      }else if(meshResolution > input.dem.get_cellSize())
      {
@@ -290,7 +291,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
      NUMEL=(nrows-1)*(ncols-1)*(nlayers-1);  //number of elements
      //hexahedral elements are being used
      NNPE=8;                                 //number of nodes per element
-
+     
 	 XORD.allocate(nrows, ncols, nlayers);
 	 YORD.allocate(nrows, ncols, nlayers);
 	 ZORD.allocate(nrows, ncols, nlayers);
@@ -324,7 +325,6 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 			}
 		}
 	}
-
 
      if(check_aspect_ratio==1)
           aspect_ratio=get_aspect_ratio(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);

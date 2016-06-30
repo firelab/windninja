@@ -73,8 +73,13 @@ public:
     NinjaFoam& operator= ( NinjaFoam const& A );
 
     virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninjafoam");}
+
+    double get_meshResolution();
 
 private:
+
+    double foamRoughness; //roughness value used in OpenFOAM
 
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
@@ -100,8 +105,8 @@ private:
     void SetBcs();
     int writeMoveDynamicMesh();
     int writeBlockMesh();
-    int readDem(int &ratio_); //sets blockMesh data from DEM 
-    int readLogFile(int &ratio); //sets blockMesh data from STL log file when DEM not available
+    int readDem(double &ratio_); //sets blockMesh data from DEM 
+    int readLogFile(double &ratio); //sets blockMesh data from STL log file when DEM not available
     
     std::string boundary_name;
     std::string terrainName;
@@ -115,10 +120,14 @@ private:
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
     std::vector<double> bbox;
-    std::vector<int> nCells;
-    double side1; // length of side of regular hex cell in zone1
-    double firstCellHeight1; //height of near-ground cell after moveDynamicMesh
-    int latestTime; //latest time directory 
+    std::vector<int> nCells; //number of cells in x,y,z directions of blockMesh
+    double meshResolution; // mesh resolution
+    double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
+    double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
+    double finalFirstCellHeight; //final approx height of near-ground cell after refinement
+    int latestTime; //latest time directory
+    int cellCount; //total cell count in the mesh 
+    int simpleFoamEndTime; //set to last time directory
     
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
@@ -126,23 +135,28 @@ private:
     
     int SurfaceTransformPoints();
     int SurfaceCheck();
+    int RefineSurfaceLayer();
     int MoveDynamicMesh();
-    int RefineWallLayer();
+    int TopoSet();
+    int RefineMesh();
     int BlockMesh();
     int DecomposePar();
-    int ReconstructParMesh(const char *const arg);
-    int ReconstructPar(const char *const arg);
+    int ReconstructParMesh();
+    int ReconstructPar();
     int RenumberMesh();
     int CheckMesh();
     int ApplyInit();
     int SimpleFoam();
     int Sample();
     int ReadStl();
+    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateSimpleFoamControlDict();
 
     /* GDAL/OGR output */
     const char *pszVrtMem;
     const char *pszGridFilename;
     
+    int SampleRawOutput();
     int WriteOutputFiles();
     void SetOutputFilenames();
     

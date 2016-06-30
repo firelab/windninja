@@ -77,6 +77,15 @@ double genericSurfInitialization::Get_Wind_Height()
 }
 
 /**
+*@brief Returns horizontal grid resolution of the model
+*@return return grid resolution (in km unless < 1, then degrees)
+*/
+double genericSurfInitialization::getGridResolution()
+{
+    return -1.0;
+}
+
+/**
 * Fetch the variable names
 *
 * @return a vector of variable names
@@ -84,14 +93,10 @@ double genericSurfInitialization::Get_Wind_Height()
 std::vector<std::string> genericSurfInitialization::getVariableList()
 {
     std::vector<std::string> varList;
-    //varList.push_back( "Temperature_height_above_ground" );
-    //varList.push_back( "V-component_of_wind_height_above_ground" );
-    //varList.push_back( "U-component_of_wind_height_above_ground" );
-    //varList.push_back( "Total_cloud_cover" );
-    varList.push_back( "T_2m" );
-    varList.push_back( "v_10m_gr" );
-    varList.push_back( "u_10m_gr" );
-    varList.push_back( "q_e" );
+    varList.push_back( "Temperature_height_above_ground" );
+    varList.push_back( "V-component_of_wind_height_above_ground" );
+    varList.push_back( "U-component_of_wind_height_above_ground" );
+    varList.push_back( "Total_cloud_cover" );
     return varList;
 }
 
@@ -225,22 +230,22 @@ void genericSurfInitialization::checkForValidData()
                     }
                 }
 
-                if( varList[i] == "T_2m")//"Temperature_height_above_ground" )   //units are Kelvin
+                if( varList[i] == "Temperature_height_above_ground" )   //units are Kelvin
                 {
                     if(padfScanline[k] < 180.0 || padfScanline[k] > 340.0)  //these are near the most extreme temperatures ever recored on earth
                         throw badForecastFile("Temperature is out of range in forecast file.");
                 }
-                else if( varList[i] == "v_10m_gr")//"V-component_of_wind_height_above_ground" )  //units are m/s
+                else if( varList[i] == "V-component_of_wind_height_above_ground" )  //units are m/s
                 {
                     if(std::abs(padfScanline[k]) > 220.0)
                         throw badForecastFile("V-velocity is out of range in forecast file.");
                 }
-                else if( varList[i] == "u_10m_gr")//"U-component_of_wind_height_above_ground" )  //units are m/s
+                else if( varList[i] == "U-component_of_wind_height_above_ground" )  //units are m/s
                 {
                     if(std::abs(padfScanline[k]) > 220.0)
                         throw badForecastFile("U-velocity is out of range in forecast file.");
                 }
-                else if( varList[i] == "q_e")//"Total_cloud_cover" )  //units are percent
+                else if( varList[i] == "Total_cloud_cover" )  //units are percent
                 {
                     if(padfScanline[k] < 0.0 || padfScanline[k] > 100.0)
                         throw badForecastFile("Total cloud cover is out of range in forecast file.");
@@ -448,32 +453,28 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                         GRA_NearestNeighbour,
                                                         1.0, psWarpOptions );
 
-        //if( varList[i] == "Temperature_height_above_ground" ) {
-        if( varList[i] == "T_2m" ) {
+        if( varList[i] == "Temperature_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
         if( CPLIsNan( dfNoData ) ) {
         airGrid.set_noDataValue(-9999.0);
         airGrid.replaceNan( -9999.0 );
         }
     }
-        //else if( varList[i] == "V-component_of_wind_height_above_ground" ) {
-        else if( varList[i] == "v_10_gr" ) {
+        else if( varList[i] == "V-component_of_wind_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
         if( CPLIsNan( dfNoData ) ) {
         vGrid.set_noDataValue(-9999.0);
         vGrid.replaceNan( -9999.0 );
         }
     }
-        //else if( varList[i] == "U-component_of_wind_height_above_ground" ) {
-        else if( varList[i] == "u_10m_gr" ) {
+        else if( varList[i] == "U-component_of_wind_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
         if( CPLIsNan( dfNoData ) ) {
         uGrid.set_noDataValue(-9999.0);
         uGrid.replaceNan( -9999.0 );
         }
     }
-        //else if( varList[i] == "Total_cloud_cover" ) {
-        else if( varList[i] == "q_e" ) {
+        else if( varList[i] == "Total_cloud_cover" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
         if( CPLIsNan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);
