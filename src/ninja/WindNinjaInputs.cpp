@@ -52,7 +52,6 @@ WindNinjaInputs::WindNinjaInputs()
     CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
     //outer_relax = 0.01;
     diurnalWinds = false;
-    tz_db.load_from_file(FindDataPath("date_time_zonespec.csv"));
     airTempUnits = temperatureUnits::F;
     airTemp = -10000;
     cloudCoverUnits = coverUnits::percent;
@@ -210,7 +209,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   heightList = rhs.heightList;
 
   ninjaTime = rhs.ninjaTime;
-  tz_db = rhs.tz_db;
   if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
       ninjaTimeZone.reset();
   else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty
@@ -405,8 +403,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       heightList = rhs.heightList;
 
       ninjaTime = rhs.ninjaTime;
-      tz_db = rhs.tz_db;
-      //ninjaTimeZone.reset(new boost::local_time::posix_time_zone(rhs.ninjaTimeZone->to_posix_string()));
       if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
           ninjaTimeZone.reset();
       else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty
