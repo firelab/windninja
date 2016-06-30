@@ -1899,6 +1899,11 @@ int wxModelInitialization::LoadFromCsv()
     if( p == "" )
         return 1;
 
+    /*
+    ** FIXME(kyle): Maybe need a stronger check here.  Also note, we don't free
+    ** this, it just lives until the end of the application.  It should only be
+    ** allocated once, and reused.
+    */
     if( !papszThreddsCsv )
     {
         papszLines = CSLLoad2( p.c_str(), 10, 512, NULL );
