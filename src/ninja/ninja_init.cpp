@@ -28,10 +28,6 @@
 
 #include "ninja_init.h"
 
-//#include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
-//#include "boost/date_time/gregorian/gregorian_types.hpp"    //no i/o just types
-//namespace bpt = boost::posix_time;
-
 boost::local_time::tz_database globalTimeZoneDB;
 
 void NinjaCheckThreddsData( void *rc )
