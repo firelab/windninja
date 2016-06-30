@@ -16,3 +16,9 @@
         </div>
     </div>
 </div>
+
+
+{% for skill in site.data.skills %}
+<span class="post-meta white-text">{{skill.descr}}</span>
+<div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>
+                {% endfor %}
