@@ -54,7 +54,11 @@ The CMake build has several other general options which can be set:
 
 CMake will attempt to find all of the third party libraries needed for WindNinja. All are required with the exception of Qt, if the gui is not being built. CMake has default methods for handling libraries. It will usually ask for a path to a lib, a path to an include directory, and possibly a path to a binary that can specify some configuration values for the install. Since all of the libraries are required, the CMake configuration fails when one is not found. This means you must find the paths for each lib in order, as CMake fails each time you click "Configure" on the next unfound lib. After everything is found and set, click "Generate".
 
-##Build WindNinja
+
+
+## Build WindNinja
+
+
 
 If you have correctly configured in the cmake gui and clicked "generate", a Makefile will be built in the build directory. Next run:
 
@@ -68,15 +72,23 @@ make should compile and link WindNinja to all of its dependency libraries. The W
 
 make install should install all of the necessary WindNinja binaries and other files in the location specified earlier in the cmake CMAKE_INSTALL_PREFIX option.
 
-##Set Environment Variables
+
+
+## Set Environment Variables
+
+
 
 As of WindNinja 2.2.0, the environment variable WINDNINJA_DATA must be set. This points to datasets that WindNinja needs to run certain functions. If the program is installed (i.e., with make install), it is likely that WindNinja will find the path. Otherwise, the environment variable will need to be set:
 
     export WINDNINJA_DATA=~/src/wind/windninja/data
 
-##(Optional) Install OpenFOAM 2.2.0
 
-If you want to use the optional conservation of mass and momentum solver, you will need to build and install OpenFOAM 2.2.0. Follow the instructions at http://openfoam.org/download/2-2-0-source/.
+
+## (Optional) Install OpenFOAM 2.2.0
+
+
+
+If you want to use the optional conservation of mass and momentum solver, you will need to build and install OpenFOAM 2.2.0. Follow the instructions at [openFOAM](http://openfoam.org/download/2-2-0-source/).
 
 Then build build our custom libraries and applications. For example:
 
