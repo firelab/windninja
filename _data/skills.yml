@@ -1,28 +1,46 @@
--   id: C++
-    descr: C++
-    xp: 9
--   id: C
-    descr: C
+-   id: USA
+    descr: USA
+    xp: 50
+-   id: Unknown
+    descr: Unknown
     color: teal
-    xp: 1
--   id: Python
-    descr: Python
-    xp: 1
--   id: HTML
-    descr: HTML
-    xp: 1
--   id: Objective-C
-    descr: Objective-C
-    xp: 1
--   id: Ruby
-    descr: Ruby
-    xp: 1
--   id: other
-    descr: other
+    xp: 10
+-   id: Spain
+    descr: Spain
+    xp: 10
+-   id: Canada
+    descr: Canada
+    xp: 5
+-   id: Chile
+    descr: Chile
+    xp: 5
+-   id: Australia
+    descr: Australia
+    xp: 5
+-   id: Japan
+    descr: Japan
+    xp: 4
+-   id: Italy
+    descr: Italy
+    xp: 3
+-   id: China (PRC)
+    descr: China (PRC)
     xp: 2
--   id: FORTRAN
-    descr: FORTRAN
+-   id: Germany
+    descr: Germany
+    xp: 2
+-   id: South Korea
+    descr: South Korea
     xp: 1
--   id: Perl
-    descr: Perl
+-   id: Portugal
+    descr: Portugal
+    xp: 1
+-   id: Argentina
+    descr: Argentina
+    xp: 1
+-   id: United Kingdom
+    descr: United Kingdom
+    xp: 1
+-   id: Turkey
+    descr: Turkey
     xp: 1

@@ -54,63 +54,10 @@ layout: default
         <div class="block glass">
             <div class="block-body">
                 <h3 class="margin-bot">Recent WindNinja Launches</h3>
-                <table>
-                <tbody>
-                <tr><th>country</th><th>last visit</th></tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 15:51:52</td>
-                </tr>
-                <tr>
-                <td>France</td>
-                <td>2016-06-30 15:27:57</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 15:20:02</td>
-                </tr>
-                <tr>
-                <td>Japan</td>
-                <td>2016-06-30 14:43:24</td>
-                </tr>
-                <tr>
-                <td>Canada</td>
-                <td>2016-06-30 14:41:41</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 14:23:11</td>
-                </tr>
-                <tr>
-                <td>Japan</td>
-                <td>2016-06-30 13:08:33</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 12:58:57</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 12:48:56</td>
-                </tr>
-                <tr>
-                <td>Spain</td>
-                <td>2016-06-30 09:26:19</td>
-                </tr>
-                <tr>
-                <td>Macedonia</td>
-                <td>2016-06-30 07:20:52</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-30 01:43:53</td>
-                </tr>
-                <tr>
-                <td>United States</td>
-                <td>2016-06-29 22:41:21</td>
-                </tr>
-                </tbody>
-                </table>
+                {% for skill in site.data.skills %}
+                <span class="post-meta white-text">{{skill.descr}}</span>
+                <div class="progress margin-bot"><div class="progress-{{skill.xp}}"></div></div>
+                {% endfor %}
             </div>
         </div>
     </div>
