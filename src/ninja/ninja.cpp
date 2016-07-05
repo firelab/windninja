@@ -4177,8 +4177,9 @@ void ninja::set_wxStationFilename(std::string station_filename)
 //    input.stationFetch = stationFetch; 
     input.wxStationFilename = station_filename;
 //    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
-//    input.stations=wxStation::readStationFetchFile(input.wxStationFilename, input.dem.fileName);
+    input.stations=wxStation::readStationFetchFile(input.wxStationFilename, input.dem.fileName);
     input.vecStations=wxStation::vectorRead(input.wxStationFilename,input.dem.fileName);
+//    exit(1);
     input.stationsScratch = input.stations;
     input.stationsOldInput = input.stations;
     input.stationsOldOutput = input.stations;

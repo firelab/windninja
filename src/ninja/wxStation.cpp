@@ -984,7 +984,6 @@ OGRFeature::DestroyFeature( poFeature );
 OGR_DS_Destroy( hDS );
 CSLDestroy( papszHeader );
 
-
 return oStations;  
 }
 std::vector<wxStation> wxStation::readStationFile( std::string csvFile,

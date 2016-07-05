@@ -606,22 +606,56 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 void pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
 {
-    
-//    u = new double [input.stationsScratch.size()];
-    cout<<"back in PI"<<endl;
-    
-//    int ska=input.stations.size();
-//    for (int i=0; i<ska;i++)
+    cout<<"Interpolating Time Data"<<endl;
+
+    boost::posix_time::ptime tempq;
+    boost::posix_time::ptime init;
+
+    int qq;
+    qq=input.vecStations[0].size();
+//    cout<<qq<<endl;
+
+    vector<vector<wxStation> > Selectify;
+
+//    cout<<"timeList"<<endl;
+//    for( int i=0;i<timeList.size();i++)
 //    {
-//    cout<<timeList[i]<<endl;
-//    cout<<input.stations[i].datetime<<endl;
-    
-//    cout<<input.stations[0].get_datetime()<<endl;
-//    cout<<input.stations[0].get_stationName()<<endl;
-    
-//    cout<<"timeList1: "<<timeList[0]<<endl;
-    
-    
+//        cout<<timeList[i]<<endl;
+//    }
+//    cout<<timeList.size()<<endl;
+//    cout<<"vecStation[0]"<<endl;
+//    for (int i=0;i<qq;i++)
+//    {
+//        cout<<input.vecStations[0][i].get_datetime()<<endl;
+//    }
+//    cout<<qq<<endl;
+
+    cout<<"station[0] first step: "<<input.vecStations[0][0].get_datetime()<<endl;
+    tempq=input.vecStations[0][0].get_datetime();
+    init=timeList[0];
+    cout<<"timelist[0]: "<<timeList[0]<<endl;
+
+    boost::posix_time::time_duration buffer;
+    boost::posix_time::time_duration zero(0,0,0,0);
+
+
+//    buffer=tempq-init;
+    buffer=init-tempq;
+
+    if (buffer<zero)
+    {
+            cout<<"inverting sign"<<endl;
+            buffer=buffer.invert_sign();
+    }
+
+    cout<<buffer<<endl;
+
+    //THIS IS WHERE INTERPOLATION IS GOING TO HAPPEN!
+
+
+
+
+
     
     
 }
