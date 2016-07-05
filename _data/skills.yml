@@ -1,46 +1,70 @@
 -   id: USA
     descr: USA
-    xp: 50
+    xp: 90
 -   id: Unknown
     descr: Unknown
     color: teal
-    xp: 10
+    xp: 30
 -   id: Spain
     descr: Spain
-    xp: 10
+    xp: 20
 -   id: Canada
     descr: Canada
-    xp: 5
+    xp: 15
 -   id: Chile
     descr: Chile
-    xp: 5
+    xp: 15
 -   id: Australia
     descr: Australia
-    xp: 5
+    xp: 15
 -   id: Japan
     descr: Japan
-    xp: 4
+    xp: 10
 -   id: Italy
     descr: Italy
-    xp: 3
+    xp: 10
 -   id: China (PRC)
     descr: China (PRC)
-    xp: 2
+    xp: 5
 -   id: Germany
     descr: Germany
-    xp: 2
+    xp: 5
 -   id: South Korea
     descr: South Korea
-    xp: 1
+    xp: 5
 -   id: Portugal
     descr: Portugal
-    xp: 1
+    xp: 5
 -   id: Argentina
     descr: Argentina
-    xp: 1
+    xp: 4
 -   id: United Kingdom
     descr: United Kingdom
-    xp: 1
+    xp: 4
 -   id: Turkey
     descr: Turkey
-    xp: 1
+    xp: 4
+-   id: South Africa
+    descr: South Africa
+    xp: 4
+-   id: France
+    descr: France
+    xp: 3
+-   id: Morocoo
+    descr: Morocoo
+    xp: 3
+-   id: Iran
+    descr: Iran
+    xp: 3
+-   id: China (Taiwan)
+    descr: China (Taiwan)
+    xp: 5
+-   id: Brazil
+    descr: Brazil
+    xp: 2
+-   id: Netherlands
+    descr: Netherlands
+    xp: 2
+-   id: Czech Republic
+    descr: Czech Republc
+    xp: 2
