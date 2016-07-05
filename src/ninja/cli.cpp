@@ -963,11 +963,11 @@ int windNinjaCLI(int argc, char* argv[])
         
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
-            conflicting_options(vm, "fetch_station", "wx_station_filename");
+//            conflicting_options(vm, "fetch_station", "wx_station_filename");
 
             std::vector<boost::posix_time::ptime> timeList;
 
-            if(vm.count("fetch_station")) //download station and make appropriate size ninjaArmy
+            if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
                 option_dependency(vm, "fetch_station", "fetch_station_filename");
                 option_dependency(vm, "fetch_station", "start_year");
@@ -1001,7 +1001,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                             timeList );
 
                     //make the army for a fetched station
-                    windsim.makeStationArmy( timeList );
+//                    windsim.makeStationArmy( timeList );
                 }
                 catch(...)
                 {
@@ -1014,7 +1014,7 @@ int windNinjaCLI(int argc, char* argv[])
                 //make the army for a user-supplied station
                 windsim.makeStationArmy( timeList );
             }
-            return(0); //temporary for STATION_FETCH
+//            return(0); //temporary for STATION_FETCH
         }
 
 //        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
@@ -1327,7 +1327,41 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setInitializationMethod( i_,
                         WindNinjaInputs::pointInitializationFlag,
                         vm["match_points"].as<bool>() );
-                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
+                if (vm["fetch_station"].as<bool>() == true)
+                {
+                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
+                    std::vector<boost::posix_time::ptime> timeLiszt;
+                    
+                    timeLiszt = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                         vm["start_month"].as<int>(),
+                                                         vm["start_day"].as<int>(),
+                                                         vm["start_hour"].as<int>(),
+                                                         vm["start_minute"].as<int>(),
+                                                         vm["end_year"].as<int>(),
+                                                         vm["end_month"].as<int>(),
+                                                         vm["end_day"].as<int>(),
+                                                         vm["end_hour"].as<int>(),
+                                                         vm["end_minute"].as<int>(),
+                                                         vm["number_time_steps"].as<int>(),
+                                                         osTimeZone );
+                    windsim.makeStationArmy(timeLiszt);
+                    
+                   
+                    
+                    
+                    cout<<"whizzle!"<<endl;
+                    exit(1);
+                }
+                if (vm["fetch_station"].as<bool>() == false)
+                {
+                    windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
+                }
+//                exit(1);
+                // vm["fetch_station"].as<bool>()
+                
+                
+//                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
+//                windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>() );
                 if(vm["write_wx_station_kml"].as<bool>() == true)
                     wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                                             vm["wx_station_kml_filename"].as<std::string>());

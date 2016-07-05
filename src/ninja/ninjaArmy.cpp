@@ -141,7 +141,15 @@ int ninjaArmy::getSize()
  */
 void ninjaArmy::makeStationArmy( std::vector<boost::posix_time::ptime> timeList )
 {
-
+    cout<<"ninjaarmy.cpp"<<endl; 
+    ninjas[0]->set_InterpolateData(timeList);
+    
+//    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_InterpolateData( timeList ) );    
+//    IF_VALID_INDEX_TRY( nIndex, ninjas,
+//            ninjas[ nIndex ]->set_InterpolateData(timeList));
+//ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)    
+        
+    
 }
 
 /**

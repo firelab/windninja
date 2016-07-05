@@ -48,6 +48,14 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "boost/date_time/posix_time/posix_time_io.hpp"
+#include "boost/date_time/local_time_adjustor.hpp"
+#include "boost/date_time/gregorian/gregorian.hpp"
+#include "boost/date_time/local_time/local_time.hpp"
+#include "iostream"
+#include "numeric"
+
 /** Class representing a weather station
  */
 class wxStation
@@ -95,7 +103,13 @@ class wxStation
     double get_cloudCover( coverUnits::eCoverUnits units = coverUnits::fraction );
     void set_influenceRadius( double InfluenceRadius, lengthUnits::eLengthUnits units );
     double get_influenceRadius( lengthUnits::eLengthUnits units = lengthUnits::meters );
-
+    
+    void set_datetime(boost::posix_time::ptime timedata);
+    boost::posix_time::ptime get_datetime();
+    
+    static void wxPrinter(wxStation wxObject);
+    static void wxVectorPrinter(std::vector<wxStation> wxObject, int count);
+    
     inline eCoordType get_coordType() { return coordType; }
     inline void set_coordType( eCoordType c ){ coordType = c; }
     inline eDatumType get_datumType() { return datumType; }
@@ -110,15 +124,23 @@ class wxStation
 
     bool check_station();
 
+    static char** oldGetValidHeader();
     static char** getValidHeader();
+    
+    static std::vector<std::vector<wxStation> > vectorRead(std::string csvFile,std::string demFile);
+    
     static std::vector<wxStation> readStationFile( std::string csvFile, 
-					      std::string demFile );
+					      std::string demFile);
+    static std::vector<wxStation> readStationFetchFile(std::string csvFile,std::string demFile);
+//    static wxStation readStationFetchFile(std::string csvFile,std::string demFile,int piCount);
+    
     static void writeKmlFile( std::vector<wxStation> stations, 
 			      std::string outFileName );
 
     static void writeStationFile( std::vector<wxStation> StationVect, 
 				  const std::string outFileName );
     static void writeBlankStationFile( std::string outFileName );
+    
 
  private:
 
@@ -146,6 +168,11 @@ class wxStation
     eDatumType datumType;
     eCoordType coordType;
     
+    boost::posix_time::ptime datetime;
+    
+    
+
+   
     friend class Stability;
 
 };

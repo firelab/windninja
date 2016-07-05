@@ -75,6 +75,7 @@ wxStation::wxStation( wxStation const& m )
     influenceRadiusUnits = m.influenceRadiusUnits;
     datumType = m.datumType;
     coordType = m.coordType;
+    datetime = m.datetime;
 
 }
 
@@ -108,6 +109,7 @@ wxStation& wxStation::operator= ( wxStation const& m )
     influenceRadiusUnits = m.influenceRadiusUnits;
     datumType = m.datumType;
     coordType = m.coordType;
+    datetime =m.datetime;
     }
     return *this;
 }
@@ -152,6 +154,7 @@ void wxStation::initialize()
     influenceRadiusUnits = lengthUnits::meters;
     datumType = WGS84;
     coordType = GEOGCS;
+    datetime;
 }
 
 /** Checks wxStation for valid parameters.
@@ -197,6 +200,30 @@ bool wxStation::check_station()
  * @return array of strings representing the header
  */
 
+char **wxStation::oldGetValidHeader()
+{
+    char** papszList = NULL;
+    papszList = CSLAddString( papszList, "Station_Name" );
+    papszList = CSLAddString( papszList,
+                    "Coord_Sys(PROJCS,GEOGCS)" );
+    papszList = CSLAddString( papszList, "Datum(WGS84,NAD83,NAD27)" );
+    papszList = CSLAddString( papszList, "Lat/YCoord" );
+    papszList = CSLAddString( papszList, "Lon/XCoord" );
+    papszList = CSLAddString( papszList, "Height" );
+    papszList = CSLAddString( papszList, "Height_Units(meters,feet)" );
+    papszList = CSLAddString( papszList, "Speed" );
+    papszList = CSLAddString( papszList,
+                    "Speed_Units(mph,kph,mps)" );
+    papszList = CSLAddString( papszList, "Direction(degrees)" );
+    papszList = CSLAddString( papszList, "Temperature" );
+    papszList = CSLAddString( papszList,
+                    "Temperature_Units(F,C)" );
+    papszList = CSLAddString( papszList, "Cloud_Cover(%)" );
+    papszList = CSLAddString( papszList, "Radius_of_Influence" );
+    papszList = CSLAddString( papszList,
+                    "Radius_of_Influence_Units(miles,feet,meters,km)" );
+    return papszList;
+}
 char **wxStation::getValidHeader()
 {
     char** papszList = NULL;
@@ -219,6 +246,7 @@ char **wxStation::getValidHeader()
     papszList = CSLAddString( papszList, "Radius_of_Influence" );
     papszList = CSLAddString( papszList,
                     "Radius_of_Influence_Units(miles,feet,meters,km)" );
+    papszList= CSLAddString(papszList,"date_time");
     return papszList;
 }
 
@@ -466,15 +494,511 @@ void wxStation::set_influenceRadius( double InfluenceRadius,
     influenceRadiusUnits = units;
 }
 
+void wxStation::set_datetime(boost::posix_time::ptime timedata)
+{
+    datetime=timedata;
+}
+boost::posix_time::ptime wxStation::get_datetime()
+{
+    boost::posix_time::ptime time=datetime;
+    return time;
+}
+
+void wxStation::wxPrinter(wxStation wxObject)
+{
+    cout<<"Station Name: "<<wxObject.stationName<<endl;
+    cout<<"lat,lon: "<<wxObject.lat<<" , "<<wxObject.lon<<endl;
+    cout<<"speed,dir: "<<wxObject.speed<<" , "<<wxObject.direction<<endl;
+    cout<<"temperature: "<<wxObject.temperature<<endl;
+    cout<<"cloud cover: "<<wxObject.cloudCover<<endl;
+    cout<<"datetime: "<<wxObject.datetime<<endl;
+    
+}
+
+void wxStation::wxVectorPrinter(std::vector<wxStation> wxObject, int count)
+{
+    for(int i=0;i<count;i++)
+    {
+        cout<<"station step #"<<i<<endl;
+        cout<<"Station Name: "<<wxObject[i].stationName<<endl;
+        cout<<"lat,lon: "<<wxObject[i].lat<<" , "<<wxObject[i].lon<<endl;
+        cout<<"speed,dir: "<<wxObject[i].speed<<" , "<<wxObject[i].direction<<endl;
+        cout<<"temperature: "<<wxObject[i].temperature<<endl;
+        cout<<"cloud cover: "<<wxObject[i].cloudCover<<endl;
+        cout<<"datetime: "<<wxObject[i].datetime<<endl;
+    }
+    
+}
+
+
+/** vector of vectors*/
+
+std::vector<std::vector<wxStation> >wxStation::vectorRead(std::string csvFile,std::string demFile)
+{
+    cout<<"vector function"<<endl;
+    std::vector<std::vector<wxStation> > a;
+    
+    vector<std::string> stationNames;
+    
+    OGRDataSourceH hDS;
+    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+    
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRFeatureDefn *poFeatureDefn;
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+    
+    std::string oStationName;
+    
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+    
+    poLayer->ResetReading();
+    while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) 
+    {
+    poFeatureDefn = poLayer->GetLayerDefn();
+    
+    // get Station name
+    oStationName = poFeature->GetFieldAsString( 0 );
+    stationNames.push_back(oStationName);
+    }
+    
+    int statCount;
+    statCount=stationNames.size();
+        
+    int specCount=statCount;
+        
+    vector<int> idxCount;
+    int j=0;
+    int q=0;
+
+    for (int i=0;i<statCount;i++)
+    {
+//        cout<<"looks at: "<<q<<endl;
+//        cout<<"starts at: "<<j<<endl;
+        
+        int idx1=0; 
+        for(j;j<specCount;j++)
+        {
+            if(stationNames[j]==stationNames[q])
+            {
+                idx1++;
+            }
+        }
+        idxCount.push_back(idx1);
+        j=std::accumulate(idxCount.begin(),idxCount.end(),0);
+        q=j;
+        if (j==statCount)
+        {
+            cout<<"exiting loop"<<endl;
+            break;
+        }
+    }
+
+ cout<<"idxCount size: "<<idxCount.size()<<endl;
+ for (int ii=0;ii<idxCount.size();ii++)
+ {
+     cout<<idxCount[ii]<<endl;
+ }
+ 
+std::vector<std::vector<wxStation> > wxVector;
+std::vector<wxStation> cata;
+cata=readStationFetchFile(csvFile,demFile);
+int t=0;
+vector<int> countLimiter;
+
+for (int ei=1;ei<=idxCount.size();ei++)
+{
+//    cout<<ei<<endl;
+    int rounder=idxCount.size()-ei;
+    int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
+    countLimiter.push_back(e);
+}
+//cout<<"limiter 0: "<<countLimiter[0]<<endl;
+//cout<<"limiter 1: "<<countLimiter[1]<<endl;
+//cout<<"limiter 2: "<<countLimiter[2]<<endl;
+
+//cout<<"idx 0: "<<idxCount[0]<<endl;
+//cout<<"idx 1: "<<idxCount[1]<<endl;
+//cout<<"idx 2: "<<idxCount[2]<<endl;
+
+for (int ei=0;ei<idxCount.size();ei++)
+{
+
+std::vector<wxStation> sub(&cata[t],&cata[countLimiter[ei]]);
+
+//cout<<"subsize: "<<sub.size()<<endl;
+
+wxVector.push_back(sub);
+
+t=countLimiter[ei];
+
+}
+
+//for (int i=0;i<idxCount.size();i++)
+//{
+////    wxPrinter(wxVector[i][0]);
+////    wxVectorPrinter(wxVector[i],wxVector[i].size());
+//    cout<<wxVector[i].size()<<endl;
+//}
+//cout<<wxVector.size()<<endl;  
+    
+//    exit(1);
+    return wxVector;
+}
+
 /** Read a csv file to populate a wxStation vector
  * This funtion uses OGR Spatial Features lib to open the csv file
  * @param csvFile input csv file for reading
  * @param demFile georeferenced dem file for converting lat/lon to projcs
  * @return oStations std::vector of wxStation objects
  */
-std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
-                           std::string demFile )
+std::vector<wxStation> wxStation::readStationFetchFile(std::string csvFile,std::string demFile)
+//wxStation wxStation::readStationFetchFile(std::string csvFile,std::string demFile,int piCount)
 {
+cout<<"Karl King"<<endl;
+
+wxStation oStation;
+std::vector<wxStation> oStations;
+std::string oErrorString = "";
+
+
+OGRDataSourceH hDS;
+hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+if( hDS == NULL ) 
+{
+oErrorString = "Cannot open csv file: ";
+oErrorString += csvFile;
+throw( std::runtime_error( oErrorString ) );
+}
+OGRFeatureH hFeature;  
+
+double dfTempValue = 0.0;
+OGRLayer *poLayer;
+OGRFeature *poFeature;
+OGRFeatureDefn *poFeatureDefn;
+OGRFieldDefn *poFieldDefn;
+poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+OGRLayerH hLayer;
+hLayer=OGR_DS_GetLayer(hDS,0);
+OGR_L_ResetReading(hLayer);
+int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+cout<<"Reading csvName: "<<csvFile<<endl;
+//cout<<"fCount: "<<fCount<<endl;
+
+const char* station;
+int idx=0;
+
+poLayer->ResetReading();
+
+char **papszHeader = NULL;
+//papszHeader = getValidHeader();
+papszHeader=getValidHeader();
+char **papszOldHeader=oldGetValidHeader();
+
+bool fetchType;
+
+poFeatureDefn = poLayer->GetLayerDefn();
+//check for correct number of fields, and proper header
+int nFields = poFeatureDefn->GetFieldCount();
+    if( nFields != CSLCount( papszHeader ) ) 
+    {
+        papszHeader=papszOldHeader;
+        fetchType=false;
+        cout<<"old way"<<endl;
+    
+    }
+    else if (nFields !=CSLCount (papszHeader))
+    {
+        OGR_DS_Destroy( hDS );
+        oErrorString = "Incorrect number of definitions in csv file. ";
+        oErrorString += "There are ";
+        oErrorString += nFields;
+        oErrorString += " in the file, it needs ";
+        oErrorString += CSLCount( papszHeader );
+        CSLDestroy( papszHeader );
+        throw( std::domain_error( oErrorString ) );
+    }
+    else
+    {
+    fetchType=true;
+    cout<<"new way"<<endl;
+    }
+
+cout<<fetchType<<endl;
+
+const char *pszKey;
+std::string oStationName;
+std::string datetime;
+
+poLayer->ResetReading();
+
+while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) 
+{
+    
+poFeatureDefn = poLayer->GetLayerDefn();
+
+// get Station name
+oStationName = poFeature->GetFieldAsString( 0 );
+oStation.set_stationName( oStationName );
+//cout<<"stid: "<<oStationName<<endl;
+
+pszKey = poFeature->GetFieldAsString( 1 );
+
+//LAT LON COORDINATES
+if( EQUAL( pszKey, "geogcs" ) )
+{
+//    cout<<"geogcs"<<endl;
+    //check for valid latitude in degrees
+    dfTempValue = poFeature->GetFieldAsDouble( 3 );
+    if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
+    OGRFeature::DestroyFeature( poFeature );
+    OGR_DS_Destroy( hDS );
+    CSLDestroy( papszHeader );
+
+    oErrorString = "Bad latitude in weather station csv file";
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+
+    throw( std::domain_error( oErrorString ) );
+    }
+    //check for valid longitude in degrees
+    dfTempValue = poFeature->GetFieldAsDouble( 4 );
+    
+    if( dfTempValue < -180.0 || dfTempValue > 360.0 ) 
+    {
+    OGRFeature::DestroyFeature( poFeature );
+    OGR_DS_Destroy( hDS );
+    CSLDestroy( papszHeader );
+
+    oErrorString = "Bad longitude in weather station csv file";
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+
+    throw( std::domain_error( oErrorString ) );
+    }
+    const char *pszDatum = poFeature->GetFieldAsString( 2 );
+    oStation.set_location_LatLong( poFeature->GetFieldAsDouble( 3 ),
+                   poFeature->GetFieldAsDouble( 4 ),
+                   demFile,
+                   pszDatum );
+//    cout<<"lat,lon: "<<oStation.lat<<" , "<<oStation.lon<<endl;
+}
+else if( EQUAL( pszKey, "projcs" ) ) 
+{
+    oStation.set_location_projected( poFeature->GetFieldAsDouble( 3 ),
+                     poFeature->GetFieldAsDouble( 4 ),
+                     demFile );
+}
+else 
+{
+    oErrorString = "Invalid coordinate system: ";
+    oErrorString += poFeature->GetFieldAsString( 1 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+
+    throw( std::domain_error( oErrorString ) );
+}
+
+//MIDDLE STUFF
+pszKey = poFeature->GetFieldAsString( 6 );
+
+dfTempValue = poFeature->GetFieldAsDouble( 5 );
+
+if( dfTempValue <= 0.0 ) 
+{
+    oErrorString = "Invalid height: ";
+    oErrorString += poFeature->GetFieldAsString( 5 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+
+    throw( std::domain_error( oErrorString ) );
+}
+if( EQUAL( pszKey, "meters" ) )
+{
+    oStation.set_height( dfTempValue, lengthUnits::meters );
+//    cout<<"height: "<<oStation.height<<", "<<oStation.heightUnits<<endl;
+}
+else if( EQUAL( pszKey, "feet" ) )
+    oStation.set_height( dfTempValue, lengthUnits::feet );
+else 
+{
+    oErrorString = "Invalid units for height: ";
+    oErrorString += poFeature->GetFieldAsString( 6 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+
+    throw( std::domain_error( oErrorString ) );
+}
+
+
+
+//WIND SPEED
+pszKey = poFeature->GetFieldAsString( 8 );
+dfTempValue = poFeature->GetFieldAsDouble( 7 );
+if( dfTempValue < 0.0 ) 
+{
+    oErrorString = "Invalid value for speed: ";
+    oErrorString += poFeature->GetFieldAsString( 7 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+    throw( std::domain_error( oErrorString ) );
+}
+
+if ( EQUAL( pszKey, "mps" ) )
+{
+    oStation.set_speed( dfTempValue, velocityUnits::metersPerSecond );
+//    cout<<"windspd: "<<oStation.speed<<" , "<<oStation.inputSpeedUnits<<endl;
+}
+else if( EQUAL( pszKey, "mph" ) )
+    oStation.set_speed( dfTempValue, velocityUnits::milesPerHour );
+else if( EQUAL( pszKey, "kph" ) )
+    oStation.set_speed( dfTempValue,
+            velocityUnits::kilometersPerHour );
+else 
+{
+    oErrorString = "Invalid units for speed: ";
+    oErrorString += poFeature->GetFieldAsString( 8 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+    throw( std::domain_error( oErrorString ) );
+}
+//WIND DIRECTION
+dfTempValue = poFeature->GetFieldAsDouble( 9 );
+if( dfTempValue > 360.1 || dfTempValue < 0.0 ) 
+{
+    oErrorString = "Invalid value for direction: ";
+    oErrorString += poFeature->GetFieldAsString( 9 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+    throw( std::domain_error( oErrorString ) );
+}
+oStation.set_direction( dfTempValue );
+//cout<<"winddir: "<<oStation.direction<<endl;
+
+//TEMPERATURE
+pszKey = poFeature->GetFieldAsString( 11 );
+
+if( EQUAL(pszKey, "f" ) )
+    oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
+                  temperatureUnits::F );
+else if( EQUAL( pszKey, "c" ) )
+{
+    oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
+                  temperatureUnits::C );
+//    cout<<"temp (K): "<<oStation.temperature<<endl;
+}
+else if( EQUAL( pszKey, "k" ) )
+    oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
+                  temperatureUnits::K );
+else 
+{
+    oErrorString = "Invalid units for temperature: ";
+    oErrorString += poFeature->GetFieldAsString( 11 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+    throw( std::domain_error( oErrorString ) );
+}
+//CLOUD COVER
+dfTempValue = poFeature->GetFieldAsDouble( 12 );
+if( dfTempValue > 100.0 || dfTempValue < 0.0 ) 
+{
+    oErrorString = "Invalid value for cloud cover: ";
+    oErrorString += poFeature->GetFieldAsString( 12 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+//    throw( std::domain_error( oErrorString ) );
+//    cout<<oErrorString<<endl;
+    dfTempValue=0.0; //TEMPORARY UNTIL SOLRAD IS FIXED
+}
+oStation.set_cloudCover( dfTempValue, coverUnits::percent );
+//cout<<"cloud cover: "<<oStation.cloudCover<<endl;
+
+//RADIUS OF INFLUENCE
+pszKey = poFeature->GetFieldAsString( 14 );
+
+dfTempValue = poFeature->GetFieldAsDouble( 13 );
+
+if( EQUAL( pszKey, "miles" ) )
+    oStation.set_influenceRadius( dfTempValue, lengthUnits::miles );
+else if( EQUAL( pszKey, "feet" ) )
+    oStation.set_influenceRadius( dfTempValue, lengthUnits::feet );
+else if( EQUAL( pszKey, "km" ) )
+    oStation.set_influenceRadius( dfTempValue,
+                  lengthUnits::kilometers );
+else if( EQUAL( pszKey, "meters" ) )
+    oStation.set_influenceRadius( dfTempValue, lengthUnits::meters );
+else 
+{
+    oErrorString = "Invalid units for influence radius: ";
+    oErrorString += poFeature->GetFieldAsString( 14 );
+    oErrorString += " at station: ";
+    oErrorString += oStationName;
+    throw( std::domain_error( oErrorString ) );
+}
+//cout<<"influence: "<<oStation.influenceRadius<<endl;
+
+//pszKey=poFeature->GetFieldAsString(15);
+//cout<<pszKey<<endl;
+datetime=poFeature->GetFieldAsString(15);
+std::string trunk=datetime.substr(0,datetime.size()-1);
+//cout<<trunk<<endl;
+
+boost::posix_time::ptime abs_time;
+
+boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+fig->set_iso_extended_format();
+std::istringstream iss(trunk);
+iss.imbue(std::locale(std::locale::classic(),fig));
+iss>>abs_time;
+//cout<<abs_time<<endl;
+oStation.set_datetime(abs_time);
+//cout<<"datetime: "<<oStation.datetime<<endl;
+
+
+oStations.push_back( oStation );
+oStation.initialize();
+}
+
+
+if (fCount==oStations.size())
+
+{
+    cout<<"matched fCount to Vector Size"<<endl;
+//    for (int i=0; i<fCount;i++)
+//    {
+//        cout<<oStations[i].datetime<<endl;
+//    }
+    
+
+}
+
+    
+cout<<oStations.size()<<endl;
+cout<<fCount<<endl;
+
+OGRFeature::DestroyFeature( poFeature );
+OGR_DS_Destroy( hDS );
+CSLDestroy( papszHeader );
+
+
+return oStations;  
+}
+std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
+                           std::string demFile)
+{
+    cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+    
+    cout<<"readstationfile"<<endl;
+    
+    cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+    
+    
+    
+    
     wxStation oStation;
     std::vector<wxStation> oStations;
     std::string oErrorString = "";
@@ -499,49 +1023,81 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
     oErrorString += csvFile;
     throw( std::domain_error( oErrorString ) );
     }
+    
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+    
+    cout<<"Reading csvName: "<<csvFile<<endl;
 
+    bool fetchType;    
+    
     poLayer->ResetReading();
 
     char **papszHeader = NULL;
     papszHeader = getValidHeader();
+    char ** papszOldHeader= oldGetValidHeader();
+    
 
     poFeatureDefn = poLayer->GetLayerDefn();
     //check for correct number of fields, and proper header
     int nFields = poFeatureDefn->GetFieldCount();
-    if( nFields != CSLCount( papszHeader ) ) {
-        OGR_DS_Destroy( hDS );
-        oErrorString = "Incorrect number of definitions in csv file. ";
-        oErrorString += "There are ";
-        oErrorString += nFields;
-        oErrorString += " in the file, it needs ";
-        oErrorString += CSLCount( papszHeader );
-        CSLDestroy( papszHeader );
-        throw( std::domain_error( oErrorString ) );
-    }
+//    if( nFields != CSLCount( papszHeader ) ) 
+//    {
+//        papszHeader=papszOldHeader;
+//        fetchType=false;
+//        cout<<"old way"<<endl;
+        
+//    }
+//    else if (nFields !=CSLCount (papszHeader))
+//    {
+//        OGR_DS_Destroy( hDS );
+//        oErrorString = "Incorrect number of definitions in csv file. ";
+//        oErrorString += "There are ";
+//        oErrorString += nFields;
+//        oErrorString += " in the file, it needs ";
+//        oErrorString += CSLCount( papszHeader );
+//        CSLDestroy( papszHeader );
+//        throw( std::domain_error( oErrorString ) );
+//    }
+//    else
+//    {
+        fetchType=true;
+        cout<<"new way"<<endl;
+//    }
+    
+    cout<<fetchType<<endl;
+//    exit(1);
+    
 
-    while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) {
-        poFeatureDefn = poLayer->GetLayerDefn();
-        int iField;
-        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++) {
-            poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
-            if( !EQUAL( poFieldDefn->GetNameRef(),
-                papszHeader[iField] ) ) {
-                OGRFeature::DestroyFeature( poFeature );
-                OGR_DS_Destroy( hDS );
-                CSLDestroy( papszHeader );
-                //this one isn't working????
-                throw( std::domain_error( "Incorrect header definition in " \
-                                          "csv file" ) );
-            }
-        }
-    }
+//    while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) {
+//        poFeatureDefn = poLayer->GetLayerDefn();
+//        int iField;
+//        for( iField = 0; iField < poFeatureDefn->GetFieldCount(); iField++) {
+//            poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
+//            if( !EQUAL( poFieldDefn->GetNameRef(),
+//                papszHeader[iField] ) ) {
+//                OGRFeature::DestroyFeature( poFeature );
+//                OGR_DS_Destroy( hDS );
+//                CSLDestroy( papszHeader );
+//                //this one isn't working????
+//                throw( std::domain_error( "Incorrect header definition in " \
+//                                          "csv file" ) );
+//                cout<<"problem"<<endl;
+//            }
+//        }
+//    }
 
     const char *pszKey;
     std::string oStationName;
+    std::string rawDateTime;    
+    
 
     poLayer->ResetReading();
-    while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) {
-    poFeatureDefn = poLayer->GetLayerDefn();
+    while( ( poFeature = poLayer->GetNextFeature() ) != NULL ) 
+    {
+//    poFeatureDefn = poLayer->GetLayerDefn();
 
     // get Station name
     oStationName = poFeature->GetFieldAsString( 0 );
@@ -589,6 +1145,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
                          poFeature->GetFieldAsDouble( 4 ),
                          demFile );
     }
+
     else {
         oErrorString = "Invalid coordinate system: ";
         oErrorString += poFeature->GetFieldAsString( 1 );
@@ -597,6 +1154,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
 
         throw( std::domain_error( oErrorString ) );
     }
+
 
     //get height and units
 
@@ -624,6 +1182,7 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
 
         throw( std::domain_error( oErrorString ) );
     }
+
 
     // get speed and speed units
     pszKey = poFeature->GetFieldAsString( 8 );
@@ -715,15 +1274,55 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
         oErrorString += oStationName;
         throw( std::domain_error( oErrorString ) );
     }
+    
+//    cout<<"here.5"<<endl;
+//    cout<<fetchType<<endl;
+    
+    
+//    if (fetchType==1)
+//    {
+        rawDateTime=poFeature->GetFieldAsString(15);
+        std::string trunk=rawDateTime.substr(0,rawDateTime.size()-1);
+        //cout<<trunk<<endl;
+        
+        boost::posix_time::ptime abs_time;
+        
+        boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+        fig->set_iso_extended_format();
+        std::istringstream iss(trunk);
+        iss.imbue(std::locale(std::locale::classic(),fig));
+        iss>>abs_time;
+        //cout<<abs_time<<endl;
+        oStation.set_datetime(abs_time);
+        //cout<<"datetime: "<<oStation.datetime<<endl;
+//    }
+//    cout<<oStation.datetime<<endl;
 
+    
     oStations.push_back( oStation );
     oStation.initialize();
+    cout<<fCount<<endl;
+    cout<<oStations.size()<<endl;
     }
+    
+    cout<<oStations[0].datetime<<endl;
+    
+    cout<<"here"<<endl;
+    
+    cout<<fCount<<endl;
+    cout<<oStations.size()<<endl;
+    
+    if (fCount==oStations.size())
+        cout<<"holy shit it worked"<<endl;
+    cout<<oStations.size()<<endl;
 
+    
     OGRFeature::DestroyFeature( poFeature );
     OGR_DS_Destroy( hDS );
     CSLDestroy( papszHeader );
+    
 
+    
     return oStations;
 }
 /**Write a csv file with no data, just a header

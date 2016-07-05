@@ -78,6 +78,9 @@ class pointInitialization : public initialize
 		        AsciiGrid<double>& L,
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
+        
+        
+        static void interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList);
 
         void stationCliCaller(bool station_fetch, std::string station_id, int nHours, bool btype,std::string fetcher,std::string radius, std::string limit, std::string pLat, std::string pLon, std::string LLLat, std::string LLLon, std::string URLat, std::string URLon , std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
 //        void fetchSingleStation(std::string token,bool type,int nHours, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);

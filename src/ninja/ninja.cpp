@@ -382,7 +382,7 @@ do
 
 		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
                     wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-
+                    
 		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
 		{
                     domainAverageInitialization init;
@@ -392,7 +392,6 @@ do
 		{
                     pointInitialization init;
                     init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-
 		}
 		else if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
                 {
@@ -4143,7 +4142,15 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
 void ninja::set_stationFetchFlag(bool flag)
 {
     cout<<"ninja: set_stationFetch=="<<flag<<endl;
-    input.stationFetch=flag;
+    input.stationFetch=flag;   
+    
+}
+
+void ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)
+{
+    cout<<"ninja.cpp"<<endl;    
+    pointInitialization init;
+    init.interpolateTimeData(input,timeList);
 }
 
 /**
@@ -4167,8 +4174,11 @@ void ninja::set_wxStationFilename(std::string station_filename)
     if(station_filename.empty())
         throw std::runtime_error("Weather station filename empty in ninja::set_wxStationFilename().");
 
+//    input.stationFetch = stationFetch; 
     input.wxStationFilename = station_filename;
-    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
+//    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
+//    input.stations=wxStation::readStationFetchFile(input.wxStationFilename, input.dem.fileName);
+    input.vecStations=wxStation::vectorRead(input.wxStationFilename,input.dem.fileName);
     input.stationsScratch = input.stations;
     input.stationsOldInput = input.stations;
     input.stationsOldOutput = input.stations;
