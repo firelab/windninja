@@ -103,7 +103,7 @@ a {
     }
 
     &:hover {
-        color: $lime-color;
+        color: lighten($text-color,15%);
     }
 }
 
