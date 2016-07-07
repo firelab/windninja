@@ -461,26 +461,26 @@ void mainWindow::createConnections()
   ** enabled.  We also update the output resolutions when the various outputs
   ** are enabled.  Additionally when either of the radio buttons are checked.
   */
-  connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)),
-          this, SLOT(updateOutRes()));
-  connect(tree->surface->meshFeetRadioButton, SIGNAL(toggled(bool)),
-          this, SLOT(updateOutRes()));
+  connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->surface->meshFeetRadioButton, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
 
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
