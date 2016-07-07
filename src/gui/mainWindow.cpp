@@ -455,6 +455,12 @@ void mainWindow::createConnections()
   //connect(tree->location->getLatLonToolButton, SIGNAL(clicked()),
   //	  this, SLOT(getLatLon()));
   //also connect the toggle on the check box on output pages to update
+
+  /*
+  ** When we update the mesh resolution, update the outputs if the output is
+  ** enabled.  We also update the output resolutions when the various outputs
+  ** are enabled.  Additionally when either of the radio buttons are checked.
+  */
   connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)),
       this, SLOT(updateOutRes()));
   connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)),
@@ -463,6 +469,19 @@ void mainWindow::createConnections()
       this, SLOT(updateOutRes()));
   connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)),
       this, SLOT(updateOutRes()));
+  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
+  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
+  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
+  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)),
+      this, SLOT(updateOutRes()));
+  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)),
+          this, SLOT(updateOutRes()));
+  connect(tree->surface->meshFeetRadioButton, SIGNAL(toggled(bool)),
+          this, SLOT(updateOutRes()));
+
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
@@ -1042,27 +1061,39 @@ void mainWindow::updateOutRes()
 {
   //get res from surface page and store as an int
   double resolution = tree->surface->meshResDoubleSpinBox->value();
-
-  if(tree->google->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->google->googleResSpinBox->setValue(resolution);
-      tree->google->googleMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  bool useMeters = tree->surface->meshMetersRadioButton->isChecked();
+  if (tree->google->useMeshResCheckBox->isChecked() == true) {
+    tree->google->googleResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->google->googleMetersRadioButton->setChecked(true);
+    } else {
+      tree->google->googleFeetRadioButton->setChecked(true);
     }
-  if(tree->fb->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->fb->fbResSpinBox->setValue(resolution);
-      tree->fb->fbMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->fb->useMeshResCheckBox->isChecked() == true) {
+    tree->fb->fbResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->fb->fbMetersRadioButton->setChecked(true);
+    } else {
+      tree->fb->fbFeetRadioButton->setChecked(true);
     }
-  if(tree->shape->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->shape->shapeResSpinBox->setValue(resolution);
-      tree->shape->shapeMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->shape->useMeshResCheckBox->isChecked() == true) {
+    tree->shape->shapeResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->shape->shapeMetersRadioButton->setChecked(true);
+    } else {
+      tree->shape->shapeFeetRadioButton->setChecked(true);
     }
-  if(tree->pdf->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->pdf->pdfResSpinBox->setValue(resolution);
-      tree->pdf->pdfMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->pdf->useMeshResCheckBox->isChecked() == true) {
+    tree->pdf->pdfResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->pdf->pdfMetersRadioButton->setChecked(true);
+    } else {
+      tree->pdf->pdfFeetRadioButton->setChecked(true);
     }
+  }
 }
 
 //empty fx, need to write it when help is done.
