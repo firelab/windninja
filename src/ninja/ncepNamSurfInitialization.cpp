@@ -476,6 +476,10 @@ void ncepNamSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             CSLSetNameValue( psWarpOptions->papszWarpOptions,
                              "INIT_DEST", "NO_DATA" );
 
+        /*
+        ** FIXME(kyle): valgrind reporting memory leak as psWarpOptions is
+        ** cloned internally and then not freed
+        */
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,

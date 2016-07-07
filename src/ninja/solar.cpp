@@ -45,34 +45,6 @@ Solar::Solar()
 	S_init(solarPosData);
 }
 
-//Solar::Solar(int day_in, int month_in, int year_in,
-//	int second_in, int minute_in, int hour_in,
-//	double latitude_in, double longitude_in,
-//	double timeZone_in, double aspect_in, double slope_in)
-//{
-//	aspect = aspect_in;
-//	theta = noDataValue;
-//	solarDate.set_day(day_in);
-//	phi = noDataValue;
-//	solarTime.set_hour(hour_in);
-//	interval = 0;
-//	latitude = latitude_in;
-//	longitude = longitude_in;
-//	solarTime.set_minute(minute_in);
-//	solarDate.set_month(month_in);
-//	solarTime.set_second(second_in);
-//	slope = slope_in;
-//	solarDate.set_year(year_in);
-//	solarIntensity = noDataValue;
-//	solarTime.set_timezone(timeZone_in);
-//
-//	solarPosData = new posdata;
-//
-//	set_allSolarPosData();
-//
-//	call_solPos();
-//}
-
 Solar::Solar(const boost::local_time::local_date_time& time_in,
 		double latitude_in, double longitude_in, 
 		double aspect_in, double slope_in)
@@ -175,53 +147,6 @@ bool Solar::compute_solar(boost::local_time::local_date_time time_in,
 
 	return true;
 }
-
-//bool Solar::call_solPos(int day_in, int month_in, int year_in,
-//		int second_in, int minute_in, int hour_in,
-//		double latitude_in, double longitude_in,
-//		double timeZone_in, double aspect_in, double slope_in)
-//{
-//	aspect = aspect_in;
-//	theta = noDataValue;
-//	solarDate.set_day(day_in);
-//	phi = noDataValue;
-//	solarTime.set_hour(hour_in);
-//	interval = 0;
-//	latitude = latitude_in;
-//	longitude = longitude_in;
-//	solarTime.set_minute(minute_in);
-//	solarDate.set_month(month_in);
-//	solarTime.set_second(second_in);
-//	slope = slope_in;
-//	solarDate.set_year(year_in);
-//	solarIntensity = noDataValue;
-//	solarTime.set_timezone(timeZone_in);
-//
-//	solarPosData = new posdata;
-//
-//	set_allSolarPosData();
-//
-//	call_solPos();
-//	return true;
-//}
-
-//bool Solar::initialize_SolarForTesting()
-//{
-//	set_aspect(0);
-//	set_slope(0);
-//	set_interval(0);
-//	set_latitude(47);
-//	set_longitude(-114);
-//
-//	boost::local_time::time_zone_ptr timezone;
-//	boost::local_time::tz_database tz_db;
-//	tz_db.load_from_file(FindBoostDataBaseFile());
-//	timezone =	tz_db.time_zone_from_region("America/Denver");
-//		if(timezone == NULL)
-//			throw std::runtime_error("The time zone string: %s does not match any in the time zone database file: date_time_zonespec.csv.",timeZoneString.c_str());
-//
-//	solarTime = boost::local_time::local_date_time(boost::gregorian::date(1977, 9, 23), boost::posix_time::time_duration(12,0,0,0), phx_tz, local_date_time::NOT_DATE_TIME_ON_ERROR);
-//}
 
 bool Solar::set_allSolarPosData()
 {

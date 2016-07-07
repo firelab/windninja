@@ -36,23 +36,6 @@
  */
 weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
 {
-    try {
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    }
-    catch( boost::local_time::data_not_accessible ) {
-    qDebug() << "diurnalInput::loadBoostTimeZones():"
-         << "caught data_not_accessible";
-    //throw( new guiInitializationError( "Failed to load time zone, "
-    //				   "Cannot initialize interface. " ) );
-    }
-    catch( boost::local_time::bad_field_count ) {
-    qDebug() << "diurnalInput::loadBoostTimeZones():"
-         << "caught bad_field_count";
-    //throw( new guiInitializationError( "Failed to load time zone, "
-    //				   "Cannot initialize interface. " ) );
-    }
-    //setDisabled(true);
-
     weatherGroupBox = new QGroupBox( tr( "Weather Model Initialization" ),
                      this );
     weatherGroupBox->setCheckable( true );

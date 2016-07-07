@@ -84,6 +84,7 @@
 // #define NC_UINT64       11      /* unsigned 8-byte int */
 // #define NC_STRING       12      /* string */
 
+extern boost::local_time::tz_database globalTimeZoneDB;
 
 /**
  * Default constructor.
@@ -414,17 +415,20 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
     if( poResult == NULL )
     {
+        CPLHTTPDestroyResult( poResult );
         throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
     }
 
     if( poResult->nStatus != 0 )
     {
+        CPLHTTPDestroyResult( poResult );
         throw ( badForecastFile( poResult->pszErrBuf ) );
     }
 
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
+        CPLHTTPDestroyResult( poResult );
         throw ( badForecastFile( "Failed to download forecast." ) );
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
@@ -516,12 +520,11 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
  */
 std::vector<blt::local_date_time> wxModelInitialization::getTimeList(std::string timeZoneString)
 {
-    if( aoCachedTimes.size() > 0 )
+    if( aoCachedTimes.size() > 0 ) {
         return aoCachedTimes;
-    blt::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    blt::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region( timeZoneString.c_str() );
+    }
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
     if( timeZonePtr == NULL ) {
         ostringstream os;
         os << "The time zone string: " << timeZoneString.c_str()
@@ -545,12 +548,11 @@ std::vector<blt::local_date_time>
 wxModelInitialization::getTimeList(const char *pszVariable,
                                    std::string timeZoneString)
 {
-    if( aoCachedTimes.size() > 0 )
+    if( aoCachedTimes.size() > 0 ) {
         return aoCachedTimes;
-    blt::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    blt::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region( timeZoneString.c_str() );
+    }
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
     if( timeZonePtr == NULL ) {
         ostringstream os;
         os << "The time zone string: " << timeZoneString.c_str()
@@ -1897,6 +1899,11 @@ int wxModelInitialization::LoadFromCsv()
     if( p == "" )
         return 1;
 
+    /*
+    ** FIXME(kyle): Maybe need a stronger check here.  Also note, we don't free
+    ** this, it just lives until the end of the application.  It should only be
+    ** allocated once, and reused.
+    */
     if( !papszThreddsCsv )
     {
         papszLines = CSLLoad2( p.c_str(), 10, 512, NULL );
