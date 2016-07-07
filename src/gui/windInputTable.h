@@ -75,6 +75,7 @@ class windInputTable : public QWidget
  public slots:
   void enableDiurnalCells(bool checked);
   void enableStabilityCells(bool checked);
+  void clear();
 
  public:
   QGridLayout *diurnalLayout;
@@ -88,4 +89,3 @@ private:
 };
 
 #endif /* WINDINPUTTABLE_H */
-

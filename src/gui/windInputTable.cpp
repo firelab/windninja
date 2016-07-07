@@ -185,4 +185,11 @@ void windInputTable::windInputUpdate()
     }
 }
 
-
+void windInputTable::clear() {
+  for (int i = 0; i < nRuns; i++) {
+    speed[i]->setValue(0.0);
+    dir[i]->setValue(0.0);
+    cloudCover[i]->setValue(0);
+    airTemp[i]->setValue(72);
+  }
+}
