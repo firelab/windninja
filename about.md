@@ -38,6 +38,3 @@ See the [Change Log](http://firelab.github.io/windninja/log/) for release notes,
 
 
 Contact the WindNinja Support Team at [wind.ninja.support@gmail.com](mailto:wind.ninja.support@gmail.com)
-
-
-

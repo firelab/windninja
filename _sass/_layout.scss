@@ -1,8 +1,8 @@
 /**
  * Site header
  */
-.site-header {  
-   
+.site-header {
+
     min-height: 56px;
 
     // Positioning context for the mobile navigation icon
@@ -22,7 +22,7 @@
     letter-spacing: -1px;
     margin-bottom: 0;
     float: left;
-    
+
     &,
     &:visited {
         color: $text-color;
@@ -38,7 +38,7 @@
     }
 
     .page-link {
-        color: $text-color;
+        color: $lime-color;
         line-height: $base-line-height;
         font-size: 14px;
 
@@ -103,7 +103,7 @@
 /**
  * Site footer
  */
-.site-footer {   
+.site-footer {
     padding: $spacing-unit 0;
     text-align: center;
 }
@@ -147,7 +147,7 @@
 
 .col-3 {
     width: -webkit-calc(25% - (#{$spacing-unit} / 2));
-    width:         calc(25% - (#{$spacing-unit} / 2));  
+    width:         calc(25% - (#{$spacing-unit} / 2));
 }
 
 .col-4 {
