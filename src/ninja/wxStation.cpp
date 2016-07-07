@@ -34,6 +34,7 @@
 #include "wxStation.h"
 
 
+
 /**
  * Default constructor for wxStation class populated with default values
  * @see wxStation::initialize
@@ -512,6 +513,10 @@ void wxStation::wxPrinter(wxStation wxObject)
     cout<<"temperature: "<<wxObject.temperature<<endl;
     cout<<"cloud cover: "<<wxObject.cloudCover<<endl;
     cout<<"datetime: "<<wxObject.datetime<<endl;
+    cout<<"coord sys: "<<wxObject.coordType<<endl;
+    cout<<"datum: "<<wxObject.datumType<<endl;
+    cout<<"RI:"<<wxObject.influenceRadius<<endl;
+    cout<<"height: "<<wxObject.height<<endl;
     
 }
 
@@ -536,6 +541,7 @@ void wxStation::wxVectorPrinter(std::vector<wxStation> wxObject, int count)
 std::vector<std::vector<wxStation> >wxStation::vectorRead(std::string csvFile,std::string demFile)
 {
     cout<<"vector function"<<endl;
+
     std::vector<std::vector<wxStation> > a;
     
     vector<std::string> stationNames;

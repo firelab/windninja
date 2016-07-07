@@ -112,7 +112,7 @@ private:
 
 	
     posdata* solarPosData;
-    
+    friend class pointInitialization;
     #ifdef STABILITY
     friend class Stability;
     #endif 

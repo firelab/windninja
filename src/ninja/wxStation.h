@@ -174,6 +174,7 @@ class wxStation
 
    
     friend class Stability;
+    friend class pointInitialization;
 
 };
 

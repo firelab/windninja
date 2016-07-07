@@ -604,16 +604,16 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 }
 
-void pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+vector<vector<wxStation> > pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data"<<endl;
 
     boost::posix_time::ptime tempq;
     boost::posix_time::ptime init;
 
-    int qq;
-    qq=input.vecStations[0].size();
+
 //    cout<<qq<<endl;
+
 
     vector<vector<wxStation> > Selectify;
 
@@ -630,34 +630,371 @@ void pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector
 //    }
 //    cout<<qq<<endl;
 
-    cout<<"station[0] first step: "<<input.vecStations[0][0].get_datetime()<<endl;
-    tempq=input.vecStations[0][0].get_datetime();
-    init=timeList[0];
-    cout<<"timelist[0]: "<<timeList[0]<<endl;
+//    cout<<"station[0] first step: "<<input.vecStations[0][0].get_datetime()<<endl;
+//    tempq=input.vecStations[0][1].get_datetime();
+//    init=timeList[1];
+//    cout<<"timelist[0]: "<<timeList[0]<<endl;
 
-    boost::posix_time::time_duration buffer;
+    boost::posix_time::time_duration buffer(1,0,0,0);
     boost::posix_time::time_duration zero(0,0,0,0);
 
+//    buffer=init-tempq;
+int totalsize=input.vecStations.size();
 
-//    buffer=tempq-init;
-    buffer=init-tempq;
 
-    if (buffer<zero)
+
+//cout<<buffer<<endl;
+
+for (int k=0;k<totalsize;k++)
+{
+    int timesize=0;
+    vector<wxStation> subSelectify;
+    int qq;
+    qq=input.vecStations[k].size();
+
+    for (int j=0;j<timeList.size();j++)
     {
-            cout<<"inverting sign"<<endl;
-            buffer=buffer.invert_sign();
+        boost::posix_time::ptime comparator; //robespierre
+        comparator=timeList[j];
+
+        int counter=0;
+        for (int i=0;i<qq;i++)
+        {
+            boost::posix_time::time_duration difference;
+            difference=comparator-input.vecStations[k][i].get_datetime();
+            if (difference<=zero)
+            {
+                difference=difference.invert_sign();
+            }
+            if (difference<=buffer)
+            {
+                counter++;
+
+                if (counter>2)
+                {
+//                    cout<<"false"<<" "<<counter<<endl;
+                    continue;
+                }
+
+//                cout<<"true"<<" "<<counter<<endl;
+//                cout<<difference<<endl;
+                subSelectify.push_back(input.vecStations[k][i]);
+
+
+
+            }
+            if (difference>buffer)
+            {
+//                cout<<"false"<<endl;
+            }
+
+        }
+//        cout<<subSelectify.size()<<endl;
+
+//        cout<<"moving to next timeList[j] \n\n"<<endl;
+        timesize++;
+    }
+//    cout<<timesize<<endl;
+//    cout<<timeList.size()<<endl;
+
+    Selectify.push_back(subSelectify);
+}
+//cout<<Selectify[0][0].get_datetime()<<endl;
+cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
+
+
+vector<vector<wxStation> > lowVec;
+vector<vector<wxStation> > highVec;
+
+for (int j=0;j<Selectify.size();j++)
+{
+    vector<wxStation> lowStations;
+    vector<wxStation> highstations;
+
+    for (int i=0;i<Selectify[j].size();i+=2)
+    {
+          lowStations.push_back(Selectify[j][i]);
+    }
+    for (int k=1;k<Selectify[j].size();k+=2)
+    {
+        highstations.push_back(Selectify[j][k]);
+    }
+    lowVec.push_back(lowStations);
+    highVec.push_back(highstations);
+
+}
+
+//cout<<"highvec size: "<<highVec[2].size()<<endl;
+//cout<<"lowvec size: "<<lowVec[2].size()<<endl;
+
+//SETTING WX TIMELIST
+
+
+vector<vector<wxStation> > interpolatedWxData;
+for (int ey=0;ey<Selectify.size();ey++)
+{
+    vector<wxStation> subInter;
+    for (int ex=0;ex<timeList.size();ex++)
+    {
+        wxStation timeStorage;
+        timeStorage.set_datetime(timeList[ex]);
+        subInter.push_back(timeStorage);
+    }
+    interpolatedWxData.push_back(subInter);
+}
+
+//wxStation::wxPrinter(input.vecStations[0][0]);
+
+//SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
+for (int k=0;k<Selectify.size();k++)
+{
+    double latitude;
+    double longitude;
+    double height;
+    double radiusInfluence;
+    wxStation::eDatumType datum;
+    wxStation::eCoordType coord;
+    std::string stationName;
+
+
+    latitude=input.vecStations[k][0].get_lat();
+    longitude=input.vecStations[k][0].get_lon();
+    height=input.vecStations[k][0].get_height();
+    radiusInfluence=input.vecStations[k][0].get_influenceRadius();
+    datum=input.vecStations[k][0].get_datumType();
+    coord=input.vecStations[k][0].get_coordType();
+    const char* newdatum="WGS84";
+    stationName=input.vecStations[k][0].get_stationName();
+
+    std::string demfile=input.dem.fileName;
+
+
+    for (int i=0;i<timeList.size();i++)
+    {
+        interpolatedWxData[k][i].set_location_LatLong(latitude,longitude,demfile,newdatum);
+        interpolatedWxData[k][i].set_height(height,lengthUnits::meters);
+        interpolatedWxData[k][i].set_influenceRadius(radiusInfluence,lengthUnits::meters);
+        interpolatedWxData[k][i].set_stationName(stationName);
+    }
+}
+
+
+
+//INTERPOLATING WIND SPEED
+for (int k=0;k<Selectify.size();k++)
+{
+    for (int i=0;i<timeList.size();i++)
+    {
+
+    double low;
+    double high;
+    double inter;
+
+    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
+    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pInter=timeList[i];
+
+
+    low=unixTime(pLow);
+    high=unixTime(pHigh);
+    inter=unixTime(pInter);
+
+    //cout<<pLow<<" "<<low<<endl;
+    //cout<<pHigh<<" "<<high<<endl;
+    //cout<<pInter<<" "<<inter<<endl;
+
+    double speed1;
+    double speed2;
+    double speedI;
+
+    speed1=lowVec[k][i].get_speed();
+    speed2=highVec[k][i].get_speed();
+
+//    cout<<speed1<<" "<<speed2<<endl;
+    speedI=interpolator(inter,low,high,speed1,speed2);
+
+
+    //cout<<speed1<<" "<<speed2<<endl;
+
+//    cout<<speedI<<endl;
+
+    interpolatedWxData[k][i].set_speed(speedI,velocityUnits::metersPerSecond);
     }
 
-    cout<<buffer<<endl;
+}
 
-    //THIS IS WHERE INTERPOLATION IS GOING TO HAPPEN!
+//INTERPOLATING WIND DIRECITON
+for (int k=0;k<Selectify.size();k++)
+{
+    for (int i=0;i<timeList.size();i++)
+    {
+
+    double lowDir;
+    double highDir;
+    double interDir;
+
+    lowDir=lowVec[k][i].get_direction();
+    highDir=highVec[k][i].get_direction();
+
+//    cout<<lowDir<<" "<<highDir<<endl;
+
+    interDir=interpolateDirection(lowDir,highDir);
+
+//    cout<<interDir<<endl;
+
+    interpolatedWxData[k][i].set_direction(interDir);
+    }
+
+}
+
+//INTERPOLATING TEMPERATURE
+for (int k=0;k<Selectify.size();k++)
+{
+    for (int i=0;i<timeList.size();i++)
+    {
+
+    double low;
+    double high;
+    double inter;
+
+    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
+    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pInter=timeList[i];
 
 
+    low=unixTime(pLow);
+    high=unixTime(pHigh);
+    inter=unixTime(pInter);
 
+    double lowTemp;
+    double highTemp;
+    double interTemp;
+
+    lowTemp=lowVec[k][i].get_temperature();
+    highTemp=highVec[k][i].get_temperature();
+
+    interTemp=interpolator(inter,low,high,lowTemp,highTemp);
+
+
+//    cout<<lowTemp<<" "<<highTemp<<endl;
+//    cout<<interTemp<<"\n\n"<<endl;
+
+    interpolatedWxData[k][i].set_temperature(interTemp,temperatureUnits::K);
+    }
+
+}
+
+//INTERPOLATING CLOUD COVER
+for (int k=0;k<Selectify.size();k++)
+{
+    for (int i=0;i<timeList.size();i++)
+    {
+
+    double low;
+    double high;
+    double inter;
+
+    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
+    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pInter=timeList[i];
+
+
+    low=unixTime(pLow);
+    high=unixTime(pHigh);
+    inter=unixTime(pInter);
+
+    double lowCloud;
+    double highCloud;
+    double interCloud;
+
+    lowCloud=lowVec[k][i].get_cloudCover();
+    highCloud=highVec[k][i].get_cloudCover();
+
+    interCloud=interpolator(inter,low,high,lowCloud,highCloud);
+
+
+//    cout<<lowCloud<<" "<<highCloud<<endl;
+//    cout<<interCloud<<"\n\n"<<endl;
+
+    interpolatedWxData[k][i].set_cloudCover(interCloud,coverUnits::fraction);
+    }
+
+}
+
+//cout<<interpolatedWxData.size()<<endl;
+//cout<<interpolatedWxData[0].size()<<" , "<<interpolatedWxData[1].size()<<" , "<<interpolatedWxData[2].size()<<endl;
+//cout<<"\n\n"<<endl;
+
+//wxStation::wxPrinter(lowVec[2][5]);
+//cout<<"\n"<<endl;
+//wxStation::wxPrinter(interpolatedWxData[2][5]);
+//cout<<"\n"<<endl;
+//wxStation::wxPrinter(highVec[2][5]);
 
 
     
-    
+return interpolatedWxData;
+}
+double pointInitialization::unixTime(boost::posix_time::ptime time)
+{
+
+    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+    boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
+
+    double stepDuration;
+    stepDuration=dNew;
+
+//    printf("%lf\n",stepDuration);
+
+    return stepDuration;
+}
+
+double pointInitialization::interpolator(double iPoint, double lowX, double highX, double lowY, double highY)
+{
+    double result;
+    double work=0.00;
+
+    double slope;
+    slope=(highY-lowY)/(highX-lowX);
+    double pointS;
+    pointS=(iPoint-lowX);
+    result=lowY+pointS*slope;
+
+//    cout<<result<<endl;
+
+
+    return result;
+}
+//interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian, averages and then returns degrees
+//see this wiki page https://en.wikipedia.org/wiki/Mean_of_circular_quantities
+double pointInitialization::interpolateDirection(double lowDir,double highDir)
+{
+    double work=0.00;
+    double one_eighty=180.000;
+    double lowRad;
+    lowRad=lowDir*PI/one_eighty;
+
+    double highRad;
+    highRad=highDir*PI/one_eighty;
+
+    double sinSum;
+    double cosSum;
+    sinSum=sin(lowRad)+sin(highRad);
+    cosSum=cos(lowRad)+cos(highRad);
+
+    double average;
+    average=atan2(sinSum,cosSum);
+
+    double degAverage;
+
+    degAverage=average*one_eighty/PI;
+
+    if (degAverage<0)
+    {
+        degAverage=degAverage+360.000;
+    }
+
+    return degAverage;
 }
 
 string pointInitialization::BuildTime(std::string year_0,std::string month_0,
@@ -713,10 +1050,14 @@ vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> t
     stringstream startstream;
     stringstream endstream;
     boost::posix_time::time_facet *facet=new boost::posix_time::time_facet("%Y%m%d%H%M");
+    boost::posix_time::time_duration buffer(1,0,0,0);
 
     startstream.imbue(locale(startstream.getloc(),facet));
+    timeList[0]=timeList[0]-buffer;
     startstream<<timeList[0];
+
     endstream.imbue(locale(endstream.getloc(),facet));
+    timeList[timeList.size()-1]=timeList[timeList.size()-1]+buffer;
     endstream<<timeList[timeList.size()-1];
 
     std::string startString;
@@ -1753,41 +2094,90 @@ void pointInitialization::doubleVectorPrinter(vector<const double*> stData,std::
 
 }
 
-void pointInitialization::Irradiate(const double* solrad, int largecount)
+vector<double> pointInitialization::Irradiate(const double* solrad,int smallcount, int largecount,std::string timeZone,double lat, double lon,char** times)
 {
     //will eventually convert solar radiation to cloud cover, this function doesn't work yet.
 
- //vector<const double*> cloudcover;
- const double* cloudcover;
+vector<double> blegh;
+vector<double> outCloud;
+double work=0.000;
+blegh.push_back(work);
 
- const double toad=0.11043;
- double exp=0.33333333333;
- const double inverse=-990.00000000;
-
- vector<double> newtoad;
- vector<double> newtoad2;
- vector<double> newtoad3;
- vector<double> newtoad4;
-
-
-//int largecount=24;
+//cout<<solrad[0]<<endl;
+//cout<<largecount<<endl;
+//cout<<lat<<endl;
+//cout<<lon<<endl;
+//cout<<times[0]<<endl;
 
     for (int j=0;j<largecount;j++)
     {
+        char *trunk=times[j];
+        Solar sol;
+        bool silver;
 
-        newtoad.push_back((inverse+solrad[j]));
-        printf("%.3f, ",newtoad[j]);
-        printf("\n");
-        newtoad2.push_back(pow(newtoad[j],0.3));
-        printf("%.3f, ",newtoad2[j]);
+        boost::posix_time::ptime abs_time;
+
+        boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+        fig->set_iso_extended_format();
+        std::istringstream iss(trunk);
+        iss.imbue(std::locale(std::locale::classic(),fig));
+        iss>>abs_time;
+//        cout<<abs_time<<endl;
+
+//        cout<<timeZone<<endl;
+
+        boost::local_time::tz_database tz_db;
+        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+        boost::local_time::time_zone_ptr timeZonePtr;
+        timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+        boost::local_time::local_date_time startLocal(abs_time,timeZonePtr);
+
+
+//        cout<<startLocal<<endl;
+
+        double zero=0.000000;
+        double one=1.0000000;
+
+        silver=sol.compute_solar(startLocal,lat,lon,zero,zero);
+
+        double senor=sol.get_solarIntensity();
+        double solFrac;
+
+
+//        cout<<startLocal<<endl;
+////        cout<<" "<<solrad[j]<<" "<<senor<<endl;
+        solFrac=solrad[j]/senor;
+        if (solFrac<=zero)
+        {
+            solFrac=one;
+        }
+        if (solFrac>one)
+        {
+            solFrac=one;
+        }
+        if (isnan(solFrac))
+        {
+            solFrac=one;
+        }
+        solFrac=one-solFrac;
+//        cout<<solFrac<<endl;
+//        cout<<"\n"<<endl;
+        solFrac=100*solFrac;
+        outCloud.push_back(solFrac);
+//        cout<<solFrac<<endl;
+
 
     }
 
+    //    exit(1);
+//    for (int p;p<outCloud.size();p++)
+//    {
+//        cout<<outCloud[p]<<endl;
+//    }
 
-    printf("\n");
 
- //return cloudcover;
-
+return outCloud;
 }
 void pointInitialization::UnifyRadiation(vector<double> radiation)
 {
@@ -2702,7 +3092,7 @@ void pointInitialization::fetchLatLonStation(bool type,
 }
 
 
-void pointInitialization::fetchBboxStation(bool type,int nHours,
+void pointInitialization::fetchManualBboxStation(bool type,int nHours,
                                            std::string lat1,
                                            std::string lon1,
                                            std::string lat2,
@@ -2968,7 +3358,8 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
     boost::local_time::time_zone_ptr timeZonePtr;
     timeZonePtr = tz_db.time_zone_from_region(timeZone);
     
-    endHour=endHour+1;
+    endHour=endHour;
+    startHour=startHour;
     
 //    boost::posix_time::ptime startTime(boost::gregorian::date(startYear,startMonth,startDay),boost::posix_time::time_duration(startHour,startMinute,0,0));
     boost::gregorian::date dStart(startYear,startMonth,startDay);
@@ -3033,7 +3424,7 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
  */
 bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
                                     std::string demFile, 
-                                    std::vector<boost::posix_time::ptime> timeList)
+                                    std::vector<boost::posix_time::ptime> timeList,std::string timeZone)
 {
     vector<std::string>timeUTC;
     timeUTC=UnifyTime(timeList);
@@ -3271,36 +3662,153 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 //            FloatPrinter(rawsTemp,count11,"rawstemp");
 //            FloatPrinter(rawsSolrad,count12,"rawssol");
 
-            const double* aZero;
+            int aZero;
             aZero=0;
             std::string baddata="-9999";
             vector<string>rawsWindDirection;
             rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-
+            vector<double> rawsCloudCover;
+            rawsCloudCover=Irradiate(rawsSolrad,1,count12,timeZone,rawsLatitude,rawsLatitude,rawsDateTime);
 
                 for (int ez=0;ez<count9;ez++)
                 {
-                if (rawsSolrad==aZero)
+                if (rawsCloudCover.size()==aZero)
                 {
 
                     outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
                 }
                 else
                 {
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
                 }
 
                 }
 
         }
     }
+
     cout<<"returned true: "<<true<<endl;
     return true;
 }
-
-void pointInitialization::fetchTest(std::string station_id, int nHours)
+//FOR TESTING SOLAR RADIATION CONVERSION
+void pointInitialization::fetchTest(std::string station_id, int nHours,std::string timeZone)
     {
 
+    const char* lmUrl;
+
+    lmUrl=pointInitialization::BuildSingleLatest(dtoken,station_id,
+                                                 ndvar,nHours,false,"0");
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
+    hDS=OGROpen(lmUrl,0,NULL);//fetches url using OGR
+//    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
+    if (hDS==NULL)
+    {
+        printf("miserable failure \n");
+        printf("likely causes:\n station outside network\n no data for station\n mesowest is offline\n");
+        exit(1);
+    }
+
+
+//    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    const char* csvname="single.csv";
+
+    int idx0=0;
+    int idx=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int idx9=0;
+    int count1=0;
+    int count2=0;
+    int count3=0;
+    int count4=0;
+    int count5=0;
+
+    int idxx1=0;
+    int idxx2=0;
+    int idxx3=0;
+    int countxx1=0;
+    int countxx2=0;
+    int countxx3=0;
+    const double *cloudlow;
+    const double *cloudmed;
+    const double *cloudhigh;
+
+    const double *windspd;
+    const double *winddir;
+    const double *airtemp;
+    const double *solrad;
+    const double *cloud;
+    double latitude;
+    double longitude;
+    std::string station;
+    char **datetime;
+
+    int mnetid;
+
+    while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
+    {
+        idx0=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetid=(OGR_F_GetFieldAsInteger(hFeature,idx0));
+
+        idx=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+        windspd=OGR_F_GetFieldAsDoubleList(hFeature,idx,&count1);
+
+        idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+        winddir=OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2);
+
+        idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+        airtemp=OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3);
+
+        if (mnetid==2)
+        {
+        idx4=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+        solrad=OGR_F_GetFieldAsDoubleList(hFeature,idx4,&count4);
+        }
+        if (mnetid==1)
+        {
+
+        idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
+        cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
+
+        idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
+        cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
+
+        idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
+        cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
+        }
+
+        idx5=OGR_F_GetFieldIndex(hFeature, "LATITUDE");
+        latitude=OGR_F_GetFieldAsDouble(hFeature,idx5);
+
+        idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+        longitude=OGR_F_GetFieldAsDouble(hFeature,idx6);
+
+        idx7=OGR_F_GetFieldIndex(hFeature,"STID");
+        station=OGR_F_GetFieldAsString(hFeature,idx7);
+
+        idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+        datetime=OGR_F_GetFieldAsStringList(hFeature,idx8);
+        //note: Mesowest data downloaded as GEOJson names date and time data
+        //as "date_times", Mewsowest data using
+        // Json names time data as date_time!!!!!!
+
+
+    }
+
+
+    vector<double> formaggio;
+    formaggio=Irradiate(solrad,1,count4,timeZone,latitude,longitude,datetime);
 
     }
 

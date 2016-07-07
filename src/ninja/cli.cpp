@@ -998,7 +998,9 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
                                                             vm["elevation_file"].as<std::string>(),
-                                                            timeList );
+                                                            timeList,osTimeZone );
+
+                    cout<<"stopping before wxStation"<<endl;
 
                     //make the army for a fetched station
 //                    windsim.makeStationArmy( timeList );
