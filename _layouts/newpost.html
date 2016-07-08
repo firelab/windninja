@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+  {% include head.html %}
+
+  <body>
+
+    {% include header.html %}
+
+    <div class="page-content margin-bot-big">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+          <header class="post-header">
+            <h1 class="post-title" itemprop="name headline">{{ page.title }}</h1>
+            <p class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%b %-d, %Y" }}</time>{% if page.author %} • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page.author }}</span></span>{% endif %}</p>
+          </header>
+          <div>
+          {{ content }}
+
+          <br>  </br>
+
+          </div>
+          <div>
+          <div class="col col-4">
+            <p><img src="http://firelab.github.io/windninja/assets/ATCHPH.jpg" alt="https://www.york.ac.uk/media/chemistry/research/atmosphericchem/globe.jpg"></p><p>Wagenbrenner, NS, Forthofer, JM, Lamb, BK, Shannon, KS, Butler, BW, (2016) <a href="http://www.atmos-chem-phys.net/16/5229/2016/acp-16-5229-2016.pdf">Downscaling surface wind predictions from numerical weather prediction models in complex terrain with WindNinja.</a> Atmos. Chem. Phys. 16:5229-5241, doi:10.5194/acp-16-5229-2016.</p>
+          </div>
+          <div class="col col-4">
+            <p><img src="http://firelab.github.io/windninja/assets/IJWF.png" alt="FIYAH"></p><p>Forthofer, JM, Butler, BW, Wagenbrenner, NS, (2014) <a href="http://www.fs.fed.us/rm/pubs_other/rmrs_2014_forthofer_j001.pdf">A comparison of three approaches for simulating fine-scale surface winds in support of wildland fire management. Part I. Model formulation and comparison against measurements.</a> Int. J. Wildland Fire, 23:969-931. doi:10.1071/WF12089.</p>
+          </div>
+          <div class="col col-4">
+          <p><img src="http://www.iawfonline.org/IAWF%20Logo%20Redsign5%20compressed.jpg" alt="fiyah"></p><p> Forthofer, JM, Shannon, KS, Butler, BW (2011) Initialization of high resolution surface wind simulations using National Weather Service (NWS) gridded data. In ‘11th International Wildland Fire Safety Summit. Missoula, MT’, April 4-8, 2011. (International Association of Wildland Fire) </p>
+         </div>
+       </div>
+
+
+<div class="col col-12">
+<br> </br>
+
+</div>
+
+
+          <div class="col col-4">
+          <p><img src="http://firelab.github.io/windninja/assets/AMS2.png" alt="AMS"></p><p>Forthofer, J.; Shannon, K.; and Butler, B. 2009. <a href="https://ams.confex.com/ams/8Fire/techprogram/paper_156275.htm">Simulating diurnally driven slope winds with WindNinja</a>. In: Proceedings of 8th Symposium on Fire and Forest Meteorological Society; 2009 October 13-15; Kalispell, MT (2,037 KB; 13 pages)</p>
+        </div>
+        <div class="col col-4">
+      <p><img src="http://firelab.github.io/windninja/assets/csu.png" alt="CSU"></p><p>Forthofer, J. M. 2007. <a href="http://firelab.org/document/forthofer-thesis">Modeling wind in complex terrain for use in fire spread prediction</a>. Fort Collins, CO: Colorado State University, Thesis. (528 KB; 123 pages)</p>
+
+      </div>
+
+      <div class="col col-4">
+    </div>
+
+
+        </article>
+      </div>
+
+
+    </div>
+
+    {% include footer.html %}
+
+  </body>
+
+</html>

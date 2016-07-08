@@ -113,10 +113,10 @@ a {
  * Blockquotes
  */
 blockquote {
-    color: $grey-color;
+    color: $lime-color;
     border-left: 4px solid $grey-color-light;
     padding-left: $spacing-unit / 2;
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing: -1px;
     font-style: italic;
 
@@ -130,12 +130,15 @@ blockquote {
 /**
  * Code formatting
  */
-pre,
+pre
+{
+  background-color: $lime-color
+}
 code {
     font-size: 15px;
-    border: 1px solid lighten($glass-color, 10%);
+    border: 1px solid lighten($grey-color, 10%);
     border-radius: 3px;
-    background-color: $glass-color;
+    background-color: $grey-color-dark;
 }
 
 code {
