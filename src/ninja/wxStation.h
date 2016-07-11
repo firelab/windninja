@@ -56,6 +56,9 @@
 #include "iostream"
 #include "numeric"
 
+
+
+
 /** Class representing a weather station
  */
 class wxStation
@@ -175,6 +178,7 @@ class wxStation
    
     friend class Stability;
     friend class pointInitialization;
+    friend class wxTwo;
 
 };
 

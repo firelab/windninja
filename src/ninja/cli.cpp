@@ -1000,7 +1000,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                             vm["elevation_file"].as<std::string>(),
                                                             timeList,osTimeZone );
 
-                    cout<<"stopping before wxStation"<<endl;
 
                     //make the army for a fetched station
 //                    windsim.makeStationArmy( timeList );

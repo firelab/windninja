@@ -90,6 +90,8 @@
 #include "wxModelInitializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
+#include "wxTwo.h"
+
 
 #ifdef NINJAFOAM
 #include "foamInitialization.h"
