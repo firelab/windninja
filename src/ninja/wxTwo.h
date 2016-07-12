@@ -94,7 +94,7 @@ class wxTwo
     inline coverUnits::eCoverUnits get_cloudCoverUnits() { return cloudCoverUnits; }
     inline lengthUnits::eLengthUnits get_influenceRadiusUnits() { return influenceRadiusUnits; }
 
-    static void readStationFile2(std::string csvFile,std::string demFile);
+    static vector<wxTwo> readStationFile2(std::string csvFile,std::string demFile,vector<vector<wxStation> > inputStation);
 
 //    static wxTwo readStationFetchFile(std::string csvFile,std::string demFile,int piCount);
 

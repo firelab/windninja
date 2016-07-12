@@ -382,8 +382,10 @@ boost::posix_time::ptime wxTwo::get_datetime(int idx)
  * "wxStationList", the new code, which is mainly the below function and some parasite functions
  * that are used to call certain variables outside this file.
  */
-void wxTwo::readStationFile2(string csvFile,string demFile)
+vector<wxTwo> wxTwo::readStationFile2(string csvFile,string demFile,vector<vector<wxStation> > inputStation)
 {
+
+    cout<<"Converting wxList to wxTwo"<<endl;
 
     vector<std::string> stationNames;
     vector<wxTwo> stationData;
@@ -462,7 +464,7 @@ void wxTwo::readStationFile2(string csvFile,string demFile)
 
      for (int i=0;i<idxCount.size();i++)
      {
-         cout<<countLimiter[i]-1<<" "<<stationNames[countLimiter[0]-1]<<endl;
+         cout<<countLimiter[i]-1<<" "<<stationNames[countLimiter[i]-1]<<endl;
      }
 
 
@@ -471,7 +473,16 @@ void wxTwo::readStationFile2(string csvFile,string demFile)
 //    cout<<countLimiter[1]-1<<" "<<stationNames[countLimiter[1]-1]<<endl;
 //    cout<<countLimiter[2]-1<<" "<<stationNames[countLimiter[2]-1]<<endl;
 //     vector<wxStationList> Liszt=wxStationList::readStationFetchFile(csvFile,demFile);
-     vector<vector<wxStationList> >Horace=wxStationList::vectorRead(csvFile,demFile);
+
+     vector<vector<wxStation> >stationDataList;
+//     if (inputStation[0][0].get_stationName()=="")
+//     {
+//     vector<vector<wxStationList> >stationDataList=wxStationList::vectorRead(csvFile,demFile);
+//     }
+//     else
+
+       stationDataList=inputStation;
+
      for (int i=0;i<countLimiter[0];i++)
      {
 //         wxStationList::wxPrinter(Liszt[i]);
@@ -479,12 +490,12 @@ void wxTwo::readStationFile2(string csvFile,string demFile)
 for (int i=0;i<idxCount.size();i++)
 {
     wxTwo subDat;
-    subDat.set_stationName(Horace[i][0].get_stationName());
+    subDat.set_stationName(stationDataList[i][0].get_stationName());
     cout<<subDat.get_stationName()<<endl;
 
     const char* stCoordDat;
 
-    int iCT=Horace[i][0].get_coordType();
+    int iCT=stationDataList[i][0].get_coordType();
 
     if (iCT==0)
     {
@@ -500,28 +511,29 @@ for (int i=0;i<idxCount.size();i++)
      stCoordDat="WGS84";
     }
 
-    subDat.set_location_LatLong(Horace[i][0].get_lat(),Horace[i][0].get_lon(),
+    subDat.set_location_LatLong(stationDataList[i][0].get_lat(),stationDataList[i][0].get_lon(),
             demFile,stCoordDat);
 
-    for (int k=0;k<Horace[i].size();k++)
+    for (int k=0;k<stationDataList[i].size();k++)
     {
-     subDat.set_speed(Horace[i][k].get_speed(),velocityUnits::metersPerSecond);
-     subDat.set_direction(Horace[i][k].get_direction());
-     subDat.set_temperature(Horace[i][k].get_temperature(),temperatureUnits::K);
-     subDat.set_cloudCover(Horace[i][k].get_cloudCover(),coverUnits::fraction);
-     subDat.set_influenceRadius(Horace[i][k].get_influenceRadius(),lengthUnits::meters);
-     subDat.set_height(Horace[i][k].get_height(),lengthUnits::meters);
+     subDat.set_speed(stationDataList[i][k].get_speed(),velocityUnits::metersPerSecond);
+     subDat.set_direction(stationDataList[i][k].get_direction());
+     subDat.set_temperature(stationDataList[i][k].get_temperature(),temperatureUnits::K);
+     subDat.set_cloudCover(stationDataList[i][k].get_cloudCover(),coverUnits::fraction);
+     subDat.set_influenceRadius(stationDataList[i][k].get_influenceRadius(),lengthUnits::meters);
+     subDat.set_height(stationDataList[i][k].get_height(),lengthUnits::meters);
+     subDat.set_datetime(stationDataList[i][k].get_datetime());
 
     }
-    cout<<subDat.speed.size()<<endl;
-    cout<<subDat.direction.size()<<endl;
+//    cout<<subDat.speed.size()<<endl;
+//    cout<<subDat.direction.size()<<endl;
     stationData.push_back(subDat);
 }
-cout<<stationData.size()<<endl;
+//cout<<stationData.size()<<endl;
 
-//     for (int kk=0;kk<Horace[1].size();kk++)
+//     for (int kk=0;kk<stationDataList[1].size();kk++)
 //     {
-//         cout<<Horace[1][kk].get_cloudCover()<<" "<<stationData[1].get_cloudCover(coverUnits::fraction,kk)<<endl;
+//         cout<<stationDataList[1][kk].get_cloudCover()<<" "<<stationData[1].get_cloudCover(coverUnits::fraction,kk)<<endl;
 //     }
 
 
@@ -529,9 +541,9 @@ cout<<stationData.size()<<endl;
 
 //     wxTwo eval=readIndStat(csvFile,demFile,idxCount,idxCount[0]);
 
-      exit(1);
+//      exit(1);
 
-//return stationData;
+return stationData;
 }
 
 

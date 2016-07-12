@@ -55,6 +55,7 @@
 #include "gdal_util.h"
 #include "solar.h"
 #include "math.h"
+#include "wxTwo.h"
 
 
 
@@ -83,6 +84,7 @@ class pointInitialization : public initialize
         
         
         static vector<vector<wxStation> > interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList);
+        static vector<wxTwo> InterpolateWxTwo(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);

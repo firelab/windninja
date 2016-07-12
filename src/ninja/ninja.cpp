@@ -4150,7 +4150,8 @@ void ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"ninja.cpp"<<endl;    
     pointInitialization init;
-    init.interpolateTimeData(input,timeList);
+//    init.interpolateTimeData(input,timeList);
+    init.InterpolateWxTwo(input,timeList);
 }
 
 /**
@@ -4177,9 +4178,10 @@ void ninja::set_wxStationFilename(std::string station_filename)
 //    input.stationFetch = stationFetch; 
     input.wxStationFilename = station_filename;
 //    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
-//    input.vecStations=wxStation::vectorRead(input.wxStationFilename,input.dem.fileName);
-      wxTwo::readStationFile2(input.wxStationFilename,input.dem.fileName);
-    exit(1);
+    input.vecStations=wxStation::vectorRead(input.wxStationFilename,input.dem.fileName);
+//      wxTwo::readStationFile2(input.wxStationFilename,input.dem.fileName);
+
+//    exit(1);
     input.stations=wxStation::readStationFetchFile(input.wxStationFilename, input.dem.fileName);
 //    exit(1);
     input.stationsScratch = input.stations;

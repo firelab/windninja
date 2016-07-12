@@ -604,6 +604,56 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 }
 
+vector<wxTwo> pointInitialization::InterpolateWxTwo(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+{
+    wxTwo crap;
+    crap.initialize();
+    vector<wxTwo> vecCrap;
+    vecCrap.push_back(crap);
+
+    vector<wxTwo> refinedDat;
+
+    cout<<"accessed interpolatewxtwo"<<endl;
+
+    vector<vector<wxStation> > interpolatedDataSet;
+    interpolatedDataSet=interpolateTimeData(input,timeList);
+
+    cout<<"interpolated DataSet"<<endl;
+    cout<<interpolatedDataSet.size()<<endl;
+    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
+    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
+    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
+    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
+
+
+
+
+    refinedDat=wxTwo::readStationFile2(input.wxStationFilename,input.dem.fileName,interpolatedDataSet);
+
+
+    cout<<"refined WXTWO"<<endl;
+    cout<<refinedDat.size()<<endl;
+    cout<<refinedDat[0].datetime[0]<<endl;
+    cout<<refinedDat[0].speed[0]<<endl;
+    cout<<refinedDat[1].speed[0]<<endl;
+    cout<<refinedDat[2].speed[0]<<endl;
+
+
+
+
+    boost::posix_time::time_duration buffer(1,0,0,0);
+    boost::posix_time::time_duration zero(0,0,0,0);
+
+    vector<wxTwo> Selectify;
+
+
+
+
+    return vecCrap;
+}
+
+
+
 vector<vector<wxStation> > pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data"<<endl;
