@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+  {% include head.html %}
+
+  <body>
+
+    {% include header.html %}
+
+    <div class="page-content margin-bot-big">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+          <header class="post-header">
+            <h1 class="post-title" itemprop="name headline">{{ page.title }}</h1>
+            <p class="post-meta"><time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%b %-d, %Y" }}</time>{% if page.author %} • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">{{ page.author }}</span></span>{% endif %}</p>
+          </header>
+          <div>
+          {{ content }}
+
+          <br>  </br>
+
+          </div>
+          <div>
+          <div class="col col-6">
+            <a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial1.pdf"> <img src="http://firelab.github.io/windninja/assets/t1.jpg" alt="t1"></a><h3 id="[tutorial-1:the-basics](http://firelab.github.io/windninja/pdf/windninja_tutorial1.pdf)"><a name="[tutorial-1:the-basics](http://firelab.github.io/windninja/pdf/windninja_tutorial1.pdf)" href="#[tutorial-1:the-basics](http://firelab.github.io/windninja/pdf/windninja_tutorial1.pdf)"></a><a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial1.pdf">Tutorial 1:The Basics</a></h3><p>This tutorial provides a step by step guide to running a basic WindNinja simulation.</p>
+          </div>
+          <div class="col col-6">
+            <a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial2.pdf"> <img src="http://firelab.github.io/windninja/assets/t2.jpg" alt="t2"></a><h3 id="[tutorial-2:-diurnal-winds-and-non-neutral-stability](http://firelab.github.io/windninja/pdf/windninja_tutorial2.pdf)"><a name="[tutorial-2:-diurnal-winds-and-non-neutral-stability](http://firelab.github.io/windninja/pdf/windninja_tutorial2.pdf)" href="#[tutorial-2:-diurnal-winds-and-non-neutral-stability](http://firelab.github.io/windninja/pdf/windninja_tutorial2.pdf)"></a><a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial2.pdf">Tutorial 2: Diurnal Winds and Non-neutral Stability</a></h3><p>This tutorial will step you through the process of running a WindNinja simulation that includes diurnal slope winds and an atmospheric stability that is not neutral.</p>
+          </div>
+          <div class="col col-12">
+          <br> </br>
+          </div>
+          <div class="col col-6">
+            <a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial3.pdf"><img src="http://firelab.github.io/windninja/assets/t3.png" alt="t3"></p><h3 id="[tutorial-3:-point-initialization](http://firelab.github.io/windninja/pdf/windninja_tutorial3.pdf)"><a name="[tutorial-3:-point-initialization](http://firelab.github.io/windninja/pdf/windninja_tutorial3.pdf)" href="#[tutorial-3:-point-initialization](http://firelab.github.io/windninja/pdf/windninja_tutorial3.pdf)"></a><a href="http://firelab.github.io/windninja/pdf/WindNinja_tutorial3.pdf">Tutorial 3: Point Initialization</a></h3><p>This tutorial will step you through the process of running a WindNinja simulation that is initialized by location specific wind information.  Note that the point initialization option is not currently available for use with the momentum solver.</p>
+         </div>
+
+       </div>
+
+          <div class="col col-6">
+            <a href="http://firelab.github.io/windninja/pdf/CLI_instructions.pdf"><img src="http://firelab.github.io/windninja/assets/cli.png" alt="cli"></p><h3 id="[cli-instructions](http://firelab.github.io/windninja/pdf/cli_instructions.pdf)"><a name="[cli-instructions](http://firelab.github.io/windninja/pdf/cli_instructions.pdf)" href="#[cli-instructions](http://firelab.github.io/windninja/pdf/cli_instructions.pdf)"></a><a href="http://firelab.github.io/windninja/pdf/CLI_instructions.pdf">CLI Instructions</a></h3><p>This guide explains how to run WindNinja from a command line.</p>
+        </div>
+        <div class="col col-12">
+        <br> </br>
+        </div>
+        <div class="col col-6">
+
+
+      </div>
+
+      <div class="col col-4">
+    </div>
+
+
+        </article>
+      </div>
+
+
+    </div>
+
+    {% include footer.html %}
+
+  </body>
+
+</html>

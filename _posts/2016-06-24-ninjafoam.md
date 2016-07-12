@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "NinjaFOAM"
-color: red
+color: purple
 width:   3
 height:  1
 date:   2016-06-24 13:45:49 +0200
@@ -14,11 +14,11 @@ NinjaFOAM is a new optional solver in WindNinja that solves the conservation of 
 
 [NinjaFOAM Overview](http://)
 
-###  NinjaFOAM 
+###  NinjaFOAM
 
 This page documents the individual steps in a NinjaFOAM simulation. These steps are executed in `ninjafoam::simulate_wind()`. Output from each OpenFOAM call is written to a log file (e.g., `log.checkMesh`) in the temporary directory.
 
-1. A temporary case directory is created and the OpenFOAM case files are written to the temporary directory. The OpenFOAM files are copied from template files located in `WINDNINJA_DATA/ninjafoam.zip`. 
+1. A temporary case directory is created and the OpenFOAM case files are written to the temporary directory. The OpenFOAM files are copied from template files located in `WINDNINJA_DATA/ninjafoam.zip`.
 
 2. The DEM is converted to binary STL format and written to `constant/triSurface`.
 
@@ -40,7 +40,7 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 
 11. Call `applyInit`. This applies the initial conditions.  
 
-12. Run `simpleFoam`, in parallel if more than one processor is available. 
+12. Run `simpleFoam`, in parallel if more than one processor is available.
 
 13. Call `sample` to sample the velocity field at the user-specified output height. The sampling is controlled by `sampleDict`. The sampling is performed on the output surface `<demBaseName>_out.stl` created at the beginning of the simulation. There are several types of interpolation schemes available: `cell`, `cellPoint`, `cellPointFace`, etc.
 
@@ -51,4 +51,3 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 
 
 ### [Debugging](https://github.com/firelab/windninja/wiki/Debugging)
-
