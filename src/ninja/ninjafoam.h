@@ -113,6 +113,7 @@ private:
     int writeMoveDynamicMesh();
     int writeBlockMesh();
     int readDem(double &ratio_); //sets blockMesh data from DEM
+    int ReadStl();
     int readLogFile(double &ratio); //sets blockMesh data from STL log file when DEM not available
     double GetNativeFineMeshResolution(); //for output re-sampling
 
@@ -130,6 +131,8 @@ private:
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     int CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
+    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateSimpleFoamControlDict();
 
     int latestTime; //latest time directory
     int simpleFoamEndTime; //set to last time directory
@@ -150,9 +153,6 @@ private:
     int ApplyInit();
     int SimpleFoam();
     int Sample();
-    int ReadStl();
-    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
-    void UpdateSimpleFoamControlDict();
 
     /* Output */
     int SampleRawOutput();
