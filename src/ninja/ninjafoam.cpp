@@ -2415,7 +2415,16 @@ const char * NinjaFoam::GetGridFilename()
     return pszGridFilename;
 }
 
-void NinjaFoam::SetOutputFilenames()
+double NinjaFoam::GetNativeFineMeshResolution()
+{
+    long nTargetCells = 20000;
+    mesh.set_targetNumHorizCells(nTargetCells);
+    mesh.compute_cellsize(input.dem);
+
+    return mesh.meshResolution;
+}
+
+void NinjaFoam::SetOutputResolution()
 {
     //Set output file resolutions now
     if( input.kmzResolution <= 0.0 )  //if negative, use DEM resolution
@@ -2429,6 +2438,19 @@ void NinjaFoam::SetOutputFilenames()
     if( input.pdfResolution <= 0.0 )
         input.pdfResolution = input.dem.get_cellSize();
 
+    //resample if needed so kmz and pdf output is readable 
+    if( input.kmzResolution < GetNativeFineMeshResolution() )
+    {
+        input.kmzResolution = GetNativeFineMeshResolution();
+    }
+    if( input.pdfResolution < GetNativeFineMeshResolution() )
+    {
+        input.pdfResolution = GetNativeFineMeshResolution();
+    }
+}
+
+void NinjaFoam::SetOutputFilenames()
+{
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
@@ -2571,10 +2593,10 @@ int NinjaFoam::WriteOutputFiles()
     //change windspeed units back to what is specified by speed units switch
     velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
 
-    /*-------------------------------------------------------------------*/
-    /* set up filenames                                                  */
-    /*-------------------------------------------------------------------*/
+    //resample to requested output resolutions
+    SetOutputResolution();
 
+    //set up filenames
     SetOutputFilenames();
 
     /*-------------------------------------------------------------------*/

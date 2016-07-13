@@ -156,8 +156,11 @@ private:
     const char *pszVrtMem;
     const char *pszGridFilename;
     
+    double GetNativeFineMeshResolution(); //for output re-sampling
+
     int SampleRawOutput();
     int WriteOutputFiles();
+    void SetOutputResolution();
     void SetOutputFilenames();
     
     //Timers
