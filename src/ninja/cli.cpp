@@ -1346,7 +1346,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["end_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
-                    windsim.makeStationArmy(timeLiszt);
+                    windsim.makeStationArmy(timeLiszt, osTimeZone);
                     
                    
                     
@@ -1360,7 +1360,7 @@ int windNinjaCLI(int argc, char* argv[])
                     vector<boost::posix_time::ptime> outaTime;
                     boost::posix_time::ptime noTime;
                     outaTime.push_back(noTime);
-                    windsim.makeStationArmy(outaTime);
+                    windsim.makeStationArmy(outaTime,osTimeZone);
                 }
                 cout<<"whizzle!"<<endl;
                 exit(1);

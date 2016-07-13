@@ -139,10 +139,64 @@ int ninjaArmy::getSize()
  *
  * @param timeList Vector of times.
  */
-void ninjaArmy::makeStationArmy( std::vector<boost::posix_time::ptime> timeList )
+void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList , string timeZone)
 {
-    cout<<"ninjaarmy.cpp"<<endl; 
+    cout<<"RaisingStationArmy"<<endl;
+    vector<wxStation> stationArmada;
     ninjas[0]->set_InterpolateData(timeList);
+    stationArmada=ninjas[0]->get_wxStations();
+
+    ninjas.resize(timeList.size());
+
+    for(unsigned int i=0; i< timeList.size();i++)
+    {
+        ninjas[i]=new ninja();
+    }
+
+    boost::local_time::tz_database tz_db;
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+    vector<boost::local_time::local_date_time> localTimeList;
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
+        boost::posix_time::ptime aGlobal=timeList[i];
+        boost::local_time::local_date_time aLocal(aGlobal,timeZonePtr);
+
+        localTimeList.push_back(aLocal);
+
+//        cout<<timeList[i]<<" "<<localTimeList[i]<<endl;
+//        cout<<stationArmada[0].get_datetime(i)<<" "<<stationArmada[0].get_localDateTime(i)<<endl;
+    }
+    for(unsigned int k=0;k<stationArmada.size();k++)
+    {
+        for (unsigned int i=0;i<timeList.size();i++)
+        {
+            boost::posix_time::ptime aGlobal=timeList[i];
+            boost::local_time::local_date_time aLocal(aGlobal,timeZonePtr);
+            stationArmada[k].set_localDateTime(aLocal);
+        }
+    }
+
+
+
+
+//    boost::local_time::local_date_time a=timeList[0];
+
+
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
+
+        ninjas[i]->set_date_time(localTimeList[i]);
+//        ninjas[i]->set_date_time(stationArmada[i]);
+
+    }
+
+
+
+
+
     
 //    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_InterpolateData( timeList ) );    
 //    IF_VALID_INDEX_TRY( nIndex, ninjas,

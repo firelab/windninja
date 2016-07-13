@@ -77,6 +77,7 @@ wxStation::wxStation( wxStation const& m )
     datumType = m.datumType;
     coordType = m.coordType;
     datetime = m.datetime;
+    localDateTime=m.localDateTime;
 
 }
 
@@ -111,6 +112,7 @@ wxStation& wxStation::operator= ( wxStation const& m )
     datumType = m.datumType;
     coordType = m.coordType;
     datetime =m.datetime;
+    localDateTime=m.localDateTime;
     }
     return *this;
 }
@@ -156,6 +158,7 @@ void wxStation::initialize()
     datumType = WGS84;
     coordType = GEOGCS;
     datetime;
+    localDateTime;
 }
 
 /**
@@ -411,6 +414,16 @@ boost::posix_time::ptime wxStation::get_datetime(int idx)
     boost::posix_time::ptime time=datetime[idx];
     return time;
 }
+void wxStation::set_localDateTime(boost::local_time::local_date_time timedata)
+{
+    localDateTime.push_back(timedata);
+}
+boost::local_time::local_date_time wxStation::get_localDateTime(int idx)
+{
+    boost::local_time::local_date_time time=localDateTime[idx];
+    return time;
+}
+
 /** Converts vector<vector<wxStationList> > to vector<wxStation> (wxStation for now)
  * wxStation List is what I made originally and does a good job or organizing the data,
  * but it isn't very readable or intuitive. All of the old wx code was renamed to a new class
@@ -1560,7 +1573,7 @@ if( dfTempValue < 0.0 )
 if ( EQUAL( pszKey, "mps" ) )
 {
     oStation.set_speed( dfTempValue, velocityUnits::metersPerSecond );
-    cout<<"windspd: "<<oStation.speed<<" , "<<oStation.inputSpeedUnits<<endl;
+//    cout<<"windspd: "<<oStation.speed<<" , "<<oStation.inputSpeedUnits<<endl;
 }
 else if( EQUAL( pszKey, "mph" ) )
     oStation.set_speed( dfTempValue, velocityUnits::milesPerHour );

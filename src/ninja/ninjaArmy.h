@@ -113,7 +113,7 @@ public:
         ncepGfsSurf
     };
 
-    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList );
+    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,std::string timeZone );
     void makeArmy(std::string forecastFilename, std::string timeZone);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);

@@ -222,6 +222,8 @@ class wxStation
 
     void set_datetime(boost::posix_time::ptime timedata);
     boost::posix_time::ptime get_datetime(int idx);
+    void set_localDateTime(boost::local_time::local_date_time timedata);
+    boost::local_time::local_date_time get_localDateTime(int idx);
 
     static void wxPrinter(wxStation wxObject);
     static void wxVectorPrinter(std::vector<wxStation> wxObject, int count);
@@ -278,7 +280,8 @@ class wxStation
     eDatumType datumType;
     eCoordType coordType;
 
-    vector<boost::posix_time::ptime> datetime;
+    vector<boost::posix_time::ptime> datetime; //this is UTC and is used to match data points from MesoWest and Interpolation.
+    vector<boost::local_time::local_date_time> localDateTime;
 
 
 
