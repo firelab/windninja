@@ -36,7 +36,6 @@ NinjaFoam::NinjaFoam() : ninja()
     pszGridFilename = NULL;
 
     boundary_name = "";
-    terrainName = "NAME";
     type = "";
     value = "";
     gammavalue = "";

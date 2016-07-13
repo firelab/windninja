@@ -101,7 +101,6 @@ private:
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs;
     std::string boundary_name;
-    std::string terrainName;
     std::string type;
     std::string value;
     std::string gammavalue;
