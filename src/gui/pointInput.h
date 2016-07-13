@@ -59,6 +59,7 @@
 #include "wxStation.h"
 #include "ninjaUnits.h"
 
+
 #include <QGridLayout>
 #include <QVBoxLayout>
 

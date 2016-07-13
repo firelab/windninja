@@ -1010,11 +1010,11 @@ int windNinjaCLI(int argc, char* argv[])
                     return -1;
                 }
             }        
-            else if(vm.count("wx_station_filename"))   //if a station file already exists
-            {
-                //make the army for a user-supplied station
-                windsim.makeStationArmy( timeList );
-            }
+//            else if(vm.count("wx_station_filename"))   //if a station file already exists
+//            {
+//                //make the army for a user-supplied station
+////                windsim.makeStationArmy( timeList );
+//            }
 //            return(0); //temporary for STATION_FETCH
         }
 
@@ -1330,6 +1330,7 @@ int windNinjaCLI(int argc, char* argv[])
                         vm["match_points"].as<bool>() );
                 if (vm["fetch_station"].as<bool>() == true)
                 {
+                    cout<<"new PointInitialization"<<endl;
                     windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
                     std::vector<boost::posix_time::ptime> timeLiszt;
                     
@@ -1350,25 +1351,31 @@ int windNinjaCLI(int argc, char* argv[])
                    
                     
                     
-                    cout<<"whizzle!"<<endl;
-                    exit(1);
+//                    exit(1);
                 }
                 if (vm["fetch_station"].as<bool>() == false)
                 {
+                    cout<<"classic PointInitialization"<<endl;
                     windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
+                    vector<boost::posix_time::ptime> outaTime;
+                    boost::posix_time::ptime noTime;
+                    outaTime.push_back(noTime);
+                    windsim.makeStationArmy(outaTime);
                 }
-//                exit(1);
+                cout<<"whizzle!"<<endl;
+                exit(1);
                 // vm["fetch_station"].as<bool>()
                 
                 
 //                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
 //                windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>() );
                 if(vm["write_wx_station_kml"].as<bool>() == true)
-                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-                                            vm["wx_station_kml_filename"].as<std::string>());
+                    cout<<"I'VE DISABLED THIS FUNCTION UNTIL WE REWRITE THE KML!"<<endl;
+//                    wxStationList::writeKmlFile(windsim.getWxStations( i_ ),
+//                                            vm["wx_station_kml_filename"].as<std::string>());
 
-                windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
-                        lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
+//                windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
+//                        lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
 
                 if(vm["diurnal_winds"].as<bool>())
                 {
@@ -1705,7 +1712,8 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
     }
-    catch (badForecastFile& e) {   //catch a badForecastFile
+    catch (badForecastFile& e
+            ) {   //catch a badForecastFile
         cout << "Exception badForecastFile caught: " << e.what() << "\n";
         cout << "There was a problem downloading the forecast file or it had bad data.\n";
         return -1;

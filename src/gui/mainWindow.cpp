@@ -841,7 +841,8 @@ void mainWindow::writeBlankStationFile()
     (this, tr("Save station file as..."), "stations.csv",
      tr("Text Files (*.csv)"));
     if(!fileName.isEmpty())
-    wxStation::writeBlankStationFile( fileName.toStdString() );
+//    wxStation::writeBlankStationFile( fileName.toStdString() );
+     cout<<"ive disabled this because it doesn't work right now"<<endl;
     else
     return;
 }

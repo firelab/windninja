@@ -96,8 +96,7 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
                   wxModelInitialization.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
-                  windninja.cpp
-                  wxTwo.cpp)
+                  windninja.cpp)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp

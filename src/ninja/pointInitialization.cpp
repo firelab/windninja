@@ -137,14 +137,14 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 	for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
 	{
-		if(input.stationsScratch[ii].get_height() > maxStationHeight)
-			maxStationHeight = input.stationsScratch[ii].get_height();
-		sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
-		T[ii] = input.stationsScratch[ii].get_temperature();
-		cc[ii] = input.stationsScratch[ii].get_cloudCover();
-		X[ii] = input.stationsScratch[ii].get_projXord();
-		Y[ii] = input.stationsScratch[ii].get_projYord();
-		influenceRadius[ii] = input.stationsScratch[ii].get_influenceRadius();
+        if(input.stationsScratch[ii].get_height(0) > maxStationHeight)
+            maxStationHeight = input.stationsScratch[ii].get_height(0);
+        sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
+        T[ii] = input.stationsScratch[ii].get_temperature(0);
+        cc[ii] = input.stationsScratch[ii].get_cloudCover(0);
+        X[ii] = input.stationsScratch[ii].get_projXord();
+        Y[ii] = input.stationsScratch[ii].get_projYord();
+        influenceRadius[ii] = input.stationsScratch[ii].get_influenceRadius(0);
 	}
 
 	input.inputWindHeight = maxStationHeight;  //for use later during vertical fill of 3D grid
@@ -182,9 +182,9 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 	//now interpolate all stations vertically to the maxStationHeight
 	for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
 	{
-		if(input.stationsScratch[ii].get_height() != maxStationHeight)	//if station is not at the 2d interp layer height of maxStationHeight, interpolate vertically using profile to this height
+        if(input.stationsScratch[ii].get_height(0) != maxStationHeight)	//if station is not at the 2d interp layer height of maxStationHeight, interpolate vertically using profile to this height
 		{	
-			profile.inputWindHeight = input.stationsScratch[ii].get_height();
+            profile.inputWindHeight = input.stationsScratch[ii].get_height(0);
 			//get surface properties
 			if(input.dem.check_inBounds(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord()))	//if station is in the dem domain
 			{
@@ -198,7 +198,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				{
 					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
 							aspect(i_, j_),slope(i_, j_), cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
-							input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_height(),
+                            input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_height(0),
 							(input.surface.Albedo)(i_, j_), (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
 							(input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
 							(input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
@@ -248,8 +248,8 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
 				{
 					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-							0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
-							input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
+                            0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(0),
+                            input.stationsScratch[ii].get_height(0), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
 							profile.Rough_h, profile.Rough_d);
 
 
@@ -288,13 +288,13 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 			profile.AGL=maxStationHeight + profile.Rough_h;			//this is height above THE GROUND!! (not "z=0" for the log profile)
 
-			wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
+            wind_sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
 			profile.inputWindSpeed = u[ii];	
 			u[ii] = profile.getWindSpeed();
 			profile.inputWindSpeed = v[ii];
 			v[ii] = profile.getWindSpeed();
 		}else{	//else station is already at 2d interp layer height
-			wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
+            wind_sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
 		}
 	}
 	
@@ -603,58 +603,86 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     */
 
 }
-
-vector<wxTwo> pointInitialization::InterpolateWxTwo(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+vector<wxStation> pointInitialization::interpolateNull(WindNinjaInputs &input)
 {
-    wxTwo crap;
+    cout<<"no interpolation needed"<<endl;
+    vector<wxStation> refinedDat;
+    refinedDat=wxStation::makeWxStation(input.wxStationFilename,input.dem.fileName,input.vecStations);
+
+    for (int i=0;i<refinedDat.size();i++)
+    {
+    bool a=wxStation::check_station(refinedDat[i]);
+        if (a != true)
+        {
+            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
+        }
+        else
+        {
+            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
+        }
+    }
+
+
+    return refinedDat;
+}
+
+vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+{
+    wxStation crap;
     crap.initialize();
-    vector<wxTwo> vecCrap;
+    vector<wxStation> vecCrap;
     vecCrap.push_back(crap);
 
-    vector<wxTwo> refinedDat;
+    vector<wxStation> refinedDat;
 
-    cout<<"accessed interpolatewxtwo"<<endl;
 
-    vector<vector<wxStation> > interpolatedDataSet;
+    vector<vector<wxStationList> > interpolatedDataSet;
     interpolatedDataSet=interpolateTimeData(input,timeList);
 
-    cout<<"interpolated DataSet"<<endl;
-    cout<<interpolatedDataSet.size()<<endl;
-    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
-    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
-    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
-    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
+//    cout<<"interpolated DataSet"<<endl;
+//    cout<<interpolatedDataSet.size()<<endl;
+//    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
+//    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
+//    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
+//    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
 
+    refinedDat=wxStation::makeWxStation(input.wxStationFilename,input.dem.fileName,interpolatedDataSet);
 
-
-
-    refinedDat=wxTwo::readStationFile2(input.wxStationFilename,input.dem.fileName,interpolatedDataSet);
-
-
-    cout<<"refined WXTWO"<<endl;
-    cout<<refinedDat.size()<<endl;
-    cout<<refinedDat[0].datetime[0]<<endl;
-    cout<<refinedDat[0].speed[0]<<endl;
-    cout<<refinedDat[1].speed[0]<<endl;
-    cout<<refinedDat[2].speed[0]<<endl;
-
-
-
+//    cout<<"refined wxStation"<<endl;
+//    cout<<refinedDat.size()<<endl;
+//    cout<<refinedDat[0].datetime[0]<<endl;
+//    cout<<refinedDat[0].speed[0]<<endl;
+//    cout<<refinedDat[1].speed[0]<<endl;
+//    cout<<refinedDat[2].speed[0]<<endl;
 
     boost::posix_time::time_duration buffer(1,0,0,0);
     boost::posix_time::time_duration zero(0,0,0,0);
 
-    vector<wxTwo> Selectify;
+    vector<wxStation> Selectify;
+
+
+    for (int i=0;i<refinedDat.size();i++)
+    {
+    bool a=wxStation::check_station(refinedDat[i]);
+        if (a != true)
+        {
+            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
+        }
+        else
+        {
+            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
+        }
+    }
 
 
 
 
-    return vecCrap;
+    return refinedDat;
 }
 
 
 
-vector<vector<wxStation> > pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+vector<vector<wxStationList> > pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data"<<endl;
 
@@ -665,7 +693,7 @@ vector<vector<wxStation> > pointInitialization::interpolateTimeData(WindNinjaInp
 //    cout<<qq<<endl;
 
 
-    vector<vector<wxStation> > Selectify;
+    vector<vector<wxStationList> > Selectify;
 
 //    cout<<"timeList"<<endl;
 //    for( int i=0;i<timeList.size();i++)
@@ -698,7 +726,7 @@ int totalsize=input.vecStations.size();
 for (int k=0;k<totalsize;k++)
 {
     int timesize=0;
-    vector<wxStation> subSelectify;
+    vector<wxStationList> subSelectify;
     int qq;
     qq=input.vecStations[k].size();
 
@@ -753,13 +781,13 @@ for (int k=0;k<totalsize;k++)
 cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
 
 
-vector<vector<wxStation> > lowVec;
-vector<vector<wxStation> > highVec;
+vector<vector<wxStationList> > lowVec;
+vector<vector<wxStationList> > highVec;
 
 for (int j=0;j<Selectify.size();j++)
 {
-    vector<wxStation> lowStations;
-    vector<wxStation> highstations;
+    vector<wxStationList> lowStations;
+    vector<wxStationList> highstations;
 
     for (int i=0;i<Selectify[j].size();i+=2)
     {
@@ -780,13 +808,13 @@ for (int j=0;j<Selectify.size();j++)
 //SETTING WX TIMELIST
 
 
-vector<vector<wxStation> > interpolatedWxData;
+vector<vector<wxStationList> > interpolatedWxData;
 for (int ey=0;ey<Selectify.size();ey++)
 {
-    vector<wxStation> subInter;
+    vector<wxStationList> subInter;
     for (int ex=0;ex<timeList.size();ex++)
     {
-        wxStation timeStorage;
+        wxStationList timeStorage;
         timeStorage.set_datetime(timeList[ex]);
         subInter.push_back(timeStorage);
     }
@@ -802,8 +830,8 @@ for (int k=0;k<Selectify.size();k++)
     double longitude;
     double height;
     double radiusInfluence;
-    wxStation::eDatumType datum;
-    wxStation::eCoordType coord;
+    wxStationList::eDatumType datum;
+    wxStationList::eCoordType coord;
     std::string stationName;
 
 

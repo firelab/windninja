@@ -117,6 +117,7 @@ void pointInput::readStationFile()
 {
     std::vector<wxStation>readStations;
     pointData.stations.clear();
+    std::vector<vector<wxStationList> > temporary;
 
     QString fileName;
     fileName = QFileDialog::getOpenFileName(this, tr("Open station file"),
@@ -128,8 +129,12 @@ void pointInput::readStationFile()
     }
     else {
         try {
-            readStations = wxStation::readStationFile(fileName.toStdString(),
-                                                      demFileName.toStdString());
+            temporary=wxStationList::vectorRead(stationFileName.toStdString(),demFileName.toStdString());
+            readStations = wxStation::makeWxStation(stationFileName.toStdString(),demFileName.toStdString(),temporary);
+
+            //this is a temporary fix, I have no idea what this class is (pointInput)
+            //the above code is absolutely wrong but works for now, nothing outside of the interpolate functions
+            //and stuff should never touch wxStationList, it needs to access the interpoalted wxStation Data, which comes from PI.
         }
         catch(std::domain_error &e) {
             QMessageBox::warning(this, tr("WindNinja"), tr(e.what()),
@@ -186,8 +191,9 @@ void pointInput::writeStationFile()
     if( fileName.isEmpty() || fileName == ".csv" )
     return;
     else
-    wxStation::writeStationFile( pointData.stations,
-                     fileName.toStdString() );
+//    wxStation::writeStationFile( pointData.stations,
+//                     fileName.toStdString() );
+        cout<<"this is disabled until further notice"<<endl;
 }
 
 void pointInput::writeStationKml()
@@ -222,8 +228,9 @@ void pointInput::writeStationKml()
     if( fileName.isEmpty() || fileName == ".kml" )
     return;
     else
-    wxStation::writeKmlFile( pointData.stations,
-                    fileName.toStdString() );
+//    wxStation::writeKmlFile( pointData.stations,
+//                    fileName.toStdString() );
+        cout<<"disabled"<<endl;
 }
 
 void pointInput::setInputFile( QString file )
