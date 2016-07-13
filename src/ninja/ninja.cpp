@@ -2773,7 +2773,6 @@ void ninja::computeDustEmissions()
 
 void ninja::writeOutputFiles()
 {
-    
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
 	//Write volume data to VTK format (always in m/s?)
@@ -4717,11 +4716,12 @@ void ninja::set_outputFilenames(double& meshResolution,
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
