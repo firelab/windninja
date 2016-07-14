@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "NinjaFOAM"
-color: purple
+color: red
 width:   3
 height:  1
 date:   2016-06-15 13:45:49 +0200
