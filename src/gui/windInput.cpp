@@ -43,6 +43,8 @@ windInput::windInput(QWidget *parent) : QWidget(parent)
 
     clearButton = new QToolButton(this);
     clearButton->setIcon(QIcon(":cancel.png"));
+    clearButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    clearButton->setText("Clear");
     clearButton->setToolTip("Clear all entries");
 
     windLayout = new QVBoxLayout;
