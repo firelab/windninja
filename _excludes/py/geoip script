@@ -1,2 +1,0 @@
-python pygeoipmap.py -i pureip --service m --db GeoLiteCity.dat --output=new2.png
-
