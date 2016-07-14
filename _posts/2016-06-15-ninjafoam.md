@@ -48,15 +48,17 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 
 15. Remove the temporary directory and all OpenFOAM case files unless VTK output was requested.
 
-# Further Reading
+
+
+## Documentation
 
 
 - - -
 
 
-## [NinjaFOAM: Debugging](http://firelab.github.io/windninja/main/2016/06/14/debugging.html)
+# [NinjaFOAM: Debugging](http://firelab.github.io/windninja/main/2016/06/14/debugging.html)
 
 
-## [NinjaFOAM: Meshing](http://firelab.github.io/windninja/main/2016/06/14/meshing.html)
+# [NinjaFOAM: Meshing](http://firelab.github.io/windninja/main/2016/06/14/meshing.html)
 
-### [NinjaFOAM: Refine Mesh](http://firelab.github.io/windninja/main/2016/06/14/refinemesh.html)
+#### [NinjaFOAM: Refine Mesh](http://firelab.github.io/windninja/main/2016/06/14/refinemesh.html)
