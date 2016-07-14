@@ -15,9 +15,10 @@ __Linux__: Follow the instructions on [building from source](https://github.com/
 Where can documentation about running WindNinja be found?
 ---------------------------------------------------------
 
-[Right Here!](http://firelab.github.io/windninja/main/2016/06/24/basics.html)
+[Tutorials can be found online here.](http://firelab.github.io/windninja/main/2016/07/11/tutorial.html)
 
 Much of the available documentation is included in the WindNinja installation.  To find this, first install WindNinja.  Next, go to Start->Programs->WindNinja-x.x.x.  Here you will find links to the included documentation, which includes tutorials, elevation file download instructions, wind vector viewing instructions, and example elevation files.
+
 
 Another place to find WindNinja documentation is on WindNinja's distribution web site:  http://www.firelab.org/windninja
 

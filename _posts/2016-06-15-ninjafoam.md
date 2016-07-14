@@ -12,7 +12,6 @@ categories: main
 
 NinjaFOAM is a new optional solver in WindNinja that solves the conservation of mass and momentum equations. It is based on the OpenFOAM computational fluid dynamics (CFD) toolbox. OpenFOAM is free, open source software for CFD from the [OpenFOAM Foundation](http://openfoam.org).
 
-[NinjaFOAM Overview](http://)
 
 ###  NinjaFOAM
 
