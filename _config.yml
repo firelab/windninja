@@ -17,3 +17,5 @@ github_username:  tfinney9
 
 # Build settings
 markdown: kramdown
+
+exclude: _excludes
