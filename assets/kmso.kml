@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml>
+  <Document>
+    <description>Weather Stations:C:/Users/tfinney/Documents/kmso.kml</description>
+    <Placemark>
+      <name>KMSO</name
+>    <Point>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+          -114.093000,46.920800,0.0
+        </coordinates>
+      </Point>
+      <description>
+        <![CDATA[
+          Name: KMSO
+          Height: 10.00 m
+          Speed: 1.54 mps
+          Direction: 290 degrees
+          Cloud Cover: 0.00 percent
+          Temperature: 24.0 C
+          Radius of Influence: infinite
+        ]]>
+      </description>
+    </Placemark>
+    <Placemark>
+      <name>PNTM8</name
+>    <Point>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+          -113.986000,47.041300,0.0
+        </coordinates>
+      </Point>
+      <description>
+        <![CDATA[
+          Name: PNTM8
+          Height: 10.00 m
+          Speed: 1.79 mps
+          Direction: 52 degrees
+          Cloud Cover: 0.00 percent
+          Temperature: 15.6 C
+          Radius of Influence: infinite
+        ]]>
+      </description>
+    </Placemark>
+    <Placemark>
+      <name>TR266</name
+>    <Point>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>
+          -114.112000,47.045900,0.0
+        </coordinates>
+      </Point>
+      <description>
+        <![CDATA[
+          Name: TR266
+          Height: 10.00 m
+          Speed: 1.79 mps
+          Direction: 198 degrees
+          Cloud Cover: 0.00 percent
+          Temperature: 22.2 C
+          Radius of Influence: infinite
+        ]]>
+      </description>
+    </Placemark>
+  </Document>
+</kml>
