@@ -82,9 +82,9 @@ class pointInitialization : public initialize
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
         
-        static vector<wxStation> interpolateNull(WindNinjaInputs &input);
-        static vector<vector<wxStationList> > interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList);
-        static vector<wxStation> InterpolatewxStation(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList);
+        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations);
+        static vector<vector<wxStationList> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
+        static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);

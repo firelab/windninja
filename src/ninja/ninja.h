@@ -255,6 +255,8 @@ public:
 //stationFetch
     void set_stationFetchFlag( bool flag );
     void set_InterpolateData(std::vector<boost::posix_time::ptime> timeList);
+    std::vector<std::vector<wxStationList> >get_wxStatList();
+
 
 //stationFetch
     std::vector<wxStation> get_wxStations();

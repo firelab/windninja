@@ -4171,7 +4171,7 @@ void ninja::set_wxStationFilename(std::string station_filename)
 //    input.stationFetch = stationFetch; 
     input.wxStationFilename = station_filename;
 //    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
-    input.vecStations=wxStationList::vectorRead(input.wxStationFilename,input.dem.fileName);
+//    input.vecStations=wxStationList::vectorRead(input.wxStationFilename,input.dem.fileName);
 //      wxTwo::makeWxStation(input.wxStationFilename,input.dem.fileName);
 
 //    exit(1);
@@ -4191,33 +4191,32 @@ void ninja::set_wxStationFilename(std::string station_filename)
 }
 void ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)
 {
-    cout<<"ninja.cpp"<<endl;
-    pointInitialization init;
-//    init.interpolateTimeData(input,timeList);
-    vector<boost::posix_time::ptime> outaTime;
-    boost::posix_time::ptime noTime;
-    outaTime.push_back(noTime);
-    if (timeList==outaTime)
-    {
-        input.realStations=init.interpolateNull(input);
-    }
-    else
-    {
-        input.realStations=init.InterpolatewxStation(input,timeList);
-    }
-
-    input.stations=input.realStations;
-    input.stationsScratch = input.stations;
-    input.stationsOldInput = input.stations;
-    input.stationsOldOutput = input.stations;
-    for (unsigned int i = 0; i < input.stations.size(); i++)
-    {
-        if (wxStation::check_station(input.stations[i])==false)
-        {
-            throw std::range_error("Error in weather station parameters.");
-        }
-    }
-    input.inputSpeedUnits = input.stations[0].get_speedUnits(); //set inputSpeedUnits in ninja class to first station.
+//    cout<<"ninja.cpp"<<endl;
+//    pointInitialization init;
+////    init.interpolateTimeData(input,timeList);
+//    vector<boost::posix_time::ptime> outaTime;
+//    boost::posix_time::ptime noTime;
+//    outaTime.push_back(noTime);
+//    if (timeList==outaTime)
+//    {
+//        input.realStations=init.interpolateNull(input);
+//    }
+//    else
+//    {
+//        input.realStations=init.InterpolatewxStation(input,timeList);
+//    }
+//    input.stations=input.realStations;
+//    input.stationsScratch = input.stations;
+//    input.stationsOldInput = input.stations;
+//    input.stationsOldOutput = input.stations;
+//    for (unsigned int i = 0; i < input.stations.size(); i++)
+//    {
+//        if (wxStation::check_station(input.stations[i])==false)
+//        {
+//            throw std::range_error("Error in weather station parameters.");
+//        }
+//    }
+//    input.inputSpeedUnits = input.stations[0].get_speedUnits(); //set inputSpeedUnits in ninja class to first station.
 
 
 }
@@ -4230,6 +4229,10 @@ void ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)
 std::vector<wxStation> ninja::get_wxStations()
 {
     return input.stations;
+}
+std::vector<std::vector<wxStationList> > ninja::get_wxStatList()
+{
+    return input.vecStations;
 }
 
 

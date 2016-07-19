@@ -603,11 +603,22 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     */
 
 }
-vector<wxStation> pointInitialization::interpolateNull(WindNinjaInputs &input)
+/**
+ * @brief pointInitialization::interpolateNull
+ * Used if the function is the old PointInitialization.
+ * @param csvFileName
+ * @param demFileName
+ * @param vecStations
+ * @return
+ */
+
+
+
+vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations)
 {
     cout<<"no interpolation needed"<<endl;
     vector<wxStation> refinedDat;
-    refinedDat=wxStation::makeWxStation(input.wxStationFilename,input.dem.fileName,input.vecStations);
+    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,vecStations);
 
     for (int i=0;i<refinedDat.size();i++)
     {
@@ -626,7 +637,16 @@ vector<wxStation> pointInitialization::interpolateNull(WindNinjaInputs &input)
     return refinedDat;
 }
 
-vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+/**
+ * @brief pointInitialization::InterpolatewxStation
+ * @param csvFileName
+ * @param demFileName
+ * @param vecStations
+ * @param timeList
+ * @return
+ */
+
+vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
     wxStation crap;
     crap.initialize();
@@ -635,9 +655,8 @@ vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &inp
 
     vector<wxStation> refinedDat;
 
-
     vector<vector<wxStationList> > interpolatedDataSet;
-    interpolatedDataSet=interpolateTimeData(input,timeList);
+    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
 
 //    cout<<"interpolated DataSet"<<endl;
 //    cout<<interpolatedDataSet.size()<<endl;
@@ -646,13 +665,13 @@ vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &inp
 //    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
 //    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
 
-    refinedDat=wxStation::makeWxStation(input.wxStationFilename,input.dem.fileName,interpolatedDataSet);
+    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,interpolatedDataSet);
 
 //    cout<<"refined wxStation"<<endl;
 //    cout<<refinedDat.size()<<endl;
 //    cout<<refinedDat[0].datetime[0]<<endl;
 //    cout<<refinedDat[0].speed[0]<<endl;
-//    cout<<refinedDat[1].speed[0]<<endl;
+//    cout<<refinedDat[0].speed[1]<<endl;
 //    cout<<refinedDat[2].speed[0]<<endl;
 
     boost::posix_time::time_duration buffer(1,0,0,0);
@@ -666,7 +685,7 @@ vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &inp
     bool a=wxStation::check_station(refinedDat[i]);
         if (a != true)
         {
-            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
+            cout<<"!!stationcheck failed on #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" potential for bad data!!"<<endl;
         }
         else
         {
@@ -675,14 +694,21 @@ vector<wxStation> pointInitialization::InterpolatewxStation(WindNinjaInputs &inp
     }
 
 
-
-
     return refinedDat;
 }
 
+/**
+ * @brief interpolates raw data WRT time
+ *
+ * @param csvFileName: used to verify correct file
+ * @param demFileName: used to set coord system in interpolated data
+ * @param vecStations: the raw data to be interpolated
+ * @param timeList: the desired time and steps
+ *
+ */
 
 
-vector<vector<wxStationList> > pointInitialization::interpolateTimeData(WindNinjaInputs &input,std::vector<boost::posix_time::ptime> timeList)
+vector<vector<wxStationList> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data"<<endl;
 
@@ -713,38 +739,129 @@ vector<vector<wxStationList> > pointInitialization::interpolateTimeData(WindNinj
 //    init=timeList[1];
 //    cout<<"timelist[0]: "<<timeList[0]<<endl;
 
-    boost::posix_time::time_duration buffer(1,0,0,0);
+//    boost::posix_time::time_duration buffer(1,0,0,0);
     boost::posix_time::time_duration zero(0,0,0,0);
+    boost::posix_time::time_duration max(48,0,0,0);
+    boost::posix_time::time_duration one(0,1,0,0);
+
+    boost::posix_time::time_duration buffer;
+    boost::posix_time::time_duration avgBuffer;
+    vector<boost::posix_time::time_duration> avgBufferList;
+
+    boost::posix_time::time_duration bufferSum;
 
 //    buffer=init-tempq;
-int totalsize=input.vecStations.size();
+int totalsize=vecStations.size();
 
 
+//Creates a vector of time buffers to be used to interpolate the raw data with the timeList
+for (int j=0;j<totalsize;j++)
+{
+    vector<boost::posix_time::time_duration> buffers;
+    for (int i=0;i<vecStations[j].size();i++)
+    {
+        buffer=vecStations[j][i].get_datetime()-vecStations[j][i+1].get_datetime();
+        if (buffer<=zero)
+        {
+            buffer=buffer.invert_sign();
+        }
+        if (buffer>=max)
+        {
+            buffer=buffers[0];
+        }
+//        cout<<buffer<<endl;
+        buffers.push_back(buffer);
 
-//cout<<buffer<<endl;
+    }
+    //cout<<buffers.size()<<endl;
+    bufferSum=std::accumulate(buffers.begin(),buffers.end(),zero);
+    //cout<<bufferSum<<endl;
+
+    avgBuffer=bufferSum/buffers.size();
+
+    cout<<avgBuffer<<endl;
+    avgBufferList.push_back(avgBuffer);
+}
+
+//cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+//int k=1;
+//for (int j=0;j<timeList.size();j++)
+//{
+//    int qq;
+//    qq=vecStations[k].size();
+//    boost::posix_time::ptime comparator;
+//    comparator=timeList[j];
+//    int counter=0;
+
+//    cout<<"goal: "<<comparator<<endl;
+
+//    for (int i=0;i<qq;i++)
+//    {
+//        boost::posix_time::time_duration difference;
+//        difference=comparator-vecStations[k][i].get_datetime();
+//        if (difference<=zero)
+//        {
+//            difference=difference.invert_sign();
+//        }
+//        if (difference<=avgBufferList[k])
+//        {
+//            counter++;
+
+//            if (counter>2)
+//            {
+//    //                    cout<<"false"<<" "<<counter<<endl;
+//                continue;
+//            }
+
+//    //                cout<<"true"<<" "<<counter<<endl;
+//            cout<<difference<<endl;
+//            cout<<vecStations[k][i].get_datetime()<<endl;
+//            continue;
+//        }
+//        if (difference<=avgBufferList[k]+one && counter<2)
+//        {
+//            cout<<difference<<endl;
+//            cout<<vecStations[k][i].get_datetime()<<endl;
+//            counter++;
+//            continue;
+//        }
+//        if (difference>avgBufferList[k])
+//        {
+//    //                cout<<"false"<<endl;
+//        }
+
+
+//    }
+//    cout<<" "<<endl;
+//}
+
+//cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
 
 for (int k=0;k<totalsize;k++)
 {
     int timesize=0;
     vector<wxStationList> subSelectify;
     int qq;
-    qq=input.vecStations[k].size();
+    qq=vecStations[k].size();
+//    cout<<avgBufferList[k]<<endl;
 
     for (int j=0;j<timeList.size();j++)
     {
         boost::posix_time::ptime comparator; //robespierre
         comparator=timeList[j];
 
+
         int counter=0;
         for (int i=0;i<qq;i++)
         {
+
             boost::posix_time::time_duration difference;
-            difference=comparator-input.vecStations[k][i].get_datetime();
+            difference=comparator-vecStations[k][i].get_datetime();
             if (difference<=zero)
             {
-                difference=difference.invert_sign();
+                difference=difference.invert_sign();               
             }
-            if (difference<=buffer)
+            if (difference<=avgBufferList[k])
             {
                 counter++;
 
@@ -756,12 +873,19 @@ for (int k=0;k<totalsize;k++)
 
 //                cout<<"true"<<" "<<counter<<endl;
 //                cout<<difference<<endl;
-                subSelectify.push_back(input.vecStations[k][i]);
-
-
-
+//                cout<<vecStations[k][i].get_datetime()<<endl;
+                subSelectify.push_back(vecStations[k][i]);
+                continue;
             }
-            if (difference>buffer)
+            if (difference<=avgBufferList[k]+one && counter<2)
+            {
+//                cout<<difference<<endl;
+//                cout<<vecStations[k][i].get_datetime()<<endl;
+                subSelectify.push_back(vecStations[k][i]);
+                counter++;
+                continue;
+            }
+            if (difference>avgBufferList[k])
             {
 //                cout<<"false"<<endl;
             }
@@ -771,15 +895,17 @@ for (int k=0;k<totalsize;k++)
 
 //        cout<<"moving to next timeList[j] \n\n"<<endl;
         timesize++;
+
     }
 //    cout<<timesize<<endl;
 //    cout<<timeList.size()<<endl;
 
     Selectify.push_back(subSelectify);
 }
-//cout<<Selectify[0][0].get_datetime()<<endl;
-cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
 
+//        exit(1);
+
+cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
 
 vector<vector<wxStationList> > lowVec;
 vector<vector<wxStationList> > highVec;
@@ -802,6 +928,27 @@ for (int j=0;j<Selectify.size();j++)
 
 }
 
+//printf("\n\n");
+
+//cout<<Selectify[0].size()<<endl;
+
+
+
+//cout<<" "<<endl;
+//cout<<lowVec[0].size()<<endl;
+//cout<<timeList.size()<<endl;
+//cout<<highVec[0].size()<<endl;
+
+//for (int i=0;i<timeList.size();i++)
+//{
+//    cout<<lowVec[0][i].get_datetime()<<endl;
+//    cout<<timeList[i]<<endl;
+//    cout<<highVec[0][i].get_datetime()<<endl;
+
+
+//}
+
+//exit(1);
 //cout<<"highvec size: "<<highVec[2].size()<<endl;
 //cout<<"lowvec size: "<<lowVec[2].size()<<endl;
 
@@ -821,7 +968,7 @@ for (int ey=0;ey<Selectify.size();ey++)
     interpolatedWxData.push_back(subInter);
 }
 
-//wxStation::wxPrinter(input.vecStations[0][0]);
+//wxStation::wxPrinter(vecStations[0][0]);
 
 //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
 for (int k=0;k<Selectify.size();k++)
@@ -835,16 +982,16 @@ for (int k=0;k<Selectify.size();k++)
     std::string stationName;
 
 
-    latitude=input.vecStations[k][0].get_lat();
-    longitude=input.vecStations[k][0].get_lon();
-    height=input.vecStations[k][0].get_height();
-    radiusInfluence=input.vecStations[k][0].get_influenceRadius();
-    datum=input.vecStations[k][0].get_datumType();
-    coord=input.vecStations[k][0].get_coordType();
+    latitude=vecStations[k][0].get_lat();
+    longitude=vecStations[k][0].get_lon();
+    height=vecStations[k][0].get_height();
+    radiusInfluence=vecStations[k][0].get_influenceRadius();
+    datum=vecStations[k][0].get_datumType();
+    coord=vecStations[k][0].get_coordType();
     const char* newdatum="WGS84";
-    stationName=input.vecStations[k][0].get_stationName();
+    stationName=vecStations[k][0].get_stationName();
 
-    std::string demfile=input.dem.fileName;
+    std::string demfile=demFileName;
 
 
     for (int i=0;i<timeList.size();i++)
@@ -877,9 +1024,9 @@ for (int k=0;k<Selectify.size();k++)
     high=unixTime(pHigh);
     inter=unixTime(pInter);
 
-    //cout<<pLow<<" "<<low<<endl;
-    //cout<<pHigh<<" "<<high<<endl;
-    //cout<<pInter<<" "<<inter<<endl;
+//    cout<<pLow<<" "<<low<<endl;
+//    cout<<pHigh<<" "<<high<<endl;
+//    cout<<pInter<<" "<<inter<<endl;
 
     double speed1;
     double speed2;
@@ -890,9 +1037,15 @@ for (int k=0;k<Selectify.size();k++)
 
 //    cout<<speed1<<" "<<speed2<<endl;
     speedI=interpolator(inter,low,high,speed1,speed2);
-
-
-    //cout<<speed1<<" "<<speed2<<endl;
+//    printf("%lf",inter);
+//    cout<<" "<<endl;
+//    printf("%lf",low);
+//    cout<<" ";
+//    printf("%lf",high);
+//    cout<<" "<<endl;
+////    cout<<pInter<<endl;
+////    cout<<pLow<<" "<<pHigh<<endl;
+//    cout<<speed1<<" "<<speed2<<endl;
 
 //    cout<<speedI<<endl;
 

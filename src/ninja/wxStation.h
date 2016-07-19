@@ -241,7 +241,7 @@ class wxStation
     inline lengthUnits::eLengthUnits get_influenceRadiusUnits() { return influenceRadiusUnits; }
 
     static vector<wxStation> makeWxStation(std::string csvFile,std::string demFile,vector<vector<wxStationList> > inputStation);
-
+    static void stationViewer(wxStation station);
 //    static wxStation readStationFetchFile(std::string csvFile,std::string demFile,int piCount);
 
 //    static void writeKmlFile( std::vector<wxStation> stations,

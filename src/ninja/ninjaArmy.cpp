@@ -134,17 +134,34 @@ int ninjaArmy::getSize()
     return ninjas.size();
 }
 
+
 /**
- * @brief Makes an army (array) of ninjas for a point initialization run.
- *
- * @param timeList Vector of times.
+ * @brief ninjaArmy::makeStationArmy Makes an army (array) of ninjas for a Point Initialization run.
+ * @param timeList vector of simulation times
+ * @param timeZone
+ * @param stationFileName
+ * @param demFile
  */
-void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList , string timeZone)
+void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList , string timeZone, string stationFileName, string demFile)
 {
-    cout<<"RaisingStationArmy"<<endl;
+    cout<<"makeStationArmy"<<endl;
     vector<wxStation> stationArmada;
-    ninjas[0]->set_InterpolateData(timeList);
-    stationArmada=ninjas[0]->get_wxStations();
+    vector<boost::posix_time::ptime> outaTime;
+    boost::posix_time::ptime noTime;
+    outaTime.push_back(noTime);
+
+    vector<vector<wxStationList> > vecStation=wxStationList::vectorRead(stationFileName,demFile);
+
+        if (timeList==outaTime) //If old PointInitalization
+        {
+            stationArmada=pointInitialization::interpolateNull(stationFileName,demFile,vecStation);
+        }
+        else
+        {
+            stationArmada=pointInitialization::InterpolatewxStation(stationFileName,demFile,vecStation,timeList);
+        }
+//    ninjas[0]->set_InterpolateData(timeList);
+//    stationArmada=ninjas[0]->get_wxStations();
 
     ninjas.resize(timeList.size());
 
@@ -167,7 +184,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
         localTimeList.push_back(aLocal);
 
 //        cout<<timeList[i]<<" "<<localTimeList[i]<<endl;
-//        cout<<stationArmada[0].get_datetime(i)<<" "<<stationArmada[0].get_localDateTime(i)<<endl;
+//        cout<<stationArmada[0].get_datetime(i)<<endl;
     }
     for(unsigned int k=0;k<stationArmada.size();k++)
     {
@@ -180,11 +197,6 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     }
 
 
-
-
-//    boost::local_time::local_date_time a=timeList[0];
-
-
     for(unsigned int i = 0; i < timeList.size(); i++)
     {
 
@@ -192,9 +204,6 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
 //        ninjas[i]->set_date_time(stationArmada[i]);
 
     }
-
-
-
 
 
     

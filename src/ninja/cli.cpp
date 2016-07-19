@@ -1346,12 +1346,12 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["end_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
-                    windsim.makeStationArmy(timeLiszt, osTimeZone);
+                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
                     
                    
                     
                     
-//                    exit(1);
+
                 }
                 if (vm["fetch_station"].as<bool>() == false)
                 {
@@ -1360,7 +1360,7 @@ int windNinjaCLI(int argc, char* argv[])
                     vector<boost::posix_time::ptime> outaTime;
                     boost::posix_time::ptime noTime;
                     outaTime.push_back(noTime);
-                    windsim.makeStationArmy(outaTime,osTimeZone);
+                    windsim.makeStationArmy(outaTime,osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
                 }
                 cout<<"whizzle!"<<endl;
                 exit(1);

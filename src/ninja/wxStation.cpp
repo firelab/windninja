@@ -594,11 +594,92 @@ for (int i=0;i<idxCount.size();i++)
 
 return stationData;
 }
+bool wxStation::check_station(wxStation station)
+{
+    if(station.stationName.empty() || station.stationName == "")
+    {
+        cout<<"failed Name Check"<<endl;
+        return false;
+    }
+
+    if(station.coordType != GEOGCS && station.coordType != PROJCS)
+    {
+        cout<<"failed Coord Check"<<endl;
+        return false;
+    }
+
+    if(station.datumType != WGS84 && station.datumType != NAD83 && station.datumType !=NAD27)
+    {
+        cout<<"failed datum Check"<<endl;
+        return false;
+    }
+
+    if(station.lat < -90.0 || station.lat > 90.0)
+    {
+        cout<<"failed lat Check"<<endl;
+        return false;
+    }
+
+    if(station.lon < -180.0 || station.lon > 360.0)
+    {
+        cout<<"failed lon Check"<<endl;
+        return false;
+    }
+    for (int i=0;i<station.height.size();i++)
+    {
+        if(station.height[i] < 0.0)
+            {
+                cout<<"failed height Check on "<<i<<endl;
+                cout<<station.height[i]<<endl;
+                return false;
+            }
+
+        if(station.speed[i] < 0.0)
+            {
+                cout<<"failed speed Check on "<<i<<endl;
+                cout<<station.speed[i]<<endl;
+                return false;
+            }
+
+        if(station.direction[i] < 0.0 || station.direction[i] > 360.0)
+            {
+                cout<<"failed direction Check on "<<i<<endl;
+                cout<<station.direction[i]<<endl;
+                return false;
+            }
+        if(station.temperature[i]< 173.15 || station.temperature[i] > 330.00)
+            {
+                cout<<"failed temperature Check on "<<i<<endl;
+                cout<<station.temperature[i]<<endl;
+                return false;
+            }
+        if(station.cloudCover[i]<0.0||station.cloudCover[i]>1.10)
+            {
+                cout<<"failed cloud check on "<<i<<endl;
+                cout<<station.cloudCover[i]<<endl;
+                return false;
+            }
+
+    }
+
+    if(station.w_speed < 0.0)
+    {
+        cout<<"failed vert_speed Check"<<endl;
+        return false;
+    }
+
+    return true;
+}
 
 
 /**
  * Write CSV and KML files and stuff used to be here, I don't know what do to/if they are needed
  */
+
+void wxStation::stationViewer(wxStation station)
+{
+
+}
 
 
 wxStationList::wxStationList()
@@ -720,41 +801,6 @@ void wxStationList::initialize()
     datumType = WGS84;
     coordType = GEOGCS;
     datetime;
-}
-
-bool wxStation::check_station(wxStation station)
-{
-    if(station.stationName.empty() || station.stationName == "")
-        return false;
-
-    if(station.coordType != GEOGCS && station.coordType != PROJCS)
-        return false;
-
-    if(station.datumType != WGS84 && station.datumType != NAD83 && station.datumType !=NAD27)
-        return false;
-
-    if(station.lat < -90.0 || station.lat > 90.0)
-        return false;
-
-    if(station.lon < -180.0 || station.lon > 360.0)
-        return false;
-    for (int i=0;i<station.height.size();i++)
-    {
-    if(station.height[i] < 0.0)
-        return false;
-
-    if(station.speed[i] < 0.0)
-        return false;
-
-    if(station.direction[i] < 0.0 || station.direction[i] > 360.0)
-        return false;
-
-    }
-
-    if(station.w_speed < 0.0)
-        return false;
-
-    return true;
 }
 
 
