@@ -3598,6 +3598,11 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
     }
 }
 
+void ninja::set_ExistingCaseDirectory(std::string directory)
+{
+    input.existingCaseDirectory = directory;
+}
+
 void ninja::set_StlFile(std::string stlFile)
 {
     input.stlFile = stlFile;

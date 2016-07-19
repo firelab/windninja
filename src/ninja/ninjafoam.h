@@ -80,6 +80,8 @@ public:
 private:
 
     /* OpenFOAM case setup */
+    int UpdateExistingCase();
+    int GenerateNewCase();
     int GenerateTempDirectory();
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);

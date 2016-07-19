@@ -374,6 +374,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
+                ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory") 
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
@@ -989,6 +990,9 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
                     windsim.setNonEqBc( i_,
                         vm["non_equilibrium_boundary_conditions"].as<bool>() );
+                }
+                if(vm.count("existing_case_directory")){
+                    windsim.setExistingCaseDirectory( i_, vm["existing_case_directory"].as<std::string>() );
                 }
             }
             #endif //NINJAFOAM

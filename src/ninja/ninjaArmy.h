@@ -332,6 +332,15 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the path to an existing case for a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param  path to existing directory 
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions=NULL );
         
     /**
     * \brief Set the type of STL file for a NinjaFOAM run

@@ -140,6 +140,7 @@ WindNinjaInputs::WindNinjaInputs()
     meshCount = 1000000;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
     nonEqBc = true;
+    existingCaseDirectory = "!set";
     stlFile = "!set";
     speedInitGridFilename = "!set";
     dirInitGridFilename= "!set";
