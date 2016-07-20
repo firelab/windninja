@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml>
   <Document>
-    <description>Weather Stations:C:/Users/tfinney/Documents/kmso.kml</description>
+    <description>Weather Stations:kmso.kml</description>
     <Placemark>
       <name>KMSO</name
 >    <Point>
         <altitudeMode>clampToGround</altitudeMode>
         <coordinates>
-          -114.093000,46.920800,0.0
+          -114.092500,46.920830,0.0
         </coordinates>
       </Point>
       <description>
         <![CDATA[
           Name: KMSO
           Height: 10.00 m
-          Speed: 1.54 mps
-          Direction: 290 degrees
+          Speed: 5.14 mps
+          Direction: 310 degrees
           Cloud Cover: 0.00 percent
-          Temperature: 24.0 C
+          Temperature: 28.0 C
           Radius of Influence: infinite
         ]]>
       </description>
@@ -27,17 +27,17 @@
 >    <Point>
         <altitudeMode>clampToGround</altitudeMode>
         <coordinates>
-          -113.986000,47.041300,0.0
+          -113.986306,47.041333,0.0
         </coordinates>
       </Point>
       <description>
         <![CDATA[
           Name: PNTM8
           Height: 10.00 m
-          Speed: 1.79 mps
-          Direction: 52 degrees
+          Speed: 5.37 mps
+          Direction: 276 degrees
           Cloud Cover: 0.00 percent
-          Temperature: 15.6 C
+          Temperature: 14.4 C
           Radius of Influence: infinite
         ]]>
       </description>
@@ -47,17 +47,17 @@
 >    <Point>
         <altitudeMode>clampToGround</altitudeMode>
         <coordinates>
-          -114.112000,47.045900,0.0
+          -114.112072,47.045931,0.0
         </coordinates>
       </Point>
       <description>
         <![CDATA[
           Name: TR266
           Height: 10.00 m
-          Speed: 1.79 mps
-          Direction: 198 degrees
+          Speed: 0.00 mps
+          Direction: 36 degrees
           Cloud Cover: 0.00 percent
-          Temperature: 22.2 C
+          Temperature: 25.0 C
           Radius of Influence: infinite
         ]]>
       </description>
