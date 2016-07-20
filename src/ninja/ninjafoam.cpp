@@ -2676,11 +2676,24 @@ int NinjaFoam::UpdateExistingCase()
 {
     int status = 0;
 
+    pszTempPath = input.existingCaseDirectory.c_str();
+    
+    //check for valid case and DEM
+    status = CheckForValidCaseDir(pszTempPath);
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, CPLSPrintf("'%s' is not a valid "
+                "case directory.", pszTempPath));
+        return NINJA_E_OTHER;
+    }
+    status = CheckForValidDem();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, CPLSPrintf("The DEM, '%s' does not correspond "
+                "to the supplied case directory, '%s'", input.dem.fileName.c_str(), pszTempPath));
+        return NINJA_E_OTHER;
+    }
+
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory: %s",
             input.existingCaseDirectory.c_str());
-
-    pszTempPath = input.existingCaseDirectory.c_str();
-
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
     status = WriteFoamFiles();
@@ -3027,4 +3040,35 @@ double NinjaFoam::GetFirstCellHeightFromDisk()
     double height = atoi(h.c_str());
 
     return height;
+}
+
+int NinjaFoam::CheckForValidCaseDir(const char* dir)
+{
+    //check at least for the controlDict file
+    if( !CPLCheckForFile((char*)CPLSPrintf("%s/system/controlDict", dir), NULL) ){
+        return NINJA_E_OTHER;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::CheckForValidDem()
+{
+    char **papszFileList;
+    const char *pszFilename;
+    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", pszTempPath ) );
+
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename( papszFileList[i] );
+        std::string s(pszFilename);
+        std::string ss = input.dem.fileName;
+        if( s.find(ss.substr(0, ss.size()-3)) != s.npos ){
+            CSLDestroy( papszFileList );
+            return NINJA_SUCCESS;
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    return NINJA_E_OTHER;
 }

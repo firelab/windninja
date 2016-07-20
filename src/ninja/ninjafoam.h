@@ -143,6 +143,8 @@ private:
     std::vector<std::string> GetProcessorDirsOnDisk();
     bool StringIsNumeric(const std::string &str);
     double GetFirstCellHeightFromDisk();
+    int CheckForValidCaseDir(const char* dir);
+    int CheckForValidDem();
     
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();
