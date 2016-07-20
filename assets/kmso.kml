@@ -14,8 +14,8 @@
         <![CDATA[
           Name: KMSO
           Height: 10.00 m
-          Speed: 5.14 mps
-          Direction: 310 degrees
+          Speed: 2.06 mps
+          Direction: 350 degrees
           Cloud Cover: 0.00 percent
           Temperature: 28.0 C
           Radius of Influence: infinite
@@ -34,10 +34,10 @@
         <![CDATA[
           Name: PNTM8
           Height: 10.00 m
-          Speed: 5.37 mps
-          Direction: 276 degrees
+          Speed: 4.47 mps
+          Direction: 264 degrees
           Cloud Cover: 0.00 percent
-          Temperature: 14.4 C
+          Temperature: 15.6 C
           Radius of Influence: infinite
         ]]>
       </description>
@@ -54,10 +54,10 @@
         <![CDATA[
           Name: TR266
           Height: 10.00 m
-          Speed: 1.34 mps
-          Direction: 33 degrees
+          Speed: 1.79 mps
+          Direction: 28 degrees
           Cloud Cover: 0.00 percent
-          Temperature: 26.1 C
+          Temperature: 25.6 C
           Radius of Influence: infinite
         ]]>
       </description>
