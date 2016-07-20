@@ -137,6 +137,12 @@ private:
 
     int latestTime; //latest time directory
     int simpleFoamEndTime; //set to last time directory
+
+    int GetLatestTimeOnDisk();
+    std::vector<std::string> GetTimeDirsOnDisk();
+    std::vector<std::string> GetProcessorDirsOnDisk();
+    bool StringIsNumeric(const std::string &str);
+    double GetFirstCellHeightFromDisk();
     
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();

@@ -546,7 +546,7 @@ int NinjaFoam::WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *psz
 
     CPLFree(data);
 
-    VSIFCloseL(fin); // reopened for each file in writeFoamFiles()
+    VSIFCloseL(fin); // reopened for each file in )writeFoamFiles()
     VSIFCloseL(fout); // reopened for each file in writeFoamFiles()
 
     return NINJA_SUCCESS;
@@ -2676,7 +2676,8 @@ int NinjaFoam::UpdateExistingCase()
 {
     int status = 0;
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory: %s", input.existingCaseDirectory.c_str());
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory: %s",
+            input.existingCaseDirectory.c_str());
 
     pszTempPath = input.existingCaseDirectory.c_str();
 
@@ -2688,11 +2689,15 @@ int NinjaFoam::UpdateExistingCase()
         return NINJA_E_OTHER;
     }
     
-    //search case for latestTime (MDM stops at 50) 
-    latestTime = 52;
+    //rm latestTime in case (old flow solution)
+    latestTime = GetLatestTimeOnDisk();
+    NinjaUnlinkTree(CPLSPrintf("%s/%d", pszTempPath, latestTime));
 
-    //read in firstCellHeight from latestTime
-    finalFirstCellHeight = 25.28;
+    //now latestTime on disk is where we want to start (the mesh is here)
+    latestTime = GetLatestTimeOnDisk();
+
+    //read in firstCellHeight from latestTime dir on disk
+    finalFirstCellHeight = GetFirstCellHeightFromDisk(); 
 
     //Get rid of -9999.9 in 0/ files
     CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
@@ -2730,18 +2735,24 @@ int NinjaFoam::UpdateExistingCase()
             CPLFormFilename(pszTempPath, CPLSPrintf("%d/p", latestTime), "")); 
 
     //update controlDict
+    CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszTempPath),
+            CPLSPrintf("%s/system/controlDict", pszTempPath));
     CopyFile(CPLSPrintf("%s/system/controlDict", pszTempPath),
             CPLSPrintf("%s/system/controlDict", pszTempPath),
             "startFrom       latestTime", "startFrom       startTime");
-//    CopyFile(CPLSPrintf("%s/system/controlDict", pszTempPath),
-//            CPLSPrintf("%s/system/controlDict", pszTempPath),
-//            "latestTime", CPLSPrintf("%d", latestTime));
+    CopyFile(CPLSPrintf("%s/system/controlDict", pszTempPath),
+            CPLSPrintf("%s/system/controlDict", pszTempPath),
+            "latestTime", CPLSPrintf("%d", latestTime));
 
-    //remove old endTime directory
-    //int previousEndTime = 252;
-    //NinjaUnlinkTree(CPLSPrintf("%s/%d", pszTempPath, previousEndTime));
+    //update endTime
+    UpdateSimpleFoamControlDict();
 
-    //return NINJA_E_OTHER;
+    //rm any processor* directories
+    std::vector<std::string> dirList = GetProcessorDirsOnDisk();
+    for(int n=0; n<dirList.size(); n++){
+        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszTempPath, n) );
+    }
+
     return NINJA_SUCCESS;
 }
 
@@ -2917,4 +2928,103 @@ int NinjaFoam::GenerateNewCase()
     checkCancel();
 
     return NINJA_SUCCESS;
+}
+
+int NinjaFoam::GetLatestTimeOnDisk()
+{
+    std::vector<std::string> dirList = GetTimeDirsOnDisk();
+    int latest = 0;
+
+    for(int i=0; i<dirList.size(); i++){
+        if(atoi(dirList[i].c_str()) > latest){
+            latest = atoi(dirList[i].c_str());    
+        } 
+    }
+
+    return latest;
+}
+
+std::vector<std::string> NinjaFoam::GetProcessorDirsOnDisk()
+{
+    char **papszFileList;
+    const char *pszFilename;
+    papszFileList = VSIReadDir( pszTempPath );
+    std::vector<std::string> dirList;
+
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename( papszFileList[i] );
+        std::string str(pszFilename);
+        if(str.find("processor") != str.npos){
+            dirList.push_back(str);  
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    return dirList;
+}
+
+std::vector<std::string> NinjaFoam::GetTimeDirsOnDisk()
+{
+    char **papszFileList;
+    const char *pszFilename;
+    papszFileList = VSIReadDir( pszTempPath );
+    std::vector<std::string> dirList;
+
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename( papszFileList[i] );
+        std::string str(pszFilename);
+        if(StringIsNumeric(str)){
+            dirList.push_back(str);  
+        }
+    }
+
+    CSLDestroy( papszFileList );
+
+    return dirList;
+}
+
+bool NinjaFoam::StringIsNumeric(const std::string &str)
+{
+    return str.find_first_not_of("0123456789") == std::string::npos;
+}
+
+double NinjaFoam::GetFirstCellHeightFromDisk()
+{
+    int time = GetLatestTimeOnDisk();
+
+    //read time/U and search for firstCellHeight
+    const char *pszInput = CPLSPrintf("%s/%d/U", pszTempPath, time);
+    VSILFILE *fin;
+    VSILFILE *fout;
+
+    fin = VSIFOpenL( pszInput, "r" );
+
+    char *data;
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+
+    std::string s(data);
+    
+    CPLFree(data);
+    VSIFCloseL(fin);
+ 
+    //search string for firstCellHeight
+    std::string h;
+    int pos;
+    if(s.find("firstCellHeight") != s.npos){
+        pos = s.find("firstCellHeight ");
+        h = s.substr(pos+16, (s.find(";", pos+16) - (pos+16)));
+    }
+
+    double height = atoi(h.c_str());
+
+    return height;
 }
