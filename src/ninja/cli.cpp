@@ -974,6 +974,8 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
                 conflicting_options(vm, "mesh_resolution", "mesh_count");
+                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
+                conflicting_options(vm, "mesh_choice", "existing_case_directory");
                 if(vm.count("mesh_choice")){
                     if( windsim.setMeshCount( i_,
                         ninja::get_eNinjafoamMeshChoice(vm["mesh_choice"].as<std::string>()) ) != 0 ){
