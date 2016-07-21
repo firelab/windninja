@@ -660,6 +660,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw;
         }
     }
+    
+    CPLFree( (void*)NinjaFoam::pszTempPath );
 
     return status;
 }

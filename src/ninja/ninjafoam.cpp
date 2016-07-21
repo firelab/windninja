@@ -97,7 +97,6 @@ NinjaFoam& NinjaFoam::operator= (NinjaFoam const& A)
 
 NinjaFoam::~NinjaFoam()
 {
-    CPLFree( (void*)pszTempPath );
     CPLFree( (void*)pszVrtMem );
     CPLFree( (void*)pszGridFilename );
 }
