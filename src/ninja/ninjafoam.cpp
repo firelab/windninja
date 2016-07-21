@@ -29,9 +29,10 @@
 
 #include "ninjafoam.h"
 
+const char* NinjaFoam::pszTempPath = NULL;
+
 NinjaFoam::NinjaFoam() : ninja()
 {
-    pszTempPath = NULL;
     pszVrtMem = NULL;
     pszGridFilename = NULL;
 
@@ -51,6 +52,23 @@ NinjaFoam::NinjaFoam() : ninja()
     latestTime = 0;
     cellCount = 0; 
     simpleFoamEndTime = 1000; //initial value in controlDict_simpleFoam
+
+    startTotal = 0.0;
+    endTotal = 0.0;
+    startMesh = 0.0;
+    endMesh = 0.0;
+    startInit = 0.0;
+    endInit = 0.0;
+    startSolve = 0.0;
+    endSolve = 0.0;
+    startWriteOut = 0.0;
+    endWriteOut = 0.0;
+    startFoamFileWriting = 0.0;
+    endFoamFileWriting = 0.0;
+    startOutputSampling = 0.0;
+    endOutputSampling = 0.0;
+    startStlConversion = 0.0;
+    endStlConversion = 0.0;
 }
 
 /**
@@ -134,14 +152,15 @@ bool NinjaFoam::simulate_wind()
     
     int status = 0;
 
-    if(input.existingCaseDirectory == "!set"){
+    //if pszTempPath is not valid, create a new case 
+    if(CheckForValidCaseDir(pszTempPath) != NINJA_SUCCESS){
         status = GenerateNewCase();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up new OpenFOAM case");
             return NINJA_E_OTHER;
         }
     }
-    else{
+    else{ //otherwise, we're just updating an existing case
         status = UpdateExistingCase();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up existing case.");
@@ -613,11 +632,6 @@ int NinjaFoam::WriteFoamFiles()
 
 int NinjaFoam::GenerateTempDirectory()
 {
-    //force temp dir to DEM location
-    CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
-    CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
-    CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
-
     pszTempPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
     VSIMkdir( pszTempPath, 0777 );
 
@@ -2676,15 +2690,6 @@ int NinjaFoam::UpdateExistingCase()
 {
     int status = 0;
 
-    pszTempPath = input.existingCaseDirectory.c_str();
-    
-    //check for valid case and DEM
-    status = CheckForValidCaseDir(pszTempPath);
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, CPLSPrintf("'%s' is not a valid "
-                "case directory.", pszTempPath));
-        return NINJA_E_OTHER;
-    }
     status = CheckForValidDem();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, CPLSPrintf("The DEM, '%s' does not correspond "
@@ -2692,8 +2697,7 @@ int NinjaFoam::UpdateExistingCase()
         return NINJA_E_OTHER;
     }
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory: %s",
-            input.existingCaseDirectory.c_str());
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
     status = WriteFoamFiles();
@@ -2778,12 +2782,6 @@ int NinjaFoam::GenerateNewCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing OpenFOAM files...");
 
     int status = 0;
-
-    status = GenerateTempDirectory();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error generating the NINJAFOAM directory.");
-        return NINJA_E_OTHER;
-    }
 
     //writes *most* of the foam files, but not all can be written at this point
     status = WriteFoamFiles();
@@ -3059,10 +3057,10 @@ int NinjaFoam::CheckForValidDem()
     papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", pszTempPath ) );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
-        pszFilename = CPLGetFilename( papszFileList[i] );
+        pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
         std::string s(pszFilename);
-        std::string ss = input.dem.fileName;
-        if( s.find(ss.substr(0, ss.size()-3)) != s.npos ){
+        std::string ss = CPLGetBasename( input.dem.fileName.c_str() );
+        if( s.find(ss.substr(0, ss.size())) != s.npos ){
             CSLDestroy( papszFileList );
             return NINJA_SUCCESS;
         }

@@ -76,13 +76,14 @@ public:
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
     double get_meshResolution();
+    static const char *pszTempPath;
+    static int GenerateTempDirectory();
 
 private:
 
     /* OpenFOAM case setup */
     int UpdateExistingCase();
     int GenerateNewCase();
-    int GenerateTempDirectory();
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
@@ -97,7 +98,6 @@ private:
     void SetInlets();
     void SetBcs();
     
-    const char *pszTempPath;
     double foamRoughness; //roughness value used in OpenFOAM
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face

@@ -152,7 +152,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         while(1){
             const char* f = CPLReadLine(fcastList);
             if (f == NULL)
-                    break;
+                break;
             wxList.push_back(f);
         }
         VSIFClose(fcastList);
@@ -246,6 +246,21 @@ bool ninjaArmy::startRuns(int numProcessors)
                     throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
+        }
+    }
+    //if it's a ninjafoam run and the user specified an existing case dir, set it here
+    if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
+        NinjaFoam::pszTempPath = ninjas[0]->input.existingCaseDirectory.c_str(); 
+    }
+    //if it's a ninjafoam run and the case is not set by the user, generate the ninjafoam dir
+    if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory == "!set"){
+        //force temp dir to DEM location
+        CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        int status = NinjaFoam::GenerateTempDirectory();
+        if(status != 0){
+            throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }
     }
 
@@ -440,7 +455,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
-        
+ 
                 //start the run
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
