@@ -691,6 +691,7 @@ void mainWindow::openExistingCase()
   existingCaseDir = QFileInfo(dir).canonicalFilePath();
 
   if(dir.isEmpty()){
+      existingCaseDir = "";
       tree->surface->downloadDEMButton->setEnabled(true);
       tree->surface->meshResComboBox->setEnabled(true);
   }
@@ -1916,7 +1917,9 @@ int mainWindow::solve()
 
         army->setDEM( i, demFile );
 #ifdef NINJAFOAM
-        army->setExistingCaseDirectory( i, caseFile );
+        if(caseFile != ""){
+            army->setExistingCaseDirectory( i, caseFile );
+        }
 #endif
         //set initialization
         if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
