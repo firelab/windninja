@@ -3013,6 +3013,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( true );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
+        tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
         
@@ -3044,6 +3045,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( false );
         tree->weather->ninjafoamConflictLabel->setHidden( true );
         
+        tree->surface->foamCaseGroupBox->setHidden( true );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
         

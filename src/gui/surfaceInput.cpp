@@ -146,6 +146,7 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     mainLayout = new QVBoxLayout;
 #ifdef NINJAFOAM
     mainLayout->addWidget(foamCaseGroupBox);
+    foamCaseGroupBox->setHidden( true );
 #endif
     mainLayout->addWidget(inputFileGroupBox);
     mainLayout->addWidget(roughnessGroupBox);
