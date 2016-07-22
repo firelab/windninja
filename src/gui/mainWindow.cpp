@@ -53,6 +53,9 @@ mainWindow::mainWindow(QWidget *parent)
     noGoogleCellSize = 30.0;
 
     //set defaults for some variables
+#ifdef NINJAFOAM
+    existingCaseDir = "";
+#endif
     inputFileName = "";
     inputFileDir = "";
     inputFileType = -1;
@@ -437,6 +440,11 @@ void mainWindow::createConnections()
     connect(&fileWatcher, SIGNAL(fileChanged(QString)),
       this, SLOT(inputFileDeleted()));
 
+#ifdef NINJAFOAM
+  //Connect input file open button to dialog box
+  connect(tree->surface->foamCaseOpenToolButton, SIGNAL(clicked()),
+      this, SLOT(openExistingCase()));
+#endif
   //Connect input file open button to dialog box
   connect(tree->surface->inputFileOpenToolButton, SIGNAL(clicked()),
       this, SLOT(openInputFile()));
@@ -662,8 +670,20 @@ void mainWindow::selectNinjafoamSolver( bool pick )
     checkAllItems();
     }
 }
-#endif //NINJAFOAM
 
+void mainWindow::openExistingCase()
+{
+  QString dir = QFileDialog::getExistingDirectory(this,
+          tr("Open Existing Case"),
+          inputFileDir.absolutePath(),
+          QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+  QString shortName = QFileInfo(dir).fileName();
+  tree->surface->foamCaseLineEdit->setText(shortName);
+
+  tree->surface->meshResComboBox->setEnabled(false);
+}
+#endif //NINJAFOAM
 
 //function for finding and opening an input file.
 void mainWindow::openInputFile()
