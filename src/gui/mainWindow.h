@@ -106,7 +106,7 @@ class mainWindow : public QMainWindow
   enum eInputFileType{
     ASC, LCP, GTIFF, IMG};
 #ifdef NINJAFOAM
-  QDir existingCaseDir;
+  QString existingCaseDir;
 #endif
   QString inputFileName;
   QDir inputFileDir;
@@ -143,8 +143,9 @@ class mainWindow : public QMainWindow
   void inputFileChanged(QString newFile);
 
  public slots:
-#ifdef NINJAFOAM
+#ifdef NINJAFOAM  
   void openExistingCase();
+  void updateFileInputForCase(const char* file);
 #endif
   void openInputFile();
   void updateFileInput(const char* file);

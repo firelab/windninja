@@ -663,6 +663,7 @@ void mainWindow::selectNativeSolver( bool pick )
     checkAllItems();
     }
 }
+
 void mainWindow::selectNinjafoamSolver( bool pick )
 {
     if( pick ) {
@@ -683,6 +684,11 @@ void mainWindow::openExistingCase()
 
   tree->surface->downloadDEMButton->setEnabled(false);
   tree->surface->meshResComboBox->setEnabled(false);
+  
+  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
+      emit(inputFileChanged(QFileInfo(dir).fileName()));
+
+  existingCaseDir = QFileInfo(dir).canonicalFilePath();
 
   if(dir.isEmpty()){
       tree->surface->downloadDEMButton->setEnabled(true);
@@ -737,7 +743,6 @@ void mainWindow::openInputFile()
 
       tree->surface->meshResComboBox->setEnabled(true);
 
-
       if(inputFileName != fileName)
           emit(inputFileChanged(fileName));
 
@@ -749,12 +754,64 @@ void mainWindow::openInputFile()
     }
 
 #ifdef NINJAFOAM
-      if(tree->surface->foamCaseLineEdit->text() != ""){
-          tree->surface->meshResComboBox->setEnabled(false);
-      }
+    if(tree->surface->foamCaseLineEdit->text() != ""){
+        tree->surface->meshResComboBox->setEnabled(false);
+    }
 #endif
 
 }
+#ifdef NINJAFOAM
+/**
+ * Slot to update elevation file input for existing case
+ *
+ * @param file File associated with existing case
+ */
+void mainWindow::updateFileInputForCase(const char* file)
+{
+    QString fileName(file);
+
+    fileWatcher.addPath(fileName);
+
+    if(!fileName.isEmpty())
+    {
+      cwd = QFileInfo(fileName).dir();
+      //use GDAL to check the file
+      if(checkInputFile(fileName) < 0)
+      {
+          tree->surface->inputFileLineEdit->clear();
+          fileName = "";
+          return;
+      }
+
+      QString shortName = QFileInfo(fileName).fileName();
+      if(inputFileType == LCP)
+      {
+        tree->surface->roughnessComboBox->setDisabled(true);
+        tree->surface->roughnessComboBox->hide();
+        tree->surface->roughnessLabel->show();
+      }
+      else
+      {
+        tree->surface->roughnessComboBox->setDisabled(false);
+        tree->surface->roughnessComboBox->show();
+        tree->surface->roughnessLabel->hide();
+      }
+
+    tree->surface->inputFileLineEdit->setText(shortName);
+    
+    tree->surface->meshResComboBox->setEnabled(true);
+
+    if(inputFileName != fileName)
+        emit(inputFileChanged(fileName));
+
+      inputFileName = fileName;
+      inputFileDir = QFileInfo(fileName).absolutePath();
+      shortInputFileName = shortName;
+      checkMeshCombo();
+      checkInputItem();
+    }
+}
+#endif //NINJAFOAM
 
 /**
  * Slot to update elevation file input with downloaded DEM file
@@ -1475,6 +1532,10 @@ int mainWindow::solve()
 
     //dem file
     std::string demFile = inputFileName.toStdString();
+    
+#ifdef NINJAFOAM
+    std::string caseFile = existingCaseDir.toStdString();
+#endif
 
     //vegetation/roughness
     int vegIndex = tree->surface->roughnessComboBox->currentIndex();
@@ -1811,6 +1872,9 @@ int mainWindow::solve()
     {
 
         army->setDEM( i, demFile );
+#ifdef NINJAFOAM
+        army->setExistingCaseDirectory( i, caseFile );
+#endif
         //set initialization
         if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
         {
