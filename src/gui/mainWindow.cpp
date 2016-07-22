@@ -694,6 +694,49 @@ void mainWindow::openExistingCase()
       tree->surface->downloadDEMButton->setEnabled(true);
       tree->surface->meshResComboBox->setEnabled(true);
   }
+
+  if(!dir.isEmpty()){
+    //look for DEM that matches the STL basename in the NINJAFOAM_ paraent directory
+    char **papszFileList;
+    const char *pszFilename;
+    const char *pszBasename;
+    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", existingCaseDir.toStdString().c_str()) );
+
+    //get the basename of the STL
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename( papszFileList[i] );
+        std::string s(pszFilename);
+        if( s.find(".stl") != s.npos & s.find("_out.stl") == s.npos){
+            pszBasename = CPLStrdup(CPLGetBasename( pszFilename ));
+        }
+    }
+
+    //look for DEM
+    const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
+    const char* pszInputFilename;
+    papszFileList = VSIReadDir( pszDemPath );
+
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
+        std::string s(pszFilename);
+        if( s.compare(pszBasename) == 0 ){
+            pszInputFilename = CPLStrdup( papszFileList[i] );
+            break;
+        }
+    }
+
+    const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+    updateFileInputForCase(pszFname);
+
+    CSLDestroy( papszFileList );
+    CPLFree( (void*)pszBasename );
+    CPLFree( (void*)pszDemPath );
+    CPLFree( (void*)pszInputFilename );
+    CPLFree( (void*)pszFname );
+ 
+    tree->surface->downloadDEMButton->setEnabled(false);
+    tree->surface->meshResComboBox->setEnabled(false);
+  }
 }
 #endif //NINJAFOAM
 
