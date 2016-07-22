@@ -988,11 +988,6 @@ int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string dir
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
 }
-
-int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
-}
 #endif
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods

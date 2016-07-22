@@ -868,89 +868,6 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readLogFile(double &expansionRatio)
-{
-    const char *pszInput;
-
-    pszInput = CPLFormFilename(pszTempPath, "log", "json");
-
-    VSILFILE *fin;
-    fin = VSIFOpenL( pszInput, "r" );
-
-    char *data;
-
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
-
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
-
-    std::string s(data);
-    std::string ss;
-    int pos, pos2, pos3, pos4, pos5;
-    int found;
-    pos = s.find("Bounding Box");
-    if(pos != s.npos){
-        pos2 = s.find("(", pos);
-        pos3 = s.find(")", pos2);
-        ss = s.substr(pos2+1, pos3-pos2-1); // xmin ymin zmin
-        pos4 = s.find("(", pos3);
-        pos5 = s.find(")", pos4);
-        ss.append(" ");
-        ss.append(s.substr(pos4+1, pos5-pos4-1));// xmin ymin zmin xmax ymax zmax
-        found = ss.find(" ");
-        if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(0, found).c_str()) + 10); // xmin
-            bbox.push_back(atof(ss.substr(found).c_str()) + 10); // ymin
-        }
-        found = ss.find(" ", found+1);
-        if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) * 1.1); // zmin (should be above highest point in DEM)
-        }
-        found = ss.find(" ", found+1);
-        if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) - 10); // xmax
-        }
-        found = ss.find(" ", found+1);
-        if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) - 10); // ymax
-        }
-        found = ss.find(" ", found+1);
-        if(found != ss.npos){
-            bbox.push_back(atof(ss.substr(found).c_str()) * 2.5); // zmax
-        }
-    }
-    else{
-        cout<<"Bounding Box not found in log.json!"<<endl;
-        return NINJA_E_FILE_IO;
-    }
-
-    double meshVolume;
-    double cellVolume;
-    double side;
-
-    meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
-    cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
-    cellVolume = meshVolume/cellCount; // volume of 1 cell in zone1
-    side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
-    meshResolution = side;
-
-    nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
-    nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
-    nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
-
-    initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
-    expansionRatio = 4.0;
-
-    CPLFree(data);
-    VSIFCloseL(fin);
-
-    return NINJA_SUCCESS;
-}
-
 int NinjaFoam::readDem(double &expansionRatio)
 {
     
@@ -1033,17 +950,9 @@ int NinjaFoam::writeBlockMesh()
     double ratio_;
     int status;
 
-    if(input.stlFile != "!set"){ //if an STL file was supplied and we don't have a DEM
-        status = readLogFile(ratio_);
-        if(status != 0){
-            //do something
-        }
-    }
-    else{
-        status = readDem(ratio_);
-        if(status != 0){
-            //do something
-        }
+    status = readDem(ratio_);
+    if(status != 0){
+        //do something
     }
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
@@ -2655,36 +2564,6 @@ int NinjaFoam::WriteOutputFiles()
 	return NINJA_SUCCESS;
 }
 
-int NinjaFoam::ReadStl()
-{
-
-    VSILFILE *ffin;
-    VSILFILE *ffout;
-
-    ffin = VSIFOpenL( input.stlFile.c_str(), "r" );
-    ffout = VSIFOpenL( CPLFormFilename(pszTempPath, CPLSPrintf("constant/triSurface/%s", CPLGetFilename(input.stlFile.c_str())), ""), "w" );
-
-    char *data;
-
-    vsi_l_offset offset;
-    VSIFSeekL(ffin, 0, SEEK_END);
-    offset = VSIFTellL(ffin);
-
-    VSIRewindL(ffin);
-    data = (char*)CPLMalloc(offset * sizeof(char));
-    VSIFReadL(data, offset, 1, ffin);
-
-    //cout<<"data = "<<data<<endl;
-
-    VSIFWriteL(data, offset, 1, ffout);
-
-    CPLFree(data);
-    VSIFCloseL(ffin);
-    VSIFCloseL(ffout);
-
-    return NINJA_SUCCESS;
-}
-
 int NinjaFoam::UpdateExistingCase()
 {
     int status = 0;
@@ -2831,14 +2710,6 @@ int NinjaFoam::GenerateNewCase()
 
     checkCancel();
 
-    if(input.stlFile != "!set"){
-        status = ReadStl();
-        if(status != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReadStl().");
-            return NINJA_E_OTHER;
-        }
-    }
-
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
     #endif
@@ -2854,17 +2725,8 @@ int NinjaFoam::GenerateNewCase()
         return NINJA_E_OTHER;
     }
 
-    if(input.stlFile != "!set"){ //only need surface check if we're using an stl as input
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Checking surface points in original terrain file...");
-        status = SurfaceCheck();
-        if(status != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SurfaceCheck().");
-            return NINJA_E_OTHER;
-        }
-    }
 
     checkCancel();
-
 	
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");

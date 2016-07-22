@@ -3602,11 +3602,6 @@ void ninja::set_ExistingCaseDirectory(std::string directory)
 {
     input.existingCaseDirectory = directory;
 }
-
-void ninja::set_StlFile(std::string stlFile)
-{
-    input.stlFile = stlFile;
-}
 #endif
 
 void ninja::set_speedFile(std::string speedFile)
