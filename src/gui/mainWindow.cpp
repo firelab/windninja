@@ -681,7 +681,13 @@ void mainWindow::openExistingCase()
   QString shortName = QFileInfo(dir).fileName();
   tree->surface->foamCaseLineEdit->setText(shortName);
 
+  tree->surface->downloadDEMButton->setEnabled(false);
   tree->surface->meshResComboBox->setEnabled(false);
+
+  if(dir.isEmpty()){
+      tree->surface->downloadDEMButton->setEnabled(true);
+      tree->surface->meshResComboBox->setEnabled(true);
+  }
 }
 #endif //NINJAFOAM
 
@@ -728,8 +734,9 @@ void mainWindow::openInputFile()
         }
 
       tree->surface->inputFileLineEdit->setText(shortName);
-      
+
       tree->surface->meshResComboBox->setEnabled(true);
+
 
       if(inputFileName != fileName)
           emit(inputFileChanged(fileName));
@@ -740,6 +747,12 @@ void mainWindow::openInputFile()
       checkMeshCombo();
       checkInputItem();
     }
+
+#ifdef NINJAFOAM
+      if(tree->surface->foamCaseLineEdit->text() != ""){
+          tree->surface->meshResComboBox->setEnabled(false);
+      }
+#endif
 
 }
 
@@ -3009,11 +3022,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        //tree->diurnal->diurnalGroupBox->setCheckable( false );
-        //tree->diurnal->diurnalGroupBox->setChecked( false );
-        //tree->diurnal->diurnalGroupBox->setHidden( true );
-        //tree->diurnal->ninjafoamConflictLabel->setHidden( false );
-
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
         tree->stability->stabilityGroupBox->setChecked( false );
