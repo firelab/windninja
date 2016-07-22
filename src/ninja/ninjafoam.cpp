@@ -3056,12 +3056,15 @@ int NinjaFoam::CheckForValidDem()
     papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", pszTempPath ) );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
-        pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
+        pszFilename = CPLGetFilename( papszFileList[i] );
         std::string s(pszFilename);
         std::string ss = CPLGetBasename( input.dem.fileName.c_str() );
-        if( s.find(ss.substr(0, ss.size())) != s.npos ){
-            CSLDestroy( papszFileList );
-            return NINJA_SUCCESS;
+        if( s.find(".stl") != s.npos & s.find("_out.stl") == s.npos){
+            s = (CPLGetBasename(pszFilename));
+            if( s.compare(ss) != s.npos ){
+                CSLDestroy( papszFileList );
+                return NINJA_SUCCESS;
+            }
         }
     }
 
