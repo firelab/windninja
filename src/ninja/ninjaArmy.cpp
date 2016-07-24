@@ -250,7 +250,7 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
     //if it's a ninjafoam run and the user specified an existing case dir, set it here
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
-        NinjaFoam::SetFoamDirectory(ninjas[0]->input.existingCaseDirectory.c_str());
+        NinjaFoam::SetFoamPath(ninjas[0]->input.existingCaseDirectory.c_str());
     }
     //if it's a ninjafoam run and the case is not set by the user, generate the ninjafoam dir
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory == "!set"){
@@ -258,7 +258,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
-        int status = NinjaFoam::GenerateTempDirectory();
+        int status = NinjaFoam::GenerateFoamDirectory();
         if(status != 0){
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }

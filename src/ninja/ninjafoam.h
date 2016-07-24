@@ -76,8 +76,8 @@ public:
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
     double get_meshResolution();
-    static int GenerateTempDirectory();
-    static void SetFoamDirectory(const char *pszPath);
+    static int GenerateFoamDirectory();
+    static void SetFoamPath(const char *pszPath);
 
 private:
     static const char *pszFoamPath;
