@@ -250,7 +250,7 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
     //if it's a ninjafoam run and the user specified an existing case dir, set it here
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
-        NinjaFoam::pszTempPath = ninjas[0]->input.existingCaseDirectory.c_str(); 
+        NinjaFoam::SetFoamDirectory(ninjas[0]->input.existingCaseDirectory.c_str());
     }
     //if it's a ninjafoam run and the case is not set by the user, generate the ninjafoam dir
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory == "!set"){
@@ -661,8 +661,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
     }
     
-    //CPLFree( (void*)NinjaFoam::pszTempPath );
-
     return status;
 }
 

@@ -76,10 +76,11 @@ public:
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
     double get_meshResolution();
-    static const char *pszTempPath;
     static int GenerateTempDirectory();
+    static void SetFoamDirectory(const char *pszPath);
 
 private:
+    static const char *pszFoamPath;
 
     /* OpenFOAM case setup */
     int UpdateExistingCase();

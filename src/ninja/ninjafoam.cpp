@@ -29,7 +29,7 @@
 
 #include "ninjafoam.h"
 
-const char* NinjaFoam::pszTempPath = NULL;
+const char* NinjaFoam::pszFoamPath = NULL;
 
 NinjaFoam::NinjaFoam() : ninja()
 {
@@ -151,8 +151,8 @@ bool NinjaFoam::simulate_wind()
     
     int status = 0;
 
-    //if pszTempPath is not valid, create a new case 
-    if(CheckForValidCaseDir(pszTempPath) != NINJA_SUCCESS){
+    //if pszFoamPath is not valid, create a new case 
+    if(CheckForValidCaseDir(pszFoamPath) != NINJA_SUCCESS){
         status = GenerateNewCase();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up new OpenFOAM case");
@@ -217,11 +217,11 @@ bool NinjaFoam::simulate_wind()
         //try solving with previous mesh iterations (less refinement)
         while(latestTime > 50){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
-            CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszTempPath, latestTime ));
-            NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszTempPath, latestTime  ) );
+            CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
+            NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
             if(input.numberCPUs > 1){
                 for(int n=0; n<input.numberCPUs; n++){
-                    NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszTempPath, n) );
+                    NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
                 }
             }
             latestTime -= 1;
@@ -589,7 +589,7 @@ int NinjaFoam::WriteFoamFiles()
         pszFilename = CPLGetFilename(papszFileList[i]);
         osFullPath = papszFileList[i];
         if(std::string(pszFilename) == ""){
-            pszTempFoamPath = CPLFormFilename(pszTempPath, osFullPath.c_str(), "");
+            pszTempFoamPath = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
             VSIMkdir(pszTempFoamPath, 0777);
         }
     }
@@ -607,7 +607,7 @@ int NinjaFoam::WriteFoamFiles()
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
             pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
-            pszOutput = CPLFormFilename(pszTempPath, osFullPath.c_str(), "");
+            pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
             fin = VSIFOpenL( pszInput, "r" );
             fout = VSIFOpenL( pszOutput, "w" );
@@ -629,10 +629,16 @@ int NinjaFoam::WriteFoamFiles()
     return NINJA_SUCCESS;
 }
 
+void NinjaFoam::SetFoamDirectory(const char* pszPath)
+{
+    pszFoamPath = pszPath;
+
+}
+
 int NinjaFoam::GenerateTempDirectory()
 {
-    pszTempPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
-    VSIMkdir( pszTempPath, 0777 );
+    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
+    VSIMkdir( pszFoamPath, 0777 );
 
     return NINJA_SUCCESS;
 }
@@ -907,18 +913,18 @@ int NinjaFoam::readDem(double &expansionRatio)
     expansionRatio = 1.0;
     
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
-    CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
-            CPLFormFilename(pszTempPath, "0/U", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
+            CPLFormFilename(pszFoamPath, "0/U", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
-            CPLFormFilename(pszTempPath, "0/k", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
+            CPLFormFilename(pszFoamPath, "0/k", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            CPLFormFilename(pszTempPath, "0/epsilon", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
+            CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
     
@@ -959,7 +965,7 @@ int NinjaFoam::writeBlockMesh()
     pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
 
     pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "constant/polyMesh/blockMeshDict", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
 
     VSILFILE *fin;
     VSILFILE *fout;
@@ -1041,7 +1047,7 @@ int NinjaFoam::writeMoveDynamicMesh()
     pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
 
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
-    pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
 
     fin = VSIFOpenL( pszInput, "r" );
     fout = VSIFOpenL( pszOutput, "w" );
@@ -1069,8 +1075,8 @@ int NinjaFoam::writeMoveDynamicMesh()
     VSIFCloseL(fin);
     VSIFCloseL(fout);
     
-    pszInput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
-    pszOutput = CPLFormFilename(pszTempPath, "0/pointDisplacement", "");
+    pszInput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
     
     /*
      * Check firstCellHeight in the block mesh. 
@@ -1164,14 +1170,14 @@ int NinjaFoam::SurfaceTransformPoints()
 
     const char *const papszArgv[] = { "surfaceTransformPoints",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-translate",
                                       CPLSPrintf("(0 0 %.0f)", input.outputWindHeight),
-                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())),
-                                      CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())),
+                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszFoamPath, CPLGetBasename(input.dem.fileName.c_str())),
+                                      CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, CPLGetBasename(input.dem.fileName.c_str())),
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "surfaceTransformPoints.log", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "surfaceTransformPoints.log", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //create output surface stl in pszTemppath/constant/triSurface
 
@@ -1186,11 +1192,11 @@ int NinjaFoam::SurfaceCheck()
 
     const char *const papszArgv[] = { "surfaceCheck",
                                       "-case",
-                                      pszTempPath,
-                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszTempPath, CPLGetBasename(input.dem.fileName.c_str())),
+                                      pszFoamPath,
+                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszFoamPath, CPLGetBasename(input.dem.fileName.c_str())),
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.json", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.json", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //writes log.json used in mesh file writing
 
@@ -1226,8 +1232,8 @@ int NinjaFoam::MoveDynamicMesh()
         }
 
         //re-write controlDict for moveDynamicMesh
-        pszInput = CPLFormFilename(pszTempPath, "system/controlDict_moveDynamicMesh", "");
-        pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+        pszInput = CPLFormFilename(pszFoamPath, "system/controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
         CopyFile(pszInput, pszOutput);
 
 #ifdef WIN32
@@ -1239,7 +1245,7 @@ int NinjaFoam::MoveDynamicMesh()
                                       CPLSPrintf("%d", input.numberCPUs),
                                       "moveDynamicMesh",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-parallel",
                                       NULL };
 #else
@@ -1248,7 +1254,7 @@ int NinjaFoam::MoveDynamicMesh()
                                       CPLSPrintf("%d", input.numberCPUs),
                                       "moveDynamicMesh",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-parallel",
                                       NULL };
 #endif
@@ -1312,13 +1318,13 @@ int NinjaFoam::MoveDynamicMesh()
 
     else{ // single processor
         //re-write controlDict for moveDynamicMesh
-        pszInput = CPLFormFilename(pszTempPath, "system/controlDict_moveDynamicMesh", "");
-        pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+        pszInput = CPLFormFilename(pszFoamPath, "system/controlDict_moveDynamicMesh", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
         CopyFile(pszInput, pszOutput);
 
         const char *const papszArgv[] = { "moveDynamicMesh",
                                           "-case",
-                                          pszTempPath,
+                                          pszFoamPath,
                                           NULL };
         
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
@@ -1353,15 +1359,15 @@ int NinjaFoam::MoveDynamicMesh()
     }
     
     // write moveDynamicMesh stdout to a log file 
-    fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.moveDynamicMesh", ""), "w");
+    fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.moveDynamicMesh", ""), "w");
     const char * d = s.c_str();
     int nSize = strlen(d);
     VSIFWriteL(d, nSize, 1, fout);
     VSIFCloseL(fout);
     
     //re-write controlDict for flow
-    pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    pszInput = CPLFormFilename(pszFoamPath, "system/controlDict_simpleFoam", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
     CopyFile(pszInput, pszOutput); 
     
     //update dict files
@@ -1380,11 +1386,11 @@ int NinjaFoam::RefineSurfaceLayer(){
     int nRet = 0;
     
     //write topoSetDict
-    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     
     CopyFile(pszInput, pszOutput, "$terrain$", 
-            CPLFormFilename(CPLSPrintf("%s/constant/triSurface", pszTempPath), CPLGetBasename(input.dem.fileName.c_str()), ""));
+            CPLFormFilename(CPLSPrintf("%s/constant/triSurface", pszFoamPath), CPLGetBasename(input.dem.fileName.c_str()), ""));
     CopyFile(pszInput, pszOutput, "$xout$", CPLSPrintf("%.2f", (bbox[0] + 10)));
     CopyFile(pszInput, pszOutput, "$yout$", CPLSPrintf("%.2f", (bbox[1] + 10)));
     CopyFile(pszInput, pszOutput, "$zout$", CPLSPrintf("%.2f", (bbox[5] - 10)));
@@ -1397,12 +1403,12 @@ int NinjaFoam::RefineSurfaceLayer(){
     /*----------------------------------------------*/
     
     //write refineMeshDict for 3-D
-    pszInput = CPLFormFilename(pszTempPath, "system/refineMeshDict_xyz", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/refineMeshDict", "");
+    pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict_xyz", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
     CopyFile(pszInput, pszOutput);
     
-    pszInput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszTempPath, "system/topoSetDict", "");
+    pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+    pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
 
@@ -1459,23 +1465,23 @@ void NinjaFoam::UpdateDictFiles()
     UpdateSimpleFoamControlDict();
 
     /* copy files to latestTime and update firstCellHeight */   
-    CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%s/k", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/k", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%s/epsilon", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/epsilon", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
 
 void NinjaFoam::UpdateSimpleFoamControlDict()
@@ -1483,8 +1489,8 @@ void NinjaFoam::UpdateSimpleFoamControlDict()
     int oldSimpleFoamEndTime = simpleFoamEndTime; 
     simpleFoamEndTime = latestTime + input.nIterations; //only write final timestep
     CPLDebug("NINJAFOAM", "simpleFoamEndTime = %d", simpleFoamEndTime);
-    const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict", "");
-    const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    const char *pszInput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
+    const char *pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
     //update endTime based on latestTime
     CopyFile(pszInput, pszOutput, 
         CPLSPrintf("endTime         %d", oldSimpleFoamEndTime),
@@ -1498,13 +1504,13 @@ int NinjaFoam::TopoSet()
        
     const char *const papszArgv[] = { "topoSet",
                                     "-case",
-                                    pszTempPath,
+                                    pszFoamPath,
                                     "-dict",
                                     "system/topoSetDict",
                                     "-latestTime",
                                     NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.topoSet", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1519,12 +1525,12 @@ int NinjaFoam::RefineMesh()
     
     const char *const papszArgv[] = { "refineMesh",
                                     "-case",
-                                    pszTempPath,
+                                    pszFoamPath,
                                     "-dict",
                                     "system/refineMeshDict", 
                                     NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.refineMesh", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
     
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1539,10 +1545,10 @@ int NinjaFoam::BlockMesh()
     char* currentDir = CPLGetCurrentDir();
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
-                                    pszTempPath,
+                                    pszFoamPath,
                                     NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.blockMesh", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.blockMesh", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1557,11 +1563,11 @@ int NinjaFoam::DecomposePar()
 
     const char *const papszArgv[] = { "decomposePar", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-force", 
                                       NULL };
     
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.decomposePar", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.decomposePar", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1576,11 +1582,11 @@ int NinjaFoam::ReconstructParMesh()
 
     const char *const papszArgv[] = { "reconstructParMesh", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-latestTime", 
                                       NULL };
     
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.reconstructParMesh", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.reconstructParMesh", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1595,11 +1601,11 @@ int NinjaFoam::ReconstructPar()
 
     const char *const papszArgv[] = { "reconstructPar", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-latestTime",
                                       NULL };
     
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.reconstructPar", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.reconstructPar", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1614,12 +1620,12 @@ int NinjaFoam::RenumberMesh()
 
     const char *const papszArgv[] = { "renumberMesh", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-latestTime",
                                       "-overwrite", 
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.renumberMesh", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.renumberMesh", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1635,10 +1641,10 @@ int NinjaFoam::CheckMesh()
     const char *const papszArgv[] = { "checkMesh",
                                       "-latestTime",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.checkmesh", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.checkmesh", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1649,7 +1655,7 @@ int NinjaFoam::CheckMesh()
 
     const char *pszInput;
 
-    pszInput = CPLFormFilename(pszTempPath, "log.checkmesh", "");
+    pszInput = CPLFormFilename(pszFoamPath, "log.checkmesh", "");
 
     fin = VSIFOpenL( pszInput, "r" );
 
@@ -1685,10 +1691,10 @@ int NinjaFoam::ApplyInit()
 
     const char *const papszArgv[] = { "applyInit", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.applyInit", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.applyInit", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1716,7 +1722,7 @@ int NinjaFoam::SimpleFoam()
                                       CPLSPrintf("%d", input.numberCPUs),
                                       "simpleFoam",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-parallel",
                                        NULL };
         #else
@@ -1726,7 +1732,7 @@ int NinjaFoam::SimpleFoam()
                                       CPLSPrintf("%d", input.numberCPUs),
                                       "simpleFoam",
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-parallel",
                                        NULL };
         #endif
@@ -1755,7 +1761,7 @@ int NinjaFoam::SimpleFoam()
     else{
         const char *const papszArgv[] = { "simpleFoam",
                                        "-case",
-                                       pszTempPath,
+                                       pszFoamPath,
                                        NULL };
 
         CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
@@ -1780,7 +1786,7 @@ int NinjaFoam::SimpleFoam()
     }
     
     // write simpleFoam stdout to a log file 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.simpleFoam", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.simpleFoam", ""), "w");
     const char * d = s.c_str();
     int nSize = strlen(d);
     VSIFWriteL(d, nSize, 1, fout);
@@ -1795,11 +1801,11 @@ int NinjaFoam::Sample()
 
     const char *const papszArgv[] = { "sample", 
                                       "-case",
-                                      pszTempPath,
+                                      pszFoamPath,
                                       "-latestTime", 
                                       NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.sample", ""), "w");
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.sample", ""), "w");
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
@@ -1838,18 +1844,18 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-    pszMem = CPLSPrintf( "%s/output.raw", pszTempPath );
+    pszMem = CPLSPrintf( "%s/output.raw", pszFoamPath );
     /* This is a member, hold on to it so we can read it later */
-    pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszTempPath ) );
+    pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszFoamPath ) );
 
     char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszTempPath) );
+    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath) );
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
             fin = VSIFOpen(CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
-                            pszTempPath, 
+                            pszFoamPath, 
                             papszOutputSurfacePath[i]), "r");
             break;
         }
@@ -1975,7 +1981,7 @@ int NinjaFoam::SampleCloud()
     nYSize = input.dem.get_nRows();
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
-    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszTempPath ) );
+    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
     hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
                              GDT_Float64, NULL );
     GDALRasterBandH hUBand, hVBand;
@@ -2112,7 +2118,7 @@ int NinjaFoam::SampleCloudGrid()
     sOptions.dfNoDataValue = -9999;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
-    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszTempPath ) );
+    pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
     hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
                              GDT_Float64, NULL );
     padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
@@ -2571,7 +2577,7 @@ int NinjaFoam::UpdateExistingCase()
     status = CheckForValidDem();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, CPLSPrintf("The DEM, '%s' does not correspond "
-                "to the supplied case directory, '%s'", input.dem.fileName.c_str(), pszTempPath));
+                "to the supplied case directory, '%s'", input.dem.fileName.c_str(), pszFoamPath));
         return NINJA_E_OTHER;
     }
 
@@ -2586,7 +2592,7 @@ int NinjaFoam::UpdateExistingCase()
     
     //rm latestTime in case (old flow solution)
     latestTime = GetLatestTimeOnDisk();
-    NinjaUnlinkTree(CPLSPrintf("%s/%d", pszTempPath, latestTime));
+    NinjaUnlinkTree(CPLSPrintf("%s/%d", pszFoamPath, latestTime));
 
     //now latestTime on disk is where we want to start (the mesh is here)
     latestTime = GetLatestTimeOnDisk();
@@ -2595,48 +2601,48 @@ int NinjaFoam::UpdateExistingCase()
     finalFirstCellHeight = GetFirstCellHeightFromDisk(); 
 
     //Get rid of -9999.9 in 0/ files
-    CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
-            CPLFormFilename(pszTempPath, "0/U", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
+            CPLFormFilename(pszFoamPath, "0/U", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight)); //just use final cell height here for now
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
-            CPLFormFilename(pszTempPath, "0/k", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
+            CPLFormFilename(pszFoamPath, "0/k", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            CPLFormFilename(pszTempPath, "0/epsilon", ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
+            CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
 
     //copy 0/ to latestTime/
-    CopyFile(CPLFormFilename(pszTempPath, "0/U", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%d/U", latestTime), ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/U", latestTime), ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
 
-    CopyFile(CPLFormFilename(pszTempPath, "0/k", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%d/k", latestTime), ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/k", latestTime), ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
 
-    CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
-            CPLFormFilename(pszTempPath, CPLSPrintf("%d/p", latestTime), "")); 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), "")); 
 
     //update controlDict
-    CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszTempPath),
-            CPLSPrintf("%s/system/controlDict", pszTempPath));
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszTempPath),
-            CPLSPrintf("%s/system/controlDict", pszTempPath),
+    CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszFoamPath),
+            CPLSPrintf("%s/system/controlDict", pszFoamPath));
+    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+            CPLSPrintf("%s/system/controlDict", pszFoamPath),
             "startFrom       latestTime", "startFrom       startTime");
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszTempPath),
-            CPLSPrintf("%s/system/controlDict", pszTempPath),
+    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+            CPLSPrintf("%s/system/controlDict", pszFoamPath),
             "latestTime", CPLSPrintf("%d", latestTime));
 
     //update endTime
@@ -2645,7 +2651,7 @@ int NinjaFoam::UpdateExistingCase()
     //rm any processor* directories
     std::vector<std::string> dirList = GetProcessorDirsOnDisk();
     for(int n=0; n<dirList.size(); n++){
-        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszTempPath, n) );
+        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
     }
 
     return NINJA_SUCCESS;
@@ -2669,8 +2675,8 @@ int NinjaFoam::GenerateNewCase()
     }
 
     //write controlDict for flow solution--this will get modified during moveDynamicMesh
-    const char *pszInput = CPLFormFilename(pszTempPath, "system/controlDict_simpleFoam", "");
-    const char *pszOutput = CPLFormFilename(pszTempPath, "system/controlDict", "");
+    const char *pszInput = CPLFormFilename(pszFoamPath, "system/controlDict_simpleFoam", "");
+    const char *pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
     CopyFile(pszInput, pszOutput);
 
     checkCancel();
@@ -2686,7 +2692,7 @@ int NinjaFoam::GenerateNewCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
     const char *pszStlFileName = CPLStrdup(CPLFormFilename(
-                (CPLSPrintf("%s/constant/triSurface/", pszTempPath)),
+                (CPLSPrintf("%s/constant/triSurface/", pszFoamPath)),
                 CPLGetBasename(input.dem.fileName.c_str()), ".stl"));
 
     int nBand = 1;
@@ -2820,7 +2826,7 @@ std::vector<std::string> NinjaFoam::GetProcessorDirsOnDisk()
 {
     char **papszFileList;
     const char *pszFilename;
-    papszFileList = VSIReadDir( pszTempPath );
+    papszFileList = VSIReadDir( pszFoamPath );
     std::vector<std::string> dirList;
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
@@ -2840,7 +2846,7 @@ std::vector<std::string> NinjaFoam::GetTimeDirsOnDisk()
 {
     char **papszFileList;
     const char *pszFilename;
-    papszFileList = VSIReadDir( pszTempPath );
+    papszFileList = VSIReadDir( pszFoamPath );
     std::vector<std::string> dirList;
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
@@ -2866,7 +2872,7 @@ double NinjaFoam::GetFirstCellHeightFromDisk()
     int time = GetLatestTimeOnDisk();
 
     //read time/U and search for firstCellHeight
-    const char *pszInput = CPLSPrintf("%s/%d/U", pszTempPath, time);
+    const char *pszInput = CPLSPrintf("%s/%d/U", pszFoamPath, time);
     VSILFILE *fin;
     VSILFILE *fout;
 
@@ -2915,7 +2921,7 @@ int NinjaFoam::CheckForValidDem()
 {
     char **papszFileList;
     const char *pszFilename;
-    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", pszTempPath ) );
+    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", pszFoamPath ) );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetFilename( papszFileList[i] );
