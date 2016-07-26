@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "Point Sampling"
-color:  blue
-width:   3
-height:  1
-date:   2016-06-23 11:31:49 +0200
-categories: main
+layout: internal
 ---
+
+## Point Sampling
 It is possible to extract point predictions from WindNinja using the command line interface. A csv file needs to be supplied with the requested point locations. The input csv is specified with `input_points_file`. The output filename can be optionally specified with `output_points_file`. The input points file must have the following format:
 
     WGS84

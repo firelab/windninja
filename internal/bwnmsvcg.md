@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "Building WindNinja on Windows using MSVC and gistinternals.com"
-color: blue
-width:   6 
-height:  1
-date:   2016-06-19 12:45:49 +0200
-categories: main
+layout: internal
 ---
+
+## Building WindNinja on Windows with gisinterntals
 
 
 gisinternals.com builds gdal and most of the dependencies needed for WindNinja.  It is simpler than building everything from source, and is preferred.  Boost and Qt still need to be built, but all other dependencies are available.
@@ -21,7 +17,7 @@ You can choose the proper architecture (x86 or amd64) and compiler version (MSVC
 
 You might need to edit `release-1600-x64\include\boost\config\auto_link.hpp` to find the correct boost libs. For example, to link to boost built with MSVC 2010, change line 136 to:
 
-`#define BOOST_LIB_TOOLSET "vc100"` 
+`#define BOOST_LIB_TOOLSET "vc100"`
 
 Your `GIS_INTERNALS_HOME` value will point to `C:\src\x64\release-1600-x64`.
 

@@ -1,13 +1,8 @@
 ---
-layout: post
-title:  "Nomads Weather Model Information"
-color:  teal
-width:   6 
-height:  1
-date:   2016-06-22 11:31:49 +0200
-categories: main
+layout: internal
 ---
 
+## Nomads Weather Model Informations
 
 General
 -------
@@ -114,4 +109,3 @@ Frequent users would benefit by subscribing to NCEP's list-serv pertaining to
 the NOMADS server.  Changes and downtime are reported there:
 
 https://lstsrv.ncep.noaa.gov/mailman/listinfo/ncep.list.nomads-ftpprd
-

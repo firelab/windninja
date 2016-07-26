@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "Building WindNinja on Windows"
-color: purple
-width:   6
-height:  1
-date:   2016-06-24 11:31:49 +0200
-categories: main
+layout: internal
 ---
+
+## Building WindNinja on Windows
 
 
 To build WindNinja on Windows, we recommend building all the third party libraries from source (described below) and **not** downloading pre-built binaries.  This will prevent issues related to incompatibilities of various runtime libraries the codes rely on (version differences and debug/release differences).  The instructions below describe how to build a release version for both 32-bit and 64-bit systems.  As such, a specific directory structure is recommended, however, all of this (debug/release, 32/64, and directory structure) could be modified.  Building is done with the shell (command line) version of the Microsoft Visual Studio C/C++ Compiler which can normally be accessed at Start->Microsoft Visual Studio 2010->Visual Studio Tools and choosing the Visual Studio Command Prompt (2010) for 32-bit compiles and Visual Studio x64 Win64 Command Prompt (2010) for 64-bit compiles.  The commands listed in the instructions below should be run from these command prompts.  Be sure to use the correct one (32- or 64-bit) for your desired build (including building the third party libraries).  Linking incompatible builds together leads to problems (for example, linking a 64-bit WindNinja build with a 32-bit third party library) and is a very common mistake when building both.

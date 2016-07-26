@@ -1,12 +1,10 @@
 ---
-layout: post
-title:  "MesoNet API for WindNinja"
-color:  blue
-width:   3
-height:  1
-date:   2016-06-23 11:31:49 +0200
-categories: main
+layout: internal
 ---
+
+## MesoNet API for WindNinja
+
+
 ## Mesonet API Documentation
 http://synopticlabs.org/api/mesonet/
 
@@ -25,7 +23,7 @@ station-fetch also interprets NWS/FAA cloud codes as cloud cover through the fol
 <tr><td>CLR</td><td>1</td><td>0/8</td><td>0</td></tr>
 </table>
 
-For information on how this conversion was done and how it is used in station-fetch, 
+For information on how this conversion was done and how it is used in station-fetch,
 see this [comment](https://github.com/firelab/windninja/blob/station-fetch/src/ninja/pointInitialization.cpp#L1077)
 
 ## Using StationFetch
@@ -41,7 +39,7 @@ Station Fetch currently only works by reading in the bounds from the DEM file pr
 
 ### For All Fetching Types
 
-All fetching types require a time period. If you want the latest data and a given number of hours back. Set "latest" to "true" and specify the number of hours for the field "forecast_duration". If you want a specific start and end time, set "latest" to "false" and use the "time" fields. "time_1_" is the start time and "time_2_" is the stop time. 
+All fetching types require a time period. If you want the latest data and a given number of hours back. Set "latest" to "true" and specify the number of hours for the field "forecast_duration". If you want a specific start and end time, set "latest" to "false" and use the "time" fields. "time_1_" is the start time and "time_2_" is the stop time.
 
 ### Single Station
 
@@ -57,10 +55,10 @@ this will save the data to a file named "multi.csv"
 
 ### Point and Radius
 
-1. Set "fetch_type" to "point". 
-2. Specify a station ID as the initial point under "fetch_station_name". 
+1. Set "fetch_type" to "point".
+2. Specify a station ID as the initial point under "fetch_station_name".
 3. Specify a radius under "radius"
-4. Limit the number of stations fetched in the radius by setting "station_limit" to a value. Too many stations will generate an error by the Mesonet API. 
+4. Limit the number of stations fetched in the radius by setting "station_limit" to a value. Too many stations will generate an error by the Mesonet API.
 
 this will save the data to a file named "point.csv"
 
@@ -79,7 +77,7 @@ this will saved the data to a file named "latlon.csv"
 1. Set "fetch_type" to "box".
 2. Specify the lower left latitude and longitude in the fields "box_lower_left_latitude" and "box_lower_left_longitude".
 3. Specify the upper right latitude longitude in the fields starting with "box_upper_right_"
-Note: Bounding Boxes cannot limit the number of stations it fetches, therefore specifying a very large box may generate an error by the Mesonet API. 
+Note: Bounding Boxes cannot limit the number of stations it fetches, therefore specifying a very large box may generate an error by the Mesonet API.
 
 this will save the data to a file named "box.csv"
 

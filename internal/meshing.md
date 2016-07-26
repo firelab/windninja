@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "NinjaFOAM: Meshing"
-color: red
-width:   3 
-height:  1
-date:   2016-06-14 12:45:49 +0200
-categories: main
+layout: internal
 ---
+
+## Meshing
 
 # Move Dynamic Mesh
 

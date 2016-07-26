@@ -1,13 +1,6 @@
 ---
-layout: post
-title:  "NinjaFOAM: Debugging"
-color: red
-width:   3 
-height:  1
-date:   2016-06-14 12:45:49 +0200
-categories: main
+layout: internal
 ---
-
 ## Environment variables
 
 Set the environment variable `WRITE_FOAM_FILES` to end the run at various locations in a NinjaFOAM simulation.
@@ -24,7 +17,7 @@ Set the environment variable `WRITE_FOAM_FILES` to end the run at various locati
     decomposePar -force
     mpiexec -np 4 moveDynamicMesh -parallel
     reconstructPar -latestTime
-    topoSet -dict system/topoSetDict 
+    topoSet -dict system/topoSetDict
     refineMesh -dict system/refineMeshDict
     checkMesh -latestTime
     renumberMesh -latestTime -overwrite
@@ -49,7 +42,3 @@ Generate a surface to sample with `surfaceTransformPoints` (see above). Then edi
 
 ### Sample a transect
 Copy `system/sampleDict_transect` to `system/sampleDict` and edit `$axis$`, `$xstart$`, `$ystart$`, `$zstart$`, `$xend$`, `$yend$`, `$zend$`, and `$nPoints$`. Then run `sample -latestTime`.
-
-
-
-    

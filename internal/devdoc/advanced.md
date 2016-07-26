@@ -1,13 +1,8 @@
 ---
-layout: post
-title:  "Advanced Runtime Configuration"
-color: blue
-width:   6
-height:  1
-date:   2016-06-20 13:45:49 +0200
-categories: main
+layout: internal
 ---
 
+## Advanced Runtime Configuration
 
 Some default values can be altered at runtime using environment variables or local configuration options.  This is a list of those values.
 

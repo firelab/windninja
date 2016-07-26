@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "Scalar Transport"
-color: purple
-width:   3
-height:  1
-date:   2016-06-23 08:45:49 +0200
-categories: main
+layout: internal
 ---
+
+## Scalar Transport
 
 ## Overview
 Transport of a passive scalar `T` is done with `myScalarTransportFoam`. This solver is used to obtain a solution to the advection-diffusion equation given a known velocity field `U`.

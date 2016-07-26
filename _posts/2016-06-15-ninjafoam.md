@@ -55,9 +55,9 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 - - -
 
 
-# [NinjaFOAM: Debugging](http://firelab.github.io/windninja/main/2016/06/14/debugging.html)
+# [NinjaFOAM: Debugging](/internal/debugging.html)
 
 
-# [NinjaFOAM: Meshing](http://firelab.github.io/windninja/main/2016/06/14/meshing.html)
+# [NinjaFOAM: Meshing](/internal/meshing.html)
 
-#### [NinjaFOAM: Refine Mesh](http://firelab.github.io/windninja/main/2016/06/14/refinemesh.html)
+#### [NinjaFOAM: Refine Mesh](/internal/refinemesh.html)

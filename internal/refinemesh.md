@@ -1,12 +1,8 @@
 ---
-layout: post
-title:  "NinjaFOAM: Refine Mesh"
-color: red
-width:   3 
-height:  1
-date:   2016-06-14 12:45:49 +0200
-categories: main
+layout: internal
 ---
+
+## NinjaFOAM: Refine Mesh
 
 After `moveDynamicMesh` runs, `refineMesh` is used to refine the near-surface cells in order to get a finer final mesh resolution near the ground. The syntax is:
 
