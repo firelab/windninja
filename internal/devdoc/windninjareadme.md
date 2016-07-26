@@ -94,4 +94,4 @@ See [FAQ](http://firelab.github.io/windninja/faq/)
 
 See [CREDITS](http://firelab.org/project/windninja) for authors
 
-See [CHANGE LOG](http://firelab.github.io/windninja/internal/devdoc/log.html) for release information
+See [CHANGE LOG](http://firelab.github.io/windninja/log/) for release information
