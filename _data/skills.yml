@@ -1,10 +1,6 @@
 -   id: USA
     descr: USA
     xp: 90
--   id: Unknown
-    descr: Unknown
-    color: teal
-    xp: 30
 -   id: Spain
     descr: Spain
     xp: 20
