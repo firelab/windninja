@@ -1,11 +1,5 @@
 ---
-layout: post
-title:  "NinjaFOAM"
-color: red
-width:   3
-height:  1
-date:   2016-06-15 13:45:49 +0200
-categories: main
+layout: internal
 ---
 
 ## Overview
@@ -55,9 +49,9 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 - - -
 
 
-# [NinjaFOAM: Debugging](/windninja/internal/debugging.html)
+# [NinjaFOAM: Debugging](/internal/debugging.html)
 
 
-# [NinjaFOAM: Meshing](/windninja/internal/meshing.html)
+# [NinjaFOAM: Meshing](/internal/meshing.html)
 
-#### [NinjaFOAM: Refine Mesh](/windninja/internal/refinemesh.html)
+#### [NinjaFOAM: Refine Mesh](/internal/refinemesh.html)
