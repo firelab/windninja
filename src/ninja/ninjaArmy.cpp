@@ -467,7 +467,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
-                    diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                    //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
+                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
