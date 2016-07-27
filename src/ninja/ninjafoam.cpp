@@ -46,6 +46,7 @@ NinjaFoam::NinjaFoam() : ninja()
     
     foamRoughness = 0.01; 
 
+    meshResolution = -1.0;
     initialFirstCellHeight = -1.0;
     oldFirstCellHeight = -1.0;
     finalFirstCellHeight = -1.0;
@@ -870,7 +871,6 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
 
 int NinjaFoam::readDem(double &expansionRatio)
 {
-    
     // get some info from the DEM
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
     double dx = input.dem.get_xDimension();
