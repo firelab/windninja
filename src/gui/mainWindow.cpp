@@ -3157,6 +3157,8 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
+        tree->vtk->vtkGroupBox->setHidden( true );
+        tree->vtk->vtkGroupBox->setChecked( false );
         tree->vtk->vtkWarningLabel->setHidden( true );
         
     }
@@ -3190,7 +3192,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( false );
-        
+        tree->vtk->vtkGroupBox->setHidden( false );
     }
 }
 #endif

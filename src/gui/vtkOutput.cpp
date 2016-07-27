@@ -1,4 +1,5 @@
 /******************************************************************************
+ *  toggle nerdtree on/off
  *
  * $Id$
  *
@@ -41,12 +42,13 @@ vtkOutput::vtkOutput(QWidget *parent) : QWidget(parent)
   //writeVolumeCheckBox = new QCheckBox(tr("Volume File"), this); 
   //writeSurfaceCheckBox = new QCheckBox(tr("Surface File"), this);
   
-  ninjafoamConflictLabel = new QLabel(tr("*.vtk files are not written for the mometum solver output. Instead,\n"
-   "if the VTK option is selected, the OpenFOAM case directory will\n"
-   "be left behind in your working directory. This case directory contains\n"
-   "3-D files which can be viewed in a program called ParaView. See the \n"
-   "OpenFOAM documentation for more details.\n"
-   "\nThese files are for advanced users and are rarely used by fire\n"
+  ninjafoamConflictLabel = new QLabel(tr("*.vtk files are not written for the"
+   " mometum solver output. Instead, the\n"
+   " OpenFOAM case directory is left behind in the same directory as your DEM.\n"
+   " This case directory (NINJAFOAM_*) contains the 3-D files which can be\n"
+   " viewed in a program called ParaView. See the OpenFOAM documentation for\n"
+   " more details.\n"
+   " \nNote that these files are for advanced users and are rarely used by fire\n"
    "managers/modelers.\n"
    ), this);
   ninjafoamConflictLabel->setHidden(true);
