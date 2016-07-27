@@ -29,6 +29,8 @@
 
 #include "ninja.h"
 
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /**Ninja constructor
  * This is the default ninja constructor.
  */
@@ -4035,10 +4037,8 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-//	std::vector<std::string> regions;
-//	regions = tz_db.region_list();
-
-    input.ninjaTimeZone = input.tz_db.time_zone_from_region( timeZoneString.c_str() );
+  input.ninjaTimeZone =
+      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;

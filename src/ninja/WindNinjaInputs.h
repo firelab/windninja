@@ -161,7 +161,6 @@ public:
     bool diurnalWinds;			//flag that enables or disables diurnal wind computation (true=>include diurnal winds,  false=>don't include diurnal winds)
     boost::local_time::local_date_time ninjaTime;		//time and date class
     boost::local_time::time_zone_ptr ninjaTimeZone;		//timezone information
-    boost::local_time::tz_database tz_db;			//timezone database read from file
     temperatureUnits::eTempUnits airTempUnits;		//units of air temperature, used in diurnal computations
     double airTemp;			//air temperature used
     coverUnits::eCoverUnits cloudCoverUnits;		//units of cloud cover (0=>fraction, 1=>percent) ALWAYS STORED AS FRACTION!
