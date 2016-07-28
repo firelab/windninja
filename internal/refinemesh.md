@@ -2,6 +2,8 @@
 layout: internal
 ---
 
+<a href="http://openfoam.org/"> <img src="http://firelab.github.io/windninja/assets/foam2.png" style="width:175px;height:65px;"> </a>
+
 ## NinjaFOAM: Refine Mesh
 
 After `moveDynamicMesh` runs, `refineMesh` is used to refine the near-surface cells in order to get a finer final mesh resolution near the ground. The syntax is:

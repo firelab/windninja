@@ -1,6 +1,9 @@
 ---
 layout: internal
 ---
+
+<a href="http://openfoam.org/"> <img src="http://firelab.github.io/windninja/assets/foam2.png" style="width:175px;height:65px;"> </a>
+
 ## Environment variables
 
 Set the environment variable `WRITE_FOAM_FILES` to end the run at various locations in a NinjaFOAM simulation.

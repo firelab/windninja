@@ -2,6 +2,8 @@
 layout: internal
 ---
 
+<a href="http://openfoam.org/"> <img src="http://firelab.github.io/windninja/assets/foam2.png" style="width:175px;height:65px;"> </a>
+
 ## Meshing
 
 # Move Dynamic Mesh
