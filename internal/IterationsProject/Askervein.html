@@ -1,0 +1,93 @@
+---
+layout: internal
+color: red
+width:   3
+height:  1
+date:   2016-07-25 01:58:13 +0200
+categories: main
+---
+<html>
+<head>
+  <style>
+    body
+    {
+      color:#FFFFFF
+    }
+  </style>
+</head>
+
+
+  <div>
+    <h1 class="post-title" itemprop="name headline" style="color:white;">Iterations Project: Askervein Hill</h1>
+    <p>The Askervein Hill elevation file (57<sup>o</sup>11.313'N, 7<sup>o</sup>22.360'W) was the site of a large
+wind measurement study that we've used for testing WindNinja in the past.</p>
+    <p>The terrain isn't as complex as the Salmon River, but is still more complex than Big Butte Small. So it
+works as our medium difficulty test case. </p>
+    <h1 style="color:white;">Graphs Explained</h1>
+      <p></p>
+
+{{ '* * *' | markdownify }}
+
+    <div>
+      <p><span style="font-weight:bold">Velocity and Angle Plots:</span> These plots are the direct values of
+wind velocity and wind direction from WindNinja's resulting .asc files. The velocity colors are very similar
+to the colors seen in WindNinja's .kmz files. The angle colors were chosen to be able to see all the different
+types of directions all at once. These plots are handy for directly knowing what WindNinja's results look
+like.</p>
+      <p><span style="font-weight:bold">Velocity Difference and Angle Difference Plots:</span> These plots are
+the most useful of the plots. They were obtained by taking the values of all the velocities and angles of a
+single iteration and subtracting them from all the velocities and angles of the converged solution. It makes
+it really easy to see the progress of convergence with increasing the number of iterations. Comparing these
+plots with the angle and velocity plots is also handy for determining where recirculation zones occur.</p>
+      <p><span style="font-weight:bold">Residual Plots:</span> These plots are really handy for making sure
+that WindNinja's solver is working correctly. During each solver step, the solver compares many solved
+variables at each step with the same solved variables from the previous step. These differences are the
+residuals and help the solver know when to properly change calculation steps.</p>
+      <p>These plots are the residuals at the start of the final iteration and at the end of the final iteration.
+The fact that the residuals change from relatively big values to very small values means that WindNinja is
+working properly.</p>
+      <p>The variable symbols mean the following:</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">Ux</span> is the velocity going in the forward
+or the downwind direction.</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">Uy</span> is the velocity going in the left and
+right or the lateral direction.</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">Uz</span> is the velocity going in the up and
+down or the vertical direction.</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">Pressure</span> is the pressure at the specific
+point.</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">k</span> is the turbulent kinetic energy per
+unit mass as used in the k-ε formula for Reynold's Stresses</p>
+      <p style="text-indent:40px"><span style="font-weight:bold">Epsilon</span> is the rate of dissipation of
+turbulent kinetic energy as used in the k-ε formula for Reynold's Stresses</p>
+      <p><span style="font-weight:bold">Iteration vs Error Plots:</span> These plots are handy for seeing the
+progression to full convergence in a single plot. The sum plots are the sum of all the velocity differences
+and angle differences at each iteration. The RMS plots are the Root Mean Square of all the velocity and
+angle differences where the converged solution is used as the mean.</p>
+      <p><span style="font-weight:bold">Continuity Errors and Simulation Time Summaries Plots:</span> The
+continuity error plots are the values obtained from adding all the residuals at given iteration together. The
+residuals were obtained from the last calculation done by the solver at each given iteration. They help to
+know that WindNinja is working correctly.</p>
+      <p>The Total Simulation Time plot is more useful. It shows how long each simulation took when WindNinja's
+solver cuts off at different iterations. It shows the reason why running WindNinja at fewer iterations is so
+important.</p>
+    </div>
+
+{{ '* * *' | markdownify }}
+
+    <h1 style="color:white;">Results</h1>
+  </div>
+
+  <div class="col col-12">
+    <br></br>
+    <p>These tests haven't been completed yet. Come back in a week or so.</p>
+  </div>
+
+  <div class="col col-12">
+    <br></br>
+  </div>
+
+  <div>
+    <h1 style="color:white;" align="center"><a href="/windninja/internal/iterationsproject.html">Back to Iterations Project Home</a></h1>
+  </div>
+
+</body>
