@@ -16,25 +16,21 @@ layout: internal
   <div>
       <h1 class="post-title" itemprop="name headline" style="color:white;">Iterations Project</h1>
     <h1 style="color:white;">What is the Iterations Project?</h1>
-    <p>WindNinja's momentum solver currently takes a lot more time to run than WindNinja's mass only solver,
-but the momentum solver provides more accurate results than the mass only solver.
-This extra runtime is due in part to different discretization schemes, the way the grids are set up,
-and the inclusion of more transport equations.</p>
-    <p>Currently, WindNinja trades accuracy for speed. Solving more transport equations provides a more accurate answer,
-but increases the runtime of the solver considerably. Even though WindNinja's momentum solver includes more transport
-equations than the mass only solver, WindNinja still applies quite a few simplifications to the overall transport equations
-in order to improve calculation speed.</p>
-    <p>So the primary concern when modifying WindNinja to improve speed is whether the results are still
-"close enough". This involves having a separate copy of WindNinja, making modifications to the program, and
-running WindNinja for many test cases. Results from WindNinja after the modifications are compared with results
-without the modifications. If the results are favorable with the modifications, more tests are run until it is
-proven to be a good change for the program. </p>
-    <p>The goal of the iterations project was to see the impact of cutting off the momentum solver at a specified
-number of iterations instead of letting it run to complete convergence. In the past, the solver was set up to cut
-off at 300 iterations for Coarse grid resolutions, 500 iterations for Medium grid resolutions, and 800 iterations
-for Fine grid resolutions. The idea was that by the time the solver had reached this number of iterations, most of
-the error would be on the lee side of hills and on the extremely complex terrain where WindNinja should be used
-with caution anyways.</p>
+    <p>WindNinja's conservation of mass and momentum solver may provide more accurate results than the fast-running
+conservation of mass solver in some situations; however, it requires substantially longer runtimes due to the
+inclusion of additional physics in the governing equations.</p>
+    <p>Because WindNinja is designed as an emergency response tool, it trades some accuracy for speed.
+This tradeoff is justifiable given the inherent uncertainty regargaring initial and boundary conditions available
+to drive the model. One way to reduce simulation times is to reduce the number of iterations performed when running
+the conservation of mass and momentum solver. We would like to only run as many iterations as needed to get to
+a state where the changes in the predicted wind field are on the order of the uncertainty in the boundary and
+intial conditions.</p>
+    <p>The goal of the iterations project was to investigate the impact of stopping the solver at a specified
+number of iterations instead of letting it run to complete convergence. Initially, the solver was set up to stop
+at 200 iterations for "coarse" grid resolutions, 500 iterations for "medium" grid resolutions, and 1000 iterations
+for "fine" grid resolutions. This work investigated the suitability of those cutoffs. We attempted to identify
+the point at which further iteration induced flow changes primarily in recirculation or eddy zones where the true
+flow solution is transient and steady-state predictions should always be interpreted with caution.</p>
 
     <h1 style="color:white;">Experimental Methods</h1>
     <p>Three elevation files were selected and run with WindNinja's momentum solver for Coarse, Medium, and Fine
