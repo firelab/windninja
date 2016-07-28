@@ -51,9 +51,9 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 - - -
 
 
-# [NinjaFOAM: Debugging](/internal/debugging.html)
+# [NinjaFOAM: Debugging](/windninja/internal/debugging.html)
 
 
-# [NinjaFOAM: Meshing](/internal/meshing.html)
+# [NinjaFOAM: Meshing](/windninja/internal/meshing.html)
 
-#### [NinjaFOAM: Refine Mesh](/internal/refinemesh.html)
+#### [NinjaFOAM: Refine Mesh](/windninja/internal/refinemesh.html)
