@@ -28,6 +28,15 @@ NOMADS Dependencies
 Due to a bug in the vsizip package in GDAL, version 1.11.1 or newer is
 required.  See http://trac.osgeo.org/gdal/ticket/5530.
 
+NOMADS Parallel Testing Server
+------------------------------
+
+In order to test the new model changes, NOMADS uses a parallel test server.
+The git branch para-nomads sets the proper server and script names for the
+endpoint.  In order to test the new models, use that branch and test only the
+models to be changed, all other will likely fail.  That branch is skipped in
+travis builds.
+
 NOMADS Configuration
 --------------------
 

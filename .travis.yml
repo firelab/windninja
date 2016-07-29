@@ -23,6 +23,13 @@ install:
 script:
   - ctest -E 'landfire|rtma'
 
+# branches to skip
+branches:
+  except:
+  - "para-nomads"
+  - "gh-pages"
+  - "gh"
+
 notifications:
   email:
     recipients:
