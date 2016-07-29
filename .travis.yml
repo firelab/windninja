@@ -9,6 +9,7 @@ compiler:
   - gcc
 
 before_install:
+  - sudo apt-get remove libgdal1
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1397BC53640DB551
   - sudo apt-get update -qq
