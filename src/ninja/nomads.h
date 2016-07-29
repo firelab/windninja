@@ -86,8 +86,13 @@ extern "C" {
 ** around that.  It has been fixed in GDAL 1.11.x.  Older versions may want to
 ** try defining NOMADS_USE_IP.
 */
-#define NOMADS_IP                        "140.90.101.62"
-#define NOMADS_HOST                      "nomads.ncep.noaa.gov"
+
+/*
+** XXX: This branch uses an alternate IP and url for the test server.  Perl
+** endpoints are also changed below
+*/
+#define NOMADS_IP                        "140.172.17.38"
+#define NOMADS_HOST                      "para.nomads.ncep.noaa.gov"
 
 /* Host for NOMADS */
 #define NOMADS_URL_CGI_HOST              "http://" NOMADS_HOST "/cgi-bin/"
@@ -176,11 +181,11 @@ static const char *apszNomadsKeys[][11] =
       "gfs_global",
       /* name of the perl script for the grib filter */
 #if defined(NOMADS_GFS_0P5DEG)
-      "filter_gfs_0p50.pl",
+      "filter_gfs_0p50_para.pl",
 #elif defined(NOMADS_GFS_1P0DEG)
-      "filter_gfs_1p00.pl",
+      "filter_gfs_1p00_para.pl",
 #else /* NOMADS_GFS_0.25DEG is default */
-      "filter_gfs_0p25.pl",
+      "filter_gfs_0p25_para.pl",
 #endif
       /* File naming format */
 #if defined(NOMADS_GFS_0P5DEG)
@@ -218,7 +223,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hires_arw_alaska",
-      "filter_hiresak.pl",
+      "filter_hiresak_para.pl",
       "hiresw.t%02dz.arw_5km.f%02d.ak.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
@@ -233,7 +238,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hires_nmm_alaska",
-      "filter_hiresak.pl",
+      "filter_hiresak_para.pl",
       "hiresw.t%02dz.nmmb_5km.f%02d.ak.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
@@ -248,7 +253,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hires_arw_conus",
-      "filter_hiresconus.pl",
+      "filter_hiresconus_para.pl",
       "hiresw.t%02dz.arw_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
@@ -263,7 +268,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hires_nmm_conus",
-      "filter_hiresconus.pl",
+      "filter_hiresconus_para.pl",
       "hiresw.t%02dz.nmmb_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
@@ -281,7 +286,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "nam_alaska",
-      "filter_nam_ak.pl",
+      "filter_nam_ak_para.pl",
       "nam.t%02dz.awak3d%02d.grb2.tm00",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
@@ -296,7 +301,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "nam_conus",
-      "filter_nam.pl",
+      "filter_nam_para.pl",
       "nam.t%02dz.awphys%02d.grb2.tm00",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
@@ -316,7 +321,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "nam_north_america",
-      "filter_nam_na.pl",
+      "filter_nam_na_para.pl",
       "nam.t%02dz.awip32%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
@@ -338,7 +343,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "nam_nest_alaska",
-      "filter_nam_alaskanest.pl",
+      "filter_nam_alaskanest_para.pl",
       "nam.t%02dz.alaskanest.hiresf%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
@@ -353,7 +358,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "nam_nest_conus",
-      "filter_nam_conusnest.pl",
+      "filter_nam_conusnest_para.pl",
       "nam.t%02dz.conusnest.hiresf%02d.tm00.grib2",
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
@@ -368,7 +373,7 @@ static const char *apszNomadsKeys[][11] =
     /* Alaska RTMA */
     {
       "rtma_ak",
-      "filter_akrtma.pl",
+      "filter_akrtma_para.pl",
       "akrtma.t%02dz.2dvaranl_ndfd.grb2",
       "akrtma.%s",
       NOMADS_GENERIC_DATE,
@@ -385,7 +390,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "rtma_conus",
-      "filter_rtma2p5.pl",
+      "filter_rtma2p5_para.pl",
       "rtma2p5.t%02dz.2dvaranl_ndfd.grb2",
       "rtma2p5.%s",
       NOMADS_GENERIC_DATE,
@@ -400,7 +405,7 @@ static const char *apszNomadsKeys[][11] =
     /* Guam RTMA */
     {
       "rtma_gu",
-      "filter_gurtma.pl",
+      "filter_gurtma_para.pl",
       "gurtma.t%02dz.2dvaranl_ndfd.grb2",
       "gurtma.%s",
       NOMADS_GENERIC_DATE,
@@ -413,7 +418,7 @@ static const char *apszNomadsKeys[][11] =
     /* Hawaii RTMA */
     {
       "rtma_hi",
-      "filter_hirtma.pl",
+      "filter_hirtma_para.pl",
       "hirtma.t%02dz.2dvaranl_ndfd.grb2",
       "hirtma.%s",
       NOMADS_GENERIC_DATE,
@@ -426,7 +431,7 @@ static const char *apszNomadsKeys[][11] =
     /* Puerto Rico RTMA */
     {
       "rtma_pr",
-      "filter_prrtma.pl",
+      "filter_prrtma_para.pl",
       "prrtma.t%02dz.2dvaranl_ndfd.grb2",
       "prrtma.%s",
       NOMADS_GENERIC_DATE,
@@ -442,7 +447,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hrrr_conus",
-      "filter_hrrr_2d.pl",
+      "filter_hrrr_2d_para.pl",
       "hrrr.t%02dz.wrfsfcf%02d.grib2",
       "hrrr.%s",
       NOMADS_GENERIC_DATE,
@@ -458,7 +463,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "rap_conus",
-      "filter_rap.pl",
+      "filter_rap_para.pl",
       "rap.t%02dz.awp130pgrbf%02d.grib2",
       "rap.%s",
       NOMADS_GENERIC_DATE,
@@ -473,7 +478,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "rap_north_america",
-      "filter_rap32.pl",
+      "filter_rap32_para.pl",
       "rap.t%02dz.awip32f%02d.grib2",
       "rap.%s",
       NOMADS_GENERIC_DATE,
@@ -489,7 +494,7 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "narr",
-      "filter_narre.pl",
+      "filter_narre_para.pl",
       "narre.t%02dz.mean.grd130.f%02d.grib2",
       "narre.%s/ensprod",
       "%Y%m%d",
