@@ -10,25 +10,26 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      T;
+    location    "0";
+    object      kappat;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 1 0 0 0];
+dimensions      [0 2 -1 0 0 0 0];
 
-internalField   uniform 300;
+internalField   uniform 0;
+
+//kinematic turbulent thermal conductivity
 
 boundaryField
 {
     east_face
     {
-        type            fixedValue;
-        value           uniform 300;
+        type            zeroGradient;
     }
     north_face
     {
-        type            fixedValue;
-        value           uniform 300;
+        type            zeroGradient;
     }
     south_face
     {
@@ -40,12 +41,15 @@ boundaryField
     }
     minZ
     {
-        type            zeroGradient;
+        type            kappatJayatillekeWallFunction;
+        Prt             0.85;
+        value           uniform 0;
     }
     maxZ
     {
         type            zeroGradient;
     }
 }
+
 
 // ************************************************************************* //

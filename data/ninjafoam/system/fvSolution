@@ -16,6 +16,14 @@ FoamFile
 
 solvers
 {
+    p_rgh
+    {
+        solver              PCG;
+        preconditioner      DIC;
+        tolerance           1e-08;
+        relTol              0.01;
+    }
+
     T
     {
         solver                  PBiCG;
@@ -119,6 +127,7 @@ SIMPLE
 
     residualControl
     {
+        p_rgh           1e-2;
         p               0.00001;
         U               0.00001;
         k               0.00001;
@@ -133,6 +142,7 @@ relaxationFactors
 {
     fields
     {
+    p_rgh           0.7;
     p               0.5;
     }
     equations

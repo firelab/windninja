@@ -22,6 +22,18 @@ nu              nu [0 2 -1 0 0 0 0]     1.58946099535e-05; // New variable
 
 rho             rho [1 -3 0 0 0 0 0]    1.1614; // Density of the fluid
 
+//Thermal expansion coefficient
+beta            beta [0 0 0 -1 0 0 0] 3e-03;
+
+//Reference temperature
+TRef            TRef [0 0 0 1 0 0 0] 300;
+
+//Laminar Prandtl number
+Pr             Pr [0 0 0 0 0 0 0] 0.9;
+
+//Turbulent Prandtl number
+Prt             Prt [0 0 0 0 0 0 0] 0.7;
+
 CrossPowerLawCoeffs
 {
     m               m [0 0 1 0 0 0 0]       1.0;

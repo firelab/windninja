@@ -10,41 +10,53 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      T;
+    object      p_rgh;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 1 0 0 0];
+dimensions      [0 2 -2 0 0 0 0];
 
-internalField   uniform 300;
+internalField   uniform 0;
 
 boundaryField
 {
     east_face
     {
-        type            fixedValue;
-        value           uniform 300;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
+
     north_face
     {
-        type            fixedValue;
-        value           uniform 300;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
+
     south_face
     {
-        type            zeroGradient;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
     west_face
     {
-        type            zeroGradient;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
     minZ
     {
-        type            zeroGradient;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
     maxZ
     {
-        type            zeroGradient;
+        type            fixedFluxPressure;
+        rho             rhok;
+        value           uniform 0;
     }
 }
 

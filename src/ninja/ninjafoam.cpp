@@ -354,11 +354,11 @@ bool NinjaFoam::simulate_wind()
     checkCancel();
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
-    status = SimpleFoam();
+    status = BuoyantBoussinesqSimpleFoam();
     if(status != 0){
         //try solving with previous mesh iterations (less refinement)
         while(latestTime > 50){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during BuoyantBoussinesqSimpleFoam(). Coarsening mesh...");
             CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszTempPath, latestTime ));
             NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszTempPath, latestTime  ) );
             if(input.numberCPUs > 1){
@@ -1723,6 +1723,10 @@ void NinjaFoam::UpdateDictFiles()
             
     CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+    CopyFile(CPLFormFilename(pszTempPath, "0/kappat", ""), 
+            CPLFormFilename(pszTempPath, CPLSPrintf("%s/kappat", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+    CopyFile(CPLFormFilename(pszTempPath, "0/p_rgh", ""), 
+            CPLFormFilename(pszTempPath, CPLSPrintf("%s/p_rgh", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
 
 void NinjaFoam::UpdateSimpleFoamControlDict()
@@ -1939,6 +1943,98 @@ int NinjaFoam::ApplyInit()
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
+    VSIFCloseL(fout);
+
+    return nRet;
+}
+
+int NinjaFoam::BuoyantBoussinesqSimpleFoam()
+{
+    int nRet = -1;
+    
+    char data[PIPE_BUFFER_SIZE + 1];
+    int pos, startPos;
+    std::string s, t;
+    double p;
+
+    if(input.numberCPUs > 1){
+        #ifdef WIN32
+        const char *const papszArgv[] = { "mpiexec",
+                                      "-env",
+                                      "MPI_BUFFER_SIZE",
+                                      "20000000",
+                                      "-n",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "buoyantBoussinesqSimpleFoam",
+                                      "-case",
+                                      pszTempPath,
+                                      "-parallel",
+                                       NULL };
+        #else
+        CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
+        const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "buoyantBoussinesqSimpleFoam",
+                                      "-case",
+                                      pszTempPath,
+                                      "-parallel",
+                                       NULL };
+        #endif
+
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            checkCancel();
+            data[sizeof(data)-1] = '\0';
+            s.append(data);
+            CPLDebug("NINJAFOAM", "buoyantBoussinesqSimpleFoam: %s", data);
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    //number of iterations is set equal to the write interval
+                    p = atof(t.c_str()) / simpleFoamEndTime * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d", (int)p);
+                }
+            }
+        }
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+    }
+    else{
+        const char *const papszArgv[] = { "buoyantBoussinesqSimpleFoam",
+                                       "-case",
+                                       pszTempPath,
+                                       NULL };
+
+        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
+
+        while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
+            data[sizeof(data)-1] = '\0';
+            s.append(data);
+            
+            if(s.rfind("smoothSolver") != s.npos){
+                startPos = s.rfind("smoothSolver");
+                pos = s.rfind("Time = ", startPos);
+                if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
+                    t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
+                    //number of iterations is set equal to the write interval
+                    p = atof(t.c_str()) / simpleFoamEndTime * 100;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "(solver) %.0f%% complete...", p);
+                }
+            }
+        }
+        nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+    }
+    
+    // write simpleFoam stdout to a log file 
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszTempPath, "log.buoyantBoussinesqSimpleFoam", ""), "w");
+    const char * d = s.c_str();
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
     VSIFCloseL(fout);
 
     return nRet;

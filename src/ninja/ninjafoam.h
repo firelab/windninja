@@ -151,6 +151,7 @@ private:
     int CheckMesh();
     int ApplyInit();
     int SimpleFoam();
+    int BuoyantBoussinesqSimpleFoam();
     int Sample();
 
     /* Output */
