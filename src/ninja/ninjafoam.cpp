@@ -2572,6 +2572,12 @@ int NinjaFoam::SampleRawOutput()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    if(VelocityGrid.get_maxValue() > 220.0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "The flow solution did not converge. This may occasionally "
+                "happen in very complex terrain when the mesh resolution is high. Try the simulation "
+                "again with a coarser mesh.");
+        return(NINJA_E_OTHER);
+    }
 
     GDALClose( hDS );
 
