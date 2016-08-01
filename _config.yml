@@ -9,7 +9,7 @@
 title: WindNinja
 email: tfinney@fs.fed.us
 description: > # this means to ignore newlines until "baseurl:"
-  RMRS, tfinney@fs.fed.us
+  RMRS, wind.ninja.support@gmail.com
 baseurl: "/windninja" # the subpath of your site, e.g. /blog
 url: "http://firelab.github.io/windninja/" # the base hostname & protocol for your site
 twitter_username: null
@@ -17,5 +17,3 @@ github_username:  tfinney9
 
 # Build settings
 markdown: kramdown
-
-

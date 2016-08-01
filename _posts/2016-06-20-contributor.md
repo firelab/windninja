@@ -8,48 +8,53 @@ date:   2016-06-20 13:45:49 +0200
 categories: main
 ---
 
-## Current Contriubtors to WindNinja
 
+
+
+# Principal Contributors and Project Investigators
 ***
 
-# Principle Investigators
+<br>
 
+- Jason Forthofer, Mechanical Engineer, Fire Sciences Laboratory, Missoula, MT
 
-- Jason Forthofer
+- Kyle Shannon, Software Engineer, Boise State University, Boise, ID
 
-- Bret Butler
+- Natalie Wagenbrenner, Research Meteorologist, Fire Sciences Laboratory, Missoula, MT
 
-- Natalie Wagenbrenner
+- Bret Butler, Mechanical Engineer, Fire Sciences Laboratory, Missoula, MT
 
-# Research Collaborators
+<br>
 
-
-
-- Kyle Shannon
-
-- Cody Posey
-
-- Levi Mallot
-
-# Other Contributors
-
+# Recent Contributors
 ***
 
-- Jonathan Perkins
+<br>
 
-#### University Autonoma of Barcelona
+- Tanner Finney, Montana State University
 
+- Levi Mallot, University of Missouri
 
-  - Ana Cortés
+- Cody Posey, University of Montana
 
-  - Gemma Sanjuan
+- Ana Cortés,  University Autonoma of Barcelona
 
-  -  Nicolás Chiaraviglio
+- Gemma Sanjuan, University Autonoma of Barcelona
 
-  - Tomàs Margalef
+- Nicolás Chiaraviglio, University Autonoma of Barcelona
 
+- Tomàs Margalef, University Autonoma of Barcelona
 
+<br>
 
+# Other Contributors (Data, etc.)
+***
+
+<br>
+
+- Jonathan Perkins, University of California, Santa Cruz
+
+<br>
 
 # Funding Contributors
 
