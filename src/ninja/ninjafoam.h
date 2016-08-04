@@ -90,6 +90,7 @@ private:
     int WriteUBoundaryField(std::string &dataString);
     int WriteKBoundaryField(std::string &dataString);
     int WriteEpsilonBoundaryField(std::string &dataString);
+    int WriteTBoundaryField(std::string &dataString);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();

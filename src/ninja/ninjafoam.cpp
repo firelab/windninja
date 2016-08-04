@@ -593,17 +593,17 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
     if(std::string(pszFilename) == "p"){
         WritePBoundaryField(dataString);
     }
-
     if(std::string(pszFilename) == "U"){
         WriteUBoundaryField(dataString);
     }
-
     if(std::string(pszFilename) == "k"){
         WriteKBoundaryField(dataString);
     }
-
     if(std::string(pszFilename) == "epsilon"){
         WriteEpsilonBoundaryField(dataString);
+    }
+    if(std::string(pszFilename) == "T"){
+        WriteTBoundaryField(dataString);
     }
 
     // writing remaining fields from template file
@@ -892,6 +892,39 @@ void NinjaFoam::ComputeDirection()
     direction.push_back(0);
 }
 
+int NinjaFoam::WriteTBoundaryField(std::string &dataString)
+{
+    //append BC blocks from template files
+    for(int i = 0; i < bcs.size(); i++){
+        boundary_name = bcs[i];
+        //check if boundary_name is an inlet
+        if(std::find(inlets.begin(), inlets.end(), boundary_name) != inlets.end()){
+            template_ = "inlet.tmp";
+            type = "verticalProfileTemperatureInlet";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
+        }
+        else{
+            template_ = "";
+            type = "zeroGradient";
+            value = "";
+            gammavalue = "";
+            pvalue = "";
+            inletoutletvalue = "";
+        }
+        int status;
+        //append BC block for current face
+        status = AddBcBlock(dataString);
+        if(status != 0){
+            //do something
+        }
+    }
+
+    return NINJA_SUCCESS;
+}
+
 int NinjaFoam::WriteEpsilonBoundaryField(std::string &dataString)
 {
     //append BC blocks from template files
@@ -1158,6 +1191,11 @@ int NinjaFoam::readDem(double &expansionRatio)
             
     CopyFile(CPLFormFilename(pszTempPath, "0/epsilon", ""), 
             CPLFormFilename(pszTempPath, "0/epsilon", ""), 
+            "-9999.9", 
+            CPLSPrintf("%.2f", initialFirstCellHeight));
+
+    CopyFile(CPLFormFilename(pszTempPath, "0/T", ""), 
+            CPLFormFilename(pszTempPath, "0/T", ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
     
@@ -1721,6 +1759,11 @@ void NinjaFoam::UpdateDictFiles()
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
+    CopyFile(CPLFormFilename(pszTempPath, "0/T", ""), 
+            CPLFormFilename(pszTempPath, CPLSPrintf("%s/T", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
+            CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
+            CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
+
     CopyFile(CPLFormFilename(pszTempPath, "0/p", ""), 
             CPLFormFilename(pszTempPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
     CopyFile(CPLFormFilename(pszTempPath, "0/kappat", ""), 

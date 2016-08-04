@@ -37,6 +37,20 @@ volVectorField U
     mesh
 );
 
+Info<< "Reading field T\n" << endl;
+volScalarField T
+(
+    IOobject
+    (
+        "T",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::NO_WRITE
+    ),
+    mesh
+);
+
 Info<< "Calculating wall distance field" << endl;
 volScalarField y(wallDist(mesh).y());
 y.write();

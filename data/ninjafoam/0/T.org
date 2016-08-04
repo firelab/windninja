@@ -20,7 +20,24 @@ internalField   uniform 300;
 
 boundaryField
 {
-$boundaryField$
+    east_face
+    {
+        type            fixedValue;
+        value           uniform 300;
+    }
+    north_face
+    {
+        type            fixedValue;
+        value           uniform 300;
+    }
+    south_face
+    {
+        type            zeroGradient;
+    }
+    west_face
+    {
+        type            zeroGradient;
+    }
     minZ
     {
         type            zeroGradient;

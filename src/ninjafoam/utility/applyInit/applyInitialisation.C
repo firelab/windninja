@@ -45,37 +45,48 @@ Description
 
 // turbulence constants - file-scope
 
-
 int main(int argc, char *argv[])
 {
-
     #include "setRootCase.H"
-
-	#include "createTime.H"
+    #include "createTime.H"
     #include "createMesh.H"
 
-	volVectorField U
-	(
-		IOobject
-		(
-			"U",
-			runTime.timeName(),
-			mesh,
-			IOobject::MUST_READ,
-			IOobject::AUTO_WRITE
-		),
-		mesh
-	);
-	word patchName;
-	forAll(U.boundaryField().types(),patchI)
-	{
-		if(!U.boundaryField().types()[patchI].compare(word("logProfileVelocityInlet")))
-		{
-			patchName = mesh.boundary()[patchI].name();
-		}
-	}
+    volVectorField U
+    (
+        IOobject
+        (
+                "U",
+                runTime.timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+        ),
+        mesh
+    );
 
-	const IOdictionary uFile_
+    volScalarField T
+    (
+        IOobject
+        (
+                "T",
+                runTime.timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+        ),
+        mesh
+    );
+
+    word patchName;
+    forAll(U.boundaryField().types(),patchI)
+    {
+        if(!U.boundaryField().types()[patchI].compare(word("logProfileVelocityInlet")))
+        {
+                patchName = mesh.boundary()[patchI].name();
+        }
+    }
+
+    const IOdictionary uFile_
     (
         IOobject
         (
@@ -88,37 +99,62 @@ int main(int argc, char *argv[])
         ),
         U.readStream(word("volVectorField"))
     );
+    const IOdictionary tFile_
+    (
+        IOobject
+        (
+            "T",
+            runTime.timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        T.readStream(word("volScalarField"))
+    );
 
-	const dictionary dict(uFile_.subDict("boundaryField").subDict(patchName));
+    const dictionary dict(uFile_.subDict("boundaryField").subDict(patchName));
+    const dictionary tdict(tFile_.subDict("boundaryField").subDict(patchName));
 
-	Info<< "Calculating wall distance field" << endl;
+    Info<< "Calculating wall distance field" << endl;
 
     volScalarField y = wallDist(mesh).y();	//distance to nearest wall
-	//volScalarField y(mesh.C().component(2)); //z-component of cell center
+    //volScalarField y(mesh.C().component(2)); //z-component of cell center
 
-	const scalar UfreeStream_(readScalar(dict.lookup("UfreeStream")));
-	const vector uDirection_(dict.lookup("uDirection"));
-	const scalar inputWindHeight_Veg_(readScalar(dict.lookup("inputWindHeight_Veg")));
-	const scalar z0_(readScalar(dict.lookup("z0")));
-	//const scalar Rd_(readScalar(dict.lookup("Rd")));
-	scalar ustar = Foam::log((inputWindHeight_Veg_)/z0_);
-	ustar = (UfreeStream_*0.41)/(ustar);
-	scalar ucalc(0.0);
+    const scalar UfreeStream_(readScalar(dict.lookup("UfreeStream")));
+    const vector uDirection_(dict.lookup("uDirection"));
+    const scalar inputWindHeight_Veg_(readScalar(dict.lookup("inputWindHeight_Veg")));
+    const scalar z0_(readScalar(dict.lookup("z0")));
+    //const scalar Rd_(readScalar(dict.lookup("Rd")));
+    scalar ustar = Foam::log((inputWindHeight_Veg_)/z0_);
+    ustar = (UfreeStream_*0.41)/(ustar);
+    scalar ucalc(0.0);
+    scalar tcalc(0.0);
 
-	// Loop over all the faces in the patch
-	// and initialize the log profile
-	forAll(y,cellI)
-	{
-		// relative height from ground for face lists
-		scalar AGL = y[cellI];
+    // Loop over all the faces in the patch
+    // and initialize the log profile
+    forAll(y,cellI)
+    {
+        // relative height from ground for face lists
+        scalar AGL = y[cellI];
 
-		//Apply the log law equation profile
+        //Apply the log law equation profile
         ucalc = ustar/0.41*Foam::log((AGL)/z0_);
-    	U[cellI] = ucalc*uDirection_;
-	}
+        U[cellI] = ucalc*uDirection_;
+        //Apply the temperature profile
+        if(AGL > 200){
+            tcalc = 300 - 0.11*AGL;
+        }
+        else{
+            tcalc = 278 + 0.11*AGL;
+        }
+        T[cellI] = tcalc;
+    }
 
-	U.write();
-	Info<< "End\n" << endl;
+    U.write();
+    T.write();
+
+    Info<< "End\n" << endl;
 
     return 0;
 }
