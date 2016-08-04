@@ -325,3 +325,10 @@ void NinjaFree( void *hData )
     free( hData );
 }
 
+std::string NinjaRemoveSpaces( std::string s )
+{
+    s.erase( std::remove_if( s.begin(), s.end(), ::isspace ), s.end() );
+
+    return s;
+}
+
