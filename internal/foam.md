@@ -50,10 +50,40 @@ This page documents the individual steps in a NinjaFOAM simulation. These steps 
 
 - - -
 
+<br>
+<div class="col col-4">
+  <div class="block red">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
 
-# [NinjaFOAM: Debugging](/windninja/internal/debugging.html)
+          <h2>
+            <a class="post-link white-text" href="/windninja//internal/debugging.html">Debugging</a>
+          </h2>
+          <img src="http://firelab.github.io/windninja/assets/ofenpoam.png" style="width:75px;height:75px;">
+      </div>
+  </div>
+</div>
+<div class="col col-4">
+  <div class="block red">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
 
+          <h2>
+            <a class="post-link white-text" href="/windninja/internal/meshing.html">Meshing</a>
+          </h2>
+          <img src="http://firelab.github.io/windninja/assets/ofenpoam.png" style="width:75px;height:75px;">
+      </div>
+  </div>
+</div>
+<div class="col col-4">
+  <div class="block red">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
 
-# [NinjaFOAM: Meshing](/windninja/internal/meshing.html)
-
-#### [NinjaFOAM: Refine Mesh](/windninja/internal/refinemesh.html)
+          <h2>
+            <a class="post-link white-text" href="/windninja//internal/refinemesh.html">Refine Mesh</a>
+          </h2>
+          <img src="http://firelab.github.io/windninja/assets/ofenpoam.png" style="width:75px;height:75px;">
+      </div>
+  </div>
+</div>
