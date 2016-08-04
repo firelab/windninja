@@ -258,7 +258,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
-        int status = NinjaFoam::GenerateFoamDirectory();
+        int status = NinjaFoam::GenerateFoamDirectory(ninjas[0]->input.dem.fileName);
         if(status != 0){
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }

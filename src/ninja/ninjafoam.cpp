@@ -636,9 +636,10 @@ void NinjaFoam::SetFoamPath(const char* pszPath)
 
 }
 
-int NinjaFoam::GenerateFoamDirectory()
+int NinjaFoam::GenerateFoamDirectory(std::string demName)
 {
-    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( "NINJAFOAM_"));
+    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s_",
+                  CPLGetBasename(demName.c_str())) ));
     VSIMkdir( pszFoamPath, 0777 );
 
     return NINJA_SUCCESS;
