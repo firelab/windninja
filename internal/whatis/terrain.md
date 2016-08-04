@@ -19,4 +19,4 @@ terrain representation) and faster processing time</h3>
 
 <br>
 
-<h1 style="color:white;" align="center"><a href="/howdoes/">Back to How Does WindNinja Work?</a></h1>
+<h1 style="color:white;" align="center"><a href="/windninja/howdoes/">Back to How Does WindNinja Work?</a></h1>
