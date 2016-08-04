@@ -21,7 +21,7 @@ install:
   - make -j3
 
 script:
-  - ctest -E 'landfire|rtma'
+    - ctest -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config'
 
 # branches to skip
 branches:
