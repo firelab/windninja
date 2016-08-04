@@ -1,0 +1,132 @@
+---
+layout: post
+title:  "How Does WindNinja Work?"
+color: pink
+width:   3
+height:  1
+date:   2016-08-04 12:45:49 +0200
+categories: main
+permalink: /howdoes/
+---
+
+<div class="col col-6">
+
+<ol style="font-size:20px">
+<li>Build a 3-D model (mesh) of the air</li>
+
+<li>prescribe an initial wind field</li>
+
+<li>compute final mass/momentum conserving wind field.</li>
+
+</ol>
+
+</div>
+
+<div class="col col-6">
+
+<ul style="list-style-type:disc;font-size:18px">
+
+<li>Requires a good estimate of the initial wind field</li>
+
+<li>Adjusts for terrain (conservation of mass/momentum)</li>
+
+<li>Parameterizations for some other effects (e.g., diurnal slope flows)</li>
+
+</ul>
+
+
+</div>
+
+<div class="col col-12">
+
+<img src="http://firelab.github.io/windninja/assets/mesh.png" alt="fiyah!" style="width:400px;height:250px;">
+<br>
+<br>
+</div>
+
+<p style="font-size:18px">To see a live WindNinja Simulation Online <a href="http://firelab.github.io/windninja/online/">click here</a>
+
+
+<h2>Assumptions</h2>
+
+{{ '* * *' | markdownify }}
+
+<ul style="list-style-type:disc;font-size:18px">
+
+<li>No moisture/latent heat effects, steady-state, no conservation of energy</li>
+<li>Conservation of momentum is optional</li>
+<li>Some thermal energy parameterizations</li>
+<li>diurnal slope flows, non-neutral atmospheric stability</li>
+
+</ul>
+
+<h2>Advantages</h2>
+
+{{ '* * *' | markdownify }}
+
+<ul style="list-style-type:disc;font-size:18px">
+
+
+<li>Fast</li>
+<li>low computational requirements</li>
+<li>simple to run</li>
+<li>high spatial resolution</li>
+</ul>
+
+<h2>Limitations</h2>
+{{ '* * *' | markdownify }}
+
+<ul style="list-style-type:disc;font-size:18px">
+
+<li>No conservation of energy or large-scale/complex flow effects (e.g.,
+land-sea breezes, thunderstorms)</li>
+
+</ul>
+
+<br>
+<br>
+
+<br>
+
+<h2>More Information</h2>
+
+{{ '* * *' | markdownify }}
+
+<br>
+
+<div class="col col-4">
+  <div class="block blue">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+
+          <h2>
+            <a class="post-link white-text" href="/windninja/internal/whatis/terrain.html">Terrain Resolution</a>
+          </h2>
+          <span class="post-meta white-text">WindNinja approximates complex terrain with a finite number of points</span>
+      </div>
+  </div>
+</div>
+<div class="col col-4">
+  <div class="block red">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+
+          <h2>
+            <a class="post-link white-text" href="/windninja/internal/whatis/solver.html">WindNinja Solvers</a>
+          </h2>
+          <span class="post-meta white-text">WindNinja has two solvers, Conservation of Mass and Conservation of Mass/Momentum</span>
+      </div>
+  </div>
+</div>
+<div class="col col-4">
+  <div class="block pink">
+      <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+
+          <h2>
+            <a class="post-link white-text" href="/windninja/internal/whatis/thermal.html">Thermal Paramaterizations</a>
+          </h2>
+          <span class="post-meta white-text">Diurnal Winds and Non-neutral stability</span>
+      </div>
+  </div>
+</div>

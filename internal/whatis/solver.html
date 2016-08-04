@@ -1,0 +1,129 @@
+---
+layout: internal
+---
+<h1 class="post-title" itemprop="name headline" style="color:white;">WindNinja Solvers</h1>
+<br>
+<div class="col col-5">
+
+<h2>Conservation of Mass</h2>
+
+<hr />
+
+<ul style="font-size:20px">
+<li>Minimizes change in initial wind field while conserving mass</li>
+
+<li>Finite element method</li>
+
+<li>steady-state</li>
+
+<li>incompressible</li>
+
+</ul>
+
+</div>
+
+<div class="col col-1">
+
+</div>
+
+<div class="col col-6">
+<h2>Conservation of Mass/Momentum</h2>
+
+<hr />
+
+<ul style="font-size:20px">
+<li>Solver for incompressible turbulent flow</li>
+
+<li>Finite volume method</li>
+
+<li>kappa-epsilon for turbulence</li>
+
+<li>incompressible</li>
+
+<li>semi-implicit method (simpleFoam)</li>
+<a href="http://openfoam.org/"> <img src="http://firelab.github.io/windninja/assets/foam2.png" style="width:175px;height:65px;"> </a>
+
+</ul>
+
+</div>
+
+
+
+<h2>Computational Domain</h2>
+<hr />
+<br>
+<div class="col col-12">
+<ul>
+  <li>Native Solver:Native Mesher</li>
+  <li>OpenFOAM solver: blockMesh, snappyHexMesh, extrudeMesh</li>
+  <li>Terrain Following hexahedral cells</li>
+  <li>Cells grow vertically with height</li>
+  <li>Top height set as f(max(dx|dy|dz))</li>
+</ul>
+</div>
+
+
+  <img src="http://firelab.github.io/windninja/assets/native.png" alt="fiyah!" style="width:300px;height:250px;">
+  <img src="http://firelab.github.io/windninja/assets/opensolver.png" alt="fiyah!" style="width:300px;height:250px;">
+
+<br>
+<h2>Boundary and Initial Conditions</h2>
+<hr />
+<br>
+
+<div class="col col-5">
+
+<h2>Conservation of Mass</h2>
+
+<hr />
+
+<ul style="font-size:20px">
+<li>Ux and Uy set at all nodes, Uz=0</li>
+
+<li>Log profile (neutral) used in vertical</li>
+
+<li>Bilinear interpolation used in horizontal</li>
+
+<li>Ground:Neumann (impermeable)</li>
+
+<li>Sides and Top: zero-gradient</li>
+
+</ul>
+
+</div>
+<div class="col col-1">
+
+</div>
+
+<div class="col col-6">
+
+<h2>Conservation of Mass/Momentum</h2>
+
+<hr />
+
+<ul style="font-size:20px">
+<li>Interior initialized using same profiles as the inlet</li>
+
+<li>Ground:non-equilibrium wall function</li>
+
+<li>Sides and top: zero-gradient</li>
+
+</ul>
+<br>
+<br>
+<br>
+<br>
+
+
+</div>
+
+<div class="col col-6">
+<img src="http://firelab.github.io/windninja/assets/native2.png" alt="fiyah!" style="width:500px;height:350px;">
+</div>
+<div class="col col-6">
+<img src="http://firelab.github.io/windninja/assets/cfdsolver2.png" alt="fiyah!" style="width:500px;height:350px;">
+</div>
+
+<br>
+
+<h1 style="color:white;" align="center"><a href="/windninja/howdoes/">Back to How Does WindNinja Work?</a></h1>

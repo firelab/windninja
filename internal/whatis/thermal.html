@@ -1,0 +1,89 @@
+---
+layout: internal
+---
+<h1 class="post-title" itemprop="name headline" style="color:white;">Thermal Parameterizations</h1>
+
+<br>
+<p style="font-size:18px">To see a live WindNinja Simulation with Thermal Parameterizations <a href="http://firelab.github.io/windninja/diurnal/">click here</a>
+<br>
+
+<h2>Diurnal Winds</h2>
+<hr />
+<br>
+<p style="font-size:20px">Diurnal slope winds are caused by warming of mountain slopes by daytime
+sunlight or cooling by nocturnal radiation (that is, radiation emitted by the “warm”
+ground that is lost to the “cold” sky). This heats or cools the air adjacent to the slope,
+causing buoyant forces that produce flow up or down the slope. </p>
+<br>
+<br>
+<p style="font-size:20px">During the daytime,a slope’s orientation to the sun can affect its rate of heating and, therefore, the
+strength of the diurnal wind.  Other factors affecting the diurnal wind strength are
+how well solar energy is absorbed by the ground surface and transferred to the air,
+how cloudy it is, and how steep the slope is.</p>
+<br>
+<p style="font-size:20px"> A simple model has been included in WindNinja to simulate the effects of diurnal
+slope winds. It is designed to compute small scale
+slope winds, but not larger scale valley winds.The slope winds will have some effect of producing valley winds, but it
+will be slight.  Also, the model will not simulate other buoyancy driven flows such as
+sea or land breezes.</p>
+<br>
+
+<h3>Diurnal Wind Effects</h3>
+<hr />
+<br>
+
+<div class="col col-6">
+  <p> Mid-Day </p>
+  <img src="http://firelab.github.io/windninja/assets/diurnalMid.png" alt="fiyah!" style="width:400px;height:400px;">
+</div>
+<div class="col col-6">
+  <p> Night </p>
+  <img src="http://firelab.github.io/windninja/assets/diurnalNight.png" alt="fiyah!" style="width:400px;height:400px;">
+  <br>
+  <br>
+</div>
+<h2>Non-neutral Stability</h2>
+<hr />
+<br>
+
+<p style="font-size:20px">Atmospheric stability is a measure of the resistance of the atmosphere to vertical
+motion.  This is caused by varying air density with height above the ground.
+Atmospheric stability can have a dramatic impact on surface wind flow.  In a very
+stable atmosphere, flow approaching a mountain would likely tend to flow around the
+sides rather than over the mountain.  In an unstable atmosphere, the flow might tend
+to go over the mountain. </p>
+<br>
+<p style="font-size:20px">This is a simplified description of what can be a fairly
+complex phenomena.  Some examples of the complexities of reality are:</p>
+<div style="margin-left: 50px;">
+<ol style="font-size:17px">
+  <li>in certain stable flow conditions wave and breaking-wave structures can form near terrain</li>
+  <li>the atmospheric stability can change with height in the atmosphere</li>
+  <li> some conditions can generate severe downslope wind conditions.</li>
+</ol>
+</div>
+<br>
+<p style="font-size:20px">WindNinja has a simple model to include some of the simple aspects of non-neutral
+stability flows.  It can be easily turned on and requires few additional inputs from the
+user.  The current model calculates the surface heat flux to approximate the
+atmospheric stability.</p>
+<br>
+
+
+<h3>Stability effects</h3>
+<hr />
+<br>
+
+<div class="col col-6">
+  <p> Mid-Day </p>
+  <img src="http://firelab.github.io/windninja/assets/stabMid.png" alt="fiyah!" style="width:400px;height:400px;">
+</div>
+<div class="col col-6">
+  <p> Night </p>
+  <img src="http://firelab.github.io/windninja/assets/stabNight.png" alt="fiyah!" style="width:400px;height:400px;">
+</div>
+
+
+<br>
+
+<h1 style="color:white;" align="center"><a href="/windninja/howdoes/">Back to How Does WindNinja Work?</a></h1>
