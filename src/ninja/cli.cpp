@@ -1016,7 +1016,16 @@ int windNinjaCLI(int argc, char* argv[])
 ////                windsim.makeStationArmy( timeList );
 //            }
 //            return(0); //temporary for STATION_FETCH
+            pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
+                    vm["elevation_file"].as<std::string>(),
+                    timeList,osTimeZone );
+
+            cout<<"WIP-Whizzle!"<<endl;
+            exit(1);
         }
+
+
+//        exit(1);
 
 //        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
 //        {
@@ -1331,7 +1340,7 @@ int windNinjaCLI(int argc, char* argv[])
                 if (vm["fetch_station"].as<bool>() == true)
                 {
                     cout<<"new PointInitialization"<<endl;
-                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
+//                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
                     std::vector<boost::posix_time::ptime> timeLiszt;
                     
                     timeLiszt = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -1346,11 +1355,15 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["end_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
-                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-                    
+                                        exit(1);
+//                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+                    cout<<"a"<<endl;
+//                    pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
+//                            vm["elevation_file"].as<std::string>(),
+//                            timeLiszt,osTimeZone );
                    
                     
-                    
+                    exit(1);
 
                 }
                 if (vm["fetch_station"].as<bool>() == false)

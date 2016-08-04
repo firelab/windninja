@@ -123,8 +123,6 @@ public:
 
 
 
-    static char** oldGetValidHeader();
-    static char** getValidHeader();
 
 
     static std::vector<wxStationList> readStationFile( std::string csvFile,
@@ -193,6 +191,8 @@ class wxStation
               NAD27 };
     static bool check_station(wxStation station);
 
+    static char** oldGetValidHeader();
+    static char** getValidHeader();
 
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }

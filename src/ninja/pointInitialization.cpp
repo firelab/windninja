@@ -603,6 +603,507 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     */
 
 }
+
+
+
+
+void pointInitialization::interpolateFromDisk(std::string stationFilename,
+                                              std::string demFile,
+                                              std::vector<boost::posix_time::ptime> timeList,std::string timeZone)
+{
+
+
+    std::string csvFile=stationFilename;
+
+    std::vector<std::vector<wxStationList> > a;
+
+    vector<std::string> stationNames;
+
+    OGRDataSourceH hDS;
+    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRFeatureDefn *poFeatureDefn;
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+    std::string oStationName;
+
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    poLayer->ResetReading();
+    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
+    {
+    poFeatureDefn = poLayer->GetLayerDefn();
+
+    // get Station name
+    oStationName = poFeature->GetFieldAsString( 0 );
+    stationNames.push_back(oStationName);
+    }
+
+    int statCount;
+    statCount=stationNames.size();
+
+    int specCount=statCount;
+
+    vector<int> idxCount;
+    int j=0;
+    int q=0;
+
+    for (int i=0;i<statCount;i++)
+    {
+//        cout<<"looks at: "<<q<<endl;
+//        cout<<"starts at: "<<j<<endl;
+
+        int idx1=0;
+        for(j;j<specCount;j++)
+        {
+            if(stationNames[j]==stationNames[q])
+            {
+                idx1++;
+            }
+        }
+        idxCount.push_back(idx1);
+        j=std::accumulate(idxCount.begin(),idxCount.end(),0);
+        q=j;
+        if (j==statCount)
+        {
+//            cout<<"exiting loop"<<endl;
+            break;
+        }
+    }
+
+    std::vector<pointInitialization::preInterpolate> diskData;
+    std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
+    diskData=readDiskLine(stationFilename,demFile);
+    int t=0;
+    vector<int> countLimiter;
+
+    for (int ei=1;ei<=idxCount.size();ei++)
+    {
+    //    cout<<ei<<endl;
+        int rounder=idxCount.size()-ei;
+        int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
+        countLimiter.push_back(e);
+    }
+
+
+    for (int ei=0;ei<idxCount.size();ei++)
+    {
+
+    std::vector<pointInitialization::preInterpolate> sub(&diskData[t],&diskData[countLimiter[ei]]);
+
+    //cout<<"subsize: "<<sub.size()<<endl;
+
+    wxVector.push_back(sub);
+
+    t=countLimiter[ei];
+
+    }
+
+//    cout<<wxVector.size()<<endl;
+//    for (int i=0;i<wxVector.size();i++)
+//    {
+//        cout<<wxVector[i].size()<<endl;
+//    }
+
+//    cout<<wxVector[0][56].stationName<<endl;
+//    cout<<wxVector[0][56].lat<<endl;
+//    cout<<wxVector[0][56].lon<<endl;
+//    cout<<wxVector[0][56].height<<endl;
+//    cout<<wxVector[0][56].speed<<endl;
+//    cout<<wxVector[0][56].direction<<endl;
+//    cout<<wxVector[0][56].temperature<<endl;
+//    cout<<wxVector[0][56].cloudCover<<endl;
+//    cout<<wxVector[0][56].datetime<<endl;
+//    cout<<wxVector[0][56].datumType<<endl;
+//    cout<<wxVector[0][56].coordType<<endl;
+
+vector<vector<preInterpolate> > interpolatedDataSet;
+
+interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList);
+
+
+
+}
+
+
+
+vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string stationFilename, string demFile)
+{
+    std::string csvFile=stationFilename;
+    std::string oErrorString = "";
+    preInterpolate oStation;
+    std::vector<preInterpolate> oStations;
+    preInterpolate work;
+    std::vector<preInterpolate> vecwork;
+    work.stationName="aaaaaaaa";
+    vecwork.push_back(work);
+
+    OGRDataSourceH hDS;
+    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+    if( hDS == NULL )
+    {
+    oErrorString = "Cannot open csv file: ";
+    oErrorString += csvFile;
+    throw( std::runtime_error( oErrorString ) );
+    }
+
+    OGRFeatureH hFeature;
+    double dfTempValue = 0.0;
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRFeatureDefn *poFeatureDefn;
+    OGRFieldDefn *poFieldDefn;
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    cout<<"Reading csvName: "<<csvFile<<endl;
+
+    const char* station;
+    int idx=0;
+
+    poLayer->ResetReading();
+
+    char **papszHeader = NULL;
+    //papszHeader = getValidHeader();
+    papszHeader=wxStation::getValidHeader();
+    char **papszOldHeader=wxStation::oldGetValidHeader();
+
+    bool fetchType;
+
+    poFeatureDefn = poLayer->GetLayerDefn();
+    //check for correct number of fields, and proper header
+    int nFields = poFeatureDefn->GetFieldCount();
+        if( nFields != CSLCount( papszHeader ) )
+        {
+            papszHeader=papszOldHeader;
+            fetchType=false;
+            cout<<"old way"<<endl;
+
+        }
+        else if (nFields !=CSLCount (papszHeader))
+        {
+            OGR_DS_Destroy( hDS );
+            oErrorString = "Incorrect number of definitions in csv file. ";
+            oErrorString += "There are ";
+            oErrorString += nFields;
+            oErrorString += " in the file, it needs ";
+            oErrorString += CSLCount( papszHeader );
+            CSLDestroy( papszHeader );
+            throw( std::domain_error( oErrorString ) );
+        }
+        else
+        {
+        fetchType=true;
+        cout<<"new way"<<endl;
+        }
+
+        const char *pszKey;
+        std::string oStationName;
+        std::string datetime;
+
+
+        poLayer->ResetReading();
+
+        while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
+        {
+
+            poFeatureDefn = poLayer->GetLayerDefn();
+
+            // get Station name
+            oStationName = poFeature->GetFieldAsString( 0 );
+            oStation.stationName=oStationName;
+//            cout<<"stid: "<<oStation.stationName<<endl;
+
+            pszKey = poFeature->GetFieldAsString( 1 );
+
+            //LAT LON COORDINATES
+            if( EQUAL( pszKey, "geogcs" ) )
+            {
+            //    cout<<"geogcs"<<endl;
+                //check for valid latitude in degrees
+                dfTempValue = poFeature->GetFieldAsDouble( 3 );
+                if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
+                OGRFeature::DestroyFeature( poFeature );
+                OGR_DS_Destroy( hDS );
+                CSLDestroy( papszHeader );
+
+                oErrorString = "Bad latitude in weather station csv file";
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+                }
+                //check for valid longitude in degrees
+                dfTempValue = poFeature->GetFieldAsDouble( 4 );
+
+                if( dfTempValue < -180.0 || dfTempValue > 360.0 )
+                {
+                OGRFeature::DestroyFeature( poFeature );
+                OGR_DS_Destroy( hDS );
+                CSLDestroy( papszHeader );
+
+                oErrorString = "Bad longitude in weather station csv file";
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+                }
+                const char *pszDatum = poFeature->GetFieldAsString( 2 );
+//                oStation.set_location_LatLong( poFeature->GetFieldAsDouble( 3 ),
+//                               poFeature->GetFieldAsDouble( 4 ),
+//                               demFile,
+//                               pszDatum );
+                oStation.lat=poFeature->GetFieldAsDouble(3);
+                oStation.lon=poFeature->GetFieldAsDouble(4);
+                oStation.datumType=pszDatum;
+                oStation.coordType=pszKey;
+
+//                cout<<"lat,lon: "<<oStation.lat<<" , "<<oStation.lon<<endl;
+//                cout<<oStation.datumType<<" "<<oStation.coordType<<endl;
+            }
+            else if( EQUAL( pszKey, "projcs" ) )
+            {
+                oStation.lat=poFeature->GetFieldAsDouble(3);
+                oStation.lon=poFeature->GetFieldAsDouble(4);
+                oStation.coordType=pszKey;
+            }
+            else
+            {
+                oErrorString = "Invalid coordinate system: ";
+                oErrorString += poFeature->GetFieldAsString( 1 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+            }
+            //MIDDLE STUFF
+            pszKey = poFeature->GetFieldAsString( 6 );
+
+            dfTempValue = poFeature->GetFieldAsDouble( 5 );
+
+            if( dfTempValue <= 0.0 )
+            {
+                oErrorString = "Invalid height: ";
+                oErrorString += poFeature->GetFieldAsString( 5 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+            }
+            if( EQUAL( pszKey, "meters" ) )
+            {
+//                oStation.set_height( dfTempValue, lengthUnits::meters );
+                oStation.height=dfTempValue;
+                oStation.heightUnits=lengthUnits::meters;
+                //    cout<<"height: "<<oStation.height<<", "<<oStation.heightUnits<<endl;
+            }
+            else if( EQUAL( pszKey, "feet" ) )
+            {
+                oStation.height=dfTempValue;
+                oStation.heightUnits=lengthUnits::feet;
+            }
+            else
+            {
+                oErrorString = "Invalid units for height: ";
+                oErrorString += poFeature->GetFieldAsString( 6 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+            }
+            //WIND SPEED
+            pszKey = poFeature->GetFieldAsString( 8 );
+            dfTempValue = poFeature->GetFieldAsDouble( 7 );
+            if( dfTempValue < 0.0 )
+            {
+                dfTempValue=0.0;
+                oErrorString = "Invalid value for speed: ";
+                oErrorString += poFeature->GetFieldAsString( 7 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                throw( std::domain_error( oErrorString ) );
+            }
+
+            if ( EQUAL( pszKey, "mps" ) )
+            {
+//                oStation.set_speed( dfTempValue, velocityUnits::metersPerSecond );
+            oStation.speed=dfTempValue;
+            oStation.inputSpeedUnits=velocityUnits::metersPerSecond;
+//            cout<<"windspd: "<<oStation.speed<<" , "<<oStation.inputSpeedUnits<<endl;
+            }
+            else if( EQUAL( pszKey, "mph" ) )
+            {
+                oStation.speed=dfTempValue;
+                oStation.inputSpeedUnits=velocityUnits::milesPerHour;
+            }
+            else if( EQUAL( pszKey, "kph" ) )
+                {
+                    oStation.speed=dfTempValue;
+                    oStation.inputSpeedUnits=velocityUnits::kilometersPerHour;
+                }
+            else
+            {
+                oErrorString = "Invalid units for speed: ";
+                oErrorString += poFeature->GetFieldAsString( 8 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                throw( std::domain_error( oErrorString ) );
+            }
+            //WIND DIRECTION
+            dfTempValue = poFeature->GetFieldAsDouble( 9 );
+            if( dfTempValue > 360.1 || dfTempValue < 0.0 )
+            {
+                oErrorString = "Invalid value for direction: ";
+                oErrorString += poFeature->GetFieldAsString( 9 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                throw( std::domain_error( oErrorString ) );
+            }
+//            oStation.set_direction( dfTempValue );
+            oStation.direction=dfTempValue;
+            //cout<<"winddir: "<<oStation.direction<<endl;
+
+            //TEMPERATURE
+            pszKey = poFeature->GetFieldAsString( 11 );
+
+            if( EQUAL(pszKey, "f" ) )
+            {
+//                oStation.set_temperature( poFeature->GetFieldAsDouble( 10 ),
+//                              temperatureUnits::F );
+                oStation.temperature=poFeature->GetFieldAsDouble(10);
+                oStation.tempUnits=temperatureUnits::F;
+            }
+            else if( EQUAL( pszKey, "c" ) )
+            {
+                oStation.temperature=poFeature->GetFieldAsDouble(10);
+                oStation.tempUnits=temperatureUnits::C;
+            //    cout<<"temp (K): "<<oStation.temperature<<endl;
+            }
+            else if( EQUAL( pszKey, "k" ) )
+            {
+                oStation.temperature=poFeature->GetFieldAsDouble(10);
+                oStation.tempUnits=temperatureUnits::K;
+            }
+            else
+            {
+                oErrorString = "Invalid units for temperature: ";
+                oErrorString += poFeature->GetFieldAsString( 11 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                throw( std::domain_error( oErrorString ) );
+            }
+
+            //CLOUD COVER
+            dfTempValue = poFeature->GetFieldAsDouble( 12 );
+            if( dfTempValue > 100.0 || dfTempValue < 0.0 )
+            {
+                oErrorString = "Invalid value for cloud cover: ";
+                oErrorString += poFeature->GetFieldAsString( 12 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+            //    throw( std::domain_error( oErrorString ) );
+            //    cout<<oErrorString<<endl;
+                dfTempValue=0.0; //TEMPORARY UNTIL SOLRAD IS FIXED
+            }
+            oStation.cloudCover=dfTempValue;
+            //cout<<"cloud cover: "<<oStation.cloudCover<<endl;
+
+            //RADIUS OF INFLUENCE
+            pszKey = poFeature->GetFieldAsString( 14 );
+
+            dfTempValue = poFeature->GetFieldAsDouble( 13 );
+
+            if( EQUAL( pszKey, "miles" ) )
+            {
+//                oStation.set_influenceRadius( dfTempValue, lengthUnits::miles );
+                oStation.influenceRadius=dfTempValue;
+                oStation.influenceRadiusUnits=lengthUnits::miles;
+            }
+            else if( EQUAL( pszKey, "feet" ) )
+            {
+                oStation.influenceRadius=dfTempValue;
+                oStation.influenceRadiusUnits=lengthUnits::feet;
+            }
+            else if( EQUAL( pszKey, "km" ) )
+            {
+                oStation.influenceRadius=dfTempValue;
+                oStation.influenceRadiusUnits=lengthUnits::kilometers;
+            }
+            else if( EQUAL( pszKey, "meters" ) )
+            {
+                oStation.influenceRadius=dfTempValue;
+                oStation.influenceRadiusUnits=lengthUnits::meters;
+            }
+            else
+            {
+                oErrorString = "Invalid units for influence radius: ";
+                oErrorString += poFeature->GetFieldAsString( 14 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                throw( std::domain_error( oErrorString ) );
+            }
+            //cout<<"influence: "<<oStation.influenceRadius<<endl;
+
+            //pszKey=poFeature->GetFieldAsString(15);
+            //cout<<pszKey<<endl;
+            datetime=poFeature->GetFieldAsString(15);
+            std::string trunk=datetime.substr(0,datetime.size()-1);
+            //cout<<trunk<<endl;
+
+            boost::posix_time::ptime abs_time;
+
+            boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+            fig->set_iso_extended_format();
+            std::istringstream iss(trunk);
+            iss.imbue(std::locale(std::locale::classic(),fig));
+            iss>>abs_time;
+            //cout<<abs_time<<endl;
+            oStation.datetime=abs_time;
+
+            oStations.push_back(oStation);
+
+        }
+
+        OGRFeature::DestroyFeature( poFeature );
+        OGR_DS_Destroy( hDS );
+        CSLDestroy( papszHeader );
+
+//        if (fCount==oStations.size())
+//        {
+////            cout<<"matched features"<<endl;
+//            for (int i=0; i<fCount;i++)
+//            {
+////                cout<<oStations[i].datetime<<endl;
+//            }
+
+
+//        }
+
+    return oStations;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  * @brief pointInitialization::interpolateNull
  * Used if the function is the old PointInitialization.
@@ -656,7 +1157,7 @@ vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileN
     vector<wxStation> refinedDat;
 
     vector<vector<wxStationList> > interpolatedDataSet;
-    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
+//    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
 
 //    cout<<"interpolated DataSet"<<endl;
 //    cout<<interpolatedDataSet.size()<<endl;
@@ -694,7 +1195,7 @@ vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileN
     }
 
 
-    return refinedDat;
+    return vecCrap;
 }
 
 /**
@@ -708,7 +1209,8 @@ vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileN
  */
 
 
-vector<vector<wxStationList> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
+
+vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data"<<endl;
 
@@ -719,7 +1221,11 @@ vector<vector<wxStationList> > pointInitialization::interpolateTimeData(std::str
 //    cout<<qq<<endl;
 
 
-    vector<vector<wxStationList> > Selectify;
+
+
+    vector<vector<preInterpolate> > Selectify;
+
+
 
 //    cout<<"timeList"<<endl;
 //    for( int i=0;i<timeList.size();i++)
@@ -760,7 +1266,7 @@ for (int j=0;j<totalsize;j++)
     vector<boost::posix_time::time_duration> buffers;
     for (int i=0;i<vecStations[j].size();i++)
     {
-        buffer=vecStations[j][i].get_datetime()-vecStations[j][i+1].get_datetime();
+        buffer=vecStations[j][i].datetime-vecStations[j][i+1].datetime;
         if (buffer<=zero)
         {
             buffer=buffer.invert_sign();
@@ -779,68 +1285,71 @@ for (int j=0;j<totalsize;j++)
 
     avgBuffer=bufferSum/buffers.size();
 
-    cout<<avgBuffer<<endl;
+//    cout<<avgBuffer<<endl;
     avgBufferList.push_back(avgBuffer);
 }
 
-//cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-//int k=1;
-//for (int j=0;j<timeList.size();j++)
-//{
-//    int qq;
-//    qq=vecStations[k].size();
-//    boost::posix_time::ptime comparator;
-//    comparator=timeList[j];
-//    int counter=0;
-
-//    cout<<"goal: "<<comparator<<endl;
-
-//    for (int i=0;i<qq;i++)
-//    {
-//        boost::posix_time::time_duration difference;
-//        difference=comparator-vecStations[k][i].get_datetime();
-//        if (difference<=zero)
-//        {
-//            difference=difference.invert_sign();
-//        }
-//        if (difference<=avgBufferList[k])
-//        {
-//            counter++;
-
-//            if (counter>2)
-//            {
-//    //                    cout<<"false"<<" "<<counter<<endl;
-//                continue;
-//            }
-
-//    //                cout<<"true"<<" "<<counter<<endl;
-//            cout<<difference<<endl;
-//            cout<<vecStations[k][i].get_datetime()<<endl;
-//            continue;
-//        }
-//        if (difference<=avgBufferList[k]+one && counter<2)
-//        {
-//            cout<<difference<<endl;
-//            cout<<vecStations[k][i].get_datetime()<<endl;
-//            counter++;
-//            continue;
-//        }
-//        if (difference>avgBufferList[k])
-//        {
-//    //                cout<<"false"<<endl;
-//        }
 
 
-//    }
-//    cout<<" "<<endl;
-//}
 
-//cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+////cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+////int k=1;
+////for (int j=0;j<timeList.size();j++)
+////{
+////    int qq;
+////    qq=vecStations[k].size();
+////    boost::posix_time::ptime comparator;
+////    comparator=timeList[j];
+////    int counter=0;
+
+////    cout<<"goal: "<<comparator<<endl;
+
+////    for (int i=0;i<qq;i++)
+////    {
+////        boost::posix_time::time_duration difference;
+////        difference=comparator-vecStations[k][i].get_datetime();
+////        if (difference<=zero)
+////        {
+////            difference=difference.invert_sign();
+////        }
+////        if (difference<=avgBufferList[k])
+////        {
+////            counter++;
+
+////            if (counter>2)
+////            {
+////    //                    cout<<"false"<<" "<<counter<<endl;
+////                continue;
+////            }
+
+////    //                cout<<"true"<<" "<<counter<<endl;
+////            cout<<difference<<endl;
+////            cout<<vecStations[k][i].get_datetime()<<endl;
+////            continue;
+////        }
+////        if (difference<=avgBufferList[k]+one && counter<2)
+////        {
+////            cout<<difference<<endl;
+////            cout<<vecStations[k][i].get_datetime()<<endl;
+////            counter++;
+////            continue;
+////        }
+////        if (difference>avgBufferList[k])
+////        {
+////    //                cout<<"false"<<endl;
+////        }
+
+
+////    }
+////    cout<<" "<<endl;
+////}
+
+////cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
 
 for (int k=0;k<totalsize;k++)
 {
     int timesize=0;
-    vector<wxStationList> subSelectify;
+    vector<preInterpolate> subSelectify;
     int qq;
     qq=vecStations[k].size();
 //    cout<<avgBufferList[k]<<endl;
@@ -856,10 +1365,10 @@ for (int k=0;k<totalsize;k++)
         {
 
             boost::posix_time::time_duration difference;
-            difference=comparator-vecStations[k][i].get_datetime();
+            difference=comparator-vecStations[k][i].datetime;
             if (difference<=zero)
             {
-                difference=difference.invert_sign();               
+                difference=difference.invert_sign();
             }
             if (difference<=avgBufferList[k])
             {
@@ -903,17 +1412,17 @@ for (int k=0;k<totalsize;k++)
     Selectify.push_back(subSelectify);
 }
 
-//        exit(1);
+
 
 cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
 
-vector<vector<wxStationList> > lowVec;
-vector<vector<wxStationList> > highVec;
+vector<vector<preInterpolate> > lowVec;
+vector<vector<preInterpolate> > highVec;
 
 for (int j=0;j<Selectify.size();j++)
 {
-    vector<wxStationList> lowStations;
-    vector<wxStationList> highstations;
+    vector<preInterpolate> lowStations;
+    vector<preInterpolate> highstations;
 
     for (int i=0;i<Selectify[j].size();i+=2)
     {
@@ -928,78 +1437,86 @@ for (int j=0;j<Selectify.size();j++)
 
 }
 
-//printf("\n\n");
+////printf("\n\n");
 
-//cout<<Selectify[0].size()<<endl;
-
-
-
-//cout<<" "<<endl;
-//cout<<lowVec[0].size()<<endl;
-//cout<<timeList.size()<<endl;
-//cout<<highVec[0].size()<<endl;
-
-//for (int i=0;i<timeList.size();i++)
-//{
-//    cout<<lowVec[0][i].get_datetime()<<endl;
-//    cout<<timeList[i]<<endl;
-//    cout<<highVec[0][i].get_datetime()<<endl;
+////cout<<Selectify[0].size()<<endl;
 
 
-//}
 
-//exit(1);
-//cout<<"highvec size: "<<highVec[2].size()<<endl;
-//cout<<"lowvec size: "<<lowVec[2].size()<<endl;
+////cout<<" "<<endl;
+////cout<<lowVec[0].size()<<endl;
+////cout<<timeList.size()<<endl;
+////cout<<highVec[0].size()<<endl;
 
-//SETTING WX TIMELIST
+////for (int i=0;i<timeList.size();i++)
+////{
+////    cout<<lowVec[0][i].get_datetime()<<endl;
+////    cout<<timeList[i]<<endl;
+////    cout<<highVec[0][i].get_datetime()<<endl;
 
 
-vector<vector<wxStationList> > interpolatedWxData;
+////}
+
+////exit(1);
+////cout<<"highvec size: "<<highVec[2].size()<<endl;
+////cout<<"lowvec size: "<<lowVec[2].size()<<endl;
+
+////SETTING WX TIMELIST
+
+
+vector<vector<preInterpolate> > interpolatedWxData;
 for (int ey=0;ey<Selectify.size();ey++)
 {
-    vector<wxStationList> subInter;
+    vector<preInterpolate> subInter;
     for (int ex=0;ex<timeList.size();ex++)
     {
-        wxStationList timeStorage;
-        timeStorage.set_datetime(timeList[ex]);
+        preInterpolate timeStorage;
+        timeStorage.datetime=timeList[ex];
         subInter.push_back(timeStorage);
     }
     interpolatedWxData.push_back(subInter);
 }
 
-//wxStation::wxPrinter(vecStations[0][0]);
+////wxStation::wxPrinter(vecStations[0][0]);
 
-//SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
+////SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
 for (int k=0;k<Selectify.size();k++)
 {
     double latitude;
     double longitude;
     double height;
     double radiusInfluence;
-    wxStationList::eDatumType datum;
-    wxStationList::eCoordType coord;
+    std::string datum;
+    std::string coord;
     std::string stationName;
 
 
-    latitude=vecStations[k][0].get_lat();
-    longitude=vecStations[k][0].get_lon();
-    height=vecStations[k][0].get_height();
-    radiusInfluence=vecStations[k][0].get_influenceRadius();
-    datum=vecStations[k][0].get_datumType();
-    coord=vecStations[k][0].get_coordType();
+    latitude=vecStations[k][0].lat;
+    longitude=vecStations[k][0].lon;
+    height=vecStations[k][0].height;
+    radiusInfluence=vecStations[k][0].influenceRadius;
+    datum=vecStations[k][0].datumType;
+    coord=vecStations[k][0].coordType;
     const char* newdatum="WGS84";
-    stationName=vecStations[k][0].get_stationName();
+    stationName=vecStations[k][0].stationName;
 
     std::string demfile=demFileName;
 
 
     for (int i=0;i<timeList.size();i++)
     {
-        interpolatedWxData[k][i].set_location_LatLong(latitude,longitude,demfile,newdatum);
-        interpolatedWxData[k][i].set_height(height,lengthUnits::meters);
-        interpolatedWxData[k][i].set_influenceRadius(radiusInfluence,lengthUnits::meters);
-        interpolatedWxData[k][i].set_stationName(stationName);
+////      interpolatedWxData[k][i].set_location_LatLong(latitude,longitude,demfile,newdatum);
+        interpolatedWxData[k][i].lat=latitude;
+        interpolatedWxData[k][i].lon=longitude;
+        interpolatedWxData[k][i].datumType=datum;
+        interpolatedWxData[k][i].coordType=coord;
+////        interpolatedWxData[k][i].set_height(height,lengthUnits::meters);
+        interpolatedWxData[k][i].height=height;
+        interpolatedWxData[k][i].heightUnits=lengthUnits::meters;
+////        interpolatedWxData[k][i].set_influenceRadius(radiusInfluence,lengthUnits::meters);
+        interpolatedWxData[k][i].influenceRadius=radiusInfluence;
+        interpolatedWxData[k][i].influenceRadiusUnits=lengthUnits::meters;
+        interpolatedWxData[k][i].stationName=stationName;
     }
 }
 
@@ -1015,8 +1532,8 @@ for (int k=0;k<Selectify.size();k++)
     double high;
     double inter;
 
-    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
-    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
     boost::posix_time::ptime pInter=timeList[i];
 
 
@@ -1032,8 +1549,8 @@ for (int k=0;k<Selectify.size();k++)
     double speed2;
     double speedI;
 
-    speed1=lowVec[k][i].get_speed();
-    speed2=highVec[k][i].get_speed();
+    speed1=lowVec[k][i].speed;
+    speed2=highVec[k][i].speed;
 
 //    cout<<speed1<<" "<<speed2<<endl;
     speedI=interpolator(inter,low,high,speed1,speed2);
@@ -1049,10 +1566,15 @@ for (int k=0;k<Selectify.size();k++)
 
 //    cout<<speedI<<endl;
 
-    interpolatedWxData[k][i].set_speed(speedI,velocityUnits::metersPerSecond);
+//    interpolatedWxData[k][i].(speedI,velocityUnits::metersPerSecond);
+    interpolatedWxData[k][i].speed=speedI;
+    interpolatedWxData[k][i].inputSpeedUnits=vecStations[k][0].inputSpeedUnits;
     }
 
 }
+
+//cout<<interpolatedWxData[1][3].speed<<" "<<interpolatedWxData[1][3].inputSpeedUnits<<endl;
+
 
 //INTERPOLATING WIND DIRECITON
 for (int k=0;k<Selectify.size();k++)
@@ -1064,8 +1586,8 @@ for (int k=0;k<Selectify.size();k++)
     double highDir;
     double interDir;
 
-    lowDir=lowVec[k][i].get_direction();
-    highDir=highVec[k][i].get_direction();
+    lowDir=lowVec[k][i].direction;
+    highDir=highVec[k][i].direction;
 
 //    cout<<lowDir<<" "<<highDir<<endl;
 
@@ -1073,7 +1595,7 @@ for (int k=0;k<Selectify.size();k++)
 
 //    cout<<interDir<<endl;
 
-    interpolatedWxData[k][i].set_direction(interDir);
+    interpolatedWxData[k][i].direction=interDir;
     }
 
 }
@@ -1088,8 +1610,8 @@ for (int k=0;k<Selectify.size();k++)
     double high;
     double inter;
 
-    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
-    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
     boost::posix_time::ptime pInter=timeList[i];
 
 
@@ -1101,16 +1623,17 @@ for (int k=0;k<Selectify.size();k++)
     double highTemp;
     double interTemp;
 
-    lowTemp=lowVec[k][i].get_temperature();
-    highTemp=highVec[k][i].get_temperature();
-
+    lowTemp=lowVec[k][i].temperature;
+    highTemp=highVec[k][i].temperature;
     interTemp=interpolator(inter,low,high,lowTemp,highTemp);
 
 
 //    cout<<lowTemp<<" "<<highTemp<<endl;
 //    cout<<interTemp<<"\n\n"<<endl;
 
-    interpolatedWxData[k][i].set_temperature(interTemp,temperatureUnits::K);
+//    interpolatedWxData[k][i].set_temperature(interTemp,temperatureUnits::K);
+    interpolatedWxData[k][i].temperature=interTemp;
+    interpolatedWxData[k][i].tempUnits=vecStations[k][0].tempUnits;
     }
 
 }
@@ -1125,8 +1648,8 @@ for (int k=0;k<Selectify.size();k++)
     double high;
     double inter;
 
-    boost::posix_time::ptime pLow=lowVec[k][i].get_datetime();
-    boost::posix_time::ptime pHigh=highVec[k][i].get_datetime();
+    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
     boost::posix_time::ptime pInter=timeList[i];
 
 
@@ -1138,8 +1661,8 @@ for (int k=0;k<Selectify.size();k++)
     double highCloud;
     double interCloud;
 
-    lowCloud=lowVec[k][i].get_cloudCover();
-    highCloud=highVec[k][i].get_cloudCover();
+    lowCloud=lowVec[k][i].cloudCover;
+    highCloud=highVec[k][i].cloudCover;
 
     interCloud=interpolator(inter,low,high,lowCloud,highCloud);
 
@@ -1147,7 +1670,9 @@ for (int k=0;k<Selectify.size();k++)
 //    cout<<lowCloud<<" "<<highCloud<<endl;
 //    cout<<interCloud<<"\n\n"<<endl;
 
-    interpolatedWxData[k][i].set_cloudCover(interCloud,coverUnits::fraction);
+//    interpolatedWxData[k][i].set_cloudCover(interCloud,coverUnits::fraction);
+    interpolatedWxData[k][i].cloudCover=interCloud;
+    interpolatedWxData[k][i].cloudCoverUnits=coverUnits::percent;
     }
 
 }
@@ -1155,12 +1680,6 @@ for (int k=0;k<Selectify.size();k++)
 //cout<<interpolatedWxData.size()<<endl;
 //cout<<interpolatedWxData[0].size()<<" , "<<interpolatedWxData[1].size()<<" , "<<interpolatedWxData[2].size()<<endl;
 //cout<<"\n\n"<<endl;
-
-//wxStation::wxPrinter(lowVec[2][5]);
-//cout<<"\n"<<endl;
-//wxStation::wxPrinter(interpolatedWxData[2][5]);
-//cout<<"\n"<<endl;
-//wxStation::wxPrinter(highVec[2][5]);
 
 
     

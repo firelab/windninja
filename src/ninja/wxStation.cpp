@@ -812,7 +812,7 @@ void wxStationList::initialize()
  * @return array of strings representing the header
  */
 
-char **wxStationList::oldGetValidHeader()
+char **wxStation::oldGetValidHeader()
 {
     char** papszList = NULL;
     papszList = CSLAddString( papszList, "Station_Name" );
@@ -836,7 +836,7 @@ char **wxStationList::oldGetValidHeader()
                     "Radius_of_Influence_Units(miles,feet,meters,km)" );
     return papszList;
 }
-char **wxStationList::getValidHeader()
+char **wxStation::getValidHeader()
 {
     char** papszList = NULL;
     papszList = CSLAddString( papszList, "Station_Name" );
@@ -1462,8 +1462,8 @@ poLayer->ResetReading();
 
 char **papszHeader = NULL;
 //papszHeader = getValidHeader();
-papszHeader=getValidHeader();
-char **papszOldHeader=oldGetValidHeader();
+papszHeader=wxStation::getValidHeader();
+char **papszOldHeader=wxStation::oldGetValidHeader();
 
 bool fetchType;
 
@@ -1768,7 +1768,7 @@ void wxStationList::writeBlankStationFile( std::string outFileName )
     if( fout == NULL )
     return;
     char** papszHeader = NULL;
-    papszHeader = getValidHeader();
+    papszHeader = wxStation::getValidHeader();
     for( int i = 0;i < CSLCount( papszHeader ) - 1;i++ )
     fprintf( fout, "\"%s\",", papszHeader[i] );
     fprintf( fout, "\"%s\"\n", papszHeader[CSLCount( papszHeader ) - 1] );
@@ -1795,7 +1795,7 @@ void wxStationList::writeStationFile( std::vector<wxStationList>StationVect,
     if( fout == NULL )
     return;
     char** papszHeader = NULL;
-    papszHeader = getValidHeader();
+    papszHeader = wxStation::getValidHeader();
     for( int i = 0;i < CSLCount( papszHeader ) - 1;i++ )
     fprintf( fout, "\"%s\",", papszHeader[i] );
     fprintf( fout, "\"%s\"\n", papszHeader[CSLCount( papszHeader ) - 1] );

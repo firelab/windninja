@@ -81,9 +81,46 @@ class pointInitialization : public initialize
 		        AsciiGrid<double>& L,
 		        AsciiGrid<double>& u_star,
 		        AsciiGrid<double>& bl_height);
-        
+
+
+        struct preInterpolate
+        {
+            std::string stationName;
+            double lat;
+            double lon;
+            double projXord;
+            double projYord;
+            double xord;
+            double yord;
+            double height;
+            double speed;
+            double direction;
+            double w_speed;
+            double temperature;
+            double cloudCover;
+            double influenceRadius;
+            lengthUnits::eLengthUnits heightUnits;
+            velocityUnits::eVelocityUnits inputSpeedUnits;
+            velocityUnits::eVelocityUnits w_speedUnits;
+            temperatureUnits::eTempUnits tempUnits;
+            coverUnits::eCoverUnits cloudCoverUnits;
+            lengthUnits::eLengthUnits influenceRadiusUnits;
+            string datumType;
+            string coordType;
+            boost::posix_time::ptime datetime;
+        };
+
+        static void interpolateFromDisk(std::string stationFilename, //master function for interpolation, and making wxStation stuff
+                                        std::string demFile,
+                                        std::vector<boost::posix_time::ptime> timeList,std::string timeZone);
+        static vector<preInterpolate> readDiskLine(std::string stationFilename,std::string demFile); //reads in the data from disk
+
+
+        static vector<wxStation> makeWxStation(vector<preInterpolate> data); //prepares final product
+
+
         static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations);
-        static vector<vector<wxStationList> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
+        static vector<vector<preInterpolate> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
