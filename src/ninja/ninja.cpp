@@ -4230,10 +4230,10 @@ std::vector<wxStation> ninja::get_wxStations()
 {
     return input.stations;
 }
-std::vector<std::vector<wxStationList> > ninja::get_wxStatList()
-{
-    return input.vecStations;
-}
+//std::vector<std::vector<wxStationList> > ninja::get_wxStatList()
+//{
+//    return input.vecStations;
+//}
 
 
 /** Function sets the vector of weather stations.

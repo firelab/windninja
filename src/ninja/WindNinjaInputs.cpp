@@ -188,7 +188,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   outputWindHeightUnits = rhs.outputWindHeightUnits;
   outputWindHeight = rhs.outputWindHeight;
   
-  vecStations=rhs.vecStations;
   realStations=rhs.realStations;
 
   stations = rhs.stations;
@@ -353,7 +352,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       outputWindHeightUnits = rhs.outputWindHeightUnits;
       outputWindHeight = rhs.outputWindHeight;
       
-      vecStations=rhs.vecStations;
       
       stations = rhs.stations;
       wxStationFilename = rhs.wxStationFilename;

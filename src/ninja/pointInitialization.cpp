@@ -607,7 +607,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 
 
-void pointInitialization::interpolateFromDisk(std::string stationFilename,
+vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFilename,
                                               std::string demFile,
                                               std::vector<boost::posix_time::ptime> timeList,std::string timeZone)
 {
@@ -615,7 +615,7 @@ void pointInitialization::interpolateFromDisk(std::string stationFilename,
 
     std::string csvFile=stationFilename;
 
-    std::vector<std::vector<wxStationList> > a;
+
 
     vector<std::string> stationNames;
 
@@ -721,12 +721,28 @@ void pointInitialization::interpolateFromDisk(std::string stationFilename,
 //    cout<<wxVector[0][56].datumType<<endl;
 //    cout<<wxVector[0][56].coordType<<endl;
 
-vector<vector<preInterpolate> > interpolatedDataSet;
+    vector<vector<preInterpolate> > interpolatedDataSet;
 
-interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList);
+    interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList); //heavy lifting function that does all interpolation
+
+    vector<wxStation> readyToGo;
+    readyToGo=makeWxStation(interpolatedDataSet,csvFile,demFile);
+
+    for (int i=0;i<readyToGo.size();i++)
+    {
+    bool a=wxStation::check_station(readyToGo[i]);
+        if (a != true)
+        {
+            cout<<"!!stationcheck failed on #"<<i<<": \""<<readyToGo[i].get_stationName()<<"\" potential for bad data!!"<<endl;
+        }
+        else
+        {
+            cout<<"station check passed, station #"<<i<<": \""<<readyToGo[i].get_stationName()<<"\" has good data"<<endl;
+        }
+    }
 
 
-
+return readyToGo;
 }
 
 
@@ -1091,7 +1107,159 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 }
 
 
+vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string csvFile, string demFile)
+{
+    cout<<"converting Interpolated struct to wxStation"<<endl;
+    vector<std::string> stationNames;
+    vector<wxStation> stationData;
 
+    OGRDataSourceH hDS;
+    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRFeatureDefn *poFeatureDefn;
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+    std::string oStationName;
+
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    poLayer->ResetReading();
+    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
+    {
+    poFeatureDefn = poLayer->GetLayerDefn();
+
+    // get Station name
+    oStationName = poFeature->GetFieldAsString( 0 );
+    stationNames.push_back(oStationName);
+//    cout<<oStationName<<endl;
+    }
+
+
+
+    int statCount;
+    statCount=stationNames.size();
+
+    int specCount=statCount;
+
+    vector<int> idxCount;
+    int j=0;
+    int q=0;
+
+    for (int i=0;i<statCount;i++)
+    {
+//        cout<<"looks at: "<<q<<endl;
+//        cout<<"starts at: "<<j<<endl;
+
+        int idx1=0;
+        for(j;j<specCount;j++)
+        {
+            if(stationNames[j]==stationNames[q])
+            {
+                idx1++;
+            }
+        }
+        idxCount.push_back(idx1);
+        j=std::accumulate(idxCount.begin(),idxCount.end(),0);
+        q=j;
+        if (j==statCount)
+        {
+//            cout<<"exiting loop"<<endl;
+            break;
+        }
+    }
+    //     cout<<"idxCount size: "<<idxCount.size()<<endl;
+    //     for (int ii=0;ii<idxCount.size();ii++)
+    //     {
+    //         cout<<idxCount[ii]<<endl;
+    //     }
+         vector<int> countLimiter;
+
+         for (int ei=1;ei<=idxCount.size();ei++)
+         {
+         //    cout<<ei<<endl;
+             int rounder=idxCount.size()-ei;
+             int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
+             countLimiter.push_back(e);
+         }
+
+    //     for (int i=0;i<idxCount.size();i++)
+    //     {
+    //         cout<<countLimiter[i]-1<<" "<<stationNames[countLimiter[i]-1]<<endl;
+    //     }
+
+
+
+    //    cout<<countLimiter[0]-1<<" "<<stationNames[countLimiter[0]-1]<<endl;
+    //    cout<<countLimiter[1]-1<<" "<<stationNames[countLimiter[1]-1]<<endl;
+    //    cout<<countLimiter[2]-1<<" "<<stationNames[countLimiter[2]-1]<<endl;
+    //     vector<wxStationList> Liszt=wxStationList::readStationFetchFile(csvFile,demFile);
+
+         vector<vector<preInterpolate> >stationDataList;
+//     if (inputStation[0][0].get_stationName()=="")
+//     {
+//     vector<vector<wxStationList> >stationDataList=wxStationList::vectorRead(csvFile,demFile);
+//     }
+//     else
+
+        stationDataList=data;
+        //here is where a wxstation is made
+        for (int i=0;i<idxCount.size();i++)
+        {
+            wxStation subDat;
+//            subDat.set_stationName(stationDataList[i][0].get_stationName());
+            subDat.set_stationName(stationDataList[i][0].stationName);
+//            cout<<subDat.get_stationName()<<endl;
+
+            std::string CoordSys=stationDataList[i][0].datumType;
+
+//            int iCT=stationDataList[i][0].get_coordType();
+//            cout<<stationDataList[i][0].coordType<<endl;
+
+            if (CoordSys=="projcs")
+            {
+//             subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
+                cout<<"poo"<<endl;
+            }
+//            if (iCT==1)
+//            {
+//             stCoordDat="WGS84";
+//            }
+//            else
+//            {
+//             cout<<"defaulting to WGS84 "<<endl;
+//             stCoordDat="WGS84";
+//            }
+            else //WGS84!
+            {
+            const char* stCoorDat=CoordSys.c_str();
+//            cout<<stCoorDat<<endl;
+            subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
+                    demFile,stCoorDat);
+            }
+
+            for (int k=0;k<stationDataList[i].size();k++)
+            {
+             subDat.set_speed(stationDataList[i][k].speed,stationDataList[i][k].inputSpeedUnits);
+             subDat.set_direction(stationDataList[i][k].direction);
+             subDat.set_temperature(stationDataList[i][k].temperature,stationDataList[i][k].tempUnits);
+             subDat.set_cloudCover(stationDataList[i][k].cloudCover,stationDataList[i][k].cloudCoverUnits);
+             subDat.set_influenceRadius(stationDataList[i][k].influenceRadius,stationDataList[i][k].influenceRadiusUnits);
+             subDat.set_height(stationDataList[i][k].height,stationDataList[i][k].heightUnits);
+             subDat.set_datetime(stationDataList[i][k].datetime);
+
+            }
+        //    cout<<subDat.speed.size()<<endl;
+        //    cout<<subDat.direction.size()<<endl;
+            stationData.push_back(subDat);
+        }
+
+
+    return stationData;
+}
 
 
 
@@ -1114,12 +1282,11 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
  */
 
 
-
-vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations)
+vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations)
 {
     cout<<"no interpolation needed"<<endl;
     vector<wxStation> refinedDat;
-    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,vecStations);
+    refinedDat=makeWxStation(vecStations,csvFileName,demFileName);
 
     for (int i=0;i<refinedDat.size();i++)
     {
@@ -1138,65 +1305,65 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
     return refinedDat;
 }
 
-/**
- * @brief pointInitialization::InterpolatewxStation
- * @param csvFileName
- * @param demFileName
- * @param vecStations
- * @param timeList
- * @return
- */
+///**
+// * @brief pointInitialization::InterpolatewxStation
+// * @param csvFileName
+// * @param demFileName
+// * @param vecStations
+// * @param timeList
+// * @return
+// */
 
-vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
-{
-    wxStation crap;
-    crap.initialize();
-    vector<wxStation> vecCrap;
-    vecCrap.push_back(crap);
+//vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
+//{
+//    wxStation crap;
+//    crap.initialize();
+//    vector<wxStation> vecCrap;
+//    vecCrap.push_back(crap);
 
-    vector<wxStation> refinedDat;
+//    vector<wxStation> refinedDat;
 
-    vector<vector<wxStationList> > interpolatedDataSet;
-//    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
+//    vector<vector<wxStationList> > interpolatedDataSet;
+////    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
 
-//    cout<<"interpolated DataSet"<<endl;
-//    cout<<interpolatedDataSet.size()<<endl;
-//    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
-//    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
-//    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
-//    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
+////    cout<<"interpolated DataSet"<<endl;
+////    cout<<interpolatedDataSet.size()<<endl;
+////    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
+////    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
+////    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
+////    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
 
-    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,interpolatedDataSet);
+//    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,interpolatedDataSet);
 
-//    cout<<"refined wxStation"<<endl;
-//    cout<<refinedDat.size()<<endl;
-//    cout<<refinedDat[0].datetime[0]<<endl;
-//    cout<<refinedDat[0].speed[0]<<endl;
-//    cout<<refinedDat[0].speed[1]<<endl;
-//    cout<<refinedDat[2].speed[0]<<endl;
+////    cout<<"refined wxStation"<<endl;
+////    cout<<refinedDat.size()<<endl;
+////    cout<<refinedDat[0].datetime[0]<<endl;
+////    cout<<refinedDat[0].speed[0]<<endl;
+////    cout<<refinedDat[0].speed[1]<<endl;
+////    cout<<refinedDat[2].speed[0]<<endl;
 
-    boost::posix_time::time_duration buffer(1,0,0,0);
-    boost::posix_time::time_duration zero(0,0,0,0);
+//    boost::posix_time::time_duration buffer(1,0,0,0);
+//    boost::posix_time::time_duration zero(0,0,0,0);
 
-    vector<wxStation> Selectify;
-
-
-    for (int i=0;i<refinedDat.size();i++)
-    {
-    bool a=wxStation::check_station(refinedDat[i]);
-        if (a != true)
-        {
-            cout<<"!!stationcheck failed on #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" potential for bad data!!"<<endl;
-        }
-        else
-        {
-            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
-        }
-    }
+//    vector<wxStation> Selectify;
 
 
-    return vecCrap;
-}
+//    for (int i=0;i<refinedDat.size();i++)
+//    {
+//    bool a=wxStation::check_station(refinedDat[i]);
+//        if (a != true)
+//        {
+//            cout<<"!!stationcheck failed on #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" potential for bad data!!"<<endl;
+//        }
+//        else
+//        {
+//            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
+//        }
+//    }
+
+
+//    return vecCrap;
+//}
 
 /**
  * @brief interpolates raw data WRT time

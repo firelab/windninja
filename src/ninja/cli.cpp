@@ -1016,89 +1016,14 @@ int windNinjaCLI(int argc, char* argv[])
 ////                windsim.makeStationArmy( timeList );
 //            }
 //            return(0); //temporary for STATION_FETCH
-            pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
+            vector<wxStation> eval;
+            eval=pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
                     vm["elevation_file"].as<std::string>(),
                     timeList,osTimeZone );
 
             cout<<"WIP-Whizzle!"<<endl;
             exit(1);
         }
-
-
-//        exit(1);
-
-//        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
-//        {
-//            conflicting_options(vm, "fetch_station_name", "wx_station_filename");
-////            option_dependency(vm, "fetch_station");
-//            option_dependency(vm, "fetch_station", "fetch_station_name");
-//            option_dependency(vm, "fetch_station", "forecast_duration");
-//            option_dependency(vm, "fetch_station", "latest");
-//            option_dependency(vm, "fetch_station","fetch_type");
-//            option_dependency(vm, "fetch_station", "radius");
-//            option_dependency(vm, "fetch_station", "station_limit");
-//            option_dependency(vm, "fetch_station", "point_latitude");
-//            option_dependency(vm, "fetch_station", "point_longitude");
-//            option_dependency(vm, "fetch_station", "box_lower_left_latitude");
-//            option_dependency(vm, "fetch_station", "box_lower_left_longitude");
-//            option_dependency(vm, "fetch_station", "box_upper_right_latitude");
-//            option_dependency(vm, "fetch_station", "box_upper_right_longitude");
-//            option_dependency(vm, "fetch_station", "time_1_yr");
-//            option_dependency(vm, "fetch_station", "time_1_mo");
-//            option_dependency(vm, "fetch_station", "time_1_day");
-//            option_dependency(vm, "fetch_station", "time_1_clock");
-//            option_dependency(vm, "fetch_station", "time_2_yr");
-//            option_dependency(vm, "fetch_station", "time_2_mo");
-//            option_dependency(vm, "fetch_station", "time_2_day");
-//            option_dependency(vm, "fetch_station", "time_2_clock");
-//
-//
-//
-//
-//            if(vm.count("fetch_station_name"))   //download station and make appropriate size ninjaArmy
-//            {
-//                pointInitialization *station;
-//                station->stationCliCaller( vm["fetch_station"].as<bool>(),
-//                        vm["fetch_station_name"].as<std::string>(),
-//                        vm["forecast_duration"].as<int>(),
-//                        vm["latest"].as<bool>(),
-//                        vm["fetch_type"].as<std::string>(),
-//                        vm["radius"].as<std::string>(),
-//                        vm["station_limit"].as<std::string>(),
-//                        vm["point_latitude"].as<std::string>(),
-//                        vm["point_longitude"].as<std::string>(),
-//                        vm["box_lower_left_latitude"].as<std::string>(),
-//                        vm["box_lower_left_longitude"].as<std::string>(),
-//                        vm["box_upper_right_latitude"].as<std::string>(),
-//                        vm["box_upper_right_longitude"].as<std::string>(),
-//                        vm["time_1_yr"].as<std::string>(),
-//                        vm["time_1_mo"].as<std::string>(),
-//                        vm["time_1_day"].as<std::string>(),
-//                        vm["time_1_clock"].as<std::string>(),
-//                        vm["time_2_yr"].as<std::string>(),
-//                        vm["time_2_mo"].as<std::string>(),
-//                        vm["time_2_day"].as<std::string>(),
-//                        vm["time_2_clock"].as<std::string>() );
-//                return(0); //temporary for STATION_FETCH
-//                try
-//                {
-////                    windsim.makeArmy( station->fetchStation( vm["fetch_station_name"].as<std::string>(),
-////                                                             vm["forecast_duration"].as<int>() ),
-////                                                             osTimeZone );
-//                }
-//                catch(... )
-//                {
-//                    cout << "'fetch_station_name' is not valid" << "\n";
-//                    return -1;
-//                }
-//            }
-//
-//            option_dependency(vm, "forecast_filename", "time_zone");
-//            if(vm.count("wx_station_filename"))   //if a station file already exists
-//            {
-//                windsim.makeArmy(vm["wx_station_filename"].as<std::string>(), osTimeZone);
-//            }
-//        }
 
 
 //STATION_FETCH
@@ -1384,7 +1309,7 @@ int windNinjaCLI(int argc, char* argv[])
 //                windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>() );
                 if(vm["write_wx_station_kml"].as<bool>() == true)
                     cout<<"I'VE DISABLED THIS FUNCTION UNTIL WE REWRITE THE KML!"<<endl;
-//                    wxStationList::writeKmlFile(windsim.getWxStations( i_ ),
+//                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
 //                                            vm["wx_station_kml_filename"].as<std::string>());
 
 //                windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),

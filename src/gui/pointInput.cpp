@@ -117,7 +117,7 @@ void pointInput::readStationFile()
 {
     std::vector<wxStation>readStations;
     pointData.stations.clear();
-    std::vector<vector<wxStationList> > temporary;
+    std::vector<vector<string> > temporary;
 
     QString fileName;
     fileName = QFileDialog::getOpenFileName(this, tr("Open station file"),
@@ -129,8 +129,16 @@ void pointInput::readStationFile()
     }
     else {
         try {
-            temporary=wxStationList::vectorRead(stationFileName.toStdString(),demFileName.toStdString());
-            readStations = wxStation::makeWxStation(stationFileName.toStdString(),demFileName.toStdString(),temporary);
+//            temporary=wxStationList::vectorRead(stationFileName.toStdString(),demFileName.toStdString());
+//            readStations = wxStation::makeWxStation(stationFileName.toStdString(),demFileName.toStdString(),temporary);
+            std::string a="limehouse blues";
+            vector<string> chicago;
+            chicago.push_back(a);
+            wxStation bb;
+            bb.set_stationName("temp!");
+            readStations.push_back(bb);
+
+
 
             //this is a temporary fix, I have no idea what this class is (pointInput)
             //the above code is absolutely wrong but works for now, nothing outside of the interpolate functions

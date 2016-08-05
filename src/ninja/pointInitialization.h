@@ -110,18 +110,18 @@ class pointInitialization : public initialize
             boost::posix_time::ptime datetime;
         };
 
-        static void interpolateFromDisk(std::string stationFilename, //master function for interpolation, and making wxStation stuff
+        static vector<wxStation> interpolateFromDisk(std::string stationFilename, //master function for interpolation, and making wxStation stuff
                                         std::string demFile,
                                         std::vector<boost::posix_time::ptime> timeList,std::string timeZone);
         static vector<preInterpolate> readDiskLine(std::string stationFilename,std::string demFile); //reads in the data from disk
 
 
-        static vector<wxStation> makeWxStation(vector<preInterpolate> data); //prepares final product
+        static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string csvFile, std::string demFile); //prepares final product
 
 
-        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations);
+        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations);
         static vector<vector<preInterpolate> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
-        static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
+//        static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);

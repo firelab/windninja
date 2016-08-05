@@ -150,16 +150,16 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     boost::posix_time::ptime noTime;
     outaTime.push_back(noTime);
 
-    vector<vector<wxStationList> > vecStation=wxStationList::vectorRead(stationFileName,demFile);
+//    vector<vector<wxStationList> > vecStation=wxStationList::vectorRead(stationFileName,demFile);
 
-        if (timeList==outaTime) //If old PointInitalization
-        {
-            stationArmada=pointInitialization::interpolateNull(stationFileName,demFile,vecStation);
-        }
-        else
-        {
-            stationArmada=pointInitialization::InterpolatewxStation(stationFileName,demFile,vecStation,timeList);
-        }
+//        if (timeList==outaTime) //If old PointInitalization
+//        {
+//            stationArmada=pointInitialization::interpolateNull(stationFileName,demFile,vecStation);
+//        }
+//        else
+//        {
+//            stationArmada=pointInitialization::InterpolatewxStation(stationFileName,demFile,vecStation,timeList);
+//        }
 //    ninjas[0]->set_InterpolateData(timeList);
 //    stationArmada=ninjas[0]->get_wxStations();
 
