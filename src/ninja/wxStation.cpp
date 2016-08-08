@@ -1834,77 +1834,77 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
 void wxStation::writeKmlFile( std::vector<wxStation> stations,
         const std::string outFileName )
 {
-//    if( stations.size() == 0 )
-//        return;
-//    FILE *fout = fopen( outFileName.c_str(), "w" );
-//    if( fout == NULL ) {
-//        printf( "Cannot open kml file: %s for writing.", outFileName.c_str() );
-//        return;
-//    }
+    if( stations.size() == 0 )
+        return;
+    FILE *fout = fopen( outFileName.c_str(), "w" );
+    if( fout == NULL ) {
+        printf( "Cannot open kml file: %s for writing.", outFileName.c_str() );
+        return;
+    }
 
-//    double heightTemp, speedTemp, directionTemp, ccTemp, temperatureTemp, radOfInflTemp;
+    double heightTemp, speedTemp, directionTemp, ccTemp, temperatureTemp, radOfInflTemp;
 
 
-//    fprintf( fout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
-//    fprintf( fout, "<kml>\n" );
-//    fprintf( fout, "  <Document>\n" );
-//    fprintf( fout, "    <description>Weather Stations:%s</description>\n",
-//            outFileName.c_str() );
-//    for( unsigned int i = 0;i < stations.size();i++ ) {
+    fprintf( fout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+    fprintf( fout, "<kml>\n" );
+    fprintf( fout, "  <Document>\n" );
+    fprintf( fout, "    <description>Weather Stations:%s</description>\n",
+            outFileName.c_str() );
+    for( unsigned int i = 0;i < stations.size();i++ ) {
 
-//        heightTemp = stations[i].get_height();
-//        speedTemp = stations[i].get_speed();
-//        directionTemp = stations[i].get_direction();
-//        ccTemp = stations[i].get_cloudCover();
-//        temperatureTemp = stations[i].get_temperature();
-//        radOfInflTemp = stations[i].get_influenceRadius();
+        heightTemp = stations[i].get_height(0);
+        speedTemp = stations[i].get_speed(0);
+        directionTemp = stations[i].get_direction(0);
+        ccTemp = stations[i].get_cloudCover(0);
+        temperatureTemp = stations[i].get_temperature(0);
+        radOfInflTemp = stations[i].get_influenceRadius(0);
 
-//        lengthUnits::fromBaseUnits(heightTemp, stations[i].heightUnits);
-//        //lengthUnits::fromBaseUnits(heightTemp, lengthUnits::feet);
-//        velocityUnits::fromBaseUnits(speedTemp, stations[i].inputSpeedUnits);
-//        //lengthUnits::fromBaseUnits(directionTemp, heightUnits);
-//        coverUnits::fromBaseUnits(ccTemp, stations[i].cloudCoverUnits);
-//        temperatureUnits::fromBaseUnits(temperatureTemp, stations[i].tempUnits);
-//        lengthUnits::fromBaseUnits(radOfInflTemp, stations[i].influenceRadiusUnits);
+        lengthUnits::fromBaseUnits(heightTemp, stations[i].heightUnits);
+        //lengthUnits::fromBaseUnits(heightTemp, lengthUnits::feet);
+        velocityUnits::fromBaseUnits(speedTemp, stations[i].inputSpeedUnits);
+        //lengthUnits::fromBaseUnits(directionTemp, heightUnits);
+        coverUnits::fromBaseUnits(ccTemp, stations[i].cloudCoverUnits);
+        temperatureUnits::fromBaseUnits(temperatureTemp, stations[i].tempUnits);
+        lengthUnits::fromBaseUnits(radOfInflTemp, stations[i].influenceRadiusUnits);
 
-//        fprintf( fout, "    <Placemark>\n" );
-//        fprintf( fout, "      <name>%s</name\n>",
-//                stations[i].get_stationName().c_str() );
-//        fprintf( fout, "    <Point>\n" );
-//        fprintf( fout, "        <altitudeMode>clampToGround</altitudeMode>\n" );
-//        fprintf( fout, "        <coordinates>\n" );
-//        fprintf( fout, "          %lf,%lf,0.0\n", stations[i].get_lon(),
-//                stations[i].get_lat() );
-//        fprintf( fout, "        </coordinates>\n" );
-//        fprintf( fout, "      </Point>\n" );
-//        fprintf( fout, "      <description>\n" );
-//        fprintf( fout, "        <![CDATA[\n" );
-//        fprintf( fout, "          Name: %s\n",
-//                stations[i].get_stationName().c_str() );
-//        fprintf( fout, "          Height: %.2lf %s\n", heightTemp, lengthUnits::getString(stations[i].heightUnits).c_str() );
-//        fprintf( fout, "          Speed: %.2lf %s\n", speedTemp, velocityUnits::getString(stations[i].inputSpeedUnits).c_str() );
-//        fprintf( fout, "          Direction: %.0lf %s\n",
-//                directionTemp, "degrees" );
-//        fprintf( fout, "          Cloud Cover: %.2lf %s\n",
-//                ccTemp, coverUnits::getString(stations[i].cloudCoverUnits).c_str() );
-//        fprintf( fout, "          Temperature: %.1lf %s\n",
-//                temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
-//        if(stations[i].get_influenceRadius() > 0.0)
-//        {
-//            fprintf( fout, "          Radius of Influence: %.2lf %s\n",
-//                    radOfInflTemp, lengthUnits::getString(stations[i].influenceRadiusUnits).c_str() );
-//        }else
-//        {
-//            fprintf( fout, "          Radius of Influence: infinite\n");
-//        }
-//        fprintf( fout, "        ]]>\n" );
-//        fprintf( fout, "      </description>\n" );
-//        fprintf( fout, "    </Placemark>\n" );
-//    }
-//    fprintf( fout, "  </Document>\n" );
-//    fprintf( fout, "</kml>\n" );
+        fprintf( fout, "    <Placemark>\n" );
+        fprintf( fout, "      <name>%s</name\n>",
+                stations[i].get_stationName().c_str() );
+        fprintf( fout, "    <Point>\n" );
+        fprintf( fout, "        <altitudeMode>clampToGround</altitudeMode>\n" );
+        fprintf( fout, "        <coordinates>\n" );
+        fprintf( fout, "          %lf,%lf,0.0\n", stations[i].get_lon(),
+                stations[i].get_lat() );
+        fprintf( fout, "        </coordinates>\n" );
+        fprintf( fout, "      </Point>\n" );
+        fprintf( fout, "      <description>\n" );
+        fprintf( fout, "        <![CDATA[\n" );
+        fprintf( fout, "          Name: %s\n",
+                stations[i].get_stationName().c_str() );
+        fprintf( fout, "          Height: %.2lf %s\n", heightTemp, lengthUnits::getString(stations[i].heightUnits).c_str() );
+        fprintf( fout, "          Speed: %.2lf %s\n", speedTemp, velocityUnits::getString(stations[i].inputSpeedUnits).c_str() );
+        fprintf( fout, "          Direction: %.0lf %s\n",
+                directionTemp, "degrees" );
+        fprintf( fout, "          Cloud Cover: %.2lf %s\n",
+                ccTemp, coverUnits::getString(stations[i].cloudCoverUnits).c_str() );
+        fprintf( fout, "          Temperature: %.1lf %s\n",
+                temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
+        if(stations[i].get_influenceRadius(0) > 0.0)
+        {
+            fprintf( fout, "          Radius of Influence: %.2lf %s\n",
+                    radOfInflTemp, lengthUnits::getString(stations[i].influenceRadiusUnits).c_str() );
+        }else
+        {
+            fprintf( fout, "          Radius of Influence: infinite\n");
+        }
+        fprintf( fout, "        ]]>\n" );
+        fprintf( fout, "      </description>\n" );
+        fprintf( fout, "    </Placemark>\n" );
+    }
+    fprintf( fout, "  </Document>\n" );
+    fprintf( fout, "</kml>\n" );
 
-//    fclose( fout );
+    fclose( fout );
 }
 
 

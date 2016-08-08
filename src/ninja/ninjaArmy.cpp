@@ -150,7 +150,8 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     boost::posix_time::ptime noTime;
     outaTime.push_back(noTime);
 
-//    vector<vector<wxStationList> > vecStation=wxStationList::vectorRead(stationFileName,demFile);
+    stationArmada=pointInitialization::interpolateFromDisk(stationFileName,demFile,timeList,timeZone);
+
 
 //        if (timeList==outaTime) //If old PointInitalization
 //        {
@@ -160,8 +161,8 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
 //        {
 //            stationArmada=pointInitialization::InterpolatewxStation(stationFileName,demFile,vecStation,timeList);
 //        }
-//    ninjas[0]->set_InterpolateData(timeList);
-//    stationArmada=ninjas[0]->get_wxStations();
+/////    ninjas[0]->set_InterpolateData(timeList);
+/////    stationArmada=ninjas[0]->get_wxStations();
 
     ninjas.resize(timeList.size());
 
@@ -195,6 +196,10 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
             stationArmada[k].set_localDateTime(aLocal);
         }
     }
+
+
+//    cout<<timeList.size()<<endl;
+//    cout<<localTimeList.size()<<endl;
 
 
     for(unsigned int i = 0; i < timeList.size(); i++)

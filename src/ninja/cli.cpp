@@ -1016,12 +1016,48 @@ int windNinjaCLI(int argc, char* argv[])
 ////                windsim.makeStationArmy( timeList );
 //            }
 //            return(0); //temporary for STATION_FETCH
-            vector<wxStation> eval;
-            eval=pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
-                    vm["elevation_file"].as<std::string>(),
-                    timeList,osTimeZone );
+//            vector<wxStation> eval;
+//            eval=pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
+//                    vm["elevation_file"].as<std::string>(),
+//                    timeList,osTimeZone );
 
-            cout<<"WIP-Whizzle!"<<endl;
+            option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
+            option_dependency(vm, "output_wind_height", "units_output_wind_height");
+            int i_=0;
+            if(vm.count("fetch_station"))
+            {
+                windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
+            }
+            windsim.setInitializationMethod( i_,
+                    WindNinjaInputs::pointInitializationFlag,
+                    vm["match_points"].as<bool>() );
+            if (vm["fetch_station"].as<bool>() == true)
+            {
+                cout<<"new PointInitialization"<<endl;
+//                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
+               windsim.makeStationArmy(timeList, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+            }
+            if (vm["fetch_station"].as<bool>() == false)
+            {
+                cout<<"classic PointInitialization"<<endl;
+                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
+                vector<boost::posix_time::ptime> outaTime;
+                boost::posix_time::ptime noTime;
+                outaTime.push_back(noTime);
+                windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+            }
+
+
+
+
+
+
+
+
+
+
+
+            cout<<"whizzle!"<<endl;
             exit(1);
         }
 
@@ -1250,58 +1286,59 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                 }
                 #endif //STABILITY
-            }else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
+            }
+            else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
 //STATION_FETCH
-                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
-                option_dependency(vm, "output_wind_height", "units_output_wind_height");
-                if(vm.count("fetch_station")) 
-                {
-                    windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
-                }
-                windsim.setInitializationMethod( i_,
-                        WindNinjaInputs::pointInitializationFlag,
-                        vm["match_points"].as<bool>() );
-                if (vm["fetch_station"].as<bool>() == true)
-                {
-                    cout<<"new PointInitialization"<<endl;
-//                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
-                    std::vector<boost::posix_time::ptime> timeLiszt;
+//                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
+//                option_dependency(vm, "output_wind_height", "units_output_wind_height");
+//                if(vm.count("fetch_station"))
+//                {
+//                    windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
+//                }
+//                windsim.setInitializationMethod( i_,
+//                        WindNinjaInputs::pointInitializationFlag,
+//                        vm["match_points"].as<bool>() );
+//                if (vm["fetch_station"].as<bool>() == true)
+//                {
+//                    cout<<"new PointInitialization"<<endl;
+////                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
+//                    std::vector<boost::posix_time::ptime> timeLiszt;
                     
-                    timeLiszt = pointInitialization::getTimeList( vm["start_year"].as<int>(),
-                                                         vm["start_month"].as<int>(),
-                                                         vm["start_day"].as<int>(),
-                                                         vm["start_hour"].as<int>(),
-                                                         vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
-                                                         vm["number_time_steps"].as<int>(),
-                                                         osTimeZone );
-                                        exit(1);
-//                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-                    cout<<"a"<<endl;
-//                    pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
-//                            vm["elevation_file"].as<std::string>(),
-//                            timeLiszt,osTimeZone );
+//                    timeLiszt = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+//                                                         vm["start_month"].as<int>(),
+//                                                         vm["start_day"].as<int>(),
+//                                                         vm["start_hour"].as<int>(),
+//                                                         vm["start_minute"].as<int>(),
+//                                                         vm["end_year"].as<int>(),
+//                                                         vm["end_month"].as<int>(),
+//                                                         vm["end_day"].as<int>(),
+//                                                         vm["end_hour"].as<int>(),
+//                                                         vm["end_minute"].as<int>(),
+//                                                         vm["number_time_steps"].as<int>(),
+//                                                         osTimeZone );
+//                                        exit(1);
+////                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+//                    cout<<"a"<<endl;
+////                    pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
+////                            vm["elevation_file"].as<std::string>(),
+////                            timeLiszt,osTimeZone );
                    
                     
-                    exit(1);
+//                    exit(1);
 
-                }
-                if (vm["fetch_station"].as<bool>() == false)
-                {
-                    cout<<"classic PointInitialization"<<endl;
-                    windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
-                    vector<boost::posix_time::ptime> outaTime;
-                    boost::posix_time::ptime noTime;
-                    outaTime.push_back(noTime);
-                    windsim.makeStationArmy(outaTime,osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-                }
-                cout<<"whizzle!"<<endl;
-                exit(1);
+//                }
+//                if (vm["fetch_station"].as<bool>() == false)
+//                {
+//                    cout<<"classic PointInitialization"<<endl;
+//                    windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
+//                    vector<boost::posix_time::ptime> outaTime;
+//                    boost::posix_time::ptime noTime;
+//                    outaTime.push_back(noTime);
+//                    windsim.makeStationArmy(outaTime,osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+//                }
+//                cout<<"whizzle!"<<endl;
+//                exit(1);
                 // vm["fetch_station"].as<bool>()
                 
                 

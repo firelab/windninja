@@ -677,7 +677,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
 
     std::vector<pointInitialization::preInterpolate> diskData;
     std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
-    diskData=readDiskLine(stationFilename,demFile);
+    diskData=readDiskLine(stationFilename,demFile);// reads in data
     int t=0;
     vector<int> countLimiter;
 
@@ -720,13 +720,21 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
 //    cout<<wxVector[0][56].datetime<<endl;
 //    cout<<wxVector[0][56].datumType<<endl;
 //    cout<<wxVector[0][56].coordType<<endl;
-
+    vector<boost::posix_time::ptime> outaTime;
+    boost::posix_time::ptime noTime;
+    outaTime.push_back(noTime);
     vector<vector<preInterpolate> > interpolatedDataSet;
-
-    interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList); //heavy lifting function that does all interpolation
-
     vector<wxStation> readyToGo;
+    if (wxVector[0][0].datetime==noTime)
+    {
+        cout<<"notime"<<endl;
+        readyToGo=interpolateNull(csvFile,demFile,wxVector);
+    }
+    else
+    {
+    interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList); //heavy lifting function that does all interpolation
     readyToGo=makeWxStation(interpolatedDataSet,csvFile,demFile);
+    }
 
     for (int i=0;i<readyToGo.size();i++)
     {
@@ -1285,21 +1293,24 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations)
 {
     cout<<"no interpolation needed"<<endl;
+
+    vecStations[0][0].cloudCoverUnits=coverUnits::percent;
+
     vector<wxStation> refinedDat;
     refinedDat=makeWxStation(vecStations,csvFileName,demFileName);
 
-    for (int i=0;i<refinedDat.size();i++)
-    {
-    bool a=wxStation::check_station(refinedDat[i]);
-        if (a != true)
-        {
-            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
-        }
-        else
-        {
-            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
-        }
-    }
+//    for (int i=0;i<refinedDat.size();i++)
+//    {
+////    bool a=wxStation::check_station(refinedDat[i]);
+////        if (a != true)
+////        {
+////            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
+////        }
+////        else
+////        {
+////            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
+////        }
+////    }
 
 
     return refinedDat;
