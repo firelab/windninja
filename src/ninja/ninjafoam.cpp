@@ -36,7 +36,6 @@ NinjaFoam::NinjaFoam() : ninja()
     pszGridFilename = NULL;
 
     boundary_name = "";
-    terrainName = "NAME";
     type = "";
     value = "";
     gammavalue = "";
@@ -2415,7 +2414,16 @@ const char * NinjaFoam::GetGridFilename()
     return pszGridFilename;
 }
 
-void NinjaFoam::SetOutputFilenames()
+double NinjaFoam::GetNativeFineMeshResolution()
+{
+    long nTargetCells = 20000;
+    mesh.set_targetNumHorizCells(nTargetCells);
+    mesh.compute_cellsize(input.dem);
+
+    return mesh.meshResolution;
+}
+
+void NinjaFoam::SetOutputResolution()
 {
     //Set output file resolutions now
     if( input.kmzResolution <= 0.0 )  //if negative, use DEM resolution
@@ -2429,6 +2437,19 @@ void NinjaFoam::SetOutputFilenames()
     if( input.pdfResolution <= 0.0 )
         input.pdfResolution = input.dem.get_cellSize();
 
+    //resample if needed so kmz and pdf output is readable 
+    if( input.kmzResolution < GetNativeFineMeshResolution() )
+    {
+        input.kmzResolution = GetNativeFineMeshResolution();
+    }
+    if( input.pdfResolution < GetNativeFineMeshResolution() )
+    {
+        input.pdfResolution = GetNativeFineMeshResolution();
+    }
+}
+
+void NinjaFoam::SetOutputFilenames()
+{
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
@@ -2475,10 +2496,10 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
 
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
@@ -2551,6 +2572,12 @@ int NinjaFoam::SampleRawOutput()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    if(VelocityGrid.get_maxValue() > 220.0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "The flow solution did not converge. This may occasionally "
+                "happen in very complex terrain when the mesh resolution is high. Try the simulation "
+                "again with a coarser mesh.");
+        return(NINJA_E_OTHER);
+    }
 
     GDALClose( hDS );
 
@@ -2571,10 +2598,10 @@ int NinjaFoam::WriteOutputFiles()
     //change windspeed units back to what is specified by speed units switch
     velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
 
-    /*-------------------------------------------------------------------*/
-    /* set up filenames                                                  */
-    /*-------------------------------------------------------------------*/
+    //resample to requested output resolutions
+    SetOutputResolution();
 
+    //set up filenames
     SetOutputFilenames();
 
     /*-------------------------------------------------------------------*/

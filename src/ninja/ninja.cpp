@@ -29,6 +29,8 @@
 
 #include "ninja.h"
 
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /**Ninja constructor
  * This is the default ninja constructor.
  */
@@ -2772,7 +2774,6 @@ void ninja::computeDustEmissions()
 
 void ninja::writeOutputFiles()
 {
-    
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
 	//Write volume data to VTK format (always in m/s?)
@@ -4035,10 +4036,8 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-//	std::vector<std::string> regions;
-//	regions = tz_db.region_list();
-
-    input.ninjaTimeZone = input.tz_db.time_zone_from_region( timeZoneString.c_str() );
+  input.ninjaTimeZone =
+      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;
@@ -4771,11 +4770,12 @@ void ninja::set_outputFilenames(double& meshResolution,
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;

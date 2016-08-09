@@ -47,9 +47,12 @@ class windInput : public QWidget
 
   metaWindWidget *metaWind;
   windInputTable *windTable;
-  
+
+  QToolButton *clearButton;
+
   QScrollArea *scrollArea;
 
+  QHBoxLayout *clearLayout;
   QVBoxLayout *windLayout;
   QVBoxLayout *mainLayout;
 

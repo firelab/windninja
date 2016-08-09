@@ -195,13 +195,9 @@ int main(int argc, char *argv[])
     poCT = OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
     poCT->Transform(1, &longitude, &latitude);
 
-    //boost::local_time::local_date_time* ninjaTime;
     boost::local_time::time_zone_ptr ninjaTimeZone;
-    boost::local_time::tz_database tz_db;
 
-    std::string tz_file = FindDataPath("date_time_zonespec.csv");
-    tz_db.load_from_file(tz_file);
-    ninjaTimeZone = tz_db.time_zone_from_region(pszTimeZone);
+    ninjaTimeZone = globaTimeZoneDB.time_zone_from_region(pszTimeZone);
     if(ninjaTimeZone == NULL)
     {
         ostringstream os;

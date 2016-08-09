@@ -79,17 +79,8 @@ public:
 
 private:
 
-    double foamRoughness; //roughness value used in OpenFOAM
-
-    std::vector<double> direction; //input.inputDirection converted to unit vector notation
-    std::vector<std::string> inlets; // e.g., north_face
-    std::vector<std::string> bcs; 
-
-    const char *pszTempPath;
-
+    /* OpenFOAM case setup */
     int GenerateTempDirectory();
-    int WriteJson();
-    
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
@@ -103,36 +94,49 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
-    int writeMoveDynamicMesh();
-    int writeBlockMesh();
-    int readDem(double &ratio_); //sets blockMesh data from DEM 
-    int readLogFile(double &ratio); //sets blockMesh data from STL log file when DEM not available
     
+    const char *pszTempPath;
+    double foamRoughness; //roughness value used in OpenFOAM
+    std::vector<double> direction; //input.inputDirection converted to unit vector notation
+    std::vector<std::string> inlets; // e.g., north_face
+    std::vector<std::string> bcs;
     std::string boundary_name;
-    std::string terrainName;
     std::string type;
     std::string value;
     std::string gammavalue;
     std::string pvalue;
     std::string inletoutletvalue;
     std::string template_;
-    
+
+    /* mesh */
+    int writeMoveDynamicMesh();
+    int writeBlockMesh();
+    int readDem(double &ratio_); //sets blockMesh data from DEM
+    int ReadStl();
+    int readLogFile(double &ratio); //sets blockMesh data from STL log file when DEM not available
+    double GetNativeFineMeshResolution(); //for output re-sampling
+
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
     std::vector<double> bbox;
     std::vector<int> nCells; //number of cells in x,y,z directions of blockMesh
+    int cellCount; //total cell count in the mesh
     double meshResolution; // mesh resolution
     double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
     double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
     double finalFirstCellHeight; //final approx height of near-ground cell after refinement
-    int latestTime; //latest time directory
-    int cellCount; //total cell count in the mesh 
-    int simpleFoamEndTime; //set to last time directory
-    
+
+    /* OpenFOAM case control */
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     int CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
+    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateSimpleFoamControlDict();
+
+    int latestTime; //latest time directory
+    int simpleFoamEndTime; //set to last time directory
     
+    /* OpenFOAM utilities */
     int SurfaceTransformPoints();
     int SurfaceCheck();
     int RefineSurfaceLayer();
@@ -148,19 +152,17 @@ private:
     int ApplyInit();
     int SimpleFoam();
     int Sample();
-    int ReadStl();
-    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
-    void UpdateSimpleFoamControlDict();
 
-    /* GDAL/OGR output */
+    /* Output */
+    int SampleRawOutput();
+    int WriteOutputFiles();
+    void SetOutputResolution();
+    void SetOutputFilenames();
+
     const char *pszVrtMem;
     const char *pszGridFilename;
     
-    int SampleRawOutput();
-    int WriteOutputFiles();
-    void SetOutputFilenames();
-    
-    //Timers
+    /* Timers */
     double startTotal, endTotal;
     double startMesh, endMesh;
     double startInit, endInit;

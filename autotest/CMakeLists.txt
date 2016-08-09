@@ -243,6 +243,8 @@ if(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_7)
     add_test(utc_add_hours_8
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_8)
+    add_test(utc_add_hours_9
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/add_hours_9)
     add_test(utc_now_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utc/now_1)
     add_test(utc_compare_1

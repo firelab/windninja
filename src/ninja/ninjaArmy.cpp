@@ -318,17 +318,22 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 */
 bool ninjaArmy::startRuns(int numProcessors)
 {
-//    pointInitialization *point;
-//    point->fetchAutoBbox(ninjas[0]->input);
-
-    //something goes here
-
-    //Com->ninjaCom(ninjaComClass::ninjaNone, "Jason Sucks!");
     int j;
     bool status = true;
 
     if(ninjas.size()<1 || numProcessors<1)
         return false;
+
+    //check for duplicate runs before we start the simulations 
+    if(ninjas.size() > 1){
+        for(unsigned int i=0; i<ninjas.size()-1; i++){
+            for(unsigned int j=i+1; j<ninjas.size(); j++){
+                if(ninjas[i]->input == ninjas[j]->input){
+                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+                }
+            }
+        }
+    }
 
 #ifdef _OPENMP
     omp_set_nested(false);
@@ -1085,11 +1090,6 @@ int ninjaArmy::setInputPointsFilename( const int nIndex, const std::string filen
 int ninjaArmy::setOutputPointsFilename( const int nIndex, const std::string filename, char **papszOptions)
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputPointsFilename( filename ) );
-}
-/*  couldn't find equivalent in ninja.cpp, maybe still in windninjainputs?? */
-int ninjaArmy::setOutputPointsFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
- return 0;
 }
 
 int ninjaArmy::readInputFile( const int nIndex, const std::string filename, char ** papszOptions )

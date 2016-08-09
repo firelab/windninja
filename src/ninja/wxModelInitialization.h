@@ -65,6 +65,8 @@ namespace bpt = boost::posix_time;
 
 #include "volVTK.h"
 
+#include "ninja_init.h"
+
 extern omp_lock_t netCDF_lock;
 
 static char **papszThreddsCsv = NULL;

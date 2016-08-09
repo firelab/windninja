@@ -302,7 +302,6 @@ public:
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
 
-    void set_outputPointsFlag(bool flag);
     void set_inputPointsFilename(std::string filename); //set name for input file of requested output locations
     void set_outputPointsFilename(std::string filename); //set name for output file with winds at requested locations
 

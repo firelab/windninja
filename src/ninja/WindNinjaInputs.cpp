@@ -53,7 +53,6 @@ WindNinjaInputs::WindNinjaInputs()
     CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
     //outer_relax = 0.01;
     diurnalWinds = false;
-    tz_db.load_from_file(FindDataPath("date_time_zonespec.csv"));
     airTempUnits = temperatureUnits::F;
     airTemp = -10000;
     cloudCoverUnits = coverUnits::percent;
@@ -215,7 +214,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   heightList = rhs.heightList;
 
   ninjaTime = rhs.ninjaTime;
-  tz_db = rhs.tz_db;
   if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
       ninjaTimeZone.reset();
   else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty
@@ -324,6 +322,33 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 }
 
 /**
+ * Comparison operator.
+ * For use in detecting duplicate runs. Only a subset
+ * of inputs (those necessary to ID duplicate runs from
+ * the GUI) are checked.
+ * @param rhs WindNinjaInputs object to compare with.
+ * @return true if objects are equal, otherwise false.
+ */
+bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
+{
+    if( inputSpeed == rhs.inputSpeed &&
+        inputSpeedUnits == rhs.inputSpeedUnits &&
+        inputDirection == rhs.inputDirection &&
+        airTemp == rhs.airTemp &&
+        airTempUnits == rhs.airTempUnits &&
+        cloudCover == rhs.cloudCover &&
+        cloudCoverUnits == rhs.cloudCoverUnits &&
+        ninjaTime == rhs.ninjaTime &&
+        diurnalWinds == rhs.diurnalWinds)
+    {
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+/**
  * Equals operator.
  * @param rhs WindNinjaInputs object to set equal to.
  * @return A referece to a copied rhs.
@@ -386,8 +411,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       heightList = rhs.heightList;
 
       ninjaTime = rhs.ninjaTime;
-      tz_db = rhs.tz_db;
-      //ninjaTimeZone.reset(new boost::local_time::posix_time_zone(rhs.ninjaTimeZone->to_posix_string()));
       if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
           ninjaTimeZone.reset();
       else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty

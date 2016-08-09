@@ -404,6 +404,7 @@ public:
     */
     int setOutputPointsFlag( const int nIndex, const bool flag,
                              char ** papszOptions=NULL);
+
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
 
