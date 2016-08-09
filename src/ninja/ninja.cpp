@@ -652,10 +652,10 @@ double ninja::getSmallestRadiusOfInfluence()
 	double smallest = DBL_MAX;
 	for(unsigned int i = 0; i < input.stations.size(); i++)
 	{
-        if(input.stations[i].get_influenceRadius(0) > 0)
+        if(input.stations[i].get_influenceRadius() > 0)
 		{
-            if(input.stations[i].get_influenceRadius(0) < smallest)
-                smallest = input.stations[i].get_influenceRadius(0);
+            if(input.stations[i].get_influenceRadius() < smallest)
+                smallest = input.stations[i].get_influenceRadius();
 		}
 	}
 
@@ -2501,7 +2501,7 @@ bool ninja::matched(int iter)
             //Check if station is in mesh, if not, can't do matching so skip
             if(!mesh.inMeshXY(x, y))
                 continue;
-            z = input.stations[i].get_height(0) + input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) + input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
+            z = input.stations[i].get_height() + input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) + input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
 
 			//Get cell number and "parent cell" coordinates of station location
 			elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
@@ -2512,7 +2512,7 @@ bool ninja::matched(int iter)
             try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
-            wind_sd_to_uv(input.stations[i].get_speed(0), input.stations[i].get_direction(0), &true_u, &true_v);
+            wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance
@@ -2545,11 +2545,11 @@ bool ninja::matched(int iter)
                     maxCurrentOuterDiff = abs(true_v-try_output_v);
 			}
 
-            wind_sd_to_uv(input.stationsScratch[i].get_speed(0), input.stationsScratch[i].get_direction(0), &try_input_u, &try_input_v);
+            wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &try_input_u, &try_input_v);
             try_input_w = input.stationsScratch[i].get_w_speed();
-            wind_sd_to_uv(input.stationsOldInput[i].get_speed(0), input.stationsOldInput[i].get_direction(0), &old_input_u, &old_input_v);
+            wind_sd_to_uv(input.stationsOldInput[i].get_speed(), input.stationsOldInput[i].get_direction(), &old_input_u, &old_input_v);
             old_input_w = input.stationsOldInput[i].get_w_speed();
-            wind_sd_to_uv(input.stationsOldOutput[i].get_speed(0), input.stationsOldOutput[i].get_direction(0), &old_output_u, &old_output_v);
+            wind_sd_to_uv(input.stationsOldOutput[i].get_speed(), input.stationsOldOutput[i].get_direction(), &old_output_u, &old_output_v);
             old_output_w = input.stationsOldOutput[i].get_w_speed();
 
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - try_output_u, true_v - try_output_v, true_w - try_output_w);

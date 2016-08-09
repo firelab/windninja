@@ -150,6 +150,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     boost::posix_time::ptime noTime;
     outaTime.push_back(noTime);
 
+
     stationArmada=pointInitialization::interpolateFromDisk(stationFileName,demFile,timeList,timeZone);
 
 
@@ -176,6 +177,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     boost::local_time::time_zone_ptr timeZonePtr;
     timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
+    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
+    boost::local_time::local_date_time localStandard(standard,timeZonePtr);
+
     vector<boost::local_time::local_date_time> localTimeList;
     for(unsigned int i = 0; i < timeList.size(); i++)
     {
@@ -187,6 +191,12 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
 //        cout<<timeList[i]<<" "<<localTimeList[i]<<endl;
 //        cout<<stationArmada[0].get_datetime(i)<<endl;
     }
+    if (timeList.size()==1 && timeList[0]==noTime)//fixes timelist for old PointInitialization data
+    {
+        timeList.assign(1,standard);
+        localTimeList.assign(1,localStandard);
+    }
+
     for(unsigned int k=0;k<stationArmada.size();k++)
     {
         for (unsigned int i=0;i<timeList.size();i++)
@@ -198,8 +208,16 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     }
 
 
-//    cout<<timeList.size()<<endl;
-//    cout<<localTimeList.size()<<endl;
+
+
+
+//    cout<<stationArmada[0].get_datetime(0)<<endl;
+//    cout<<stationArmada[0].get_localDateTime(0)<<endl;
+//    cout<<timeList[0]<<endl;
+//    cout<<localTimeList[0]<<endl;
+
+
+
 
 
     for(unsigned int i = 0; i < timeList.size(); i++)
@@ -207,11 +225,74 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
 
         ninjas[i]->set_date_time(localTimeList[i]);
 //        ninjas[i]->set_date_time(stationArmada[i]);
+//        cout<<ninjas[i]->get_date_time()<<endl;
 
     }
 
 
-    
+
+
+//    cout<<"testing self-identity"<<endl;
+
+    int n=2;
+
+//    stationArmada[n].set_currentTimeStep(ninjas[0]->get_date_time());
+
+//    cout<<stationArmada[n].get_currentTimeStep()<<endl;
+
+//    cout<<stationArmada[n].get_localDateTime(0)<<endl;
+
+////    boost::local_time::local_date_time a=stationArmada[n].get_localDateTime(0);
+//    vector<boost::local_time::local_date_time> evala;
+//    for (int i=0;i<timeList.size();i++)
+//    {
+//        boost::local_time::local_date_time a=stationArmada[n].get_localDateTime(i);
+////        cout<<a<<endl;
+//        evala.push_back(a);
+//    }
+//    cout<<evala.size()<<endl;
+
+//    boost::local_time::local_date_time a=stationArmada[n].get_localDateTime(0);
+//    boost::local_time::local_date_time cur=stationArmada[n].get_currentTimeStep();
+//    for (int i=0;i<timeList.size();i++)
+//    {
+//        if (cur==stationArmada[n].get_localDateTime(i))
+//        {
+//            cout<<i<<endl;
+//            cout<<stationArmada[n].get_speed(i)<<endl;
+//        }
+//        else
+//        {
+//            cout<<"notamach"<<endl;
+//        }
+//    }
+
+//   stationArmada[n].set_currentTimeStep(ninjas[0]->get_date_time());
+//   double height;
+//   double speed;
+//   double direction;
+//   double temp;
+//   double cc;
+//   double infr;
+
+//   height=stationArmada[n].get_height();
+//   speed=stationArmada[n].get_speed();
+//   direction=stationArmada[n].get_direction();
+//   temp=stationArmada[n].get_temperature();
+//   cc=stationArmada[n].get_cloudCover();
+//   infr=stationArmada[n].get_influenceRadius();
+
+//   cout<<stationArmada[n].get_stationName()<<endl;
+//   cout<<height<<endl;
+//   cout<<speed<<endl;
+//   cout<<direction<<endl;
+//   cout<<temp<<endl;
+//   cout<<cc<<endl;
+//   cout<<infr<<endl;
+
+
+//    cout<<"ending self-identify test"<<endl;
+//    exit(1);
 //    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_InterpolateData( timeList ) );    
 //    IF_VALID_INDEX_TRY( nIndex, ninjas,
 //            ninjas[ nIndex ]->set_InterpolateData(timeList));

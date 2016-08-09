@@ -206,24 +206,26 @@ class wxStation
     inline double get_lon() { return lon; }
     inline double get_lat() { return lat; }
     void set_height( double Height, lengthUnits::eLengthUnits units );
-    double get_height( int idx,lengthUnits::eLengthUnits units = lengthUnits::meters);
+    double get_height(lengthUnits::eLengthUnits units = lengthUnits::meters);
     void set_speed( double Speed, velocityUnits::eVelocityUnits units );
-    double get_speed(int idx, velocityUnits::eVelocityUnits units = velocityUnits::metersPerSecond);
+    double get_speed(velocityUnits::eVelocityUnits units = velocityUnits::metersPerSecond);
     void set_direction( double Direction );
-    inline double get_direction(int idx) { return direction[idx]; }
+    double get_direction();
     void set_w_speed( double W_Speed, velocityUnits::eVelocityUnits units );
     double get_w_speed(velocityUnits::eVelocityUnits units = velocityUnits::metersPerSecond);
     void set_temperature(double Temperature, temperatureUnits::eTempUnits units);
-    double get_temperature(int idx,temperatureUnits::eTempUnits units = temperatureUnits::K);
+    double get_temperature(temperatureUnits::eTempUnits units = temperatureUnits::K);
     void set_cloudCover( double CloudCover, coverUnits::eCoverUnits units );
-    double get_cloudCover( int idx,coverUnits::eCoverUnits units = coverUnits::fraction);
+    double get_cloudCover(coverUnits::eCoverUnits units = coverUnits::fraction);
     void set_influenceRadius( double InfluenceRadius, lengthUnits::eLengthUnits units );
-    double get_influenceRadius( int idx, lengthUnits::eLengthUnits units = lengthUnits::meters);
+    double get_influenceRadius(lengthUnits::eLengthUnits units = lengthUnits::meters);
 
     void set_datetime(boost::posix_time::ptime timedata);
     boost::posix_time::ptime get_datetime(int idx);
     void set_localDateTime(boost::local_time::local_date_time timedata);
     boost::local_time::local_date_time get_localDateTime(int idx);
+    boost::local_time::local_date_time get_currentTimeStep();
+    void set_currentTimeStep(boost::local_time::local_date_time step);
 
     static void wxPrinter(wxStation wxObject);
     static void wxVectorPrinter(std::vector<wxStation> wxObject, int count);
@@ -250,7 +252,7 @@ class wxStation
     static void writeStationFile( std::vector<wxStation> StationVect,
                   const std::string outFileName );
     static void writeBlankStationFile( std::string outFileName );
-
+    boost::posix_time::ptime a;
 
  private:
 
@@ -279,6 +281,8 @@ class wxStation
     lengthUnits::eLengthUnits influenceRadiusUnits;
     eDatumType datumType;
     eCoordType coordType;
+    vector<boost::local_time::local_date_time> curStep;
+
 
     vector<boost::posix_time::ptime> datetime; //this is UTC and is used to match data points from MesoWest and Interpolation.
     vector<boost::local_time::local_date_time> localDateTime;

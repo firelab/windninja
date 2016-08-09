@@ -137,14 +137,14 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 	for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
 	{
-        if(input.stationsScratch[ii].get_height(0) > maxStationHeight)
-            maxStationHeight = input.stationsScratch[ii].get_height(0);
-        sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
-        T[ii] = input.stationsScratch[ii].get_temperature(0);
-        cc[ii] = input.stationsScratch[ii].get_cloudCover(0);
+        if(input.stationsScratch[ii].get_height() > maxStationHeight)
+            maxStationHeight = input.stationsScratch[ii].get_height();
+        sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
+        T[ii] = input.stationsScratch[ii].get_temperature();
+        cc[ii] = input.stationsScratch[ii].get_cloudCover();
         X[ii] = input.stationsScratch[ii].get_projXord();
         Y[ii] = input.stationsScratch[ii].get_projYord();
-        influenceRadius[ii] = input.stationsScratch[ii].get_influenceRadius(0);
+        influenceRadius[ii] = input.stationsScratch[ii].get_influenceRadius();
 	}
 
 	input.inputWindHeight = maxStationHeight;  //for use later during vertical fill of 3D grid
@@ -182,9 +182,9 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 	//now interpolate all stations vertically to the maxStationHeight
 	for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
 	{
-        if(input.stationsScratch[ii].get_height(0) != maxStationHeight)	//if station is not at the 2d interp layer height of maxStationHeight, interpolate vertically using profile to this height
+        if(input.stationsScratch[ii].get_height() != maxStationHeight)	//if station is not at the 2d interp layer height of maxStationHeight, interpolate vertically using profile to this height
 		{	
-            profile.inputWindHeight = input.stationsScratch[ii].get_height(0);
+            profile.inputWindHeight = input.stationsScratch[ii].get_height();
 			//get surface properties
 			if(input.dem.check_inBounds(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord()))	//if station is in the dem domain
 			{
@@ -198,7 +198,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				{
 					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
 							aspect(i_, j_),slope(i_, j_), cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
-                            input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_height(0),
+                            input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_height(),
 							(input.surface.Albedo)(i_, j_), (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
 							(input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
 							(input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
@@ -248,8 +248,8 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
 				{
 					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-                            0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(0),
-                            input.stationsScratch[ii].get_height(0), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
+                            0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
+                            input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
 							profile.Rough_h, profile.Rough_d);
 
 
@@ -288,13 +288,13 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 			profile.AGL=maxStationHeight + profile.Rough_h;			//this is height above THE GROUND!! (not "z=0" for the log profile)
 
-            wind_sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
+            wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
 			profile.inputWindSpeed = u[ii];	
 			u[ii] = profile.getWindSpeed();
 			profile.inputWindSpeed = v[ii];
 			v[ii] = profile.getWindSpeed();
 		}else{	//else station is already at 2d interp layer height
-            wind_sd_to_uv(input.stationsScratch[ii].get_speed(0), input.stationsScratch[ii].get_direction(0), &u[ii], &v[ii]);
+            wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
 		}
 	}
 	
@@ -681,7 +681,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     int t=0;
     vector<int> countLimiter;
 
-    for (int ei=1;ei<=idxCount.size();ei++)
+    for (int ei=1;ei<=idxCount.size();ei++)//organizes data into a vector of vector of data
     {
     //    cout<<ei<<endl;
         int rounder=idxCount.size()-ei;
@@ -728,7 +728,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     if (wxVector[0][0].datetime==noTime)
     {
         cout<<"notime"<<endl;
-        readyToGo=interpolateNull(csvFile,demFile,wxVector);
+        readyToGo=interpolateNull(csvFile,demFile,wxVector,timeZone);
     }
     else
     {
@@ -1290,7 +1290,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
  */
 
 
-vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations)
+vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone)
 {
     cout<<"no interpolation needed"<<endl;
 
@@ -1311,6 +1311,22 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
 ////            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
 ////        }
 ////    }
+///
+
+    //fixes time!
+    boost::local_time::tz_database tz_db;
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
+    for (int i=0;i<refinedDat.size();i++)
+    {
+        refinedDat[i].datetime.assign(1,standard);
+//        cout<<refinedDat[i].get_datetime(0)<<endl;
+    }
+
+
+
 
 
     return refinedDat;

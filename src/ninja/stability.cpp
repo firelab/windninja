@@ -331,12 +331,12 @@ void Stability::SetPointInitializationAlpha(WindNinjaInputs &input,
 
 	for(unsigned int ii = 0; ii<input.stations.size(); ii++)
 	{
-        if(input.stations[ii].get_height(0) > maxStationHeight)
-            maxStationHeight = input.stations[ii].get_height(0);
-        cc[ii] = input.stations[ii].get_cloudCover(0);
+        if(input.stations[ii].get_height() > maxStationHeight)
+            maxStationHeight = input.stations[ii].get_height();
+        cc[ii] = input.stations[ii].get_cloudCover();
         X[ii] = input.stations[ii].get_projXord();
         Y[ii] = input.stations[ii].get_projYord();
-        influenceRadius[ii] = input.stations[ii].get_influenceRadius(0);
+        influenceRadius[ii] = input.stations[ii].get_influenceRadius();
     }
 
     cloudCoverGrid.interpolateFromPoints(cc, X, Y, influenceRadius, input.stations.size(), 2.0);

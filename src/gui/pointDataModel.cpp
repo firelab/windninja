@@ -83,23 +83,23 @@ QVariant pointDataModel::data( const QModelIndex &index, int role ) const
 	else if( col == 4 )
 	    return QVariant( station.get_lon() );
 	else if( col == 5 )
-        return QVariant( station.get_height(0) );
+        return QVariant( station.get_height() );
 	else if( col == 6 )
 	    return QVariant( "meters" );
 	else if( col == 7 )
-        return QVariant( station.get_speed(0) );
+        return QVariant( station.get_speed() );
 	else if( col == 8 )
 	    return QVariant( "mps" );
 	else if( col == 9 )
-        return QVariant( station.get_direction(0) );
+        return QVariant( station.get_direction() );
 	else if( col == 10 )
-        return QVariant( station.get_temperature(0) );
+        return QVariant( station.get_temperature() );
 	else if( col == 11 )
 	    return QVariant( "K" );
 	else if( col == 12 )
-        return QVariant( station.get_cloudCover(0) * 100 );
+        return QVariant( station.get_cloudCover() * 100 );
 	else if( col ==13 ) {
-        dfTemp = station.get_influenceRadius(0);
+        dfTemp = station.get_influenceRadius();
 	    if( dfTemp < 0 )
 		dfTemp = -1;
 	    return QVariant( dfTemp );

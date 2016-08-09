@@ -119,7 +119,7 @@ class pointInitialization : public initialize
         static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string csvFile, std::string demFile); //prepares final product
 
 
-        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations);
+        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone);
         static vector<vector<preInterpolate> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
 //        static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);

@@ -78,6 +78,7 @@ wxStation::wxStation( wxStation const& m )
     coordType = m.coordType;
     datetime = m.datetime;
     localDateTime=m.localDateTime;
+    curStep=m.curStep;
 
 }
 
@@ -113,6 +114,7 @@ wxStation& wxStation::operator= ( wxStation const& m )
     coordType = m.coordType;
     datetime =m.datetime;
     localDateTime=m.localDateTime;
+    curStep=m.curStep;
     }
     return *this;
 }
@@ -159,6 +161,7 @@ void wxStation::initialize()
     coordType = GEOGCS;
     datetime;
     localDateTime;
+    curStep;
 }
 
 /**
@@ -166,11 +169,26 @@ void wxStation::initialize()
  * @param units to retrieve the height in
  * @return height of station
  */
-double wxStation::get_height(int idx, lengthUnits::eLengthUnits units)
+double wxStation::get_height(lengthUnits::eLengthUnits units)
 {
-    double h = height[idx];
+//    double h = height[idx];
+//    lengthUnits::fromBaseUnits( h, units );
+//    return h;
+
+
+    double h;
     lengthUnits::fromBaseUnits( h, units );
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int i=0;i<datetime.size();i++)
+    {
+        if (cur==localDateTime[i])
+        {
+            h=height[i];
+            break;
+        }
+    }
     return h;
+
 }
 
 /**
@@ -178,11 +196,47 @@ double wxStation::get_height(int idx, lengthUnits::eLengthUnits units)
  * @param units to retrieve speed in
  * @return speed
  */
-double wxStation::get_speed( int idx, velocityUnits::eVelocityUnits units)
+//double wxStation::get_speed( int idx, velocityUnits::eVelocityUnits units)
+//{
+//    double s = speed[idx];
+//    velocityUnits::fromBaseUnits( s, units );
+//    return s;
+//}
+
+double wxStation::get_speed(velocityUnits::eVelocityUnits units)
 {
-    double s = speed[idx];
+    double s;
     velocityUnits::fromBaseUnits( s, units );
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int i=0;i<datetime.size();i++)
+    {
+        if (cur==localDateTime[i])
+        {
+//            cout<<i<<endl;
+//            cout<<speed[i]<<endl;
+            s=speed[i];
+            break;
+        }
+    }
     return s;
+
+}
+
+
+double wxStation::get_direction()
+{
+    double d;
+
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int i=0;i<datetime.size();i++)
+    {
+        if (cur==localDateTime[i])
+        {
+            d=direction[i];
+            break;
+        }
+    }
+    return d;
 }
 
 /**
@@ -201,10 +255,22 @@ double wxStation::get_w_speed( velocityUnits::eVelocityUnits units)
  * @param units to retrieve the temperature in, default is K
  * @return temperature
  */
-double wxStation::get_temperature(int idx , temperatureUnits::eTempUnits units)
+double wxStation::get_temperature(temperatureUnits::eTempUnits units)
 {
-    double t = temperature[idx];
+//    double t = temperature[idx];
+//    temperatureUnits::fromBaseUnits( t, units );
+//    return t;
+    double t;
     temperatureUnits::fromBaseUnits( t, units );
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int i=0;i<datetime.size();i++)
+    {
+        if (cur==localDateTime[i])
+        {
+            t=temperature[i];
+            break;
+        }
+    }
     return t;
 }
 /**
@@ -212,10 +278,22 @@ double wxStation::get_temperature(int idx , temperatureUnits::eTempUnits units)
  * @param units to retrieve the cover in, default is fraction
  * @return cloud cover
  */
-double wxStation::get_cloudCover( int idx, coverUnits::eCoverUnits units)
+double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
 {
-    double c = cloudCover[idx];
+//    double c = cloudCover[idx];
+//    coverUnits::fromBaseUnits( c, units );
+//    return c;
+    double c;
     coverUnits::fromBaseUnits( c, units );
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int i=0;i<datetime.size();i++)
+    {
+        if (cur==localDateTime[i])
+        {
+            c=cloudCover[i];
+            break;
+        }
+    }
     return c;
 }
 /**
@@ -223,11 +301,26 @@ double wxStation::get_cloudCover( int idx, coverUnits::eCoverUnits units)
  * @param units to retrieve the radius in, default is meters
  * @return radius of infuence
  */
-double wxStation::get_influenceRadius(int idx, lengthUnits::eLengthUnits units)
+double wxStation::get_influenceRadius(lengthUnits::eLengthUnits units)
 {
-    double i = influenceRadius[idx];
+//    double i = influenceRadius[idx];
+//    lengthUnits::fromBaseUnits( i, units );
+//    return i;
+
+    double i;
     lengthUnits::fromBaseUnits( i, units );
+    boost::local_time::local_date_time cur=get_currentTimeStep();
+    for (int k=0;k<datetime.size();k++)
+    {
+        if (cur==localDateTime[k])
+        {
+            i=influenceRadius[k];
+            break;
+        }
+    }
     return i;
+
+
 }
 /**
  * Set the weather station name
@@ -424,12 +517,24 @@ boost::local_time::local_date_time wxStation::get_localDateTime(int idx)
     return time;
 }
 
-/** Converts vector<vector<wxStationList> > to vector<wxStation> (wxStation for now)
- * wxStation List is what I made originally and does a good job or organizing the data,
- * but it isn't very readable or intuitive. All of the old wx code was renamed to a new class
- * "wxStationList", the new code, which is mainly the below function and some parasite functions
- * that are used to call certain variables outside this file.
- */
+boost::local_time::local_date_time wxStation::get_currentTimeStep()
+{
+    boost::local_time::local_date_time current=curStep[0];
+
+    return current;
+}
+
+void wxStation::set_currentTimeStep(boost::local_time::local_date_time step)
+{
+//    cout<<step<<endl;
+    curStep.assign(1,step);
+//    cout<<step<<endl;
+//    cout<<curStep[0]<<endl;
+//    cout<<curStep.size()<<endl;
+
+}
+
+
 //vector<wxStation> wxStation::makeWxStation(string csvFile,string demFile,vector<vector<wxStationList> > inputStation)
 //{
 
@@ -1852,12 +1957,12 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
             outFileName.c_str() );
     for( unsigned int i = 0;i < stations.size();i++ ) {
 
-        heightTemp = stations[i].get_height(0);
-        speedTemp = stations[i].get_speed(0);
-        directionTemp = stations[i].get_direction(0);
-        ccTemp = stations[i].get_cloudCover(0);
-        temperatureTemp = stations[i].get_temperature(0);
-        radOfInflTemp = stations[i].get_influenceRadius(0);
+        heightTemp = stations[i].get_height();
+        speedTemp = stations[i].get_speed();
+        directionTemp = stations[i].get_direction();
+        ccTemp = stations[i].get_cloudCover();
+        temperatureTemp = stations[i].get_temperature();
+        radOfInflTemp = stations[i].get_influenceRadius();
 
         lengthUnits::fromBaseUnits(heightTemp, stations[i].heightUnits);
         //lengthUnits::fromBaseUnits(heightTemp, lengthUnits::feet);
@@ -1889,7 +1994,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
                 ccTemp, coverUnits::getString(stations[i].cloudCoverUnits).c_str() );
         fprintf( fout, "          Temperature: %.1lf %s\n",
                 temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
-        if(stations[i].get_influenceRadius(0) > 0.0)
+        if(stations[i].get_influenceRadius() > 0.0)
         {
             fprintf( fout, "          Radius of Influence: %.2lf %s\n",
                     radOfInflTemp, lengthUnits::getString(stations[i].influenceRadiusUnits).c_str() );
