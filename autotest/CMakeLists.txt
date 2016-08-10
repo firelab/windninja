@@ -170,8 +170,6 @@ endif(RUN_SLOW_TESTS)
 if(WITH_NOMADS_SUPPORT)
     add_test(nomads_nam_conus_3_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 3 4 0 zip)
-    add_test(nomads_nam_conus_39_hour_zip
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 39 38 0 zip)
     add_test(nomads_nam_conus_0_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay nam_conus 0 1 0 zip)
     add_test(nomads_rap_mackay_18_limit_zip
@@ -202,8 +200,6 @@ if(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_alaska 1 2 0 zip)
     add_test(nomads_hires_nmm_ak_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_nmm_alaska 1 2 0 zip)
-    add_test(nomads_hires_arw_conus_31_hour_zip_gzip_fail
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_conus 31 32 0 zip)
     add_test(nomads_hrrr_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 1 2 0 zip)
     add_test(nomads_hrrr_15_hour_zip
