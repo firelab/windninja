@@ -254,7 +254,6 @@ public:
     void set_wxStations(std::vector<wxStation> &wxStations);
 //stationFetch
     void set_stationFetchFlag( bool flag );
-    void set_InterpolateData(std::vector<boost::posix_time::ptime> timeList);
 //    std::vector<std::vector<wxStationList> >get_wxStatList();
 
 

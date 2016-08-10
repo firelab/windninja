@@ -1271,15 +1271,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
 
 
-
-
-
-
-
-
-
-
-
 /**
  * @brief pointInitialization::interpolateNull
  * Used if the function is the old PointInitialization.
@@ -1299,20 +1290,6 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
     vector<wxStation> refinedDat;
     refinedDat=makeWxStation(vecStations,csvFileName,demFileName);
 
-//    for (int i=0;i<refinedDat.size();i++)
-//    {
-////    bool a=wxStation::check_station(refinedDat[i]);
-////        if (a != true)
-////        {
-////            cout<<"!!stationcheck failed, potential for bad data!!"<<endl;
-////        }
-////        else
-////        {
-////            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
-////        }
-////    }
-///
-
     //fixes time!
     boost::local_time::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
@@ -1326,71 +1303,9 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
     }
 
 
-
-
-
     return refinedDat;
 }
 
-///**
-// * @brief pointInitialization::InterpolatewxStation
-// * @param csvFileName
-// * @param demFileName
-// * @param vecStations
-// * @param timeList
-// * @return
-// */
-
-//vector<wxStation> pointInitialization::InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList)
-//{
-//    wxStation crap;
-//    crap.initialize();
-//    vector<wxStation> vecCrap;
-//    vecCrap.push_back(crap);
-
-//    vector<wxStation> refinedDat;
-
-//    vector<vector<wxStationList> > interpolatedDataSet;
-////    interpolatedDataSet=interpolateTimeData(csvFileName,demFileName,vecStations,timeList);
-
-////    cout<<"interpolated DataSet"<<endl;
-////    cout<<interpolatedDataSet.size()<<endl;
-////    cout<<interpolatedDataSet[0][0].get_datetime()<<endl;
-////    cout<<interpolatedDataSet[0][0].get_speed()<<endl;
-////    cout<<interpolatedDataSet[1][0].get_speed()<<endl;
-////    cout<<interpolatedDataSet[2][0].get_speed()<<endl;
-
-//    refinedDat=wxStation::makeWxStation(csvFileName,demFileName,interpolatedDataSet);
-
-////    cout<<"refined wxStation"<<endl;
-////    cout<<refinedDat.size()<<endl;
-////    cout<<refinedDat[0].datetime[0]<<endl;
-////    cout<<refinedDat[0].speed[0]<<endl;
-////    cout<<refinedDat[0].speed[1]<<endl;
-////    cout<<refinedDat[2].speed[0]<<endl;
-
-//    boost::posix_time::time_duration buffer(1,0,0,0);
-//    boost::posix_time::time_duration zero(0,0,0,0);
-
-//    vector<wxStation> Selectify;
-
-
-//    for (int i=0;i<refinedDat.size();i++)
-//    {
-//    bool a=wxStation::check_station(refinedDat[i]);
-//        if (a != true)
-//        {
-//            cout<<"!!stationcheck failed on #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" potential for bad data!!"<<endl;
-//        }
-//        else
-//        {
-//            cout<<"station check passed, station #"<<i<<": \""<<refinedDat[i].get_stationName()<<"\" has good data"<<endl;
-//        }
-//    }
-
-
-//    return vecCrap;
-//}
 
 /**
  * @brief interpolates raw data WRT time
@@ -1748,6 +1663,11 @@ for (int k=0;k<Selectify.size();k++)
 
 //    cout<<speed1<<" "<<speed2<<endl;
     speedI=interpolator(inter,low,high,speed1,speed2);
+    if (speedI>113.000)
+    {
+//        cout<<"windspeed error"<<endl;
+        speedI=speed1;
+    }
 //    printf("%lf",inter);
 //    cout<<" "<<endl;
 //    printf("%lf",low);
@@ -1820,6 +1740,19 @@ for (int k=0;k<Selectify.size();k++)
     lowTemp=lowVec[k][i].temperature;
     highTemp=highVec[k][i].temperature;
     interTemp=interpolator(inter,low,high,lowTemp,highTemp);
+    if (interTemp>57.0)
+    {
+//        cout<<"temp error"<<endl;
+        interTemp=highTemp;
+        if (interTemp>57.0)
+        {
+            interTemp=lowTemp;
+        }
+        if (interTemp>57.0)
+        {
+            interTemp=25;
+        }
+    }
 
 
 //    cout<<lowTemp<<" "<<highTemp<<endl;
@@ -1859,7 +1792,15 @@ for (int k=0;k<Selectify.size();k++)
     highCloud=highVec[k][i].cloudCover;
 
     interCloud=interpolator(inter,low,high,lowCloud,highCloud);
-
+    if (interCloud>1.0)
+    {
+//        cout<<"cloud error"<<endl;
+        interCloud=highCloud;
+        if (interCloud>1.0)
+        {
+            interCloud=lowCloud;
+        }
+    }
 
 //    cout<<lowCloud<<" "<<highCloud<<endl;
 //    cout<<interCloud<<"\n\n"<<endl;
@@ -1905,6 +1846,11 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     result=lowY+pointS*slope;
 
 //    cout<<result<<endl;
+
+    if (result<0.0000)
+    {
+        result=work;
+    }
 
 
     return result;

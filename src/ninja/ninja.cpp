@@ -4140,9 +4140,8 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
  */
 void ninja::set_stationFetchFlag(bool flag)
 {
-    cout<<"ninja: set_stationFetch=="<<flag<<endl;
+//    cout<<"ninja: set_stationFetch=="<<flag<<endl;
     input.stationFetch=flag;   
-    
 }
 
 
@@ -4166,59 +4165,13 @@ void ninja::set_wxStationFilename(std::string station_filename)
 {
     if(station_filename.empty())
         throw std::runtime_error("Weather station filename empty in ninja::set_wxStationFilename().");
-
-//    input.stationFetch = stationFetch; 
     input.wxStationFilename = station_filename;
 
-//    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
-//    input.vecStations=wxStationList::vectorRead(input.wxStationFilename,input.dem.fileName);
-//      wxTwo::makeWxStation(input.wxStationFilename,input.dem.fileName);
-
-//    exit(1);
-//    input.stations=wxStation::makeWxStation(input.wxStationFilename,input.dem.fileName,input.vecStations);
-//    exit(1);
     input.stationsScratch = input.stations;
     input.stationsOldInput = input.stations;
     input.stationsOldOutput = input.stations;
-//    for (unsigned int i = 0; i < input.stations.size(); i++)
-//    {
-//        if (wxStation::check_station(input.stations[i])==false)
-//        {
-//            throw std::range_error("Error in weather station parameters.");
-//        }
-//    }
+
     input.inputSpeedUnits = input.stations[0].get_speedUnits(); //set inputSpeedUnits in ninja class to first station.
-}
-void ninja::set_InterpolateData(std::vector<boost::posix_time::ptime> timeList)
-{
-//    cout<<"ninja.cpp"<<endl;
-//    pointInitialization init;
-////    init.interpolateTimeData(input,timeList);
-//    vector<boost::posix_time::ptime> outaTime;
-//    boost::posix_time::ptime noTime;
-//    outaTime.push_back(noTime);
-//    if (timeList==outaTime)
-//    {
-//        input.realStations=init.interpolateNull(input);
-//    }
-//    else
-//    {
-//        input.realStations=init.InterpolatewxStation(input,timeList);
-//    }
-//    input.stations=input.realStations;
-//    input.stationsScratch = input.stations;
-//    input.stationsOldInput = input.stations;
-//    input.stationsOldOutput = input.stations;
-//    for (unsigned int i = 0; i < input.stations.size(); i++)
-//    {
-//        if (wxStation::check_station(input.stations[i])==false)
-//        {
-//            throw std::range_error("Error in weather station parameters.");
-//        }
-//    }
-//    input.inputSpeedUnits = input.stations[0].get_speedUnits(); //set inputSpeedUnits in ninja class to first station.
-
-
 }
 
 
@@ -4685,7 +4638,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     timeOutputFacet->format("%m-%d-%Y_%H%M_");
 
     if( input.diurnalWinds == true ||
-        input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )
+        input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag || input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
         timestream << input.ninjaTime;
 #ifdef STABILITY
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
@@ -4727,7 +4680,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
 
     timeAppend = timestream.str();
-
+    ostringstream pisStream;
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
     wxModelOutputFacet = new boost::local_time::local_time_facet();
@@ -4764,7 +4717,11 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_point";
         os_ascii << "_point";
         os_pdf   << "_point";
+
+        pisStream<<input.ninjaTime;
+
     }
+
 
     double meshResolutionTemp = meshResolution;
     double kmzResolutionTemp = input.kmzResolution;
@@ -4808,6 +4765,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";

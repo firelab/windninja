@@ -121,7 +121,6 @@ class pointInitialization : public initialize
 
         static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone);
         static vector<vector<preInterpolate> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
-//        static vector<wxStation> InterpolatewxStation(std::string csvFileName,std::string demFileName,vector<vector<wxStationList> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);
@@ -189,9 +188,6 @@ class pointInitialization : public initialize
                 static std::string BuildBboxUrl(std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 std::string BuildBboxLatest(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);
                 static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-
-                //                const char* BuildBboxUrl(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                //                const char* BuildBboxLatest(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);
 
 
 

@@ -346,6 +346,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
                 ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
+                ("write_wx_station_csv",po::value<bool>()->default_value(false),"write a csv of the interpolated wxdata")
+                ("wx_station_csv_filename",po::value<std::string>())
                 ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
                 ("units7_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
                 ("output_wind_height", po::value<double>()/*->required()*/, "height of output wind speed above the vegetation")
@@ -1009,57 +1011,20 @@ int windNinjaCLI(int argc, char* argv[])
                     cout << "Problem fetching station." << "\n";
                     return -1;
                 }
+                windsim.makeStationArmy(timeList, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
             }        
-//            else if(vm.count("wx_station_filename"))   //if a station file already exists
-//            {
-//                //make the army for a user-supplied station
-////                windsim.makeStationArmy( timeList );
-//            }
-//            return(0); //temporary for STATION_FETCH
-//            vector<wxStation> eval;
-//            eval=pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
-//                    vm["elevation_file"].as<std::string>(),
-//                    timeList,osTimeZone );
-
-//            option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
-//            option_dependency(vm, "output_wind_height", "units_output_wind_height");
-//            int i_=0;
-//            if(vm.count("fetch_station"))
-//            {
-//                windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
-//            }
-//            windsim.setInitializationMethod( i_,
-//                    WindNinjaInputs::pointInitializationFlag,
-//                    vm["match_points"].as<bool>() );
-            if (vm["fetch_station"].as<bool>() == true)
-            {
-                cout<<"new PointInitialization"<<endl;
-//                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
-               windsim.makeStationArmy(timeList, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-            }
             if (vm["fetch_station"].as<bool>() == false)
             {
-                cout<<"classic PointInitialization"<<endl;
-//                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
+    //                cout<<"classic PointInitialization"<<endl;
                 vector<boost::posix_time::ptime> outaTime;
                 boost::posix_time::ptime noTime;
                 outaTime.push_back(noTime);
-                windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
+                windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
             }
 
-
-
-
-
-
-
-
-
-
-
 //            cout<<"whizzle!"<<endl;
-//            exit(1);
         }
+
 
 
 //STATION_FETCH
@@ -1290,103 +1255,24 @@ int windNinjaCLI(int argc, char* argv[])
             else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
 //STATION_FETCH
-                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-                if(vm.count("fetch_station"))
+
+
+                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
+                option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename");
+                if(vm["write_wx_station_csv"].as<bool>()==true)
                 {
-                    windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
+                    cout<<"writing wxStation CSV"<<endl;
+                    wxStation::writeStationFile(windsim.getWxStations( i_ ),
+                                                vm["wx_station_csv_filename"].as<std::string>());
                 }
-                windsim.setInitializationMethod( i_,
-                        WindNinjaInputs::pointInitializationFlag,
-                        vm["match_points"].as<bool>() );
-                if (vm["fetch_station"].as<bool>() == true)
-                {
-                    cout<<"new PointInitialization"<<endl;
-                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
-                }
-                if (vm["fetch_station"].as<bool>() == false)
-                {
-                    cout<<"classic PointInitialization"<<endl;
-                    windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
-                }
-
-
-
-
-
-
-
-
-
-//                    std::vector<boost::posix_time::ptime> timeLiszt;
-                    
-//                    timeLiszt = pointInitialization::getTimeList( vm["start_year"].as<int>(),
-//                                                         vm["start_month"].as<int>(),
-//                                                         vm["start_day"].as<int>(),
-//                                                         vm["start_hour"].as<int>(),
-//                                                         vm["start_minute"].as<int>(),
-//                                                         vm["end_year"].as<int>(),
-//                                                         vm["end_month"].as<int>(),
-//                                                         vm["end_day"].as<int>(),
-//                                                         vm["end_hour"].as<int>(),
-//                                                         vm["end_minute"].as<int>(),
-//                                                         vm["number_time_steps"].as<int>(),
-//                                                         osTimeZone );
-////                                        exit(1);
-//////                    windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-////                    cout<<"a"<<endl;
-//////                    pointInitialization::interpolateFromDisk(vm["fetch_station_filename"].as<std::string>(),
-//////                            vm["elevation_file"].as<std::string>(),
-//////                            timeLiszt,osTimeZone );
-//                    option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
-//                    option_dependency(vm, "output_wind_height", "units_output_wind_height");
-//                    int i_=0;
-//                    if(vm.count("fetch_station"))
-//                    {
-//                        windsim.setStationFetchFlag( i_, vm["fetch_station"].as<bool>() );
-//                    }
-//                    windsim.setInitializationMethod( i_,
-//                            WindNinjaInputs::pointInitializationFlag,
-//                            vm["match_points"].as<bool>() );
-//                    if (vm["fetch_station"].as<bool>() == true)
-//                    {
-//                        cout<<"new PointInitialization"<<endl;
-//                    //                    windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>());
-//                       windsim.makeStationArmy(timeLiszt, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-//                    }
-//                    if (vm["fetch_station"].as<bool>() == false)
-//                    {
-//                        cout<<"classic PointInitialization"<<endl;
-//                        windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
-//                        vector<boost::posix_time::ptime> outaTime;
-//                        boost::posix_time::ptime noTime;
-//                        outaTime.push_back(noTime);
-//                        windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-//                    }
-
-//                    exit(1);
-
-//                }
-//                if (vm["fetch_station"].as<bool>() == false)
-//                {
-//                    cout<<"classic PointInitialization"<<endl;
-//                    windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>());
-//                    vector<boost::posix_time::ptime> outaTime;
-//                    boost::posix_time::ptime noTime;
-//                    outaTime.push_back(noTime);
-//                    windsim.makeStationArmy(outaTime,osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>());
-//                }
-//                cout<<"whizzle!"<<endl;
-//                exit(1);
-                // vm["fetch_station"].as<bool>()
-                
-                
-//                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
-//                windsim.setWxStationFilename( i_, vm["fetch_station_filename"].as<std::string>() );
                 if(vm["write_wx_station_kml"].as<bool>() == true)
-                    cout<<"I'VE DISABLED THIS FUNCTION UNTIL WE REWRITE THE KML!"<<endl;
-//                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-//                                            vm["wx_station_kml_filename"].as<std::string>());
+                {
+                    cout<<"writing wxStation KML"<<endl;
+                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                    vm["wx_station_kml_filename"].as<std::string>());
+//                    exit(1);
+                }
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
