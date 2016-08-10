@@ -226,6 +226,12 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
         ninjas[i]->set_date_time(localTimeList[i]);
 //        ninjas[i]->set_date_time(stationArmada[i]);
 //        cout<<ninjas[i]->get_date_time()<<endl;
+        ninjas[i]->set_wxStations(stationArmada);
+        for (int k=0;k<stationArmada.size();k++)
+        {
+            cout<<"a"<<endl;
+       stationArmada[k].set_currentTimeStep(ninjas[i]->get_date_time());
+        }
 
     }
 
