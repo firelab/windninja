@@ -4552,6 +4552,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 //            FloatPrinter(rawsTemp,count11,"rawstemp");
 //            FloatPrinter(rawsSolrad,count12,"rawssol");
 
+
             int aZero;
             aZero=0;
             std::string baddata="-9999";
@@ -4578,6 +4579,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     }
 
     cout<<"returned true: "<<true<<endl;
+
     return true;
 }
 //FOR TESTING SOLAR RADIATION CONVERSION
