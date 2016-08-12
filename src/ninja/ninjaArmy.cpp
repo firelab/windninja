@@ -206,6 +206,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
         ninjas[i]->set_wxStationFilename(stationFileName);
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag,matchPoints);
    }
+//    delete &stationArmada;
 }
 
 /**

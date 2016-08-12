@@ -989,7 +989,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString += poFeature->GetFieldAsString( 9 );
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
-                throw( std::domain_error( oErrorString ) );
+//                throw( std::domain_error( oErrorString ) );
+                dfTempValue=0.0;
             }
 //            oStation.set_direction( dfTempValue );
             oStation.direction=dfTempValue;
@@ -1667,6 +1668,7 @@ for (int k=0;k<Selectify.size();k++)
     {
 //        cout<<"windspeed error"<<endl;
         speedI=speed1;
+
     }
 //    printf("%lf",inter);
 //    cout<<" "<<endl;
@@ -4441,6 +4443,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     ofstream outFile;//writing to csv
     outFile.open(csvName.c_str());
     cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
+    cout<<"Downloading Data from MesoWest...."<<endl;
 //    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
     std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
     outFile<<header<<endl;
@@ -4554,6 +4557,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
 
             int aZero;
+            cout<<"Save timestep #"<<fCount<<" to disk"<<endl;
             aZero=0;
             std::string baddata="-9999";
             vector<string>rawsWindDirection;
@@ -4577,6 +4581,35 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
         }
     }
+    cout<<"Data downloaded and saved...."<<endl;
+    OGR_DS_Destroy(poDS);
+    OGR_DS_Destroy(hDS);
+    delete cloudhigh;
+    delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
+    delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
+
+//    const double *cloudlow;
+//    const double *cloudmed;
+//    const double *cloudhigh;
+
+//    const double* rawsWind;
+//    const double* rawsDir;
+//    const double* rawsSolrad;
+//    const double* rawsTemp;
+//    double rawsLatitude;
+//    double rawsLongitude;
+//    const char* rawsStation;
+//    char** rawsDateTime;
+
+//    const double* metarWind;
+//    const double* metarDir;
+//    const double* metarTemp;
+//    double metarLatitude;
+//    double  metarLongitude;
+//    const char* metarStation;
+//    char** metarDateTime;
+
+
 
     cout<<"returned true: "<<true<<endl;
 
