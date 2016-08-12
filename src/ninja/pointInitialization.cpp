@@ -4511,7 +4511,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
             metarWindDirection=fixWindDir(metarDir,"0",count1);
             metarTemperature=fixWindDir(metarTemp,"-9999",count1);
 
-
             for(int ez=0;ez<count1;ez++)
             {
              outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
@@ -4555,16 +4554,13 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 //            FloatPrinter(rawsTemp,count11,"rawstemp");
 //            FloatPrinter(rawsSolrad,count12,"rawssol");
 
-
             int aZero;
-            cout<<"Save timestep #"<<fCount<<" to disk"<<endl;
             aZero=0;
             std::string baddata="-9999";
             vector<string>rawsWindDirection;
             rawsWindDirection=fixWindDir(rawsDir,"0",count9);
             vector<double> rawsCloudCover;
             rawsCloudCover=Irradiate(rawsSolrad,1,count12,timeZone,rawsLatitude,rawsLatitude,rawsDateTime);
-
                 for (int ez=0;ez<count9;ez++)
                 {
                 if (rawsCloudCover.size()==aZero)

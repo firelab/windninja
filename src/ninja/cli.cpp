@@ -1279,18 +1279,28 @@ int windNinjaCLI(int argc, char* argv[])
 
                 if(vm["diurnal_winds"].as<bool>())
                 {
-//                    option_dependency(vm, "diurnal_winds", "year");
-//                    option_dependency(vm, "diurnal_winds", "month");
-//                    option_dependency(vm, "diurnal_winds", "day");
-//                    option_dependency(vm, "diurnal_winds", "hour");
-//                    option_dependency(vm, "diurnal_winds", "minute");
-//                    option_dependency(vm, "diurnal_winds", "time_zone");
+                    if(vm["fetch_station"].as<bool>() == true)
+                    {
+                        windsim.setDiurnalWinds( i_, true);
+                    }
+                    if(vm["fetch_station"].as<bool>() == false)
+                    {
+
+
+
+                    option_dependency(vm, "diurnal_winds", "year");
+                    option_dependency(vm, "diurnal_winds", "month");
+                    option_dependency(vm, "diurnal_winds", "day");
+                    option_dependency(vm, "diurnal_winds", "hour");
+                    option_dependency(vm, "diurnal_winds", "minute");
+                    option_dependency(vm, "diurnal_winds", "time_zone");
 
                     windsim.setDiurnalWinds( i_, true);
-//                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-//                                             vm["day"].as<int>(), vm["hour"].as<int>(),
-//                                             vm["minute"].as<int>(), 0.0,
-//                                             osTimeZone);
+                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                             vm["day"].as<int>(), vm["hour"].as<int>(),
+                                             vm["minute"].as<int>(), 0.0,
+                                             osTimeZone);
+                    }
                 }
                 #ifdef STABILITY
                 //Atmospheric stability selections
@@ -1312,18 +1322,27 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else
                     {
-//                        option_dependency(vm, "non_neutral_stability", "year");
-//                        option_dependency(vm, "non_neutral_stability", "month");
-//                        option_dependency(vm, "non_neutral_stability", "day");
-//                        option_dependency(vm, "non_neutral_stability", "hour");
-//                        option_dependency(vm, "non_neutral_stability", "minute");
-//                        option_dependency(vm, "non_neutral_stability", "time_zone");
+                        if(vm["fetch_station"].as<bool>() == true)
+                        {
+                            windsim.setStabilityFlag( i_, true);
+                        }
+                        if(vm["fetch_station"].as<bool>() == false)
+                        {
+
+
+                        option_dependency(vm, "non_neutral_stability", "year");
+                        option_dependency(vm, "non_neutral_stability", "month");
+                        option_dependency(vm, "non_neutral_stability", "day");
+                        option_dependency(vm, "non_neutral_stability", "hour");
+                        option_dependency(vm, "non_neutral_stability", "minute");
+                        option_dependency(vm, "non_neutral_stability", "time_zone");
 
                         windsim.setStabilityFlag( i_, true);
-//                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-//                                                           vm["day"].as<int>(), vm["hour"].as<int>(),
-//                                                           vm["minute"].as<int>(), 0.0,
-//                                                           osTimeZone);
+                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                                           vm["day"].as<int>(), vm["hour"].as<int>(),
+                                                           vm["minute"].as<int>(), 0.0,
+                                                           osTimeZone);
+                        }
                     }
                 }
                 #endif //STABILITY
