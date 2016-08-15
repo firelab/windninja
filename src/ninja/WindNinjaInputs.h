@@ -294,6 +294,7 @@ public:
     int meshCount; //mesh count for a ninjafoam simulation
     eNinjafoamMeshChoice ninjafoamMeshChoice; // fine, medium, coarse
     bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
+    std::string existingCaseDirectory; //path to exisitng case for a ninjafoam run
     std::string stlFile; //path/filename of an STL file
 #endif
 };

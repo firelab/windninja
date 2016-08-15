@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "gdal.h"
 #include "ogr_api.h"
@@ -79,6 +80,7 @@ int NinjaUnlinkTree( const char *pszPath );
 
 void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );
+std::string NinjaRemoveSpaces( std::string s);
 
 #endif /* NINJA_CONV_H */
 
