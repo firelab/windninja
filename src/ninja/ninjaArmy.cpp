@@ -177,6 +177,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
 //        cout<<timeList[i]<<" "<<localTimeList[i]<<endl;
 //        cout<<stationArmada[0].get_datetime(i)<<endl;
     }
+
     if (timeList.size()==1 && timeList[0]==noTime)//fixes timelist for old PointInitialization data
     {
         timeList.assign(1,standard);
@@ -194,12 +195,14 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     }
 
 
+
     for(unsigned int i = 0; i < timeList.size(); i++)
     {
         ninjas[i]->set_stationFetchFlag(true);
         ninjas[i]->set_date_time(localTimeList[i]);
        for (int k=0;k<stationArmada.size();k++)
         {
+
             stationArmada[k].set_currentTimeStep(ninjas[i]->get_date_time());
         }
         ninjas[i]->set_wxStations(stationArmada);

@@ -147,7 +147,15 @@ class pointInitialization : public initialize
                                                 int startDay, int startHour, int startMinute, int endYear,
                                                 int endMonth, int endDay, int endHour, int endMinute,
                                                 int nTimeSteps, std::string timeZone );
+
+        static void fetchMetaData(std::string fileName, std::string demFile, bool write);
+
+
         static std::string localSolarTime;
+        enum format{newFormat, oldFormat};
+        static format fileFormat;
+        static inline format get_formatType() {return fileFormat;}
+        static inline void set_formatType(format d) {fileFormat=d;}
 
         void newAuto(AsciiGrid<double> &dem);
         int storeHour(int nHours);

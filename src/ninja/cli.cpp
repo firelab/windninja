@@ -320,16 +320,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
                 ("fetch_station_filename", po::value<std::string>(), "path/filename where the downloaded station file will be written")
                 ("fetch_station_name", po::value<std::string>(), "station identifier")
-//                ("latest",po::value<bool>(),"get latest data")
-//                ("fetch_type",po::value<std::string>(),"type of fetch")
-//                ("radius",po::value<std::string>(),"radius of fetch")
-//                ("station_limit",po::value<std::string>(),"limit number of stations for rad/latlon")
-//                ("point_latitude",po::value<std::string>(),"latitude component for lat/lon")
-//                ("point_longitude",po::value<std::string>(),"longitude component for lat/lon")
-//                ("box_lower_left_latitude",po::value<std::string>(),"bbox LL lat coord")
-//                ("box_lower_left_longitude",po::value<std::string>(),"bbox LL lon coord")
-//                ("box_upper_right_latitude",po::value<std::string>(),"bbox UR lat coord")
-//                ("box_upper_right_longitude",po::value<std::string>(),"bbox UR long coord")
                 ("start_year",po::value<int>(),"start year for simulation")
                 ("start_month",po::value<int>(),"start month for simulation")
                 ("start_day",po::value<int>(),"start day for simulation")
@@ -341,7 +331,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("end_hour",po::value<int>(),"end hour for simulation")
                 ("end_minute",po::value<int>(),"end minute for simulation")
                 ("number_time_steps",po::value<int>(),"number of timesteps for simulation")
-
+                ("fetch_metadata",po::value<bool>()->default_value(false),"get station metadata for a domain")
+                ("metadata_filename",po::value<std::string>(),"filename for metadata")
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
@@ -962,11 +953,10 @@ int windNinjaCLI(int argc, char* argv[])
         //---------------------------------------------------------------------
         // Make army for pointInitialization  
         //---------------------------------------------------------------------
-        
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
-//            conflicting_options(vm, "fetch_station", "wx_station_filename");
-
+//            conflicting_options(vm, "fetch_station", "wx_station_filename");    
+            bool formatType;
             std::vector<boost::posix_time::ptime> timeList;
 
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
@@ -983,6 +973,9 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "fetch_station", "end_hour");
                 option_dependency(vm, "fetch_station", "end_minute");
                 option_dependency(vm, "fetch_station", "number_time_steps");
+
+                option_dependency(vm, "fetch_metadata","metadata_filename");
+
                 
                 timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
                                                      vm["start_month"].as<int>(),
@@ -1000,7 +993,7 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
                                                             vm["elevation_file"].as<std::string>(),
-                                                            timeList,osTimeZone );
+                                                            timeList,osTimeZone );  
 
 
                     //make the army for a fetched station
@@ -1011,16 +1004,133 @@ int windNinjaCLI(int argc, char* argv[])
                     cout << "Problem fetching station." << "\n";
                     return -1;
                 }
+
+                if(vm["fetch_metadata"].as<bool>() == true)
+                {
+                    pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),true);
+                }
+
                 windsim.makeStationArmy(timeList, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
             }        
             if (vm["fetch_station"].as<bool>() == false)
             {
-    //                cout<<"classic PointInitialization"<<endl;
-                vector<boost::posix_time::ptime> outaTime;
-                boost::posix_time::ptime noTime;
-                outaTime.push_back(noTime);
-                windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                char **header=wxStation::getValidHeader();
+                char **oldheader=wxStation::oldGetValidHeader();
+                std::string stationFile=vm["wx_station_filename"].as<std::string>();
+                OGRDataSourceH hDS;
+                hDS=OGROpen(stationFile.c_str(),FALSE,NULL);
+                if (hDS == NULL)
+                {
+                    cout<<"cannot open CSV file/no data to read in CSV File"<<endl;
+                }
+                OGRLayer *poLayer;
+                OGRFeatureDefn *poFeatureDefn;
+                poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+                OGRLayerH hLayer;
+                hLayer=OGR_DS_GetLayer(hDS,0);
+                OGR_L_ResetReading(hLayer);
+                poLayer->ResetReading();
+                poFeatureDefn = poLayer->GetLayerDefn();
+
+                int nFields = poFeatureDefn->GetFieldCount();
+//                if (nFields==CSLCount(header))
+//                {
+//                    cout<<"true"<<endl;
+//                }
+                if (nFields == CSLCount(oldheader))
+                {
+                    formatType=false;
+//                    pointInitialization::formatType pointInitialization::get_formatType=pointInitialization::oldFormat;
+
+//                    cout<<"shit"<<endl;
+                }
+                else if (nFields==CSLCount(header))
+                {
+                    formatType=true;
+//                    pointInitialization::get_formatType=pointInitialization::newFormat;
+                }
+                else if(nFields !=CSLCount(oldheader) && nFields != CSLCount(header))
+                {
+                    OGR_DS_Destroy( hDS );
+                    cout<<"there are an incorrect number of definitions in csv file"<<endl;
+                    exit(1);
+                }
+//                cout<<formatType<<endl;
+                OGR_DS_Destroy( hDS );
+                CSLDestroy( oldheader );
+                CSLDestroy(header);
+
+                pointInitialization::fileFormat;
+                pointInitialization::format headerType;
+
+                if (formatType==true)
+                {
+                    headerType=pointInitialization::newFormat;
+                    pointInitialization::set_formatType(headerType);
+                }
+                if (formatType==false)
+                {
+                    headerType=pointInitialization::oldFormat;
+                    pointInitialization::set_formatType(headerType);
+                }
+
+
+//                pointInitialization::format aa;
+//                aa=pointInitialization::get_formatType();
+
+//                cout<<aa<<endl;
+
+//                exit(1);
+                if (formatType==true)
+                {
+                    option_dependency(vm, "wx_station_filename", "start_year");
+                    option_dependency(vm, "wx_station_filename", "start_month");
+                    option_dependency(vm, "wx_station_filename", "start_day");
+                    option_dependency(vm, "wx_station_filename", "start_hour");
+                    option_dependency(vm, "wx_station_filename", "start_minute");
+                    option_dependency(vm, "wx_station_filename", "end_year");
+                    option_dependency(vm, "wx_station_filename", "end_month");
+                    option_dependency(vm, "wx_station_filename", "end_day");
+                    option_dependency(vm, "wx_station_filename", "end_hour");
+                    option_dependency(vm, "wx_station_filename", "end_minute");
+                    option_dependency(vm, "wx_station_filename", "number_time_steps");
+
+                    timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                         vm["start_month"].as<int>(),
+                                                         vm["start_day"].as<int>(),
+                                                         vm["start_hour"].as<int>(),
+                                                         vm["start_minute"].as<int>(),
+                                                         vm["end_year"].as<int>(),
+                                                         vm["end_month"].as<int>(),
+                                                         vm["end_day"].as<int>(),
+                                                         vm["end_hour"].as<int>(),
+                                                         vm["end_minute"].as<int>(),
+                                                         vm["number_time_steps"].as<int>(),
+                                                         osTimeZone );
+//                    cout<<"new format, old PI"<<endl;
+                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+
+
+                }
+                if (formatType==false)
+                {
+                    cout<<"old format"<<endl;
+                    vector<boost::posix_time::ptime> outaTime;
+                    boost::posix_time::ptime noTime;
+                    outaTime.push_back(noTime);
+                    windsim.makeStationArmy(outaTime,osTimeZone,vm["wx_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                }
+
+
+
+
             }
+//            if (vm["fetch_station"].as<std::string>()=="read")
+//            {
+//                cout<<"coming soon"<<endl;
+//                exit(1);
+//            }
 
 //            cout<<"whizzle!"<<endl;
         }
@@ -1277,13 +1387,15 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
 
+                pointInitialization::format fileType=pointInitialization::get_formatType();
+
                 if(vm["diurnal_winds"].as<bool>())
                 {
-                    if(vm["fetch_station"].as<bool>() == true)
+                    if(vm["fetch_station"].as<bool>() == true || fileType==pointInitialization::newFormat )
                     {
                         windsim.setDiurnalWinds( i_, true);
                     }
-                    if(vm["fetch_station"].as<bool>() == false)
+                    if(vm["fetch_station"].as<bool>() == false && fileType==pointInitialization::oldFormat)
                     {
 
 
@@ -1322,11 +1434,11 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else
                     {
-                        if(vm["fetch_station"].as<bool>() == true)
+                        if(vm["fetch_station"].as<bool>() == true || fileType==pointInitialization::newFormat)
                         {
                             windsim.setStabilityFlag( i_, true);
                         }
-                        if(vm["fetch_station"].as<bool>() == false)
+                        if(vm["fetch_station"].as<bool>() == false && fileType==pointInitialization::oldFormat)
                         {
 
 

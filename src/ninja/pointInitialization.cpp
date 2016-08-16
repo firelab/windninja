@@ -749,10 +749,10 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
         }
     }
 
-
 return readyToGo;
 }
 
+pointInitialization::format pointInitialization::fileFormat;
 
 
 vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string stationFilename, string demFile)
@@ -1987,6 +1987,140 @@ string pointInitialization::IntConvert(int a)
     time<<a;
     return time.str();
     }
+//Gets MetaData for stations if turned on
+void pointInitialization::fetchMetaData(string fileName, string demFile, bool write)
+{
+    cout<<"Downloading Station MetaData..."<<endl;
+    std::string baseurl="http://api.mesowest.net/v2/stations/metadata?";
+    std::string bbox;
+    std::string component="&network=1,2&output=geojson";
+    std::string url;
+    std::string tokfull;
+
+    GDALDataset  *poDS;
+    poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
+
+    double bounds[4];
+    bool bRet;
+
+    bRet=GDALGetBounds(poDS,bounds);
+
+    std::string URLat;
+    std::string URLon;
+    std::string LLLat;
+    std::string LLLon;
+
+
+
+    URLat=CPLSPrintf("%.6f",bounds[0]);
+    URLon=CPLSPrintf("%.6f",bounds[1]);
+    LLLat=CPLSPrintf("%.6f",bounds[2]);
+    LLLon=CPLSPrintf("%.6f",bounds[3]);
+    // LLLAT LLLON URLAT URLON
+    // 1 1 2 2
+
+    bbox="&bbox="+LLLon+","+LLLat+","+URLon+","+URLat;
+    tokfull="&token="+dtoken;
+    url=baseurl+bbox+component+tokfull;
+
+    std::string csvName;
+    if (fileName.substr(fileName.size()-4,4)==".csv")
+    {
+    csvName=fileName;
+//    cout<<".csv exists in metaDataFile"<<endl;
+    }
+    else
+    {
+    csvName=fileName+".csv";
+//    cout<<"adding .csv to metaDataFile"<<endl;
+    }
+    ofstream outFile;
+    if (write==true)
+    {
+    cout<<"writing MetaData for stations....."<<endl;
+    outFile.open(csvName.c_str());
+    std::string header="Station_name,STID,Latitude,Longitude,Elevation,Status,MnetID";
+    outFile<<header<<endl;
+    }
+
+
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
+    hDS=OGROpen(url.c_str(),0,NULL);
+    CPLGetLastErrorMsg();
+    if (hDS==NULL)
+    {
+
+        cout<<"metadata bad"<<endl;
+        exit(1);
+    }
+
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    int idx1=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+
+    double latitude;
+    double  longitude;
+    const char* stid;
+    const char* stationName;
+    const char* status;
+    int mnetID;
+    const char* elevation;
+
+
+    for (int ex=0; ex<fCount;ex++)
+    {
+        hFeature=OGR_L_GetFeature(hLayer,ex);
+
+        idx1=OGR_F_GetFieldIndex(hFeature,"STID");
+        stid=(OGR_F_GetFieldAsString(hFeature,idx1));
+
+        idx2=OGR_F_GetFieldIndex(hFeature,"name");
+        stationName=(OGR_F_GetFieldAsString(hFeature,idx2));
+
+        idx3=OGR_F_GetFieldIndex(hFeature,"latitude");
+        latitude=(OGR_F_GetFieldAsDouble(hFeature,idx3));
+
+        idx4=OGR_F_GetFieldIndex(hFeature,"longitude");
+        longitude=(OGR_F_GetFieldAsDouble(hFeature,idx4));
+
+        idx5=OGR_F_GetFieldIndex(hFeature,"status");
+        status=(OGR_F_GetFieldAsString(hFeature,idx5));
+
+        idx6=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetID=(OGR_F_GetFieldAsInteger(hFeature,idx6));
+
+        idx7=OGR_F_GetFieldIndex(hFeature,"elevation");
+        elevation=(OGR_F_GetFieldAsString(hFeature,idx7));
+
+//        cout<<stid<<endl;
+//        cout<<stationName<<endl;
+//        cout<<latitude<<endl;
+//        cout<<longitude<<endl;
+//        cout<<status<<endl;
+//        cout<<mnetID<<endl;
+//        cout<<elevation<<endl;
+        if (write==true)
+        {
+            outFile<<stid<<",\""<<stationName<<"\","<<latitude<<","<<longitude<<","<<elevation<<","<<status<<","<<mnetID<<endl;
+        }
+
+    }
+    OGR_DS_Destroy(poDS);
+    OGR_DS_Destroy(hDS);
+    delete stid,stationName,latitude,longitude,status,mnetID,elevation;
+}
 
 const char* pointInitialization::BuildSingleUrl(std::string token,
                                                 std::string station_id,
@@ -4360,6 +4494,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
             bounds[1], timeUTC[0],timeUTC[1],timeUTC[2],
             timeUTC[3],timeUTC[4],timeUTC[5],
             timeUTC[6],timeUTC[7]);
+//    cout<<URL<<endl;
     
     std::string csvName;
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
