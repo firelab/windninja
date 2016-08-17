@@ -1285,9 +1285,9 @@ double mainWindow::computeCellSize(int index)
 #ifdef NINJAFOAM  
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /*ninjafoam: calculate mesh resolution of lower volume in block mesh*/
-    coarse = 100000;
-    medium = 500000;
-    fine = 1e6;
+    coarse = 25000;
+    medium = 50000;
+    fine = 100000;
   }
   else{
     /* use native mesh */
@@ -2056,12 +2056,7 @@ int mainWindow::solve()
 #ifdef NINJAFOAM
             if(useNinjaFoam){
                 army->setMeshCount( i, ninjafoamMeshChoice );
-                if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
-                    army->setNumberOfIterations( i, 200);
-                if(ninjafoamMeshChoice == WindNinjaInputs::medium)
-                    army->setNumberOfIterations( i, 350);
-                if(ninjafoamMeshChoice == WindNinjaInputs::fine)
-                    army->setNumberOfIterations( i, 500);
+                army->setNumberOfIterations( i, 300);
             }
             else
                 army->setMeshResolutionChoice( i, meshChoice );

@@ -3566,6 +3566,7 @@ void ninja::set_MeshCount(int meshCount)
 
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
+    //if these change, update values in GUI for horizontal resolution estimation
     if(meshChoice == WindNinjaInputs::coarse){
         input.meshCount = 25000;
     }

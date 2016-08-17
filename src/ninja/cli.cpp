@@ -376,7 +376,7 @@ int windNinjaCLI(int argc, char* argv[])
                 #ifdef NINJAFOAM
                 ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory") 
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
-                ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
+                ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
                 ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
@@ -954,13 +954,13 @@ int windNinjaCLI(int argc, char* argv[])
             
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
-                if(vm.count("number_of_iterations")){
-                    windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
-                }
                 conflicting_options(vm, "mesh_choice", "mesh_count");
                 conflicting_options(vm, "mesh_resolution", "mesh_count");
                 conflicting_options(vm, "mesh_resolution", "existing_case_directory");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
+                if(vm.count("number_of_iterations")){
+                    windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
+                }
                 if(vm.count("mesh_choice")){
                     if( windsim.setMeshCount( i_,
                         ninja::get_eNinjafoamMeshChoice(vm["mesh_choice"].as<std::string>()) ) != 0 ){
