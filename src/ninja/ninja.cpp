@@ -3567,13 +3567,13 @@ void ninja::set_MeshCount(int meshCount)
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
     if(meshChoice == WindNinjaInputs::coarse){
-        input.meshCount = 100000;
+        input.meshCount = 25000;
     }
     else if(meshChoice == WindNinjaInputs::medium){
-        input.meshCount = 500000;
+        input.meshCount = 50000;
     }
     else if(meshChoice == WindNinjaInputs::fine){
-        input.meshCount = 1e6;
+        input.meshCount = 100000;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
