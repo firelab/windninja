@@ -13,79 +13,90 @@ layout: internal
 
 
 
-  <div>
-      <h1 class="post-title" itemprop="name headline" style="color:white;">Iterations Project</h1>
-    <h1 style="color:white;">What is the Iterations Project?</h1>
-    <p>WindNinja's conservation of mass and momentum solver may provide more accurate results than the fast-running
-conservation of mass solver in some situations; however, it requires substantially longer runtimes due to the
-inclusion of additional physics in the governing equations.</p>
+<div>
+    <h1 class="post-title" itemprop="name headline" style="color:white;">Iterations Project</h1>
+  <h1 style="color:white;">What is the Iterations Project?</h1>
+  <hr />
+  <p>WindNinja's momentum solver currently takes significantly more time to run than WindNinja's native conservation of mass solver,
+but the momentum solver provides more accurate results than the native solver.
+This extra runtime is due in part to different discretization schemes, the way the grids are set up,
+and the inclusion of more transport equations.</p>
+<br>
     <p>Because WindNinja is designed as an emergency response tool, it trades some accuracy for speed.
 This tradeoff is justifiable given the inherent uncertainty regargaring initial and boundary conditions available
 to drive the model. One way to reduce simulation times is to reduce the number of iterations performed when running
 the conservation of mass and momentum solver. We would like to only run as many iterations as needed to get to
 a state where the changes in the predicted wind field are on the order of the uncertainty in the boundary and
 intial conditions.</p>
+<br>
     <p>The goal of the iterations project was to investigate the impact of stopping the solver at a specified
 number of iterations instead of letting it run to complete convergence. Initially, the solver was set up to stop
 at 200 iterations for "coarse" grid resolutions, 500 iterations for "medium" grid resolutions, and 1000 iterations
 for "fine" grid resolutions. This work investigated the suitability of those cutoffs. We attempted to identify
 the point at which further iteration induced flow changes primarily in recirculation or eddy zones where the true
 flow solution is transient and steady-state predictions should always be interpreted with caution.</p>
+<br>
 
-    <h1 style="color:white;">Experimental Methods</h1>
+<h1 style="color:white;">Experimental Methods</h1>
+<hr />
     <p>Three elevation files were selected and run with WindNinja's momentum solver for Coarse, Medium, and Fine
 grid resolution keeping all variables constant except for the number of iterations.
 Variables kept constant were:</p>
-    <table align="center">
-      <tr><th></th>
-      <tr><th>Input Wind Height (m)</th><td>10</td><th>Output Wind Height (m)</th><td>10</td></tr>
-      <tr><th>Input Wind Speed (mph)</th><td>10</td><th>Output asc Resolution (m)</th><td>same as mesh</td></tr>
-      <tr><th>Input Wind Direction (deg)</th><td>220</td><th>Output kmz Resolution (m)</th><td>200</td></tr>
-      <tr><th>Vegetation</th><td>grass</td><td></td><td></td></tr>
-      <tr><th></th>
-    </table>
+<br>
+<table align="center">
+  <tr><th align="left">Input Wind Height (m)</th><td>10</td><th align="left">Output Wind Height (m)</th><td>10</td></tr>
+  <tr><th align="left">Input Wind Speed (mph)</th><td>10</td><th align="left">Output asc Resolution (m)</th><td>same as mesh</td></tr>
+  <tr><th align="left">Input Wind Direction (deg)</th><td>220</td><th align="left">Output kmz Resolution (m)</th><td>200</td></tr>
+  <tr><th align="left">Vegetation</th><td>grass</td></tr>
+</table>
+    <br>
     <p>In addition to these settings, the following debugging variable was set to make WindNinja output residual
 information to the command line: </p>
-    <p></p>
+<br>
     <table align="center">
-      <tr><th></th>
       <tr><th>CPL_DEBUG=NINJAFOAM</th></tr>
-      <tr><th></th>
     </table>
+<br>
     <p>WindNinja was then run on a Linux machine with 4 GB of RAM and 4 Intel Xeon e5-1603 processors (2.8 GHz)
 for each case using the command line interface. The command line text was redirected to a text file for
 evaluation of the residuals. All runs were kept sorted in specific file directories for ease of data analysis
 and organization.</p>
+<br>
     <p>While a computer ran in the background performing each of the simulations, an R script was written for
 analyzing the results. The script took the resulting asc files for each run and set up plots to show the
 velocities, angles, and the difference between the velocities and angles at each iteration with the converged
 solution. In addition, the R script used a homemade data parser to sift through the command line output text
-file to set up plots of all the residuals and runtimes. It took quite a while to set all this up, but the
-resulting plots look pretty cool.</p>
+file to set up plots of all the residuals and runtimes.</p>
+<br>
 
-    <h1 style="color:white;">Current Results</h1>
-    <p>The following links go to the current results of this experiment. </p>
+    <h1 style="color:white;">Results</h1>
+    <hr />
+    <p>The following links go to the results of this study. </p>
   </div>
-
+<br>
   <div>
     <table align="center" width=50%>
-      <tr></tr><th></th>
       <tr><th><a href="/windninja/internal/IterationsProject/BigButteSmall.html"><i>Big Butte Small</i></a></th><th><a href="/windninja/internal/IterationsProject/SalmonRiver.html"><i>Salmon River</i></a></th><th><a href="/windninja/internal/IterationsProject/Askervein.html"><i>Askervein Hill</i></a></th></tr>
-      <tr></tr><th></th>
     </table>
   </div>
-
+<br>
   <div>
     <h1 style="color:white;">Analysis of Results</h1>
+        <hr />
     <p>It appears that the velocities and angles still change significantly all the way up to complete
 convergence. This means that to get results to be as accurate as WindNinja is capable of acheiving, a user
 would want to run WindNinja for as many iterations as possible. However, most of these changes occur on the
 lee sides of hills or in recirculation zones, places where WindNinja already sacrifices accuracy for speed.
 In fact, the WindNinja team found that results for regions outside of the recirculation zones and not on the
 lee sides of hills were better than expected for running the momentum solver to fewer iterations.</p>
+<br>
     <p>Because WindNinja results showed convergence earlier than expected for regions outside of recirculation
 zones and for areas not on the lee sides of hills, the WindNinja team may have the momentum solver in WindNinja
 cutoff at fewer iterations for some of the resolutions.</p>
+<br>
   </div>
+
+  <a href="http://openfoam.org/"> <img src="http://firelab.github.io/windninja/assets/foam2.png" style="width:175px;height:65px;"> </a>
+
 
 </body>
