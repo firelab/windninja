@@ -319,7 +319,6 @@ int windNinjaCLI(int argc, char* argv[])
 //STATION_FETCH
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
                 ("fetch_station_filename", po::value<std::string>(), "path/filename where the downloaded station file will be written")
-                ("fetch_station_name", po::value<std::string>(), "station identifier")
                 ("start_year",po::value<int>(),"start year for simulation")
                 ("start_month",po::value<int>(),"start month for simulation")
                 ("start_day",po::value<int>(),"start day for simulation")
@@ -333,6 +332,13 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_time_steps",po::value<int>(),"number of timesteps for simulation")
                 ("fetch_metadata",po::value<bool>()->default_value(false),"get station metadata for a domain")
                 ("metadata_filename",po::value<std::string>(),"filename for metadata")
+                ("fetch_type",po::value<std::string>(),"bbox or stid")
+                ("fetch_current_station_data",po::value<bool>()->default_value(false),"true for latest, false for timeseries")
+                ("station_buffer",po::value<double>()->default_value(0.00))
+                ("station_buffer_units",po::value<std::string>()->default_value("km"))
+                ("fetch_station_name",po::value<std::string>(),"list of stations to initialize with")
+
+
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
@@ -961,57 +967,151 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
-                option_dependency(vm, "fetch_station", "fetch_station_filename");
-                option_dependency(vm, "fetch_station", "start_year");
-                option_dependency(vm, "fetch_station", "start_month");
-                option_dependency(vm, "fetch_station", "start_day");
-                option_dependency(vm, "fetch_station", "start_hour");
-                option_dependency(vm, "fetch_station", "start_minute");
-                option_dependency(vm, "fetch_station", "end_year");
-                option_dependency(vm, "fetch_station", "end_month");
-                option_dependency(vm, "fetch_station", "end_day");
-                option_dependency(vm, "fetch_station", "end_hour");
-                option_dependency(vm, "fetch_station", "end_minute");
-                option_dependency(vm, "fetch_station", "number_time_steps");
+                option_dependency(vm,"station_buffer","station_buffer_units");
+
+                pointInitialization::set_stationBuffer(vm["station_buffer"].as<double>(),vm["station_buffer_units"].as<std::string>());
+
+                if (vm["fetch_type"].as<std::string>()=="bbox")
+                {
+                    if (vm["fetch_current_station_data"].as<bool>()==false)
+                    {
+
+
+                        option_dependency(vm, "fetch_station", "fetch_station_filename");
+                        option_dependency(vm, "fetch_station", "start_year");
+                        option_dependency(vm, "fetch_station", "start_month");
+                        option_dependency(vm, "fetch_station", "start_day");
+                        option_dependency(vm, "fetch_station", "start_hour");
+                        option_dependency(vm, "fetch_station", "start_minute");
+                        option_dependency(vm, "fetch_station", "end_year");
+                        option_dependency(vm, "fetch_station", "end_month");
+                        option_dependency(vm, "fetch_station", "end_day");
+                        option_dependency(vm, "fetch_station", "end_hour");
+                        option_dependency(vm, "fetch_station", "end_minute");
+                        option_dependency(vm, "fetch_station", "number_time_steps");
+
+//                        double a=pointInitialization::get_stationBuffer();
+//                        cout<<a<<endl;
+//                        exit(1);
+
+
+                        timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                             vm["start_month"].as<int>(),
+                                                             vm["start_day"].as<int>(),
+                                                             vm["start_hour"].as<int>(),
+                                                             vm["start_minute"].as<int>(),
+                                                             vm["end_year"].as<int>(),
+                                                             vm["end_month"].as<int>(),
+                                                             vm["end_day"].as<int>(),
+                                                             vm["end_hour"].as<int>(),
+                                                             vm["end_minute"].as<int>(),
+                                                             vm["number_time_steps"].as<int>(),
+                                                             osTimeZone );
+                        try
+                        {
+                            pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
+                                                                    vm["elevation_file"].as<std::string>(),
+                                                                    timeList,osTimeZone,false);
+
+//                            vm["station_buffer"].as<double>(),vm["buffer_units"].as<std::string>()
+
+
+                            //make the army for a fetched station
+        //                    windsim.makeStationArmy( timeList );
+                        }
+                        catch(...)
+                        {
+                            cout << "Problem fetching station." << "\n";
+                            return -1;
+                        }
+
+
+
+                        windsim.makeStationArmy(timeList,
+                                                osTimeZone,
+                                                vm["fetch_station_filename"].as<std::string>(),
+                                                vm["elevation_file"].as<std::string>(),
+                                                vm["match_points"].as<bool>());
+                        }
+                        if (vm["fetch_current_station_data"].as<bool>()==true)
+                        {
+                            timeList=pointInitialization::getSingleTimeList(osTimeZone);
+                            pointInitialization::fetchStationFromBbox(vm["fetch_station_filename"].as<std::string>(),
+                                    vm["elevation_file"].as<std::string>(),
+                                    timeList,osTimeZone,true);
+                            vector<boost::posix_time::ptime> outaTime;
+                            boost::posix_time::ptime noTime;
+                            outaTime.push_back(noTime);
+                            windsim.makeStationArmy(outaTime,
+                                                    osTimeZone,
+                                                    vm["fetch_station_filename"].as<std::string>(),
+                                                    vm["elevation_file"].as<std::string>(),
+                                                    vm["match_points"].as<bool>());
+                        }
+                }
+                if (vm["fetch_type"].as<std::string>()=="stid")
+                {
+                    option_dependency(vm,"fetch_type","fetch_station_name");
+                    if (vm["fetch_current_station_data"].as<bool>()==false)
+                    {
+                        option_dependency(vm, "fetch_station", "fetch_station_filename");
+                        option_dependency(vm, "fetch_station", "start_year");
+                        option_dependency(vm, "fetch_station", "start_month");
+                        option_dependency(vm, "fetch_station", "start_day");
+                        option_dependency(vm, "fetch_station", "start_hour");
+                        option_dependency(vm, "fetch_station", "start_minute");
+                        option_dependency(vm, "fetch_station", "end_year");
+                        option_dependency(vm, "fetch_station", "end_month");
+                        option_dependency(vm, "fetch_station", "end_day");
+                        option_dependency(vm, "fetch_station", "end_hour");
+                        option_dependency(vm, "fetch_station", "end_minute");
+                        option_dependency(vm, "fetch_station", "number_time_steps");
+
+                        timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                             vm["start_month"].as<int>(),
+                                                             vm["start_day"].as<int>(),
+                                                             vm["start_hour"].as<int>(),
+                                                             vm["start_minute"].as<int>(),
+                                                             vm["end_year"].as<int>(),
+                                                             vm["end_month"].as<int>(),
+                                                             vm["end_day"].as<int>(),
+                                                             vm["end_hour"].as<int>(),
+                                                             vm["end_minute"].as<int>(),
+                                                             vm["number_time_steps"].as<int>(),
+                                                             osTimeZone );
+
+                        pointInitialization::fetchStationByName(vm["fetch_station_filename"].as<std::string>(),vm["fetch_station_name"].as<std::string>()
+                                ,timeList,osTimeZone,false);
+                        windsim.makeStationArmy(timeList,
+                                                osTimeZone,
+                                                vm["fetch_station_filename"].as<std::string>(),
+                                                vm["elevation_file"].as<std::string>(),
+                                                vm["match_points"].as<bool>());
+                    }
+                    if (vm["fetch_current_station_data"].as<bool>()==true)
+                    {
+                        vector<boost::posix_time::ptime> outaTime;
+                        boost::posix_time::ptime noTime;
+                        outaTime.push_back(noTime);
+                        pointInitialization::fetchStationByName(vm["fetch_station_filename"].as<std::string>(),
+                                vm["fetch_station_name"].as<std::string>(),outaTime,osTimeZone,true);
+                        windsim.makeStationArmy(outaTime,
+                                                osTimeZone,
+                                                vm["fetch_station_filename"].as<std::string>(),
+                                                vm["elevation_file"].as<std::string>(),
+                                                vm["match_points"].as<bool>());
+                    }
+                }
 
                 option_dependency(vm, "fetch_metadata","metadata_filename");
-
-                
-                timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
-                                                     vm["start_month"].as<int>(),
-                                                     vm["start_day"].as<int>(),
-                                                     vm["start_hour"].as<int>(),
-                                                     vm["start_minute"].as<int>(),
-                                                     vm["end_year"].as<int>(),
-                                                     vm["end_month"].as<int>(),
-                                                     vm["end_day"].as<int>(),
-                                                     vm["end_hour"].as<int>(),
-                                                     vm["end_minute"].as<int>(),
-                                                     vm["number_time_steps"].as<int>(),
-                                                     osTimeZone );
-                try
-                {
-                    pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
-                                                            vm["elevation_file"].as<std::string>(),
-                                                            timeList,osTimeZone );  
-
-
-                    //make the army for a fetched station
-//                    windsim.makeStationArmy( timeList );
-                }
-                catch(...)
-                {
-                    cout << "Problem fetching station." << "\n";
-                    return -1;
-                }
-
                 if(vm["fetch_metadata"].as<bool>() == true)
                 {
                     pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),true);
                 }
 
-                windsim.makeStationArmy(timeList, osTimeZone,vm["fetch_station_filename"].as<std::string>(),vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
-            }        
+
+
+            }
             if (vm["fetch_station"].as<bool>() == false)
             {
                 char **header=wxStation::getValidHeader();

@@ -133,20 +133,28 @@ class pointInitialization : public initialize
 //        void fetchBboxStation(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         
         void fetchSingleStation(bool type,int nHours, std::string station_id,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-        static void fetchTest(std::string station_id, int nHours, string timeZone);
+        static void fetchTest(std::string stationFilename,
+                              std::string demFile,
+                              std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
         void fetchMultiStation(bool type,int nHours, std::string station_ids,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void fetchPointRadiusStation(bool type,int nHours,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
         void fetchLatLonStation(bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         void fetchManualBboxStation(bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
 
         static bool fetchStationFromBbox(std::string stationFilename,
-                                    std::string demFile, 
-                                    std::vector<boost::posix_time::ptime> timeList,std::string timeZone);
+                                    std::string demFile,
+                                    std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
+
+        static bool fetchStationByName(std::string stationFilename,
+                                       std::string stationList,
+                                       std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
+
 
         static std::vector<boost::posix_time::ptime> getTimeList( int startYear, int startMonth,
                                                 int startDay, int startHour, int startMinute, int endYear,
                                                 int endMonth, int endDay, int endHour, int endMinute,
                                                 int nTimeSteps, std::string timeZone );
+        static std::vector<boost::posix_time::ptime> getSingleTimeList(std::string timeZone);
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
 
@@ -156,6 +164,12 @@ class pointInitialization : public initialize
         static format fileFormat;
         static inline format get_formatType() {return fileFormat;}
         static inline void set_formatType(format d) {fileFormat=d;}
+
+        static double stationBuffer;
+        static void set_stationBuffer(double buffer,std::string units);
+        static double get_stationBuffer();
+
+
 
         void newAuto(AsciiGrid<double> &dem);
         int storeHour(int nHours);
@@ -187,16 +201,18 @@ class pointInitialization : public initialize
 
                 const char* BuildSingleUrl(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 static const char* BuildSingleLatest(std::string token, std::string station_id,std::string svar,int past, bool extendnetwork,std::string netids);
-                const char* BuildMultiUrl(std::string token,std::string station_ids,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                const char* BuildMultiLatest(std::string token, std::string station_ids,std::string svar,int past);
                 const char* BuildRadiusLatest(std::string token, std::string station_id,std::string radius,std::string limit,std::string svar,int past);
                 const char* BuildRadiusUrl(std::string token, std::string staion_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 const char* BuildLatLonUrl(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 const char* BuildLatLonLatest(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past);
-                static std::string BuildBboxUrl(std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                std::string BuildBboxLatest(std::string token,std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string svar,int past);
-                static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
 
+                static std::string BuildMultiUrl(std::string station_ids,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                static std::string BuildMultiLatest(std::string station_ids);
+
+                static std::string BuildBboxUrl(std::string lat1,std::string lon1, std::string lat2, std::string lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                static std::string BuildBboxLatest(std::string lat1, std::string lon1, std::string lat2, std::string lon2);
+                static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                static std::string BuildUnifiedLTBbox(double lat,double lon1, double lat2, double lon2);
 
 
                 double dfInvDistWeight;
