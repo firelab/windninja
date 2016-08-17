@@ -115,7 +115,6 @@ private:
     int writeMoveDynamicMesh();
     int writeBlockMesh();
     int readDem(double &ratio_); //sets blockMesh data from DEM
-    double GetNativeFineMeshResolution(); //for output re-sampling
 
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;

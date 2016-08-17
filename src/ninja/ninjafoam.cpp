@@ -2185,15 +2185,6 @@ const char * NinjaFoam::GetGridFilename()
     return pszGridFilename;
 }
 
-double NinjaFoam::GetNativeFineMeshResolution()
-{
-    long nTargetCells = 20000;
-    mesh.set_targetNumHorizCells(nTargetCells);
-    mesh.compute_cellsize(input.dem);
-
-    return mesh.meshResolution;
-}
-
 void NinjaFoam::SetOutputResolution()
 {
     //Set output file resolutions now
@@ -2207,16 +2198,6 @@ void NinjaFoam::SetOutputResolution()
         input.angResolution = input.dem.get_cellSize();
     if( input.pdfResolution <= 0.0 )
         input.pdfResolution = input.dem.get_cellSize();
-
-    //resample if needed so kmz and pdf output is readable 
-    if( input.kmzResolution < GetNativeFineMeshResolution() )
-    {
-        input.kmzResolution = GetNativeFineMeshResolution();
-    }
-    if( input.pdfResolution < GetNativeFineMeshResolution() )
-    {
-        input.pdfResolution = GetNativeFineMeshResolution();
-    }
 }
 
 void NinjaFoam::SetOutputFilenames()
