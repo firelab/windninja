@@ -1,6 +1,33 @@
 Release Notes
 =============
 
+WindNinja 3.1.0
+---------------
+
+ - Coarsen CFD outputs so they are readable (\#171)
+
+ - Reduce target number of cells for CFD solver component (\#173)
+
+ - Fix hyperlinks in tutorials (\#191)
+
+ - Use a single mesh for multiple runs (\#176 )
+
+ - Handle spaces in DEM file with Momentum Solver (\#180)
+
+ - Add UAB solver enhancements (\#118)
+
+ - Better warning when solver fails to converge (\#184 )
+
+ - Add a clear button to clear entered domain average inputs (\#165)
+
+ - Fix memory consumption issue with multiple runs (\#166)
+
+ - Properly update feet and meters in output windows (\#167)
+
+ - Prevent duplicate domain average runs (\#163)
+
+ - Dispaly text representation of progress in dialog (\#112)
+
 WindNinja 3.0.1
 ---------------
 
