@@ -1350,6 +1350,7 @@ void WidgetDownloadDEM::displayDEMBounds(int state)
         wvGoogleMaps->page()->mainFrame()->evaluateJavaScript("clearDEMBounds(); null");
         switch(currentIndex){
         case 0:
+            // US SRTM
             bounds =
                 QString("us_srtm_kml.setMap(map);");
             qDebug() << bounds;
@@ -1357,6 +1358,7 @@ void WidgetDownloadDEM::displayDEMBounds(int state)
             this->wvGoogleMaps->page()->currentFrame()->documentElement().evaluateJavaScript(bounds);
             break;
         case 1:
+            // World SRTM
             bounds =
                 QString("new google.maps.LatLng(%1,%2),").arg(world_srtm_southBound).arg(world_srtm_westBound) +
                 QString("new google.maps.LatLng(%1,%2)").arg(world_srtm_northBound).arg(world_srtm_eastBound);
@@ -1379,6 +1381,7 @@ void WidgetDownloadDEM::displayDEMBounds(int state)
             break;
     #ifdef HAVE_GMTED
         case 2:
+            // GMTED
             bounds =
                 QString("new google.maps.LatLng(%1,%2),").arg(world_gmted_southBound).arg(world_gmted_westBound) +
                 QString("new google.maps.LatLng(%1,%2)").arg(world_gmted_northBound).arg(world_gmted_eastBound);
@@ -1402,6 +1405,7 @@ void WidgetDownloadDEM::displayDEMBounds(int state)
     #endif
     #ifdef WITH_LCP_CLIENT
         case 3:
+            // LCP
             bounds =
                 QString("new google.maps.LatLng(%1,%2),").arg(lcp_southBound).arg(lcp_westBound) +
                 QString("new google.maps.LatLng(%1,%2)").arg(lcp_northBound).arg(lcp_eastBound);
