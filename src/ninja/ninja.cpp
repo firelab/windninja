@@ -4963,6 +4963,19 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
+    //Check DEM
+    GDALDataset *poDS;
+    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("Could not open DEM for reading");
+    }
+    if(GDALHasNoData(poDS, 1))
+    {
+        throw std::runtime_error("The DEM has no data values.");
+    }
+    GDALClose((GDALDatasetH)poDS);
+
     //Check base inputs needed for run
     if( input.dem.prjString == "" && input.googOutFlag == true )
         throw std::logic_error("Projection information in prjString is not set but should be.");
