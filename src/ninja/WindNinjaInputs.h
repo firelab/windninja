@@ -61,6 +61,7 @@ public:
 
     WindNinjaInputs(const WindNinjaInputs &rhs);
     WindNinjaInputs &operator=(const WindNinjaInputs &rhs);
+    bool operator==(const WindNinjaInputs &rhs);
 
 
     /*-----------------------------------------------------------------------------
@@ -160,7 +161,6 @@ public:
     bool diurnalWinds;			//flag that enables or disables diurnal wind computation (true=>include diurnal winds,  false=>don't include diurnal winds)
     boost::local_time::local_date_time ninjaTime;		//time and date class
     boost::local_time::time_zone_ptr ninjaTimeZone;		//timezone information
-    boost::local_time::tz_database tz_db;			//timezone database read from file
     temperatureUnits::eTempUnits airTempUnits;		//units of air temperature, used in diurnal computations
     double airTemp;			//air temperature used
     coverUnits::eCoverUnits cloudCoverUnits;		//units of cloud cover (0=>fraction, 1=>percent) ALWAYS STORED AS FRACTION!
@@ -294,6 +294,7 @@ public:
     int meshCount; //mesh count for a ninjafoam simulation
     eNinjafoamMeshChoice ninjafoamMeshChoice; // fine, medium, coarse
     bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
+    std::string existingCaseDirectory; //path to exisitng case for a ninjafoam run
     std::string stlFile; //path/filename of an STL file
 #endif
 };

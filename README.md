@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
-WindNinja is a diagnostic wind model developed for use in fire modeling.
+WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
 
 Web:
 http://firelab.org/project/windninja
@@ -11,13 +11,11 @@ http://firelab.org/project/windninja
 Source & wiki:
 https://github.com/firelab/windninja
 
+FAQ:
+https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
+
 IRC:
 irc://irc.freenode.net/#windninja
-
-Legacy hosting/wiki:
-https://collab.firelab.org/software/projects/windninja
-https://collab.firelab.org/svn/windninja
-
 
 [Building on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
 

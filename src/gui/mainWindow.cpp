@@ -53,6 +53,9 @@ mainWindow::mainWindow(QWidget *parent)
     noGoogleCellSize = 30.0;
 
     //set defaults for some variables
+#ifdef NINJAFOAM
+    existingCaseDir = "";
+#endif
     inputFileName = "";
     inputFileDir = "";
     inputFileType = -1;
@@ -437,6 +440,11 @@ void mainWindow::createConnections()
     connect(&fileWatcher, SIGNAL(fileChanged(QString)),
       this, SLOT(inputFileDeleted()));
 
+#ifdef NINJAFOAM
+  //Connect input file open button to dialog box
+  connect(tree->surface->foamCaseOpenToolButton, SIGNAL(clicked()),
+      this, SLOT(openExistingCase()));
+#endif
   //Connect input file open button to dialog box
   connect(tree->surface->inputFileOpenToolButton, SIGNAL(clicked()),
       this, SLOT(openInputFile()));
@@ -455,14 +463,33 @@ void mainWindow::createConnections()
   //connect(tree->location->getLatLonToolButton, SIGNAL(clicked()),
   //	  this, SLOT(getLatLon()));
   //also connect the toggle on the check box on output pages to update
-  connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
-  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)),
-      this, SLOT(updateOutRes()));
+
+  /*
+  ** When we update the mesh resolution, update the outputs if the output is
+  ** enabled.  We also update the output resolutions when the various outputs
+  ** are enabled.  Additionally when either of the radio buttons are checked.
+  */
+  connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+  connect(tree->surface->meshFeetRadioButton, SIGNAL(toggled(bool)), this,
+          SLOT(updateOutRes()));
+
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
@@ -636,6 +663,7 @@ void mainWindow::selectNativeSolver( bool pick )
     checkAllItems();
     }
 }
+
 void mainWindow::selectNinjafoamSolver( bool pick )
 {
     if( pick ) {
@@ -643,8 +671,75 @@ void mainWindow::selectNinjafoamSolver( bool pick )
     checkAllItems();
     }
 }
-#endif //NINJAFOAM
 
+void mainWindow::openExistingCase()
+{
+  QString dir = QFileDialog::getExistingDirectory(this,
+          tr("Open Existing Case"),
+          inputFileDir.absolutePath(),
+          QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+  QString shortName = QFileInfo(dir).fileName();
+  tree->surface->foamCaseLineEdit->setText(shortName);
+
+  tree->surface->downloadDEMButton->setEnabled(false);
+  tree->surface->meshResComboBox->setEnabled(false);
+  
+  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
+      emit(inputFileChanged(QFileInfo(dir).fileName()));
+
+  existingCaseDir = QFileInfo(dir).canonicalFilePath();
+
+  if(dir.isEmpty()){
+      existingCaseDir = "";
+      tree->surface->downloadDEMButton->setEnabled(true);
+      tree->surface->meshResComboBox->setEnabled(true);
+  }
+
+  if(!dir.isEmpty()){
+    //look for DEM that matches the STL basename in the NINJAFOAM_ paraent directory
+    char **papszFileList;
+    const char *pszFilename;
+    const char *pszBasename;
+    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", existingCaseDir.toStdString().c_str()) );
+
+    //get the basename of the STL
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetFilename( papszFileList[i] );
+        std::string s(pszFilename);
+        if( s.find(".stl") != s.npos & s.find("_out.stl") == s.npos){
+            pszBasename = CPLStrdup(CPLGetBasename( pszFilename ));
+        }
+    }
+
+    //look for DEM
+    const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
+    const char* pszInputFilename;
+    papszFileList = VSIReadDir( pszDemPath );
+
+    for(int i=0; i<CSLCount( papszFileList ); i++){
+        pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
+        std::string s(pszFilename);
+        if( s.compare(pszBasename) == 0 ){
+            pszInputFilename = CPLStrdup( papszFileList[i] );
+            break;
+        }
+    }
+
+    const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+    updateFileInputForCase(pszFname);
+
+    CSLDestroy( papszFileList );
+    CPLFree( (void*)pszBasename );
+    CPLFree( (void*)pszDemPath );
+    CPLFree( (void*)pszInputFilename );
+    CPLFree( (void*)pszFname );
+ 
+    tree->surface->downloadDEMButton->setEnabled(false);
+    tree->surface->meshResComboBox->setEnabled(false);
+  }
+}
+#endif //NINJAFOAM
 
 //function for finding and opening an input file.
 void mainWindow::openInputFile()
@@ -689,7 +784,7 @@ void mainWindow::openInputFile()
         }
 
       tree->surface->inputFileLineEdit->setText(shortName);
-      
+
       tree->surface->meshResComboBox->setEnabled(true);
 
       if(inputFileName != fileName)
@@ -702,7 +797,65 @@ void mainWindow::openInputFile()
       checkInputItem();
     }
 
+#ifdef NINJAFOAM
+    if(tree->surface->foamCaseLineEdit->text() != ""){
+        tree->surface->meshResComboBox->setEnabled(false);
+    }
+#endif
+
 }
+#ifdef NINJAFOAM
+/**
+ * Slot to update elevation file input for existing case
+ *
+ * @param file File associated with existing case
+ */
+void mainWindow::updateFileInputForCase(const char* file)
+{
+    QString fileName(file);
+
+    fileWatcher.addPath(fileName);
+
+    if(!fileName.isEmpty())
+    {
+      cwd = QFileInfo(fileName).dir();
+      //use GDAL to check the file
+      if(checkInputFile(fileName) < 0)
+      {
+          tree->surface->inputFileLineEdit->clear();
+          fileName = "";
+          return;
+      }
+
+      QString shortName = QFileInfo(fileName).fileName();
+      if(inputFileType == LCP)
+      {
+        tree->surface->roughnessComboBox->setDisabled(true);
+        tree->surface->roughnessComboBox->hide();
+        tree->surface->roughnessLabel->show();
+      }
+      else
+      {
+        tree->surface->roughnessComboBox->setDisabled(false);
+        tree->surface->roughnessComboBox->show();
+        tree->surface->roughnessLabel->hide();
+      }
+
+    tree->surface->inputFileLineEdit->setText(shortName);
+    
+    tree->surface->meshResComboBox->setEnabled(true);
+
+    if(inputFileName != fileName)
+        emit(inputFileChanged(fileName));
+
+      inputFileName = fileName;
+      inputFileDir = QFileInfo(fileName).absolutePath();
+      shortInputFileName = shortName;
+      checkMeshCombo();
+      checkInputItem();
+    }
+}
+#endif //NINJAFOAM
 
 /**
  * Slot to update elevation file input with downloaded DEM file
@@ -1042,27 +1195,39 @@ void mainWindow::updateOutRes()
 {
   //get res from surface page and store as an int
   double resolution = tree->surface->meshResDoubleSpinBox->value();
-
-  if(tree->google->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->google->googleResSpinBox->setValue(resolution);
-      tree->google->googleMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  bool useMeters = tree->surface->meshMetersRadioButton->isChecked();
+  if (tree->google->useMeshResCheckBox->isChecked() == true) {
+    tree->google->googleResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->google->googleMetersRadioButton->setChecked(true);
+    } else {
+      tree->google->googleFeetRadioButton->setChecked(true);
     }
-  if(tree->fb->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->fb->fbResSpinBox->setValue(resolution);
-      tree->fb->fbMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->fb->useMeshResCheckBox->isChecked() == true) {
+    tree->fb->fbResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->fb->fbMetersRadioButton->setChecked(true);
+    } else {
+      tree->fb->fbFeetRadioButton->setChecked(true);
     }
-  if(tree->shape->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->shape->shapeResSpinBox->setValue(resolution);
-      tree->shape->shapeMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->shape->useMeshResCheckBox->isChecked() == true) {
+    tree->shape->shapeResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->shape->shapeMetersRadioButton->setChecked(true);
+    } else {
+      tree->shape->shapeFeetRadioButton->setChecked(true);
     }
-  if(tree->pdf->useMeshResCheckBox->isChecked() == true)
-    {
-      tree->pdf->pdfResSpinBox->setValue(resolution);
-      tree->pdf->pdfMetersRadioButton->setChecked(tree->surface->meshMetersRadioButton->isChecked());
+  }
+  if (tree->pdf->useMeshResCheckBox->isChecked() == true) {
+    tree->pdf->pdfResSpinBox->setValue(resolution);
+    if (useMeters) {
+      tree->pdf->pdfMetersRadioButton->setChecked(true);
+    } else {
+      tree->pdf->pdfFeetRadioButton->setChecked(true);
     }
+  }
 }
 
 //empty fx, need to write it when help is done.
@@ -1120,9 +1285,9 @@ double mainWindow::computeCellSize(int index)
 #ifdef NINJAFOAM  
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /*ninjafoam: calculate mesh resolution of lower volume in block mesh*/
-    coarse = 100000;
-    medium = 500000;
-    fine = 1e6;
+    coarse = 25000;
+    medium = 50000;
+    fine = 100000;
   }
   else{
     /* use native mesh */
@@ -1411,6 +1576,10 @@ int mainWindow::solve()
 
     //dem file
     std::string demFile = inputFileName.toStdString();
+    
+#ifdef NINJAFOAM
+    std::string caseFile = existingCaseDir.toStdString();
+#endif
 
     //vegetation/roughness
     int vegIndex = tree->surface->roughnessComboBox->currentIndex();
@@ -1747,6 +1916,11 @@ int mainWindow::solve()
     {
 
         army->setDEM( i, demFile );
+#ifdef NINJAFOAM
+        if(caseFile != ""){
+            army->setExistingCaseDirectory( i, caseFile );
+        }
+#endif
         //set initialization
         if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
         {
@@ -1882,12 +2056,7 @@ int mainWindow::solve()
 #ifdef NINJAFOAM
             if(useNinjaFoam){
                 army->setMeshCount( i, ninjafoamMeshChoice );
-                if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
-                    army->setNumberOfIterations( i, 200);
-                if(ninjafoamMeshChoice == WindNinjaInputs::medium)
-                    army->setNumberOfIterations( i, 350);
-                if(ninjafoamMeshChoice == WindNinjaInputs::fine)
-                    army->setNumberOfIterations( i, 500);
+                army->setNumberOfIterations( i, 300);
             }
             else
                 army->setMeshResolutionChoice( i, meshChoice );
@@ -1954,7 +2123,11 @@ int mainWindow::solve()
     for( unsigned int i = 0; i < army->getSize(); i++ ) 
     {
         connect( army->getNinjaCom( i ),
-                 SIGNAL( sendProgress( int, int) ), this,
+                 SIGNAL( sendMessage( QString, QColor ) ), this,
+                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
+
+        connect( army->getNinjaCom( i ),
+                 SIGNAL( sendProgress( int, int ) ), this,
                  SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
 
         connect( army->getNinjaCom( i ),
@@ -2055,13 +2228,19 @@ int mainWindow::solve()
     return ninjaSuccess;
 }
 
+void mainWindow::updateProgress(const QString message)
+{
+  progressDialog->setLabelText(message);
+}
+
 void mainWindow::updateProgress(int run, int progress)
 {
   runProgress[run] = progress;
   totalProgress = 0;
 
-  for(int i = 0;i < nRuns;i++)
+  for(int i = 0;i < nRuns;i++){
     totalProgress += runProgress[i];
+  }
 
   progressDialog->setValue(totalProgress);
 }
@@ -2948,11 +3127,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        //tree->diurnal->diurnalGroupBox->setCheckable( false );
-        //tree->diurnal->diurnalGroupBox->setChecked( false );
-        //tree->diurnal->diurnalGroupBox->setHidden( true );
-        //tree->diurnal->ninjafoamConflictLabel->setHidden( false );
-
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
         tree->stability->stabilityGroupBox->setChecked( false );
@@ -2972,11 +3146,14 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( true );
         tree->weather->ninjafoamConflictLabel->setHidden( false );
         
+        tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
+        tree->vtk->vtkGroupBox->setHidden( true );
+        tree->vtk->vtkGroupBox->setChecked( false );
         tree->vtk->vtkWarningLabel->setHidden( true );
         
     }
@@ -3003,13 +3180,14 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->weather->weatherGroupBox->setHidden( false );
         tree->weather->ninjafoamConflictLabel->setHidden( true );
         
+        tree->surface->foamCaseGroupBox->setHidden( true );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
         
         tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( false );
-        
+        tree->vtk->vtkGroupBox->setHidden( false );
     }
 }
 #endif

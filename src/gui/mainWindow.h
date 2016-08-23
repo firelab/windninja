@@ -93,6 +93,7 @@ class mainWindow : public QMainWindow
 
   public slots:
    void updateProgress(int run, int progress);
+   void updateProgress(const QString message);
    void updateTimer();
    void openDEMDownloader();
 
@@ -104,6 +105,9 @@ class mainWindow : public QMainWindow
 
   enum eInputFileType{
     ASC, LCP, GTIFF, IMG};
+#ifdef NINJAFOAM
+  QString existingCaseDir;
+#endif
   QString inputFileName;
   QDir inputFileDir;
   QString shortInputFileName;
@@ -139,6 +143,10 @@ class mainWindow : public QMainWindow
   void inputFileChanged(QString newFile);
 
  public slots:
+#ifdef NINJAFOAM  
+  void openExistingCase();
+  void updateFileInputForCase(const char* file);
+#endif
   void openInputFile();
   void updateFileInput(const char* file);
   void inputFileDeleted();

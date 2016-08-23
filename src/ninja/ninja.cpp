@@ -29,6 +29,8 @@
 
 #include "ninja.h"
 
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /**Ninja constructor
  * This is the default ninja constructor.
  */
@@ -2773,7 +2775,6 @@ void ninja::computeDustEmissions()
 
 void ninja::writeOutputFiles()
 {
-    
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
 	//Write volume data to VTK format (always in m/s?)
@@ -3565,14 +3566,15 @@ void ninja::set_MeshCount(int meshCount)
 
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
+    //if these change, update values in GUI for horizontal resolution estimation
     if(meshChoice == WindNinjaInputs::coarse){
-        input.meshCount = 100000;
+        input.meshCount = 25000;
     }
     else if(meshChoice == WindNinjaInputs::medium){
-        input.meshCount = 500000;
+        input.meshCount = 50000;
     }
     else if(meshChoice == WindNinjaInputs::fine){
-        input.meshCount = 1e6;
+        input.meshCount = 100000;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
@@ -3599,9 +3601,9 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
     }
 }
 
-void ninja::set_StlFile(std::string stlFile)
+void ninja::set_ExistingCaseDirectory(std::string directory)
 {
-    input.stlFile = stlFile;
+    input.existingCaseDirectory = directory;
 }
 #endif
 
@@ -4036,10 +4038,8 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-//	std::vector<std::string> regions;
-//	regions = tz_db.region_list();
-
-    input.ninjaTimeZone = input.tz_db.time_zone_from_region( timeZoneString.c_str() );
+  input.ninjaTimeZone =
+      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;
@@ -4717,11 +4717,12 @@ void ninja::set_outputFilenames(double& meshResolution,
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(kmzResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(shpResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(velResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(pdfResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
@@ -4962,6 +4963,19 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
+    //Check DEM
+    GDALDataset *poDS;
+    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("Could not open DEM for reading");
+    }
+    if(GDALHasNoData(poDS, 1))
+    {
+        throw std::runtime_error("The DEM has no data values.");
+    }
+    GDALClose((GDALDatasetH)poDS);
+
     //Check base inputs needed for run
     if( input.dem.prjString == "" && input.googOutFlag == true )
         throw std::logic_error("Projection information in prjString is not set but should be.");

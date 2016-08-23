@@ -285,7 +285,7 @@ public:
     void set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice); //mesh count for a ninjafoam run
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
-    void set_StlFile(std::string stlFile); 
+    void set_ExistingCaseDirectory(std::string directory); //use existing case for ninjafoam run
 #endif
 
     void set_speedFile(std::string speedFile);

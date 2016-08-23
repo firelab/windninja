@@ -88,6 +88,16 @@ BOOST_AUTO_TEST_CASE( add_hours_2 )
 
 BOOST_AUTO_TEST_CASE( add_hours_3 )
 {
+  /*
+  ** This is a bad test, the result checks aren't comprehensive enough, since
+  ** we don't know the input.  Disabling this test, but leaving it in for
+  ** docuentation.  add_hours_9 captures the last known failure, and it was
+  ** invalid because of a month roll-over.
+  */
+  if (true) {
+    BOOST_CHECK(1);
+    return;
+  }
     NomadsUtcNow( u );
     int h = u->ts->tm_hour;
     int d = u->ts->tm_mday;
@@ -153,6 +163,15 @@ BOOST_AUTO_TEST_CASE( add_hours_8 )
     NomadsUtcAddHours( u, -2 );
     BOOST_CHECK_EQUAL( u->ts->tm_mday, 9 );
     BOOST_CHECK_EQUAL( u->ts->tm_hour, 22 );
+}
+
+/* Peculiar case where add_hours_3 was failing */
+BOOST_AUTO_TEST_CASE(add_hours_9) {
+  int rc;
+  rc = NomadsUtcFromIsoFrmt(u, "20160730T00:03:10");
+  NomadsUtcAddHours(u, 25);
+  BOOST_CHECK_EQUAL(u->ts->tm_mday, 31);
+  BOOST_CHECK_EQUAL(u->ts->tm_hour, 1);
 }
 
 BOOST_AUTO_TEST_CASE( now_1 )
@@ -268,4 +287,3 @@ BOOST_AUTO_TEST_CASE( copy_2 )
     NomadsUtcFree( v );
 }
 BOOST_AUTO_TEST_SUITE_END()
-

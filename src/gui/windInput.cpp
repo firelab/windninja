@@ -40,15 +40,28 @@ windInput::windInput(QWidget *parent) : QWidget(parent)
     
     scrollArea = new QScrollArea;
     scrollArea->setWidget(windTable);
-    
+
+    clearButton = new QToolButton(this);
+    clearButton->setIcon(QIcon(":cancel.png"));
+    clearButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    clearButton->setText("Clear");
+    clearButton->setToolTip("Clear all entries");
+
     windLayout = new QVBoxLayout;
+    clearLayout = new QHBoxLayout;
     mainLayout = new QVBoxLayout;
 
+    clearLayout->addStretch();
+    clearLayout->addWidget(clearButton);
+
     windLayout->addWidget(metaWind);
+    windLayout->addLayout(clearLayout);
     windLayout->addWidget(scrollArea);
 
     windGroupBox->setLayout( windLayout );
 
     mainLayout->addWidget( windGroupBox );
     setLayout(mainLayout);
+
+    connect(clearButton, SIGNAL(clicked()), windTable, SLOT(clear()));
 }

@@ -374,11 +374,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
+                ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory") 
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
-                ("number_of_iterations", po::value<int>()->default_value(1000), "number of iterations for momentum solver") 
-                ("mesh_count", po::value<int>()->default_value(1000000), "number of cells in the mesh") 
+                ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
+                ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
-                ("stl_file", po::value<std::string>(), "path/filename of STL file (*.stl)")
                 ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
                 ("input_dir_grid", po::value<std::string>(), "path/filename of input raster dir file (*.asc)")
                 #endif
@@ -948,31 +948,19 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
             //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
-            #ifdef NINJAFOAM
-            if(!vm.count("stl_file")){
-                //only set the dem if there is no STL file specified
-                windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
-                windsim.setPosition( i_ );    //get position from DEM file
-            }
-            #endif //NINJAFOAM
             
-            #ifndef NINJAFOAM
             windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
             windsim.setPosition( i_ );    //get position from DEM file
-            #endif 
             
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
-                conflicting_options(vm, "stl_file", "elevation_file");
-                if(vm.count("stl_file")){
-                    windsim.setStlFile( i_, vm["stl_file"].as<std::string>() );
-                }
-            
+                conflicting_options(vm, "mesh_choice", "mesh_count");
+                conflicting_options(vm, "mesh_resolution", "mesh_count");
+                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
+                conflicting_options(vm, "mesh_choice", "existing_case_directory");
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
-                conflicting_options(vm, "mesh_choice", "mesh_count");
-                conflicting_options(vm, "mesh_resolution", "mesh_count");
                 if(vm.count("mesh_choice")){
                     if( windsim.setMeshCount( i_,
                         ninja::get_eNinjafoamMeshChoice(vm["mesh_choice"].as<std::string>()) ) != 0 ){
@@ -989,6 +977,9 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
                     windsim.setNonEqBc( i_,
                         vm["non_equilibrium_boundary_conditions"].as<bool>() );
+                }
+                if(vm.count("existing_case_directory")){
+                    windsim.setExistingCaseDirectory( i_, vm["existing_case_directory"].as<std::string>() );
                 }
             }
             #endif //NINJAFOAM

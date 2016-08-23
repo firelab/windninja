@@ -63,8 +63,6 @@ class timeZoneWidget : public QWidget
     QCheckBox *tzDetailCheckBox; /**< Toggle details */
     QStringList tzStringList;	/**< List of zones read from boost */
 
-    blt::tz_database tz_db; /**< boost time zone database */
-
     void loadTimeZones();
     void loadDefaultTimeZones();
 

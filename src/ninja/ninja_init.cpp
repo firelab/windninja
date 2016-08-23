@@ -28,6 +28,8 @@
 
 #include "ninja_init.h"
 
+boost::local_time::tz_database globalTimeZoneDB;
+
 void NinjaCheckThreddsData( void *rc )
 {
     int *r;
@@ -148,6 +150,7 @@ int NinjaInitialize()
         }
     }
 #endif
+    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     return 0;
 }
 

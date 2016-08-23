@@ -29,6 +29,8 @@
 
 #include "timeZoneWidget.h"
 
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /** 
  * Construct a timeZoneWidget that relies on boost for time zone
  * operations
@@ -108,26 +110,10 @@ void timeZoneWidget::createConnections()
  */
 void timeZoneWidget::loadTimeZones()
 {
-    try {
-	tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    }
-    catch( blt::data_not_accessible ) {
-	qDebug() << "diurnalInput::loadBoostTimeZones():"
-		 << "caught data_not_accessible";
-	//throw( new guiInitializationError( "Failed to load time zone, "
-	//				   "Cannot initialize interface. " ) );
-    }
-    catch( blt::bad_field_count ) {
-	qDebug() << "diurnalInput::loadBoostTimeZones():"
-		 << "caught bad_field_count";
-	//throw( new guiInitializationError( "Failed to load time zone, "
-	//				   "Cannot initialize interface. " ) );
-    }
-    
-    std::vector<std::string> tz_list = tz_db.region_list();
-    
-    for( unsigned int i = 0; i < tz_list.size();i++ )
-	tzStringList << QString::fromStdString( tz_list[i] );
+  std::vector<std::string> tz_list = globalTimeZoneDB.region_list();
+  for (unsigned int i = 0; i < tz_list.size(); i++) {
+    tzStringList << QString::fromStdString(tz_list[i]);
+  }
 }
 /** 
  * Load the default time zones for US.  '~' represents standard zones.
@@ -262,7 +248,7 @@ void timeZoneWidget::updateDetailString( int index )
 	return;
     else {
 	blt::time_zone_ptr tz;
-	tz = tz_db.time_zone_from_region( tzText.toStdString() );
+	tz = globalTimeZoneDB.time_zone_from_region( tzText.toStdString() );
 	bool has_dst = tz->has_dst();
 	QString text = "Standard Name:\t\t";
 	text += QString::fromStdString( tz->std_zone_name() ); 
