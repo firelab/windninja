@@ -322,6 +322,15 @@ bool NinjaFoam::simulate_wind()
     /*  wrap up                               */
     /*----------------------------------------*/
 
+    //write log.ninja to store info needed for reusing cases
+    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+    VSILFILE *fout;
+    fout = VSIFOpenL(pszInput, "w");
+    const char *d = CPLSPrintf("meshResolution = %.2f", meshResolution);
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
+
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
@@ -2583,6 +2592,37 @@ int NinjaFoam::UpdateExistingCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
+    //set meshResolution from log.ninja
+    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+    VSILFILE *fin;
+    fin = VSIFOpenL(pszInput, "r");
+
+    char *data;
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+
+    std::string s(data);
+
+    CPLFree(data);
+    VSIFCloseL(fin);
+
+    std::string h;
+    int pos;
+    if(s.find("meshResolution") != s.npos){
+        pos = s.find("firstCellHeight ");
+        h = s.substr(pos+18, pos+23);
+    }
+
+    meshResolution = atof(h.c_str());
+
+    //write the new dict files
     status = WriteFoamFiles();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during WriteFoamFiles().");
@@ -2875,7 +2915,6 @@ double NinjaFoam::GetFirstCellHeightFromDisk()
     //read time/U and search for firstCellHeight
     const char *pszInput = CPLSPrintf("%s/%d/U", pszFoamPath, time);
     VSILFILE *fin;
-    VSILFILE *fout;
 
     fin = VSIFOpenL( pszInput, "r" );
 
