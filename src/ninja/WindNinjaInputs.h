@@ -92,8 +92,8 @@ public:
     };
 
     enum ePDFBaseMap {
-        HILLSHADE,
-        TOPOFIRE
+        TOPOFIRE,
+        HILLSHADE
     };
 
     enum eInitializationMethod{

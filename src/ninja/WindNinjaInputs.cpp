@@ -105,7 +105,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
-    pdfBaseType = HILLSHADE;
+    pdfBaseType = TOPOFIRE;
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
