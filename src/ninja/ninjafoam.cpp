@@ -322,15 +322,6 @@ bool NinjaFoam::simulate_wind()
     /*  wrap up                               */
     /*----------------------------------------*/
 
-    //write log.ninja to store info needed for reusing cases
-    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
-    VSILFILE *fout;
-    fout = VSIFOpenL(pszInput, "w");
-    const char *d = CPLSPrintf("meshResolution = %.2f", meshResolution);
-    int nSize = strlen(d);
-    VSIFWriteL(d, nSize, 1, fout);
-    VSIFCloseL(fout);
-
     #ifdef _OPENMP
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
@@ -2844,7 +2835,30 @@ int NinjaFoam::GenerateNewCase()
         return true;
     }
 
+    //write log.ninja
+    status = WriteNinjaLog();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error writing log.ninja.");
+    }
+
     checkCancel();
+
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::WriteNinjaLog()
+{
+    //write log.ninja to store info needed for reusing cases
+    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+    VSILFILE *fout;
+    fout = VSIFOpenL(pszInput, "w");
+    if( !fout ){
+        return NINJA_E_OTHER;
+    }
+    const char *d = CPLSPrintf("meshResolution = %.2f", meshResolution);
+    int nSize = strlen(d);
+    VSIFWriteL(d, nSize, 1, fout);
+    VSIFCloseL(fout);
 
     return NINJA_SUCCESS;
 }
