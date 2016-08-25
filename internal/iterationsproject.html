@@ -24,18 +24,27 @@ and the inclusion of more transport equations.</p>
 <br>
     <p>Because WindNinja is designed as an emergency response tool, it trades some accuracy for speed.
 This tradeoff is justifiable given the inherent uncertainty regargaring initial and boundary conditions available
-to drive the model. One way to reduce simulation times is to reduce the number of iterations performed when running
+to drive the model. One way to reduce simulation time is to reduce the number of iterations performed when running
 the conservation of mass and momentum solver. We would like to only run as many iterations as needed to get to
 a state where the changes in the predicted wind field are on the order of the uncertainty in the boundary and
 intial conditions.</p>
 <br>
     <p>The goal of the iterations project was to investigate the impact of stopping the solver at a specified
-number of iterations instead of letting it run to complete convergence. Initially, the solver was set up to stop
+number of iterations instead of letting it run to complete convergence. Initially, the solver was set to stop
 at 200 iterations for "coarse" grid resolutions, 500 iterations for "medium" grid resolutions, and 1000 iterations
 for "fine" grid resolutions. This work investigated the suitability of those cutoffs. We attempted to identify
 the point at which further iteration induced flow changes primarily in recirculation or eddy zones where the true
 flow solution is transient and steady-state predictions should always be interpreted with caution.</p>
 <br>
+    <p>Since the time of this project, we have performed other experiments to improve the momentum solver speed
+while conserving accuracy. This resulted in changes for some of WindNinja's internal settings,
+including the number of cells in the mesh for a given resolution. At the time of this study, the mesh for Coarse
+resolution consisted of 100,000 cells, the mesh for Medium resolution consisted of 500,000 cells, and the mesh
+for Fine resolution consisted of 1,000,000 cells. The number of cells for a given mesh has decreased since the
+time of this study. See our <a>Mesh Count Project</a> which is currently not posted, but will be in the next
+couple of weeks.</p>
+<br>
+
 
 <h1 style="color:white;">Experimental Methods</h1>
 <hr />
