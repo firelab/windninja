@@ -465,7 +465,12 @@ static const char *apszNomadsKeys[][11] =
       "0:23:1",
       "0:18:1",
       NOMADS_GENERIC_VAR_LIST,
-      NOMADS_GENERIC_LEVELS_LIST,
+      /*
+      ** The August 2016 TIN changed the level for cloud cover to
+      ** entire_atmosphere.  Request both levels so if they change it, we won't
+      ** fail.
+      */
+      NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
       "13 km",
       "RAP CONUS" },
     /*
@@ -480,7 +485,7 @@ static const char *apszNomadsKeys[][11] =
       "0:23:1",
       "0:18:1",
       NOMADS_GENERIC_VAR_LIST,
-      NOMADS_GENERIC_LEVELS_LIST,
+      NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
       "32 km",
       "RAP North America" },
 #ifdef NOMADS_EXPER_FORECASTS
