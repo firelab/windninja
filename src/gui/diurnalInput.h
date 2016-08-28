@@ -30,6 +30,11 @@
 #ifndef DIURNALINPUT_H_
 #define DIURNALINPUT_H_
 
+#ifndef Q_MOC_RUN
+#include <boost/python.hpp>
+#endif
+
+
 #include <QGroupBox>
 #include <QComboBox>
 #include <QCheckBox>

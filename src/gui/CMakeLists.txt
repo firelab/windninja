@@ -17,6 +17,8 @@
 
 cmake_minimum_required(VERSION 2.6)
 
+add_definitions(-DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+
 QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
                         setconfigdialog.ui)
 
@@ -62,7 +64,8 @@ include_directories(${QT_INCLUDES}
                     ${PROJECT_SOURCE_DIR}/src/ninja
                     ${CMAKE_CURRENT_BINARY_DIR})
 
-QT4_WRAP_CPP(NINJA_GUI_INCLUDES_MOC ${NINJA_GUI_INCLUDES})
+QT4_WRAP_CPP(NINJA_GUI_INCLUDES_MOC ${NINJA_GUI_INCLUDES}
+    "-D BOOST_TT_HAS_OPERATOR_HPP_INCLUDED=1")
 QT4_ADD_RESOURCES(NINJA_GUI_RESOURCES ${PROJECT_SOURCE_DIR}/wn-resources.qrc)
 
 set(NINJA_GUI_SOURCES cmake_gui.cpp

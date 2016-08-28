@@ -47,6 +47,10 @@
 #include "gdal.h"
 #include "ogr_api.h"
 
+#ifndef Q_MOC_RUN
+#include <boost/python.hpp>
+#endif
+
 #ifdef _OPENMP
 omp_lock_t netCDF_lock;
 #endif

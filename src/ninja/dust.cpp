@@ -85,9 +85,9 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
     /* Get the geometry info                    */
     /*------------------------------------------*/
     
-    OGRDataSource *poOGRDS;
-    poOGRDS = OGRSFDriverRegistrar::Open(input.dustFilename.c_str(), FALSE);
-    if(poOGRDS == NULL)
+    OGRDataSourceH hOGRDS = 0;
+    hOGRDS = OGROpen(input.dustFilename.c_str(), FALSE, 0);
+    if(hOGRDS == NULL)
     {
         throw std::runtime_error("Could not open the fire perimeter file '" +
               input.dustFilename + "' for reading.");
@@ -96,7 +96,7 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
     OGRFeature *poFeature;
     OGRGeometry *poGeo;
     
-    poLayer = poOGRDS->GetLayer(0);
+    poLayer = (OGRLayer*)OGR_DS_GetLayer(hOGRDS, 0);
     poLayer->ResetReading();
     poFeature = poLayer->GetNextFeature();
     poGeo = poFeature->GetGeometryRef();
@@ -158,7 +158,7 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
         hMemDS = NULL;
     }
     
-    OGRDataSource::DestroyDataSource( poOGRDS );
+    OGR_DS_Destroy(hOGRDS);
 }
 #endif
 

@@ -602,36 +602,38 @@ int windNinjaCLI(int argc, char* argv[])
         /*------------------------------------------*/            
          
         if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
-            OGRDataSource *poOGRDS;
-            poOGRDS = OGRSFDriverRegistrar::Open(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE);
+          OGRDataSourceH hDS = 0;
+          hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(),
+                        FALSE, 0);
+          if (hDS == 0) {
+            fprintf(stderr, "Failed to open fire perimeter file.\n");
+            exit(1);
+          }
 
-            if( poOGRDS == NULL )
-            {
-                fprintf(stderr, "Failed to open fire perimeter file.\n");
-                exit(1);
-            }
+          OGRLayerH hLayer;
+          OGRFeatureH hFeature;
+          OGRGeometryH hGeo;
 
-            OGRLayer *poLayer;
-            OGRFeature *poFeature;
-            OGRGeometry *poGeo;
-    
-            poLayer = poOGRDS->GetLayer(0);
-            poLayer->ResetReading();
-            poFeature = poLayer->GetNextFeature();
-            poGeo = poFeature->GetGeometryRef();
-            
-            OGREnvelope psEnvelope;
-            
-            poGeo->getEnvelope(&psEnvelope);
-            
+          hLayer = OGR_DS_GetLayer(hDS, 0);
+          OGR_L_ResetReading(hLayer);
+          hFeature = OGR_L_GetNextFeature(hLayer);
+          if (hFeature == NULL) {
+            fprintf(stderr, "Failed to get fire perimeter feature");
+            exit(1);
+          }
+          hGeo = OGR_F_GetGeometryRef(hFeature);
+          OGREnvelope psEnvelope;
+          OGR_G_GetEnvelope(hGeo, &psEnvelope);
+          OGR_DS_Destroy(hDS);
+
             double bbox[4];
             bbox[0] = psEnvelope.MaxY; //north
             bbox[1] = psEnvelope.MaxX; //east
             bbox[2] = psEnvelope.MinY; //south
             bbox[3] = psEnvelope.MinX; //west
             
-            OGRPointToLatLon(bbox[1], bbox[0], poOGRDS, "WGS84");
-            OGRPointToLatLon(bbox[3], bbox[2], poOGRDS, "WGS84");
+            OGRPointToLatLon(bbox[1], bbox[0], hDS, "WGS84");
+            OGRPointToLatLon(bbox[3], bbox[2], hDS, "WGS84");
             
             //add a buffer
             bbox[0] += 0.009; //north
@@ -1515,7 +1517,6 @@ int windNinjaCLI(int argc, char* argv[])
 
     return 0;
 }
-
 
 
 
