@@ -143,6 +143,8 @@ private:
     double GetFirstCellHeightFromDisk();
     int CheckForValidCaseDir(const char* dir);
     int CheckForValidDem();
+
+    int WriteNinjaLog();
     
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();
