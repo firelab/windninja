@@ -3057,7 +3057,7 @@ void ninja::writeOutputFiles()
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid);
+			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
             output.setDEMfile(input.pdfDEMFileName);
             output.setLineWidth(input.pdfLineWidth);
             output.setDPI(input.pdfDPI);
@@ -3099,7 +3099,7 @@ void ninja::writeOutputFiles()
             output.setMaxRunNumber(input.armySize-1);
 
 			output.setDirGrid(AngleGrid);
-			output.setSpeedGrid(VelocityGrid);
+			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
 			
 			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
 
