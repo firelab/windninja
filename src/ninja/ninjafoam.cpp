@@ -2539,7 +2539,7 @@ int NinjaFoam::WriteOutputFiles()
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid);
+			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
             output.setDEMfile(input.pdfDEMFileName);
             output.setLineWidth(input.pdfLineWidth);
             output.setDPI(input.pdfDPI);

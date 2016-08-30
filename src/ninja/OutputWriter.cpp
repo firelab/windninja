@@ -175,9 +175,11 @@ void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 #endif
 
     void
-OutputWriter::setSpeedGrid ( AsciiGrid<double> &s)
+OutputWriter::setSpeedGrid ( AsciiGrid<double> &s,
+                             velocityUnits::eVelocityUnits u )
 {
     spd = s;
+    units = u;
     return;
 }		/* -----  end of method OutputWriter::setSpeedGrid  ----- */
 
@@ -423,7 +425,20 @@ bool OutputWriter::_createLegend()
 
     
     //TODO: Add support for configuring wind speed units
-    PrintString(legend,"Wind Speed (mph)", titleX, titleY, titleTextHeight, white);
+    std::string unitsText = "";
+    if(units == velocityUnits::metersPerSecond){
+        unitsText = "m/s";
+    }
+    else if(units == velocityUnits::milesPerHour){
+        unitsText = "mph";
+    }
+    else if(units == velocityUnits::kilometersPerHour){
+        unitsText = "kph";
+    }
+    else{
+        throw std::runtime_error("OutputWriter: velocityUnits set incorrectly.");
+    }
+    PrintString(legend, CPLSPrintf("Wind Speed (%s)", unitsText.c_str()), titleX, titleY, titleTextHeight, white);
 	for(int i = 0;i < NCOLORS;i++)
 	{
 		x1 = int(legendWidth * x);
