@@ -4,7 +4,15 @@ Release Notes
 WindNinja 3.1.0
 ---------------
 
- - Coarsen CFD outputs so they are readable (\#171)
+ - Fix PDF output legend units (\#217)
+
+ - Make TopoFire the default basemap for PDF output (\#209)
+
+ - Check for no data values in the DEM in CLI runs (\#207)
+
+ - Fix segfault issue related to time zone info in the GUI (\#198)
+
+ - NOMADS HRRR and RAP forecast durations lengthened (\#181)
 
  - Reduce target number of cells for CFD solver component (\#173)
 
@@ -12,7 +20,9 @@ WindNinja 3.1.0
 
  - Use a single mesh for multiple runs (\#176 )
 
- - Handle spaces in DEM file with Momentum Solver (\#180)
+ - Add ability to use an existing case for momentum solver runs (\#176)
+
+ - Handle spaces and other unsupported characters in DEM filename with momentum solver (\#180)
 
  - Add UAB solver enhancements (\#118)
 
