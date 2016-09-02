@@ -1007,6 +1007,8 @@ int windNinjaCLI(int argc, char* argv[])
                                                              vm["end_minute"].as<int>(),
                                                              vm["number_time_steps"].as<int>(),
                                                              osTimeZone );
+                        cout<<"a"<<endl;
+
                         try
                         {
                             pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
@@ -1472,13 +1474,13 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename");
                 if(vm["write_wx_station_csv"].as<bool>()==true)
                 {
-                    cout<<"writing wxStation CSV"<<endl;
+                    cout<<"writing wxStation CSV for step # "<<i_<<endl;
                     wxStation::writeStationFile(windsim.getWxStations( i_ ),
                                                 vm["wx_station_csv_filename"].as<std::string>());
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true)
                 {
-                    cout<<"writing wxStation KML"<<endl;
+                    cout<<"writing wxStation KML for step # "<<i_<<endl;
                     wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                     vm["wx_station_kml_filename"].as<std::string>());
 //                    exit(1);

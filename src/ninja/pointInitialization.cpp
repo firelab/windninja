@@ -678,6 +678,27 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     std::vector<pointInitialization::preInterpolate> diskData;
     std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
     diskData=readDiskLine(stationFilename,demFile);// reads in data
+
+    cout<<"checking first time step..."<<endl;
+//    cout<<diskData[0].datetime<<endl;
+//    cout<<timeList[0]<<endl;
+    bool timeCheck;
+    timeCheck=timeList[0]>=diskData[0].datetime;
+
+    if (timeCheck==false)
+    {
+        cout<<"FATAL: Initial time step must match first time step for in CSV!"<<endl;
+        cout<<"This error should only appear if you are using your own data file."<<endl;
+        cout<<"check inputs and "<<csvFile<<" to ensure that the start time matches the first time in your data"<<endl;
+        cout<<"\n"<<endl;
+
+        cout<<"Conflicting TimeSteps:"<<endl;
+        cout<<"timeList (start Time) "<<timeList[0]<<endl;
+        cout<<"Time on File"<<diskData[0].datetime<<endl;
+        exit(1);
+    }
+    cout<<"first time step check passed!"<<endl;
+
     int t=0;
     vector<int> countLimiter;
 
@@ -2038,7 +2059,7 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     ofstream outFile;
     if (write==true)
     {
-    cout<<"writing MetaData for stations....."<<endl;
+    cout<<"writing MetaData for stations..."<<endl;
     outFile.open(csvName.c_str());
     std::string header="Station_name,STID,Latitude,Longitude,Elevation,Status,MnetID";
     outFile<<header<<endl;
