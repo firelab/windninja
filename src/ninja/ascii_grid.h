@@ -1945,8 +1945,9 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDataset *srcDS;
     //reopen with GDALOpenShared() for GDALAutoCreateWarpedVRT()
     srcDS = (GDALDataset*)GDALOpenShared( "poDS_grid", GA_ReadOnly );
-        if( srcDS == NULL ) {
-            CPLDebug( "ascii_grid::ascii2png()", "cannot open poDS_grid");}
+    if( srcDS == NULL ) {
+        CPLDebug( "ascii_grid::ascii2png()", "cannot open poDS_grid");
+    }
 
     GDALRasterBand *srcBand = srcDS->GetRasterBand(1);
     srcBand->SetColorTable(poCT);

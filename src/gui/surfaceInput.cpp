@@ -36,6 +36,18 @@
  */
 surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
 {
+#ifdef NINJAFOAM
+    //make ninjafoam case input controls
+    foamCaseGroupBox = new QGroupBox(tr("Use Existing Case"));
+
+    foamCaseLineEdit = new QLineEdit;
+    foamCaseLineEdit->setReadOnly(true);
+
+    foamCaseOpenToolButton = new QToolButton;
+    foamCaseOpenToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    foamCaseOpenToolButton->setText(tr("Open Case"));
+    foamCaseOpenToolButton->setIcon(QIcon(":folder_page.png"));
+#endif //NINJAFOAM
 
     //make INPUT input controls
     inputFileGroupBox = new QGroupBox(tr("Elevation Input File"));
@@ -52,6 +64,12 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     downloadDEMButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     downloadDEMButton->setText(tr("Download File"));
     downloadDEMButton->setIcon(QIcon(":server_go.png"));
+
+#ifdef NINJAFOAM
+    foamCaseLayout = new QHBoxLayout;
+    foamCaseLayout->addWidget(foamCaseLineEdit);
+    foamCaseLayout->addWidget(foamCaseOpenToolButton);
+#endif
 
     inputLayout = new QHBoxLayout;
     inputLayout->addWidget(inputFileLineEdit);
@@ -116,6 +134,9 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     timeZoneLayout->addStretch();
 
     //set layouts to boxes
+#ifdef NINJAFOAM
+    foamCaseGroupBox->setLayout(foamCaseLayout);
+#endif
     inputFileGroupBox->setLayout(inputLayout);
     roughnessGroupBox->setLayout(roughnessLayout);
     meshResGroupBox->setLayout(meshResLayout);
@@ -123,6 +144,10 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     
     //main layout
     mainLayout = new QVBoxLayout;
+#ifdef NINJAFOAM
+    mainLayout->addWidget(foamCaseGroupBox);
+    foamCaseGroupBox->setHidden( true );
+#endif
     mainLayout->addWidget(inputFileGroupBox);
     mainLayout->addWidget(roughnessGroupBox);
     mainLayout->addWidget(meshResGroupBox);

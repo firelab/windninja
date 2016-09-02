@@ -72,8 +72,8 @@ pdfOutput::pdfOutput(QWidget *parent) : QWidget(parent)
     backgroundLabel = new QLabel(tr("Basemap"), this);
 
     backgroundComboBox = new QComboBox(this);
-    backgroundComboBox->addItem(tr("Hillshade"));
     backgroundComboBox->addItem(tr("TopoFire topo maps"));
+    backgroundComboBox->addItem(tr("Hillshade"));
 
     // Size names dictated by https://en.wikipedia.org/wiki/Paper_size
     sizeLabel = new QLabel(tr("Size"), this);

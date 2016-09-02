@@ -248,7 +248,7 @@ void timeZoneWidget::updateDetailString( int index )
 	return;
     else {
 	blt::time_zone_ptr tz;
-	tz = tz_db.time_zone_from_region( tzText.toStdString() );
+	tz = globalTimeZoneDB.time_zone_from_region( tzText.toStdString() );
 	bool has_dst = tz->has_dst();
 	QString text = "Standard Name:\t\t";
 	text += QString::fromStdString( tz->std_zone_name() ); 

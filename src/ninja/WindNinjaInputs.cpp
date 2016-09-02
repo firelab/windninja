@@ -106,7 +106,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfLineWidth  = 1.0;
     pdfUnits = lengthUnits::meters;
     pdfFile = "!set";
-    pdfBaseType = HILLSHADE;
+    pdfBaseType = TOPOFIRE;
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
@@ -138,9 +138,10 @@ WindNinjaInputs::WindNinjaInputs()
 #endif
 #ifdef NINJAFOAM
     nIterations = 1000;
-    meshCount = 1000000;
+    meshCount = -1;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
     nonEqBc = true;
+    existingCaseDirectory = "!set";
     stlFile = "!set";
     speedInitGridFilename = "!set";
     dirInitGridFilename= "!set";

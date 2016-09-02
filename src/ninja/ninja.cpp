@@ -3565,14 +3565,15 @@ void ninja::set_MeshCount(int meshCount)
 
 void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
 {
+    //if these change, update values in GUI for horizontal resolution estimation
     if(meshChoice == WindNinjaInputs::coarse){
-        input.meshCount = 100000;
+        input.meshCount = 25000;
     }
     else if(meshChoice == WindNinjaInputs::medium){
-        input.meshCount = 500000;
+        input.meshCount = 50000;
     }
     else if(meshChoice == WindNinjaInputs::fine){
-        input.meshCount = 1e6;
+        input.meshCount = 100000;
     }
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
@@ -3599,9 +3600,9 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
     }
 }
 
-void ninja::set_StlFile(std::string stlFile)
+void ninja::set_ExistingCaseDirectory(std::string directory)
 {
-    input.stlFile = stlFile;
+    input.existingCaseDirectory = directory;
 }
 #endif
 
@@ -4584,7 +4585,7 @@ void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
     VSIStatL( path.c_str(), &sStat );
-    const char *pszTestPath = CPLFormFilename(path.c_str(), "test", "");
+    const char *pszTestPath = CPLFormFilename(path.c_str(), "NINJA_TEST", "");
     int nRet;
     
     if( VSI_ISDIR( sStat.st_mode ) ){
@@ -4975,6 +4976,29 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
+    //Check DEM
+    GDALDataset *poDS;
+    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("Could not open DEM for reading.");
+    }
+    if(GDALHasNoData(poDS, 1))
+    {
+        throw std::runtime_error("The DEM has no data values.");
+    }
+    GDALClose((GDALDatasetH)poDS);
+
+    //check for invalid characters in DEM name
+    std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
+    if(s.find_first_of("0123456789") == 0){
+        throw std::runtime_error("The DEM name cannot start with a number.");
+    }
+    if(s.find_first_of("/\\:;\"'") != std::string::npos){
+        throw std::runtime_error("The DEM name contains an invalid character."
+                " The DEM name cannot contain the following characters: / \\ : ; \" '.");
+    }
+
     //Check base inputs needed for run
     if( input.dem.prjString == "" && input.googOutFlag == true )
         throw std::logic_error("Projection information in prjString is not set but should be.");

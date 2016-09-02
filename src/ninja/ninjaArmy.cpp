@@ -230,7 +230,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         while(1){
             const char* f = CPLReadLine(fcastList);
             if (f == NULL)
-                    break;
+                break;
             wxList.push_back(f);
         }
         VSIFClose(fcastList);
@@ -326,6 +326,23 @@ bool ninjaArmy::startRuns(int numProcessors)
             }
         }
     }
+#ifdef NINJAFOAM
+    //if it's a ninjafoam run and the user specified an existing case dir, set it here
+    if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
+        NinjaFoam::SetFoamPath(ninjas[0]->input.existingCaseDirectory.c_str());
+    }
+    //if it's a ninjafoam run and the case is not set by the user, generate the ninjafoam dir
+    if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory == "!set"){
+        //force temp dir to DEM location
+        CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
+        int status = NinjaFoam::GenerateFoamDirectory(ninjas[0]->input.dem.fileName);
+        if(status != 0){
+            throw std::runtime_error("Error generating the NINJAFOAM directory.");
+        }
+    }
+#endif //NINJAFOAM
 
 #ifdef _OPENMP
     omp_set_nested(false);
@@ -518,7 +535,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
-        
+ 
                 //start the run
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
@@ -530,7 +547,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
-                    diurnal_ninja->set_meshResolution(ninjas[i]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                    //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
+                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
@@ -723,7 +741,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw;
         }
     }
-
+    
     return status;
 }
 
@@ -1046,9 +1064,9 @@ int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptio
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
 }
 
-int ninjaArmy::setStlFile( const int nIndex, const std::string stlFile, char ** papszOptions )
+int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_StlFile( stlFile ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
 }
 #endif
 /*-----------------------------------------------------------------------------

@@ -120,7 +120,6 @@ class weatherModel : public QWidget
     QVBoxLayout *weatherLayout;
     QVBoxLayout *layout;
 
-    boost::local_time::tz_database tz_db;
     QString tzString;
  private:
     void loadModelComboBox();

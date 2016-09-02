@@ -53,7 +53,7 @@ bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poDstDS,
                           const char *datum );
 bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
                         const char *datum );
-bool OGRPointToLatLon( double &x, double &y, OGRDataSource *poSrcDS,
+bool OGRPointToLatLon( double &x, double &y, OGRDataSourceH hDS,
 				const char *datum );
 int GDALGetUtmZone( GDALDataset *poDS );
 int GDALFillBandNoData( GDALDataset *poDS, int nBand, int nSearchPixels );

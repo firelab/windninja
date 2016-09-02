@@ -37,13 +37,13 @@ LandfireClient::LandfireClient() : SurfaceFetch()
     xRes = 30.0;
     yRes = 30.0;
     northeast_x = -40;
-    northeast_y = 90;
+    northeast_y = 72;
     southeast_x = -40;
-    southeast_y = 0;
+    southeast_y = 12;
     southwest_x = -180;
-    southwest_y = 0;
+    southwest_y = 12;
     northwest_x = -180;
-    northwest_y = 80;
+    northwest_y = 72;
 }
 
 /*

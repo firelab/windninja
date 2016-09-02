@@ -76,11 +76,15 @@ public:
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
     double get_meshResolution();
+    static int GenerateFoamDirectory(std::string demName);
+    static void SetFoamPath(const char *pszPath);
 
 private:
+    static const char *pszFoamPath;
 
     /* OpenFOAM case setup */
-    int GenerateTempDirectory();
+    int UpdateExistingCase();
+    int GenerateNewCase();
     int WriteFoamFiles();
     int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
     int WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
@@ -95,7 +99,6 @@ private:
     void SetInlets();
     void SetBcs();
     
-    const char *pszTempPath;
     double foamRoughness; //roughness value used in OpenFOAM
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
@@ -112,9 +115,6 @@ private:
     int writeMoveDynamicMesh();
     int writeBlockMesh();
     int readDem(double &ratio_); //sets blockMesh data from DEM
-    int ReadStl();
-    int readLogFile(double &ratio); //sets blockMesh data from STL log file when DEM not available
-    double GetNativeFineMeshResolution(); //for output re-sampling
 
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
@@ -135,6 +135,16 @@ private:
 
     int latestTime; //latest time directory
     int simpleFoamEndTime; //set to last time directory
+
+    int GetLatestTimeOnDisk();
+    std::vector<std::string> GetTimeDirsOnDisk();
+    std::vector<std::string> GetProcessorDirsOnDisk();
+    bool StringIsNumeric(const std::string &str);
+    double GetFirstCellHeightFromDisk();
+    int CheckForValidCaseDir(const char* dir);
+    int CheckForValidDem();
+
+    int WriteNinjaLog();
     
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();
