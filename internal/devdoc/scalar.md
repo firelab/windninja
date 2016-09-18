@@ -7,10 +7,11 @@ layout: internal
 ## Overview
 Transport of a passive scalar `T` is done with `myScalarTransportFoam`. This solver is used to obtain a solution to the advection-diffusion equation given a known velocity field `U`.
 
-`    dT           
+```
+    dT           
     -- + Div(UT) - Laplacian(DTT) = Q
     dt           
-`
+```
 The diffusion coefficient `DT` is assumed to be a constant scalar, `Q` is the source term.
 
 ## Steps
