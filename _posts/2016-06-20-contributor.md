@@ -17,13 +17,13 @@ permalink: /contributors/
 
 <br>
 
+- Bret Butler, Mechanical Engineer, Fire Sciences Laboratory, Missoula, MT
+
 - Jason Forthofer, Mechanical Engineer, Fire Sciences Laboratory, Missoula, MT
 
 - Kyle Shannon, Software Engineer, Boise State University, Boise, ID
 
 - Natalie Wagenbrenner, Research Meteorologist, Fire Sciences Laboratory, Missoula, MT
-
-- Bret Butler, Mechanical Engineer, Fire Sciences Laboratory, Missoula, MT
 
 <br>
 
@@ -34,7 +34,7 @@ permalink: /contributors/
 
 - Tanner Finney, Montana State University
 
-- Levi Mallot, University of Missouri
+- Levi Malott, University of Missouri
 
 - Cody Posey, University of Montana
 
