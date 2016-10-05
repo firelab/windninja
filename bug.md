@@ -42,7 +42,7 @@ permalink: /help/
           <h2>
             <a class="post-link white-text" href="mailto:wind.ninja.support@gmail.com">Contact Us</a>
           </h2>
-          <p>Send an email to the Wind Ninja support team.</p>
+          <p>Send an email to the WindNinja support team.</p>
       </div>
   </div>
 </div>
