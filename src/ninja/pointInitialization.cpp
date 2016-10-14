@@ -31,11 +31,11 @@
 #include "pointInitialization.h"
 
  const std::string pointInitialization::dtoken="33e3c8ee12dc499c86de1f2076a9e9d4";
- const std::string pointInitialization::dvar="wind_speed,wind_direction,air_temp,\
-                                              solar_radiation,cloud_layer_1_code";
- const std::string pointInitialization::ndvar="wind_speed,wind_direction,air_temp,\
-                                               solar_radiation,cloud_layer_1_code,\
-                                               cloud_layer_2_code,cloud_layer_3_code";
+ const std::string pointInitialization::dvar="wind_speed,wind_direction,air_temp,"
+                                             "solar_radiation,cloud_layer_1_code";
+ const std::string pointInitialization::ndvar="wind_speed,wind_direction,air_temp,"
+                                              "solar_radiation,cloud_layer_1_code,"
+                                              "cloud_layer_2_code,cloud_layer_3_code";
 
 pointInitialization::pointInitialization() : initialize()
 {
@@ -80,7 +80,6 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
         AsciiGrid<double>& bl_height)
 {
     int i, j, k;
-
     windProfile profile;
     profile.profile_switch = windProfile::monin_obukov_similarity;  //switch that detemines what profile is used...
     
@@ -161,16 +160,15 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     input.surface.Z = input.inputWindHeight;
 
     airTempGrid.interpolateFromPoints(T, X, Y, influenceRadius, input.stationsScratch.size(), dfInvDistWeight);
-    //airTempGrid.write_Grid("C:\\01_JASON_L14\\WindNinja_legacy\\trunk\\source\\airTempTest.asc", 2);
     cloudCoverGrid.interpolateFromPoints(cc, X, Y, influenceRadius, input.stationsScratch.size(), dfInvDistWeight);
 
     //Check one grid to be sure that the interpolation completely filled the grid
     if(cloudCoverGrid.checkForNoDataValues())
     {
-        throw std::runtime_error("Fill interpolation from the wx stations didn't completely fill the grids.  " \
-				"To be sure everything is filled, let at least one wx station have an \
-                                infinite influence radius.  " \
-				"This is specified by defining the influence radius to be a value less than zero in the wx " \
+        throw std::runtime_error("Fill interpolation from the wx stations didn't completely fill the grids.  "
+				"To be sure everything is filled, let at least one wx station have an "
+                                "infinite influence radius.  This is specified by defining the influence "
+                                "radius to be a value less than zero in the wx "
 				"station file.");
     }
 
@@ -199,7 +197,8 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     //now interpolate all stations vertically to the maxStationHeight
     for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
     {
-        //if station is not at the 2d interp layer height of maxStationHeight, interpolate vertically using profile to this height
+        //if station is not at the 2d interp layer height of maxStationHeight,
+        //interpolate vertically using profile to this height
         if(input.stationsScratch[ii].get_height() != maxStationHeight)	
         {	
             profile.inputWindHeight = input.stationsScratch[ii].get_height();
