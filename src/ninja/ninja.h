@@ -99,11 +99,13 @@
 #include "ninjaUnits.h"
 #include "element.h"
 #include "farsiteAtm.h"
-#include <boost/shared_ptr.hpp>
 #include "OutputWriter.h"
 
+#ifndef Q_MOC_RUN
+#include <boost/shared_ptr.hpp>
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
+#endif
 
 
 #ifdef STABILITY

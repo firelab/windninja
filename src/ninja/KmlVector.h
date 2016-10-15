@@ -51,8 +51,10 @@
 
 #include "gdal_util.h" //nsw
 
+#ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
+#endif
 
 #include "ninjaException.h"
 

@@ -39,7 +39,9 @@
 
 #include <stdlib.h>
 
+#ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
+#endif
 
 int NinjaInitialize();
 
