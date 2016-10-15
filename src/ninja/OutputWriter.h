@@ -78,7 +78,8 @@ class OutputWriter
         /* ====================  ACCESSORS     ======================================= */
 
         /* ====================  MUTATORS      ======================================= */
-        void setSpeedGrid(AsciiGrid<double> &s);
+        void setSpeedGrid(AsciiGrid<double> &s,
+                          velocityUnits::eVelocityUnits units);
         void setDirGrid(AsciiGrid<double> &d);
 #ifdef EMISSIONS
         void setDustGrid(AsciiGrid<double> &d);
@@ -134,6 +135,7 @@ class OutputWriter
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;
+        velocityUnits::eVelocityUnits units;
 #ifdef EMISSIONS
         AsciiGrid<double> dust;
 #endif

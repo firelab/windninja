@@ -248,6 +248,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             }
         }
     }
+#ifdef NINJAFOAM
     //if it's a ninjafoam run and the user specified an existing case dir, set it here
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
         NinjaFoam::SetFoamPath(ninjas[0]->input.existingCaseDirectory.c_str());
@@ -263,6 +264,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }
     }
+#endif //NINJAFOAM
 
 #ifdef _OPENMP
     omp_set_nested(false);

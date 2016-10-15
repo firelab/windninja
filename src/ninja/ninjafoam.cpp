@@ -638,8 +638,8 @@ void NinjaFoam::SetFoamPath(const char* pszPath)
 
 int NinjaFoam::GenerateFoamDirectory(std::string demName)
 {
-    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s_",
-                  CPLGetBasename(demName.c_str())) ));
+    std::string t = NinjaRemoveSpaces(std::string(CPLGetBasename(demName.c_str())));
+    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s_", t.c_str())));
     VSIMkdir( pszFoamPath, 0777 );
 
     return NINJA_SUCCESS;
@@ -2539,7 +2539,7 @@ int NinjaFoam::WriteOutputFiles()
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
 			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid);
+			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
             output.setDEMfile(input.pdfDEMFileName);
             output.setLineWidth(input.pdfLineWidth);
             output.setDPI(input.pdfDPI);
