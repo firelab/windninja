@@ -392,8 +392,8 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     return aoCachedTimes;
 }
 
-const char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
-                                                time_t nTime )
+char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
+                                          time_t nTime )
 {
     int i;
     char **papszFileList = NULL;
@@ -503,6 +503,8 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     }
 
     hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    CPLFree( (void*) pszForecastFile );
+    pszForecastFile = NULL;
     nBandCount = GDALGetRasterCount( hSrcDS );
     hBand = GDALGetRasterBand( hSrcDS, 1 );
     dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
@@ -796,6 +798,7 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     }
 
     hDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    CPLFree( (void*)pszForecastFile );
     int nBandCount = GDALGetRasterCount( hDS );
     hBand = GDALGetRasterBand( hDS, 1 );
     int bSuccess;
