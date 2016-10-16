@@ -71,7 +71,7 @@ static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
     pszList = CPLMalloc(sizeof(char) * m);
     memset(pszList, 0, m);
     k = 0;
-    for (i = 0; i < n; i++) {
+    for (i = 0; k < m && i < n; i++) {
       // copy the prefix, add a '_'
       for (j = 0; j < strlen(pszPrefix); j++) {
         pszList[k++] = pszPrefix[j];
