@@ -314,13 +314,13 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
                 }
             }
 
-            profile.AGL=maxStationHeight + profile.Rough_h;			//this is height above THE GROUND!! (not "z=0" for the log profile)
+            profile.AGL=maxStationHeight + profile.Rough_h; //this is height above THE GROUND!! (not "z=0" for the log profile)
 
             wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
-			profile.inputWindSpeed = u[ii];	
-			u[ii] = profile.getWindSpeed();
-			profile.inputWindSpeed = v[ii];
-			v[ii] = profile.getWindSpeed();
+            profile.inputWindSpeed = u[ii];
+            u[ii] = profile.getWindSpeed();
+            profile.inputWindSpeed = v[ii];
+            v[ii] = profile.getWindSpeed();
         }
         else{   //else station is already at 2d interp layer height
             wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
@@ -332,6 +332,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
     input.surface.windSpeedGrid.set_headerData(uInitializationGrid);
     input.surface.windGridExists = true;
+
     for(i=0;i<input.dem.get_nRows();i++)
     {
         for(j=0;j<input.dem.get_nCols();j++)
@@ -418,7 +419,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
         }
         else{
                 f = 1e-4;	//if latitude is not available, set f to mid-latitude value
-            }
+        }
         if(f==0.0){	//zero will give division by zero below
             f = 1e-8;	//if latitude is zero, set f small
         }
@@ -431,9 +432,9 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
             {
                 vel = std::pow((uInitializationGrid(i,j)*uInitializationGrid(i,j)+
                             vInitializationGrid(i,j)*vInitializationGrid(i,j)),0.5);
-                            u_star(i,j) = vel*0.4/(log((input.inputWindHeight+
-                                        input.surface.Rough_h(i,j)-input.surface.Rough_d(i,j))/
-                                        input.surface.Roughness(i,j)));
+                u_star(i,j) = vel*0.4/(log((input.inputWindHeight+
+                            input.surface.Rough_h(i,j)-input.surface.Rough_d(i,j))/
+                            input.surface.Roughness(i,j)));
                             
                 //compute neutral ABL height
                 //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
