@@ -155,7 +155,9 @@ NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
-    ( NinjaH * ninja, const char * forecastFilename, const char * timezone )
+    ( NinjaH * ninja, const char * forecastFilename,
+      const char * timezone,
+      bool momentumFlag )
 {
     NinjaErr retval = NINJA_E_INVALID;
     if( NULL != ninja )
@@ -163,7 +165,10 @@ NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
        try
        {
            reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
-               ( std::string( forecastFilename ), std::string( timezone ) );
+               ( std::string( forecastFilename ),
+                 std::string( timezone ),
+                 momentumFlag );
+
            retval = NINJA_SUCCESS;
        }
        catch( armyException & e )

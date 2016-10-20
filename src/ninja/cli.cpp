@@ -882,9 +882,9 @@ int windNinjaCLI(int argc, char* argv[])
         //---------------------------------------------------------------------
         #ifdef NINJAFOAM 
         
-        if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") && 
+        if(vm["initialization_method"].as<std::string>()==string("pointInitialization") &&
            vm["momentum_flag"].as<bool>()){
-            cout << "'initialization_method' must be 'domainAverageInitialization' if the momentum solver is enabled.\n";
+            cout << "'poinInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
             return -1;
         }
         //conflicting_options(vm, "momentum_flag", "diurnal_winds");
@@ -916,7 +916,8 @@ int windNinjaCLI(int argc, char* argv[])
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone );
+                                                            osTimeZone,
+                                                            vm["momentum_flag"].as<bool>() );
                 }
                 catch(... )
                 {
@@ -928,7 +929,9 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "forecast_filename", "time_zone");
             if(vm.count("forecast_filename"))   //if a forecast file already exists
             {
-                windsim.makeArmy(vm["forecast_filename"].as<std::string>(), osTimeZone);
+                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
+                                 osTimeZone,
+                                 vm["momentum_flag"].as<bool>());
             }
         }
 

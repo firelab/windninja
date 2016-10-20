@@ -140,7 +140,7 @@ int ninjaArmy::getSize()
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
+void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
 {
     wxModelInitialization* model;
     
@@ -163,7 +163,12 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         
         for(unsigned int i = 0; i < wxList.size(); i++)
         {
-            ninjas[i] = new ninja();
+            if(momentumFlag == true){
+                ninjas[i] = new NinjaFoam();
+            }
+            else{
+                 ninjas[i] = new ninja();
+            }
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -197,7 +202,12 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
         {
-            ninjas[i] = new ninja();  //wxModelInitializations only for ninjas now (not ninjafoams)
+            if(momentumFlag == true){
+                ninjas[i] = new NinjaFoam();
+            }
+            else{
+                 ninjas[i] = new ninja();
+            }
         }
 
         for(unsigned int i = 0; i < timeList.size(); i++)
