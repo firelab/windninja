@@ -884,7 +884,7 @@ int windNinjaCLI(int argc, char* argv[])
         
         if(vm["initialization_method"].as<std::string>()==string("pointInitialization") &&
            vm["momentum_flag"].as<bool>()){
-            cout << "'poinInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
+            cout << "'pointInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
             return -1;
         }
         //conflicting_options(vm, "momentum_flag", "diurnal_winds");
