@@ -602,28 +602,28 @@ int windNinjaCLI(int argc, char* argv[])
         /*------------------------------------------*/            
          
         if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
-          OGRDataSourceH hDS = 0;
-          hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(),
-                        FALSE, 0);
-          if (hDS == 0) {
-            fprintf(stderr, "Failed to open fire perimeter file.\n");
-            exit(1);
-          }
+            OGRDataSourceH hDS = 0;
+            hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(),
+                          FALSE, 0);
+            if (hDS == 0) {
+              fprintf(stderr, "Failed to open fire perimeter file.\n");
+              exit(1);
+            }
 
-          OGRLayerH hLayer;
-          OGRFeatureH hFeature;
-          OGRGeometryH hGeo;
+            OGRLayerH hLayer;
+            OGRFeatureH hFeature;
+            OGRGeometryH hGeo;
 
-          hLayer = OGR_DS_GetLayer(hDS, 0);
-          OGR_L_ResetReading(hLayer);
-          hFeature = OGR_L_GetNextFeature(hLayer);
-          if (hFeature == NULL) {
-            fprintf(stderr, "Failed to get fire perimeter feature");
-            exit(1);
-          }
-          hGeo = OGR_F_GetGeometryRef(hFeature);
-          OGREnvelope psEnvelope;
-          OGR_G_GetEnvelope(hGeo, &psEnvelope);
+            hLayer = OGR_DS_GetLayer(hDS, 0);
+            OGR_L_ResetReading(hLayer);
+            hFeature = OGR_L_GetNextFeature(hLayer);
+            if (hFeature == NULL) {
+              fprintf(stderr, "Failed to get fire perimeter feature");
+              exit(1);
+            }
+            hGeo = OGR_F_GetGeometryRef(hFeature);
+            OGREnvelope psEnvelope;
+            OGR_G_GetEnvelope(hGeo, &psEnvelope);
 
             double bbox[4];
             bbox[0] = psEnvelope.MaxY; //north
