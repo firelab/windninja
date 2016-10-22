@@ -624,7 +624,6 @@ int windNinjaCLI(int argc, char* argv[])
           hGeo = OGR_F_GetGeometryRef(hFeature);
           OGREnvelope psEnvelope;
           OGR_G_GetEnvelope(hGeo, &psEnvelope);
-          OGR_DS_Destroy(hDS);
 
             double bbox[4];
             bbox[0] = psEnvelope.MaxY; //north
@@ -635,6 +634,8 @@ int windNinjaCLI(int argc, char* argv[])
             OGRPointToLatLon(bbox[1], bbox[0], hDS, "WGS84");
             OGRPointToLatLon(bbox[3], bbox[2], hDS, "WGS84");
             
+            OGR_DS_Destroy(hDS);
+
             //add a buffer
             bbox[0] += 0.009; //north
             bbox[1] += 0.042; //east
