@@ -351,6 +351,7 @@ public:
 protected:
     void checkCancel();
     void write_compare_output();
+    boost::shared_ptr<wxModelInitialization> wxInit;
 
 private:
 
@@ -387,9 +388,6 @@ private:
     AsciiGrid<double> *vInitializationGrid;
     AsciiGrid<double> *airTempGrid;
     AsciiGrid<double> *cloudCoverGrid;
-
-
-    boost::shared_ptr<wxModelInitialization> wxInit;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)

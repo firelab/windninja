@@ -1364,11 +1364,6 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "mesh_resolution", "units_mesh_resolution");
                 windsim.setMeshResolution( i_, vm["mesh_resolution"].as<double>(), lengthUnits::getUnit(vm["units_mesh_resolution"].as<std::string>()));
             }
-            #ifdef NINJAFOAM
-            else if(vm["momentum_flag"].as<bool>()){
-                //don't do anything
-            }
-            #endif
             else{
                 cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
                 return -1;

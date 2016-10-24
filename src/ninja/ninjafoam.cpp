@@ -123,6 +123,15 @@ bool NinjaFoam::simulate_wind()
 
     checkInputs();
 
+    /* if it's a wxModelInitialization, get the average speed,
+     * direction, T, cloud cover
+     */
+    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    {
+        wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
+        wxInit->ninjaFoamInitializeFields(input);
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();

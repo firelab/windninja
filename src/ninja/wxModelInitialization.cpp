@@ -1053,6 +1053,18 @@ void wxModelInitialization::deallocateTemp()
 }
 #endif
 
+#ifdef NINJAFOAM
+/**
+ * Sets input speed, direction, temperature, and cloud from a surface wx model.
+ * @param input WindNinjaInputs object storing necessary input information.
+ */
+void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
+{
+
+}
+
+#endif //NINJAFOAM
+
 /**
  * Initializes u0, v0, w0, and cloud from a surface wx model.
  * @param input WindNinjaInputs object storing necessary input information.
