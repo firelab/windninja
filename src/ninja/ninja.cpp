@@ -28,6 +28,7 @@
 
 
 #include "ninja.h"
+#include "testOutstream.cpp"
 
 extern boost::local_time::tz_database globalTimeZoneDB;
 
@@ -2776,6 +2777,8 @@ void ninja::computeDustEmissions()
 void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
+
+	funRun();
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
