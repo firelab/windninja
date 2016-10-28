@@ -1,14 +1,11 @@
 ---
-layout: post
-title:  "WindNinja Online Run"
-color: red
-width:   3
-height:  1
-date:   2016-07-27 12:45:49 +0200
-categories: main
-permalink: /online/
+layout: internal
+permalink: /oldline/
 ---
-<h1 style="color:white;">Sample WindNinja Run</h1>
+
+<h1 class="post-title" itemprop="name headline" style="color:white;">Sample WindNinja Run</h1>
+<!-- <h1 style="color:white;">Sample WindNinja Run</h1> -->
+<br>
 
 <html>
 <head>
