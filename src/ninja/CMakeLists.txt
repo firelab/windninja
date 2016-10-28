@@ -56,6 +56,7 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
                   ncepHrrrSurfInitialization.cpp
                   ncepNdfdInitialization.cpp
                   ncepRapSurfInitialization.cpp
+		  openFoamPolyMesh.cpp
                   wrfSurfInitialization.cpp
                   wrf3dInitialization.cpp
                   ninja_conv.cpp

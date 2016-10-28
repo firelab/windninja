@@ -120,6 +120,8 @@
 #include "dust.h"
 #endif
 
+#include "openFoamPolyMesh.h"
+
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
 #define LENGTH 256
