@@ -195,6 +195,23 @@ class wxModelInitialization : public initialize
     wn_3dScalarField wxCloud3d;
 
     GDALProgressFunc pfnProgress;
+
+private:
+    void WriteWxModelGrids(WindNinjaInputs &input);
+
+    AsciiGrid<double> airTempGrid_wxModel;
+    AsciiGrid<double> uGrid_wxModel;
+    AsciiGrid<double> vGrid_wxModel;
+    AsciiGrid<double> wGrid_wxModel;
+    AsciiGrid<double> speedInitializationGrid_wxModel;
+    AsciiGrid<double> dirInitializationGrid_wxModel;
+    AsciiGrid<double> cloudCoverGrid_wxModel;
+
+    AsciiGrid<double> airTempGrid;
+    AsciiGrid<double> speedInitializationGrid;
+    AsciiGrid<double> dirInitializationGrid;
+    AsciiGrid<double> uInitializationGrid;
+    AsciiGrid<double> vInitializationGrid;
 };
 
 #endif /* WX_MODEL_INITIALIZATION_H */

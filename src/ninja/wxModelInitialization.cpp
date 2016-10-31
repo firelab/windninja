@@ -114,6 +114,13 @@ wxModelInitialization::wxModelInitialization(const wxModelInitialization& A) : i
  */
 wxModelInitialization::~wxModelInitialization()
 {
+    airTempGrid.deallocate();
+    uGrid_wxModel.deallocate();
+    vGrid_wxModel.deallocate();
+    speedInitializationGrid_wxModel.deallocate();
+    dirInitializationGrid_wxModel.deallocate();
+    cloudCoverGrid_wxModel.deallocate();
+    airTempGrid_wxModel.deallocate();
 }
 
 /**
@@ -1062,25 +1069,12 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 {
     input.inputWindHeight = (*this).Get_Wind_Height();
 
-    AsciiGrid<double> airTempGrid_wxModel;
-    AsciiGrid<double> cloudCoverGrid_wxModel;
-    AsciiGrid<double> uGrid_wxModel;
-    AsciiGrid<double> vGrid_wxModel;
-    AsciiGrid<double> wGrid_wxModel;
-
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
 
-    AsciiGrid<double> speedInitializationGrid;
     speedInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> dirInitializationGrid;
     dirInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> uInitializationGrid;
     uInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> vInitializationGrid;
     vInitializationGrid.set_headerData(input.dem);
 
     //Interpolate from original wxModel grids to dem coincident grids
@@ -1116,11 +1110,8 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
     //set average direction
     input.inputDirection = meanDir;
 
-    //deallocate temporary grids
-    airTempGrid_wxModel.deallocate();
-    cloudCoverGrid_wxModel.deallocate();
-    uGrid_wxModel.deallocate();
-    vGrid_wxModel.deallocate();
+    //write wx model grids
+    WriteWxModelGrids(input);
 }
 
 #endif //NINJAFOAM
@@ -1155,16 +1146,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     //make sure rough_h is set to zero if profile switch is 0 or 2
 
     //Read in wxModel grids (includes speed, direction, temperature and cloud cover grids)
-
-    AsciiGrid<double> airTempGrid_wxModel;
-    AsciiGrid<double> cloudCoverGrid_wxModel;
-    AsciiGrid<double> speedInitializationGrid_wxModel;
-    AsciiGrid<double> dirInitializationGrid_wxModel;
-    AsciiGrid<double> uGrid_wxModel;
-    AsciiGrid<double> vGrid_wxModel;
-    AsciiGrid<double> wGrid_wxModel;
-
-
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
 
@@ -1173,21 +1154,11 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 #endif
 
     //Make final grids with same header as dem
-    AsciiGrid<double> airTempGrid;
     airTempGrid.set_headerData(input.dem);
-
     cloud.set_headerData(input.dem);
-
-    AsciiGrid<double> speedInitializationGrid;
     speedInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> dirInitializationGrid;
     dirInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> uInitializationGrid;
     uInitializationGrid.set_headerData(input.dem);
-
-    AsciiGrid<double> vInitializationGrid;
     vInitializationGrid.set_headerData(input.dem);
 
     //Interpolate from original wxModel grids to dem coincident grids
@@ -1223,145 +1194,8 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
         throw std::logic_error("NoData values found in wx model interpolated grids.");
     }
 
-    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
-    {
-        speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
-        dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
-
-        //now make speed and direction from u,v components
-        for(int i=0; i<speedInitializationGrid_wxModel.get_nRows(); i++) {
-            for(int j=0; j<speedInitializationGrid_wxModel.get_nCols(); j++) {
-                if( uGrid_wxModel(i,j) == uGrid_wxModel.get_NoDataValue() ||
-                    vGrid_wxModel(i,j) == vGrid_wxModel.get_NoDataValue() ) {
-                    speedInitializationGrid_wxModel(i,j) = speedInitializationGrid_wxModel.get_NoDataValue();
-                    dirInitializationGrid_wxModel(i,j) = dirInitializationGrid_wxModel.get_NoDataValue();
-                }
-                else
-                    wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j), &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
-            }
-        }
-
-        //Write raw model output files
-        std::string rootname, path;
-        //rootname = CPLGetBasename(input.forecastFilename.c_str());
-        path = CPLGetPath(input.forecastFilename.c_str());
-
-        ostringstream wxModelTimestream;
-        blt::local_time_facet* wxModelOutputFacet;
-        wxModelOutputFacet = new blt::local_time_facet();
-        wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
-        wxModelOutputFacet->format("%m-%d-%Y_%H%M");
-        wxModelTimestream << input.ninjaTime;
-        rootname = getForecastIdentifier() + "-" + wxModelTimestream.str();
-
-        std::string wxModelVelFileTemp = rootname + "_vel";
-        std::string wxModelAngFileTemp = rootname + "_ang";
-        std::string wxModelCldFileTemp = rootname + "_cld";
-        std::string wxModelShpFileTemp = rootname;
-        std::string wxModelDbfFileTemp = rootname;
-        std::string wxModelKmlFileTemp = rootname;
-        std::string wxModelKmzFileTemp = rootname;
-        std::string wxModelLegFileTemp = rootname;
-        std::string dateTimewxModelLegFileTemp = rootname + ".date_time";
-
-        input.wxModelVelFile = CPLFormFilename(path.c_str(), wxModelVelFileTemp.c_str(), ".asc");
-        input.wxModelAngFile = CPLFormFilename(path.c_str(), wxModelAngFileTemp.c_str(), ".asc");
-        input.wxModelCldFile = CPLFormFilename(path.c_str(), wxModelCldFileTemp.c_str(), ".asc");
-        input.wxModelShpFile = CPLFormFilename(path.c_str(), wxModelShpFileTemp.c_str(), "shp");
-        input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
-        input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
-        input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
-        input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
-        input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
-    }
-    velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, input.outputSpeedUnits);
-
-#pragma omp parallel sections
-    {
-    //write FARSITE files
-#pragma omp section
-    {
-        try{
-        if(input.wxModelAsciiOutFlag==true)
-            {
-            AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
-            tempCloud *= 100.0;
-            tempCloud.write_Grid(input.wxModelCldFile.c_str(), 0);
-            dirInitializationGrid_wxModel.write_Grid(input.wxModelAngFile.c_str(), 0);
-            speedInitializationGrid_wxModel.write_Grid(input.wxModelVelFile.c_str(), 2);
-            }
-        }catch (exception& e)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: %s", e.what());
-        }catch (...)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: Cannot determine exception type.");
-        }
-
-    }//end omp section
-
-    //write shape files
-#pragma omp section
-    {
-        try{
-        if(input.wxModelShpOutFlag==true)
-            {
-            ShapeVector wxModelShapeFiles;
-
-            wxModelShapeFiles.setDirGrid(dirInitializationGrid_wxModel);
-            wxModelShapeFiles.setSpeedGrid(speedInitializationGrid_wxModel);
-            wxModelShapeFiles.setDataBaseName(input.wxModelDbfFile);
-            wxModelShapeFiles.setShapeFileName(input.wxModelShpFile);
-            wxModelShapeFiles.makeShapeFiles();
-            }
-        }catch (exception& e)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
-        }catch (...)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
-        }
-    }//end omp section
-
-    //write kmz file
-#pragma omp section
-    {
-        try{
-        if(input.wxModelGoogOutFlag == true)
-            {
-            KmlVector wxModelKmlFiles;
-
-            wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
-            wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
-            wxModelKmlFiles.setDemFile(input.dem.fileName);
-            #ifdef EMISSIONS
-            wxModelKmlFiles.setDustFlag(input.dustFlag);
-            #endif
-            wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
-            wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
-            wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
-            wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
-            wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
-            wxModelKmlFiles.setTime(input.ninjaTime);
-            std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
-            wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
-
-            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling))
-            {
-                if(wxModelKmlFiles.makeKmz())
-                    wxModelKmlFiles.removeKmlFile();
-            }
-            }
-        }catch (exception& e)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
-        }catch (...)
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
-        }
-    }//end omp section
-
-    }	//end parallel sections region
+    //write wx model grids
+    WriteWxModelGrids(input);
 
     //Check if grids are coincident
     if(!input.dem.checkForCoincidentGrids(airTempGrid))
@@ -1570,15 +1404,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
         profile.inputWindSpeed = vTemp; // get wx speed at 10m height
         v10List.push_back(profile.getWindSpeed());
     }
-
-    //deallocate temporary grids
-    airTempGrid_wxModel.deallocate();
-    cloudCoverGrid_wxModel.deallocate();
-    speedInitializationGrid_wxModel.deallocate();
-    dirInitializationGrid_wxModel.deallocate();
-    uGrid_wxModel.deallocate();
-    vGrid_wxModel.deallocate();
-    wGrid_wxModel.deallocate();
 
     //----3d WX model-------------------------------------------------
 
@@ -1827,6 +1652,154 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
             }
         }
     }
+}
+
+/**
+ * \brief Write wx model grids
+ * @param input Reference to WindNinjaInputs
+ * @return void
+ */
+void wxModelInitialization::WriteWxModelGrids(WindNinjaInputs &input)
+{
+    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
+    {
+        speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
+        dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
+
+        //now make speed and direction from u,v components
+        for(int i=0; i<speedInitializationGrid_wxModel.get_nRows(); i++) {
+            for(int j=0; j<speedInitializationGrid_wxModel.get_nCols(); j++) {
+                if( uGrid_wxModel(i,j) == uGrid_wxModel.get_NoDataValue() ||
+                    vGrid_wxModel(i,j) == vGrid_wxModel.get_NoDataValue() ) {
+                    speedInitializationGrid_wxModel(i,j) = speedInitializationGrid_wxModel.get_NoDataValue();
+                    dirInitializationGrid_wxModel(i,j) = dirInitializationGrid_wxModel.get_NoDataValue();
+                }
+                else
+                    wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j), &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
+            }
+        }
+
+        //Write raw model output files
+        std::string rootname, path;
+        //rootname = CPLGetBasename(input.forecastFilename.c_str());
+        path = CPLGetPath(input.forecastFilename.c_str());
+
+        ostringstream wxModelTimestream;
+        blt::local_time_facet* wxModelOutputFacet;
+        wxModelOutputFacet = new blt::local_time_facet();
+        wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
+        wxModelOutputFacet->format("%m-%d-%Y_%H%M");
+        wxModelTimestream << input.ninjaTime;
+        rootname = getForecastIdentifier() + "-" + wxModelTimestream.str();
+
+        std::string wxModelVelFileTemp = rootname + "_vel";
+        std::string wxModelAngFileTemp = rootname + "_ang";
+        std::string wxModelCldFileTemp = rootname + "_cld";
+        std::string wxModelShpFileTemp = rootname;
+        std::string wxModelDbfFileTemp = rootname;
+        std::string wxModelKmlFileTemp = rootname;
+        std::string wxModelKmzFileTemp = rootname;
+        std::string wxModelLegFileTemp = rootname;
+        std::string dateTimewxModelLegFileTemp = rootname + ".date_time";
+
+        input.wxModelVelFile = CPLFormFilename(path.c_str(), wxModelVelFileTemp.c_str(), ".asc");
+        input.wxModelAngFile = CPLFormFilename(path.c_str(), wxModelAngFileTemp.c_str(), ".asc");
+        input.wxModelCldFile = CPLFormFilename(path.c_str(), wxModelCldFileTemp.c_str(), ".asc");
+        input.wxModelShpFile = CPLFormFilename(path.c_str(), wxModelShpFileTemp.c_str(), "shp");
+        input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
+        input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
+        input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
+        input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
+        input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
+    }
+    velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+
+#pragma omp parallel sections
+    {
+    //write FARSITE files
+#pragma omp section
+    {
+        try{
+        if(input.wxModelAsciiOutFlag==true)
+            {
+            AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
+            tempCloud *= 100.0;
+            tempCloud.write_Grid(input.wxModelCldFile.c_str(), 0);
+            dirInitializationGrid_wxModel.write_Grid(input.wxModelAngFile.c_str(), 0);
+            speedInitializationGrid_wxModel.write_Grid(input.wxModelVelFile.c_str(), 2);
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: Cannot determine exception type.");
+        }
+
+    }//end omp section
+
+    //write shape files
+#pragma omp section
+    {
+        try{
+        if(input.wxModelShpOutFlag==true)
+            {
+            ShapeVector wxModelShapeFiles;
+
+            wxModelShapeFiles.setDirGrid(dirInitializationGrid_wxModel);
+            wxModelShapeFiles.setSpeedGrid(speedInitializationGrid_wxModel);
+            wxModelShapeFiles.setDataBaseName(input.wxModelDbfFile);
+            wxModelShapeFiles.setShapeFileName(input.wxModelShpFile);
+            wxModelShapeFiles.makeShapeFiles();
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+        }
+    }//end omp section
+
+    //write kmz file
+#pragma omp section
+    {
+        try{
+        if(input.wxModelGoogOutFlag == true)
+            {
+            KmlVector wxModelKmlFiles;
+
+            wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
+            wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
+            wxModelKmlFiles.setDemFile(input.dem.fileName);
+            #ifdef EMISSIONS
+            wxModelKmlFiles.setDustFlag(input.dustFlag);
+            #endif
+            wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
+            wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
+            wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+            wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
+            wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
+            wxModelKmlFiles.setTime(input.ninjaTime);
+            std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
+            wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
+
+            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling))
+            {
+                if(wxModelKmlFiles.makeKmz())
+                    wxModelKmlFiles.removeKmlFile();
+            }
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+        }
+    }//end omp section
+
+    }	//end parallel sections region
 }
 
 /**
