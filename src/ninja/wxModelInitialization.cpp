@@ -1060,7 +1060,59 @@ void wxModelInitialization::deallocateTemp()
  */
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 {
+    AsciiGrid<double> airTempGrid_wxModel;
+    AsciiGrid<double> cloudCoverGrid_wxModel;
+    AsciiGrid<double> uGrid_wxModel;
+    AsciiGrid<double> vGrid_wxModel;
+    AsciiGrid<double> wGrid_wxModel;
 
+    setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
+             vGrid_wxModel, wGrid_wxModel );
+
+    AsciiGrid<double> speedInitializationGrid;
+    speedInitializationGrid.set_headerData(input.dem);
+
+    AsciiGrid<double> dirInitializationGrid;
+    dirInitializationGrid.set_headerData(input.dem);
+
+    AsciiGrid<double> uInitializationGrid;
+    uInitializationGrid.set_headerData(input.dem);
+
+    AsciiGrid<double> vInitializationGrid;
+    vInitializationGrid.set_headerData(input.dem);
+
+    //Interpolate from original wxModel grids to dem coincident grids
+    uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
+    vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
+
+    /*
+    ** Fill in speed and direction grids from interpolated U and V grids.
+    */
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_uv_to_sd(uInitializationGrid(i,j),
+                          vInitializationGrid(i,j),
+                          &(speedInitializationGrid)(i,j),
+                          &(dirInitializationGrid)(i,j));
+        }
+    }
+
+    //set average speed
+    input.inputSpeed = speedInitializationGrid.get_meanValue();
+
+    //average u and v components
+    double meanU;
+    double meanV;
+    meanU = uInitializationGrid.get_meanValue();
+    meanV = vInitializationGrid.get_meanValue();
+
+    double meanSpd;
+    double meanDir;
+
+    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
+
+    //set average direction
+    input.inputDirection = meanDir;
 }
 
 #endif //NINJAFOAM
