@@ -1060,6 +1060,8 @@ void wxModelInitialization::deallocateTemp()
  */
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 {
+    input.inputWindHeight = (*this).Get_Wind_Height();
+
     AsciiGrid<double> airTempGrid_wxModel;
     AsciiGrid<double> cloudCoverGrid_wxModel;
     AsciiGrid<double> uGrid_wxModel;
