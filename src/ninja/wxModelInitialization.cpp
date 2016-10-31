@@ -1113,6 +1113,12 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 
     //set average direction
     input.inputDirection = meanDir;
+
+    //deallocate temporary grids
+    airTempGrid_wxModel.deallocate();
+    cloudCoverGrid_wxModel.deallocate();
+    uGrid_wxModel.deallocate();
+    vGrid_wxModel.deallocate();
 }
 
 #endif //NINJAFOAM
