@@ -35,12 +35,23 @@ openFoamPolyMesh::openFoamPolyMesh()
     polyMesh_path = "/home/latwood/Downloads/case/constant/polyMesh/";
     fzout = NULL;
 
-    xmax = 4;
-    ymax = 5;
-    zmax = 3;
-    Ax = (xmax-1)*(zmax-1);
-    Ay = (ymax-1)*(zmax-1);
-    Az = (xmax-1)*(ymax-1);
+    xpoints = 4;
+    ypoints = 5;
+    zpoints = 3;
+    xcells = xpoints-1;
+    ycells = ypoints-1;
+    zcells = zpoints-1;
+    npoints = xpoints*ypoints*zpoints;
+    ncells = xcells*ycells*zcells;
+    Ax = xcells*zcells;
+    Ay = ycells*zcells;
+    Az = xcells*ycells; //where is the proper place to put something like this? They are constants that depend on the imput
+    nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
+    ninternalfaces = 0;
+
+    nNeighbors;
+    cellOwners;
+
     writePolyMeshFiles();
 }
 
@@ -48,15 +59,25 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double lastx, double 
 {
 
     polyMesh_path = outputPath;
-    xmax = lastx;
-    ymax = lasty;
-    zmax = lastz;
+    xpoints = lastx;
+    ypoints = lasty;
+    zpoints = lastz;
 
     foam_version = "2.0";
     fzout = NULL;
-    Ax = (xmax-1)*(zmax-1);
-    Ay = (ymax-1)*(zmax-1);
-    Az = (xmax-1)*(ymax-1);
+    xcells = xpoints-1;
+    ycells = ypoints-1;
+    zcells = zpoints-1;
+    npoints = xpoints*ypoints*zpoints;
+    ncells = xcells*ycells*zcells;
+    Ax = xcells*zcells;
+    Ay = ycells*zcells;
+    Az = xcells*ycells;
+    nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
+    ninternalfaces = 0;
+
+    nNeighbors;
+    cellOwners;
 
     writePolyMeshFiles();
 
@@ -79,13 +100,13 @@ bool openFoamPolyMesh::writePolyMeshFiles()
     fprintf(fzout, "This is a ground surface written by WindNinja.  It is on a structured grid.\n");
     fprintf(fzout, "ASCII\n\n");
     fprintf(fzout, "DATASET STRUCTURED_GRID\n");
-    fprintf(fzout, "DIMENSIONS %0.0lf %0.0lf %0.0lf\n", xmax, ymax, zmax);
-    fprintf(fzout, "POINTS %0.0lf double\n", xmax*ymax*zmax);
-    for(double k=0; k<zmax; k++)
+    fprintf(fzout, "DIMENSIONS %0.0lf %0.0lf %0.0lf\n", xpoints, ypoints, zpoints);
+    fprintf(fzout, "POINTS %0.0lf double\n", xpoints*ypoints*zpoints);
+    for(double k=0; k<zpoints; k++)
     {
-            for(double j=0; j<ymax; j++)
+            for(double j=0; j<ypoints; j++)
         {
-            for (double i = 0;i<xmax;i++)
+            for (double i = 0;i<xpoints;i++)
             {
                 fprintf(fzout, "%lf %lf %lf\n", i, j, k);
             }
@@ -101,6 +122,22 @@ bool openFoamPolyMesh::writePolyMeshFiles()
     makeFoamFooter();
     fclose(fzout);
 
+    //now create the owners OpenFOAM mesh file
+    current_path = polyMesh_path+"owner";
+    fzout = fopen(current_path.c_str(),"w");
+    makeFoamHeader("labelList","owner","constant/polyMesh");
+    printOwners();
+    makeFoamFooter();
+    fclose(fzout);
+
+    //now create the neighbors OpenFOAM mesh file
+    current_path = polyMesh_path+"neighbor";
+    fzout = fopen(current_path.c_str(),"w");
+    makeFoamHeader("labelList","neighbor","constant/polyMesh");
+    printNeighbors();
+    makeFoamFooter();
+    fclose(fzout);
+
     //now create the faces
     current_path = polyMesh_path+"faces";
     fzout = fopen(current_path.c_str(), "w");
@@ -109,7 +146,49 @@ bool openFoamPolyMesh::writePolyMeshFiles()
     makeFoamFooter();
     fclose(fzout);
 
+    //now create the boundary file
+    current_path = polyMesh_path+"boundary";
+    fzout = fopen(current_path.c_str(), "w");
+    makeFoamHeader("polyBoundaryMesh","boundary","constant/polyMesh");
+    printBoundaries();
+    makeFoamFooter();
+    fclose(fzout);
+
+    //debug viewValues
+    current_path = polyMesh_path+"debugInfo";
+    fzout = fopen(current_path.c_str(), "w");
+    viewValues();
+    fclose(fzout);
+
     return true;
+}
+
+void openFoamPolyMesh::viewValues()
+{
+    fprintf(fzout,"xpoints = %lf\n",xpoints);
+    fprintf(fzout,"ypoints = %lf\n",ypoints);
+    fprintf(fzout,"zpoints = %lf\n",zpoints);
+    fprintf(fzout,"xcells = %lf\n",xcells);
+    fprintf(fzout,"ycells = %lf\n",ycells);
+    fprintf(fzout,"zcells = %lf\n",zcells);
+    fprintf(fzout,"npoints = %lf\n",npoints);
+    fprintf(fzout,"ncells = %lf\n",ncells);
+    fprintf(fzout,"nfaces = %lf\n",nfaces);
+    fprintf(fzout,"Ax = %lf\n",Ax);
+    fprintf(fzout,"Ay = %lf\n",Ay);
+    fprintf(fzout,"Az = %lf\n",Az);
+
+    fprintf(fzout,"Neighbors Vector size: %zu\n",nNeighbors.size());
+    for (double i = 0;i<nNeighbors.size();i++)
+    {
+        fprintf(fzout,"%lf\n",nNeighbors[i]);
+    }
+
+    fprintf(fzout,"Owners Vector size: %zu\n",cellOwners.size());
+    for (double i=0;i<cellOwners.size();i++)
+    {
+        fprintf(fzout,"%lf\n",cellOwners[i]);
+    }
 }
 
 void openFoamPolyMesh::makeFoamHeader(std::string theClassType, std::string theObjectType, std::string theFoamFileLocation)
@@ -140,12 +219,12 @@ void openFoamPolyMesh::makeFoamFooter()
 
 void openFoamPolyMesh::printPoints()
 {
-    fprintf(fzout, "\n%0.0lf\n(\n", xmax*ymax*zmax);
-    for(double k=0; k<zmax; k++)
+    fprintf(fzout, "\n%0.0lf\n(\n", xpoints*ypoints*zpoints);
+    for(double k=0; k<zpoints; k++)
     {
-            for(double j=0; j<ymax; j++)
+            for(double j=0; j<ypoints; j++)
         {
-            for (double i = 0;i<xmax;i++)
+            for (double i = 0;i<xpoints;i++)
             {
                 fprintf(fzout, "(%0.0lf %0.0lf %0.0lf)\n", i, j, k);
             }
@@ -154,91 +233,300 @@ void openFoamPolyMesh::printPoints()
     fprintf(fzout, ")\n");
 }
 
-void openFoamPolyMesh::printFaces()
+void openFoamPolyMesh::printOwners()
 {
-    fprintf(fzout, "\n%0.0lf\n(\n",Ax*ymax+Ay*xmax+Az*zmax);
-    for(double i=0; i<xmax; i++)
+    int lessValues = 0;
+    bool ylimit = false;
+    bool zlimit = false;
+
+    //fill out the number of neighbors per cell and the interior cell owner information
+    //note that xmax, ymax, and zmax are numbers of points, but this needed number of cells
+    for (double i=0;i<ncells;i++)
     {
-        fprintf(fzout, "4(%0.0lf %0.0lf %0.0lf %0.0lf)\n", i, xmax*ymax+i, xmax*ymax+xmax+i,xmax+i);
+        if (fmod(i+1,3) == 0)
+        {
+            lessValues++;
+        }
+        if (ylimit == false && i >= (ycells-1)*xcells)
+        {
+            ylimit = true;
+            lessValues++;
+        }
+        if (zlimit == false && i >= xcells*ycells*zcells-3)
+        {
+            zlimit = true;
+            lessValues++;
+        }
+
+        nNeighbors.push_back(3-lessValues);
+        //fill out the owners information for interior cells
+        for (double j = 0;j<nNeighbors[i];j++)
+        {
+            cellOwners.push_back(i);
+        }
+
+        if (fmod(i+1,3) == 0)
+        {
+            lessValues--;
+        }
     }
-    for(double j=0; j<ymax; j++)
+
+    //now update nneighbors
+    ninternalfaces = cellOwners.size(); //should also be nfaces - 2*(Ax+Ay+Az)
+
+    //now fill out the owners information for the north outside volume face
+    for (double i=0;i<xcells;i++)
     {
-        fprintf(fzout, "4(%0.0lf %0.0lf %0.0lf %0.0lf)\n", xmax*j, xmax*j+1, xmax*j+xmax*ymax+1,xmax*j+xmax*ymax);
+        for (double k = 0;k<zcells;k++)
+        {
+            cellOwners.push_back(xcells*(ycells-1)+xcells*ycells*k+i);
+        }
     }
-    for(double k=0; k<zmax; k++)
+
+    //now fill out the owners information for the west outside volume face
+    for (double k = 0;k<zcells;k++)
     {
-        fprintf(fzout, "4(%0.0lf %0.0lf %0.0lf %0.0lf)\n", xmax*ymax*k, xmax*ymax*k+1, xmax*ymax*k+xmax, xmax*ymax*k+xmax+1);
+        for (double j = 0;j<ycells;j++)
+        {
+            cellOwners.push_back(xcells*j+xcells*ycells*k);
+        }
+    }
+
+    //now fill out the owners information for the east outside volume face
+    for (double k=0;k<zcells;k++)
+    {
+        for (double j=0;j<ycells;j++)
+        {
+            cellOwners.push_back((xcells-1)+xcells*j+xcells*ycells*k);
+        }
+    }
+
+    //now fill out the owners information for the south outside volume face
+    for (double i=0;i<xcells;i++)
+    {
+        for (double k=0;k<zcells;k++)
+        {
+            cellOwners.push_back(xcells*ycells*k+i);
+        }
+    }
+
+    //now fill out the owners information for the bottom outside volume face
+    for (double i=0;i<xcells;i++)
+    {
+        for (double j=0;j<ycells;j++)
+        {
+            cellOwners.push_back(xcells*j+i);
+        }
+    }
+
+    //now fill out the owners information for the top outside volume face
+    for (double i=0;i<xcells;i++)
+    {
+        for (double j=0;j<ycells;j++)
+        {
+            cellOwners.push_back(xcells*ycells*(zcells-1)+xcells*j+i);
+        }
+    }
+
+    //now print out the information
+    fprintf(fzout, "\n%0.0lf\n(\n",nfaces);
+    for (double i = 0;i<cellOwners.size();i++)
+    {
+        fprintf(fzout, "%0.0lf\n",cellOwners[i]);
     }
     fprintf(fzout, ")\n");
 }
 
-
-
-/* my notes:::
-
-    //note that in the element.cpp, there are lots of times when it calls mesh stuff to get different coordinates or values, especially in the get_ij or get_uvw functions! It also has it's own functions called interpolate taht get what is actually wanted that is in the coordinates but not exactly the coordinates.
-
-//foaminitialization.cpp has an interesting function call to convert from input grids to dem coincident grids by interpolation: speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);    dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
-
-//okay these are useful looking functions from mesh.cpp, I'm just having trouble distinguishing the differences:
-//get_elemNum   Calculates the global element number given the element's (i,j,k) index
-//get_elemIndex   Calculates the element's (i,j,k) index given the global element number elemNum
-//get_global_node    Calculates the global node number of local node "locNodeNum" in the element "elemNum"
-        //with local node 0 equal to global node "node0".
-    //NOTE that local node numbering goes counter clockwise and from bottom to top starting at
-    //the lower left cell corner as shown below
-    //
-    //		7----6
-    //      |    |    at the upper level (higher z)
-    //      |    |
-    //      4----5
-    //
-    //
-    //
-    //		3----2
-    //      |    |    at the lower level (lower z)
-    //      |    |
-    //      0----1
-//I think the idea is you have the cells pictured like this and it takes the cell index you would have and gets the actual one that it has? It gets the 0node in terms of global values, then adds one node to it to find the next node and so on till it gets what all the different parts are.
-
-//get_node_type  //if test=0 => internal node
-                    //   test=1 => surface node
-                    //   test=2 => edge node
-                    //   test=3 => corner node
-
-//inMeshXY  checks to see if it is an xy in the mesh
-//checkInBounds   checks to see if it is internal to the mesh
-
- from NinjaFoam it looks like a way to get the case directory set up
-    if(CheckForValidCaseDir(pszFoamPath) != NINJA_SUCCESS){
-        status = GenerateNewCase();
-        if(status != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up new OpenFOAM case");
-            return NINJA_E_OTHER;
+void openFoamPolyMesh::printNeighbors()
+{
+    fprintf(fzout, "\n%0.0lf\n(\n",ninternalfaces);
+    for (double j=0;j<ncells;j++)
+    {
+        if (nNeighbors[j] == 3)
+        {
+            fprintf(fzout,"%0.0lf\n",1+j);
+            fprintf(fzout,"%0.0lf\n",xcells+j);
+            fprintf(fzout,"%0.0lf\n",xcells*ycells+j);
+        } else if (nNeighbors[j] == 2)
+        {
+            if (fmod(j+1,xcells) == 0)
+            {
+                fprintf(fzout,"%0.0lf\n",xcells+j);
+                fprintf(fzout,"%0.0lf\n",xcells*ycells+j);
+            } else if (j >= xcells*ycells*(zcells-1))
+            {
+                fprintf(fzout,"%0.0lf\n",1+j);
+                fprintf(fzout,"%0.0lf\n",xcells+j);
+            } else
+            {
+                fprintf(fzout,"%0.0lf\n",1+j);
+                fprintf(fzout,"%0.0lf\n",xcells*ycells+j);
+            }
+        } else if (nNeighbors[j] == 1)
+        {
+            if (fmod(j+1,xcells*ycells) == 0)
+            {
+                fprintf(fzout,"%0.0lf\n",xcells*ycells+j);
+            } else if (j >= xcells*ycells*(zcells-1) && j < xcells*ycells*(zcells-1)+xcells*(ycells-1))
+            {
+                fprintf(fzout,"%0.0lf\n",xcells+j);
+            } else
+            {
+                fprintf(fzout,"%0.0lf\n",1+j);
+            }
         }
     }
-    else{ //otherwise, we're just updating an existing case
-        status = UpdateExistingCase();
-        if(status != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up existing case.");
-            return NINJA_E_OTHER;
+    fprintf(fzout, ")\n");
+}
+
+void openFoamPolyMesh::printFaces()
+{
+    fprintf(fzout, "\n%0.0lf\n(\n",nfaces);
+
+    //first fill out the internal faces
+    double lostPointIndices = 0;    //this is because all the stuff is based off of cells, not points, so 1 y row is not accounted for in j every time an x sweep is finished
+    for (double j=0;j<ncells;j++)
+    {
+        if (nNeighbors[j] == 3)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",1+j+lostPointIndices,1+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices);
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints+j+lostPointIndices);
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices);
+        } else if (nNeighbors[j] == 2)
+        {
+            if (fmod(j+1,xcells) == 0)
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints+j+lostPointIndices);
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices);
+                lostPointIndices = lostPointIndices + 1;
+            } else if (j >= xcells*ycells*(zcells-1))
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",1+j+lostPointIndices,1+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices);
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints+j+lostPointIndices);
+            } else
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",1+j+lostPointIndices,1+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices);
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices);
+            }
+        } else if (nNeighbors[j] == 1)
+        {
+            if (fmod(j+1,xcells*ycells) == 0)
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices);
+                lostPointIndices = lostPointIndices + ypoints;
+            } else if (j >= xcells*ycells*(zcells-1) && j < xcells*ycells*(zcells-1)+xcells*(ycells-1))
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints+j+lostPointIndices,xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints+j+lostPointIndices);
+                lostPointIndices = lostPointIndices + 1;
+            } else
+            {
+                fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",1+j+lostPointIndices,1+xpoints+j+lostPointIndices,1+xpoints*ypoints+xpoints+j+lostPointIndices,1+xpoints*ypoints+j+lostPointIndices);
+            }
         }
     }
 
-//there are also nice update whatever foam control dict. I could make something nice like that for running the smoke transport. there's also functions for writing each separate folder and for writing each separate condition, so like write boundry patch or stuff like that.
-//ninjafoam copy file looks like a very useful piece! Though I don't understand why a key is needed.
-//okay writeFoamFiles() might be the way to generate a new case.
-//here is the part in foamfiles that seems to work:
+    //now fill out the faces for the north outside volume face
+    for (double i=0;i<xcells;i++)
+    {
+        for (double k = 0;k<zcells;k++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*(ypoints-1)+xpoints*ypoints*k+i,xpoints*ypoints*(k+1)+xpoints*(ypoints-1)+i,1+xpoints*ypoints*(k+1)+xpoints*(ypoints-1)+i,1+xpoints*(ypoints-1)+xpoints*ypoints*k+i);
+        }
+    }
 
-    if( osFullPath.find("0") == 0){
-                WriteZeroFiles(fin, fout, pszFilename);
-            }
-            else if( osFullPath.find("system") == 0 ){
-                WriteSystemFiles(fin, fout, pszFilename);
-            }
-            else if( osFullPath.find("constant") == 0 ){
-                WriteConstantFiles(fin, fout, pszFilename);
-            }
-*/
-//almost better off just to figure out how to read/write your own man! and make sure it doesn't already exist
+    //now fill out the faces for the west outside volume face
+    for (double k=0;k<zcells;k++)
+    {
+        for (double j = 0;j<ycells;j++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints*k+xpoints*j,xpoints*ypoints*(k+1)+xpoints*j,xpoints*ypoints*(k+1)+xpoints*(j+1),xpoints*ypoints*k+xpoints*(j+1));
+        }
+    }
 
+    //now fill out the faces for the east outside volume face
+    for (double k=0;k<zcells;k++)
+    {
+        for (double j = 0;j<ycells;j++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints*k+xpoints*(j+1)-1,xpoints*ypoints*k+xpoints*(j+2)-1,xpoints*ypoints*(k+1)+xpoints*(j+2)-1,xpoints*ypoints*(k+1)+xpoints*(j+1)-1);
+        }
+    }
+
+    //now fill out the faces for the south outside volume face
+    for (double i=0;i<xcells;i++)
+    {
+        for (double k = 0;k<zcells;k++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints*k+i,xpoints*ypoints*k+i+1,xpoints*ypoints*(k+1)+i+1,xpoints*ypoints*(k+1)+i);
+        }
+    }
+
+    //now fill out the faces for the bottom outside volume face
+    for (double i = 0;i<xcells;i++)
+    {
+        for (double j=0;j<ycells;j++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*j+i,xpoints*(j+1)+i,xpoints*(j+1)+i+1,xpoints*j+i+1);
+        }
+    }
+
+    //now fill out the faces for the top outside volume face
+    for (double i = 0;i<xcells;i++)
+    {
+        for (double j=0;j<ycells;j++)
+        {
+            fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",xpoints*ypoints*(zpoints-1)+xpoints*j+i,xpoints*ypoints*(zpoints-1)+xpoints*j+i+1,xpoints*ypoints*(zpoints-1)+xpoints*(j+1)+i+1,xpoints*ypoints*(zpoints-1)+xpoints*(j+1)+i);
+        }
+    }
+
+    fprintf(fzout, ")\n");
+}
+
+void openFoamPolyMesh::printBoundaries()
+{
+    fprintf(fzout,"\n6\n(\n");    //the number of boundaries we have in windninja
+
+    //now print out the north patch
+    fprintf(fzout,"    north_face\n    {\n");
+    fprintf(fzout,"\ttype\t\tpatch;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Ax);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces);
+    fprintf(fzout,"    }\n");
+
+    //now print out the west patch
+    fprintf(fzout,"    west_face\n    {\n");
+    fprintf(fzout,"\ttype\t\tpatch;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Ay);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces+Ax);
+    fprintf(fzout,"    }\n");
+
+    //now print out the east patch
+    fprintf(fzout,"    east_face\n    {\n");
+    fprintf(fzout,"\ttype\t\tpatch;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Ay);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces+Ax+Ay);
+    fprintf(fzout,"    }\n");
+
+    //now print out the south patch
+    fprintf(fzout,"    south_face\n    {\n");
+    fprintf(fzout,"\ttype\t\tpatch;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Ax);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces+Ax+2*Ay);
+    fprintf(fzout,"    }\n");
+
+    //now print out the top patch
+    fprintf(fzout,"    minZ\n    {\n");
+    fprintf(fzout,"\ttype\t\twall;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Az);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces+2*Ax+2*Ay);
+    fprintf(fzout,"    }\n");
+
+    //now print out the bottom patch
+    fprintf(fzout,"    maxZ\n    {\n");
+    fprintf(fzout,"\ttype\t\tpatch;\n");
+    fprintf(fzout,"\tnFaces\t\t%0.0lf;\n",Az);
+    fprintf(fzout,"\tstartFace\t%0.0lf;\n",ninternalfaces+2*Ax+2*Ay+Az);
+    fprintf(fzout,"    }\n");
+
+    fprintf(fzout, ")\n");
+}
