@@ -114,6 +114,7 @@ wxModelInitialization::wxModelInitialization(const wxModelInitialization& A) : i
  */
 wxModelInitialization::~wxModelInitialization()
 {
+    cloudCoverGrid.deallocate();
     airTempGrid.deallocate();
     uGrid_wxModel.deallocate();
     vGrid_wxModel.deallocate();
@@ -1076,10 +1077,14 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
     dirInitializationGrid.set_headerData(input.dem);
     uInitializationGrid.set_headerData(input.dem);
     vInitializationGrid.set_headerData(input.dem);
+    airTempGrid.set_headerData(input.dem);
+    cloudCoverGrid.set_headerData(input.dem);
 
     //Interpolate from original wxModel grids to dem coincident grids
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
+    airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
+    cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
 
     /*
     ** Fill in speed and direction grids from interpolated U and V grids.
@@ -1112,6 +1117,21 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 
     //write wx model grids
     WriteWxModelGrids(input);
+
+    /*
+     * if diurnal is on, set required inputs from grids.
+     * For ninjafoam diurnal simulations, the ninjafoam
+     * run is linked with a diurnal simulation using the native
+     * solver. A foamInitialzation is used for the native solver
+     * run. In foamDomainAverageInitialization, we use the u,v grids
+     * from the ninjafoam simulation, and, for now, just domain-
+     * average temperature and cloud cover.
+     */
+
+    if(input.diurnalWinds == true){
+        input.airTemp = airTempGrid.get_meanValue(); //K
+        input.cloudCover = cloudCoverGrid.get_meanValue(); //fraction
+    }
 }
 
 #endif //NINJAFOAM

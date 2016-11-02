@@ -402,11 +402,19 @@ do
 		    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
                 }
 #ifdef NINJAFOAM
-		else if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag)
+		else if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag)
 		{
-                    foamInitialization init;
-                    init.inputVelocityGrid= VelocityGrid; //set input grids from cfd solution
+                    foamDomainAverageInitialization init;
+                    init.inputVelocityGrid = VelocityGrid; //set input grids from cfd solution
                     init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
+                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+		}
+		else if(input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
+		{
+                    foamWxModelInitialization init;
+                    init.inputVelocityGrid = VelocityGrid; //set input grids from cfd solution
+                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
+                    //init.inputAirGrid = AirGrid; //set input grids from cfd solution
                     init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
 		}
 #endif
@@ -414,9 +422,9 @@ do
                      throw std::logic_error("Incorrect wind initialization.");
 		}
 
-		#ifdef _OPENMP
-			endInit = omp_get_wtime();
-		#endif
+#ifdef _OPENMP
+                endInit = omp_get_wtime();
+#endif
 
 		checkCancel();
 
@@ -2288,7 +2296,7 @@ void ninja::prepareOutput()
 	if(!isNullRun)
 		interp_uvw();
  
-        if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag){
+        if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag){
             //Set cloud grid
             int longEdge = input.dem.get_nRows();
             if(input.dem.get_nRows() < input.dem.get_nCols())
@@ -4642,7 +4650,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
     
     if(input.customOutputPath == "!set"){ // if a custom output path was not specified in the cli
-        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ||
+            input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
         {
             pathName = CPLGetPath(input.forecastFilename.c_str());
             //if it's a .tar, write to directory containing the .tar file
@@ -4679,7 +4688,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     wxModelOutputFacet = new boost::local_time::local_time_facet();
     wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
     wxModelOutputFacet->format("%m-%d-%Y_%H%M");
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ||
+        input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag )
     {
         wxModelTimestream << input.ninjaTime;
     }
@@ -4693,7 +4703,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
-        input.initializationMethod == WindNinjaInputs::foamInitializationFlag )
+        input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);

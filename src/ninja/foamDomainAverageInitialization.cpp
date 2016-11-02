@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initializing with NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with domain-average NinjaFOAM simulations for use with diurnal 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -27,18 +27,19 @@
 *
 *****************************************************************************/
 
-#include "foamInitialization.h"
+#include "foamDomainAverageInitialization.h"
 
-foamInitialization::foamInitialization() : initialize()
+foamDomainAverageInitialization::foamDomainAverageInitialization() : initialize()
 {
-
+    CPLDebug("NINJA", "Starting a foamDomainAverageInitialization run.");
+    inputVelocityGrid = -9999.0;
+    inputAngleGrid = -9999.0;
 }
 
-foamInitialization::~foamInitialization()
+foamDomainAverageInitialization::~foamDomainAverageInitialization()
 {
-    CPLDebug("NINJA", "Starting a foamInitialization run.");
-    inputVelocityGrid = -9999.0;
-    inputAngleGrid = -9999.0;    
+    inputVelocityGrid.deallocate();
+    inputAngleGrid.deallocate();
 }
 
 /**
@@ -53,7 +54,7 @@ foamInitialization::~foamInitialization()
  * @param w0 w component
  * @see WindNinjaInputs, Mesh, wn_3dScalarField
  */
-void foamInitialization::initializeFields(WindNinjaInputs &input,
+void foamDomainAverageInitialization::initializeFields(WindNinjaInputs &input,
 	Mesh const& mesh,
 	wn_3dScalarField& u0,
 	wn_3dScalarField& v0,
@@ -91,7 +92,7 @@ void foamInitialization::initializeFields(WindNinjaInputs &input,
     {
         inputVelocityGrid.BufferGridInPlace();
         inputAngleGrid.BufferGridInPlace();
-        CPLDebug("NINJA", "Buffering in foamInitialization...");
+        CPLDebug("NINJA", "Buffering in foamDomainAverageInitialization...");
     }
 
     //Interpolate from input grids to dem coincident grids

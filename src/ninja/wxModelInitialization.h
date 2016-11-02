@@ -208,6 +208,7 @@ private:
     AsciiGrid<double> cloudCoverGrid_wxModel;
 
     AsciiGrid<double> airTempGrid;
+    AsciiGrid<double> cloudCoverGrid;
     AsciiGrid<double> speedInitializationGrid;
     AsciiGrid<double> dirInitializationGrid;
     AsciiGrid<double> uInitializationGrid;

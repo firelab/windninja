@@ -100,7 +100,8 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
-                    foamInitialization.cpp)
+                    foamDomainAverageInitialization.cpp
+                    foamWxModelInitialization.cpp)
 endif(NINJAFOAM)
 
 if(WITH_NOMADS_SUPPORT)

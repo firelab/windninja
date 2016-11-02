@@ -102,7 +102,8 @@ public:
         pointInitializationFlag,		//single or multiple point inititialization
         wxModelInitializationFlag,	//Weather forecast model initialization
         griddedInitializationFlag,  //gridded speed and direction
-        foamInitializationFlag
+        foamDomainAverageInitializationFlag, //foam "parent" run initialized with domain avg init
+        foamWxModelInitializationFlag //foam "parent" run initialized with wx model init
     };
 
     eVegetation vegetation;
