@@ -1077,7 +1077,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     windProfile profile;
     profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
 
-    //input.inputWindHeight = 10.0;               //HARD CODED HERE AS 10 METERS, WE SHOULD DO THIS RIGHT SOMETIME!!!
     input.surface.Z = (*this).Get_Wind_Height();    //(ACTUALLY READ THE HEIGHT OF THE WINDS FROM THE FORECAST FILE)
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
