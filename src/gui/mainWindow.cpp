@@ -1961,10 +1961,11 @@ int mainWindow::solve()
                                 inputSpeedUnits);
             //get direction
             army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
+
+            army->setInputWindHeight ( i, inHeight, inHeightUnits );
         }
         
         //set input output height
-        army->setInputWindHeight ( i, inHeight, inHeightUnits );
         army->setOutputWindHeight( i, outHeight, outHeightUnits );
 
         //set output speed units
