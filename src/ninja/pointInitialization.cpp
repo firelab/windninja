@@ -85,11 +85,6 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 	profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
 																	//make sure rough_h is set to zero if profile switch is 0 or 2
 
-	//These are only needed if diurnal is turned on...
-	AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
-	AsciiGrid<double> uDiurnal;
-	AsciiGrid<double> vDiurnal;
-	AsciiGrid<double> wDiurnal;
 	Aspect aspect;
 	Slope slope;
 	Shade shade;
@@ -341,20 +336,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 		influenceRadius = NULL;
 	}
 
-	//initialize u0, v0, w0 equal to zero
-	#pragma omp parallel for default(shared) private(i,j,k)
-	for(k=0;k<mesh.nlayers;k++)
-	{
-		for(i=0;i<mesh.nrows;i++)
-		{
-			for(j=0;j<mesh.ncols;j++)
-			{
-				u0(i, j, k) = 0.0;
-				v0(i, j, k) = 0.0;
-				w0(i, j, k) = 0.0;	
-			}
-		}
-	}
+    initializeWindToZero(mesh, u0, v0, w0);
 
 	//compute diurnal wind
 	if(input.diurnalWinds == true)

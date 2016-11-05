@@ -42,26 +42,42 @@
 
 class initialize
 {
-	public:
+    public:
+        initialize();
+        virtual ~initialize(); 
+        
+        //Pure virtual function for initializing volume wind fields.
+        virtual void initializeFields(WindNinjaInputs &input,
+                        Mesh const& mesh,
+                        wn_3dScalarField& u0,
+                        wn_3dScalarField& v0,
+                        wn_3dScalarField& w0,
+                        AsciiGrid<double>& cloud,
+                        AsciiGrid<double>& L,
+                        AsciiGrid<double>& u_star,
+                        AsciiGrid<double>& bl_height) = 0;
 
-		initialize();								//Default constructor
-		virtual ~initialize();                              // Destructor
-		
-		//initialize(initialize const& m);               // Copy constructor
-		//initialize& operator= (initialize const& m);   // Assignment operator
+    protected:
+        void initializeWindToZero(Mesh const& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
 
-		//Pure virtual function for initializing volume wind fields.
-		virtual void initializeFields(WindNinjaInputs &input,
-				Mesh const& mesh,
-				wn_3dScalarField& u0,
-				wn_3dScalarField& v0,
-				wn_3dScalarField& w0,
-				AsciiGrid<double>& cloud,
-				AsciiGrid<double>& L,
-				AsciiGrid<double>& u_star,
-				AsciiGrid<double>& bl_height) = 0;
+        void initializeDiurnal(WindNinjaInputs& input,
+                             AsciiGrid<double>& cloud,
+                             AsciiGrid<double>& L,
+                             AsciiGrid<double>& u_star,
+                             AsciiGrid<double>& bl_height,
+                             AsciiGrid<double>& airTempGrid,
+                             AsciiGrid<double>& speedInitializationGrid);
 
-	protected:
+        AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
+        AsciiGrid<double> uDiurnal;
+        AsciiGrid<double> vDiurnal;
+        AsciiGrid<double> wDiurnal;
+
+    private:
+ 
 
 };
 

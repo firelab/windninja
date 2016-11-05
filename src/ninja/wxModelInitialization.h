@@ -197,6 +197,40 @@ class wxModelInitialization : public initialize
     GDALProgressFunc pfnProgress;
 
 private:
+    void setWn2dGrids(WindNinjaInputs &input, AsciiGrid<double>& cloud);
+
+    void initializeDiurnalComponent(WindNinjaInputs &input,
+                                    const Mesh& mesh,
+                                    wn_3dScalarField& u0,
+                                    wn_3dScalarField& v0,
+                                    wn_3dScalarField& w0);
+
+    void initializeWindFrom2dData(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                AsciiGrid<double>& L,
+                                AsciiGrid<double>& bl_height,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+    void initializeWindFrom3dData(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                AsciiGrid<double>& L,
+                                AsciiGrid<double>& bl_height,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+    void interpolate2dDataToPoints(WindNinjaInputs& input,
+                                 const Mesh& mesh,
+                                 AsciiGrid<double>& L,
+                                 AsciiGrid<double>& bl_height);
+
+    void interpolate3dDataToPoints(WindNinjaInputs& input,
+                                 const Mesh& mesh,
+                                 AsciiGrid<double>& L,
+                                 AsciiGrid<double>& bl_height);
+
     void WriteWxModelGrids(WindNinjaInputs &input);
 
     AsciiGrid<double> airTempGrid_wxModel;
@@ -213,6 +247,8 @@ private:
     AsciiGrid<double> dirInitializationGrid;
     AsciiGrid<double> uInitializationGrid;
     AsciiGrid<double> vInitializationGrid;
+
+    windProfile profile;
 };
 
 #endif /* WX_MODEL_INITIALIZATION_H */
