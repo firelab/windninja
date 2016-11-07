@@ -121,67 +121,9 @@ void initialize::initializeDiurnal(WindNinjaInputs& input,
     //Set windspeed grid for diurnal computation
     input.surface.set_windspeed(speedInitializationGrid);
 
-    //Monin-Obukhov length, surface friction velocity, and atmospheric boundary layer height
-    L.set_headerData(input.dem.get_nCols(),
-                     input.dem.get_nRows(),
-                     input.dem.get_xllCorner(),
-                     input.dem.get_yllCorner(),
-                     input.dem.get_cellSize(),
-                     input.dem.get_noDataValue(),
-                     0.0);
-
-    u_star.set_headerData(input.dem.get_nCols(),
-                         input.dem.get_nRows(),
-                         input.dem.get_xllCorner(),
-                         input.dem.get_yllCorner(),
-                         input.dem.get_cellSize(),
-                         input.dem.get_noDataValue(),
-                         0.0);
-
-    bl_height.set_headerData(input.dem.get_nCols(),
-                        input.dem.get_nRows(),
-                        input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        input.dem.get_cellSize(),
-                        input.dem.get_noDataValue(),
-                        -1.0);
-
     //compute diurnal wind, Monin-Obukhov length, surface friction velocity, and ABL height
     if(input.diurnalWinds == true)
     {
-        //height of diurnal flow above "z=0" in log profile
-        height.set_headerData(input.dem.get_nCols(),
-                        input.dem.get_nRows(),
-                        input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        input.dem.get_cellSize(),
-                        input.dem.get_noDataValue(),
-                        0);
-
-        uDiurnal.set_headerData(input.dem.get_nCols(),
-                        input.dem.get_nRows(),
-                        input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        input.dem.get_cellSize(),
-                        input.dem.get_noDataValue(),
-                        0);
- 
-        vDiurnal.set_headerData(input.dem.get_nCols(),
-                        input.dem.get_nRows(),
-                        input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        input.dem.get_cellSize(),
-                        input.dem.get_noDataValue(),
-                        0);
-
-        wDiurnal.set_headerData(input.dem.get_nCols(),
-                        input.dem.get_nRows(),
-                        input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        input.dem.get_cellSize(), 
-                        input.dem.get_noDataValue(),
-                        0);
-
         double aspect_temp = 0;	//just placeholder, basically
         double slope_temp = 0;	//just placeholder, basically
 
