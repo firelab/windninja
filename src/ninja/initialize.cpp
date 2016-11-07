@@ -40,6 +40,12 @@ initialize::~initialize()
     uDiurnal.deallocate();
     vDiurnal.deallocate();
     wDiurnal.deallocate();
+    uInitializationGrid.deallocate();
+    vInitializationGrid.deallocate();
+    airTempGrid.deallocate();
+    cloudCoverGrid.deallocate();
+    speedInitializationGrid.deallocate();
+    dirInitializationGrid.deallocate();
 }
 
 void initialize::initializeWindToZero( Mesh const& mesh,
@@ -66,14 +72,55 @@ void initialize::initializeWindToZero( Mesh const& mesh,
 
 }
 
+void initialize::initializeWindFromProfile(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                AsciiGrid<double>& L,
+                                AsciiGrid<double>& bl_height,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0)
+{
+    int i, j, k;
+//#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
+    for(i=0;i<input.dem.get_nRows();i++)
+    {
+        for(j=0;j<input.dem.get_nCols();j++)
+        {
+            profile.ObukovLength = L(i,j);
+            profile.ABL_height = bl_height(i,j);
+            profile.Roughness = input.surface.Roughness(i,j);
+            profile.Rough_h = input.surface.Rough_h(i,j);
+            profile.Rough_d = input.surface.Rough_d(i,j);
+            profile.inputWindHeight = input.inputWindHeight;
+
+            for(k=0;k<mesh.nlayers;k++)
+            {
+                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);
+
+                profile.inputWindSpeed = uInitializationGrid(i,j);
+                u0(i, j, k) += profile.getWindSpeed();
+
+                profile.inputWindSpeed = vInitializationGrid(i,j);
+                v0(i, j, k) += profile.getWindSpeed();
+
+                profile.inputWindSpeed = 0.0;
+                w0(i, j, k) += profile.getWindSpeed();
+            }
+        }
+    }
+}
+
 void initialize::initializeDiurnal(WindNinjaInputs& input,
                          AsciiGrid<double>& cloud,
                          AsciiGrid<double>& L,
                          AsciiGrid<double>& u_star,
                          AsciiGrid<double>& bl_height,
-                         AsciiGrid<double>& airTempGrid,
-                         AsciiGrid<double>& speedInitializationGrid)
+                         AsciiGrid<double>& airTempGrid)
 {
+    //Set windspeed grid for diurnal computation
+    input.surface.set_windspeed(speedInitializationGrid);
+
     //Monin-Obukhov length, surface friction velocity, and atmospheric boundary layer height
     L.set_headerData(input.dem.get_nCols(),
                      input.dem.get_nRows(),
@@ -188,4 +235,77 @@ void initialize::initializeDiurnal(WindNinjaInputs& input,
             }
         }
     }
+}
+
+void initialize::addDiurnalComponent(WindNinjaInputs &input,
+                                    const Mesh& mesh,
+                                    wn_3dScalarField& u0,
+                                    wn_3dScalarField& v0,
+                                    wn_3dScalarField& w0)
+{
+    int i, j, k;
+    double AGL=0; //height above top of roughness elements
+#pragma omp parallel for default(shared) private(i,j,k,AGL)
+    //start at 1, not zero because ground nodes must be zero for boundary conditions to work properly
+    for(k=1;k<mesh.nlayers;k++)	
+    {
+        for(i=0;i<mesh.nrows;i++)
+        {
+            for(j=0;j<mesh.ncols;j++)
+            {
+                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                AGL=mesh.ZORD(i, j, k)-input.dem(i,j);
+
+                if((AGL - input.surface.Rough_d(i,j)) < height(i,j))
+                {
+                    u0(i, j, k) += uDiurnal(i,j);
+                    v0(i, j, k) += vDiurnal(i,j);
+                    w0(i, j, k) += wDiurnal(i,j);
+                }
+            }
+        }
+    }
+}
+
+void initialize::setUniformCloudCover(WindNinjaInputs &input,
+                                    AsciiGrid<double> cloud)
+{
+    //Set cloud grid
+    int longEdge = input.dem.get_nRows();
+    if(input.dem.get_nRows() < input.dem.get_nCols())
+        longEdge = input.dem.get_nCols();
+
+    double tempCloudCover;
+    if(input.cloudCover < 0)
+        tempCloudCover = 0.0;
+    else
+        tempCloudCover = input.cloudCover;
+
+    cloud.set_headerData(1, 1, input.dem.get_xllCorner(),
+                        input.dem.get_yllCorner(),
+                        (longEdge * input.dem.cellSize),
+                        -9999.0, tempCloudCover, input.dem.prjString);
+}
+
+void initialize::setGridHeaderData(WindNinjaInputs& input,
+                         AsciiGrid<double>& cloud,
+                         AsciiGrid<double>& L,
+                         AsciiGrid<double>& u_star,
+                         AsciiGrid<double>& bl_height,
+                         AsciiGrid<double>& airTempGrid)
+{
+    L.set_headerData(input.dem);
+    u_star.set_headerData(input.dem);
+    bl_height.set_headerData(input.dem);
+    height.set_headerData(input.dem);
+    cloud.set_headerData(input.dem);
+    uDiurnal.set_headerData(input.dem);
+    vDiurnal.set_headerData(input.dem);
+    wDiurnal.set_headerData(input.dem);
+    airTempGrid.set_headerData(input.dem);
+    cloudCoverGrid.set_headerData(input.dem);
+    speedInitializationGrid.set_headerData(input.dem);
+    dirInitializationGrid.set_headerData(input.dem);
+    uInitializationGrid.set_headerData(input.dem);
+    vInitializationGrid.set_headerData(input.dem);
 }

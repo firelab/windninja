@@ -54,5 +54,6 @@ class foamDomainAverageInitialization : public initialize
 
     private:
     
+        void setWn2dGrids(WindNinjaInputs &input);
 };
 #endif /* FOAM_DOMAIN_AVERAGE_INITIALIZATION_H */

@@ -64,9 +64,9 @@ class foamWxModelInitialization : public initialize
         
         AsciiGrid<double> inputVelocityGrid;
         AsciiGrid<double> inputAngleGrid;
-        AsciiGrid<double> inputAirGrid;
 
     private:
     
+        void setWn2dGrids(WindNinjaInputs &input);
 };
 #endif /* FOAM_WX_MODEL_INITIALIZATION_H */

@@ -61,26 +61,13 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
         AsciiGrid<double>& u_star,
         AsciiGrid<double>& bl_height)
 {
-    int i, j, k;
+    setGridHeaderData(input, cloud, L, u_star, bl_height, airTempGrid);
 
-    windProfile profile;
-    profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...	
     //make sure rough_h is set to zero if profile switch is 0 or 2
+    //switch that detemines what profile is used...
+    profile.profile_switch = windProfile::monin_obukov_similarity;
 	
-    AsciiGrid<double> speedInitializationGrid;
-    speedInitializationGrid.set_headerData(input.dem);
-    AsciiGrid<double> dirInitializationGrid;
-    dirInitializationGrid.set_headerData(input.dem);
-    AsciiGrid<double> uInitializationGrid;
-    uInitializationGrid.set_headerData(input.dem);
-    AsciiGrid<double> vInitializationGrid;
-    vInitializationGrid.set_headerData(input.dem);
-    
-    cloud.set_headerData(input.dem);
-    cloud = input.cloudCover;
-
-    AsciiGrid<double> airTempGrid(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, input.dem.get_noDataValue(), input.airTemp);
-	AsciiGrid<double> cloudCoverGrid(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, input.dem.get_noDataValue(), input.cloudCover);
+    setUniformCloudCover(input, cloud); 
 
     CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
     CPLDebug("NINJA", "input.dirInitGridFilename = %s", input.dirInitGridFilename.c_str());
@@ -120,71 +107,28 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
     speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
     dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
     
-    //Set windspeed grid for diurnal computation
-    input.surface.set_windspeed(speedInitializationGrid);
-    
     CPLDebug("NINJA", "check for coincident grids: u = %d", speedInitializationGrid.checkForCoincidentGrids(uInitializationGrid));
 
+    int i, j, k;
     //set the u and v initialization grids
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_sd_to_uv(speedInitializationGrid(i,j), dirInitializationGrid(i,j), &(uInitializationGrid)(i,j), &(vInitializationGrid)(i,j));
+            wind_sd_to_uv(speedInitializationGrid(i,j),
+                    dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j),
+                    &(vInitializationGrid)(i,j));
         }
     }
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid, speedInitializationGrid);
+    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid);
     
-    #pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-        for(i=0;i<input.dem.get_nRows();i++)
-        {
-            for(j=0;j<input.dem.get_nCols();j++)
-            {
-                profile.ObukovLength = L(i,j);
-                profile.ABL_height = bl_height(i,j);
-                profile.Roughness = input.surface.Roughness(i,j);
-                profile.Rough_h = input.surface.Rough_h(i,j);
-                profile.Rough_d = input.surface.Rough_d(i,j);
-                profile.inputWindHeight = input.inputWindHeight;
+    initializeWindFromProfile(input, mesh, L, bl_height, u0, v0, w0);
 
-                for(k=0;k<mesh.nlayers;k++)
-                {
-                    profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);			//this is height above THE GROUND!! (not "z=0" for the log profile)
-
-                    profile.inputWindSpeed = uInitializationGrid(i,j);
-                    u0(i, j, k) += profile.getWindSpeed();
-
-                    profile.inputWindSpeed = vInitializationGrid(i,j);
-                    v0(i, j, k) += profile.getWindSpeed();
-
-                    profile.inputWindSpeed = 0.0;
-                    w0(i, j, k) += profile.getWindSpeed();
-                }
-            }
-        }
-
-    //Now add diurnal component if desired
-    double AGL=0;                                //height above top of roughness elements
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
-#pragma omp parallel for default(shared) private(i,j,k,AGL)
-        for(k=1;k<mesh.nlayers;k++)	//start at 1, not zero because ground nodes must be zero for boundary conditions to work properly
-        {
-            for(i=0;i<mesh.nrows;i++)
-            {
-                for(j=0;j<mesh.ncols;j++)
-                {
-                    AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	//this is height above THE GROUND!! (not "z=0" for the log profile)
-                    if((AGL - input.surface.Rough_d(i,j)) < height(i,j))
-                    {
-                        u0(i, j, k) += uDiurnal(i,j);
-                        v0(i, j, k) += vDiurnal(i,j);
-                        w0(i, j, k) += wDiurnal(i,j);
-                    }
-                }
-            }
-        }
+        addDiurnalComponent(input, mesh, u0, v0, w0);
     }
 }
 

@@ -50,54 +50,43 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                 AsciiGrid<double>& u_star,
                 AsciiGrid<double>& bl_height)
 {
-    //Set cloud grid
-    int longEdge = input.dem.get_nRows();
-    if(input.dem.get_nRows() < input.dem.get_nCols())
-        longEdge = input.dem.get_nCols();
+    setGridHeaderData(input, cloud, L, u_star, bl_height, airTempGrid);
 
-    double tempCloudCover;
-    if(input.cloudCover < 0)
-        tempCloudCover = 0.0;
-    else
-        tempCloudCover = input.cloudCover;
+    setUniformCloudCover(input, cloud);
 
-    cloud.set_headerData(1, 1, input.dem.get_xllCorner(),
-                        input.dem.get_yllCorner(),
-                        (longEdge * input.dem.cellSize),
-                        -9999.0, tempCloudCover, input.dem.prjString);
+    //make sure rough_h is set to zero if profile switch is 0 or 2
+    //switch that detemines what profile is used...
+    profile.profile_switch = windProfile::monin_obukov_similarity;
 
+    initializeWindToZero(mesh, u0, v0, w0);
+
+    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid);
+
+    initializeWindFromProfile(input, mesh, L, bl_height, u0, v0, w0);
+
+    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
+    {
+        addDiurnalComponent(input, mesh, u0, v0, w0);
+    }
+}
+
+void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input,
+                                                 AsciiGrid<double>& cloud,
+                                                 AsciiGrid<double>& L,
+                                                 AsciiGrid<double>& u_star,
+                                                 AsciiGrid<double>& bl_height,
+                                                 AsciiGrid<double>& airTempGrid)
+{
     double inwindu=0.0;		//input u wind component
     double inwindv=0.0;		//input v wind component
     double inwindw=0.0;		//input w wind component
     int i, j, k;
-
-    windProfile profile;
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-    profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
 
     //Set inwindu and inwindv
     wind_sd_to_uv(input.inputSpeed, input.inputDirection, &inwindu, &inwindv);
 
     //Set inwindw
     inwindw=0.0;
-
-    AsciiGrid<double> airTempGrid(input.dem.get_nCols(),
-                                 input.dem.get_nRows(),
-                                 input.dem.xllCorner,
-                                 input.dem.yllCorner,
-                                 input.dem.cellSize,
-                                 input.dem.get_noDataValue(),
-                                 input.airTemp);
-
-    AsciiGrid<double> cloudCoverGrid(input.dem.get_nCols(),
-                                 input.dem.get_nRows(),
-                                 input.dem.xllCorner,
-                                 input.dem.yllCorner,
-                                 input.dem.cellSize,
-                                 input.dem.get_noDataValue(),
-                                 input.cloudCover);
-
-    initializeWindToZero(mesh, u0, v0, w0);
 
     //Monin-Obukhov length, surface friction velocity, and atmospheric boundary layer height
     L.set_headerData(input.dem.get_nCols(),
@@ -107,6 +96,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                      input.dem.get_cellSize(),
                      input.dem.get_noDataValue(),
                      0.0);
+
     u_star.set_headerData(input.dem.get_nCols(),
                          input.dem.get_nRows(),
                          input.dem.get_xllCorner(),
@@ -114,6 +104,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                          input.dem.get_cellSize(),
                          input.dem.get_noDataValue(),
                          0.0);
+
     bl_height.set_headerData(input.dem.get_nCols(),
                          input.dem.get_nRows(),
                          input.dem.get_xllCorner(),
@@ -122,7 +113,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                          input.dem.get_noDataValue(),
                          -1.0);
 
-    //compute diurnal wind, Monin-Obukhov length, surface friction velocity, and ABL height
     if(input.diurnalWinds == true)
     {
         height.set_headerData(input.dem.get_nCols(),
@@ -132,6 +122,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                         input.dem.get_cellSize(),
                         input.dem.get_noDataValue(),
                         0);	//height of diurnal flow above "z=0" in log profile
+
         uDiurnal.set_headerData(input.dem.get_nCols(),
                         input.dem.get_nRows(),
                         input.dem.get_xllCorner(),
@@ -139,6 +130,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                         input.dem.get_cellSize(),
                         input.dem.get_noDataValue(),
                         0);
+
         vDiurnal.set_headerData(input.dem.get_nCols(),
                         input.dem.get_nRows(),
                         input.dem.get_xllCorner(),
@@ -146,6 +138,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                         input.dem.get_cellSize(),
                         input.dem.get_noDataValue(),
                         0);
+
         wDiurnal.set_headerData(input.dem.get_nCols(),
                         input.dem.get_nRows(),
                         input.dem.get_xllCorner(),
@@ -218,63 +211,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                     //compute neutral ABL height
                     //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
                     bl_height(i,j) = 0.2 * u_star(i,j) / f;	
-                }
-            }
-        }
-    }
-
-    //Initialize u0,v0,w0----------------------------------
-    #pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-    for(i=0;i<input.dem.get_nRows();i++)
-    {
-        for(j=0;j<input.dem.get_nCols();j++)
-        {
-            profile.ObukovLength = L(i,j);
-            profile.ABL_height = bl_height(i,j);
-            profile.Roughness = input.surface.Roughness(i,j);
-            profile.Rough_h = input.surface.Rough_h(i,j);
-            profile.Rough_d = input.surface.Rough_d(i,j);
-            profile.inputWindHeight = input.inputWindHeight;
-
-            for(k=0;k<mesh.nlayers;k++)
-            {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
-                profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	
-                
-                profile.inputWindSpeed = inwindu;
-                u0(i, j, k) += profile.getWindSpeed();
-
-                profile.inputWindSpeed = inwindv;
-                v0(i, j, k) += profile.getWindSpeed();
-
-                profile.inputWindSpeed = inwindw;
-                w0(i, j, k) += profile.getWindSpeed();
-
-            }
-        }
-    }
-
-    //Now add diurnal component if desired
-    //height above top of roughness elements
-    double AGL=0;
-    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
-    {
-        #pragma omp parallel for default(shared) private(i,j,k,AGL)
-        //start at 1, not zero because ground nodes must be zero for boundary conditions to work properly
-        for(k=1;k<mesh.nlayers;k++)	
-        {
-            for(i=0;i<mesh.nrows;i++)
-            {
-                for(j=0;j<mesh.ncols;j++)
-                {
-                    //this is height above THE GROUND!! (not "z=0" for the log profile)
-                    AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	
-                    if((AGL - (input.surface.Rough_d(i,j))) < height(i,j))
-                    {
-                        u0(i, j, k) += uDiurnal(i,j);
-                        v0(i, j, k) += vDiurnal(i,j);
-                        w0(i, j, k) += wDiurnal(i,j);
-                    }		
                 }
             }
         }

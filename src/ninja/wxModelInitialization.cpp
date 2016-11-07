@@ -1146,6 +1146,8 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          AsciiGrid<double>& u_star,
                          AsciiGrid<double>& bl_height)
 {
+    setGridHeaderData(input, cloud, L, u_star, bl_height, airTempGrid);
+
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
     profile.profile_switch = windProfile::monin_obukov_similarity;
@@ -1163,17 +1165,13 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     //Write wx model grids
     WriteWxModelGrids(input);
 
-    //Set windspeed grid for diurnal computation
-    input.surface.set_windspeed(speedInitializationGrid);
-
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid, speedInitializationGrid);
+    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid);
 
     //Interpolate 2D wx model data to requested point locations
     interpolate2dDataToPoints(input, mesh, L, bl_height);
 
-    //Initialize u0,v0,w0 from 2d WN grids
     bool wxModel3d = false;
 #ifdef NOMADS_ENABLE_3D
     if(this->getForecastReadable().find("3D") != std::string::npos){
@@ -1184,26 +1182,17 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
         initializeWindFrom3dData(input, mesh, L, bl_height, u0, v0, w0);
     } 
     else{
-        initializeWindFrom2dData(input, mesh, L, bl_height, u0, v0, w0);
+        initializeWindFromProfile(input, mesh, L, bl_height, u0, v0, w0);
     }
 
-    //Add the diural component
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
-        initializeDiurnalComponent(input, mesh, u0, v0, w0);
+        addDiurnalComponent(input, mesh, u0, v0, w0);
     }
 }
 
 void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<double>& cloud)
 {
-    //Make final grids with same header as dem
-    airTempGrid.set_headerData(input.dem);
-    cloud.set_headerData(input.dem);
-    speedInitializationGrid.set_headerData(input.dem);
-    dirInitializationGrid.set_headerData(input.dem);
-    uInitializationGrid.set_headerData(input.dem);
-    vInitializationGrid.set_headerData(input.dem);
-
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
     cloud.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
@@ -1253,75 +1242,6 @@ void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<doubl
         throw std::logic_error("Dem and uInitializationGrid are not coincident in wx model interpolation.");
     else if(!input.dem.checkForCoincidentGrids(vInitializationGrid))
         throw std::logic_error("Dem and vInitializationGrid are not coincident in wx model interpolation.");
-}
-
-void wxModelInitialization::initializeDiurnalComponent(WindNinjaInputs &input,
-                                                    const Mesh& mesh,
-                                                    wn_3dScalarField& u0,
-                                                    wn_3dScalarField& v0,
-                                                    wn_3dScalarField& w0)
-{
-    int i, j, k;
-    double AGL=0; //height above top of roughness elements
-#pragma omp parallel for default(shared) private(i,j,k,AGL)
-    //start at 1, not zero because ground nodes must be zero for boundary conditions to work properly
-    for(k=1;k<mesh.nlayers;k++)	
-    {
-        for(i=0;i<mesh.nrows;i++)
-        {
-            for(j=0;j<mesh.ncols;j++)
-            {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
-                AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	
-
-                if((AGL - input.surface.Rough_d(i,j)) < height(i,j))
-                {
-                    u0(i, j, k) += uDiurnal(i,j);
-                    v0(i, j, k) += vDiurnal(i,j);
-                    w0(i, j, k) += wDiurnal(i,j);
-                }
-            }
-        }
-    }
-}
-
-void wxModelInitialization::initializeWindFrom2dData(WindNinjaInputs &input,
-                                const Mesh& mesh,
-                                AsciiGrid<double>& L,
-                                AsciiGrid<double>& bl_height,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0)
-{
-    int i, j, k;
-//#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-    for(i=0;i<input.dem.get_nRows();i++)
-    {
-        for(j=0;j<input.dem.get_nCols();j++)
-        {
-            profile.ObukovLength = L(i,j);
-            profile.ABL_height = bl_height(i,j);
-            profile.Roughness = input.surface.Roughness(i,j);
-            profile.Rough_h = input.surface.Rough_h(i,j);
-            profile.Rough_d = input.surface.Rough_d(i,j);
-            profile.inputWindHeight = input.inputWindHeight;
-
-            for(k=0;k<mesh.nlayers;k++)
-            {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
-                profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	
-
-                profile.inputWindSpeed = uInitializationGrid(i,j);
-                u0(i, j, k) += profile.getWindSpeed();
-
-                profile.inputWindSpeed = vInitializationGrid(i,j);
-                v0(i, j, k) += profile.getWindSpeed();
-
-                profile.inputWindSpeed = 0.0;
-                w0(i, j, k) += profile.getWindSpeed();
-            }
-        }
-    }
 }
 
 void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,

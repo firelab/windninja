@@ -199,20 +199,6 @@ class wxModelInitialization : public initialize
 private:
     void setWn2dGrids(WindNinjaInputs &input, AsciiGrid<double>& cloud);
 
-    void initializeDiurnalComponent(WindNinjaInputs &input,
-                                    const Mesh& mesh,
-                                    wn_3dScalarField& u0,
-                                    wn_3dScalarField& v0,
-                                    wn_3dScalarField& w0);
-
-    void initializeWindFrom2dData(WindNinjaInputs &input,
-                                const Mesh& mesh,
-                                AsciiGrid<double>& L,
-                                AsciiGrid<double>& bl_height,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0);
-
     void initializeWindFrom3dData(WindNinjaInputs &input,
                                 const Mesh& mesh,
                                 AsciiGrid<double>& L,
@@ -241,14 +227,6 @@ private:
     AsciiGrid<double> dirInitializationGrid_wxModel;
     AsciiGrid<double> cloudCoverGrid_wxModel;
 
-    AsciiGrid<double> airTempGrid;
-    AsciiGrid<double> cloudCoverGrid;
-    AsciiGrid<double> speedInitializationGrid;
-    AsciiGrid<double> dirInitializationGrid;
-    AsciiGrid<double> uInitializationGrid;
-    AsciiGrid<double> vInitializationGrid;
-
-    windProfile profile;
 };
 
 #endif /* WX_MODEL_INITIALIZATION_H */
