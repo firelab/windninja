@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+WindNinja 3.1.1
+---------------
+
+ - Fix bug where input wind height was not set correctly for GUI wx model runs (\#223)
+
+
 WindNinja 3.1.0
 ---------------
 
