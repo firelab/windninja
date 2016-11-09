@@ -1068,7 +1068,7 @@ void wxModelInitialization::deallocateTemp()
  */
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 {
-    input.inputWindHeight = (*this).Get_Wind_Height();
+    input.inputWindHeight = Get_Wind_Height();
 
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
@@ -1116,7 +1116,7 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
     input.inputDirection = meanDir;
 
     //write wx model grids
-    WriteWxModelGrids(input);
+    writeWxModelGrids(input);
 
     /*
      * if diurnal is on, set required inputs from grids.
@@ -1163,7 +1163,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     setWn2dGrids(input, cloud);
 
     //Write wx model grids
-    WriteWxModelGrids(input);
+    writeWxModelGrids(input);
 
     initializeWindToZero(mesh, u0, v0, w0);
 
@@ -1462,7 +1462,7 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input,
     }
 }
 
-void wxModelInitialization::WriteWxModelGrids(WindNinjaInputs &input)
+void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
     if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
     {

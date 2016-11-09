@@ -217,7 +217,7 @@ private:
                                  AsciiGrid<double>& L,
                                  AsciiGrid<double>& bl_height);
 
-    void WriteWxModelGrids(WindNinjaInputs &input);
+    void writeWxModelGrids(WindNinjaInputs &input);
 
     AsciiGrid<double> airTempGrid_wxModel;
     AsciiGrid<double> uGrid_wxModel;
