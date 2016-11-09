@@ -1141,12 +1141,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          wn_3dScalarField& u0,
                          wn_3dScalarField& v0,
                          wn_3dScalarField& w0,
-                         AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& L,
-                         AsciiGrid<double>& u_star,
-                         AsciiGrid<double>& bl_height)
+                         AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, L, u_star, bl_height, airTempGrid);
+    setGridHeaderData(input, cloud, airTempGrid);
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
@@ -1167,10 +1164,10 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid);
+    initializeDiurnal(input, cloud, airTempGrid);
 
     //Interpolate 2D wx model data to requested point locations
-    interpolate2dDataToPoints(input, mesh, L, bl_height);
+    interpolate2dDataToPoints(input, mesh);
 
     bool wxModel3d = false;
 #ifdef NOMADS_ENABLE_3D
@@ -1179,10 +1176,10 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     }
 #endif
     if(wxModel3d == true){
-        initializeWindFrom3dData(input, mesh, L, bl_height, u0, v0, w0);
+        initializeWindFrom3dData(input, mesh, u0, v0, w0);
     } 
     else{
-        initializeWindFromProfile(input, mesh, L, bl_height, u0, v0, w0);
+        initializeWindFromProfile(input, mesh, u0, v0, w0);
     }
 
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
@@ -1246,8 +1243,6 @@ void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<doubl
 
 void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                AsciiGrid<double>& L,
-                                AsciiGrid<double>& bl_height,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0)
@@ -1329,17 +1324,14 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
     /*
      * Interpolate 3D wx model data to requested point locations
      */
-    interpolate3dDataToPoints(input, mesh, L, bl_height);
+    interpolate3dDataToPoints(input, mesh);
 
     wxU3d.deallocate();
     wxV3d.deallocate();
     wxW3d.deallocate();
 }
 
-void wxModelInitialization::interpolate2dDataToPoints(WindNinjaInputs &input, 
-                            const Mesh& mesh,
-                            AsciiGrid<double>& L,
-                            AsciiGrid<double>& bl_height)
+void wxModelInitialization::interpolate2dDataToPoints(WindNinjaInputs &input, const Mesh& mesh)
 {
     double X, Y, Z, uTemp, vTemp;
     element elem(&mesh);
@@ -1377,10 +1369,7 @@ void wxModelInitialization::interpolate2dDataToPoints(WindNinjaInputs &input,
     }
 }
 
-void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input,
-                            const Mesh& mesh,
-                            AsciiGrid<double>& L,
-                            AsciiGrid<double>& bl_height)
+void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, const Mesh& mesh)
 {
     element elem(&mesh);
     std::vector<Mesh> meshList;

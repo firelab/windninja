@@ -65,9 +65,6 @@ ninja::ninja()
     SK=NULL;
     row_ptr=NULL;
     col_ind=NULL;
-    //L=NULL;
-    //u_star=NULL;
-    //bl_height=NULL;
     uDiurnal=NULL;
     vDiurnal=NULL;
     wDiurnal=NULL;
@@ -126,9 +123,6 @@ ninja::ninja(const ninja &rhs)
 , v0(rhs.v0)
 , w0(rhs.w0)
 , mesh(rhs.mesh)
-, L(rhs.L)
-, u_star(rhs.u_star)
-, bl_height(rhs.bl_height)
 , input(rhs.input)
 {
     input.Com = NULL;   //must be set to null!
@@ -212,9 +206,6 @@ ninja &ninja::operator=(const ninja &rhs)
         u0 = rhs.u0;
         v0 = rhs.v0;
         w0 = rhs.w0;
-        L = rhs.L;
-        u_star = rhs.u_star;
-        bl_height = rhs.bl_height;
 
         mesh = rhs.mesh;
         input = rhs.input;
@@ -379,49 +370,23 @@ do
 		//initialize
 		if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
 		{
-                    //wxModelInitialization* init;
-		    //wxInit = wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
-
 		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
-                    wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+                    wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+                    //temporary solution so we can access wx model virtual methods for stability and file writing
+                    init = wxInit;
 
-		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
-		{
-                    domainAverageInitialization init;
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-
-		}else if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-		{
-                    pointInitialization init;
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-
-		}
-		else if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
-                {
-                    griddedInitialization init;
-		    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
+		}else{
+                    init.reset(initializationFactory::makeInitialization(input));
+                    init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
                 }
-#ifdef NINJAFOAM
-		else if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag)
-		{
-                    foamDomainAverageInitialization init;
-                    init.inputVelocityGrid = VelocityGrid; //set input grids from cfd solution
-                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-		}
-		else if(input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
-		{
-                    foamWxModelInitialization init;
-                    init.inputVelocityGrid = VelocityGrid; //set input grids from cfd solution
-                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
-                    //init.inputAirGrid = AirGrid; //set input grids from cfd solution
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-		}
-#endif
-		else{
-                     throw std::logic_error("Incorrect wind initialization.");
-		}
-
+                if(input.initializationMethod==WindNinjaInputs::foamDomainAverageInitializationFlag ||
+                    input.initializationMethod==WindNinjaInputs::foamWxModelInitializationFlag)
+                {
+                    //set input grids from cfd solution
+                    //NEED TO PROPERLY SET THESE -- where to store the grids?
+                    //init->inputVelocityGrid = VelocityGrid;
+                    //init->inputAngleGrid = AngleGrid;
+                }
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif
@@ -1378,8 +1343,8 @@ void ninja::interp_uvw()
 
                 if(k <= 1)   //if we're in the first cell, use log profile
                 {
-                    profile.ObukovLength = L(i,j);
-                    profile.ABL_height = bl_height(i,j);
+                    profile.ObukovLength = init->L(i,j);
+                    profile.ABL_height = init->bl_height(i,j);
                     profile.Roughness = input.surface.Roughness(i,j);
                     profile.Rough_h = input.surface.Rough_h(i,j);
                     profile.Rough_d = input.surface.Rough_d(i,j);
@@ -2425,8 +2390,8 @@ void ninja::prepareOutput()
                     //profile stuff is a little weird bc we are not at nodes
                     //profile is set based on southwest corner of current cell (elem_i, elem_j)
                     //could interpolate these too?
-                    profile.ObukovLength = L(elem_i,elem_j);
-                    profile.ABL_height = bl_height(elem_i,elem_j);
+                    profile.ObukovLength = init->L(elem_i,elem_j);
+                    profile.ABL_height = init->bl_height(elem_i,elem_j);
                     profile.Roughness = input.surface.Roughness(elem_i,elem_j);
                     profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
                     profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);

@@ -52,10 +52,11 @@ class initialize
                         wn_3dScalarField& u0,
                         wn_3dScalarField& v0,
                         wn_3dScalarField& w0,
-                        AsciiGrid<double>& cloud,
-                        AsciiGrid<double>& L,
-                        AsciiGrid<double>& u_star,
-                        AsciiGrid<double>& bl_height) = 0;
+                        AsciiGrid<double>& cloud) = 0;
+
+        AsciiGrid<double> L;		//Monin-Obukhov length
+        AsciiGrid<double> u_star;	//Friction velocity
+        AsciiGrid<double> bl_height;	//atmospheric boundary layer height
 
     protected:
         void initializeWindToZero(Mesh const& mesh,
@@ -65,17 +66,12 @@ class initialize
 
         void initializeWindFromProfile(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                AsciiGrid<double>& L,
-                                AsciiGrid<double>& bl_height,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0);
 
         virtual void initializeDiurnal(WindNinjaInputs& input,
                                      AsciiGrid<double>& cloud,
-                                     AsciiGrid<double>& L,
-                                     AsciiGrid<double>& u_star,
-                                     AsciiGrid<double>& bl_height,
                                      AsciiGrid<double>& airTempGrid);
 
         void addDiurnalComponent(WindNinjaInputs &input,
@@ -89,9 +85,6 @@ class initialize
 
         void setGridHeaderData(WindNinjaInputs& input,
                              AsciiGrid<double>& cloud,
-                             AsciiGrid<double>& L,
-                             AsciiGrid<double>& u_star,
-                             AsciiGrid<double>& bl_height,
                              AsciiGrid<double>& airTempGrid);
 
         AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile

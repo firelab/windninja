@@ -45,18 +45,12 @@ class domainAverageInitialization : public initialize
                 wn_3dScalarField& u0,
                 wn_3dScalarField& v0,
                 wn_3dScalarField& w0,
-                AsciiGrid<double>& cloud,
-                AsciiGrid<double>& L,
-                AsciiGrid<double>& u_star,
-                AsciiGrid<double>& bl_height);
+                AsciiGrid<double>& cloud);
 
     private:
 
         virtual void initializeDiurnal(WindNinjaInputs& input,
                                      AsciiGrid<double>& cloud,
-                                     AsciiGrid<double>& L,
-                                     AsciiGrid<double>& u_star,
-                                     AsciiGrid<double>& bl_height,
                                      AsciiGrid<double>& airTempGrid);
 
 };

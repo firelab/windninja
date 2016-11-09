@@ -74,8 +74,6 @@ void initialize::initializeWindToZero( Mesh const& mesh,
 
 void initialize::initializeWindFromProfile(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                AsciiGrid<double>& L,
-                                AsciiGrid<double>& bl_height,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0)
@@ -113,9 +111,6 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
 
 void initialize::initializeDiurnal(WindNinjaInputs& input,
                          AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& L,
-                         AsciiGrid<double>& u_star,
-                         AsciiGrid<double>& bl_height,
                          AsciiGrid<double>& airTempGrid)
 {
     //Set windspeed grid for diurnal computation
@@ -231,9 +226,6 @@ void initialize::setUniformCloudCover(WindNinjaInputs &input,
 
 void initialize::setGridHeaderData(WindNinjaInputs& input,
                          AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& L,
-                         AsciiGrid<double>& u_star,
-                         AsciiGrid<double>& bl_height,
                          AsciiGrid<double>& airTempGrid)
 {
     L.set_headerData(input.dem);

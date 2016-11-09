@@ -88,6 +88,7 @@
 #include "initialize.h"
 #include "domainAverageInitialization.h"
 #include "wxModelInitializationFactory.h"
+#include "initializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
 
@@ -353,6 +354,7 @@ protected:
     void checkCancel();
     void write_compare_output();
     boost::shared_ptr<wxModelInitialization> wxInit;
+    boost::shared_ptr<initialize> init;
 
 private:
 
@@ -375,9 +377,6 @@ private:
     int *row_ptr, *col_ind;
     double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
     double alpha;                //alpha = alphaH/alphaV, determined by stability
-    AsciiGrid<double> L;		//Monin-Obukhov length
-    AsciiGrid<double> u_star;	//Friction velocity
-    AsciiGrid<double> bl_height;	//atmospheric boundary layer height
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;
     Slope *slope;

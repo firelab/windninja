@@ -45,12 +45,9 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                 wn_3dScalarField& u0,
                 wn_3dScalarField& v0,
                 wn_3dScalarField& w0,
-                AsciiGrid<double>& cloud,
-                AsciiGrid<double>& L,
-                AsciiGrid<double>& u_star,
-                AsciiGrid<double>& bl_height)
+                AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, L, u_star, bl_height, airTempGrid);
+    setGridHeaderData(input, cloud, airTempGrid);
 
     setUniformCloudCover(input, cloud);
 
@@ -60,9 +57,9 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, L, u_star, bl_height, airTempGrid);
+    initializeDiurnal(input, cloud, airTempGrid);
 
-    initializeWindFromProfile(input, mesh, L, bl_height, u0, v0, w0);
+    initializeWindFromProfile(input, mesh, u0, v0, w0);
 
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
@@ -72,9 +69,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 
 void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input,
                                                  AsciiGrid<double>& cloud,
-                                                 AsciiGrid<double>& L,
-                                                 AsciiGrid<double>& u_star,
-                                                 AsciiGrid<double>& bl_height,
                                                  AsciiGrid<double>& airTempGrid)
 {
     int i, j;

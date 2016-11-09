@@ -44,6 +44,7 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
                   initialize.cpp
+                  initializationFactory.cpp
                   KmlVector.cpp
                   LineStyle.cpp
                   mesh.cpp

@@ -67,10 +67,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 		wn_3dScalarField& u0,
 		wn_3dScalarField& v0,
 		wn_3dScalarField& w0,
-		AsciiGrid<double>& cloud,
-        AsciiGrid<double>& L,
-        AsciiGrid<double>& u_star,
-        AsciiGrid<double>& bl_height)
+		AsciiGrid<double>& cloud)
 {
 	//Set cloud grid
 //	int longEdge = input.dem.get_nRows();
