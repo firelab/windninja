@@ -148,11 +148,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     vector<boost::posix_time::ptime> outaTime;
     boost::posix_time::ptime noTime;
     outaTime.push_back(noTime);
-
     stationArmada=pointInitialization::interpolateFromDisk(stationFileName,demFile,timeList,timeZone);
 
     ninjas.resize(timeList.size());
-
     for(unsigned int i=0; i< timeList.size();i++)
     {
         ninjas[i]=new ninja();

@@ -115,6 +115,10 @@ class wxStation
     boost::local_time::local_date_time get_currentTimeStep();
     void set_currentTimeStep(boost::local_time::local_date_time step);
 
+    void assign_speed( double Speed, velocityUnits::eVelocityUnits units, int index );
+    void assign_direction(double direction, int index);
+    int get_listSize();
+
     static void wxPrinter(wxStation wxObject);
     static void wxVectorPrinter(std::vector<wxStation> wxObject, int count);
 
@@ -180,6 +184,7 @@ class wxStation
 
     friend class Stability;
     friend class pointInitialization;
+
 
 };
 

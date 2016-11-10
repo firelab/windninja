@@ -511,6 +511,24 @@ void wxStation::set_localDateTime(boost::local_time::local_date_time timedata)
 {
     localDateTime.push_back(timedata);
 }
+
+void wxStation::assign_direction(double Direction, int index)// Used for Match Points
+{
+    direction[index]=Direction;
+}
+void wxStation::assign_speed(double Speed, velocityUnits::eVelocityUnits units, int index)// Used for Match Points
+{
+    velocityUnits::toBaseUnits( Speed, units );
+    speed[index]=Speed;
+    inputSpeedUnits = units;
+}
+
+int wxStation::get_listSize()
+{
+    int size=speed.size();
+    return size;
+}
+
 boost::local_time::local_date_time wxStation::get_localDateTime(int idx)
 {
     boost::local_time::local_date_time time=localDateTime[idx];

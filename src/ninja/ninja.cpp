@@ -354,6 +354,9 @@ int matchingIterCount = 0;
 bool matchFlag = false;
 if(input.matchWxStations == true)
 {
+//    num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
+//    num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
+//    num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
@@ -615,7 +618,7 @@ if(input.frictionVelocityFlag == 1){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",endDustEmissions-startDustEmissions);
 			}
 			#endif
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
 			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
 	#endif
 
@@ -639,7 +642,6 @@ if(input.frictionVelocityFlag == 1){
 	     }
          #endif
 	 }
-
      return true;
 }
 
@@ -650,7 +652,7 @@ if(input.frictionVelocityFlag == 1){
 double ninja::getSmallestRadiusOfInfluence()
 {
 	double smallest = DBL_MAX;
-	for(unsigned int i = 0; i < input.stations.size(); i++)
+    for(unsigned int i = 0; i < input.stations.size(); i++)
 	{
         if(input.stations[i].get_influenceRadius() > 0)
 		{
@@ -2545,6 +2547,9 @@ bool ninja::matched(int iter)
                     maxCurrentOuterDiff = abs(true_v-try_output_v);
 			}
 
+            //index for storing data back in wxstation object
+            int dataIndex=input.inputsRunNumber;
+
             wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &try_input_u, &try_input_v);
             try_input_w = input.stationsScratch[i].get_w_speed();
             wind_sd_to_uv(input.stationsOldInput[i].get_speed(), input.stationsOldInput[i].get_direction(), &old_input_u, &old_input_v);
@@ -2552,10 +2557,12 @@ bool ninja::matched(int iter)
             wind_sd_to_uv(input.stationsOldOutput[i].get_speed(), input.stationsOldOutput[i].get_direction(), &old_output_u, &old_output_v);
             old_output_w = input.stationsOldOutput[i].get_w_speed();
 
+
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - try_output_u, true_v - try_output_v, true_w - try_output_w);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_u = %lf\tu_solve = %lf\tu_true = %lf", try_input_u, try_output_u, true_u);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_v = %lf\tv_solve = %lf\tv_true = %lf", try_input_v, try_output_v, true_v);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_w = %lf\tw_solve = %lf\tw_true = %lf", try_input_w, try_output_w, true_w);
+
 
 			//Compute new values using formula (from Lopes (2003)):
 			//
@@ -2583,6 +2590,7 @@ bool ninja::matched(int iter)
 
 
             //Did our last correction attempt improve things for u?
+
             if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<1)
             {
                 //If worse, then scrap the last try and, only step halfway
@@ -2631,48 +2639,46 @@ bool ninja::matched(int iter)
             if(u_keep_old==true && v_keep_old==true)
             {
                 wind_uv_to_sd(old_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].assign_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
 
             }else if(u_keep_old==true && v_keep_old==false)
             {
                 wind_uv_to_sd(old_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].assign_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
 
             }else if(u_keep_old==false && v_keep_old==true)
             {
                 wind_uv_to_sd(try_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].assign_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
 
             }else
             {
                 wind_uv_to_sd(try_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].assign_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
             }
 
 
             //input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
-
-
 
             //u component
             //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
@@ -2683,9 +2689,10 @@ bool ninja::matched(int iter)
 
 			//Set stationsScratch to new velocities and direction that are closer (hopefully!)
 			wind_uv_to_sd(new_input_u, new_input_v, &spd, &dir);
-            input.stationsScratch[i].set_speed(spd, velocityUnits::metersPerSecond);
-			input.stationsScratch[i].set_direction(dir);
-			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
+            input.stationsScratch[i].assign_speed(spd,velocityUnits::metersPerSecond,dataIndex);
+            input.stationsScratch[i].assign_direction(dir,dataIndex);
+
+//			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
         }
 
 		//compute percent complete
