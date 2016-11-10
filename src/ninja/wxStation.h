@@ -115,8 +115,8 @@ class wxStation
     boost::local_time::local_date_time get_currentTimeStep();
     void set_currentTimeStep(boost::local_time::local_date_time step);
 
-    void assign_speed( double Speed, velocityUnits::eVelocityUnits units, int index );
-    void assign_direction(double direction, int index);
+    void update_speed( double Speed, velocityUnits::eVelocityUnits units, int index );
+    void update_direction(double direction, int index);
     int get_listSize();
 
     static void wxPrinter(wxStation wxObject);

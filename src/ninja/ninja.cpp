@@ -2639,42 +2639,42 @@ bool ninja::matched(int iter)
             if(u_keep_old==true && v_keep_old==true)
             {
                 wind_uv_to_sd(old_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].assign_direction(dir,dataIndex);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else if(u_keep_old==true && v_keep_old==false)
             {
                 wind_uv_to_sd(old_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].assign_direction(dir,dataIndex);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else if(u_keep_old==false && v_keep_old==true)
             {
                 wind_uv_to_sd(try_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].assign_direction(dir,dataIndex);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else
             {
                 wind_uv_to_sd(try_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].assign_direction(dir,dataIndex);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].assign_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].assign_direction(dir,dataIndex);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
             }
 
 
@@ -2689,8 +2689,8 @@ bool ninja::matched(int iter)
 
 			//Set stationsScratch to new velocities and direction that are closer (hopefully!)
 			wind_uv_to_sd(new_input_u, new_input_v, &spd, &dir);
-            input.stationsScratch[i].assign_speed(spd,velocityUnits::metersPerSecond,dataIndex);
-            input.stationsScratch[i].assign_direction(dir,dataIndex);
+            input.stationsScratch[i].update_speed(spd,velocityUnits::metersPerSecond,dataIndex);
+            input.stationsScratch[i].update_direction(dir,dataIndex);
 
 //			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
         }

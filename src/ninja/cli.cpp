@@ -993,7 +993,6 @@ int windNinjaCLI(int argc, char* argv[])
                         option_dependency(vm, "fetch_station", "number_time_steps");
 
 //                        double a=pointInitialization::get_stationBuffer();
-//                        cout<<a<<endl;
 //                        exit(1);
 
 
@@ -1009,8 +1008,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                              vm["end_minute"].as<int>(),
                                                              vm["number_time_steps"].as<int>(),
                                                              osTimeZone );
-                        cout<<"a"<<endl;
-
                         try
                         {
                             pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),

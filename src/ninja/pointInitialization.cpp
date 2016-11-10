@@ -569,7 +569,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
     diskData=readDiskLine(stationFilename,demFile);// reads in data
 
-    cout<<"checking first time step..."<<endl;
+    cout<<"Checking first time step..."<<endl;
 //    cout<<diskData[0].datetime<<endl;
 //    cout<<timeList[0]<<endl;
     bool timeCheck;
@@ -587,7 +587,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
         cout<<"Time on File"<<diskData[0].datetime<<endl;
         exit(1);
     }
-    cout<<"first time step check passed!"<<endl;
+    cout<<"First time step check passed!"<<endl;
 
     int t=0;
     vector<int> countLimiter;
@@ -720,7 +720,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         {
             papszHeader=papszOldHeader;
             fetchType=false;
-            cout<<"old way"<<endl;
+            cout<<"Reading Data W/o Time..."<<endl;
 
         }
         else if (nFields !=CSLCount (papszHeader))
@@ -737,7 +737,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         else
         {
         fetchType=true;
-        cout<<"new way"<<endl;
+        cout<<"Reading Data W/ Timesteps..."<<endl;
         }
 
         const char *pszKey;
@@ -1030,7 +1030,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
 vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string csvFile, string demFile)
 {
-    cout<<"converting Interpolated struct to wxStation"<<endl;
+    cout<<"converting Interpolated struct to wxStation..."<<endl;
     vector<std::string> stationNames;
     vector<wxStation> stationData;
 
@@ -1234,7 +1234,7 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
 
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
-    cout<<"Interpolating Time Data"<<endl;
+    cout<<"Interpolating Time Data..."<<endl;
 
     boost::posix_time::ptime tempq;
     boost::posix_time::ptime init;
@@ -1436,7 +1436,7 @@ for (int k=0;k<totalsize;k++)
 
 
 
-cout<<"time data Interpolated\n"<<"Temporally Interpolating wx Data"<<endl;
+cout<<"Time data Interpolated...\n"<<"Temporally Interpolating wx Data..."<<endl;
 
 vector<vector<preInterpolate> > lowVec;
 vector<vector<preInterpolate> > highVec;
@@ -4465,7 +4465,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 //    cout<<bounds[3]<<endl;//LL Lon
     double buffer;
     buffer=get_stationBuffer();
-    cout<<"adding: "<<buffer<<" m to dem for station fetching..."<<endl;
+    cout<<"Adding "<<buffer<<" m to DEM for station fetching..."<<endl;
 
     double projxL=bounds[2];
     double projyL=bounds[3];
@@ -4530,19 +4530,19 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     {
         URL=BuildUnifiedLTBbox(bounds[2],bounds[3],bounds[0],bounds[1]);
     }
-
+    cout<<"WxData URL: "<<endl;
     cout<<URL<<endl;
 
     std::string csvName;
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
     {
     csvName=stationFilename;
-    cout<<".csv exists in stationFilename"<<endl;
+    cout<<".csv exists in stationFilename..."<<endl;
     }
     else
     {
     csvName=stationFilename+".csv";
-    cout<<"adding .csv to stationFilename"<<endl;
+    cout<<"Adding .csv to stationFilename..."<<endl;
     }
 
     OGRDataSourceH hDS;
@@ -4811,7 +4811,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
 
 
-    cout<<"returned true: "<<true<<endl;
+    cout<<"Fetch Station returned true: "<<true<<endl;
 
     return true;
 }
@@ -4841,12 +4841,12 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
     {
     csvName=stationFilename;
-    cout<<".csv exists in stationFilename"<<endl;
+    cout<<".csv exists in stationFilename..."<<endl;
     }
     else
     {
     csvName=stationFilename+".csv";
-    cout<<"adding .csv to stationFilename"<<endl;
+    cout<<"Adding .csv to stationFilename..."<<endl;
     }
 
     OGRDataSourceH hDS;
@@ -5092,7 +5092,7 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
 
 
-    cout<<"returned true: "<<true<<endl;
+    cout<<"Fetch Station returned true: "<<true<<endl;
 
     return true;
 }
