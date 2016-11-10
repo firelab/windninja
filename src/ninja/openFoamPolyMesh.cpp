@@ -49,10 +49,19 @@ openFoamPolyMesh::openFoamPolyMesh()
     nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
     ninternalfaces = nfaces-2*(Ax+Ay+Az);
 
-    writePolyMeshFiles();
+    xmin = 0;
+    xmax = xcells;
+    ymin = 0;
+    ymax = ycells;
+    zmin = 0;
+    zmax = zcells;
+
+    x,y,z;
+
+    writePolyMeshFiles("points");
 }
 
-openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells)
+openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf)
 {
 
     polyMesh_path = outputPath;
@@ -73,8 +82,45 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
     nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
     ninternalfaces = nfaces-2*(Ax+Ay+Az);
 
-    writePolyMeshFiles();
+    xmin = x0;
+    xmax = xf;
+    ymin = y0;
+    ymax = yf;
+    zmin = z0;
+    zmax = zf;
 
+    x,y,z;
+
+    writePolyMeshFiles("points");
+
+}
+
+openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxcells, double nycells, double nzcells)
+{
+    polyMesh_path = outputPath;
+    xpoints = nxcells;
+    ypoints = nycells;
+    zpoints = nzcells;
+    x = xcoord;
+    y = ycoord;
+    z = zcoord;
+
+    foam_version = "2.0";
+    fzout = NULL;
+    xcells = xpoints-1;
+    ycells = ypoints-1;
+    zcells = zpoints-1;
+    npoints = xpoints*ypoints*zpoints;
+    ncells = xcells*ycells*zcells;
+    Ax = xcells*zcells;
+    Ay = ycells*zcells;
+    Az = xcells*ycells;
+    nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
+    ninternalfaces = nfaces-2*(Ax+Ay+Az);
+
+
+
+    writePolyMeshFiles("array");
 }
 
 openFoamPolyMesh::~openFoamPolyMesh()
@@ -82,7 +128,7 @@ openFoamPolyMesh::~openFoamPolyMesh()
 
 }
 
-bool openFoamPolyMesh::writePolyMeshFiles()
+bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType)
 {
     //this outputs the points as a vtk (helps to look at the mesh a second way.
     //Plus I know this works for the tutorial cases
@@ -92,7 +138,13 @@ bool openFoamPolyMesh::writePolyMeshFiles()
     current_path = polyMesh_path+"points";
     fzout = fopen(current_path.c_str(), "w");
     makeFoamHeader("vectorField","points","constant/polyMesh");
-    printPoints();
+    if (pointWriteType == "points")
+    {
+        printPoints();
+    } else if (pointWriteType == "array")
+    {
+        print3dArrayPoints();
+    }
     makeFoamFooter();
     fclose(fzout);
 
@@ -163,14 +215,35 @@ void openFoamPolyMesh::makeFoamFooter()
 
 void openFoamPolyMesh::printPoints()
 {
-    fprintf(fzout, "\n%0.0lf\n(\n", xpoints*ypoints*zpoints);
+    double dx = (xmax-xmin)/xcells;
+    double dy = (ymax-ymin)/ycells;
+    double dz = (zmax-zmin)/zcells;
+
+    fprintf(fzout, "\n%0.0lf\n(\n", npoints);
     for(double k=0; k<zpoints; k++)
     {
             for(double j=0; j<ypoints; j++)
         {
             for (double i = 0;i<xpoints;i++)
             {
-                fprintf(fzout, "(%0.0lf %0.0lf %0.0lf)\n", i, j, k);
+                fprintf(fzout, "(%lf %lf %lf)\n", dx*i, dy*j, dz*k);
+            }
+        }
+    }
+    fprintf(fzout, ")\n");
+}
+
+void openFoamPolyMesh::print3dArrayPoints()
+{
+    fprintf(fzout, "\n%0.0lf\n(\n", npoints);
+    for(double k=0; k<zpoints; k++)
+    {
+            for(double j=0; j<xpoints; j++)
+        {
+            for (double i = 0;i<ypoints;i++)
+            {
+                fprintf(fzout, "(%lf %lf %lf)\n", x(k*xpoints*ypoints + j*ypoints + i),
+                        y(k*xpoints*ypoints + j*ypoints + i), z(k*xpoints*ypoints + j*ypoints + i));    //somehow the x and y's are backwards, but this was how to replicate the vtk file
             }
         }
     }

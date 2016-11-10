@@ -34,6 +34,15 @@
 #include <vector>
 #include <math.h>
 
+//volVTK includes
+//#include <stdio.h>
+//#include <string>
+
+
+#include "wn_3dArray.h"
+//#include "wn_3dScalarField.h"
+#include "ninjaException.h"
+
 /*
 currently this program is set up to populate the constant/polymesh directory in a given case folder with files that replicate the OpenFoam cavity tutorial, not the windninja mesh points. The idea is to get a better understanding of how the faces and neighbors need to be written. After this works for normal points, I'm going to adjust it to mesh specific stuff.
 */
@@ -44,11 +53,12 @@ class openFoamPolyMesh
 public:
 
     openFoamPolyMesh();
-    openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells);
+    openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf);
+    openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxcells, double nycells, double nzcells);
     ~openFoamPolyMesh();
 
     //this is the equivalent main function
-    bool writePolyMeshFiles();
+    bool writePolyMeshFiles(std::string pointWriteType);
 
     //technically not necessary, but it makes it nice for debugging since it makes it easier to replicate
     //and compare with OpenFoam tutorial files.
@@ -62,6 +72,7 @@ public:
     //note that this exact format gives the exact replicate of the points file from the tutorial
     //note I want to allow decimals for the points when I do it for the regular mesh. Just the tutorial happens to have clean numbers with no decimals and this makes it more comparable
     void printPoints();
+    void print3dArrayPoints();
 
     //assigns the number of neighbor's per cell and cell owner's values
     //prints the cellOwners into the owners file
@@ -95,6 +106,15 @@ private:
     double Ax;		//number of faces in the x-z plane, also the number of faces in the north and south patches
     double Ay;		//number of faces in the y-z plane, also the number of faces in the west and east patches
     double Az;		//number of faces in the x-y plane, also the number of faces in the minZ and maxZ patches
+
+    double xmin;    //smallest x coordinate
+    double xmax;    //largest x coordinate
+    double ymin;    //smallest y coordinate
+    double ymax;    //largest y coordinate
+    double zmin;    //smallest z coordinate
+    double zmax;    //largest z coordinate
+
+    wn_3dArray x, y, z;  //the x,y,z values for the mesh
 
 };
 

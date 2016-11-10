@@ -2777,7 +2777,8 @@ void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
-    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/constant/polyMesh/",300,500,20);
+    //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/constant/polyMesh/",3,3,3,0,1,0,1,0,1);
+    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/constant/polyMesh/",mesh.XORD, mesh.YORD, mesh.ZORD,input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers);
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
