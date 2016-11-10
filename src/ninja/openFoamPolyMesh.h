@@ -44,14 +44,11 @@ class openFoamPolyMesh
 public:
 
     openFoamPolyMesh();
-    openFoamPolyMesh(std::string outputPath, double lastx, double lasty, double lastz);
+    openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells);
     ~openFoamPolyMesh();
 
     //this is the equivalent main function
     bool writePolyMeshFiles();
-
-    //this is for looking at values to make sure they are legit
-    void viewValues();
 
     //technically not necessary, but it makes it nice for debugging since it makes it easier to replicate
     //and compare with OpenFoam tutorial files.
@@ -98,9 +95,6 @@ private:
     double Ax;		//number of faces in the x-z plane, also the number of faces in the north and south patches
     double Ay;		//number of faces in the y-z plane, also the number of faces in the west and east patches
     double Az;		//number of faces in the x-y plane, also the number of faces in the minZ and maxZ patches
-
-    std::vector<double> nNeighbors;  //this keeps track of how many neighbors there are for each cell, in order of cell 0 to ncells
-    std::vector<double> cellOwners;  //this is the owners as outputted to the owners files. Useful for setting up the faces and neighbors files
 
 };
 
