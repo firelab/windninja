@@ -4,7 +4,7 @@ Release Notes
 WindNinja 3.1.1
 ---------------
 
-- Fix issue where the input widn height was not properly set in the GUI (\#223)
+- Fix issue where the input wind height was not properly set in the GUI (\#223)
 
 WindNinja 3.1.0
 ---------------
