@@ -2324,6 +2324,14 @@ int NinjaFoam::SampleRawOutput()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    // If we failed to fill in the data for the entire grid, we've failed.
+    // Report a better message.
+    if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                "the openfoam output could not be interpolated to a proper "
+                "surface, simulation failed.");
+        return NINJA_E_OTHER;
+    }
     if(VelocityGrid.get_maxValue() > 220.0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
