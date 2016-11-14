@@ -1176,12 +1176,6 @@ int NinjaFoam::SurfaceTransformPoints()
                     pszFoamPath,
                     CPLGetBasename(input.dem.fileName.c_str()))));
 
-    // We now translate the surface when we generate the STL.  The old code is
-    // left in case we have to do other translation.
-
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_SURFACE_TRANSFORM", "NO" ) ) ) {
-        return CPLMoveFile( stl.c_str(), stlOut.c_str() );
-    }
     const char *const papszArgv[] = { "surfaceTransformPoints",
                                       "-case",
                                       pszFoamPath,
@@ -2750,8 +2744,7 @@ int NinjaFoam::GenerateNewCase()
                         nBand,
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
-                        //NinjaStlAscii,
-                        input.outputWindHeight,
+                        0,
                         NULL);
 
     CPLFree((void*)pszStlFileName);
@@ -2772,12 +2765,33 @@ int NinjaFoam::GenerateNewCase()
     /*-------------------------------------------------------------------*/
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
-    status = SurfaceTransformPoints();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
-        return NINJA_E_OTHER;
+
+    // We now translate the surface in NinjaElevationToStl.  The old code is
+    // left in case we have to do other translation.
+    if( !CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_SURFACE_TRANSFORM", "NO" ) ) ) {
+        status = SurfaceTransformPoints();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
+            return NINJA_E_OTHER;
+        }
     }
 
+    pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath,
+                CPLGetBasename(input.dem.fileName.c_str()))));
+
+    stlName = NinjaRemoveSpaces(std::string(pszStlFileName));
+
+    nBand = 1;
+
+    eErr = NinjaElevationToStl(inFile,
+                        (const char*)stlName.c_str(),
+                        nBand,
+                        input.dem.get_cellSize(),
+                        NinjaStlBinary,
+                        input.outputWindHeight,
+                        NULL);
+
+    CPLFree((void*)pszStlFileName);
 
     checkCancel();
 	
