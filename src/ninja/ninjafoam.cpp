@@ -1176,6 +1176,12 @@ int NinjaFoam::SurfaceTransformPoints()
                     pszFoamPath,
                     CPLGetBasename(input.dem.fileName.c_str()))));
 
+    // We now translate the surface when we generate the STL.  The old code is
+    // left in case we have to do other translation.
+
+    if( !CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_SURFACE_TRANSFORM", "NO" ) ) ) {
+        return CPLMoveFile( stl.c_str(), stlOut.c_str() );
+    }
     const char *const papszArgv[] = { "surfaceTransformPoints",
                                       "-case",
                                       pszFoamPath,
@@ -2745,6 +2751,7 @@ int NinjaFoam::GenerateNewCase()
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
                         //NinjaStlAscii,
+                        input.outputWindHeight,
                         NULL);
 
     CPLFree((void*)pszStlFileName);

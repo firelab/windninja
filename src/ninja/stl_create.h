@@ -58,6 +58,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
                             int nBand,
                             double dfTargetCellSize,
                             NinjaStlType eType,
+                            double dfOffset,
                             GDALProgressFunc pfnProgress );
 
 #endif /* NINJA_STL_CONVERT_H_ */
