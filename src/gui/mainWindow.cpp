@@ -1331,14 +1331,12 @@ double mainWindow::computeCellSize(int index)
     double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
 
     double dz = GDALMaxValue - GDALMinValue;
-    double zMin = GDALMaxValue * 1.1;
-    double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
-    double ZLength = zMax - zMin; 
+    double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
 
     double volume;
     double cellCount;
     double cellVolume;
-    
+
     volume = XLength * YLength * ZLength; //volume of blockMesh
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
