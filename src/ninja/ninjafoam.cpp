@@ -2766,14 +2766,16 @@ int NinjaFoam::GenerateNewCase()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
 
+    double stlOutputHeight = input.outputWindHeight;
     // We now translate the surface in NinjaElevationToStl.  The old code is
     // left in case we have to do other translation.
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_SURFACE_TRANSFORM", "NO" ) ) ) {
+    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_FORCE_SURFACE_TRANSFORM", "YES" ) ) ) {
         status = SurfaceTransformPoints();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
             return NINJA_E_OTHER;
         }
+        stlOutputHeight = 0.0;
     }
 
     pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath,
@@ -2788,7 +2790,7 @@ int NinjaFoam::GenerateNewCase()
                         nBand,
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
-                        input.outputWindHeight,
+                        stlOutputHeight,
                         NULL);
 
     CPLFree((void*)pszStlFileName);
