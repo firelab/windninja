@@ -1116,8 +1116,8 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if (vm["fetch_station"].as<bool>() == false)
             {
-                char **header=wxStation::getValidHeader();
-                char **oldheader=wxStation::oldGetValidHeader();
+                const char * const *header=wxStation::getValidHeader();
+                const char * const *oldheader=wxStation::oldGetValidHeader();
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
                 OGRDataSourceH hDS;
                 hDS=OGROpen(stationFile.c_str(),FALSE,NULL);
@@ -1140,14 +1140,14 @@ int windNinjaCLI(int argc, char* argv[])
 //                {
 //                    cout<<"true"<<endl;
 //                }
-                if (nFields == CSLCount(oldheader))
+                if (nFields == CSLCount((char**)oldheader))
                 {
                     formatType=false;
 //                    pointInitialization::formatType pointInitialization::get_formatType=pointInitialization::oldFormat;
 
 //                    cout<<"shit"<<endl;
                 }
-                else if (nFields==CSLCount(header))
+                else if (nFields==CSLCount((char**)header))
                 {
                     formatType=true;
 //                    pointInitialization::get_formatType=pointInitialization::newFormat;
@@ -1160,8 +1160,6 @@ int windNinjaCLI(int argc, char* argv[])
                 }
 //                cout<<formatType<<endl;
                 OGR_DS_Destroy( hDS );
-                CSLDestroy( oldheader );
-                CSLDestroy(header);
 
                 pointInitialization::fileFormat;
                 pointInitialization::format headerType;

@@ -33,8 +33,6 @@
  */
 #include "wxStation.h"
 
-
-
 /**
  * Default constructor for wxStation class populated with default values
  * @see wxStation::initialize
@@ -641,6 +639,79 @@ void wxStation::stationViewer(wxStation station)
 
 }
 
+/**
+ * Check the validity of the csv file named pszFilename.  If it is valid, retrun
+ * the format version of the data.
+ *
+ * 1 -> original windninja format, in use until 3.2.0 (TODO(kyle):update
+ * version)
+ * 2 -> format after implemententing the station fetch functionality.
+ *
+ * If the header is not valid, return -1;
+ *
+ * \param pszFilename the path of the file to test
+ *
+ * \return -1 if the file is invalid in anyway, or the version of the file(1 or
+ * 2).
+ */
+int wxStation::HeaderVersion(const char *pszFilename) {
+  OGRDataSourceH hDS = NULL;
+  hDS = OGROpen(pszFilename, FALSE, NULL);
+  if (hDS == NULL) {
+    return -1;
+  }
+  OGRLayerH hLayer = NULL;
+  hLayer = OGR_DS_GetLayer(hDS, 0);
+  if (hLayer == NULL) {
+    OGR_DS_Destroy(hDS);
+    return -1;
+  }
+  OGRFeatureDefnH hDefn = NULL;
+  hDefn = OGR_L_GetLayerDefn(hLayer);
+  if (hDefn == NULL) {
+    OGR_DS_Destroy(hDS);
+    return -1;
+  }
+
+  /*
+  ** Iterate through the expected columns.  If the layer doesn't runs out of
+  ** fields before we get to the end of the expected header, GetFieldDefn() will
+  ** return NULL, so there is no explicit count check needed.
+  */
+
+  int n = CSLCount((char **)apszValidHeader1);
+  /* We'll use our index later to check for more fields */
+  int i = 0;
+
+  OGRFieldDefnH hFldDefn = NULL;
+  for (i = 0; i < n; i++) {
+    hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
+    if (hFldDefn == NULL) {
+      OGR_DS_Destroy(hDS);
+      return -1;
+    }
+    if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
+      OGR_DS_Destroy(hDS);
+      return -1;
+    }
+  }
+
+  /*
+  ** Now we have a valid header for version 1.  If there are more fields, we
+  ** check them.  If not, we are done.
+  **
+  ** TODO(kyle): should we accept a version 1 file with extra non-valid fields?
+  */
+  if (OGR_FD_GetFieldCount(hDefn) > n) {
+    if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
+      OGR_DS_Destroy(hDS);
+      /* If we silently except version 1 files, return 1 here. */
+      return -1;
+    }
+    return 2;
+  }
+  return 1;
+}
 
 /**
  * Fetch a valid header associated with values contained in wxStationList.
@@ -649,73 +720,27 @@ void wxStation::stationViewer(wxStation station)
  * @return array of strings representing the header
  */
 
-char **wxStation::oldGetValidHeader()
-{
-    char** papszList = NULL;
-    papszList = CSLAddString( papszList, "Station_Name" );
-    papszList = CSLAddString( papszList,
-                    "Coord_Sys(PROJCS,GEOGCS)" );
-    papszList = CSLAddString( papszList, "Datum(WGS84,NAD83,NAD27)" );
-    papszList = CSLAddString( papszList, "Lat/YCoord" );
-    papszList = CSLAddString( papszList, "Lon/XCoord" );
-    papszList = CSLAddString( papszList, "Height" );
-    papszList = CSLAddString( papszList, "Height_Units(meters,feet)" );
-    papszList = CSLAddString( papszList, "Speed" );
-    papszList = CSLAddString( papszList,
-                    "Speed_Units(mph,kph,mps)" );
-    papszList = CSLAddString( papszList, "Direction(degrees)" );
-    papszList = CSLAddString( papszList, "Temperature" );
-    papszList = CSLAddString( papszList,
-                    "Temperature_Units(F,C)" );
-    papszList = CSLAddString( papszList, "Cloud_Cover(%)" );
-    papszList = CSLAddString( papszList, "Radius_of_Influence" );
-    papszList = CSLAddString( papszList,
-                    "Radius_of_Influence_Units(miles,feet,meters,km)" );
-    return papszList;
-}
-char **wxStation::getValidHeader()
-{
-    char** papszList = NULL;
-    papszList = CSLAddString( papszList, "Station_Name" );
-    papszList = CSLAddString( papszList,
-                    "Coord_Sys(PROJCS,GEOGCS)" );
-    papszList = CSLAddString( papszList, "Datum(WGS84,NAD83,NAD27)" );
-    papszList = CSLAddString( papszList, "Lat/YCoord" );
-    papszList = CSLAddString( papszList, "Lon/XCoord" );
-    papszList = CSLAddString( papszList, "Height" );
-    papszList = CSLAddString( papszList, "Height_Units(meters,feet)" );
-    papszList = CSLAddString( papszList, "Speed" );
-    papszList = CSLAddString( papszList,
-                    "Speed_Units(mph,kph,mps)" );
-    papszList = CSLAddString( papszList, "Direction(degrees)" );
-    papszList = CSLAddString( papszList, "Temperature" );
-    papszList = CSLAddString( papszList,
-                    "Temperature_Units(F,C)" );
-    papszList = CSLAddString( papszList, "Cloud_Cover(%)" );
-    papszList = CSLAddString( papszList, "Radius_of_Influence" );
-    papszList = CSLAddString( papszList,
-                    "Radius_of_Influence_Units(miles,feet,meters,km)" );
-    papszList= CSLAddString(papszList,"date_time");
-    return papszList;
-}
+const char *const *wxStation::oldGetValidHeader() { return apszValidHeader1; }
+const char *const *wxStation::getValidHeader() { return apszValidHeader2; }
+
 /**Write a csv file with no data, just a header
  * @param outFileName file to write
  */
-void wxStation::writeBlankStationFile( std::string outFileName )
-{
-    if( outFileName.empty() || outFileName == "" )
+void wxStation::writeBlankStationFile(std::string outFileName) {
+  if (outFileName.empty() || outFileName == "") {
     return;
-    FILE *fout;
-    fout = fopen( outFileName.c_str(), "w" );
-    if( fout == NULL )
+  }
+  FILE *fout;
+  fout = fopen(outFileName.c_str(), "w");
+  if (fout == NULL) {
     return;
-    char** papszHeader = NULL;
-    papszHeader = wxStation::getValidHeader();
-    for( int i = 0;i < CSLCount( papszHeader ) - 1;i++ )
-    fprintf( fout, "\"%s\",", papszHeader[i] );
-    fprintf( fout, "\"%s\"\n", papszHeader[CSLCount( papszHeader ) - 1] );
-    fclose( fout );
-    CSLDestroy( papszHeader );
+  }
+  int n = CSLCount( (char**)apszValidHeader2 );
+  for (int i = 0; i < n - 1; i++) {
+    fprintf(fout, "\"%s\",", apszValidHeader2[i]);
+  }
+  fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
+  fclose(fout);
 }
 
 /** Write a csv file representing interpolated wxStation data
@@ -759,13 +784,14 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
 
     FILE *fout;
     fout = fopen( outFileNameStamp.c_str(), "w" );
-    if( fout == NULL )
-    return;
-    char** papszHeader = NULL;
-    papszHeader = wxStation::getValidHeader();
-    for( int i = 0;i < CSLCount( papszHeader ) - 1;i++ )
-    fprintf( fout, "\"%s\",", papszHeader[i] );
-    fprintf( fout, "\"%s\"\n", papszHeader[CSLCount( papszHeader ) - 1] );
+    if (fout == NULL) {
+      return;
+    }
+    int n = CSLCount((char **)apszValidHeader2);
+    for (int i = 0; i < n - 1; i++) {
+      fprintf(fout, "\"%s\",", apszValidHeader2[i]);
+    }
+    fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
 
     for( unsigned int i = 0;i < StationVect.size();i++ ) {
     fprintf( fout, "\"%s\",", StationVect[i].get_stationName().c_str() );
@@ -792,7 +818,6 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
     }
 
     fclose( fout );
-    CSLDestroy( papszHeader );
 }
 /** Write a point kml file for all the weather stations in stations vector.
  * @param stations A vector of wxStationList objects
@@ -899,11 +924,4 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
     fclose( fout );
 }
-
-
-
-
-
-
-
 

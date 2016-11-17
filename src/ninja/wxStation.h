@@ -57,7 +57,19 @@
 #include "numeric"
 #include "wxStation.h"
 
+static const char *apszValidHeader1[] = {
+    "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
+    "Lat/YCoord", "Lon/XCoord", "Height", "Height_Units(meters,feet)", "Speed",
+    "Speed_Units(mph,kph,mps)", "Direction(degrees)", "Temperature",
+    "Temperature_Units(F,C)", "Cloud_Cover(%)", "Radius_of_Influence",
+    "Radius_of_Influence_Units(miles,feet,meters,km)", NULL};
 
+static const char *apszValidHeader2[] = {
+    "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
+    "Lat/YCoord", "Lon/XCoord", "Height", "Height_Units(meters,feet)", "Speed",
+    "Speed_Units(mph,kph,mps)", "Direction(degrees)", "Temperature",
+    "Temperature_Units(F,C)", "Cloud_Cover(%)", "Radius_of_Influence",
+    "Radius_of_Influence_Units(miles,feet,meters,km)", "date_time", NULL};
 
 /** Class representing a weather station
  */
@@ -79,8 +91,8 @@ class wxStation
               NAD27 };
     static bool check_station(wxStation station);
 
-    static char** oldGetValidHeader();
-    static char** getValidHeader();
+    static const char* const * oldGetValidHeader();
+    static const char* const * getValidHeader();
 
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }
@@ -146,6 +158,7 @@ class wxStation
     static void writeBlankStationFile( std::string outFileName );
     boost::posix_time::ptime a;
 
+    static int HeaderVersion(const char *pszFilename);
  private:
 
     vector<double> zero;
@@ -179,13 +192,8 @@ class wxStation
     vector<boost::posix_time::ptime> datetime; //this is UTC and is used to match data points from MesoWest and Interpolation.
     vector<boost::local_time::local_date_time> localDateTime;
 
-
-
-
     friend class Stability;
     friend class pointInitialization;
-
-
 };
 
 
