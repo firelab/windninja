@@ -56,8 +56,10 @@
 
 #include "gdal_util.h"
 
+#ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
+#endif
 
 
 
@@ -78,7 +80,8 @@ class OutputWriter
         /* ====================  ACCESSORS     ======================================= */
 
         /* ====================  MUTATORS      ======================================= */
-        void setSpeedGrid(AsciiGrid<double> &s);
+        void setSpeedGrid(AsciiGrid<double> &s,
+                          velocityUnits::eVelocityUnits units);
         void setDirGrid(AsciiGrid<double> &d);
 #ifdef EMISSIONS
         void setDustGrid(AsciiGrid<double> &d);
@@ -134,6 +137,7 @@ class OutputWriter
         /* ====================  DATA MEMBERS  ======================================= */
         AsciiGrid<double> spd;
         AsciiGrid<double> dir;
+        velocityUnits::eVelocityUnits units;
 #ifdef EMISSIONS
         AsciiGrid<double> dust;
 #endif

@@ -38,9 +38,11 @@
 #include "Slope.h"
 #include "ninja_conv.h"
 #include "ninja_init.h"
+#ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
 #include "boost/date_time/gregorian/gregorian_types.hpp"    //no i/o just types
+#endif
 
 void Usage(const char *pszError)
 {

@@ -71,7 +71,7 @@ private:
     const char **ppszModelData;
 
     int InitializeForecastTimes();
-    const char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
+    char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
 
     nomads_utc *u;
 

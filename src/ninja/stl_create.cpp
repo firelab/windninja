@@ -57,6 +57,8 @@ static StlPosition StlComputeNormal( StlPosition *v1,  StlPosition *v2 )
  *        value <= 0.0 is native resolution.
  * \param eType type of stl file to create, ascii or binary.  Currently only
  *              binary is supported
+ * \param dfOffset the offset for the z value, useful for translating to the
+ *                 input wind height.
  * \param pfnProgress a pointer to a progress function
  * \return zero on success, non-zero otherwise
  */
@@ -65,6 +67,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
                             int nBand,
                             double dfTargetCellSize,
                             NinjaStlType eType,
+                            double dfOffset,
                             GDALProgressFunc pfnProgress )
 {
     GDALDatasetH hDS;
@@ -207,19 +210,19 @@ CPLErr NinjaElevationToStl( const char *pszInput,
         {
             a.x = adfGeoTransform[0] + j * dfXRes + fXOffset;
             a.y = adfGeoTransform[3] + i * dfYRes + fYOffset;
-            a.z = pafScanline[j+i*nOutXSize];
+            a.z = pafScanline[j+i*nOutXSize] + dfOffset;
 
             b.x = adfGeoTransform[0] + ( j + 1 ) * dfXRes + fXOffset;
             b.y = a.y;
-            b.z = pafScanline[(j+i*nOutXSize) + 1];
+            b.z = pafScanline[(j+i*nOutXSize) + 1] + dfOffset;
 
             c.x = a.x;
             c.y = adfGeoTransform[3] + ( i + 1 ) * dfYRes + fYOffset;
-            c.z = pafScanline[(j+i*nOutXSize) + nOutXSize];
+            c.z = pafScanline[(j+i*nOutXSize) + nOutXSize] + dfOffset;
 
             d.x = b.x;
             d.y = c.y;
-            d.z = pafScanline[(j+i*nOutXSize) + nOutXSize + 1];
+            d.z = pafScanline[(j+i*nOutXSize) + nOutXSize + 1] + dfOffset;
 
             v1.x = c.x - a.x;
             v1.y = c.y - a.y;

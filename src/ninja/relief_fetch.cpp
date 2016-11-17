@@ -279,10 +279,10 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     OGRSpatialReferenceH hSrcSRS = OSRNewSpatialReference( GDALGetProjectionRef( inDS ) );
     OSRFixup( hSrcSRS );
     OSRExportToWkt( hSrcSRS, (char**)&pszDstWKT );
+    OSRDestroySpatialReference( hSrcSRS );
     GDALClose( inDS );
     if( NULL ==  pszDstWKT )
     {
-        OSRDestroySpatialReference( hSrcSRS );
         return SURF_FETCH_E_WARPER_ERR;
     }
     /*finished with the input file */

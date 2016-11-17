@@ -43,7 +43,9 @@
 #include "wxModelInitializationFactory.h"
 #include "ninja_errors.h"
 #include <algorithm>
+#ifndef Q_MOC_RUN
 #include "boost/typeof/typeof.hpp"
+#endif
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
 

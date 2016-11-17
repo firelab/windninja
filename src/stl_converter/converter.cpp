@@ -13,7 +13,7 @@
 
 void Usage()
 {
-    printf("stl_converter [-r cellsize] input output\n");
+    printf("stl_converter [-r cellsize] [-o zoffset] input output\n");
     exit(1);
 }
 
@@ -22,6 +22,7 @@ int main( int argc, char* argv[] )
     NinjaInitialize();
     /*  parse input arguments  */
     double dfRes = 0.0;
+    double dfOffset = 0.0;
     const char *pszIn = NULL;
     const char *pszOut = NULL;
     int i = 1;
@@ -30,6 +31,10 @@ int main( int argc, char* argv[] )
         if( strcmp( argv[i], "-r" ) == 0 && i + 1 < argc )
         {
             dfRes = atof( argv[++i] );
+        }
+        else if( strcmp( argv[i], "-o" ) == 0 && i + 1 < argc )
+        {
+            dfOffset = atof(argv[++i]);
         }
         else if( pszIn == NULL )
         {
@@ -50,6 +55,6 @@ int main( int argc, char* argv[] )
     {
         Usage();
     }
-    return NinjaElevationToStl( pszIn, pszOut, 1, dfRes, NinjaStlBinary, GDALTermProgress );
+    return NinjaElevationToStl( pszIn, pszOut, 1, dfRes, NinjaStlBinary, dfOffset, GDALTermProgress );
 }
 

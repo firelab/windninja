@@ -46,31 +46,50 @@ const char ** NomadsFindModel( const char *pszKey )
 }
 
 /*
-** Results must be free'd.  We can't use CPLSPrintf on large lists fo arguments
-** because we overrun the ring buffer.
+** Results must be free'd.  We can't use CPLSPrintf on large lists of arguments
+** because we overrun the ring buffer.  A straight-forward strcat or other
+** method wasn't obvious, but brute force method is.  The previous
+** implementation had an overlapping buffer, was wrong, and valgrind complained
+** correctly.
 */
 static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
 {
-    int i, n, m;
+    int i, j, k, n, m;
     char *pszList;
     char **papszArgs = CSLTokenizeString2( pszVars, ",", 0 );
-    n = CSLCount( papszArgs );
-    if( !n )
-        return NULL;
+    n = CSLCount(papszArgs);
+    if (!n) {
+      return NULL;
+    }
     /* var_##=on& */
     /* variable names -n-1 for commas */
-    m = strlen( pszVars ) - (n - 1);
-    m += (strlen( pszPrefix ) + strlen( "_" )) * n;
-    m += strlen( "&" ) * (n - 1);
-    m += (strlen( "=on" ) * n);
+    m = strlen(pszVars) - (n - 1);
+    m += (strlen(pszPrefix) + strlen("_")) * n;
+    m += strlen("&") * (n - 1);
+    m += (strlen("=on") * n);
     m += 1; /* terminate */
-    pszList = CPLMalloc( sizeof( char ) * m );
-    memset( pszList, 0, m );
-    sprintf( pszList, "%s_%s=on", pszPrefix, papszArgs[0] );
-    for( i = 1; i < n; i++ )
-    {
-        sprintf( pszList, "%s&%s_%s=on", pszList, pszPrefix, papszArgs[i] );
+    pszList = CPLMalloc(sizeof(char) * m);
+    memset(pszList, 0, m);
+    k = 0;
+    for (i = 0; k < m && i < n; i++) {
+      // copy the prefix, add a '_'
+      for (j = 0; j < strlen(pszPrefix); j++) {
+        pszList[k++] = pszPrefix[j];
+      }
+      pszList[k++] = '_';
+      for (j = 0; j < strlen(papszArgs[i]); j++) {
+        pszList[k++] = papszArgs[i][j];
+      }
+      pszList[k++] = '=';
+      pszList[k++] = 'o';
+      pszList[k++] = 'n';
+      if (i < n - 1) {
+        pszList[k++] = '&';
+      }
     }
+    assert(k == m - 1);
+    // terminate, k should be waiting at the proper position
+    pszList[k] = '\0';
     CSLDestroy( papszArgs );
     return pszList;
 }

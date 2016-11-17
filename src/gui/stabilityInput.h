@@ -16,8 +16,10 @@
 #include "gdal_priv.h"
 #include "ogr_srs_api.h"
 
+#ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
+#endif
 
 #include "latLonWidget.h"
 #include "timeZoneWidget.h"

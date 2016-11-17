@@ -224,12 +224,12 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
 
     /*
     ** Regular expression support if we have C++11 support.  isnan ambiguouity
-    ** is causing non-C++11 compliance.
+    ** is causing non-C++11 compliance.  Not tested or used, 0 disables.
     */
-#if __cplusplus >= 201103
-    std::string result = std::string s( (const char*) m_poResult->pabyData )
+#if __cplusplus >= 201103 && 0
+    std::string s((const char*) m_poResult->pabyData );
     std::smatch m;
-    std::regex e( "\b(?:(?:https?)://|www\.)[a-z-A-Z0-9+&@#/%=~_|$?!:,.]" \
+    std::regex e( "\\b(?:(?:https?)://|www\\.)[a-z-A-Z0-9+&@#/%=~_|$?!:,.]" \
                   "*[a-z-A-Z0-9+&@#/%=~_|$]" );
     std::regex_search( s, m, e );
     std::string url = m[0].str(); //retrieve first match
