@@ -48,7 +48,7 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 
-#ifndef QT_MOC_RUN
+#ifndef Q_MOC_RUN
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/posix_time/posix_time_io.hpp"
 #include "boost/date_time/local_time_adjustor.hpp"
