@@ -706,10 +706,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
     poLayer->ResetReading();
 
-    char **papszHeader = NULL;
-    //papszHeader = getValidHeader();
-    papszHeader=wxStation::getValidHeader();
-    char **papszOldHeader=wxStation::oldGetValidHeader();
+    const char * const *papszHeader = wxStation::getValidHeader();
+    const char * const *papszOldHeader = wxStation::oldGetValidHeader();
 
     bool fetchType;
 
@@ -731,7 +729,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += nFields;
             oErrorString += " in the file, it needs ";
             oErrorString += CSLCount( papszHeader );
-            CSLDestroy( papszHeader );
             throw( std::domain_error( oErrorString ) );
         }
         else
@@ -768,7 +765,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
                 OGRFeature::DestroyFeature( poFeature );
                 OGR_DS_Destroy( hDS );
-                CSLDestroy( papszHeader );
 
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -783,7 +779,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 {
                 OGRFeature::DestroyFeature( poFeature );
                 OGR_DS_Destroy( hDS );
-                CSLDestroy( papszHeader );
 
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -1011,7 +1006,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         OGRFeature::DestroyFeature( poFeature );
         OGR_DS_Destroy( hDS );
-        CSLDestroy( papszHeader );
 
 //        if (fCount==oStations.size())
 //        {

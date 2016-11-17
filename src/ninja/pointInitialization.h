@@ -44,11 +44,13 @@
 #include "iostream"
 #include "fstream"
 #include "math.h"
+#ifndef Q_MOC_RUN
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "boost/date_time/posix_time/posix_time_io.hpp"
 #include "boost/date_time/local_time_adjustor.hpp"
 #include "boost/date_time/gregorian/gregorian.hpp"
 #include "boost/date_time/local_time/local_time.hpp"
+#endif // Q_MOC_RUN
 #include "gdal.h"
 #include "cpl_conv.h"
 #include "gdal_priv.h"
