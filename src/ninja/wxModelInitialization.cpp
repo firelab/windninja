@@ -1143,7 +1143,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          wn_3dScalarField& w0,
                          AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, airTempGrid);
+    setGridHeaderData(input, cloud);
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...

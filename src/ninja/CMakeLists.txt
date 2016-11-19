@@ -22,8 +22,7 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${Boost_INCLUDE_DIRS}
                    ${PROJECT_SOURCE_DIR}/src)
 
-set(NINJA_SOURCES addDiurnalFlow.cpp
-                  air.cpp
+set(NINJA_SOURCES air.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp

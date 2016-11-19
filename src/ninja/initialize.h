@@ -34,11 +34,12 @@
 #include "ninjaException.h"
 #include "WindNinjaInputs.h"
 #include "mesh.h"
-#include "addDiurnalFlow.h"
 #include "wxStation.h"
 #include "windProfile.h"
 #include "wn_3dScalarField.h"
 #include <vector>
+#include "cellDiurnal.h"
+#include "SurfProperties.h"
 
 class initialize
 {
@@ -59,6 +60,9 @@ class initialize
         AsciiGrid<double> bl_height;	//atmospheric boundary layer height
 
     protected:
+	void addDiurnal(WindNinjaInputs& input, Aspect const* asp,
+                    Slope const* slp, Shade const* shd, Solar *inSolar);
+
         void initializeWindToZero(Mesh const& mesh,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
@@ -80,12 +84,12 @@ class initialize
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0);
 
+        void setCloudCover(WindNinjaInputs &input);
+
         void setUniformCloudCover(WindNinjaInputs &input,
                                     AsciiGrid<double> cloud);
 
-        void setGridHeaderData(WindNinjaInputs& input,
-                             AsciiGrid<double>& cloud,
-                             AsciiGrid<double>& airTempGrid);
+        void setGridHeaderData(WindNinjaInputs& input, AsciiGrid<double>& cloud);
 
         AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
         AsciiGrid<double> uDiurnal;

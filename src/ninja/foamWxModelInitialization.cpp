@@ -49,7 +49,7 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
 	wn_3dScalarField& w0,
 	AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, airTempGrid);
+    setGridHeaderData(input, cloud);
 
     setUniformCloudCover(input, cloud);
 

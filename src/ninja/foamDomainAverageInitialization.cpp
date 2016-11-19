@@ -49,9 +49,12 @@ void foamDomainAverageInitialization::initializeFields(WindNinjaInputs &input,
 	wn_3dScalarField& w0,
 	AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, airTempGrid);
+    setGridHeaderData(input, cloud);
 
-    setUniformCloudCover(input, cloud);
+    //set initialization grids
+    airTempGrid = input.airTemp;
+    //setUniformCloudCover(input, cloud);
+    setCloudCover(input);
 
     //switch that detemines what profile is used...	
     //make sure rough_h is set to zero if profile switch is 0 or 2

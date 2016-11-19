@@ -49,9 +49,7 @@ class domainAverageInitialization : public initialize
 
     private:
 
-        virtual void initializeDiurnal(WindNinjaInputs& input,
-                                     AsciiGrid<double>& cloud,
-                                     AsciiGrid<double>& airTempGrid);
+        virtual void initializeDiurnal(WindNinjaInputs& input);
 
 };
 

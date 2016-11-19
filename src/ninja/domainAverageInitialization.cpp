@@ -47,9 +47,23 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                 wn_3dScalarField& w0,
                 AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, airTempGrid);
+    setGridHeaderData(input, cloud);
 
-    setUniformCloudCover(input, cloud);
+    //set initialization grids
+    speedInitializationGrid = input.inputSpeed;
+    dirInitializationGrid = input.inputDirection;
+    airTempGrid = input.airTemp;
+    //setUniformCloudCover(input, cloud);
+    setCloudCover(input);
+
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_sd_to_uv(speedInitializationGrid(i,j),
+                    dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j),
+                    &(vInitializationGrid)(i,j));
+        }
+    }
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
@@ -57,7 +71,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, airTempGrid);
+    initializeDiurnal(input);
 
     initializeWindFromProfile(input, mesh, u0, v0, w0);
 
@@ -65,16 +79,16 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
     {
         addDiurnalComponent(input, mesh, u0, v0, w0);
     }
+
+    cloud = cloudCoverGrid;
 }
 
-void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input,
-                                                 AsciiGrid<double>& cloud,
-                                                 AsciiGrid<double>& airTempGrid)
+void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input)
 {
     int i, j;
 
     //Set windspeed grid for diurnal computation
-    input.surface.set_windspeed(speedInitializationGrid);
+    //input.surface.set_windspeed(input.inputSpeed);
 
     double inwindu=0.0;		//input u wind component
     double inwindv=0.0;		//input v wind component
@@ -96,11 +110,8 @@ void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input,
         Slope slope(&input.dem, input.numberCPUs);
         Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
 
-        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
-                &bl_height, &input.dem, &aspect, &slope, &shade, 
-                &solar, &input.surface, &cloudCoverGrid, &airTempGrid, 
-                input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
-                input.upDragCoeff, input.upEntrainmentCoeff);
+        addDiurnal(input, &aspect, &slope, &shade, &solar);  
+
     }else{	//compute neutral ABL height
         double f;
         double velocity;

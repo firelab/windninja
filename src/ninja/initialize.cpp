@@ -110,8 +110,8 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
 }
 
 void initialize::initializeDiurnal(WindNinjaInputs& input,
-                         AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& airTempGrid)
+                                 AsciiGrid<double>& cloud,
+                                 AsciiGrid<double>& airTempGrid)
 {
     //Set windspeed grid for diurnal computation
     input.surface.set_windspeed(speedInitializationGrid);
@@ -127,12 +127,7 @@ void initialize::initializeDiurnal(WindNinjaInputs& input,
         Slope slope(&input.dem, input.numberCPUs);
         Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
 
-        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L,
-                        &u_star, &bl_height, &input.dem, &aspect, &slope,
-                        &shade, &solar, &input.surface, &cloud,
-                        &airTempGrid, input.numberCPUs, input.downDragCoeff,
-                        input.downEntrainmentCoeff, input.upDragCoeff,
-                        input.upEntrainmentCoeff);
+        addDiurnal(input, &aspect, &slope, &shade, &solar);
 
     }else{	//compute neutral ABL height
 
@@ -174,6 +169,58 @@ void initialize::initializeDiurnal(WindNinjaInputs& input,
     }
 }
 
+void initialize::addDiurnal(WindNinjaInputs& input, Aspect const* asp, Slope const* slp,
+                            Shade const* shd, Solar *inSolar) 
+{
+	cellDiurnal cDiurnal(&input.dem, shd, inSolar, input.downDragCoeff,
+                             input.downEntrainmentCoeff, input.upDragCoeff,
+                             input.upEntrainmentCoeff);
+
+	double u_, v_, w_, height_, L_, U_star_, BL_height_, Xord, Yord, WindSpeed;
+	int i,j;
+
+	// DO THE WORK
+//	#pragma omp parallel for default(none) private(i,j,u_,v_,w_,height_,L_,U_star_,BL_height_, Xord, Yord, WindSpeed, Z) firstprivate(cDiurnal) shared(input.dem,uDiurnal,vDiurnal,wDiurnal,height,L,u_star,bl_height, airTempGrid, asp, cloudCoverGrid, slp, input.surface)
+    for(i = 0; i < input.dem.get_nRows(); i++)
+    {
+        for(j = 0; j < input.dem.get_nCols(); j++)
+        {
+            //if simulation has been initialized with a surface wind field (NDFD etc.)
+//            if(input.surface.windGridExists == true){
+//                WindSpeed = input.surface.windSpeedGrid(i,j);
+//            }
+//            else{
+//                WindSpeed = input.surface.Windspeed;
+//            }
+
+            WindSpeed = speedInitializationGrid(i,j);
+
+            input.dem.get_cellPosition(i, j, &Xord, &Yord);
+
+            cDiurnal.initialize(Xord, Yord, (*asp)(i,j),(*slp)(i,j),
+                    cloudCoverGrid(i,j), airTempGrid(i,j), WindSpeed, input.surface.Z,
+                    input.surface.Albedo(i,j), input.surface.Bowen(i,j),
+                    input.surface.Cg(i,j), input.surface.Anthropogenic(i,j),
+                    input.surface.Roughness(i,j), input.surface.Rough_h(i,j),
+                    input.surface.Rough_d(i,j));
+
+            cDiurnal.compute_cell_diurnal_wind(i, j, &u_, &v_, &w_,
+                    &height_, &L_, &U_star_, &BL_height_);
+
+            uDiurnal.set_cellValue(i, j, u_);
+            vDiurnal.set_cellValue(i, j, v_);
+            wDiurnal.set_cellValue(i, j, w_);
+            height.set_cellValue(i, j, height_);
+            L.set_cellValue(i, j, L_);
+            u_star.set_cellValue(i, j, U_star_);
+            bl_height.set_cellValue(i, j, BL_height_);
+        }
+    }
+    uDiurnal.write_Grid("uDiurnal.asc", 2);
+    vDiurnal.write_Grid("vDiurnal.asc", 2);
+    wDiurnal.write_Grid("wDiurnal.asc", 2);
+}
+
 void initialize::addDiurnalComponent(WindNinjaInputs &input,
                                     const Mesh& mesh,
                                     wn_3dScalarField& u0,
@@ -204,10 +251,16 @@ void initialize::addDiurnalComponent(WindNinjaInputs &input,
     }
 }
 
+void initialize::setCloudCover(WindNinjaInputs &input)
+{
+    //Set cloud grid
+    cloudCoverGrid = input.cloudCover;
+}
+
 void initialize::setUniformCloudCover(WindNinjaInputs &input,
                                     AsciiGrid<double> cloud)
 {
-    //Set cloud grid
+    //Set 1x1 cloud grid
     int longEdge = input.dem.get_nRows();
     if(input.dem.get_nRows() < input.dem.get_nCols())
         longEdge = input.dem.get_nCols();
@@ -224,20 +277,18 @@ void initialize::setUniformCloudCover(WindNinjaInputs &input,
                         -9999.0, tempCloudCover, input.dem.prjString);
 }
 
-void initialize::setGridHeaderData(WindNinjaInputs& input,
-                         AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& airTempGrid)
+void initialize::setGridHeaderData(WindNinjaInputs& input, AsciiGrid<double>& cloud)
 {
     L.set_headerData(input.dem);
     u_star.set_headerData(input.dem);
     bl_height.set_headerData(input.dem);
     height.set_headerData(input.dem);
-    cloud.set_headerData(input.dem);
     uDiurnal.set_headerData(input.dem);
     vDiurnal.set_headerData(input.dem);
     wDiurnal.set_headerData(input.dem);
     airTempGrid.set_headerData(input.dem);
     cloudCoverGrid.set_headerData(input.dem);
+    cloud.set_headerData(input.dem);
     speedInitializationGrid.set_headerData(input.dem);
     dirInitializationGrid.set_headerData(input.dem);
     uInitializationGrid.set_headerData(input.dem);

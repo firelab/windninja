@@ -56,15 +56,17 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 	wn_3dScalarField& u0,
 	wn_3dScalarField& v0,
 	wn_3dScalarField& w0,
-	AsciiGrid<double>& cloud)
+        AsciiGrid<double>& cloud)
 {
-    setGridHeaderData(input, cloud, airTempGrid);
+    setGridHeaderData(input, cloud);
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
     profile.profile_switch = windProfile::monin_obukov_similarity;
 	
-    setUniformCloudCover(input, cloud); 
+    //set initialization grids
+    //setUniformCloudCover(input, cloud);
+    setCloudCover(input);
 
     CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
     CPLDebug("NINJA", "input.dirInitGridFilename = %s", input.dirInitGridFilename.c_str());

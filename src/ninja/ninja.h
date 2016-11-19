@@ -65,15 +65,10 @@
 
 #include "ninja_conv.h"
 
-#include "Elevation.h"
-#include "Aspect.h"
-#include "Slope.h"
-#include "Shade.h"
 #include "constants.h"
 #include "ascii_grid.h"
-#include "surfaceVectorField.h"
-#include "addDiurnalFlow.h"
 #include "SurfProperties.h"
+#include "surfaceVectorField.h"
 #include "WindNinjaInputs.h"
 #include "KmlVector.h"
 #include "ShapeVector.h"

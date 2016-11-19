@@ -178,19 +178,19 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				profile.Rough_h = (input.surface.Rough_h)(i_, j_);
 				profile.Rough_d = (input.surface.Rough_d)(i_, j_);
 
-				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
-				{
-					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-							aspect(i_, j_),slope(i_, j_), cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
-							input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_height(),
-							(input.surface.Albedo)(i_, j_), (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
-							(input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
-							(input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
-
-
-					cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
-					
-				}else{	//compute neutral ABL height
+//				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
+//				{
+//                                    cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
+//                                                    aspect(i_, j_),slope(i_, j_), cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
+//                                                    input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_height(),
+//                                                    (input.surface.Albedo)(i_, j_), (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
+//                                                    (input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
+//                                                    (input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
+//
+//
+//                                    cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
+//                                    
+//				}else{	//compute neutral ABL height
 					
 					double f;
 					double velocity;
@@ -218,7 +218,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 					//compute neutral ABL height
 					profile.ABL_height = 0.2 * U_star / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
 					profile.ObukovLength = 0.0;
-				}
+//				}
 
 			}else{	//if station is not in dem domain, use grass roughness
 				profile.Roughness = 0.01;
@@ -229,17 +229,17 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 				cg_ = 0.15;
 				anthropogenic_ = 0.0;
 
-				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
-				{
-					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-							0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
-							input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
-							profile.Rough_h, profile.Rough_d);
-
-
-					cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
-					
-				}else{	//compute neutral ABL height
+//				if(input.diurnalWinds == true)	//compute values needed for diurnal computation
+//				{
+//					cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
+//							0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
+//							input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
+//							profile.Rough_h, profile.Rough_d);
+//
+//
+//					cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
+//					
+//				}else{	//compute neutral ABL height
 					
 					double f;
 					double velocity;
@@ -267,7 +267,7 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 					//compute neutral ABL height
 					profile.ABL_height = 0.2 * U_star / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
 					profile.ObukovLength = 0.0;
-				}
+//				}
 			}
 
 			profile.AGL=maxStationHeight + profile.Rough_h;			//this is height above THE GROUND!! (not "z=0" for the log profile)
@@ -338,11 +338,13 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 	//compute diurnal wind
 	if(input.diurnalWinds == true)
 	{
-		addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
-                        &bl_height, &input.dem, &aspect, &slope, &shade, &solar, 
-                        &input.surface, &cloudCoverGrid, &airTempGrid, 
-                        input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
-                        input.upDragCoeff, input.upEntrainmentCoeff);
+            addDiurnal(input, &aspect, &slope, &shade, &solar);  
+
+//		addDiurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
+//                        &bl_height, &input.dem, &aspect, &slope, &shade, &solar, 
+//                        &input.surface, &cloudCoverGrid, &airTempGrid, 
+//                        input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
+//                        input.upDragCoeff, input.upEntrainmentCoeff);
 		
 		////Testing: Print diurnal component as .kmz file
 		//AsciiGrid<double> *diurnalVelocityGrid, *diurnalAngleGrid;

@@ -2371,6 +2371,14 @@ int NinjaFoam::SampleRawOutput()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    // If we failed to fill in the data for the entire grid, we've failed.
+    // Report a better message.
+    if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                "the openfoam output could not be interpolated to a proper "
+                "surface, simulation failed.");
+        return NINJA_E_OTHER;
+    }
     if(VelocityGrid.get_maxValue() > 220.0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
@@ -2783,7 +2791,7 @@ int NinjaFoam::GenerateNewCase()
                         nBand,
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
-                        //NinjaStlAscii,
+                        0,
                         NULL);
 
     CPLFree((void*)pszStlFileName);
@@ -2804,12 +2812,31 @@ int NinjaFoam::GenerateNewCase()
     /*-------------------------------------------------------------------*/
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
-    status = SurfaceTransformPoints();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
-        return NINJA_E_OTHER;
-    }
 
+    // create the output surface stl with NinjaElevationToStl unless
+    // NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS = YES.
+    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS", "NO" ) ) ) {
+        status = SurfaceTransformPoints();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
+            return NINJA_E_OTHER;
+        }
+    }else{
+        pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath,
+                    CPLGetBasename(input.dem.fileName.c_str()))));
+        stlName = NinjaRemoveSpaces(std::string(pszStlFileName));
+        nBand = 1;
+
+        eErr = NinjaElevationToStl(inFile,
+                            (const char*)stlName.c_str(),
+                            nBand,
+                            input.dem.get_cellSize(),
+                            NinjaStlBinary,
+                            input.outputWindHeight,
+                            NULL);
+
+        CPLFree((void*)pszStlFileName);
+    }
 
     checkCancel();
 	
@@ -2822,7 +2849,6 @@ int NinjaFoam::GenerateNewCase()
     /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
 
-    //reads from log.json created from surfaceCheck if DEM not available
     status = writeBlockMesh();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlockMesh().");
