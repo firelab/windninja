@@ -216,9 +216,6 @@ void initialize::addDiurnal(WindNinjaInputs& input, Aspect const* asp, Slope con
             bl_height.set_cellValue(i, j, BL_height_);
         }
     }
-    uDiurnal.write_Grid("uDiurnal.asc", 2);
-    vDiurnal.write_Grid("vDiurnal.asc", 2);
-    wDiurnal.write_Grid("wDiurnal.asc", 2);
 }
 
 void initialize::addDiurnalComponent(WindNinjaInputs &input,

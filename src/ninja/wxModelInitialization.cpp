@@ -1069,6 +1069,7 @@ void wxModelInitialization::deallocateTemp()
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
 {
     input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
 
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
@@ -1143,6 +1144,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          wn_3dScalarField& w0,
                          AsciiGrid<double>& cloud)
 {
+    input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
+
     setGridHeaderData(input, cloud);
 
     //make sure rough_h is set to zero if profile switch is 0 or 2
@@ -1157,7 +1161,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     set3dGrids(input, mesh);
 #endif
 
-    setWn2dGrids(input, cloud);
+    setWn2dGrids(input);
 
     //Write wx model grids
     writeWxModelGrids(input);
@@ -1186,13 +1190,15 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     {
         addDiurnalComponent(input, mesh, u0, v0, w0);
     }
+
+    cloud = cloudCoverGrid;
 }
 
-void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<double>& cloud)
+void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
 {
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
-    cloud.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
+    cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
 
@@ -1219,7 +1225,7 @@ void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<doubl
 
     //Check for noData values
     if(airTempGrid.checkForNoDataValues() ||
-       cloud.checkForNoDataValues() ||
+       cloudCoverGrid.checkForNoDataValues() ||
        speedInitializationGrid.checkForNoDataValues() ||
        dirInitializationGrid.checkForNoDataValues())
     {
@@ -1229,7 +1235,7 @@ void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input, AsciiGrid<doubl
     //Check if grids are coincident
     if(!input.dem.checkForCoincidentGrids(airTempGrid))
         throw std::logic_error("Dem and airTempGrid are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(cloud))
+    else if(!input.dem.checkForCoincidentGrids(cloudCoverGrid))
         throw std::logic_error("Dem and cloud are not coincident in wx model interpolation.");
     else if(!input.dem.checkForCoincidentGrids(speedInitializationGrid))
         throw std::logic_error("Dem and speedInitializationGrid are not coincident in wx model interpolation.");
