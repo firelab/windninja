@@ -47,6 +47,7 @@ class griddedInitialization : public initialize
 		        AsciiGrid<double>& cloud);
 
     private:
+        void setInitializationGrids(WindNinjaInputs &input);
     
 };
 #endif /* GRIDDED_INITIALIZATION_H */

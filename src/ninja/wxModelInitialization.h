@@ -196,6 +196,9 @@ class wxModelInitialization : public initialize
 private:
     void setWn2dGrids(WindNinjaInputs &input);
 
+    void setInitializationGrids(WindNinjaInputs &input,
+                                 Mesh const& mesh);
+
     void initializeWindFrom3dData(WindNinjaInputs &input,
                                 const Mesh& mesh,
                                 wn_3dScalarField& u0,

@@ -65,5 +65,6 @@ class foamWxModelInitialization : public initialize
     private:
     
         void setWn2dGrids(WindNinjaInputs &input);
+        void setInitializationGrids(WindNinjaInputs &input);
 };
 #endif /* FOAM_WX_MODEL_INITIALIZATION_H */

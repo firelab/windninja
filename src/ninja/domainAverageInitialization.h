@@ -50,7 +50,7 @@ class domainAverageInitialization : public initialize
     private:
 
         virtual void initializeBoundaryLayer(WindNinjaInputs& input);
-
+        void setInitializationGrids(WindNinjaInputs& input);
 };
 
 #endif /* DOMAIN_AVERAGE_INITIALIZATION_H */

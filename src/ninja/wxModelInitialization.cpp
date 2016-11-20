@@ -1144,20 +1144,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          wn_3dScalarField& w0,
                          AsciiGrid<double>& cloud)
 {
-    input.inputWindHeight = Get_Wind_Height();
-    input.surface.Z = Get_Wind_Height();
-
     setGridHeaderData(input, cloud);
 
-    //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
-    setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
-                    vGrid_wxModel, wGrid_wxModel);
-
-#ifdef NOMADS_ENABLE_3D
-    set3dGrids(input, mesh);
-#endif
-
-    setWn2dGrids(input);
+    setInitializationGrids(input, mesh);
 
     //Write wx model grids
     writeWxModelGrids(input);
@@ -1188,6 +1177,24 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     }
 
     cloud = cloudCoverGrid;
+}
+
+void wxModelInitialization::setInitializationGrids(WindNinjaInputs &input,
+                                                     Mesh const& mesh)
+{
+    input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
+
+    //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
+    setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
+                    vGrid_wxModel, wGrid_wxModel);
+
+#ifdef NOMADS_ENABLE_3D
+    set3dGrids(input, mesh);
+#endif
+
+    setWn2dGrids(input);
+
 }
 
 void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input)

@@ -60,8 +60,23 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
+    setInitializationGrids(input);
+
+    initializeWindToZero(mesh, u0, v0, w0);
+
+    initializeBoundaryLayer(input, cloud, airTempGrid);
+    
+    initializeWindFromProfile(input, mesh, u0, v0, w0);
+
+    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
+    {
+        addDiurnalComponent(input, mesh, u0, v0, w0);
+    }
+}
+
+void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
+{
     //set initialization grids
-    //setUniformCloudCover(input, cloud);
     setCloudCover(input);
 
     CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
@@ -114,16 +129,4 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
                     &(vInitializationGrid)(i,j));
         }
     }
-
-    initializeWindToZero(mesh, u0, v0, w0);
-
-    initializeBoundaryLayer(input, cloud, airTempGrid);
-    
-    initializeWindFromProfile(input, mesh, u0, v0, w0);
-
-    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
-    {
-        addDiurnalComponent(input, mesh, u0, v0, w0);
-    }
 }
-

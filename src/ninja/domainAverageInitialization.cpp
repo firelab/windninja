@@ -49,6 +49,23 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
+
+    initializeWindToZero(mesh, u0, v0, w0);
+
+    initializeBoundaryLayer(input);
+
+    initializeWindFromProfile(input, mesh, u0, v0, w0);
+
+    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
+    {
+        addDiurnalComponent(input, mesh, u0, v0, w0);
+    }
+
+    cloud = cloudCoverGrid;
+}
+
+void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
+{
     //set initialization grids
     speedInitializationGrid = input.inputSpeed;
     dirInitializationGrid = input.inputDirection;
@@ -63,19 +80,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                     &(vInitializationGrid)(i,j));
         }
     }
-
-    initializeWindToZero(mesh, u0, v0, w0);
-
-    initializeBoundaryLayer(input);
-
-    initializeWindFromProfile(input, mesh, u0, v0, w0);
-
-    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
-    {
-        addDiurnalComponent(input, mesh, u0, v0, w0);
-    }
-
-    cloud = cloudCoverGrid;
 }
 
 void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input)

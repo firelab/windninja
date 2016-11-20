@@ -51,9 +51,7 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
-    setUniformCloudCover(input, cloud);
-
-    setWn2dGrids(input);
+    setInitializationGrids(input);
 
     initializeWindToZero(mesh, u0, v0, w0);
 
@@ -65,6 +63,12 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
     {
         addDiurnalComponent(input, mesh, u0, v0, w0);
     }
+}
+
+void foamWxModelInitialization::setInitializationGrids(WindNinjaInputs &input)
+{
+    setCloudCover(input);
+    setWn2dGrids(input);
 }
 
 void foamWxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
