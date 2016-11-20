@@ -49,6 +49,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
+    setInitializationGrids(input);
 
     initializeWindToZero(mesh, u0, v0, w0);
 
