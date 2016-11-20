@@ -1164,7 +1164,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, airTempGrid);
+    initializeBoundaryLayer(input, cloud, airTempGrid);
 
     //Interpolate 2D wx model data to requested point locations
     interpolate2dDataToPoints(input, mesh);

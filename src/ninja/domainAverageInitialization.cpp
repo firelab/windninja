@@ -66,7 +66,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input);
+    initializeBoundaryLayer(input);
 
     initializeWindFromProfile(input, mesh, u0, v0, w0);
 
@@ -78,7 +78,7 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
     cloud = cloudCoverGrid;
 }
 
-void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input)
+void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input)
 {
     int i, j;
 
@@ -88,9 +88,6 @@ void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input)
 
     //Set inwindu and inwindv
     wind_sd_to_uv(input.inputSpeed, input.inputDirection, &inwindu, &inwindv);
-
-    //Set inwindw
-    inwindw=0.0;
 
     if(input.diurnalWinds == true)
     {

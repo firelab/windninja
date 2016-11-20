@@ -89,7 +89,7 @@ void foamDomainAverageInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeDiurnal(input, cloud, airTempGrid);
+    initializeBoundaryLayer(input, cloud, airTempGrid);
     
     initializeWindFromProfile(input, mesh, u0, v0, w0);
 

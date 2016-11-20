@@ -49,7 +49,7 @@ class domainAverageInitialization : public initialize
 
     private:
 
-        virtual void initializeDiurnal(WindNinjaInputs& input);
+        virtual void initializeBoundaryLayer(WindNinjaInputs& input);
 
 };
 

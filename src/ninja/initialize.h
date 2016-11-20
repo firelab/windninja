@@ -74,7 +74,7 @@ class initialize
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0);
 
-        virtual void initializeDiurnal(WindNinjaInputs& input,
+        virtual void initializeBoundaryLayer(WindNinjaInputs& input,
                                      AsciiGrid<double>& cloud,
                                      AsciiGrid<double>& airTempGrid);
 
