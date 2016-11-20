@@ -71,10 +71,13 @@ void foamDomainAverageInitialization::setInitializationGrids(WindNinjaInputs &in
 {
     inputVelocityGrid = input.foamVelocityGrid;
     inputAngleGrid = input.foamAngleGrid;
+
     airTempGrid = input.airTemp;
     setCloudCover(input);
 
     setWn2dGrids(input);
+    dirInitializationGrid.write_Grid("dirgrid.asc",2);
+    speedInitializationGrid.write_Grid("speedgrid.asc",2);
 
     int i, j;
     //set the u and v initialization grids
@@ -90,9 +93,6 @@ void foamDomainAverageInitialization::setInitializationGrids(WindNinjaInputs &in
 
 void foamDomainAverageInitialization::setWn2dGrids(WindNinjaInputs &input)
 {
-    inputVelocityGrid.set_headerData(input.dem);
-    inputAngleGrid.set_headerData(input.dem);
-
     //Check that the upper right corner is covered by the input grids and buffer if needed
     double corner2_x = input.dem.get_xllCorner() + input.dem.get_nCols() * input.dem.get_cellSize(); //corner 2
     double corner2_y = input.dem.get_yllCorner() + input.dem.get_nRows() * input.dem.get_cellSize();
