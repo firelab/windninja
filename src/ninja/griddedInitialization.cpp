@@ -72,6 +72,8 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
     {
         addDiurnalComponent(input, mesh, u0, v0, w0);
     }
+
+    cloud = cloudCoverGrid;
 }
 
 void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)

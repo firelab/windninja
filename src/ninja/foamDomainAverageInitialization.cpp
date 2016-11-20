@@ -63,6 +63,8 @@ void foamDomainAverageInitialization::initializeFields(WindNinjaInputs &input,
     {
         addDiurnalComponent(input, mesh, u0, v0, w0);
     }
+
+    cloud = cloudCoverGrid;
 }
 
 void foamDomainAverageInitialization::setWn2dGrids(WindNinjaInputs &input)
