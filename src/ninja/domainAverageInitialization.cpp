@@ -53,7 +53,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
     speedInitializationGrid = input.inputSpeed;
     dirInitializationGrid = input.inputDirection;
     airTempGrid = input.airTemp;
-    //setUniformCloudCover(input, cloud);
     setCloudCover(input);
 
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
@@ -64,10 +63,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                     &(vInitializationGrid)(i,j));
         }
     }
-
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-    //switch that detemines what profile is used...
-    profile.profile_switch = windProfile::monin_obukov_similarity;
 
     initializeWindToZero(mesh, u0, v0, w0);
 
@@ -87,12 +82,10 @@ void domainAverageInitialization::initializeDiurnal(WindNinjaInputs& input)
 {
     int i, j;
 
-    //Set windspeed grid for diurnal computation
-    //input.surface.set_windspeed(input.inputSpeed);
-
     double inwindu=0.0;		//input u wind component
     double inwindv=0.0;		//input v wind component
     double inwindw=0.0;		//input w wind component
+
     //Set inwindu and inwindv
     wind_sd_to_uv(input.inputSpeed, input.inputDirection, &inwindu, &inwindv);
 

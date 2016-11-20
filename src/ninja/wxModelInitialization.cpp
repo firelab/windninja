@@ -1149,10 +1149,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     setGridHeaderData(input, cloud);
 
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-    //switch that detemines what profile is used...
-    profile.profile_switch = windProfile::monin_obukov_similarity;
-
     //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
     setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
                     vGrid_wxModel, wGrid_wxModel);

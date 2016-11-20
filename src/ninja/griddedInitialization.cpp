@@ -60,10 +60,6 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-    //switch that detemines what profile is used...
-    profile.profile_switch = windProfile::monin_obukov_similarity;
-	
     //set initialization grids
     //setUniformCloudCover(input, cloud);
     setCloudCover(input);

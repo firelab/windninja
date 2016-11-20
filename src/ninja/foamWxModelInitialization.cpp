@@ -53,10 +53,6 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     setUniformCloudCover(input, cloud);
 
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-    //switch that detemines what profile is used...
-    profile.profile_switch = windProfile::monin_obukov_similarity;	
-	
     setWn2dGrids(input);
 
     initializeWindToZero(mesh, u0, v0, w0);
