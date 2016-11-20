@@ -379,14 +379,6 @@ do
                     init.reset(initializationFactory::makeInitialization(input));
                     init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
                 }
-                if(input.initializationMethod==WindNinjaInputs::foamDomainAverageInitializationFlag ||
-                    input.initializationMethod==WindNinjaInputs::foamWxModelInitializationFlag)
-                {
-                    //set input grids from cfd solution
-                    //NEED TO PROPERLY SET THESE -- where to store the grids?
-                    //init->inputVelocityGrid = VelocityGrid;
-                    //init->inputAngleGrid = AngleGrid;
-                }
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif
@@ -3577,6 +3569,16 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
 void ninja::set_ExistingCaseDirectory(std::string directory)
 {
     input.existingCaseDirectory = directory;
+}
+
+void ninja::set_foamVelocityGrid(AsciiGrid<double> velocityGrid)
+{
+    input.foamVelocityGrid = velocityGrid;
+}
+
+void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
+{
+    input.foamAngleGrid = angleGrid;
 }
 #endif
 

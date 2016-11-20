@@ -419,6 +419,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
+                diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
                 if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                 }
@@ -486,6 +488,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
+                    diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                     }

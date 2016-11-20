@@ -67,6 +67,27 @@ void foamDomainAverageInitialization::initializeFields(WindNinjaInputs &input,
     cloud = cloudCoverGrid;
 }
 
+void foamDomainAverageInitialization::setInitializationGrids(WindNinjaInputs &input)
+{
+    inputVelocityGrid = input.foamVelocityGrid;
+    inputAngleGrid = input.foamAngleGrid;
+    airTempGrid = input.airTemp;
+    setCloudCover(input);
+
+    setWn2dGrids(input);
+
+    int i, j;
+    //set the u and v initialization grids
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_sd_to_uv(speedInitializationGrid(i,j),
+                    dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j),
+                    &(vInitializationGrid)(i,j));
+        }
+    }
+}
+
 void foamDomainAverageInitialization::setWn2dGrids(WindNinjaInputs &input)
 {
     inputVelocityGrid.set_headerData(input.dem);
@@ -91,40 +112,3 @@ void foamDomainAverageInitialization::setWn2dGrids(WindNinjaInputs &input)
             speedInitializationGrid.checkForCoincidentGrids(input.dem));
 }
 
-void foamDomainAverageInitialization::setInitializationGrids(WindNinjaInputs &input)
-{
-    //set initialization grids
-    airTempGrid = input.airTemp;
-    setCloudCover(input);
-
-    setWn2dGrids(input);
-
-    //Check that the upper right corner is covered by the input grids and buffer if needed
-    double corner2_x = input.dem.get_xllCorner() + input.dem.get_nCols() * input.dem.get_cellSize(); //corner 2
-    double corner2_y = input.dem.get_yllCorner() + input.dem.get_nRows() * input.dem.get_cellSize();
-    
-    while( !inputVelocityGrid.check_inBounds(corner2_x, corner2_y) )
-    {
-        inputVelocityGrid.BufferGridInPlace();
-        inputAngleGrid.BufferGridInPlace();
-        CPLDebug("NINJA", "Buffering in foamDomainAverageInitialization...");
-    }
-
-    //Interpolate from input grids to dem coincident grids
-    speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
-    dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
-    
-    CPLDebug("NINJA", "check for coincident grids: speedInitializationGrid = %d",
-            speedInitializationGrid.checkForCoincidentGrids(input.dem));
-   
-    int i, j;
-    //set the u and v initialization grids
-    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
-        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_sd_to_uv(speedInitializationGrid(i,j),
-                    dirInitializationGrid(i,j),
-                    &(uInitializationGrid)(i,j),
-                    &(vInitializationGrid)(i,j));
-        }
-    }
-}

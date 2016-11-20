@@ -69,8 +69,22 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
 
 void foamWxModelInitialization::setInitializationGrids(WindNinjaInputs &input)
 {
+    inputVelocityGrid = input.foamVelocityGrid;
+    inputAngleGrid = input.foamAngleGrid;
     setCloudCover(input);
+
     setWn2dGrids(input);
+
+    int i, j;
+    //set the u and v initialization grids
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_sd_to_uv(speedInitializationGrid(i,j),
+                    dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j),
+                    &(vInitializationGrid)(i,j));
+        }
+    }
 }
 
 void foamWxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
@@ -96,14 +110,4 @@ void foamWxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
     CPLDebug("NINJA", "check for coincident grids: speedInitializationGrid = %d",
             speedInitializationGrid.checkForCoincidentGrids(input.dem));
    
-    int i, j;
-    //set the u and v initialization grids
-    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
-        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_sd_to_uv(speedInitializationGrid(i,j),
-                    dirInitializationGrid(i,j),
-                    &(uInitializationGrid)(i,j),
-                    &(vInitializationGrid)(i,j));
-        }
-    }
 }

@@ -285,6 +285,8 @@ public:
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_ExistingCaseDirectory(std::string directory); //use existing case for ninjafoam run
+    void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
+    void set_foamAngleGrid(AsciiGrid<double> angleGrid);
 #endif
 
     void set_speedFile(std::string speedFile);
