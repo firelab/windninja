@@ -1069,31 +1069,15 @@ void wxModelInitialization::deallocateTemp()
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
                                                     AsciiGrid<double> &cloud)
 {
-    setGridHeaderData(input, cloud);
-
     input.inputWindHeight = Get_Wind_Height();
     input.surface.Z = Get_Wind_Height();
+
+    setGridHeaderData(input, cloud);
 
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
 
-    //Interpolate from original wxModel grids to dem coincident grids
-    uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
-    vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
-    airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
-    cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
-
-    /*
-    ** Fill in speed and direction grids from interpolated U and V grids.
-    */
-    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
-        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_uv_to_sd(uInitializationGrid(i,j),
-                          vInitializationGrid(i,j),
-                          &(speedInitializationGrid)(i,j),
-                          &(dirInitializationGrid)(i,j));
-        }
-    }
+    interpolateWxGridsToNinjaGrids(input);
 
     //set average speed
     input.inputSpeed = speedInitializationGrid.get_meanValue();
@@ -1142,9 +1126,19 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          wn_3dScalarField& w0,
                          AsciiGrid<double>& cloud)
 {
+    input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
+
     setGridHeaderData(input, cloud);
 
-    setInitializationGrids(input, mesh);
+    //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
+    setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
+                    vGrid_wxModel, wGrid_wxModel);
+#ifdef NOMADS_ENABLE_3D
+    set3dGrids(input, mesh);
+#endif
+
+    interpolateWxGridsToNinjaGrids(input);
 
     //Write wx model grids
     writeWxModelGrids(input);
@@ -1177,25 +1171,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     cloud = cloudCoverGrid;
 }
 
-void wxModelInitialization::setInitializationGrids(WindNinjaInputs &input,
-                                                     Mesh const& mesh)
-{
-    input.inputWindHeight = Get_Wind_Height();
-    input.surface.Z = Get_Wind_Height();
-
-    //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
-    setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
-                    vGrid_wxModel, wGrid_wxModel);
-
-#ifdef NOMADS_ENABLE_3D
-    set3dGrids(input, mesh);
-#endif
-
-    setWn2dGrids(input);
-
-}
-
-void wxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
+void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);

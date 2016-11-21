@@ -186,10 +186,7 @@ class wxModelInitialization : public initialize
     GDALProgressFunc pfnProgress;
 
 private:
-    void setWn2dGrids(WindNinjaInputs &input);
-
-    void setInitializationGrids(WindNinjaInputs &input,
-                                 Mesh const& mesh);
+    void interpolateWxGridsToNinjaGrids(WindNinjaInputs& input);
 
     void initializeWindFrom3dData(WindNinjaInputs &input,
                                 const Mesh& mesh,
