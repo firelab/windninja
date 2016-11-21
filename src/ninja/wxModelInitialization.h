@@ -129,15 +129,6 @@ class wxModelInitialization : public initialize
     
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
     
-    wn_3dScalarField air3d; //perturbation potential temperature
-    
-    std::vector<double> u10List;
-    std::vector<double> v10List;
-    
-    std::vector<double> u_wxList;
-    std::vector<double> v_wxList;
-    std::vector<double> w_wxList;
-
     void SetProgressFunc( GDALProgressFunc );
     void SetProgressArg( void *p );
 
