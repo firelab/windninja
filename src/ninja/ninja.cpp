@@ -357,28 +357,19 @@ do
 
 		if(input.matchWxStations == true)
 		{
-			matchingIterCount++;
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
+                    matchingIterCount++;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
 		}
 
-		#ifdef _OPENMP
-			startInit = omp_get_wtime();
-		#endif
+#ifdef _OPENMP
+                startInit = omp_get_wtime();
+#endif
 
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
 		//initialize
-		if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-		{
-		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
-                    wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
-                    //temporary solution so we can access wx model virtual methods for stability and file writing
-                    init = wxInit;
-
-		}else{
-                    init.reset(initializationFactory::makeInitialization(input));
-                    init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
-                }
+                init.reset(initializationFactory::makeInitialization(input));
+                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif
@@ -1723,7 +1714,7 @@ void ninja::discretize()
     //If the run is a 2D WX model run
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            wxInit->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
+            init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
     {
         stb.Set2dWxInitializationAlpha(input, mesh, CloudGrid);
 
@@ -1742,12 +1733,12 @@ void ninja::discretize()
 	//the potential temp (theta) is available, then use the method below
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            wxInit->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
+            init->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
 
-        stb.Set3dVariableAlpha(input, mesh, wxInit->air3d, u0, v0);
-        wxInit->air3d.deallocate();
+        stb.Set3dVariableAlpha(input, mesh, init->air3d, u0, v0);
+        init->air3d.deallocate();
 
         for(unsigned int k=0; k<mesh.nlayers; k++)
         {
@@ -2302,7 +2293,7 @@ void ninja::prepareOutput()
             std::string dt;
 
             if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
-                times = (wxInit->getTimeList(input.ninjaTimeZone));
+                times = (init->getTimeList(input.ninjaTimeZone));
                 dt =  boost::lexical_cast<std::string>(input.ninjaTime);
             }
 
@@ -2312,7 +2303,7 @@ void ninja::prepareOutput()
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){// if it's a wx model run
                     if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
                         output = fopen(input.outputPointsFilename.c_str(), "w");
-                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
+                        if(init->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
                             fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
                         }
                         else{
@@ -2332,7 +2323,7 @@ void ninja::prepareOutput()
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
                     if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
                         output = fopen("output.txt", "w"); //append new time to end of file
-                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
+                        if(init->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
                             fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
                         }
                         else{//it's a 2D wx model run
@@ -2408,13 +2399,13 @@ void ninja::prepareOutput()
 
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
 
-                    if(wxInit->getForecastIdentifier() == "WRF-3D"){
+                    if(init->getForecastIdentifier() == "WRF-3D"){
                         fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                                new_u, new_v, new_w, wxInit->u_wxList[i], wxInit->v_wxList[i], wxInit->w_wxList[i]);
+                                new_u, new_v, new_w, init->u_wxList[i], init->v_wxList[i], init->w_wxList[i]);
                     }
                     else{
                     fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                            new_u, new_v, new_w, wxInit->u10List[i], wxInit->v10List[i]);
+                            new_u, new_v, new_w, init->u10List[i], init->v10List[i]);
                     }
                 }
                 else{ //if not a wx model run
@@ -2979,8 +2970,8 @@ void ninja::writeOutputFiles()
 			ninjaKmlFiles.setTime(input.ninjaTime);
 			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
 			{
-			    std::vector<boost::local_time::local_date_time> times(wxInit->getTimeList(input.ninjaTimeZone));
-			    ninjaKmlFiles.setWxModel(wxInit->getForecastIdentifier(), times[0]);
+			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
 
 			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))

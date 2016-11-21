@@ -41,8 +41,10 @@ initialize* initializationFactory::makeInitialization(WindNinjaInputs& input)
 {
     if(input.initializationMethod==WindNinjaInputs::noInitializationFlag)
         throw std::runtime_error("The initialization method has not been set yet.");
-
-    if(input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) {
+    else if(input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag){
+        return wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
+    }
+    else if(input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) {
         return new domainAverageInitialization;
     }
     else if(input.initializationMethod==WindNinjaInputs::pointInitializationFlag) {

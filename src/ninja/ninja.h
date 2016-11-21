@@ -350,7 +350,6 @@ public:
 protected:
     void checkCancel();
     void write_compare_output();
-    boost::shared_ptr<wxModelInitialization> wxInit;
     boost::shared_ptr<initialize> init;
 
 private:

@@ -41,6 +41,8 @@
 #include "cellDiurnal.h"
 #include "SurfProperties.h"
 
+namespace blt = boost::local_time;
+
 class initialize
 {
     public:
@@ -54,9 +56,21 @@ class initialize
                         wn_3dScalarField& v0,
                         wn_3dScalarField& w0,
                         AsciiGrid<double>& cloud) = 0;
+#ifdef NINJAFOAM
+        virtual void ninjaFoamInitializeFields( WindNinjaInputs &input ){};
+#endif //NINJAFOAM
+
+        /*TODO: refactor so these aren't accessed directly in ninja */
+        virtual std::string  getForecastIdentifier(){};
+        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr){};
+        wn_3dScalarField air3d; //perturbation potential temperature
+        std::vector<double> u10List;
+        std::vector<double> v10List;
+        std::vector<double> u_wxList;
+        std::vector<double> v_wxList;
+        std::vector<double> w_wxList;
 
         AsciiGrid<double> L;		//Monin-Obukhov length
-        AsciiGrid<double> u_star;	//Friction velocity
         AsciiGrid<double> bl_height;	//atmospheric boundary layer height
 
     protected:
@@ -88,6 +102,8 @@ class initialize
                                     AsciiGrid<double> cloud);
 
         void setGridHeaderData(WindNinjaInputs& input, AsciiGrid<double>& cloud);
+
+        AsciiGrid<double> u_star;	//Friction velocity
 
         AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
         AsciiGrid<double> uDiurnal;
