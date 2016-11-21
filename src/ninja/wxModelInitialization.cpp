@@ -1066,20 +1066,16 @@ void wxModelInitialization::deallocateTemp()
  * Sets input speed, direction, temperature, and cloud from a surface wx model.
  * @param input WindNinjaInputs object storing necessary input information.
  */
-void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
+void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud)
 {
+    setGridHeaderData(input, cloud);
+
     input.inputWindHeight = Get_Wind_Height();
     input.surface.Z = Get_Wind_Height();
 
     setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
              vGrid_wxModel, wGrid_wxModel );
-
-    speedInitializationGrid.set_headerData(input.dem);
-    dirInitializationGrid.set_headerData(input.dem);
-    uInitializationGrid.set_headerData(input.dem);
-    vInitializationGrid.set_headerData(input.dem);
-    airTempGrid.set_headerData(input.dem);
-    cloudCoverGrid.set_headerData(input.dem);
 
     //Interpolate from original wxModel grids to dem coincident grids
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
@@ -1133,6 +1129,8 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input)
         input.airTemp = airTempGrid.get_meanValue(); //K
         input.cloudCover = cloudCoverGrid.get_meanValue(); //fraction
     }
+
+    cloud = cloudCoverGrid;
 }
 
 #endif //NINJAFOAM

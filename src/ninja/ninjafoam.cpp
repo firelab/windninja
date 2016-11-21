@@ -130,7 +130,7 @@ bool NinjaFoam::simulate_wind()
     if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
     {
         init.reset(initializationFactory::makeInitialization(input));
-        init->ninjaFoamInitializeFields(input);
+        init->ninjaFoamInitializeFields(input, CloudGrid);
     }
 
     ComputeDirection(); //convert wind direction to unit vector notation

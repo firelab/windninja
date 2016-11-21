@@ -57,7 +57,8 @@ class initialize
                         wn_3dScalarField& w0,
                         AsciiGrid<double>& cloud) = 0;
 #ifdef NINJAFOAM
-        virtual void ninjaFoamInitializeFields( WindNinjaInputs &input ){};
+        virtual void ninjaFoamInitializeFields( WindNinjaInputs &input,
+                                                AsciiGrid<double> &cloud ){};
 #endif //NINJAFOAM
 
         /*TODO: refactor so these aren't accessed directly in ninja */
