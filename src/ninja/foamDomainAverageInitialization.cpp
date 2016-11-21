@@ -76,8 +76,6 @@ void foamDomainAverageInitialization::setInitializationGrids(WindNinjaInputs &in
     setCloudCover(input);
 
     setWn2dGrids(input);
-    dirInitializationGrid.write_Grid("dirgrid.asc",2);
-    speedInitializationGrid.write_Grid("speedgrid.asc",2);
 
     int i, j;
     //set the u and v initialization grids
