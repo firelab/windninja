@@ -3902,7 +3902,6 @@ void ninja::set_uniAnthropogenic(double anthropogenic)	//set uniform values of A
 
 void ninja::set_inputSpeed(double speed, velocityUnits::eVelocityUnits units)
 {
-    cout<<"CALLED set_inputSpeed"<<endl;
     //function reads input windspeed in any units and converts and stores it in m/s in the WindNinjaInputs class
 
     if(speed < 0)	//error check
