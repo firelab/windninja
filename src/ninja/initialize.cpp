@@ -111,9 +111,7 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
     }
 }
 
-void initialize::initializeBoundaryLayer(WindNinjaInputs& input,
-                                 AsciiGrid<double>& cloud,
-                                 AsciiGrid<double>& airTempGrid)
+void initialize::initializeBoundaryLayer(WindNinjaInputs& input)
 {
     //Set windspeed grid for diurnal computation
     input.surface.set_windspeed(speedInitializationGrid);

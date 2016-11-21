@@ -64,7 +64,7 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeBoundaryLayer(input, cloud, airTempGrid);
+    initializeBoundaryLayer(input);
     
     initializeWindFromProfile(input, mesh, u0, v0, w0);
 

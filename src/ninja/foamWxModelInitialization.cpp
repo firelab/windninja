@@ -55,7 +55,7 @@ void foamWxModelInitialization::initializeFields(WindNinjaInputs &input,
 
     initializeWindToZero(mesh, u0, v0, w0);
 
-    initializeBoundaryLayer(input, cloud, airTempGrid);
+    initializeBoundaryLayer(input);
 
     initializeWindFromProfile(input, mesh, u0, v0, w0);
 
@@ -72,6 +72,7 @@ void foamWxModelInitialization::setInitializationGrids(WindNinjaInputs &input)
     inputVelocityGrid = input.foamVelocityGrid;
     inputAngleGrid = input.foamAngleGrid;
 
+    airTempGrid = input.airTemp;
     setCloudCover(input);
 
     setWn2dGrids(input);
