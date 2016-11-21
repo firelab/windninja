@@ -890,6 +890,7 @@ int windNinjaCLI(int argc, char* argv[])
         }
         //conflicting_options(vm, "momentum_flag", "diurnal_winds");
         conflicting_options(vm, "momentum_flag", "input_points_file");
+        conflicting_options(vm, "momentum_flag", "write_vtk_output");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif

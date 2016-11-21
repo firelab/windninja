@@ -3149,7 +3149,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->vtk->vtkGroupBox->setHidden( true );
         tree->vtk->vtkGroupBox->setChecked( false );
         tree->vtk->vtkWarningLabel->setHidden( true );
-        
+        tree->vtk->vtkGroupBox->setCheckable(false);
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
