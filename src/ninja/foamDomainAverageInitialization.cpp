@@ -105,8 +105,5 @@ void foamDomainAverageInitialization::setWn2dGrids(WindNinjaInputs &input)
     //Interpolate from input grids to dem coincident grids
     speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
     dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
-    
-    CPLDebug("NINJA", "check for coincident grids: speedInitializationGrid = %d",
-            speedInitializationGrid.checkForCoincidentGrids(input.dem));
 }
 

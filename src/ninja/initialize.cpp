@@ -187,14 +187,6 @@ void initialize::addDiurnal(WindNinjaInputs& input, Aspect const* asp, Slope con
     {
         for(j = 0; j < input.dem.get_nCols(); j++)
         {
-            //if simulation has been initialized with a surface wind field (NDFD etc.)
-//            if(input.surface.windGridExists == true){
-//                WindSpeed = input.surface.windSpeedGrid(i,j);
-//            }
-//            else{
-//                WindSpeed = input.surface.Windspeed;
-//            }
-
             WindSpeed = speedInitializationGrid(i,j);
 
             input.dem.get_cellPosition(i, j, &Xord, &Yord);
