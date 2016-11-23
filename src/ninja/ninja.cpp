@@ -2777,14 +2777,14 @@ void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
-    //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/constant/polyMesh/",3,3,3,0,1,0,1,0,1);
-    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/constant/polyMesh/",mesh.XORD, mesh.YORD, mesh.ZORD,input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers);
+    //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",3,3,3,0,1,0,1,0,1);
+    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers,u, v, w);   //notice that even though the wn3d stuff has nrows as x and ncols as y, these are nrows and ncols of the mesh. The mesh is initialized with ncols as x and nrows as y. Be careful of this!
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
 	{
 		try{
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
+            volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
