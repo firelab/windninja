@@ -40,7 +40,7 @@
 
 
 #include "wn_3dArray.h"
-//#include "wn_3dScalarField.h"
+#include "wn_3dScalarField.h"
 #include "ninjaException.h"
 
 /*
@@ -52,9 +52,8 @@ class openFoamPolyMesh
 {
 public:
 
-    openFoamPolyMesh();
     openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf);
-    openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxcells, double nycells, double nzcells);
+    openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxpoints, double nypoints, double nzpoints, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
     ~openFoamPolyMesh();
 
     //this is the equivalent main function
@@ -87,10 +86,14 @@ public:
     //prints the boundary file
     void printBoundaries();
 
+//set up extra stuff to be moved elsewhere
+    void printScalar();
+    void printSource();
+    void printVelocity(std::string pointWriteType);
+
 private:
 
     std::string foam_version;	//the foam version number, probably will get rid of this later
-    std::string polyMesh_path;	//path to directory where the files will be written
     FILE *fzout;		//changing file to which information will be written
 
     double xpoints;		//number of points in the x direction
@@ -114,7 +117,23 @@ private:
     double zmin;    //smallest z coordinate
     double zmax;    //largest z coordinate
 
+    std::string pointsPath;    //path to the points file, found in constant/polymesh from the case directory
+    std::string ownerPath;    //path to the owner file, found in constant/polymesh from the case directory
+    std::string neighbourPath;    //path to the neighbour file, found in constant/polymesh from the case directory
+    std::string facesPath;    //path to the faces file, found in constant/polymesh from the case directory
+    std::string boundaryPath;    //path to the boundary file, found in constant/polymesh from the case directory
+
     wn_3dArray x, y, z;  //the x,y,z values for the mesh
+
+    //values used in other files
+    std::string transportPropertiesPath;    //path to the transportProperties file, found in constant from the case directory
+    double diffusivityConstant;    //the diffusivity constant
+
+    std::string scalarPath;     //path to the scalar T data file, found in 0 from the case directory
+    std::string sourcePath;     //path to the source data file, found in 0 from the case directory
+    std::string velocityPath;   //path to the velocity U data file, found in 0 from the case directory
+
+    wn_3dScalarField u, v, w; //the velocity profiles in each direction for the mesh
 
 };
 

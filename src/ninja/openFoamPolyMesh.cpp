@@ -27,44 +27,17 @@
  *
  *****************************************************************************/
 
+
 #include "openFoamPolyMesh.h"
-
-openFoamPolyMesh::openFoamPolyMesh()
-{
-    foam_version = "2.0";
-    polyMesh_path = "/home/latwood/Downloads/case/constant/polyMesh/";
-    fzout = NULL;
-
-    xpoints = 4;
-    ypoints = 5;
-    zpoints = 3;
-    xcells = xpoints-1;
-    ycells = ypoints-1;
-    zcells = zpoints-1;
-    npoints = xpoints*ypoints*zpoints;
-    ncells = xcells*ycells*zcells;
-    Ax = xcells*zcells;
-    Ay = ycells*zcells;
-    Az = xcells*ycells; //where is the proper place to put something like this? They are constants that depend on the imput
-    nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
-    ninternalfaces = nfaces-2*(Ax+Ay+Az);
-
-    xmin = 0;
-    xmax = xcells;
-    ymin = 0;
-    ymax = ycells;
-    zmin = 0;
-    zmax = zcells;
-
-    x,y,z;
-
-    writePolyMeshFiles("points");
-}
 
 openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf)
 {
 
-    polyMesh_path = outputPath;
+    pointsPath = outputPath+"constant/polyMesh/points";
+    ownerPath = outputPath+"constant/polyMesh/owner";
+    neighbourPath = outputPath+"constant/polyMesh/neighbour";
+    facesPath = outputPath+"constant/polyMesh/faces";
+    boundaryPath = outputPath+"constant/polyMesh/boundary";
     xcells = nxcells;
     ycells = nycells;
     zcells = nzcells;
@@ -91,16 +64,29 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
 
     x,y,z;
 
+    //stuff for other files
+    transportPropertiesPath = outputPath+"constant/transportProperties";
+    diffusivityConstant = 0.01;
+
+    scalarPath = outputPath+"0/T";
+    velocityPath = outputPath+"0/U";
+    sourcePath = outputPath+"0/source";
+
+
     writePolyMeshFiles("points");
 
 }
 
-openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxcells, double nycells, double nzcells)
+openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxpoints, double nypoints, double nzpoints,wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind)
 {
-    polyMesh_path = outputPath;
-    xpoints = nxcells;
-    ypoints = nycells;
-    zpoints = nzcells;
+    pointsPath = outputPath+"constant/polyMesh/points";
+    ownerPath = outputPath+"constant/polyMesh/owner";
+    neighbourPath = outputPath+"constant/polyMesh/neighbour";
+    facesPath = outputPath+"constant/polyMesh/faces";
+    boundaryPath = outputPath+"constant/polyMesh/boundary";
+    xpoints = nxpoints;
+    ypoints = nypoints;
+    zpoints = nzpoints;
     x = xcoord;
     y = ycoord;
     z = zcoord;
@@ -118,9 +104,20 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, w
     nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
     ninternalfaces = nfaces-2*(Ax+Ay+Az);
 
+    //stuff for other files
+    transportPropertiesPath = outputPath+"constant/transportProperties";
+    diffusivityConstant = 0.01;
 
+    scalarPath = outputPath+"0/T";
+    sourcePath = outputPath+"0/source";
+    velocityPath = outputPath+"0/U";
+
+    u = uwind;
+    v = vwind;
+    w = wwind;
 
     writePolyMeshFiles("array");
+
 }
 
 openFoamPolyMesh::~openFoamPolyMesh()
@@ -130,13 +127,11 @@ openFoamPolyMesh::~openFoamPolyMesh()
 
 bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType)
 {
-    //this outputs the points as a vtk (helps to look at the mesh a second way.
-    //Plus I know this works for the tutorial cases
-    std::string current_path;
+    //this outputs the mesh files, though for now it also outputs all the case files
 
+//start with the mesh files
     //now create points as an OpenFOAM file
-    current_path = polyMesh_path+"points";
-    fzout = fopen(current_path.c_str(), "w");
+    fzout = fopen(pointsPath.c_str(), "w");
     makeFoamHeader("vectorField","points","constant/polyMesh");
     if (pointWriteType == "points")
     {
@@ -148,35 +143,62 @@ bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType)
     makeFoamFooter();
     fclose(fzout);
 
-    //now create the owners OpenFOAM mesh file
-    current_path = polyMesh_path+"owner";
-    fzout = fopen(current_path.c_str(),"w");
+    //now create the owner OpenFOAM mesh file
+    fzout = fopen(ownerPath.c_str(),"w");
     makeFoamHeader("labelList","owner","constant/polyMesh");
     printOwners();
     makeFoamFooter();
     fclose(fzout);
 
-    //now create the neighbors OpenFOAM mesh file
-    current_path = polyMesh_path+"neighbour";   //I almost missed this. I spelled it the correct way and not their way at first
-    fzout = fopen(current_path.c_str(),"w");
+    //now create the neighbour OpenFOAM mesh file
+    fzout = fopen(neighbourPath.c_str(),"w");
     makeFoamHeader("labelList","neighbour","constant/polyMesh");
     printNeighbors();
     makeFoamFooter();
     fclose(fzout);
 
     //now create the faces
-    current_path = polyMesh_path+"faces";
-    fzout = fopen(current_path.c_str(), "w");
+    fzout = fopen(facesPath.c_str(), "w");
     makeFoamHeader("faceList","faces","constant/polyMesh");
     printFaces();
     makeFoamFooter();
     fclose(fzout);
 
     //now create the boundary file
-    current_path = polyMesh_path+"boundary";
-    fzout = fopen(current_path.c_str(), "w");
+    fzout = fopen(boundaryPath.c_str(), "w");
     makeFoamHeader("polyBoundaryMesh","boundary","constant/polyMesh");
     printBoundaries();
+    makeFoamFooter();
+    fclose(fzout);
+
+//now start with the case files
+
+//finish the constant directory files
+    //now create the transportProperties file
+    fzout = fopen(transportPropertiesPath.c_str(), "w");
+    makeFoamHeader("dictionary","transportProperties","constant");
+    fprintf(fzout,"nu              nu [ 0 2 -1 0 0 0 0 ] %lf;\n",diffusivityConstant);
+    makeFoamFooter();
+    fclose(fzout);
+
+//now create the property value files, the 0 directory files
+    //create the scalar field file
+    fzout = fopen(scalarPath.c_str(), "w");
+    makeFoamHeader("volScalarField","T","0");
+    printScalar();
+    makeFoamFooter();
+    fclose(fzout);
+
+    //create the source field file, note this will get changed by the setFields dict
+    fzout = fopen(sourcePath.c_str(), "w");
+    makeFoamHeader("volScalarField","source","");
+    printSource();
+    makeFoamFooter();
+    fclose(fzout);
+
+    fzout = fopen(velocityPath.c_str(), "w");
+    makeFoamHeader("volVectorField","U","0");
+    printVelocity(pointWriteType);
     makeFoamFooter();
     fclose(fzout);
 
@@ -238,12 +260,12 @@ void openFoamPolyMesh::print3dArrayPoints()
     fprintf(fzout, "\n%0.0lf\n(\n", npoints);
     for(double k=0; k<zpoints; k++)
     {
-            for(double j=0; j<xpoints; j++)
+        for(double j=0; j<xpoints; j++)
         {
             for (double i = 0;i<ypoints;i++)
             {
                 fprintf(fzout, "(%lf %lf %lf)\n", x(k*xpoints*ypoints + j*ypoints + i),
-                        y(k*xpoints*ypoints + j*ypoints + i), z(k*xpoints*ypoints + j*ypoints + i));    //somehow the x and y's are backwards, but this was how to replicate the vtk file
+                        y(k*xpoints*ypoints + j*ypoints + i), z(k*xpoints*ypoints + j*ypoints + i));
             }
         }
     }
@@ -567,4 +589,233 @@ void openFoamPolyMesh::printBoundaries()
     fprintf(fzout,"    }\n");
 
     fprintf(fzout, ")\n");
+}
+
+void openFoamPolyMesh::printScalar()
+{
+    fprintf(fzout,"dimensions      [1 -3 0 0 0 0 0];\n\n");
+    fprintf(fzout,"internalField   uniform 0;\n\n");
+    fprintf(fzout,"boundaryField\n{\n");
+    fprintf(fzout,"    north_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    west_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    east_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    south_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    minZ\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    maxZ\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n}\n");
+}
+
+void openFoamPolyMesh::printSource()
+{
+    fprintf(fzout,"dimensions      [1 -3 -1 0 0 0 0];\n\n");
+    fprintf(fzout,"internalField   uniform 0;\n\n");
+    fprintf(fzout,"boundaryField\n{\n");
+    fprintf(fzout,"    north_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    west_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    east_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    south_face\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    minZ\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+    fprintf(fzout,"    maxZ\n    {\n");
+    fprintf(fzout,"        type            zeroGradient;\n    }\n}\n");
+}
+
+void openFoamPolyMesh::printVelocity(std::string pointWriteType)
+{
+    if (pointWriteType == "points")
+    {
+        fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
+        fprintf(fzout,"internalField   uniform (0,0,0);\n\n");
+        fprintf(fzout,"boundaryField\n{\n");
+        fprintf(fzout,"    north_face\n    {\n");
+        fprintf(fzout,"        type            fixedValue;\n");
+        fprintf(fzout,"        value           uniform (1 0 0);\n}\n\n");
+        fprintf(fzout,"    west_face\n    {\n");
+        fprintf(fzout,"        type            fixedValue;\n");
+        fprintf(fzout,"        value           uniform (1 0 0);\n}\n\n");
+        fprintf(fzout,"    east_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    south_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    minZ\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    maxZ\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n}\n");
+
+    } else if (pointWriteType == "array")
+    {
+        fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
+
+        //first fill out the internal values
+        fprintf(fzout,"internalField   nonuniform List<vector>\n%0.0lf\n(\n",ncells);      //needs to be internal points
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),
+                            v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n\n");
+
+
+        //this section works to get very similar to the vtk velocities. I think it is just barely off because the velocities are given as points when the OpenFoam needs them as cell centers
+        fprintf(fzout,"boundaryField\n{\n");
+        fprintf(fzout,"    north_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    west_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    east_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    south_face\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    minZ\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n\n");
+        fprintf(fzout,"    maxZ\n    {\n");
+        fprintf(fzout,"        type            zeroGradient;\n    }\n}\n");
+
+
+
+    /*
+      //this section defines the velocities on the boundaries, something the vtk format may not even do. These also appear to be off somehow
+        //now fill in the north face velocities
+        fprintf(fzout,"boundaryField\n{\n");
+        fprintf(fzout,"    north_face\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Ax);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (i == ycells-1)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");
+
+        //now fill in the west face velocities
+        fprintf(fzout,"    west_face\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Ay);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (j == 0)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");
+
+        //now fill in the east face velocities
+        fprintf(fzout,"    east_face\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Ay);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (j == xcells-1)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");
+
+        //now print the south face velocities
+        fprintf(fzout,"    south_face\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Ax);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (i == 0)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");
+
+        //now print the minZ face velocities
+        fprintf(fzout,"    minZ\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Az);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (k == 0)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");
+
+        //now print the maxZ face velocities
+        fprintf(fzout,"    maxZ\n    {\n");
+        fprintf(fzout,"        type            pressureInletOutletVelocity;\n");
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
+        fprintf(fzout,"%0.0lf\n(\n",Az);
+        for (double k = 0; k < zcells; k++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                for (double i = 0; i < ycells; i++)
+                {
+                    if (k == zcells-1)
+                    {
+                        fprintf(fzout, "(%lf %lf %lf)\n", u(k*xpoints*ypoints + j*ypoints + i),v(k*xpoints*ypoints + j*ypoints + i), w(k*xpoints*ypoints + j*ypoints + i));
+                    }
+                }
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n}\n");
+    */
+
+
+        //~/src/meshConversion/build-windninja-Desktop-Default/src/cli/WindNinja_cli ~/Downloads/ninjafoam.cfg
+
+        //okay I discovered that the number of faces shown in the boundary file for each boundary equals the number of u values for each of those same boundaries.
+        //I also discovered that the number of internal u values is equal to the number of total cells. So does this mean that it is actually a velocity across the cell center since there is one velocity per cell for the internal velocities and one velocity per boundary face for the boundary velocities?
+    }
 }
