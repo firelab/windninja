@@ -702,15 +702,16 @@ int wxStation::HeaderVersion(const char *pszFilename) {
   **
   ** TODO(kyle): should we accept a version 1 file with extra non-valid fields?
   */
+  int rc = 1;
   if (OGR_FD_GetFieldCount(hDefn) > n) {
     if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
-      OGR_DS_Destroy(hDS);
       /* If we silently except version 1 files, return 1 here. */
-      return -1;
+      rc = -1;
     }
-    return 2;
+    rc = 2;
   }
-  return 1;
+  OGR_DS_Destroy(hDS);
+  return rc;
 }
 
 /**
