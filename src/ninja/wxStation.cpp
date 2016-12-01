@@ -657,18 +657,22 @@ void wxStation::stationViewer(wxStation station)
 int wxStation::HeaderVersion(const char *pszFilename) {
   OGRDataSourceH hDS = NULL;
   hDS = OGROpen(pszFilename, FALSE, NULL);
+  int rc = 0;
   if (hDS == NULL) {
     return -1;
   }
   OGRLayerH hLayer = NULL;
   hLayer = OGR_DS_GetLayer(hDS, 0);
   if (hLayer == NULL) {
-    OGR_DS_Destroy(hDS);
-    return -1;
+    rc = -1;
   }
   OGRFeatureDefnH hDefn = NULL;
   hDefn = OGR_L_GetLayerDefn(hLayer);
   if (hDefn == NULL) {
+    rc = -1;
+  }
+  // If we failed to open or get metadata, bail
+  if (rc == -1) {
     OGR_DS_Destroy(hDS);
     return -1;
   }
@@ -683,17 +687,22 @@ int wxStation::HeaderVersion(const char *pszFilename) {
   /* We'll use our index later to check for more fields */
   int i = 0;
 
+  assert(rc == 0);
   OGRFieldDefnH hFldDefn = NULL;
   for (i = 0; i < n; i++) {
     hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
     if (hFldDefn == NULL) {
-      OGR_DS_Destroy(hDS);
-      return -1;
+      rc = -1;
     }
     if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
-      OGR_DS_Destroy(hDS);
-      return -1;
+      rc = -1;
     }
+  }
+
+  // If we failed to get version 1 columns, bail
+  if (rc == -1) {
+    OGR_DS_Destroy(hDS);
+    return -1;
   }
 
   /*
@@ -702,7 +711,7 @@ int wxStation::HeaderVersion(const char *pszFilename) {
   **
   ** TODO(kyle): should we accept a version 1 file with extra non-valid fields?
   */
-  int rc = 1;
+  rc = 1;
   if (OGR_FD_GetFieldCount(hDefn) > n) {
     if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
       /* If we silently except version 1 files, return 1 here. */
