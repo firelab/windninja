@@ -86,9 +86,9 @@ class pointInput : public QWidget
     QToolButton *readStationFileButton;
     QToolButton *writeStationFileButton;
     QToolButton *writeStationKmlButton;
-    
+
     QGroupBox *pointGroupBox;
-    
+
     QHBoxLayout *fileLayout;
     QHBoxLayout *buttonLayout;
     QVBoxLayout *pointLayout;
@@ -110,7 +110,7 @@ class pointInput : public QWidget
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
-    
+
  signals:
     void writeToConsole( QString message );
     void stationFileChanged();
