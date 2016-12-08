@@ -38,7 +38,8 @@
 //#include <stdio.h>
 //#include <string>
 
-
+#include "mesh.h"
+#include "element.h"
 #include "wn_3dArray.h"
 #include "wn_3dScalarField.h"
 #include "ninjaException.h"
@@ -53,11 +54,11 @@ class openFoamPolyMesh
 public:
 
     openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf);
-    openFoamPolyMesh(std::string outputPath, wn_3dArray& xcoord, wn_3dArray& ycoord, wn_3dArray& zcoord, double nxpoints, double nypoints, double nzpoints, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
+    openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
     ~openFoamPolyMesh();
 
     //this is the equivalent main function
-    bool writePolyMeshFiles(std::string pointWriteType);
+    bool writePolyMeshFiles(std::string pointWriteType, element elem);
 
     //technically not necessary, but it makes it nice for debugging since it makes it easier to replicate
     //and compare with OpenFoam tutorial files.
@@ -87,9 +88,20 @@ public:
     void printBoundaries();
 
 //set up extra stuff to be moved elsewhere
+
+    //prints the T file in the 0 directory
     void printScalar();
+
+    //prints the initial source file in the 0 directory
     void printSource();
-    void printVelocity(std::string pointWriteType);
+
+    //prints the velocities in the 0 directory
+    /*
+     * the velocities appear to be stored as cell center values for the internal part of the mesh,
+     * and face center values for the external patches, placed in the same order that the points
+     * are generated in the mesh conversion.
+    */
+    void printVelocity(std::string pointWriteType, element elem);
 
 private:
 
