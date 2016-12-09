@@ -83,6 +83,18 @@ int NinjaInitialize()
     const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
     CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+
+#if defined(FIRELAB_PACKAGE)
+    /*
+    ** Set the CURL_CA_BUNDLE variable through GDAL.  This only works on GDAL
+    ** 2.1.3 or 2.2.0, which ever comes first.  Update comment when we know the
+    ** version.  Setting this is a no-op on earlier versions, so it shouldn't
+    ** have adverse side affects.  Test with CPL_CURL_VERBOSE.  For #231.
+    */
+    std::string caCert = FindDataPath( "curl-ca-bundle.crt" );
+    CPLSetConfigOption( "CAINFO", caCert.c_str() );
+#endif /* defined(FIRELAB_PACKAGE) */
+
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
     char *pszExecPath;
     const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
