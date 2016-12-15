@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+WindNinja 3.1.2
+---------------
+
+ - Fix bug where DEM downloading fails on Windows due to SSL verfification (\#231)
+
 WindNinja 3.1.1
 ---------------
 
