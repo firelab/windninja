@@ -66,7 +66,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
 
     //stuff for other files
     transportPropertiesPath = outputPath+"constant/transportProperties";
-    diffusivityConstant = 0.01;
+    diffusivityConstant = 0.05;
 
     scalarPath = outputPath+"0/T";
     velocityPath = outputPath+"0/U";
@@ -109,7 +109,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScala
 
     //stuff for other files
     transportPropertiesPath = outputPath+"constant/transportProperties";
-    diffusivityConstant = 0.01;
+    diffusivityConstant = 0.05;
 
     scalarPath = outputPath+"0/T";
     sourcePath = outputPath+"0/source";
