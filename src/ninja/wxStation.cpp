@@ -26,20 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-/**
- * @file wxStation.cpp
- * @author Jason Forthofer <jforthofer@gmail.com>
- * @author Kyle Shannon <ksshannon@gmail.com>
- */
 #include "wxStation.h"
-
-/**
- * Default constructor for wxStation class populated with default values
- * @see wxStation::initialize
- */
-
-
-
 
 wxStation::wxStation()
 {
@@ -88,50 +75,39 @@ wxStation::wxStation( wxStation const& m )
 wxStation& wxStation::operator= ( wxStation const& m )
 {
     if( &m != this ) {
-    stationName = m.stationName;
-    lat = m.lat;
-    lon = m.lon;
-    projXord = m.projXord;
-    projYord = m.projYord;
-    xord = m.xord;
-    yord = m.yord;
-    height = m.height;
-    heightUnits = m.heightUnits;
-    speed = m.speed;
-    inputSpeedUnits = m.inputSpeedUnits;
-    direction = m.direction;
-    w_speed = m.w_speed;
-    w_speedUnits = m.w_speedUnits;
-    temperature = m.temperature;
-    tempUnits = m.tempUnits;
-    cloudCover = m.cloudCover;
-    cloudCoverUnits = m.cloudCoverUnits;
-    influenceRadius = m.influenceRadius;
-    influenceRadiusUnits = m.influenceRadiusUnits;
-    datumType = m.datumType;
-    coordType = m.coordType;
-    datetime =m.datetime;
-    localDateTime=m.localDateTime;
-    curStep=m.curStep;
+        stationName = m.stationName;
+        lat = m.lat;
+        lon = m.lon;
+        projXord = m.projXord;
+        projYord = m.projYord;
+        xord = m.xord;
+        yord = m.yord;
+        height = m.height;
+        heightUnits = m.heightUnits;
+        speed = m.speed;
+        inputSpeedUnits = m.inputSpeedUnits;
+        direction = m.direction;
+        w_speed = m.w_speed;
+        w_speedUnits = m.w_speedUnits;
+        temperature = m.temperature;
+        tempUnits = m.tempUnits;
+        cloudCover = m.cloudCover;
+        cloudCoverUnits = m.cloudCoverUnits;
+        influenceRadius = m.influenceRadius;
+        influenceRadiusUnits = m.influenceRadiusUnits;
+        datumType = m.datumType;
+        coordType = m.coordType;
+        datetime =m.datetime;
+        localDateTime=m.localDateTime;
+        curStep=m.curStep;
     }
     return *this;
 }
-/**
- * Destructor
- */
+
 wxStation::~wxStation()
 {
 
 }
-/**
- *@brief Fetches station data from a known station id
- *@param station_id Known station id
- *@param nHours Duration of data to fetch in hours
- *@return void
- */
-
-
-
 
 /**
  * Initialize a wxStation object with default values
@@ -220,7 +196,6 @@ double wxStation::get_speed(velocityUnits::eVelocityUnits units)
 
 }
 
-
 double wxStation::get_direction()
 {
     double d;
@@ -248,6 +223,7 @@ double wxStation::get_w_speed( velocityUnits::eVelocityUnits units)
     velocityUnits::fromBaseUnits( w, units );
     return w;
 }
+
 /**
  * Fetch temperature for the station
  * @param units to retrieve the temperature in, default is K
@@ -271,6 +247,7 @@ double wxStation::get_temperature(temperatureUnits::eTempUnits units)
     }
     return t;
 }
+
 /**
  * Fetch the cloud cover for the station
  * @param units to retrieve the cover in, default is fraction
@@ -294,6 +271,7 @@ double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
     }
     return c;
 }
+
 /**
  * Fetch the radius of influence of the station
  * @param units to retrieve the radius in, default is meters
@@ -317,9 +295,8 @@ double wxStation::get_influenceRadius(lengthUnits::eLengthUnits units)
         }
     }
     return i;
-
-
 }
+
 /**
  * Set the weather station name
  * @param Name representation of the station name.
@@ -328,6 +305,7 @@ void wxStation::set_stationName( std::string Name )
 {
     stationName = Name;
 }
+
 /**
  * Set the location of the station in lat/lon based on projected coordinates
  * @param Xord x coordinate in system
@@ -378,6 +356,7 @@ void wxStation::set_location_projected( double Xord, double Yord,
 
     GDALClose( (GDALDatasetH)poDS );
 }
+
 /**
  * Set location of the station based on latitude and longitude.  Datum
  * transformation info may need to occur
@@ -447,6 +426,7 @@ void wxStation::set_height( double Height, lengthUnits::eLengthUnits units )
     height.push_back(Height);
     heightUnits = units;
 }
+
 /** Set the speed for the station
  *
  *
@@ -500,11 +480,13 @@ void wxStation::set_datetime(boost::posix_time::ptime timedata)
 {
     datetime.push_back(timedata);
 }
+
 boost::posix_time::ptime wxStation::get_datetime(int idx)
 {
     boost::posix_time::ptime time=datetime[idx];
     return time;
 }
+
 void wxStation::set_localDateTime(boost::local_time::local_date_time timedata)
 {
     localDateTime.push_back(timedata);
@@ -514,6 +496,7 @@ void wxStation::update_direction(double Direction, int index)// Used for Match P
 {
     direction[index]=Direction;
 }
+
 void wxStation::update_speed(double Speed, velocityUnits::eVelocityUnits units, int index)// Used for Match Points
 {
     velocityUnits::toBaseUnits( Speed, units );
@@ -550,8 +533,6 @@ void wxStation::set_currentTimeStep(boost::local_time::local_date_time step)
 
 }
 
-
-
 bool wxStation::check_station(wxStation station)
 {
     if(station.stationName.empty() || station.stationName == "")
@@ -559,65 +540,59 @@ bool wxStation::check_station(wxStation station)
         cout<<"failed Name Check"<<endl;
         return false;
     }
-
     if(station.coordType != GEOGCS && station.coordType != PROJCS)
     {
         cout<<"failed Coord Check"<<endl;
         return false;
     }
-
     if(station.datumType != WGS84 && station.datumType != NAD83 && station.datumType !=NAD27)
     {
         cout<<"failed datum Check"<<endl;
         return false;
     }
-
     if(station.lat < -90.0 || station.lat > 90.0)
     {
         cout<<"failed lat Check"<<endl;
         return false;
     }
-
     if(station.lon < -180.0 || station.lon > 360.0)
     {
         cout<<"failed lon Check"<<endl;
         return false;
     }
+
     for (int i=0;i<station.height.size();i++)
     {
         if(station.height[i] < 0.0)
-            {
-                cout<<"failed height Check on "<<i<<endl;
-                cout<<station.height[i]<<endl;
-                return false;
-            }
-
+        {
+            cout<<"failed height Check on "<<i<<endl;
+            cout<<station.height[i]<<endl;
+            return false;
+        }
         if(station.speed[i] < 0.0)
-            {
-                cout<<"failed speed Check on "<<i<<endl;
-                cout<<station.speed[i]<<endl;
-                return false;
-            }
-
+        {
+            cout<<"failed speed Check on "<<i<<endl;
+            cout<<station.speed[i]<<endl;
+            return false;
+        }
         if(station.direction[i] < 0.0 || station.direction[i] > 360.0)
-            {
-                cout<<"failed direction Check on "<<i<<endl;
-                cout<<station.direction[i]<<endl;
-                return false;
-            }
+        {
+            cout<<"failed direction Check on "<<i<<endl;
+            cout<<station.direction[i]<<endl;
+            return false;
+        }
         if(station.temperature[i]< 173.15 || station.temperature[i] > 330.00)
-            {
-                cout<<"failed temperature Check on "<<i<<endl;
-                cout<<station.temperature[i]<<endl;
-                return false;
-            }
+        {
+            cout<<"failed temperature Check on "<<i<<endl;
+            cout<<station.temperature[i]<<endl;
+            return false;
+        }
         if(station.cloudCover[i]<0.0||station.cloudCover[i]>1.10)
-            {
-                cout<<"failed cloud check on "<<i<<endl;
-                cout<<station.cloudCover[i]<<endl;
-                return false;
-            }
-
+        {
+            cout<<"failed cloud check on "<<i<<endl;
+            cout<<station.cloudCover[i]<<endl;
+            return false;
+        }
     }
 
     if(station.w_speed < 0.0)
@@ -629,7 +604,6 @@ bool wxStation::check_station(wxStation station)
     return true;
 }
 
-
 /**
  * Write CSV and KML files and stuff used to be here, I don't know what do to/if they are needed
  */
@@ -640,7 +614,7 @@ void wxStation::stationViewer(wxStation station)
 }
 
 /**
- * Check the validity of the csv file named pszFilename.  If it is valid, retrun
+ * Check the validity of the csv file named pszFilename.  If it is valid, return
  * the format version of the data.
  *
  * 1 -> original windninja format, in use until 3.2.0 (TODO(kyle):update
@@ -654,42 +628,43 @@ void wxStation::stationViewer(wxStation station)
  * \return -1 if the file is invalid in anyway, or the version of the file(1 or
  * 2).
  */
-int wxStation::HeaderVersion(const char *pszFilename) {
-  OGRDataSourceH hDS = NULL;
-  hDS = OGROpen(pszFilename, FALSE, NULL);
-  int rc = 0;
-  if (hDS == NULL) {
+int wxStation::GetHeaderVersion(const char *pszFilename)
+{
+    OGRDataSourceH hDS = NULL;
+    hDS = OGROpen(pszFilename, FALSE, NULL);
+    int rc = 0;
+    if (hDS == NULL) {
     return -1;
-  }
-  OGRLayerH hLayer = NULL;
-  hLayer = OGR_DS_GetLayer(hDS, 0);
-  if (hLayer == NULL) {
+    }
+    OGRLayerH hLayer = NULL;
+    hLayer = OGR_DS_GetLayer(hDS, 0);
+    if (hLayer == NULL) {
     rc = -1;
-  }
-  OGRFeatureDefnH hDefn = NULL;
-  hDefn = OGR_L_GetLayerDefn(hLayer);
-  if (hDefn == NULL) {
+    }
+    OGRFeatureDefnH hDefn = NULL;
+    hDefn = OGR_L_GetLayerDefn(hLayer);
+    if (hDefn == NULL) {
     rc = -1;
-  }
-  // If we failed to open or get metadata, bail
-  if (rc == -1) {
+    }
+    // If we failed to open or get metadata, bail
+    if (rc == -1) {
     OGR_DS_Destroy(hDS);
     return -1;
-  }
+    }
 
-  /*
-  ** Iterate through the expected columns.  If the layer doesn't runs out of
-  ** fields before we get to the end of the expected header, GetFieldDefn() will
-  ** return NULL, so there is no explicit count check needed.
-  */
+    /*
+    ** Iterate through the expected columns.  If the layer doesn't runs out of
+    ** fields before we get to the end of the expected header, GetFieldDefn() will
+    ** return NULL, so there is no explicit count check needed.
+    */
 
-  int n = CSLCount((char **)apszValidHeader1);
-  /* We'll use our index later to check for more fields */
-  int i = 0;
+    int n = CSLCount((char **)apszValidHeader1);
+    /* We'll use our index later to check for more fields */
+    int i = 0;
 
-  assert(rc == 0);
-  OGRFieldDefnH hFldDefn = NULL;
-  for (i = 0; i < n; i++) {
+    assert(rc == 0);
+    OGRFieldDefnH hFldDefn = NULL;
+    for (i = 0; i < n; i++) {
     hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
     if (hFldDefn == NULL) {
       rc = -1;
@@ -697,30 +672,30 @@ int wxStation::HeaderVersion(const char *pszFilename) {
     if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
       rc = -1;
     }
-  }
+    }
 
-  // If we failed to get version 1 columns, bail
-  if (rc == -1) {
+    // If we failed to get version 1 columns, bail
+    if (rc == -1) {
     OGR_DS_Destroy(hDS);
     return -1;
-  }
+    }
 
-  /*
-  ** Now we have a valid header for version 1.  If there are more fields, we
-  ** check them.  If not, we are done.
-  **
-  ** TODO(kyle): should we accept a version 1 file with extra non-valid fields?
-  */
-  rc = 1;
-  if (OGR_FD_GetFieldCount(hDefn) > n) {
+    /*
+    ** Now we have a valid header for version 1.  If there are more fields, we
+    ** check them.  If not, we are done.
+    **
+    ** TODO(kyle): should we accept a version 1 file with extra non-valid fields?
+    */
+    rc = 1;
+    if (OGR_FD_GetFieldCount(hDefn) > n) {
     if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
       /* If we silently except version 1 files, return 1 here. */
       rc = -1;
     }
     rc = 2;
-  }
-  OGR_DS_Destroy(hDS);
-  return rc;
+    }
+    OGR_DS_Destroy(hDS);
+    return rc;
 }
 
 /**

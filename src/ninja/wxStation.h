@@ -87,11 +87,9 @@ class wxStation
     wxStation( wxStation const& m );               // Copy constructor
     wxStation& operator= ( wxStation const& m );   // Assignment operator
 
-    enum eCoordType { PROJCS,
-              GEOGCS };
-    enum eDatumType { WGS84,
-              NAD83,
-              NAD27 };
+    enum eCoordType { PROJCS, GEOGCS };
+    enum eDatumType { WGS84, NAD83, NAD27 };
+
     static bool check_station(wxStation station);
 
     static const char* const * oldGetValidHeader();
@@ -161,7 +159,7 @@ class wxStation
     static void writeBlankStationFile( std::string outFileName );
     boost::posix_time::ptime a;
 
-    static int HeaderVersion(const char *pszFilename);
+    static int GetHeaderVersion(const char *pszFilename);
  private:
 
     vector<double> zero;
