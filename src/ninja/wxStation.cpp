@@ -696,16 +696,6 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     return rc;
 }
 
-/**
- * Fetch a valid header associated with values contained in wxStationList.
- * This is for displaying data and contains extra tags that represent
- * choices in units and other quantities.
- * @return array of strings representing the header
- */
-
-const char *const *wxStation::oldGetValidHeader() { return apszValidHeader1; }
-const char *const *wxStation::getValidHeader() { return apszValidHeader2; }
-
 /**Write a csv file with no data, just a header
  * @param outFileName file to write
  */

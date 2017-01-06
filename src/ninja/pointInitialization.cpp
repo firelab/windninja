@@ -673,36 +673,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
     poLayer->ResetReading();
 
-    const char * const *papszHeader = wxStation::getValidHeader();
-    const char * const *papszOldHeader = wxStation::oldGetValidHeader();
-
-    bool fetchType;
-
-    poFeatureDefn = poLayer->GetLayerDefn();
-    //check for correct number of fields, and proper header
-    int nFields = poFeatureDefn->GetFieldCount();
-    if( nFields != CSLCount( papszHeader ) )
-    {
-        papszHeader=papszOldHeader;
-        fetchType=false;
-        CPLDebug("STATION_FETCH", "Reading data w/o time...");
-    }
-    else if (nFields !=CSLCount (papszHeader))
-    {
-        OGR_DS_Destroy( hDS );
-        oErrorString = "Incorrect number of definitions in csv file. ";
-        oErrorString += "There are ";
-        oErrorString += nFields;
-        oErrorString += " in the file, it needs ";
-        oErrorString += CSLCount( papszHeader );
-        throw( std::domain_error( oErrorString ) );
-    }
-    else
-    {
-        fetchType=true;
-        CPLDebug("STATION_FETCH", "Reading data w/ timesteps...");
-    }
-
     const char *pszKey;
     std::string oStationName;
     std::string datetime;

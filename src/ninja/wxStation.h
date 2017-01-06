@@ -92,9 +92,6 @@ class wxStation
 
     static bool check_station(wxStation station);
 
-    static const char* const * oldGetValidHeader();
-    static const char* const * getValidHeader();
-
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }
     void set_location_projected( double Xord, double Yord, std::string demFile );
@@ -147,9 +144,7 @@ class wxStation
     inline coverUnits::eCoverUnits get_cloudCoverUnits() { return cloudCoverUnits; }
     inline lengthUnits::eLengthUnits get_influenceRadiusUnits() { return influenceRadiusUnits; }
 
-//    static vector<wxStation> makeWxStation(std::string csvFile,std::string demFile,vector<vector<wxStationList> > inputStation);
     static void stationViewer(wxStation station);
-//    static wxStation readStationFetchFile(std::string csvFile,std::string demFile,int piCount);
 
     static void writeKmlFile( std::vector<wxStation> stations,
                   std::string outFileName );
