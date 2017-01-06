@@ -142,16 +142,16 @@ int ninjaArmy::getSize()
  * @param stationFileName
  * @param demFile
  */
-void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList , string timeZone, string stationFileName, string demFile, bool matchPoints)
+void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
+                             string timeZone, string stationFileName,
+                             string demFile, bool matchPoints)
 {
-    vector<wxStation> stationArmada;
-    vector<boost::posix_time::ptime> outaTime;
+    vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
-    outaTime.push_back(noTime);
-    stationArmada=pointInitialization::interpolateFromDisk(stationFileName,demFile,timeList,timeZone);
-
+    stationList=pointInitialization::interpolateFromDisk(stationFileName, demFile, timeList, timeZone);
     ninjas.resize(timeList.size());
-    for(unsigned int i=0; i< timeList.size();i++)
+
+    for(unsigned int i=0; i<timeList.size(); i++)
     {
         ninjas[i]=new ninja();
     }
@@ -162,52 +162,46 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList ,
     timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
-    boost::local_time::local_date_time localStandard(standard,timeZonePtr);
+    boost::local_time::local_date_time localStandard(standard, timeZonePtr);
 
     vector<boost::local_time::local_date_time> localTimeList;
-    for(unsigned int i = 0; i < timeList.size(); i++)
+    for(unsigned int i = 0; i<timeList.size(); i++)
     {
         boost::posix_time::ptime aGlobal=timeList[i];
-        boost::local_time::local_date_time aLocal(aGlobal,timeZonePtr);
+        boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
 
         localTimeList.push_back(aLocal);
-
-//        cout<<timeList[i]<<" "<<localTimeList[i]<<endl;
-//        cout<<stationArmada[0].get_datetime(i)<<endl;
     }
 
-    if (timeList.size()==1 && timeList[0]==noTime)//fixes timelist for old PointInitialization data
+    //handle old wxStation format
+    if (timeList.size() == 1 && timeList[0] == noTime)
     {
-        timeList.assign(1,standard);
-        localTimeList.assign(1,localStandard);
+        timeList.assign(1, standard);
+        localTimeList.assign(1, localStandard);
     }
 
-    for(unsigned int k=0;k<stationArmada.size();k++)
+    for(unsigned int k=0; k<stationList.size(); k++)
     {
-        for (unsigned int i=0;i<timeList.size();i++)
+        for (unsigned int i=0; i<timeList.size(); i++)
         {
             boost::posix_time::ptime aGlobal=timeList[i];
-            boost::local_time::local_date_time aLocal(aGlobal,timeZonePtr);
-            stationArmada[k].set_localDateTime(aLocal);
+            boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
+            stationList[k].set_localDateTime(aLocal);
         }
     }
 
-
-
-    for(unsigned int i = 0; i < timeList.size(); i++)
+    for(unsigned int i = 0; i<timeList.size(); i++)
     {
         ninjas[i]->set_stationFetchFlag(true);
         ninjas[i]->set_date_time(localTimeList[i]);
-       for (int k=0;k<stationArmada.size();k++)
+        for(int k=0; k<stationList.size(); k++)
         {
-
-            stationArmada[k].set_currentTimeStep(ninjas[i]->get_date_time());
+            stationList[k].set_currentTimeStep(ninjas[i]->get_date_time());
         }
-        ninjas[i]->set_wxStations(stationArmada);
+        ninjas[i]->set_wxStations(stationList);
         ninjas[i]->set_wxStationFilename(stationFileName);
-        ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag,matchPoints);
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
    }
-//    delete &stationArmada;
 }
 
 /**
