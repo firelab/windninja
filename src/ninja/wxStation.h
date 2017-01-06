@@ -159,7 +159,14 @@ class wxStation
     static void writeBlankStationFile( std::string outFileName );
     boost::posix_time::ptime a;
 
+    enum eStationFormat{ oldFormat, newFormat, invalidFormat };
+
     static int GetHeaderVersion(const char *pszFilename);
+    static void SetStationFormat(eStationFormat format);
+    static wxStation::eStationFormat GetStationFormat();
+
+    static eStationFormat stationFormat;
+
  private:
 
     vector<double> zero;

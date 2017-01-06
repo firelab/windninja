@@ -973,6 +973,8 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 option_dependency(vm,"station_buffer","station_buffer_units");
 
+                wxStation::SetStationFormat(wxStation::newFormat);
+
                 pointInitialization::set_stationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>());
 
@@ -1043,11 +1045,12 @@ int windNinjaCLI(int argc, char* argv[])
             else if (vm["fetch_station"].as<bool>() == false)
             {
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
-
                 int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());
 
                 if (stationFormat==2) //new format
                 {
+                    wxStation::SetStationFormat(wxStation::newFormat);
+
                     option_dependency(vm, "wx_station_filename", "start_year");
                     option_dependency(vm, "wx_station_filename", "start_month");
                     option_dependency(vm, "wx_station_filename", "start_day");
@@ -1077,6 +1080,8 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else if (stationFormat==1) //old format
                 {
+                    wxStation::SetStationFormat(wxStation::oldFormat);
+
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
@@ -1303,56 +1308,52 @@ int windNinjaCLI(int argc, char* argv[])
             else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
 //STATION_FETCH
+
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-
-
                 option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
                 option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename");
+
                 if(vm["write_wx_station_csv"].as<bool>()==true)
                 {
-                    cout<<"writing wxStation CSV for step # "<<i_<<endl;
+                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
                     wxStation::writeStationFile(windsim.getWxStations( i_ ),
                                                 vm["wx_station_csv_filename"].as<std::string>());
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true)
                 {
-                    cout<<"writing wxStation KML for step # "<<i_<<endl;
+                    CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i);
                     wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                     vm["wx_station_kml_filename"].as<std::string>());
-//                    exit(1);
                 }
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
 
-                pointInitialization::format fileType=pointInitialization::get_formatType();
-
                 if(vm["diurnal_winds"].as<bool>())
                 {
-                    if(vm["fetch_station"].as<bool>() == true || fileType==pointInitialization::newFormat )
+                    if(vm["fetch_station"].as<bool>() == true ||
+                            wxStation::GetStationFormat() == wxStation::newFormat) //new format
                     {
                         windsim.setDiurnalWinds( i_, true);
                     }
-                    if(vm["fetch_station"].as<bool>() == false && fileType==pointInitialization::oldFormat)
+                    if(vm["fetch_station"].as<bool>() == false &&
+                            wxStation::GetStationFormat() == wxStation::oldFormat) //old format
                     {
+                        option_dependency(vm, "diurnal_winds", "year");
+                        option_dependency(vm, "diurnal_winds", "month");
+                        option_dependency(vm, "diurnal_winds", "day");
+                        option_dependency(vm, "diurnal_winds", "hour");
+                        option_dependency(vm, "diurnal_winds", "minute");
+                        option_dependency(vm, "diurnal_winds", "time_zone");
 
-
-
-                    option_dependency(vm, "diurnal_winds", "year");
-                    option_dependency(vm, "diurnal_winds", "month");
-                    option_dependency(vm, "diurnal_winds", "day");
-                    option_dependency(vm, "diurnal_winds", "hour");
-                    option_dependency(vm, "diurnal_winds", "minute");
-                    option_dependency(vm, "diurnal_winds", "time_zone");
-
-                    windsim.setDiurnalWinds( i_, true);
-                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-                                             vm["day"].as<int>(), vm["hour"].as<int>(),
-                                             vm["minute"].as<int>(), 0.0,
-                                             osTimeZone);
+                        windsim.setDiurnalWinds( i_, true);
+                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                                 vm["day"].as<int>(), vm["hour"].as<int>(),
+                                                 vm["minute"].as<int>(), 0.0,
+                                                 osTimeZone);
                     }
                 }
-                #ifdef STABILITY
+#ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
                 {
@@ -1372,30 +1373,30 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else
                     {
-                        if(vm["fetch_station"].as<bool>() == true || fileType==pointInitialization::newFormat)
+                        if(vm["fetch_station"].as<bool>() == true ||
+                                wxStation::GetStationFormat() == wxStation::newFormat) //new format
                         {
                             windsim.setStabilityFlag( i_, true);
                         }
-                        if(vm["fetch_station"].as<bool>() == false && fileType==pointInitialization::oldFormat)
+                        if(vm["fetch_station"].as<bool>() == false &&
+                                wxStation::GetStationFormat() == wxStation::oldFormat) //old format
                         {
+                            option_dependency(vm, "non_neutral_stability", "year");
+                            option_dependency(vm, "non_neutral_stability", "month");
+                            option_dependency(vm, "non_neutral_stability", "day");
+                            option_dependency(vm, "non_neutral_stability", "hour");
+                            option_dependency(vm, "non_neutral_stability", "minute");
+                            option_dependency(vm, "non_neutral_stability", "time_zone");
 
-
-                        option_dependency(vm, "non_neutral_stability", "year");
-                        option_dependency(vm, "non_neutral_stability", "month");
-                        option_dependency(vm, "non_neutral_stability", "day");
-                        option_dependency(vm, "non_neutral_stability", "hour");
-                        option_dependency(vm, "non_neutral_stability", "minute");
-                        option_dependency(vm, "non_neutral_stability", "time_zone");
-
-                        windsim.setStabilityFlag( i_, true);
-                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-                                                           vm["day"].as<int>(), vm["hour"].as<int>(),
-                                                           vm["minute"].as<int>(), 0.0,
-                                                           osTimeZone);
+                            windsim.setStabilityFlag( i_, true);
+                            windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                                               vm["day"].as<int>(), vm["hour"].as<int>(),
+                                                               vm["minute"].as<int>(), 0.0,
+                                                               osTimeZone);
                         }
                     }
                 }
-                #endif //STABILITY
+#endif //STABILITY
 
             }else if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
             {

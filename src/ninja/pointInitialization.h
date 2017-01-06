@@ -160,27 +160,16 @@ class pointInitialization : public initialize
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
 
-
         static std::string localSolarTime;
-        enum format{newFormat, oldFormat};
-        static format fileFormat;
-        static inline format get_formatType() {return fileFormat;}
-        static inline void set_formatType(format d) {fileFormat=d;}
 
         static double stationBuffer;
         static void set_stationBuffer(double buffer,std::string units);
         static double get_stationBuffer();
 
-
-
         void newAuto(AsciiGrid<double> &dem);
         int storeHour(int nHours);
 
-
-
     private:
-
-
                 static const std::string dtoken;
                 static const std::string dvar;
                 static const std::string ndvar;
