@@ -145,14 +145,10 @@ void wxStation::initialize()
  */
 double wxStation::get_height(lengthUnits::eLengthUnits units)
 {
-//    double h = height[idx];
-//    lengthUnits::fromBaseUnits( h, units );
-//    return h;
-
-
     double h;
     lengthUnits::fromBaseUnits( h, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int i=0;i<datetime.size();i++)
     {
         if (cur==localDateTime[i])
@@ -161,8 +157,8 @@ double wxStation::get_height(lengthUnits::eLengthUnits units)
             break;
         }
     }
-    return h;
 
+    return h;
 }
 
 /**
@@ -170,37 +166,29 @@ double wxStation::get_height(lengthUnits::eLengthUnits units)
  * @param units to retrieve speed in
  * @return speed
  */
-//double wxStation::get_speed( int idx, velocityUnits::eVelocityUnits units)
-//{
-//    double s = speed[idx];
-//    velocityUnits::fromBaseUnits( s, units );
-//    return s;
-//}
-
 double wxStation::get_speed(velocityUnits::eVelocityUnits units)
 {
     double s;
     velocityUnits::fromBaseUnits( s, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int i=0;i<datetime.size();i++)
     {
         if (cur==localDateTime[i])
         {
-//            cout<<i<<endl;
-//            cout<<speed[i]<<endl;
             s=speed[i];
             break;
         }
     }
-    return s;
 
+    return s;
 }
 
 double wxStation::get_direction()
 {
     double d;
-
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int i=0;i<datetime.size();i++)
     {
         if (cur==localDateTime[i])
@@ -209,6 +197,7 @@ double wxStation::get_direction()
             break;
         }
     }
+
     return d;
 }
 
@@ -231,12 +220,10 @@ double wxStation::get_w_speed( velocityUnits::eVelocityUnits units)
  */
 double wxStation::get_temperature(temperatureUnits::eTempUnits units)
 {
-//    double t = temperature[idx];
-//    temperatureUnits::fromBaseUnits( t, units );
-//    return t;
     double t;
     temperatureUnits::fromBaseUnits( t, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int i=0;i<datetime.size();i++)
     {
         if (cur==localDateTime[i])
@@ -245,6 +232,7 @@ double wxStation::get_temperature(temperatureUnits::eTempUnits units)
             break;
         }
     }
+
     return t;
 }
 
@@ -255,12 +243,10 @@ double wxStation::get_temperature(temperatureUnits::eTempUnits units)
  */
 double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
 {
-//    double c = cloudCover[idx];
-//    coverUnits::fromBaseUnits( c, units );
-//    return c;
     double c;
     coverUnits::fromBaseUnits( c, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int i=0;i<datetime.size();i++)
     {
         if (cur==localDateTime[i])
@@ -269,6 +255,7 @@ double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
             break;
         }
     }
+
     return c;
 }
 
@@ -279,13 +266,10 @@ double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
  */
 double wxStation::get_influenceRadius(lengthUnits::eLengthUnits units)
 {
-//    double i = influenceRadius[idx];
-//    lengthUnits::fromBaseUnits( i, units );
-//    return i;
-
     double i;
     lengthUnits::fromBaseUnits( i, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
+
     for (int k=0;k<datetime.size();k++)
     {
         if (cur==localDateTime[k])
@@ -294,6 +278,7 @@ double wxStation::get_influenceRadius(lengthUnits::eLengthUnits units)
             break;
         }
     }
+
     return i;
 }
 
@@ -319,23 +304,25 @@ void wxStation::set_location_projected( double Xord, double Yord,
     projXord = Xord;
     projYord = Yord;
 
-
     if( demFile.empty() || demFile == "" )
-    return;
+        return;
 
     //get llcorner to subtract
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( poDS == NULL ){
-    xord = Xord;
-    yord = Yord;
-    return;
+        xord = Xord;
+        yord = Yord;
+        return;
     }
+
     double adfGeoTransform[6];
+
     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
-    xord = Xord;
-    yord = Yord;
-    return;
+        xord = Xord;
+        yord = Yord;
+        return;
     }
+
     double llx = 0.0;
     double lly = 0.0;
     llx = adfGeoTransform[0];
@@ -373,11 +360,12 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     lat = Lat;
 
     if( demFile.empty() || demFile == "" )
-    return;
+        return;
 
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+
     if( poDS == NULL )
-    return;
+        return;
 
     double projX = lon;
     double projY = lat;
@@ -391,11 +379,14 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     double llx = 0.0;
     double lly = 0.0;
     double adfGeoTransform[6];
-     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
-    xord = projXord;
-    yord = projYord;
-    return;
+
+    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None )
+    {
+        xord = projXord;
+        yord = projYord;
+        return;
     }
+
     llx = adfGeoTransform[0];
     lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
 
@@ -403,11 +394,11 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     yord = projYord - lly;
 
     if( EQUAL( datum, "WGS84" ) )
-    datumType = WGS84;
+        datumType = WGS84;
     else if( EQUAL( datum, "NAD83" ) )
-    datumType = NAD83;
+        datumType = NAD83;
     else if ( EQUAL( datum, "NAD27" ) )
-    datumType = NAD27;
+        datumType = NAD27;
 
     coordType = GEOGCS;
 
@@ -525,12 +516,7 @@ boost::local_time::local_date_time wxStation::get_currentTimeStep()
 
 void wxStation::set_currentTimeStep(boost::local_time::local_date_time step)
 {
-//    cout<<step<<endl;
     curStep.assign(1,step);
-//    cout<<step<<endl;
-//    cout<<curStep[0]<<endl;
-//    cout<<curStep.size()<<endl;
-
 }
 
 bool wxStation::check_station(wxStation station)
@@ -634,22 +620,22 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     hDS = OGROpen(pszFilename, FALSE, NULL);
     int rc = 0;
     if (hDS == NULL) {
-    return -1;
+        return -1;
     }
     OGRLayerH hLayer = NULL;
     hLayer = OGR_DS_GetLayer(hDS, 0);
     if (hLayer == NULL) {
-    rc = -1;
+        rc = -1;
     }
     OGRFeatureDefnH hDefn = NULL;
     hDefn = OGR_L_GetLayerDefn(hLayer);
     if (hDefn == NULL) {
-    rc = -1;
+        rc = -1;
     }
     // If we failed to open or get metadata, bail
     if (rc == -1) {
-    OGR_DS_Destroy(hDS);
-    return -1;
+        OGR_DS_Destroy(hDS);
+        return -1;
     }
 
     /*
@@ -665,19 +651,19 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     assert(rc == 0);
     OGRFieldDefnH hFldDefn = NULL;
     for (i = 0; i < n; i++) {
-    hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
-    if (hFldDefn == NULL) {
-      rc = -1;
-    }
-    if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
-      rc = -1;
-    }
+        hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
+        if (hFldDefn == NULL) {
+            rc = -1;
+        }
+        if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
+            rc = -1;
+        }
     }
 
     // If we failed to get version 1 columns, bail
     if (rc == -1) {
-    OGR_DS_Destroy(hDS);
-    return -1;
+        OGR_DS_Destroy(hDS);
+        return -1;
     }
 
     /*
@@ -688,11 +674,11 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     */
     rc = 1;
     if (OGR_FD_GetFieldCount(hDefn) > n) {
-    if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
-      /* If we silently except version 1 files, return 1 here. */
-      rc = -1;
-    }
-    rc = 2;
+        if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
+            /* If we silently except version 1 files, return 1 here. */
+            rc = -1;
+        }
+        rc = 2;
     }
     OGR_DS_Destroy(hDS);
     return rc;
@@ -711,21 +697,22 @@ const char *const *wxStation::getValidHeader() { return apszValidHeader2; }
 /**Write a csv file with no data, just a header
  * @param outFileName file to write
  */
-void wxStation::writeBlankStationFile(std::string outFileName) {
-  if (outFileName.empty() || outFileName == "") {
-    return;
-  }
-  FILE *fout;
-  fout = fopen(outFileName.c_str(), "w");
-  if (fout == NULL) {
-    return;
-  }
-  int n = CSLCount( (char**)apszValidHeader2 );
-  for (int i = 0; i < n - 1; i++) {
-    fprintf(fout, "\"%s\",", apszValidHeader2[i]);
-  }
-  fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
-  fclose(fout);
+void wxStation::writeBlankStationFile(std::string outFileName)
+{
+    if (outFileName.empty() || outFileName == "") {
+        return;
+    }
+    FILE *fout;
+    fout = fopen(outFileName.c_str(), "w");
+    if (fout == NULL) {
+        return;
+    }
+    int n = CSLCount( (char**)apszValidHeader2 );
+    for (int i = 0; i < n - 1; i++) {
+        fprintf(fout, "\"%s\",", apszValidHeader2[i]);
+    }
+    fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
+    fclose(fout);
 }
 
 /** Write a csv file representing interpolated wxStation data
@@ -749,61 +736,59 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
 
     if (outFileName.substr(outFileName.size()-4,4)==".csv")
     {
-//        cout<<outFileName.substr(0,outFileName.size()-4)<<endl;
         outFileNameMod=outFileName.substr(0,outFileName.size()-4);
     }
     else
     {
         outFileNameMod=outFileName;
     }
-//    cout<<stringStamp.str()<<endl;
     outFileNameStamp=outFileNameMod+"-"+timestream.str()+".csv";
-//    cout<<outFileNameStamp<<endl;
 
     if( outFileNameStamp.empty() || outFileNameStamp == "" )
-    return;
+        return;
     if( StationVect.empty() ) {
-    writeBlankStationFile( outFileNameStamp );
-    return;
+        writeBlankStationFile( outFileNameStamp );
+        return;
     }
 
     FILE *fout;
     fout = fopen( outFileNameStamp.c_str(), "w" );
     if (fout == NULL) {
-      return;
+        return;
     }
     int n = CSLCount((char **)apszValidHeader2);
     for (int i = 0; i < n - 1; i++) {
-      fprintf(fout, "\"%s\",", apszValidHeader2[i]);
+        fprintf(fout, "\"%s\",", apszValidHeader2[i]);
     }
     fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
 
     for( unsigned int i = 0;i < StationVect.size();i++ ) {
-    fprintf( fout, "\"%s\",", StationVect[i].get_stationName().c_str() );
-    fprintf( fout, "\"GEOGCS\"," );
-    fprintf( fout, "\"WGS84\"," );
-    fprintf( fout, "%.10lf,", StationVect[i].get_lat() );
-    fprintf( fout, "%.10lf,", StationVect[i].get_lon() );
-    fprintf( fout, "%.2lf,", StationVect[i].get_height() );
-    fprintf( fout, "\"meters\"," );
-    fprintf( fout, "%.2lf,", StationVect[i].get_speed() );
-    fprintf( fout, "\"mps\"," );
-    fprintf( fout, "%.1lf,", StationVect[i].get_direction() );
-    fprintf( fout, "%.1lf,", StationVect[i].get_temperature() );
-    fprintf( fout, "\"K\"," );
-    fprintf( fout, "%.1lf,", StationVect[i].get_cloudCover() * 100 );
-    if( StationVect[i].get_influenceRadius() < 0.0 )
-        fprintf( fout, "%.2lf,", -1.0 );
-    else
-        fprintf( fout, "%.2lf,", StationVect[i].get_influenceRadius() );
-    fprintf( fout, "\"meters\"," );
-    fprintf( fout, "\"%s\",", timestream.str().c_str() );
+        fprintf( fout, "\"%s\",", StationVect[i].get_stationName().c_str() );
+        fprintf( fout, "\"GEOGCS\"," );
+        fprintf( fout, "\"WGS84\"," );
+        fprintf( fout, "%.10lf,", StationVect[i].get_lat() );
+        fprintf( fout, "%.10lf,", StationVect[i].get_lon() );
+        fprintf( fout, "%.2lf,", StationVect[i].get_height() );
+        fprintf( fout, "\"meters\"," );
+        fprintf( fout, "%.2lf,", StationVect[i].get_speed() );
+        fprintf( fout, "\"mps\"," );
+        fprintf( fout, "%.1lf,", StationVect[i].get_direction() );
+        fprintf( fout, "%.1lf,", StationVect[i].get_temperature() );
+        fprintf( fout, "\"K\"," );
+        fprintf( fout, "%.1lf,", StationVect[i].get_cloudCover() * 100 );
+        if( StationVect[i].get_influenceRadius() < 0.0 )
+            fprintf( fout, "%.2lf,", -1.0 );
+        else
+            fprintf( fout, "%.2lf,", StationVect[i].get_influenceRadius() );
+        fprintf( fout, "\"meters\"," );
+        fprintf( fout, "\"%s\",", timestream.str().c_str() );
 
-    fprintf( fout, "\n" );
+        fprintf( fout, "\n" );
     }
 
     fclose( fout );
 }
+
 /** Write a point kml file for all the weather stations in stations vector.
  * @param stations A vector of wxStationList objects
  * @param outFileName A string for output file
@@ -826,35 +811,36 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
     if (outFileName.substr(outFileName.size()-4,4)==".kml")
     {
-//        cout<<outFileName.substr(0,outFileName.size()-4)<<endl;
         outFileNameMod=outFileName.substr(0,outFileName.size()-4);
     }
     else
     {
         outFileNameMod=outFileName;
     }
-//    cout<<stringStamp.str()<<endl;
+
     outFileNameStamp=outFileNameMod+"-"+timestream.str()+".kml";
-//    cout<<outFileNameStamp<<endl;
-//    exit(1);
+
     if( stations.size() == 0 )
         return;
+
     FILE *fout = fopen( outFileNameStamp.c_str(), "w" );
-    if( fout == NULL ) {
+
+    if( fout == NULL )
+    {
         printf( "Cannot open kml file: %s for writing.", outFileNameStamp.c_str() );
         return;
     }
 
     double heightTemp, speedTemp, directionTemp, ccTemp, temperatureTemp, radOfInflTemp;
 
-
     fprintf( fout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
     fprintf( fout, "<kml>\n" );
     fprintf( fout, "  <Document>\n" );
     fprintf( fout, "    <description>Weather Stations:%s</description>\n",
             outFileNameStamp.c_str() );
-    for( unsigned int i = 0;i < stations.size();i++ ) {
 
+    for( unsigned int i = 0;i < stations.size();i++ )
+    {
         heightTemp = stations[i].get_height();
         speedTemp = stations[i].get_speed();
         directionTemp = stations[i].get_direction();
@@ -884,19 +870,23 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
         fprintf( fout, "        <![CDATA[\n" );
         fprintf( fout, "          Name: %s\n",
                 stations[i].get_stationName().c_str() );
-        fprintf( fout, "          Height: %.2lf %s\n", heightTemp, lengthUnits::getString(stations[i].heightUnits).c_str() );
-        fprintf( fout, "          Speed: %.2lf %s\n", speedTemp, velocityUnits::getString(stations[i].inputSpeedUnits).c_str() );
+        fprintf( fout, "          Height: %.2lf %s\n", heightTemp,
+                lengthUnits::getString(stations[i].heightUnits).c_str() );
+        fprintf( fout, "          Speed: %.2lf %s\n",
+                speedTemp, velocityUnits::getString(stations[i].inputSpeedUnits).c_str() );
         fprintf( fout, "          Direction: %.0lf %s\n",
                 directionTemp, "degrees" );
         fprintf( fout, "          Cloud Cover: %.2lf %s\n",
                 ccTemp, coverUnits::getString(stations[i].cloudCoverUnits).c_str() );
         fprintf( fout, "          Temperature: %.1lf %s\n",
                 temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
+
         if(stations[i].get_influenceRadius() > 0.0)
         {
             fprintf( fout, "          Radius of Influence: %.2lf %s\n",
                     radOfInflTemp, lengthUnits::getString(stations[i].influenceRadiusUnits).c_str() );
-        }else
+        }
+        else
         {
             fprintf( fout, "          Radius of Influence: infinite\n");
         }
@@ -904,6 +894,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
         fprintf( fout, "      </description>\n" );
         fprintf( fout, "    </Placemark>\n" );
     }
+
     fprintf( fout, "  </Document>\n" );
     fprintf( fout, "</kml>\n" );
 
