@@ -28,6 +28,8 @@
  *****************************************************************************/
 #include "wxStation.h"
 
+wxStation::eStationFormat wxStation::stationFormat = invalidFormat;  
+
 wxStation::wxStation()
 {
     initialize();
@@ -597,6 +599,16 @@ bool wxStation::check_station(wxStation station)
 void wxStation::stationViewer(wxStation station)
 {
 
+}
+
+void wxStation::SetStationFormat(eStationFormat format)
+{
+    stationFormat = format;
+}
+
+wxStation::eStationFormat wxStation::GetStationFormat()
+{
+    return stationFormat;
 }
 
 /**
