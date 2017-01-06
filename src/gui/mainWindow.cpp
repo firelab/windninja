@@ -1838,9 +1838,13 @@ int mainWindow::solve()
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
-        //we can only do one run with point
-        nRuns = 1;
-        army->setSize( nRuns, false );
+        /* right now the only option is the old format */
+        wxStation::SetStationFormat(wxStation::oldFormat);
+
+        std::vector<boost::posix_time::ptime> timeList;
+        boost::posix_time::ptime noTime;
+        timeList.push_back(noTime);
+        army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {

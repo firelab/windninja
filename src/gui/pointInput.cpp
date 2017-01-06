@@ -115,56 +115,18 @@ pointInput::~pointInput()
 
 void pointInput::readStationFile()
 {
-    std::vector<wxStation>readStations;
-    pointData.stations.clear();
-    std::vector<vector<string> > temporary;
-
     QString fileName;
     fileName = QFileDialog::getOpenFileName(this, tr("Open station file"),
                                              QFileInfo(stationFileName).path(),
-                                             tr("Comma separated value files (*.csv)"));
+                                              tr("Comma separated value files (*.csv)"));
 
     if(fileName.isEmpty() || demFileName.isEmpty()) {
         return;
     }
-    else {
-        try {
-//            temporary=wxStationList::vectorRead(stationFileName.toStdString(),demFileName.toStdString());
-//            readStations = wxStation::makeWxStation(stationFileName.toStdString(),demFileName.toStdString(),temporary);
-            std::string a="limehouse blues";
-            vector<string> chicago;
-            chicago.push_back(a);
-            wxStation bb;
-            bb.set_stationName("temp!");
-            readStations.push_back(bb);
 
-
-
-            //this is a temporary fix, I have no idea what this class is (pointInput)
-            //the above code is absolutely wrong but works for now, nothing outside of the interpolate functions
-            //and stuff should never touch wxStationList, it needs to access the interpoalted wxStation Data, which comes from PI.
-        }
-        catch(std::domain_error &e) {
-            QMessageBox::warning(this, tr("WindNinja"), tr(e.what()),
-                                 QMessageBox::Ok);
-            stationFileLineEdit->clear();
-            return;
-        }
-        catch( std::runtime_error &e ) {
-            QMessageBox::warning(this, tr("WindNinja"), tr(e.what()),
-                                 QMessageBox::Ok);
-            stationFileLineEdit->clear();
-            return;
-        }
-    }
-    if(!readStations.empty()) {
-    for(unsigned int i = 0;i < readStations.size();i++)
-        pointData.stations.push_back(readStations[i]);
-    }
     stationFileName = fileName;
     stationFileLineEdit->setText(QFileInfo(fileName).fileName());
     emit stationFileChanged();
-    pointData.update();
 }
 
 void pointInput::writeStationFile()
