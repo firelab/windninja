@@ -148,12 +148,13 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
 {
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
-    stationList=pointInitialization::interpolateFromDisk(stationFileName, demFile, timeList, timeZone);
+    //interpolate raw data to actual time steps 
+    stationList = pointInitialization::interpolateFromDisk(stationFileName, demFile, timeList, timeZone);
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
     {
-        ninjas[i]=new ninja();
+        ninjas[i] = new ninja();
     }
 
     boost::local_time::tz_database tz_db;
@@ -163,13 +164,12 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
 
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
     boost::local_time::local_date_time localStandard(standard, timeZonePtr);
-
     vector<boost::local_time::local_date_time> localTimeList;
+
     for(unsigned int i = 0; i<timeList.size(); i++)
     {
-        boost::posix_time::ptime aGlobal=timeList[i];
+        boost::posix_time::ptime aGlobal = timeList[i];
         boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
-
         localTimeList.push_back(aLocal);
     }
 
