@@ -48,23 +48,23 @@ wxStation::wxStation( wxStation const& m )
     projYord = m.projYord;
     xord = m.xord;
     yord = m.yord;
-    height = m.height;
+    heightList = m.heightList;
     heightUnits = m.heightUnits;
-    speed = m.speed;
+    speedList = m.speedList;
     inputSpeedUnits = m.inputSpeedUnits;
-    direction = m.direction;
+    directionList = m.directionList;
     w_speed = m.w_speed;
     w_speedUnits = m.w_speedUnits;
-    temperature = m.temperature;
+    temperatureList = m.temperatureList;
     tempUnits = m.tempUnits;
-    cloudCover = m.cloudCover;
+    cloudCoverList = m.cloudCoverList;
     cloudCoverUnits = m.cloudCoverUnits;
-    influenceRadius = m.influenceRadius;
+    influenceRadiusList = m.influenceRadiusList;
     influenceRadiusUnits = m.influenceRadiusUnits;
     datumType = m.datumType;
     coordType = m.coordType;
-    datetime = m.datetime;
-    localDateTime=m.localDateTime;
+    datetimeList = m.datetimeList;
+    localDateTimeList=m.localDateTimeList;
     curStep=m.curStep;
 
 }
@@ -84,23 +84,23 @@ wxStation& wxStation::operator= ( wxStation const& m )
         projYord = m.projYord;
         xord = m.xord;
         yord = m.yord;
-        height = m.height;
+        heightList = m.heightList;
         heightUnits = m.heightUnits;
-        speed = m.speed;
+        speedList = m.speedList;
         inputSpeedUnits = m.inputSpeedUnits;
-        direction = m.direction;
+        directionList = m.directionList;
         w_speed = m.w_speed;
         w_speedUnits = m.w_speedUnits;
-        temperature = m.temperature;
+        temperatureList = m.temperatureList;
         tempUnits = m.tempUnits;
-        cloudCover = m.cloudCover;
+        cloudCoverList = m.cloudCoverList;
         cloudCoverUnits = m.cloudCoverUnits;
-        influenceRadius = m.influenceRadius;
+        influenceRadiusList = m.influenceRadiusList;
         influenceRadiusUnits = m.influenceRadiusUnits;
         datumType = m.datumType;
         coordType = m.coordType;
-        datetime =m.datetime;
-        localDateTime=m.localDateTime;
+        datetimeList =m.datetimeList;
+        localDateTimeList=m.localDateTimeList;
         curStep=m.curStep;
     }
     return *this;
@@ -120,24 +120,15 @@ void wxStation::initialize()
     lat = lon = 0.0;
     datumType = wxStation::WGS84;
     coordType = wxStation::GEOGCS;
-    height = zero;
     heightUnits = lengthUnits::meters;
-    speed = zero;
     inputSpeedUnits = velocityUnits::metersPerSecond;
-    direction = zero;
     w_speed = 0.0;
     w_speedUnits = velocityUnits::metersPerSecond;
-    temperature = zero;
     tempUnits = temperatureUnits::K;
-    cloudCover = zero;
     cloudCoverUnits = coverUnits::fraction;
-    influenceRadius = zero;
     influenceRadiusUnits = lengthUnits::meters;
     datumType = WGS84;
     coordType = GEOGCS;
-    datetime;
-    localDateTime;
-    curStep;
 }
 
 /**
@@ -151,11 +142,11 @@ double wxStation::get_height(lengthUnits::eLengthUnits units)
     lengthUnits::fromBaseUnits( h, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int i=0;i<datetime.size();i++)
+    for (int i=0;i<datetimeList.size();i++)
     {
-        if (cur==localDateTime[i])
+        if (cur==localDateTimeList[i])
         {
-            h=height[i];
+            h=heightList[i];
             break;
         }
     }
@@ -174,11 +165,11 @@ double wxStation::get_speed(velocityUnits::eVelocityUnits units)
     velocityUnits::fromBaseUnits( s, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int i=0;i<datetime.size();i++)
+    for (int i=0;i<datetimeList.size();i++)
     {
-        if (cur==localDateTime[i])
+        if (cur==localDateTimeList[i])
         {
-            s=speed[i];
+            s=speedList[i];
             break;
         }
     }
@@ -191,11 +182,11 @@ double wxStation::get_direction()
     double d;
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int i=0;i<datetime.size();i++)
+    for (int i=0;i<datetimeList.size();i++)
     {
-        if (cur==localDateTime[i])
+        if (cur==localDateTimeList[i])
         {
-            d=direction[i];
+            d=directionList[i];
             break;
         }
     }
@@ -226,11 +217,11 @@ double wxStation::get_temperature(temperatureUnits::eTempUnits units)
     temperatureUnits::fromBaseUnits( t, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int i=0;i<datetime.size();i++)
+    for (int i=0;i<datetimeList.size();i++)
     {
-        if (cur==localDateTime[i])
+        if (cur==localDateTimeList[i])
         {
-            t=temperature[i];
+            t=temperatureList[i];
             break;
         }
     }
@@ -249,11 +240,11 @@ double wxStation::get_cloudCover(coverUnits::eCoverUnits units)
     coverUnits::fromBaseUnits( c, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int i=0;i<datetime.size();i++)
+    for (int i=0;i<datetimeList.size();i++)
     {
-        if (cur==localDateTime[i])
+        if (cur==localDateTimeList[i])
         {
-            c=cloudCover[i];
+            c=cloudCoverList[i];
             break;
         }
     }
@@ -272,11 +263,11 @@ double wxStation::get_influenceRadius(lengthUnits::eLengthUnits units)
     lengthUnits::fromBaseUnits( i, units );
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
-    for (int k=0;k<datetime.size();k++)
+    for (int k=0;k<datetimeList.size();k++)
     {
-        if (cur==localDateTime[k])
+        if (cur==localDateTimeList[k])
         {
-            i=influenceRadius[k];
+            i=influenceRadiusList[k];
             break;
         }
     }
@@ -416,7 +407,7 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
 void wxStation::set_height( double Height, lengthUnits::eLengthUnits units )
 {
     lengthUnits::toBaseUnits( Height, units );
-    height.push_back(Height);
+    heightList.push_back(Height);
     heightUnits = units;
 }
 
@@ -429,13 +420,13 @@ void wxStation::set_height( double Height, lengthUnits::eLengthUnits units )
 void wxStation::set_speed( double Speed, velocityUnits::eVelocityUnits units )
 {
     velocityUnits::toBaseUnits( Speed, units );
-    speed.push_back(Speed);
+    speedList.push_back(Speed);
     inputSpeedUnits = units;
 }
 
 void wxStation::set_direction( double Direction )
 {
-    direction.push_back(Direction);
+    directionList.push_back(Direction);
 }
 
 void wxStation::set_w_speed( double W_Speed, velocityUnits::eVelocityUnits units )
@@ -449,7 +440,7 @@ void wxStation::set_temperature( double Temperature,
                  temperatureUnits::eTempUnits units )
 {
     temperatureUnits::toBaseUnits( Temperature, units );
-    temperature.push_back(Temperature);
+    temperatureList.push_back(Temperature);
     tempUnits = units;
 }
 
@@ -457,7 +448,7 @@ void wxStation::set_cloudCover( double CloudCover,
                 coverUnits::eCoverUnits units )
 {
     coverUnits::toBaseUnits( CloudCover, units );
-    cloudCover.push_back(CloudCover);
+    cloudCoverList.push_back(CloudCover);
     cloudCoverUnits = units;
 }
 
@@ -465,47 +456,47 @@ void wxStation::set_influenceRadius( double InfluenceRadius,
                      lengthUnits::eLengthUnits units )
 {
     lengthUnits::toBaseUnits( InfluenceRadius, units );
-    influenceRadius.push_back(InfluenceRadius);
+    influenceRadiusList.push_back(InfluenceRadius);
     influenceRadiusUnits = units;
 }
 
 void wxStation::set_datetime(boost::posix_time::ptime timedata)
 {
-    datetime.push_back(timedata);
+    datetimeList.push_back(timedata);
 }
 
 boost::posix_time::ptime wxStation::get_datetime(int idx)
 {
-    boost::posix_time::ptime time=datetime[idx];
+    boost::posix_time::ptime time=datetimeList[idx];
     return time;
 }
 
 void wxStation::set_localDateTime(boost::local_time::local_date_time timedata)
 {
-    localDateTime.push_back(timedata);
+    localDateTimeList.push_back(timedata);
 }
 
 void wxStation::update_direction(double Direction, int index)// Used for Match Points
 {
-    direction[index]=Direction;
+    directionList[index]=Direction;
 }
 
 void wxStation::update_speed(double Speed, velocityUnits::eVelocityUnits units, int index)// Used for Match Points
 {
     velocityUnits::toBaseUnits( Speed, units );
-    speed[index]=Speed;
+    speedList[index]=Speed;
     inputSpeedUnits = units;
 }
 
 int wxStation::get_listSize()
 {
-    int size=speed.size();
+    int size=speedList.size();
     return size;
 }
 
 boost::local_time::local_date_time wxStation::get_localDateTime(int idx)
 {
-    boost::local_time::local_date_time time=localDateTime[idx];
+    boost::local_time::local_date_time time=localDateTimeList[idx];
     return time;
 }
 
@@ -549,36 +540,36 @@ bool wxStation::check_station(wxStation station)
         return false;
     }
 
-    for (int i=0;i<station.height.size();i++)
+    for (int i=0;i<station.heightList.size();i++)
     {
-        if(station.height[i] < 0.0)
+        if(station.heightList[i] < 0.0)
         {
             cout<<"failed height Check on "<<i<<endl;
-            cout<<station.height[i]<<endl;
+            cout<<station.heightList[i]<<endl;
             return false;
         }
-        if(station.speed[i] < 0.0)
+        if(station.speedList[i] < 0.0)
         {
             cout<<"failed speed Check on "<<i<<endl;
-            cout<<station.speed[i]<<endl;
+            cout<<station.speedList[i]<<endl;
             return false;
         }
-        if(station.direction[i] < 0.0 || station.direction[i] > 360.0)
+        if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0)
         {
             cout<<"failed direction Check on "<<i<<endl;
-            cout<<station.direction[i]<<endl;
+            cout<<station.directionList[i]<<endl;
             return false;
         }
-        if(station.temperature[i]< 173.15 || station.temperature[i] > 330.00)
+        if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00)
         {
             cout<<"failed temperature Check on "<<i<<endl;
-            cout<<station.temperature[i]<<endl;
+            cout<<station.temperatureList[i]<<endl;
             return false;
         }
-        if(station.cloudCover[i]<0.0||station.cloudCover[i]>1.10)
+        if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10)
         {
             cout<<"failed cloud check on "<<i<<endl;
-            cout<<station.cloudCover[i]<<endl;
+            cout<<station.cloudCoverList[i]<<endl;
             return false;
         }
     }

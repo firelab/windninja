@@ -1108,7 +1108,7 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
     for (int i=0;i<refinedDat.size();i++)
     {
-        refinedDat[i].datetime.assign(1,standard);
+        refinedDat[i].datetimeList.assign(1,standard);
 //        cout<<refinedDat[i].get_datetime(0)<<endl;
     }
 

@@ -58,7 +58,6 @@
 
 #include "iostream"
 #include "numeric"
-#include "wxStation.h"
 
 static const char *apszValidHeader1[] = {
     "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
@@ -89,6 +88,7 @@ class wxStation
 
     enum eCoordType { PROJCS, GEOGCS };
     enum eDatumType { WGS84, NAD83, NAD27 };
+    enum eStationFormat{ oldFormat, newFormat, invalidFormat };
 
     static bool check_station(wxStation station);
 
@@ -152,9 +152,6 @@ class wxStation
     static void writeStationFile( std::vector<wxStation> StationVect,
                   const std::string outFileName );
     static void writeBlankStationFile( std::string outFileName );
-    boost::posix_time::ptime a;
-
-    enum eStationFormat{ oldFormat, newFormat, invalidFormat };
 
     static int GetHeaderVersion(const char *pszFilename);
     static void SetStationFormat(eStationFormat format);
@@ -162,9 +159,8 @@ class wxStation
 
     static eStationFormat stationFormat;
 
- private:
 
-    vector<double> zero;
+ private:
 
     std::string stationName;
     double lat, lon;           //latitude and longitude
@@ -172,14 +168,18 @@ class wxStation
     double projYord;	       //y-coordinate of station (in projected coordinate system)
     double xord;	       //x-cordinate of station (in ninja coordinate system)
     double yord;	       //y-cordinate of station (in ninja coordinate system)
-    vector<double> height;	       //in m (above vegetation)
-    vector<double> speed;	       //in m/s (value < 0 indicates no value available)
-    vector<double> direction;	       //in degrees from north
-    double w_speed;	       //vertical velocity in m/s
-    vector<double> temperature;	       //in K (value < -1000 indicates no value available)
-    vector<double> cloudCover;	       //in fractions of cloud cover (0-1) (value < 0 indicates no value available)
-    vector<double> influenceRadius;    //maximum radius that the station is used for during interpolation (m)
+
+    //data are stored as vectors, each entry is a time step
+    vector<double> heightList;	       //in m (above vegetation)
+    vector<double> speedList;	       //in m/s (value < 0 indicates no value available)
+    vector<double> directionList;	       //in degrees from north
+    vector<double> temperatureList;	       //in K (value < -1000 indicates no value available)
+    vector<double> cloudCoverList;	       //in fractions of cloud cover (0-1) (value < 0 indicates no value available)
     // *Note: Value < 0 is a flag indicating influence radius is infinity (ie. influences everything)
+    vector<double> influenceRadiusList;    //maximum radius that the station is used for during interpolation (m)
+
+    double w_speed;	       //vertical velocity in m/s
+
     //Unit enums
     lengthUnits::eLengthUnits heightUnits;
     velocityUnits::eVelocityUnits inputSpeedUnits;
@@ -191,9 +191,9 @@ class wxStation
     eCoordType coordType;
     vector<boost::local_time::local_date_time> curStep;
 
-
-    vector<boost::posix_time::ptime> datetime; //this is UTC and is used to match data points from MesoWest and Interpolation.
-    vector<boost::local_time::local_date_time> localDateTime;
+    //this is UTC and is used to match data points from MesoWest and Interpolation.
+    vector<boost::posix_time::ptime> datetimeList; 
+    vector<boost::local_time::local_date_time> localDateTimeList;
 
     friend class Stability;
     friend class pointInitialization;
