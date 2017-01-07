@@ -3914,240 +3914,7 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     cout<<"WxData URL: "<<endl;
     cout<<URL<<endl;
 
-    std::string csvName;
-    if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
-    {
-        csvName=stationFilename;
-        cout<<".csv exists in stationFilename..."<<endl;
-    }
-    else
-    {
-        csvName=stationFilename+".csv";
-        cout<<"Adding .csv to stationFilename..."<<endl;
-    }
-
-    OGRDataSourceH hDS;
-    OGRLayerH hLayer;
-    OGRFeatureH hFeature;
-
-    hDS=OGROpen(URL.c_str(), 0, NULL);
-    CPLGetLastErrorMsg();
-    if (hDS==NULL)
-    {
-        cout<<URL<<endl;
-        printf("OGROpen could not read file\n try running again ");
-        cout<<"if persists: check URL, possibly no stations exist for given parameters."<<endl;
-        cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
-        throw std::runtime_error("OGROpen could not read file\nif persists:check URL, possibly not stations\nexist for given parameters,\nIf ERROR is HTTP, check internet connection and server status.");
-        return false;
-    }
-
-    hLayer=OGR_DS_GetLayer(hDS,0);
-    OGR_L_ResetReading(hLayer);
-
-    int idx=0;
-    int idx1=0;
-    int idx2=0;
-    int idx3=0;
-    int idx4=0;
-    int idx5=0;
-    int idx6=0;
-    int idx7=0;
-    int idx8=0;
-    int idx9=0;
-    int idx10=0;
-    int idx11=0;
-    int idx12=0;
-    int idx13=0;
-    int idx14=0;
-    int idx15=0;
-    int idx16=0;
-
-    vector<int> mnetid;
-
-    int idxx1=0;
-    int idxx2=0;
-    int idxx3=0;
-    const double *cloudlow;
-    const double *cloudmed;
-    const double *cloudhigh;
-
-    const double* rawsWind;
-    const double* rawsDir;
-    const double* rawsSolrad;
-    const double* rawsTemp;
-    double rawsLatitude;
-    double rawsLongitude;
-    const char* rawsStation;
-    char** rawsDateTime;
-
-    const double* metarWind;
-    const double* metarDir;
-    const double* metarTemp;
-    double metarLatitude;
-    double  metarLongitude;
-    const char* metarStation;
-    char** metarDateTime;
-
-    int fCount=OGR_L_GetFeatureCount(hLayer,1);
-
-    ofstream outFile;//writing to csv
-    outFile.open(csvName.c_str());
-    cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
-    cout<<"Downloading Data from MesoWest...."<<endl;
-    std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
-    outFile<<header<<endl;
-    
-    for (int ex=0;ex<fCount;ex++)
-    {
-        hFeature=OGR_L_GetFeature(hLayer,ex);
-
-        idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-        mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
-        if (mnetid[ex]==1) //METAR station uses cloud data
-        {
-            int count1=0;
-            int count2=0;
-            int count3=0;
-            int count4=0;
-            int countxx1=0;
-            int countxx2=0;
-            int countxx3=0;
-
-            idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-            metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
-
-            idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-            metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
-
-            idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-            metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
-
-            idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-            cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
-
-            idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-            cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
-
-            idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-            cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
-
-            idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-            metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
-
-            idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-            metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
-
-            idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-            metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
-
-            idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-            metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-            vector<std::string>cloudkappa;
-            cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-            vector<std::string>metarWindDirection;
-            vector<std::string>metarTemperature;
-            metarWindDirection=fixWindDir(metarDir,"0",count1);
-            metarTemperature=fixWindDir(metarTemp,"-9999",count1);
-            if (latest==true)
-            {
-                count1=1;
-                int ez=0;
-
-                 outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km"<<endl;
-
-            }
-            else
-            {
-                for(int ez=0;ez<count1;ez++)
-                {
-                 outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
-                }
-            }
-        }
-
-        if (mnetid[ex]==2) //RAWS STATION, solar radiation
-        {
-            int count9=0;
-            int count10=0;
-            int count11=0;
-            int count12=0;
-
-            idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-            rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
-
-            idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-            rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
-
-            idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-            rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
-
-            idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-            rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
-
-            idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-            rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
-
-            idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-            rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
-
-            idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-            rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
-
-            idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-            rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
-
-            int aZero;
-            aZero=0;
-            std::string baddata="-9999";
-            vector<string>rawsWindDirection;
-            rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-            vector<double> rawsCloudCover;
-            rawsCloudCover=Irradiate(rawsSolrad,1,count12,timeZone,rawsLatitude,rawsLatitude,rawsDateTime);
-            if (latest==true)
-            {
-                count9=1;
-                int ez=0;
-
-                if (rawsCloudCover.size()==aZero)
-                {
-
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km"<<endl;
-                }
-                else
-                {
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km"<<endl;
-                }
-
-            }
-            else
-            {
-                for (int ez=0;ez<count9;ez++)
-                {
-                    if (rawsCloudCover.size()==aZero)
-                    {
-
-                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                    }
-                    else
-                    {
-                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                    }
-
-                }
-            }
-        }
-    }
-    cout<<"Data downloaded and saved...."<<endl;
-    OGR_DS_Destroy(poDS);
-    OGR_DS_Destroy(hDS);
-    delete cloudhigh;
-    delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
-    delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
-
-    cout<<"Fetch Station returned true: "<<true<<endl;
+    fetchStationData(stationFilename, URL, timeZone, latest);
 
     return true;
 }
@@ -4173,6 +3940,15 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
                 timeUTC[6],timeUTC[7]);
 
     }
+
+    fetchStationData(stationFilename, URL, timeZone, latest);
+
+    return true;
+}
+
+void pointInitialization::fetchStationData(std::string stationFilename, std::string URL,
+                                std::string timeZone, bool latest)
+{
     std::string csvName;
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
     {
@@ -4199,7 +3975,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
         cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
         cout<<false<<endl;
         throw std::runtime_error("OGROpen could not read file\nif persists:check URL, possibly not stations\nexist for given parameters,\nIf ERROR is HTTP, check internet connection and server status.");
-        return false;
     }
 
     hLayer=OGR_DS_GetLayer(hDS,0);
@@ -4406,10 +4181,7 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
 
     cout<<"Fetch Station returned true: "<<true<<endl;
-
-    return true;
 }
-
 
 //FOR TESTING MW LATEST!!!
 void pointInitialization::fetchTest(std::string stationFilename,

@@ -197,7 +197,8 @@ class pointInitialization : public initialize
                 static std::string BuildBboxLatest(std::string lat1, std::string lon1, std::string lat2, std::string lon2);
                 static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 static std::string BuildUnifiedLTBbox(double lat,double lon1, double lat2, double lon2);
-
+                static void fetchStationData(std::string stationFilename, std::string URL,
+                                    std::string timeZone, bool latest);
 
                 double dfInvDistWeight;
 
