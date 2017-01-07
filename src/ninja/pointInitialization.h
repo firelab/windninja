@@ -126,13 +126,6 @@ class pointInitialization : public initialize
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);
-        void stationCliCaller(bool station_fetch, std::string station_id, int nHours, bool btype,std::string fetcher,std::string radius, std::string limit, std::string pLat, std::string pLon, std::string LLLat, std::string LLLon, std::string URLat, std::string URLon , std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-//        void fetchSingleStation(std::string token,bool type,int nHours, std::string station_id, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-//        void fetchTest(std::string station_id, int nHours, string svar);
-//        void fetchMultiStation(std::string token,bool type,int nHours, std::string station_ids, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-//        void fetchPointRadiusStation(std::string token,bool type,int nHours, std::string station_id,std::string radius, std::string limit, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-//        void fetchLatLonStation(std::string token, bool type,int nHours, std::string lat, std::string lon, std::string radius, std::string limit, std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
-//        void fetchBboxStation(std::string token,bool type,int nHours,std::string lat1,std::string lon1,std::string lat2,std::string lon2,std::string svar,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         
         void fetchSingleStation(bool type,int nHours, std::string station_id,std::string yeara,std::string montha, std::string daya,std::string clocka,std::string yearb,std::string monthb,std::string dayb,std::string clockb);
         static void fetchTest(std::string stationFilename,

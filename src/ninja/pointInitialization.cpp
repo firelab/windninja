@@ -1126,9 +1126,6 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
  * @param timeList: the desired time and steps
  *
  */
-
-
-
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data..."<<endl;
@@ -1136,35 +1133,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     boost::posix_time::ptime tempq;
     boost::posix_time::ptime init;
 
-
-//    cout<<qq<<endl;
-
-
-
-
     vector<vector<preInterpolate> > Selectify;
 
-
-
-//    cout<<"timeList"<<endl;
-//    for( int i=0;i<timeList.size();i++)
-//    {
-//        cout<<timeList[i]<<endl;
-//    }
-//    cout<<timeList.size()<<endl;
-//    cout<<"vecStation[0]"<<endl;
-//    for (int i=0;i<qq;i++)
-//    {
-//        cout<<input.vecStations[0][i].get_datetime()<<endl;
-//    }
-//    cout<<qq<<endl;
-
-//    cout<<"station[0] first step: "<<input.vecStations[0][0].get_datetime()<<endl;
-//    tempq=input.vecStations[0][1].get_datetime();
-//    init=timeList[1];
-//    cout<<"timelist[0]: "<<timeList[0]<<endl;
-
-//    boost::posix_time::time_duration buffer(1,0,0,0);
     boost::posix_time::time_duration zero(0,0,0,0);
     boost::posix_time::time_duration max(48,0,0,0);
     boost::posix_time::time_duration one(0,1,0,0);
@@ -1172,475 +1142,301 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     boost::posix_time::time_duration buffer;
     boost::posix_time::time_duration avgBuffer;
     vector<boost::posix_time::time_duration> avgBufferList;
-
     boost::posix_time::time_duration bufferSum;
 
-//    buffer=init-tempq;
-int totalsize=vecStations.size();
+    int totalsize=vecStations.size();
 
-
-//Creates a vector of time buffers to be used to interpolate the raw data with the timeList
-for (int j=0;j<totalsize;j++)
-{
-    vector<boost::posix_time::time_duration> buffers;
-    for (int i=0;i<vecStations[j].size();i++)
+    //Creates a vector of time buffers to be used to interpolate the raw data with the timeList
+    for (int j=0;j<totalsize;j++)
     {
-        buffer=vecStations[j][i].datetime-vecStations[j][i+1].datetime;
-        if (buffer<=zero)
+        vector<boost::posix_time::time_duration> buffers;
+        for (int i=0;i<vecStations[j].size();i++)
         {
-            buffer=buffer.invert_sign();
-        }
-        if (buffer>=max)
-        {
-            buffer=buffers[0];
-        }
-//        cout<<buffer<<endl;
-        buffers.push_back(buffer);
-
-    }
-    //cout<<buffers.size()<<endl;
-    bufferSum=std::accumulate(buffers.begin(),buffers.end(),zero);
-    //cout<<bufferSum<<endl;
-
-    avgBuffer=bufferSum/buffers.size();
-
-//    cout<<avgBuffer<<endl;
-    avgBufferList.push_back(avgBuffer);
-}
-
-
-
-
-////cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-////int k=1;
-////for (int j=0;j<timeList.size();j++)
-////{
-////    int qq;
-////    qq=vecStations[k].size();
-////    boost::posix_time::ptime comparator;
-////    comparator=timeList[j];
-////    int counter=0;
-
-////    cout<<"goal: "<<comparator<<endl;
-
-////    for (int i=0;i<qq;i++)
-////    {
-////        boost::posix_time::time_duration difference;
-////        difference=comparator-vecStations[k][i].get_datetime();
-////        if (difference<=zero)
-////        {
-////            difference=difference.invert_sign();
-////        }
-////        if (difference<=avgBufferList[k])
-////        {
-////            counter++;
-
-////            if (counter>2)
-////            {
-////    //                    cout<<"false"<<" "<<counter<<endl;
-////                continue;
-////            }
-
-////    //                cout<<"true"<<" "<<counter<<endl;
-////            cout<<difference<<endl;
-////            cout<<vecStations[k][i].get_datetime()<<endl;
-////            continue;
-////        }
-////        if (difference<=avgBufferList[k]+one && counter<2)
-////        {
-////            cout<<difference<<endl;
-////            cout<<vecStations[k][i].get_datetime()<<endl;
-////            counter++;
-////            continue;
-////        }
-////        if (difference>avgBufferList[k])
-////        {
-////    //                cout<<"false"<<endl;
-////        }
-
-
-////    }
-////    cout<<" "<<endl;
-////}
-
-////cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-
-for (int k=0;k<totalsize;k++)
-{
-    int timesize=0;
-    vector<preInterpolate> subSelectify;
-    int qq;
-    qq=vecStations[k].size();
-//    cout<<avgBufferList[k]<<endl;
-
-    for (int j=0;j<timeList.size();j++)
-    {
-        boost::posix_time::ptime comparator; //robespierre
-        comparator=timeList[j];
-
-
-        int counter=0;
-        for (int i=0;i<qq;i++)
-        {
-
-            boost::posix_time::time_duration difference;
-            difference=comparator-vecStations[k][i].datetime;
-            if (difference<=zero)
+            buffer=vecStations[j][i].datetime-vecStations[j][i+1].datetime;
+            if (buffer<=zero)
             {
-                difference=difference.invert_sign();
+                buffer=buffer.invert_sign();
             }
-            if (difference<=avgBufferList[k])
+            if (buffer>=max)
             {
-                counter++;
+                buffer=buffers[0];
+            }
+            buffers.push_back(buffer);
+        }
 
-                if (counter>2)
+        bufferSum=std::accumulate(buffers.begin(),buffers.end(),zero);
+        avgBuffer=bufferSum/buffers.size();
+        avgBufferList.push_back(avgBuffer);
+    }
+
+    for (int k=0;k<totalsize;k++)
+    {
+        int timesize=0;
+        vector<preInterpolate> subSelectify;
+        int qq;
+        qq=vecStations[k].size();
+
+        for (int j=0;j<timeList.size();j++)
+        {
+            boost::posix_time::ptime comparator; //robespierre
+            comparator=timeList[j];
+
+            int counter=0;
+            for (int i=0;i<qq;i++)
+            {
+                boost::posix_time::time_duration difference;
+                difference=comparator-vecStations[k][i].datetime;
+                if (difference<=zero)
                 {
-//                    cout<<"false"<<" "<<counter<<endl;
+                    difference=difference.invert_sign();
+                }
+                if (difference<=avgBufferList[k])
+                {
+                    counter++;
+
+                    if (counter>2)
+                    {
+                        continue;
+                    }
+
+                    subSelectify.push_back(vecStations[k][i]);
                     continue;
                 }
-
-//                cout<<"true"<<" "<<counter<<endl;
-//                cout<<difference<<endl;
-//                cout<<vecStations[k][i].get_datetime()<<endl;
-                subSelectify.push_back(vecStations[k][i]);
-                continue;
+                if (difference<=avgBufferList[k]+one && counter<2)
+                {
+                    subSelectify.push_back(vecStations[k][i]);
+                    counter++;
+                    continue;
+                }
             }
-            if (difference<=avgBufferList[k]+one && counter<2)
+
+            timesize++;
+        }
+
+        Selectify.push_back(subSelectify);
+    }
+
+    cout<<"Time data Interpolated...\n"<<"Temporally Interpolating wx Data..."<<endl;
+
+    vector<vector<preInterpolate> > lowVec;
+    vector<vector<preInterpolate> > highVec;
+
+    for (int j=0;j<Selectify.size();j++)
+    {
+        vector<preInterpolate> lowStations;
+        vector<preInterpolate> highstations;
+
+        for (int i=0;i<Selectify[j].size();i+=2)
+        {
+              lowStations.push_back(Selectify[j][i]);
+        }
+
+        for (int k=1;k<Selectify[j].size();k+=2)
+        {
+            highstations.push_back(Selectify[j][k]);
+        }
+
+        lowVec.push_back(lowStations);
+        highVec.push_back(highstations);
+
+    }
+
+    //SETTING WX TIMELIST
+    vector<vector<preInterpolate> > interpolatedWxData;
+    for (int ey=0;ey<Selectify.size();ey++)
+    {
+        vector<preInterpolate> subInter;
+        for (int ex=0;ex<timeList.size();ex++)
+        {
+            preInterpolate timeStorage;
+            timeStorage.datetime=timeList[ex];
+            subInter.push_back(timeStorage);
+        }
+        interpolatedWxData.push_back(subInter);
+    }
+
+    //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
+    for (int k=0;k<Selectify.size();k++)
+    {
+        double latitude;
+        double longitude;
+        double height;
+        double radiusInfluence;
+        std::string datum;
+        std::string coord;
+        std::string stationName;
+
+        latitude=vecStations[k][0].lat;
+        longitude=vecStations[k][0].lon;
+        height=vecStations[k][0].height;
+        radiusInfluence=vecStations[k][0].influenceRadius;
+        datum=vecStations[k][0].datumType;
+        coord=vecStations[k][0].coordType;
+        const char* newdatum="WGS84";
+        stationName=vecStations[k][0].stationName;
+
+        std::string demfile=demFileName;
+
+        for (int i=0;i<timeList.size();i++)
+        {
+            interpolatedWxData[k][i].lat=latitude;
+            interpolatedWxData[k][i].lon=longitude;
+            interpolatedWxData[k][i].datumType=datum;
+            interpolatedWxData[k][i].coordType=coord;
+            interpolatedWxData[k][i].height=height;
+            interpolatedWxData[k][i].heightUnits=lengthUnits::meters;
+            interpolatedWxData[k][i].influenceRadius=radiusInfluence;
+            interpolatedWxData[k][i].influenceRadiusUnits=lengthUnits::meters;
+            interpolatedWxData[k][i].stationName=stationName;
+        }
+    }
+
+    //INTERPOLATING WIND SPEED
+    for (int k=0;k<Selectify.size();k++)
+    {
+        for (int i=0;i<timeList.size();i++)
+        {
+            double low;
+            double high;
+            double inter;
+
+            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
+            boost::posix_time::ptime pInter=timeList[i];
+
+            low=unixTime(pLow);
+            high=unixTime(pHigh);
+            inter=unixTime(pInter);
+
+            double speed1;
+            double speed2;
+            double speedI;
+
+            speed1=lowVec[k][i].speed;
+            speed2=highVec[k][i].speed;
+
+            speedI=interpolator(inter,low,high,speed1,speed2);
+
+            if (speedI>113.000)
             {
-//                cout<<difference<<endl;
-//                cout<<vecStations[k][i].get_datetime()<<endl;
-                subSelectify.push_back(vecStations[k][i]);
-                counter++;
-                continue;
+                speedI=speed1;
+
             }
-            if (difference>avgBufferList[k])
+
+            interpolatedWxData[k][i].speed=speedI;
+            interpolatedWxData[k][i].inputSpeedUnits=vecStations[k][0].inputSpeedUnits;
+        }
+    }
+
+    //INTERPOLATING WIND DIRECITON
+    for (int k=0;k<Selectify.size();k++)
+    {
+        for (int i=0;i<timeList.size();i++)
+        {
+            double lowDir;
+            double highDir;
+            double interDir;
+
+            lowDir=lowVec[k][i].direction;
+            highDir=highVec[k][i].direction;
+
+            interDir=interpolateDirection(lowDir,highDir);
+            interpolatedWxData[k][i].direction=interDir;
+        }
+    }
+
+    //INTERPOLATING TEMPERATURE
+    for (int k=0;k<Selectify.size();k++)
+    {
+        for (int i=0;i<timeList.size();i++)
+        {
+            double low;
+            double high;
+            double inter;
+
+            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
+            boost::posix_time::ptime pInter=timeList[i];
+
+            low=unixTime(pLow);
+            high=unixTime(pHigh);
+            inter=unixTime(pInter);
+
+            double lowTemp;
+            double highTemp;
+            double interTemp;
+
+            lowTemp=lowVec[k][i].temperature;
+            highTemp=highVec[k][i].temperature;
+            interTemp=interpolator(inter,low,high,lowTemp,highTemp);
+
+            if (interTemp>57.0)
             {
-//                cout<<"false"<<endl;
+                interTemp=highTemp;
+                if (interTemp>57.0)
+                {
+                    interTemp=lowTemp;
+                }
+                if (interTemp>57.0)
+                {
+                    interTemp=25;
+                }
             }
 
+            interpolatedWxData[k][i].temperature=interTemp;
+            interpolatedWxData[k][i].tempUnits=vecStations[k][0].tempUnits;
         }
-//        cout<<subSelectify.size()<<endl;
-
-//        cout<<"moving to next timeList[j] \n\n"<<endl;
-        timesize++;
-
-    }
-//    cout<<timesize<<endl;
-//    cout<<timeList.size()<<endl;
-
-    Selectify.push_back(subSelectify);
-}
-
-
-
-cout<<"Time data Interpolated...\n"<<"Temporally Interpolating wx Data..."<<endl;
-
-vector<vector<preInterpolate> > lowVec;
-vector<vector<preInterpolate> > highVec;
-
-for (int j=0;j<Selectify.size();j++)
-{
-    vector<preInterpolate> lowStations;
-    vector<preInterpolate> highstations;
-
-    for (int i=0;i<Selectify[j].size();i+=2)
-    {
-          lowStations.push_back(Selectify[j][i]);
-    }
-    for (int k=1;k<Selectify[j].size();k+=2)
-    {
-        highstations.push_back(Selectify[j][k]);
-    }
-    lowVec.push_back(lowStations);
-    highVec.push_back(highstations);
-
-}
-
-////printf("\n\n");
-
-////cout<<Selectify[0].size()<<endl;
-
-
-
-////cout<<" "<<endl;
-////cout<<lowVec[0].size()<<endl;
-////cout<<timeList.size()<<endl;
-////cout<<highVec[0].size()<<endl;
-
-////for (int i=0;i<timeList.size();i++)
-////{
-////    cout<<lowVec[0][i].get_datetime()<<endl;
-////    cout<<timeList[i]<<endl;
-////    cout<<highVec[0][i].get_datetime()<<endl;
-
-
-////}
-
-////exit(1);
-////cout<<"highvec size: "<<highVec[2].size()<<endl;
-////cout<<"lowvec size: "<<lowVec[2].size()<<endl;
-
-////SETTING WX TIMELIST
-
-
-vector<vector<preInterpolate> > interpolatedWxData;
-for (int ey=0;ey<Selectify.size();ey++)
-{
-    vector<preInterpolate> subInter;
-    for (int ex=0;ex<timeList.size();ex++)
-    {
-        preInterpolate timeStorage;
-        timeStorage.datetime=timeList[ex];
-        subInter.push_back(timeStorage);
-    }
-    interpolatedWxData.push_back(subInter);
-}
-
-////wxStation::wxPrinter(vecStations[0][0]);
-
-////SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
-for (int k=0;k<Selectify.size();k++)
-{
-    double latitude;
-    double longitude;
-    double height;
-    double radiusInfluence;
-    std::string datum;
-    std::string coord;
-    std::string stationName;
-
-
-    latitude=vecStations[k][0].lat;
-    longitude=vecStations[k][0].lon;
-    height=vecStations[k][0].height;
-    radiusInfluence=vecStations[k][0].influenceRadius;
-    datum=vecStations[k][0].datumType;
-    coord=vecStations[k][0].coordType;
-    const char* newdatum="WGS84";
-    stationName=vecStations[k][0].stationName;
-
-    std::string demfile=demFileName;
-
-
-    for (int i=0;i<timeList.size();i++)
-    {
-////      interpolatedWxData[k][i].set_location_LatLong(latitude,longitude,demfile,newdatum);
-        interpolatedWxData[k][i].lat=latitude;
-        interpolatedWxData[k][i].lon=longitude;
-        interpolatedWxData[k][i].datumType=datum;
-        interpolatedWxData[k][i].coordType=coord;
-////        interpolatedWxData[k][i].set_height(height,lengthUnits::meters);
-        interpolatedWxData[k][i].height=height;
-        interpolatedWxData[k][i].heightUnits=lengthUnits::meters;
-////        interpolatedWxData[k][i].set_influenceRadius(radiusInfluence,lengthUnits::meters);
-        interpolatedWxData[k][i].influenceRadius=radiusInfluence;
-        interpolatedWxData[k][i].influenceRadiusUnits=lengthUnits::meters;
-        interpolatedWxData[k][i].stationName=stationName;
-    }
-}
-
-
-
-//INTERPOLATING WIND SPEED
-for (int k=0;k<Selectify.size();k++)
-{
-    for (int i=0;i<timeList.size();i++)
-    {
-
-    double low;
-    double high;
-    double inter;
-
-    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-    boost::posix_time::ptime pInter=timeList[i];
-
-
-    low=unixTime(pLow);
-    high=unixTime(pHigh);
-    inter=unixTime(pInter);
-
-//    cout<<pLow<<" "<<low<<endl;
-//    cout<<pHigh<<" "<<high<<endl;
-//    cout<<pInter<<" "<<inter<<endl;
-
-    double speed1;
-    double speed2;
-    double speedI;
-
-    speed1=lowVec[k][i].speed;
-    speed2=highVec[k][i].speed;
-
-//    cout<<speed1<<" "<<speed2<<endl;
-    speedI=interpolator(inter,low,high,speed1,speed2);
-    if (speedI>113.000)
-    {
-//        cout<<"windspeed error"<<endl;
-        speedI=speed1;
-
-    }
-//    printf("%lf",inter);
-//    cout<<" "<<endl;
-//    printf("%lf",low);
-//    cout<<" ";
-//    printf("%lf",high);
-//    cout<<" "<<endl;
-////    cout<<pInter<<endl;
-////    cout<<pLow<<" "<<pHigh<<endl;
-//    cout<<speed1<<" "<<speed2<<endl;
-
-//    cout<<speedI<<endl;
-
-//    interpolatedWxData[k][i].(speedI,velocityUnits::metersPerSecond);
-    interpolatedWxData[k][i].speed=speedI;
-    interpolatedWxData[k][i].inputSpeedUnits=vecStations[k][0].inputSpeedUnits;
     }
 
-}
-
-//cout<<interpolatedWxData[1][3].speed<<" "<<interpolatedWxData[1][3].inputSpeedUnits<<endl;
-
-
-//INTERPOLATING WIND DIRECITON
-for (int k=0;k<Selectify.size();k++)
-{
-    for (int i=0;i<timeList.size();i++)
+    //INTERPOLATING CLOUD COVER
+    for (int k=0;k<Selectify.size();k++)
     {
-
-    double lowDir;
-    double highDir;
-    double interDir;
-
-    lowDir=lowVec[k][i].direction;
-    highDir=highVec[k][i].direction;
-
-//    cout<<lowDir<<" "<<highDir<<endl;
-
-    interDir=interpolateDirection(lowDir,highDir);
-
-//    cout<<interDir<<endl;
-
-    interpolatedWxData[k][i].direction=interDir;
-    }
-
-}
-
-//INTERPOLATING TEMPERATURE
-for (int k=0;k<Selectify.size();k++)
-{
-    for (int i=0;i<timeList.size();i++)
-    {
-
-    double low;
-    double high;
-    double inter;
-
-    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-    boost::posix_time::ptime pInter=timeList[i];
-
-
-    low=unixTime(pLow);
-    high=unixTime(pHigh);
-    inter=unixTime(pInter);
-
-    double lowTemp;
-    double highTemp;
-    double interTemp;
-
-    lowTemp=lowVec[k][i].temperature;
-    highTemp=highVec[k][i].temperature;
-    interTemp=interpolator(inter,low,high,lowTemp,highTemp);
-    if (interTemp>57.0)
-    {
-//        cout<<"temp error"<<endl;
-        interTemp=highTemp;
-        if (interTemp>57.0)
+        for (int i=0;i<timeList.size();i++)
         {
-            interTemp=lowTemp;
-        }
-        if (interTemp>57.0)
-        {
-            interTemp=25;
-        }
-    }
+            double low;
+            double high;
+            double inter;
 
+            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
+            boost::posix_time::ptime pInter=timeList[i];
 
-//    cout<<lowTemp<<" "<<highTemp<<endl;
-//    cout<<interTemp<<"\n\n"<<endl;
+            low=unixTime(pLow);
+            high=unixTime(pHigh);
+            inter=unixTime(pInter);
 
-//    interpolatedWxData[k][i].set_temperature(interTemp,temperatureUnits::K);
-    interpolatedWxData[k][i].temperature=interTemp;
-    interpolatedWxData[k][i].tempUnits=vecStations[k][0].tempUnits;
-    }
+            double lowCloud;
+            double highCloud;
+            double interCloud;
 
-}
+            lowCloud=lowVec[k][i].cloudCover;
+            highCloud=highVec[k][i].cloudCover;
 
-//INTERPOLATING CLOUD COVER
-for (int k=0;k<Selectify.size();k++)
-{
-    for (int i=0;i<timeList.size();i++)
-    {
+            interCloud=interpolator(inter,low,high,lowCloud,highCloud);
 
-    double low;
-    double high;
-    double inter;
+            if (interCloud>1.0)
+            {
+                interCloud=highCloud;
+                if (interCloud>1.0)
+                {
+                    interCloud=lowCloud;
+                }
+            }
 
-    boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-    boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-    boost::posix_time::ptime pInter=timeList[i];
-
-
-    low=unixTime(pLow);
-    high=unixTime(pHigh);
-    inter=unixTime(pInter);
-
-    double lowCloud;
-    double highCloud;
-    double interCloud;
-
-    lowCloud=lowVec[k][i].cloudCover;
-    highCloud=highVec[k][i].cloudCover;
-
-    interCloud=interpolator(inter,low,high,lowCloud,highCloud);
-    if (interCloud>1.0)
-    {
-//        cout<<"cloud error"<<endl;
-        interCloud=highCloud;
-        if (interCloud>1.0)
-        {
-            interCloud=lowCloud;
+            interpolatedWxData[k][i].cloudCover=interCloud;
+            interpolatedWxData[k][i].cloudCoverUnits=coverUnits::percent;
         }
     }
 
-//    cout<<lowCloud<<" "<<highCloud<<endl;
-//    cout<<interCloud<<"\n\n"<<endl;
-
-//    interpolatedWxData[k][i].set_cloudCover(interCloud,coverUnits::fraction);
-    interpolatedWxData[k][i].cloudCover=interCloud;
-    interpolatedWxData[k][i].cloudCoverUnits=coverUnits::percent;
-    }
-
+    return interpolatedWxData;
 }
 
-//cout<<interpolatedWxData.size()<<endl;
-//cout<<interpolatedWxData[0].size()<<" , "<<interpolatedWxData[1].size()<<" , "<<interpolatedWxData[2].size()<<endl;
-//cout<<"\n\n"<<endl;
-
-
-    
-return interpolatedWxData;
-}
 double pointInitialization::unixTime(boost::posix_time::ptime time)
 {
-
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
     boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
-
     double stepDuration;
     stepDuration=dNew;
-
-//    printf("%lf\n",stepDuration);
 
     return stepDuration;
 }
@@ -1649,26 +1445,23 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
 {
     double result;
     double work=0.00;
-
     double slope;
     slope=(highY-lowY)/(highX-lowX);
     double pointS;
     pointS=(iPoint-lowX);
     result=lowY+pointS*slope;
 
-//    cout<<result<<endl;
-
     if (result<0.0000)
     {
         result=work;
     }
 
-
     return result;
 }
+
 //interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian, averages and then returns degrees
 //see this wiki page https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-double pointInitialization::interpolateDirection(double lowDir,double highDir)
+double pointInitialization::interpolateDirection(double lowDir, double highDir)
 {
     double work=0.00;
     double one_eighty=180.000;
@@ -1702,7 +1495,7 @@ string pointInitialization::BuildTime(std::string year_0,std::string month_0,
                                       std::string day_0,std::string clock_0,
                                       std::string year_1,std::string month_1,
                                       std::string day_1,std::string clock_1)
-    {
+{
     //builds the time component of a url
         std::string start;
         std::string end;
@@ -1742,7 +1535,8 @@ string pointInitialization::BuildTime(std::string year_0,std::string month_0,
         timemainfull=startfull+endfull;
 
         return timemainfull;
-    }
+}
+
 vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
 {
     vector<string> buildTimes;
@@ -1774,8 +1568,6 @@ vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> t
     std::string month_1=endString.substr(4,2);
     std::string day_1=endString.substr(6,2);
     std::string clock_1=endString.substr(8);
-//    cout<<year_0<<" , "<<month_0<<" , "<<day_0<<" , "<<clock_0<<endl;
-//    cout<<year_1<<" , "<<month_1<<" , "<<day_1<<" , "<<clock_1<<endl;
 
     buildTimes.push_back(year_0);
     buildTimes.push_back(month_0);
@@ -1790,12 +1582,13 @@ vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> t
 }
 
 string pointInitialization::IntConvert(int a)
-    {
+{
     //converts int to string for "latest" functions
     ostringstream time;
     time<<a;
     return time.str();
-    }
+}
+
 //Gets MetaData for stations if turned on
 void pointInitialization::fetchMetaData(string fileName, string demFile, bool write)
 {
@@ -1835,33 +1628,29 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     std::string csvName;
     if (fileName.substr(fileName.size()-4,4)==".csv")
     {
-    csvName=fileName;
-//    cout<<".csv exists in metaDataFile"<<endl;
+        csvName=fileName;
     }
     else
     {
-    csvName=fileName+".csv";
-//    cout<<"adding .csv to metaDataFile"<<endl;
+        csvName=fileName+".csv";
     }
     ofstream outFile;
     if (write==true)
     {
-    cout<<"writing MetaData for stations..."<<endl;
-    outFile.open(csvName.c_str());
-    std::string header="Station_name,STID,Latitude,Longitude,Elevation,Status,MnetID";
-    outFile<<header<<endl;
+        cout<<"writing MetaData for stations..."<<endl;
+        outFile.open(csvName.c_str());
+        std::string header="Station_name,STID,Latitude,Longitude,Elevation,Status,MnetID";
+        outFile<<header<<endl;
     }
-
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
-
     hDS=OGROpen(url.c_str(),0,NULL);
     CPLGetLastErrorMsg();
+
     if (hDS==NULL)
     {
-
         cout<<"metadata bad"<<endl;
         exit(1);
     }
@@ -1886,7 +1675,6 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     const char* status;
     int mnetID;
     const char* elevation;
-
 
     for (int ex=0; ex<fCount;ex++)
     {
@@ -1913,19 +1701,13 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
         idx7=OGR_F_GetFieldIndex(hFeature,"elevation");
         elevation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
-//        cout<<stid<<endl;
-//        cout<<stationName<<endl;
-//        cout<<latitude<<endl;
-//        cout<<longitude<<endl;
-//        cout<<status<<endl;
-//        cout<<mnetID<<endl;
-//        cout<<elevation<<endl;
         if (write==true)
         {
             outFile<<stid<<",\""<<stationName<<"\","<<latitude<<","<<longitude<<","<<elevation<<","<<status<<","<<mnetID<<endl;
         }
 
     }
+
     OGR_DS_Destroy(poDS);
     OGR_DS_Destroy(hDS);
     delete stid,stationName,latitude,longitude,status,mnetID,elevation;
@@ -1942,109 +1724,107 @@ const char* pointInitialization::BuildSingleUrl(std::string token,
                                                 std::string monthy,
                                                 std::string dayy,
                                                 std::string clocky)
-    {
+{
     //builds a url for a single timeseries station with specific start and stop times
-       std::string etoken;
-       std::string eburl;
-       std::string etokfull;
-       std::string estid;
-       std::string et01;
-       std::string et11;
-       std::string esvar;
-       std::string eurl;
+    std::string etoken;
+    std::string eburl;
+    std::string etokfull;
+    std::string estid;
+    std::string et01;
+    std::string et11;
+    std::string esvar;
+    std::string eurl;
 
-       // default url
+    // default url
 
-       etoken="33e3c8ee12dc499c86de1f2076a9e9d4";
-       eburl="http://api.mesowest.net/v2/stations/timeseries?";
-       etokfull="&token="+token;
-       estid="stid=kmso";
-       et01="&start=201605221000";
-       et11="&end=201605231000";
-       esvar="&vars=wind_speed";
-       eurl=eburl+estid+esvar+et01+et11+etokfull;
+    etoken="33e3c8ee12dc499c86de1f2076a9e9d4";
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    etokfull="&token="+token;
+    estid="stid=kmso";
+    et01="&start=201605221000";
+    et11="&end=201605231000";
+    esvar="&vars=wind_speed";
+    eurl=eburl+estid+esvar+et01+et11+etokfull;
 
-       std::string network;
-       std::string nEtworkFull;
-       network="1,2";
-       nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
+    const char* a=eurl.c_str();
 
-       const char* a=eurl.c_str();
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timestart1;
+    std::string timestop1;
+    std::string timefull;
+    std::string timesand;
+    std::string output;
 
-       std::string url;
-       std::string tokfull;
-       std::string stidfull;
-       std::string svarfull;
-       std::string timestart1;
-       std::string timestop1;
-       std::string timefull;
-       std::string timesand;
-       std::string output;
+    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-       timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+    tokfull="&token="+token;
+    stidfull="stid="+station_id;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
 
-       tokfull="&token="+token;
-       stidfull="stid="+station_id;
-       svarfull="&vars="+svar;
-       output="&output=geojson";
+    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
+    const char* charurl=url.c_str();
 
-       url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
+    return charurl;
 
-       const char* charurl=url.c_str();
-
-       return charurl;
-
-    }
+}
 
 const char* pointInitialization::BuildSingleLatest(std::string token, std::string station_id,
                                                    std::string svar,
                                                    int past, bool extendnetwork,
                                                    std::string netids)
-    {
+{
     //builds a url for single time series with the latest data for the past n hours
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string pasthourstr;
-        int pasthour;
-        int hour=60;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string pasthourstr;
+    int pasthour;
+    int hour=60;
 
-        std::string network;
-        std::string nEtworkFull;
+    std::string network;
+    std::string nEtworkFull;
 
-        if (extendnetwork==true)
-        {
+    if (extendnetwork==true)
+    {
         network="1,2"+netids;
         nEtworkFull="&network="+network;
-        }
-        else
-        {
-            network="1,2";
-            nEtworkFull="&network="+network;
-        }
-
-        pasthour=past*hour;
-        pasthourstr=pointInitialization::IntConvert(pasthour);
-
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        tokfull="&token="+token;
-        stidfull="stid="+station_id;
-        svarfull="&vars="+svar;
-        output="&output=geojson";
-        timesand="&recent="+pasthourstr;
-
-        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
-
-        const char* charurl=url.c_str();
-
-        return charurl;
     }
+    else
+    {
+        network="1,2";
+        nEtworkFull="&network="+network;
+    }
+
+    pasthour=past*hour;
+    pasthourstr=pointInitialization::IntConvert(pasthour);
+
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+token;
+    stidfull="stid="+station_id;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
+    timesand="&recent="+pasthourstr;
+
+    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
 
 std::string pointInitialization::BuildMultiUrl(std::string station_ids,
                                                std::string yearx,
@@ -2055,115 +1835,112 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
                                                std::string monthy,
                                                std::string dayy,
                                                std::string clocky)
-    {
+{
     // builds a url for multiple known stations for a specific start and stop time
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
+    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+dtoken;
+    stidfull="stid="+station_ids;
+    svarfull="&vars="+ndvar;
+    output="&output=geojson";
 
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        tokfull="&token="+dtoken;
-        stidfull="stid="+station_ids;
-        svarfull="&vars="+ndvar;
-        output="&output=geojson";
+    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
+    const char* charurl=url.c_str();
 
-        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
-
-        const char* charurl=url.c_str();
-
-        return url;
-    }
+    return url;
+}
 
 std::string pointInitialization::BuildMultiLatest(std::string station_ids)
 {
      //builds a url for multiple known stations for the latest n hours
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string pasthourstr="60";
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string pasthourstr="60";
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
+    timesand="&recent="+pasthourstr;
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+dtoken;
+    stidfull="stid="+station_ids;
+    svarfull="&vars="+ndvar;
+    output="&output=geojson";
 
-        timesand="&recent="+pasthourstr;
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        tokfull="&token="+dtoken;
-        stidfull="stid="+station_ids;
-        svarfull="&vars="+ndvar;
-        output="&output=geojson";
+    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
 
+    const char* charurl=url.c_str();
 
-        url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
+    return url;
 
-        const char* charurl=url.c_str();
+}
 
-        return url;
-
-    }
 const char* pointInitialization::BuildRadiusLatest(std::string token,
                                                    std::string station_id,
                                                    std::string radius,
                                                    std::string limit,
                                                    std::string svar,int past)
-    {
+{
     //builds a url fetching all stations within x miles of a known station for last n hours specified
 
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string pasthourstr;
-        std::string limiter;
-        int pasthour;
-        int hour=60;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string pasthourstr;
+    std::string limiter;
+    int pasthour;
+    int hour=60;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
 
-        pasthour=past*hour;
-        pasthourstr=pointInitialization::IntConvert(pasthour);
+    pasthour=past*hour;
+    pasthourstr=pointInitialization::IntConvert(pasthour);
 
-        timesand="&recent="+pasthourstr;
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        limiter="&limit="+limit;
-        tokfull="&token="+token;
-        stidfull="radius="+station_id+","+radius;
-        svarfull="&vars="+svar;
-        output="&output=geojson";
+    timesand="&recent="+pasthourstr;
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="radius="+station_id+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
 
-        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
-        const char* charurl=url.c_str();
+    const char* charurl=url.c_str();
 
-        return charurl;
+    return charurl;
 
-    }
+}
 
 const char* pointInitialization::BuildRadiusUrl(std::string token,
                                                 std::string station_id,
@@ -2178,39 +1955,38 @@ const char* pointInitialization::BuildRadiusUrl(std::string token,
                                                 std::string monthy,
                                                 std::string dayy,
                                                 std::string clocky)
-    {
+{
     //builds a url for a radius around a known station with a specific start and stop time
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string limiter;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string limiter;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
+    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="radius="+station_id+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
 
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        limiter="&limit="+limit;
-        tokfull="&token="+token;
-        stidfull="radius="+station_id+","+radius;
-        svarfull="&vars="+svar;
-        output="&output=geojson";
+    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
+    const char* charurl=url.c_str();
 
-        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+    return charurl;
+}
 
-        const char* charurl=url.c_str();
-
-        return charurl;
-    }
 const char* pointInitialization::BuildLatLonUrl(std::string token,
                                                 std::string lat,
                                                 std::string lon,
@@ -2225,39 +2001,39 @@ const char* pointInitialization::BuildLatLonUrl(std::string token,
                                                 std::string monthy,
                                                 std::string dayy,
                                                 std::string clocky)
-    {
+{
     //builds a url for a given latitude longitude location and grabs all stations within x miles and limited to y stations.
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string limiter;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string limiter;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
-
-
-        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        limiter="&limit="+limit;
-        tokfull="&token="+token;
-        stidfull="&radius="+lat+","+lon+","+radius;
-        svarfull="&vars="+svar;
-        output="&output=geojson";
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
 
-        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-        const char* charurl=url.c_str();
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="&radius="+lat+","+lon+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
 
-        return charurl;
-    }
+
+    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
 
 const char* pointInitialization::BuildLatLonLatest(std::string token,
                                                    std::string lat,
@@ -2266,45 +2042,45 @@ const char* pointInitialization::BuildLatLonLatest(std::string token,
                                                    std::string limit,
                                                    std::string svar,
                                                    int past)
-    {
+{
     //builds a url for a given lat/lon coordinate for the most recent n Hours
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string stidfull;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
-        std::string limiter;
-        std::string pasthourstr;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string stidfull;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
+    std::string limiter;
+    std::string pasthourstr;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
-
-
-        int pasthour;
-        int hour=60;
-
-        pasthour=past*hour;
-        pasthourstr=pointInitialization::IntConvert(pasthour);
-
-        timesand="&recent="+pasthourstr;
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        limiter="&limit="+limit;
-        tokfull="&token="+token;
-        stidfull="&radius="+lat+","+lon+","+radius;
-        svarfull="&vars="+svar;
-        output="&output=geojson";
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
 
-        url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+    int pasthour;
+    int hour=60;
 
-        const char* charurl=url.c_str();
+    pasthour=past*hour;
+    pasthourstr=pointInitialization::IntConvert(pasthour);
 
-        return charurl;
-    }
+    timesand="&recent="+pasthourstr;
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    limiter="&limit="+limit;
+    tokfull="&token="+token;
+    stidfull="&radius="+lat+","+lon+","+radius;
+    svarfull="&vars="+svar;
+    output="&output=geojson";
+
+
+    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
+
+    const char* charurl=url.c_str();
+
+    return charurl;
+}
 
 std::string pointInitialization::BuildBboxUrl(std::string lat1,
                                               std::string lon1,
@@ -2318,37 +2094,35 @@ std::string pointInitialization::BuildBboxUrl(std::string lat1,
                                               std::string monthy,
                                               std::string dayy,
                                               std::string clocky)
-    {
+{
     //builds a url for a given box of latitude longitude coordinates
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string bbox;
-        std::string svarfull;
-        std::string timesand;
-        std::string output;
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string bbox;
+    std::string svarfull;
+    std::string timesand;
+    std::string output;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
+    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-        timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    tokfull="&token="+dtoken;
+    bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
+    svarfull="&vars="+ndvar;
+    output="&output=geojson";
 
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
-        tokfull="&token="+dtoken;
-        bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
-        svarfull="&vars="+ndvar;
-        output="&output=geojson";
+    url=eburl+bbox+nEtworkFull+svarfull+timesand+output+tokfull;
 
+    const char* charurl=url.c_str();
 
-        url=eburl+bbox+nEtworkFull+svarfull+timesand+output+tokfull;
-
-        const char* charurl=url.c_str();
-
-        return url;
-    }
+    return url;
+}
 
 std::string pointInitialization::BuildBboxLatest(std::string lat1,
                                                  std::string lon1,
@@ -2357,44 +2131,39 @@ std::string pointInitialization::BuildBboxLatest(std::string lat1,
 
 {
     //builds a url for a bounding box within the latest n hours
-        std::string eburl;
-        std::string url;
-        std::string tokfull;
-        std::string bbox;
-        std::string svarfull;
-        std::string active="&status=active";
-        std::string timesand;
-        std::string output;
-        std::string pasthourstr="60";
+    std::string eburl;
+    std::string url;
+    std::string tokfull;
+    std::string bbox;
+    std::string svarfull;
+    std::string active="&status=active";
+    std::string timesand;
+    std::string output;
+    std::string pasthourstr="60";
 
+    timesand="&recent="+pasthourstr;
+    eburl="http://api.mesowest.net/v2/stations/timeseries?";
 
-        timesand="&recent="+pasthourstr;
-        eburl="http://api.mesowest.net/v2/stations/timeseries?";
+    std::string network;
+    std::string nEtworkFull;
+    network="1,2";
+    nEtworkFull="&network="+network;
 
-        std::string network;
-        std::string nEtworkFull;
-        network="1,2";
-        nEtworkFull="&network="+network;
+    tokfull="&token="+dtoken;
+    bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
+    svarfull="&vars="+ndvar;
+    output="&output=geojson";
+    url=eburl+bbox+nEtworkFull+svarfull+active+timesand+output+tokfull;
 
-        tokfull="&token="+dtoken;
-        bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
-        svarfull="&vars="+ndvar;
-        output="&output=geojson";
-        url=eburl+bbox+nEtworkFull+svarfull+active+timesand+output+tokfull;
-//        cout<<url.length()<<endl;
+    const char* charurl=url.c_str();
 
-        const char* charurl=url.c_str();
+    return url;
 
-        return url;
+}
 
-    }
 std::string pointInitialization::BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
 {
     std::string workUrl="WIP";
-//    double dURLat=lat2;
-//    double dURLon=lon2;
-//    double dLLLat=lat1;
-//    double dLLLon=lon1;
     std::string URLat;
     std::string URLon;
     std::string LLLat;
@@ -2405,23 +2174,9 @@ std::string pointInitialization::BuildUnifiedBbox(double lat1,double lon1, doubl
     LLLat=CPLSPrintf("%.6f",lat1);
     LLLon=CPLSPrintf("%.6f",lon1);
 
-
-
-//    cout<<buffer<<endl;
-//    exit(1);
-
-//    cout<<URLat<<endl<<URLon<<endl<<LLLat<<endl<<LLLon<<endl;
-
     std::string URL;
 
     URL=BuildBboxUrl(LLLat,LLLon,URLat,URLon,yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-//    std::string crap;
-
-//    crap=pointInitialization::BuildBboxLatest(LLLat,LLLon,URLat,URLon);
-
-//    cout<<crap<<endl;
-//    exit(1);
 
     return URL;
 }
@@ -2439,7 +2194,6 @@ std::string pointInitialization::BuildUnifiedLTBbox(double lat1, double lon1, do
     LLLat=CPLSPrintf("%.6f",lat1);
     LLLon=CPLSPrintf("%.6f",lon1);
 
-
     URL=BuildBboxLatest(LLLat,LLLon,URLat,URLon);
 
     return URL;
@@ -2450,10 +2204,6 @@ double pointInitialization::stationBuffer;
 
 void pointInitialization::set_stationBuffer(double buffer, string units)
 {
-
-//    cout<<buffer<<endl;
-//    cout<<units<<endl;
-
     if (units=="km" || units=="kilometers" || units=="kilometres")
     {
         lengthUnits::toBaseUnits(buffer,lengthUnits::kilometers);
@@ -2471,9 +2221,7 @@ void pointInitialization::set_stationBuffer(double buffer, string units)
         lengthUnits::toBaseUnits(buffer,lengthUnits::meters);
     }
 
-    //    lengthUnits::toBaseUnits(buffer,units);
     stationBuffer=buffer;
-
 }
 
 double pointInitialization::get_stationBuffer()
@@ -2482,24 +2230,23 @@ double pointInitialization::get_stationBuffer()
 }
 
 vector<string> pointInitialization::Split(char* str,const char* delim)
-    {
+{
     //Splits strings into vectors of strings based on a delimiter, a "," is used for most functions
-        char* saveptr;
-        char* token = strtok_r(str,delim,&saveptr);
+    char* saveptr;
+    char* token = strtok_r(str,delim,&saveptr);
 
-        vector<string> result;
+    vector<string> result;
 
-        while(token != NULL)
-        {
-            result.push_back(token);
-            token = strtok_r(NULL,delim,&saveptr);
-        }
-        return result;
+    while(token != NULL)
+    {
+        result.push_back(token);
+        token = strtok_r(NULL,delim,&saveptr);
     }
+    return result;
+}
+
 void pointInitialization::stringtoaster(int null,vector<int> vecnull)
 {
-cout<<null<<endl;
-cout<<vecnull[0]<<endl;
 
 }
 
@@ -2562,10 +2309,8 @@ cout<<vecnull[0]<<endl;
  * */
 
 vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int counter)
-    {
+{
     //converts NWS/FAA cloud information to %cloud cover for a single station
-
-
     std::string sa;
     std::string sb;
     std::ostringstream ss;
@@ -2573,23 +2318,16 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
 
     for(int i=0;i<counter;i++)
     {
-
         ss<<dbCloud[i]<<",";
         sa=(ss.str());
-        //cout<<sa<<endl;
-        //sb=sa.substr(sa.size()-2);
-
     }
 
-    //cout<<sa<<endl;
     const char* delim(",");
     char *cloudstr=&sa[0u];
     vector<string> cloudcata;
     cloudcata=Split(cloudstr,delim);
-    //VectorPrinter(cloudcata,"clouds");
 
     vector<string> cloudcatb;
-
 
     for(int i=0;i<counter;i++)
     {
@@ -2597,10 +2335,8 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
         sb=(st.str());
     }
 
-    //cout<<sb<<endl;
     char *cloudstrb=&sb[0u];
     cloudcatb=Split(cloudstrb,delim);
-    //vectorprinter(cloudcatb,"mesowest cat is watching you");
 
     std::string few="25";
     std::string sct="50";
@@ -2618,7 +2354,6 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
 
     for(int i=0;i<counter;i++)
     {
-
         if (cloudcatb[i]==mesofew)
         {
             lowclouddat.push_back(few);
@@ -2645,46 +2380,35 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
         }
     }
 
-
-
-
     return lowclouddat;
 }
 
-
-
 vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<const double*>dbCloud,
                                                                        int smallcount, int largecount)
-        {
+{
     //converts NWS/FAA cloud data to %cloud cover for any given number of stations
     // used by multi, radius, lat/lon,bbox
 
-        vector<vector<string> > newcloudcat;
+    vector<vector<string> > newcloudcat;
 
-        for(int jj=0;jj<smallcount;jj++)
+    for(int jj=0;jj<smallcount;jj++)
+    {
+        std::string sa;
+        std::string sb;
+        std::ostringstream ss;
+        std::ostringstream st;
+        vector<string> lowclouddat;
+
+        for(int j=0;j<largecount;j++)
         {
-            std::string sa;
-            std::string sb;
-            std::ostringstream ss;
-            std::ostringstream st;
-            vector<string> lowclouddat;
+            ss<<dbCloud[jj][j]<<",";
+            sa=(ss.str());
+        }
 
-            for(int j=0;j<largecount;j++)
-            {
-
-                ss<<dbCloud[jj][j]<<",";
-                sa=(ss.str());
-                //cout<<sa<<endl;
-                //sb=sa.substr(sa.size()-2);
-            }
-
-         //cout<<sa<<endl;
          const char* delim(",");
          char *cloudstr=&sa[0u];
          vector<string> cloudcata;
          cloudcata=Split(cloudstr,delim);
-
-         //VectorPrinter(cloudcata,"clouds");
 
          std::string clouda;
          vector<string> cloudcatb;
@@ -2696,10 +2420,8 @@ vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<con
              sb=(st.str());
          }
 
-         //cout<<sb<<endl;
          char *cloudstrb=&sb[0u];
          cloudcatb=Split(cloudstrb,delim);
-         //VectorPrinter(cloudcatb,"mesowest cat is watching you");
 
          std::string few="25";
          std::string sct="50";
@@ -2712,13 +2434,11 @@ vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<con
          std::string mesoovc="4";
          std::string mesoclr="1";
 
-
          std::ostringstream su;
          std::string sc;
 
          for(int l=0;l<largecount;l++)
          {
-
              if (cloudcatb[l]==mesofew)
              {
                  lowclouddat.push_back(few);
@@ -2740,16 +2460,9 @@ vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<con
                  lowclouddat.push_back(clr);
              }
          }
-         //VectorPrinter(lowclouddat,"lowclouds");
          newcloudcat.push_back(lowclouddat);
-
-
-        }
-
-//        VectorPrinter(newcloudcat[0],"set 1");
-//        VectorPrinter(newcloudcat[1],"set 2");
-
-        return newcloudcat;
+    }
+    return newcloudcat;
 }
 
 vector<string> pointInitialization::CompareClouds(vector<string>low,vector<string>med,vector<string>high,int countlow,int countmed,int counthigh)
@@ -2763,11 +2476,6 @@ vector<string> pointInitialization::CompareClouds(vector<string>low,vector<strin
     vector<int> overcloud;
     vector<string> totalCloudcat;
     std::string aa;
-
-//    cout<<low.size()<<endl;
-//     VectorPrinter(low,"low");
-//     VectorPrinter(med,"med");
-//     VectorPrinter(high,"high");
 
     for (int ti=0;ti<countlow;ti++)
     {
@@ -2784,8 +2492,6 @@ vector<string> pointInitialization::CompareClouds(vector<string>low,vector<strin
         int numc=atoi(high.at(ti).c_str());
         highcloudint.push_back(numc);
     }
-
-
     for (int ti=0;ti<countlow;ti++)
     {
 
@@ -2806,28 +2512,24 @@ vector<string> pointInitialization::CompareClouds(vector<string>low,vector<strin
     }
 
     }
-//for (int ti=0;ti<countlow;ti++)
-//{
-//    printf("%d, ",overcloud[ti]);
-//}
-int overLen=overcloud.size();
 
-std::string cloudstring;
-std::ostringstream cs;
+    int overLen=overcloud.size();
 
-for(int i=0;i<overLen;i++)
-{
+    std::string cloudstring;
+    std::ostringstream cs;
 
-    cs<<overcloud[i]<<",";
-    cloudstring=(cs.str());
+    for(int i=0;i<overLen;i++)
+    {
 
-}
-const char* delim(",");
-char *cloudstr=&cloudstring[0u];
-totalCloudcat=Split(cloudstr,delim);
-//VectorPrinter(totalCloudcat,"total");
+        cs<<overcloud[i]<<",";
+        cloudstring=(cs.str());
 
-return totalCloudcat;
+    }
+    const char* delim(",");
+    char *cloudstr=&cloudstring[0u];
+    totalCloudcat=Split(cloudstr,delim);
+
+    return totalCloudcat;
 }
 
 vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const double *dwCloud,const double *dxCloud,int count1,int count2,int count3,int backupcount)
@@ -2860,11 +2562,10 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const doub
 
     if (dvCloud==0)
     {
-    for(int ska=0;ska<count1;ska++)
-    {
-        daCloud.push_back("0");
-    }
-//            VectorPrinter(daCloud,"1");
+        for(int ska=0;ska<count1;ska++)
+        {
+            daCloud.push_back("0");
+        }
     }
     else
     {
@@ -2876,7 +2577,6 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const doub
         {
             dcCloud.push_back("0");
         }
-//            VectorPrinter(dcCloud,"2");
     }
     else
     {
@@ -2888,7 +2588,6 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const doub
         {
             deCloud.push_back("0");
         }
-//            VectorPrinter(deCloud,"3");
     }
     else
     {
@@ -2896,57 +2595,50 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const doub
     }
 
     sCloudData=CompareClouds(daCloud,dcCloud,deCloud,count1,count2,count3);
-//    VectorPrinter(sCloudData,"combo");
 
-
-
-
-return sCloudData;
-
+    return sCloudData;
 }
 
 void pointInitialization::StringPrinter(char **stringdat, int counter, std::string name)
-    {
+{
     //prints a list of strings as a string with a comma delim
-        cout<<name<<endl;
-        for(int i=0;i<counter;i++)
-        {
-            printf("%s, ",stringdat[i]);
-        }
-        printf("\n");
-        cout<<"count of char: "<<counter<<endl;
-        printf("\n");
-
-
+    cout<<name<<endl;
+    for(int i=0;i<counter;i++)
+    {
+        printf("%s, ",stringdat[i]);
     }
-
+    printf("\n");
+    cout<<"count of char: "<<counter<<endl;
+    printf("\n");
+}
 
 void pointInitialization::FloatPrinter(const double *data, int counter,std::string name)
-    {
+{
     //prints a list of floating point numbers with a comma delim
-            cout<<name<<endl;
-            for(int i=0;i<counter;i++)
-            {
-                printf("%.3f, ",data[i]);
-            }
-            printf("\n");
-            cout<<"count of doubles: "<<counter<<endl;
-            printf("\n");
-
+    cout<<name<<endl;
+    for(int i=0;i<counter;i++)
+    {
+        printf("%.3f, ",data[i]);
     }
+    printf("\n");
+    cout<<"count of doubles: "<<counter<<endl;
+    printf("\n");
+
+}
+
 void pointInitialization::VectorPrinter(std::vector<std::string> stData,std::string name)
 {
     //prints a vector of strings with a comma delim
-       cout<<name<<endl;
-       int i=0;
-       for (std::vector<string>::const_iterator i = stData.begin(); i != stData.end(); ++i)
-           std::cout << *i << ',';
+    cout<<name<<endl;
+    int i=0;
+    for (std::vector<string>::const_iterator i = stData.begin(); i != stData.end(); ++i)
+       std::cout << *i << ',';
 
-       printf("\n");
-       int veclen;
-       veclen=stData.size();
-       cout<<"length of vector "<<veclen<<endl;
-       printf("\n");
+    printf("\n");
+    int veclen;
+    veclen=stData.size();
+    cout<<"length of vector "<<veclen<<endl;
+    printf("\n");
 }
 
 void pointInitialization::doubleVectorPrinter(vector<const double*> stData,std::string name, int counter)
@@ -2970,31 +2662,20 @@ void pointInitialization::doubleVectorPrinter(vector<const double*> stData,std::
         printf("\n");
     }
 
-
-
     printf("\n");
 
     cout<<"length of vector "<<veclen<<endl;
     printf("\n");
-
-
-
 }
 
 vector<double> pointInitialization::Irradiate(const double* solrad,int smallcount, int largecount,std::string timeZone,double lat, double lon,char** times)
 {
     //will eventually convert solar radiation to cloud cover, this function doesn't work yet.
 
-vector<double> blegh;
-vector<double> outCloud;
-double work=0.000;
-blegh.push_back(work);
-
-//cout<<solrad[0]<<endl;
-//cout<<largecount<<endl;
-//cout<<lat<<endl;
-//cout<<lon<<endl;
-//cout<<times[0]<<endl;
+    vector<double> blegh;
+    vector<double> outCloud;
+    double work=0.000;
+    blegh.push_back(work);
 
     for (int j=0;j<largecount;j++)
     {
@@ -3009,9 +2690,6 @@ blegh.push_back(work);
         std::istringstream iss(trunk);
         iss.imbue(std::locale(std::locale::classic(),fig));
         iss>>abs_time;
-//        cout<<abs_time<<endl;
-
-//        cout<<timeZone<<endl;
 
         boost::local_time::tz_database tz_db;
         tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
@@ -3019,9 +2697,6 @@ blegh.push_back(work);
         timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
         boost::local_time::local_date_time startLocal(abs_time,timeZonePtr);
-
-
-//        cout<<startLocal<<endl;
 
         double zero=0.000000;
         double one=1.0000000;
@@ -3031,9 +2706,6 @@ blegh.push_back(work);
         double senor=sol.get_solarIntensity();
         double solFrac;
 
-
-//        cout<<startLocal<<endl;
-////        cout<<" "<<solrad[j]<<" "<<senor<<endl;
         solFrac=solrad[j]/senor;
         if (solFrac<=zero)
         {
@@ -3048,24 +2720,13 @@ blegh.push_back(work);
             solFrac=one;
         }
         solFrac=one-solFrac;
-//        cout<<solFrac<<endl;
-//        cout<<"\n"<<endl;
         solFrac=100*solFrac;
         outCloud.push_back(solFrac);
-//        cout<<solFrac<<endl;
-
-
     }
 
-    //    exit(1);
-//    for (int p;p<outCloud.size();p++)
-//    {
-//        cout<<outCloud[p]<<endl;
-//    }
-
-
-return outCloud;
+    return outCloud;
 }
+
 void pointInitialization::UnifyRadiation(vector<double> radiation)
 {
 
@@ -3077,28 +2738,27 @@ vector<string> pointInitialization::fixWindDir(const double *winddir,std::string
     std::ostringstream ss;
     vector<string>direction;
 
-if (winddir==0)
-{
-
-    for (int jw=0;jw<count;jw++)
+    if (winddir==0)
     {
-        direction.push_back(filler);
-    }
-}
 
-else
-{
-    for(int i=0;i<count;i++)
+        for (int jw=0;jw<count;jw++)
+        {
+            direction.push_back(filler);
+        }
+    }
+    else
     {
-        ss<<winddir[i]<<",";
-        sa=(ss.str());
+        for(int i=0;i<count;i++)
+        {
+            ss<<winddir[i]<<",";
+            sa=(ss.str());
+        }
+        const char* delim(",");
+        char *cloudstr=&sa[0u];
+        direction=Split(cloudstr,delim);
     }
-    const char* delim(",");
-    char *cloudstr=&sa[0u];
-    direction=Split(cloudstr,delim);
-}
 
-return direction;
+    return direction;
 }
 
 void pointInitialization::fetchSingleStation( bool type,
@@ -3112,45 +2772,33 @@ void pointInitialization::fetchSingleStation( bool type,
                                               std::string monthb,
                                               std::string dayb,
                                               std::string clockb)
-    {
-
+{
     const char* lmUrl;
 
     if(type==true)
     {
+        //builds url for past n Hours
         lmUrl=pointInitialization::BuildSingleLatest(dtoken,station_id,
                                                      ndvar,nHours,false,"0");
-        //builds url for past n Hours
     }
-
     else
     {
         //builds url with given time period
-        //const char* pszvtry=pointInitialization::BuildSingleUrl(dtoken,altstation,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
         lmUrl=pointInitialization::BuildSingleUrl(dtoken,station_id,ndvar,
                                                   yeara,montha,daya,clocka,
                                                   yearb,monthb,dayb,clockb);
     }
 
-    //cout<<lmUrl<<endl;
-
-    //printf("\n\n");
-
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
-    hDS=OGROpen(lmUrl,0,NULL);//fetches url using OGR
-//    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
+    hDS=OGROpen(lmUrl,0,NULL);
     if (hDS==NULL)
     {
-        printf("miserable failure \n");
-        printf("likely causes:\n station outside network\n no data for station\n mesowest is offline\n");
-        exit(1);
+        throw std::runtime_error("Error fetching station data. There may be no data available in the requested area or SynopticLabs datastore may be down.");
     }
 
-
-//    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
     hLayer=OGR_DS_GetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
@@ -3194,10 +2842,7 @@ void pointInitialization::fetchSingleStation( bool type,
 
     int mnetid;
 
-
-
     //saves data to lists of doubles or strings
-
     while((hFeature=OGR_L_GetNextFeature(hLayer))!=NULL)
     {
         idx0=OGR_F_GetFieldIndex(hFeature,"mnet_id");
@@ -3244,23 +2889,10 @@ void pointInitialization::fetchSingleStation( bool type,
         //note: Mesowest data downloaded as GEOJson names date and time data
         //as "date_times", Mewsowest data using
         // Json names time data as date_time!!!!!!
-
-
     }
-    //printf("\n\n");
-
-
-//        cout<<mnetid<<endl;
-
 
     vector<string> windDirection;
     windDirection=fixWindDir(winddir,"0",count1);
-
-
-
-//        FloatPrinter(windspd,count1,"wind_speed");
-//        FloatPrinter(winddir,count2,"wind_direction");
-//        FloatPrinter(airtemp,count3,"air_temp");
 
     int dinfluence=-1;
     std::string diu="kilometres";
@@ -3268,17 +2900,13 @@ void pointInitialization::fetchSingleStation( bool type,
     std::string baddata="-9999";
     vector<string> cloudData;
 
-
     ofstream outFile;
     outFile.open(csvname);
     outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
 
-if (mnetid==1)
-{
-
-//        solrad2=InterpretCloudData(solrad,count4);
+    if (mnetid==1)
+    {
         cloudData=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-
 
         if (cloudlow==0)// if airport lacks any cloud data due to bad instrumentation or something
         {
@@ -3294,9 +2922,9 @@ if (mnetid==1)
                 outFile<<station<<",GEOGCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<cloudData[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
-}
-if (mnetid==2)
-{
+    }
+    if (mnetid==2)
+    {
         if (solrad==0)// if RAWS lacks any cloud data due to bad instrumentation or something
         {
             for(int q=0;q<count1;q++)
@@ -3311,7 +2939,7 @@ if (mnetid==2)
                 outFile<<station<<",GEOGCS,"<<"WGS84,"<<latitude<<","<<longitude<<",10,"<<"m,"<<windspd[q]<<",m/s,"<<windDirection[q]<<","<<airtemp[q]<<",C,"<<solrad[q]<<","<<dinfluence<<","<<diu<<","<<datetime[q]<<endl;
             }
         }
-}
+    }
 }
 
 void pointInitialization::fetchMultiStation(bool type,
@@ -3322,222 +2950,199 @@ void pointInitialization::fetchMultiStation(bool type,
                                             std::string clocka,std::string yearb,
                                             std::string monthb,std::string dayb,
                                             std::string clockb)
-    {
+{
     //fetches data for multiple known stations
-        const char* lmUrl;
-        if(type==true)//build url based on desired info
+    const char* lmUrl;
+    if(type==true)//build url based on desired info
+    {
+
+    }
+    else
+    {
+
+    }
+
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+    hDS=OGROpen(lmUrl,0,NULL); //fetches data
+    if (hDS==NULL)
+        printf("I am broken, so very broken \n");
+
+    int spam=OGR_DS_GetLayerCount(hDS);
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    int idx=0;
+    int idx0=0;
+    int idx1=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int idx9=0;
+    int idx10=0;
+    int idx11=0;
+    int idx12=0;
+    int idx13=0;
+    int idx14=0;
+    int idx15=0;
+    int idx16=0;
+    int idx17=0;
+    int idx18=0;
+    int idx19=0;
+    int idx20=0;
+
+    int idxx1=0;
+    int idxx2=0;
+    int idxx3=0;
+    const double *cloudlow;
+    const double *cloudmed;
+    const double *cloudhigh;
+
+    vector<int> mnetid;
+
+    const double* rawsWind;
+    const double* rawsDir;
+    const double* rawsSolrad;
+    const double* rawsTemp;
+    double rawsLatitude;
+    double rawsLongitude;
+    const char* rawsStation;
+    char** rawsDateTime;
+
+    const double* metarWind;
+    const double* metarDir;
+    const double* metarTemp;
+    const double* metarCloud;
+    double metarLatitude;
+    double  metarLongitude;
+    const char* metarStation;
+    char** metarDateTime;
+
+    const char* csvname="multi.csv";
+
+    const char* newspam=OGR_L_GetName(hLayer);
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    //parses data based on mesonet id, 1=NWS/FAA, 2=RAWS
+    ofstream outFile;//writing to csv
+    outFile.open(csvname);
+    cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
+    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+
+    for (int ex=0;ex<fCount;ex++)
+    {
+        hFeature=OGR_L_GetFeature(hLayer,ex);
+
+        idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
+
+        if (mnetid[ex]==1) //METAR station uses cloud data
         {
-//            lmUrl=pointInitialization::BuildMultiLatest(dtoken,station_ids,ndvar,nHours);
-        }
+            int count1=0;
+            int count2=0;
+            int count3=0;
+            int count4=0;
+            int countxx1=0;
+            int countxx2=0;
+            int countxx3=0;
 
-        else
-        {
-//            lmUrl=pointInitialization::BuildMultiUrl(dtoken,station_ids,
-//                                                     ndvar,yeara,montha,
-//                                                     daya,clocka,yearb,
-//                                                     monthb,dayb,clockb);
-        }
+            idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
-        //cout<<lmUrl<<endl;
+            idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
-        OGRDataSourceH hDS;
-        OGRLayerH hLayer;
-        OGRFeatureH hFeature;
+            idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
-        hDS=OGROpen(lmUrl,0,NULL); //fetches data
-        //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
-        if (hDS==NULL)
-            printf("I am broken, so very broken \n");
-        //printf("\n\n");
+            idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
+            cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
 
-        //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
+            idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
+            cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
 
-        int spam=OGR_DS_GetLayerCount(hDS);
-//        cout<<"layercount "<<spam<<endl;
-        hLayer=OGR_DS_GetLayer(hDS,0);
-        OGR_L_ResetReading(hLayer);
+            idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
+            cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
 
-            int idx=0;
-            int idx0=0;
-            int idx1=0;
-            int idx2=0;
-            int idx3=0;
-            int idx4=0;
-            int idx5=0;
-            int idx6=0;
-            int idx7=0;
-            int idx8=0;
-            int idx9=0;
-            int idx10=0;
-            int idx11=0;
-            int idx12=0;
-            int idx13=0;
-            int idx14=0;
-            int idx15=0;
-            int idx16=0;
-            int idx17=0;
-            int idx18=0;
-            int idx19=0;
-            int idx20=0;
+            idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
+            metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
-            int idxx1=0;
-            int idxx2=0;
-            int idxx3=0;
-            const double *cloudlow;
-            const double *cloudmed;
-            const double *cloudhigh;
+            idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
-            vector<int> mnetid;
+            idx7=OGR_F_GetFieldIndex(hFeature,"STID");
+            metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
-            const double* rawsWind;
-            const double* rawsDir;
-            const double* rawsSolrad;
-            const double* rawsTemp;
-            double rawsLatitude;
-            double rawsLongitude;
-            const char* rawsStation;
-            char** rawsDateTime;
+            idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+            metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
-            const double* metarWind;
-            const double* metarDir;
-            const double* metarTemp;
-            const double* metarCloud;
-            double metarLatitude;
-            double  metarLongitude;
-            const char* metarStation;
-            char** metarDateTime;
+            vector<string>cloudkappa;
+            cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
+            vector<string>metarWindDirection;
+            metarWindDirection=fixWindDir(metarDir,"0",count1);
 
-
-            const char* csvname="multi.csv";
-
-            const char* newspam=OGR_L_GetName(hLayer);
-//            cout<<"layer name: "<<newspam<<endl;
-            int fCount=OGR_L_GetFeatureCount(hLayer,1);
-//            cout<<"feature count: "<<fCount<<endl;
-
-            //parses data based on mesonet id, 1=NWS/FAA, 2=RAWS
-
-            ofstream outFile;//writing to csv
-            outFile.open(csvname);
-            cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-            outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
-
-
-            for (int ex=0;ex<fCount;ex++)
+            for(int ez=0;ez<count1;ez++)
             {
-
-                hFeature=OGR_L_GetFeature(hLayer,ex);
-
-                idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-                mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
-                if (mnetid[ex]==1) //METAR station uses cloud data
-                {
-                    int count1=0;
-                    int count2=0;
-                    int count3=0;
-                    int count4=0;
-                    int countxx1=0;
-                    int countxx2=0;
-                    int countxx3=0;
-
-                    idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                    metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
-
-                    idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                    metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
-
-                    idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                    metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
-
-                    idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                    cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
-
-                    idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-                    cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
-
-                    idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-                    cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
-
-                    idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                    metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
-
-                    idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                    metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
-
-                    idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                    metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
-
-                    idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                    metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-                    vector<string>cloudkappa;
-                    cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-                    vector<string>metarWindDirection;
-                    metarWindDirection=fixWindDir(metarDir,"0",count1);
-
-
-                    for(int ez=0;ez<count1;ez++)
-                    {
-                     outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
-                    }
-
-                }
-
-                if (mnetid[ex]==2) //RAWS STATION, solar radiation
-                {
-                    int count9=0;
-                    int count10=0;
-                    int count11=0;
-                    int count12=0;
-
-                    idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                    rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
-
-                    idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                    rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
-
-                    idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                    rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
-
-                    idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                    rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
-
-                    idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                    rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
-
-                    idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                    rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
-
-                    idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                    rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
-
-                    idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                    rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
-
-                    const double* aZero;
-                    aZero=0;
-                    std::string baddata="-9999";
-                    vector<string>rawsWindDirection;
-                    rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-
-
-                        for (int ez=0;ez<count9;ez++)
-                        {
-                        if (rawsSolrad==aZero)
-                        {
-                            outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                        }
-                        else
-                        {
-                            outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                        }
-
-                        }
-
+             outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+            }
         }
+
+        if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        {
+            int count9=0;
+            int count10=0;
+            int count11=0;
+            int count12=0;
+
+            idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+
+            idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+
+            idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+
+            idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+            rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+
+            idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
+            rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+
+            idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+
+            idx15=OGR_F_GetFieldIndex(hFeature,"STID");
+            rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
+
+            idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
+            rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+
+            const double* aZero;
+            aZero=0;
+            std::string baddata="-9999";
+            vector<string>rawsWindDirection;
+            rawsWindDirection=fixWindDir(rawsDir,"0",count9);
+
+            for (int ez=0;ez<count9;ez++)
+            {
+                if (rawsSolrad==aZero)
+                {
+                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+                else
+                {
+                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+            }
         }
     }
+}
 
 void pointInitialization::fetchPointRadiusStation(bool type,
                                                   int nHours, std::string station_id,
@@ -3550,220 +3155,197 @@ void pointInitialization::fetchPointRadiusStation(bool type,
                                                   std::string yearb,
                                                   std::string monthb,
                                                   std::string dayb,std::string clockb)
-    {
+{
     //fetches data for known station and radius around it
-
-        const char* lmUrl;
-        if(type==true)//builds url
-        {
-
-            lmUrl=pointInitialization::BuildRadiusLatest(dtoken,station_id,radius,limit,ndvar,nHours);
-//            lmUrl=pointInitialization::BuildMultiLatest(token,station_id,svar,nHours);
-
-        }
-
-        else
-        {
-            lmUrl=pointInitialization::BuildRadiusUrl(dtoken,station_id,
-                                                      radius,limit,ndvar,
-                                                      yeara,montha,daya,
-                                                      clocka,yearb,monthb,
-                                                      dayb,clockb);
-        }
-
-        //cout<<lmUrl<<endl;
-
-        OGRDataSourceH hDS;
-        OGRLayerH hLayer;
-        OGRFeatureH hFeature;
-
-        const char* csvname="point.csv";
-
-
-        hDS=OGROpen(lmUrl,0,NULL);//fetches data
-        //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
-        if (hDS==NULL)
-            printf("I am broken, so very broken \n");
-        printf("\n\n");
-
-        //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
-        hLayer=OGR_DS_GetLayer(hDS,0);
-        OGR_L_ResetReading(hLayer);
-
-        int idx=0;
-        int idx1=0;
-        int idx2=0;
-        int idx3=0;
-        int idx4=0;
-        int idx5=0;
-        int idx6=0;
-        int idx7=0;
-        int idx8=0;
-        int idx9=0;
-        int idx10=0;
-        int idx11=0;
-        int idx12=0;
-        int idx13=0;
-        int idx14=0;
-        int idx15=0;
-        int idx16=0;
-
-        vector<int> mnetid;
-
-        int idxx1=0;
-        int idxx2=0;
-        int idxx3=0;
-        const double *cloudlow;
-        const double *cloudmed;
-        const double *cloudhigh;
-
-        const double* rawsWind;
-        const double* rawsDir;
-        const double* rawsSolrad;
-        const double* rawsTemp;
-        double rawsLatitude;
-        double rawsLongitude;
-        const char* rawsStation;
-        char** rawsDateTime;
-
-        const double* metarWind;
-        const double* metarDir;
-        const double* metarTemp;
-        const double* metarCloud;
-        double metarLatitude;
-        double  metarLongitude;
-        const char* metarStation;
-        char** metarDateTime;
-
-
-
-
-        int fCount=OGR_L_GetFeatureCount(hLayer,1);
-
-        ofstream outFile;//writing to csv
-        outFile.open(csvname);
-        cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
-
-//        cout<<fCount<<endl;
-        for (int ex=0;ex<fCount;ex++)
-        {
-
-            hFeature=OGR_L_GetFeature(hLayer,ex);
-
-            idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-            mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
-            if (mnetid[ex]==1) //METAR station uses cloud data
-            {
-                int count1=0;
-                int count2=0;
-                int count3=0;
-                int count4=0;
-                int countxx1=0;
-                int countxx2=0;
-                int countxx3=0;
-
-                idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
-
-                idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
-
-                idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
-
-                idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
-
-                idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-                cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
-
-                idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-                cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
-
-                idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
-
-                idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
-
-                idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
-
-                idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-                vector<string>cloudkappa;
-                cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-                vector<string>metarWindDirection;
-                metarWindDirection=fixWindDir(metarDir,"0",count1);
-
-
-
-                for(int ez=0;ez<count1;ez++)
-                {
-                 outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
-                }
-
-            }
-
-            if (mnetid[ex]==2) //RAWS STATION, solar radiation
-            {
-                int count9=0;
-                int count10=0;
-                int count11=0;
-                int count12=0;
-
-                idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
-
-                idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
-
-                idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
-
-                idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
-
-                idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
-
-                idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
-
-                idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
-
-                idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
-
-                const double* aZero;
-                aZero=0;
-                std::string baddata="-9999";
-                vector<string>rawsWindDirection;
-                rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-
-
-                    for (int ez=0;ez<count9;ez++)
-                    {
-                    if (rawsSolrad==aZero)
-                    {
-                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                    }
-                    else
-                    {
-                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                    }
-
-                    }
-
+    const char* lmUrl;
+    if(type==true)//builds url
+    {
+        lmUrl=pointInitialization::BuildRadiusLatest(dtoken,station_id,radius,limit,ndvar,nHours);
     }
+    else
+    {
+        lmUrl=pointInitialization::BuildRadiusUrl(dtoken,station_id,
+                                                  radius,limit,ndvar,
+                                                  yeara,montha,daya,
+                                                  clocka,yearb,monthb,
+                                                  dayb,clockb);
+    }
+
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
+    const char* csvname="point.csv";
+
+    hDS=OGROpen(lmUrl,0,NULL);//fetches data
+    if (hDS==NULL)
+        printf("I am broken, so very broken \n");
+    printf("\n\n");
+
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    int idx=0;
+    int idx1=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int idx9=0;
+    int idx10=0;
+    int idx11=0;
+    int idx12=0;
+    int idx13=0;
+    int idx14=0;
+    int idx15=0;
+    int idx16=0;
+
+    vector<int> mnetid;
+
+    int idxx1=0;
+    int idxx2=0;
+    int idxx3=0;
+    const double *cloudlow;
+    const double *cloudmed;
+    const double *cloudhigh;
+
+    const double* rawsWind;
+    const double* rawsDir;
+    const double* rawsSolrad;
+    const double* rawsTemp;
+    double rawsLatitude;
+    double rawsLongitude;
+    const char* rawsStation;
+    char** rawsDateTime;
+
+    const double* metarWind;
+    const double* metarDir;
+    const double* metarTemp;
+    const double* metarCloud;
+    double metarLatitude;
+    double  metarLongitude;
+    const char* metarStation;
+    char** metarDateTime;
+
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    ofstream outFile;//writing to csv
+    outFile.open(csvname);
+    cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
+    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+
+    for (int ex=0;ex<fCount;ex++)
+    {
+        hFeature=OGR_L_GetFeature(hLayer,ex);
+
+        idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
+
+        if (mnetid[ex]==1) //METAR station uses cloud data
+        {
+            int count1=0;
+            int count2=0;
+            int count3=0;
+            int count4=0;
+            int countxx1=0;
+            int countxx2=0;
+            int countxx3=0;
+
+            idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
+
+            idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
+
+            idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
+
+            idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
+            cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
+
+            idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
+            cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
+
+            idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
+            cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
+
+            idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
+            metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
+
+            idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
+
+            idx7=OGR_F_GetFieldIndex(hFeature,"STID");
+            metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
+
+            idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+            metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
+
+            vector<string>cloudkappa;
+            cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
+            vector<string>metarWindDirection;
+            metarWindDirection=fixWindDir(metarDir,"0",count1);
+
+            for(int ez=0;ez<count1;ez++)
+            {
+             outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
+            }
+        }
+
+        if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        {
+            int count9=0;
+            int count10=0;
+            int count11=0;
+            int count12=0;
+
+            idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+
+            idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+
+            idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+
+            idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+            rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+
+            idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
+            rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+
+            idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+
+            idx15=OGR_F_GetFieldIndex(hFeature,"STID");
+            rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
+
+            idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
+            rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+
+            const double* aZero;
+            aZero=0;
+            std::string baddata="-9999";
+            vector<string>rawsWindDirection;
+            rawsWindDirection=fixWindDir(rawsDir,"0",count9);
+
+            for (int ez=0;ez<count9;ez++)
+            {
+                if (rawsSolrad==aZero)
+                {
+                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+                else
+                {
+                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+            }
+        }
     }
 }
-
-
 
 void pointInitialization::fetchLatLonStation(bool type,
                                              int nHours, std::string lat,
@@ -3773,211 +3355,197 @@ void pointInitialization::fetchLatLonStation(bool type,
                                              std::string daya,std::string clocka,
                                              std::string yearb,std::string monthb,
                                              std::string dayb,std::string clockb)
-    {
+{
     //fetches data based on a coordinate and radius
 
-        const char* lmUrl;
-        if (type==true)
+    const char* lmUrl;
+    if (type==true)
+    {
+        lmUrl=pointInitialization::BuildLatLonLatest(dtoken,lat,lon,radius,limit,ndvar,nHours);
+    }
+    else
+    {
+        lmUrl=pointInitialization::BuildLatLonUrl(dtoken,lat,lon,radius,limit,ndvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
+    }
+
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
+    const char* csvname="latlon.csv";
+
+    hDS=OGROpen(lmUrl,0,NULL);//reading data
+    if (hDS==NULL)
+        printf("I am broken, so very broken \n");
+    printf("\n\n");
+
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    int idx=0;
+    int idx1=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int idx9=0;
+    int idx10=0;
+    int idx11=0;
+    int idx12=0;
+    int idx13=0;
+    int idx14=0;
+    int idx15=0;
+    int idx16=0;
+
+    vector<int> mnetid;
+
+    int idxx1=0;
+    int idxx2=0;
+    int idxx3=0;
+    const double *cloudlow;
+    const double *cloudmed;
+    const double *cloudhigh;
+
+    const double* rawsWind;
+    const double* rawsDir;
+    const double* rawsSolrad;
+    const double* rawsTemp;
+    double rawsLatitude;
+    double rawsLongitude;
+    const char* rawsStation;
+    char** rawsDateTime;
+
+    const double* metarWind;
+    const double* metarDir;
+    const double* metarTemp;
+    const double* metarCloud;
+    double metarLatitude;
+    double  metarLongitude;
+    const char* metarStation;
+    char** metarDateTime;
+
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    //parsing
+    ofstream tsetseWrite;//writing to csv
+    tsetseWrite.open(csvname);
+    cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
+    tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+
+    for (int ex=0;ex<fCount;ex++)
+    {
+        hFeature=OGR_L_GetFeature(hLayer,ex);
+
+        idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
+
+        if (mnetid[ex]==1) //METAR station uses cloud data
         {
+            int count1=0;
+            int count2=0;
+            int count3=0;
+            int count4=0;
+            int countxx1=0;
+            int countxx2=0;
+            int countxx3=0;
 
-            lmUrl=pointInitialization::BuildLatLonLatest(dtoken,lat,lon,radius,limit,ndvar,nHours);
+            idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
-        }
+            idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
-        else
-        {
-            lmUrl=pointInitialization::BuildLatLonUrl(dtoken,lat,lon,radius,limit,ndvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        }
+            idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
-        //cout<<lmUrl<<endl;
+            idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
+            cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
 
-        OGRDataSourceH hDS;
-        OGRLayerH hLayer;
-        OGRFeatureH hFeature;
+            idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
+            cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
 
-        const char* csvname="latlon.csv";
+            idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
+            cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
 
-        hDS=OGROpen(lmUrl,0,NULL);//reading data
-        //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
-        if (hDS==NULL)
-            printf("I am broken, so very broken \n");
-        printf("\n\n");
+            idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
+            metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
-        //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
-        hLayer=OGR_DS_GetLayer(hDS,0);
-        OGR_L_ResetReading(hLayer);
+            idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
-        int idx=0;
-        int idx1=0;
-        int idx2=0;
-        int idx3=0;
-        int idx4=0;
-        int idx5=0;
-        int idx6=0;
-        int idx7=0;
-        int idx8=0;
-        int idx9=0;
-        int idx10=0;
-        int idx11=0;
-        int idx12=0;
-        int idx13=0;
-        int idx14=0;
-        int idx15=0;
-        int idx16=0;
+            idx7=OGR_F_GetFieldIndex(hFeature,"STID");
+            metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
-        vector<int> mnetid;
+            idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+            metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
-        int idxx1=0;
-        int idxx2=0;
-        int idxx3=0;
-        const double *cloudlow;
-        const double *cloudmed;
-        const double *cloudhigh;
-
-        const double* rawsWind;
-        const double* rawsDir;
-        const double* rawsSolrad;
-        const double* rawsTemp;
-        double rawsLatitude;
-        double rawsLongitude;
-        const char* rawsStation;
-        char** rawsDateTime;
-
-        const double* metarWind;
-        const double* metarDir;
-        const double* metarTemp;
-        const double* metarCloud;
-        double metarLatitude;
-        double  metarLongitude;
-        const char* metarStation;
-        char** metarDateTime;
-
-        int fCount=OGR_L_GetFeatureCount(hLayer,1);
-
-        //parsing
-
-        ofstream tsetseWrite;//writing to csv
-        tsetseWrite.open(csvname);
-        cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+            vector<string>cloudkappa;
+            cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
+            vector<string>metarWindDirection;
+            metarWindDirection=fixWindDir(metarDir,"0",count1);
 
 
-        for (int ex=0;ex<fCount;ex++)
-        {
-
-            hFeature=OGR_L_GetFeature(hLayer,ex);
-
-            idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-            mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
-            if (mnetid[ex]==1) //METAR station uses cloud data
+            for(int ez=0;ez<count1;ez++)
             {
-                int count1=0;
-                int count2=0;
-                int count3=0;
-                int count4=0;
-                int countxx1=0;
-                int countxx2=0;
-                int countxx3=0;
-
-                idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
-
-                idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
-
-                idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
-
-                idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
-
-                idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-                cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
-
-                idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-                cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
-
-                idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
-
-                idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
-
-                idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
-
-                idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-                vector<string>cloudkappa;
-                cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-                vector<string>metarWindDirection;
-                metarWindDirection=fixWindDir(metarDir,"0",count1);
-
-
-                for(int ez=0;ez<count1;ez++)
-                {
-                 tsetseWrite<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
-                }
-
+             tsetseWrite<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"m,"<<metarWind[ez]<<",m/s,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"kilometres,"<<metarDateTime[ez]<<endl;
             }
+        }
 
-            if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        {
+            int count9=0;
+            int count10=0;
+            int count11=0;
+            int count12=0;
+
+            idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+
+            idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+
+            idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+
+            idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+            rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+
+            idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
+            rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+
+            idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+
+            idx15=OGR_F_GetFieldIndex(hFeature,"STID");
+            rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
+
+            idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
+            rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+
+            const double* aZero;
+            aZero=0;
+            std::string baddata="-9999";
+            vector<string>rawsWindDirection;
+            rawsWindDirection=fixWindDir(rawsDir,"0",count9);
+
+
+            for (int ez=0;ez<count9;ez++)
             {
-                int count9=0;
-                int count10=0;
-                int count11=0;
-                int count12=0;
-
-                idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
-
-                idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
-
-                idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
-
-                idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
-
-                idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
-
-                idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
-
-                idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
-
-                idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
-
-                const double* aZero;
-                aZero=0;
-                std::string baddata="-9999";
-                vector<string>rawsWindDirection;
-                rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-
-
-                    for (int ez=0;ez<count9;ez++)
-                    {
-                    if (rawsSolrad==aZero)
-                    {
-                        tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                    }
-                    else
-                    {
-                        tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
-                    }
-
-                    }
-
+                if (rawsSolrad==aZero)
+                {
+                    tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+                else
+                {
+                    tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"m,"<<rawsWind[ez]<<",m/s,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"kilometres,"<<rawsDateTime[ez]<<endl;
+                }
+            }
         }
     }
 }
-
 
 void pointInitialization::fetchManualBboxStation(bool type,int nHours,
                                            std::string lat1,
@@ -3991,213 +3559,201 @@ void pointInitialization::fetchManualBboxStation(bool type,int nHours,
                                            std::string yearb,
                                            std::string monthb,
                                            std::string dayb,std::string clockb)
-    {
+{
     //fetches data based on a bounding box
     //the bounding box is specified by
     // lower left (lon,lat) to upper right (lon,lat)
 
-        const char* lmUrl;
-        std::string tempUrl;
-        if (type==true)
+    const char* lmUrl;
+    std::string tempUrl;
+    if (type==true)
+    {
+        tempUrl=pointInitialization::BuildBboxLatest(lat1,lon1,lat2,lon2);
+        lmUrl=tempUrl.c_str();
+    }
+    else
+    {
+        tempUrl=pointInitialization::BuildBboxUrl(lat1,lon1,lat2,lon2,
+                                                yeara,montha,daya,clocka,
+                                                yearb,monthb,dayb,clockb);
+        lmUrl=tempUrl.c_str();
+    }
+    OGRDataSourceH hDS;
+    OGRLayerH hLayer;
+    OGRFeatureH hFeature;
+
+    const char* csvname="box.csv";
+
+    hDS=OGROpen(lmUrl,0,NULL);
+    CPLGetLastErrorMsg();
+    if (hDS==NULL)
+        printf("i be broken mon \n");
+    printf("\n\n");
+
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+
+    int idx=0;
+    int idx1=0;
+    int idx2=0;
+    int idx3=0;
+    int idx4=0;
+    int idx5=0;
+    int idx6=0;
+    int idx7=0;
+    int idx8=0;
+    int idx9=0;
+    int idx10=0;
+    int idx11=0;
+    int idx12=0;
+    int idx13=0;
+    int idx14=0;
+    int idx15=0;
+    int idx16=0;
+
+    vector<int> mnetid;
+
+    int idxx1=0;
+    int idxx2=0;
+    int idxx3=0;
+    const double *cloudlow;
+    const double *cloudmed;
+    const double *cloudhigh;
+
+    const double* rawsWind;
+    const double* rawsDir;
+    const double* rawsSolrad;
+    const double* rawsTemp;
+    double rawsLatitude;
+    double rawsLongitude;
+    const char* rawsStation;
+    char** rawsDateTime;
+
+    const double* metarWind;
+    const double* metarDir;
+    const double* metarTemp;
+    const double* metarCloud;
+    double metarLatitude;
+    double  metarLongitude;
+    const char* metarStation;
+    char** metarDateTime;
+
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    ofstream tsetseWrite;//writing to csv
+    tsetseWrite.open(csvname);
+    cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
+    tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+
+    for (int ex=0;ex<fCount;ex++)
+    {
+        hFeature=OGR_L_GetFeature(hLayer,ex);
+
+        idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
+        mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
+
+        if (mnetid[ex]==1) //METAR station uses cloud data
         {
-            tempUrl=pointInitialization::BuildBboxLatest(lat1,lon1,lat2,lon2);
-            lmUrl=tempUrl.c_str();
-        }
-        else
-        {
-            tempUrl=pointInitialization::BuildBboxUrl(lat1,lon1,lat2,lon2,
-                                                    yeara,montha,daya,clocka,
-                                                    yearb,monthb,dayb,clockb);
-            lmUrl=tempUrl.c_str();
-        }
-//        cout<<lmUrl<<endl;
-        OGRDataSourceH hDS;
-        OGRLayerH hLayer;
-        OGRFeatureH hFeature;
+            int count1=0;
+            int count2=0;
+            int count3=0;
+            int count4=0;
+            int countxx1=0;
+            int countxx2=0;
+            int countxx3=0;
 
-        const char* csvname="box.csv";
+            idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
 
+            idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
 
-        hDS=OGROpen(lmUrl,0,NULL);
-        CPLGetLastErrorMsg();
-        //    hDS=GDALOpenEx(pszvtry,GDAL_OF_ALL,NULL,NULL,NULL);
-        if (hDS==NULL)
-            printf("i be broken mon \n");
-        printf("\n\n");
+            idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
 
-        //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
-        hLayer=OGR_DS_GetLayer(hDS,0);
-        OGR_L_ResetReading(hLayer);
+            idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
+            cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
 
-        int idx=0;
-        int idx1=0;
-        int idx2=0;
-        int idx3=0;
-        int idx4=0;
-        int idx5=0;
-        int idx6=0;
-        int idx7=0;
-        int idx8=0;
-        int idx9=0;
-        int idx10=0;
-        int idx11=0;
-        int idx12=0;
-        int idx13=0;
-        int idx14=0;
-        int idx15=0;
-        int idx16=0;
+            idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
+            cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
 
-        vector<int> mnetid;
+            idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
+            cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
 
-        int idxx1=0;
-        int idxx2=0;
-        int idxx3=0;
-        const double *cloudlow;
-        const double *cloudmed;
-        const double *cloudhigh;
+            idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
+            metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
 
-        const double* rawsWind;
-        const double* rawsDir;
-        const double* rawsSolrad;
-        const double* rawsTemp;
-        double rawsLatitude;
-        double rawsLongitude;
-        const char* rawsStation;
-        char** rawsDateTime;
+            idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
 
-        const double* metarWind;
-        const double* metarDir;
-        const double* metarTemp;
-        const double* metarCloud;
-        double metarLatitude;
-        double  metarLongitude;
-        const char* metarStation;
-        char** metarDateTime;
+            idx7=OGR_F_GetFieldIndex(hFeature,"STID");
+            metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
 
-        int fCount=OGR_L_GetFeatureCount(hLayer,1);
+            idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
+            metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
-        ofstream tsetseWrite;//writing to csv
-        tsetseWrite.open(csvname);
-        cout<<fCount<<" stations "<<"saved to: "<<csvname<<endl;
-        tsetseWrite << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
+            vector<string>cloudkappa;
+            cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
+            vector<string>metarWindDirection;
+            metarWindDirection=fixWindDir(metarDir,"0",count1);
 
-        for (int ex=0;ex<fCount;ex++)
-        {
-
-            hFeature=OGR_L_GetFeature(hLayer,ex);
-
-            idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-            mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
-            if (mnetid[ex]==1) //METAR station uses cloud data
+            for(int ez=0;ez<count1;ez++)
             {
-                int count1=0;
-                int count2=0;
-                int count3=0;
-                int count4=0;
-                int countxx1=0;
-                int countxx2=0;
-                int countxx3=0;
-
-                idx1=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                metarWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx1,&count1));
-
-                idx2=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                metarDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx2,&count2));
-
-                idx3=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                metarTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx3,&count3));
-
-                idxx1=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                cloudlow=OGR_F_GetFieldAsDoubleList(hFeature,idxx1,&countxx1);
-
-                idxx2=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-                cloudmed=OGR_F_GetFieldAsDoubleList(hFeature,idxx2,&countxx2);
-
-                idxx3=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-                cloudhigh=OGR_F_GetFieldAsDoubleList(hFeature,idxx3,&countxx3);
-
-                idx5=OGR_F_GetFieldIndex(hFeature,"latitude");
-                metarLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx5));
-
-                idx6=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                metarLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx6));
-
-                idx7=OGR_F_GetFieldIndex(hFeature,"STID");
-                metarStation=(OGR_F_GetFieldAsString(hFeature,idx7));
-
-                idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
-                metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-
-                vector<string>cloudkappa;
-                cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
-                vector<string>metarWindDirection;
-                metarWindDirection=fixWindDir(metarDir,"0",count1);
-
-
-                for(int ez=0;ez<count1;ez++)
-                {
-                 tsetseWrite<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
-                }
-
+             tsetseWrite<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemp[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
             }
+        }
 
-            if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        if (mnetid[ex]==2) //RAWS STATION, solar radiation
+        {
+            int count9=0;
+            int count10=0;
+            int count11=0;
+            int count12=0;
+
+            idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
+            rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
+
+            idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
+            rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
+
+            idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
+            rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
+
+            idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
+            rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
+
+            idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
+            rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
+
+            idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
+            rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
+
+            idx15=OGR_F_GetFieldIndex(hFeature,"STID");
+            rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
+
+            idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
+            rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
+
+            const double* aZero;
+            aZero=0;
+            std::string baddata="-9999";
+            vector<string>rawsWindDirection;
+            rawsWindDirection=fixWindDir(rawsDir,"0",count9);
+
+            for (int ez=0;ez<count9;ez++)
             {
-                int count9=0;
-                int count10=0;
-                int count11=0;
-                int count12=0;
+                if (rawsSolrad==aZero)
+                {
 
-                idx9=OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                rawsWind=(OGR_F_GetFieldAsDoubleList(hFeature,idx9,&count9));
-
-                idx10=OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                rawsDir=(OGR_F_GetFieldAsDoubleList(hFeature,idx10,&count10));
-
-                idx11=OGR_F_GetFieldIndex(hFeature,"air_temp");
-                rawsTemp=(OGR_F_GetFieldAsDoubleList(hFeature,idx11,&count11));
-
-                idx12=OGR_F_GetFieldIndex(hFeature,"solar_radiation");
-                rawsSolrad=(OGR_F_GetFieldAsDoubleList(hFeature,idx12,&count12));
-
-                idx13=OGR_F_GetFieldIndex(hFeature,"latitude");
-                rawsLatitude=(OGR_F_GetFieldAsDouble(hFeature,idx13));
-
-                idx14=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                rawsLongitude=(OGR_F_GetFieldAsDouble(hFeature,idx14));
-
-                idx15=OGR_F_GetFieldIndex(hFeature,"STID");
-                rawsStation=(OGR_F_GetFieldAsString(hFeature,idx15));
-
-                idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
-                rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
-
-                const double* aZero;
-                aZero=0;
-                std::string baddata="-9999";
-                vector<string>rawsWindDirection;
-                rawsWindDirection=fixWindDir(rawsDir,"0",count9);
-
-
-                    for (int ez=0;ez<count9;ez++)
-                    {
-                    if (rawsSolrad==aZero)
-                    {
-
-                        tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                    }
-                    else
-                    {
-                        tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                    }
-
-                    }
-
+                    tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                }
+                else
+                {
+                    tsetseWrite<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsSolrad[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                }
+            }
         }
     }
-
-
 }
 
 int pointInitialization::storeHour(int nHours)
@@ -4206,16 +3762,9 @@ int pointInitialization::storeHour(int nHours)
     return bla;
 }
 
-
-
-
 void pointInitialization::newAuto(AsciiGrid<double> &dem)
 {
     double dz=dem.get_maxValue();
-    cout<<"test"<<endl;
-
-
-
 }
 
 /**@brief Builds the time list for a pointInitialization run.
@@ -4240,8 +3789,6 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
                                         int endMonth, int endDay, int endHour, int endMinute,
                                         int nTimeSteps, std::string timeZone )
 {
-
-
     boost::local_time::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     boost::local_time::time_zone_ptr timeZonePtr;
@@ -4250,56 +3797,34 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
     endHour=endHour;
     startHour=startHour;
     
-//    boost::posix_time::ptime startTime(boost::gregorian::date(startYear,startMonth,startDay),boost::posix_time::time_duration(startHour,startMinute,0,0));
     boost::gregorian::date dStart(startYear,startMonth,startDay);
     boost::posix_time::time_duration dStartTime(startHour,startMinute,0,0);
-
     boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
 
-
-//    boost::posix_time::ptime endTime(boost::gregorian::date(endYear,endMonth,endDay),boost::posix_time::time_duration(endHour,endMinute,0,0));
     boost::gregorian::date dEnd(endYear,endMonth,endDay);
     boost::posix_time::time_duration dEndTime(endHour,endMinute,0,0);
-
     boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,true);
-
-
-
 
     boost::posix_time::ptime startUtc=startLocal.utc_time();
     boost::posix_time::ptime endUtc=endLocal.utc_time();
-//    cout<<startUtc<<endl;
-//    cout<<endUtc<<endl;
     printf("\n");
 
-
-//    cout<<endTime-startTime<<endl;
-
     boost::posix_time::time_duration diffTime=endUtc-startUtc;
-
-//    cout<<diffTime<<endl;
-
     boost::posix_time::time_duration stepTime=diffTime/nTimeSteps;
-////    cout<<stepTime<<endl;
 
     std::vector<boost::posix_time::ptime> timeOut;
     std::vector<boost::posix_time::ptime> timeConstruct;
     std::vector<boost::posix_time::ptime> timeList;
     std::vector<boost::posix_time::time_duration> timeStorage;
 
-
     timeOut.push_back(startUtc);
-//    cout<<timeOut[0]<<endl;
     for (int i=1;i<nTimeSteps;i++)
     {
         boost::posix_time::time_duration specTime;
         specTime=stepTime*i;
         timeOut.push_back(startUtc+specTime);
-//        cout<<timeOut[i]<<endl;
     }
     timeOut.push_back(endUtc);
-//    cout<<timeOut[nTimeSteps]<<endl;
-//    cout<<timeOut.size()<<endl;
     timeList=timeOut;
 
     return timeList;
@@ -4310,7 +3835,7 @@ vector<boost::posix_time::ptime> pointInitialization::getSingleTimeList(string t
     vector<boost::posix_time::ptime> timeList;
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
     timeList.push_back(standard);
-//    cout<<standard<<endl;
+
     return timeList;
 }
 
@@ -4325,16 +3850,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
                                     std::string demFile,
                                     std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
 {
-
-//    cout<<timeUTC[0]<<endl;//year_0
-//    cout<<timeUTC[1]<<endl;//month_0
-//    cout<<timeUTC[2]<<endl;//day_0
-//    cout<<timeUTC[3]<<endl;//clock_0
-//    cout<<timeUTC[4]<<endl;//year_1
-//    cout<<timeUTC[5]<<endl;//month_1
-//    cout<<timeUTC[6]<<endl;//day_1
-//    cout<<timeUTC[7]<<endl;//clock_1
-
     GDALDataset  *poDS;
     poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
     if (poDS==NULL)
@@ -4350,16 +3865,11 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     bRet=GDALGetBounds(poDS,bounds);
     if (bRet==false)
     {
-        cout<<"GDALGetBounds returned false, DEM file is lacking readable data.";
-        cout<<false<<endl;       
         throw std::runtime_error("GDALGetBounds returned false, DEM file is lacking readable data.");
         return false;
 
     }
-//    cout<<bounds[0]<<endl;//UR Lat
-//    cout<<bounds[1]<<endl;// UR Lon
-//    cout<<bounds[2]<<endl;//LL Lat
-//    cout<<bounds[3]<<endl;//LL Lon
+
     double buffer;
     buffer=get_stationBuffer();
     cout<<"Adding "<<buffer<<" m to DEM for station fetching..."<<endl;
@@ -4368,60 +3878,34 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     double projyL=bounds[3];
     double projxR=bounds[0];
     double projyR=bounds[1];
-//    cout<<"lowerLeft"<<endl;
-//    cout<<projxL<<","<<projyL<<endl;
-
-//    cout<<"UpperRight"<<endl;
-//    cout<<projxR<<","<<projyR<<endl;
 
     GDALPointFromLatLon(projyL,projxL,poDS,"WGS84"); //LowerLeft
-
-
     GDALPointFromLatLon(projyR,projxR,poDS,"WGS84"); //Upper Right
-
-
     projxL=projxL-buffer;
     projyL=projyL-buffer;
-
     projxR=projxR+buffer;
     projyR=projyR+buffer;
 
-//    cout<<"------------------------------"<<endl;
-
     GDALPointToLatLon(projyL,projxL,poDS,"WGS84");
-//    cout<<"lowerLeft"<<endl;
-//    cout<<projxL<<","<<projyL<<endl;
     GDALPointToLatLon(projyR,projxR,poDS,"WGS84");
-//    cout<<"upperRight"<<endl;
-//    cout<<projxR<<","<<projyR<<endl;
 
     bounds[2]=projxL;
     bounds[3]=projyL;
     bounds[0]=projxR;
     bounds[1]=projyR;
 
-//        cout<<bounds[0]<<endl;//UR Lat
-//        cout<<bounds[1]<<endl;// UR Lon
-//        cout<<bounds[2]<<endl;//LL Lat
-//        cout<<bounds[3]<<endl;//LL Lon
-
-
-
-
-//    exit(1)
     std::string URL;
 
     if (latest==false)
     {
+        vector<std::string>timeUTC;
+        timeUTC=UnifyTime(timeList);
 
-    vector<std::string>timeUTC;
-    timeUTC=UnifyTime(timeList);
 
-
-    URL=BuildUnifiedBbox(bounds[2],bounds[3],bounds[0],
-            bounds[1], timeUTC[0],timeUTC[1],timeUTC[2],
-            timeUTC[3],timeUTC[4],timeUTC[5],
-            timeUTC[6],timeUTC[7]);
+        URL=BuildUnifiedBbox(bounds[2],bounds[3],bounds[0],
+                bounds[1], timeUTC[0],timeUTC[1],timeUTC[2],
+                timeUTC[3],timeUTC[4],timeUTC[5],
+                timeUTC[6],timeUTC[7]);
     }
     if (latest==true)
     {
@@ -4433,20 +3917,20 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     std::string csvName;
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
     {
-    csvName=stationFilename;
-    cout<<".csv exists in stationFilename..."<<endl;
+        csvName=stationFilename;
+        cout<<".csv exists in stationFilename..."<<endl;
     }
     else
     {
-    csvName=stationFilename+".csv";
-    cout<<"Adding .csv to stationFilename..."<<endl;
+        csvName=stationFilename+".csv";
+        cout<<"Adding .csv to stationFilename..."<<endl;
     }
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
 
-    hDS=OGROpen(URL.c_str(),0,NULL);
+    hDS=OGROpen(URL.c_str(), 0, NULL);
     CPLGetLastErrorMsg();
     if (hDS==NULL)
     {
@@ -4454,12 +3938,10 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
         printf("OGROpen could not read file\n try running again ");
         cout<<"if persists: check URL, possibly no stations exist for given parameters."<<endl;
         cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
-        cout<<false<<endl;
         throw std::runtime_error("OGROpen could not read file\nif persists:check URL, possibly not stations\nexist for given parameters,\nIf ERROR is HTTP, check internet connection and server status.");
         return false;
     }
 
-    //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
     hLayer=OGR_DS_GetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
@@ -4513,19 +3995,15 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     outFile.open(csvName.c_str());
     cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
     cout<<"Downloading Data from MesoWest...."<<endl;
-//    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
     std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
     outFile<<header<<endl;
     
-    
     for (int ex=0;ex<fCount;ex++)
     {
-
         hFeature=OGR_L_GetFeature(hLayer,ex);
 
         idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
         mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
 
         if (mnetid[ex]==1) //METAR station uses cloud data
         {
@@ -4566,13 +4044,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
             idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
             metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
-            
-//            FloatPrinter(metarWind,count1,"metarwind");
-//            FloatPrinter(metarDir,count2,"metardir");
-//            FloatPrinter(metarTemp,count3,"metartemp");
-//            FloatPrinter(cloudlow,countxx1,"cloudll");
-//            FloatPrinter(cloudmed,countxx2,"cloudmm");
-//            FloatPrinter(cloudhigh,countxx3,"cloudhh");
 
             vector<std::string>cloudkappa;
             cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
@@ -4587,7 +4058,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
 
                  outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km"<<endl;
 
-
             }
             else
             {
@@ -4596,7 +4066,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
                  outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
                 }
             }
-
         }
 
         if (mnetid[ex]==2) //RAWS STATION, solar radiation
@@ -4630,12 +4099,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
             idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
             rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-
-//            FloatPrinter(rawsWind,count9,"rawswind");
-//            FloatPrinter(rawsDir,count10,"rawsdir");
-//            FloatPrinter(rawsTemp,count11,"rawstemp");
-//            FloatPrinter(rawsSolrad,count12,"rawssol");
-
             int aZero;
             aZero=0;
             std::string baddata="-9999";
@@ -4663,19 +4126,18 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
             {
                 for (int ez=0;ez<count9;ez++)
                 {
-                if (rawsCloudCover.size()==aZero)
-                {
+                    if (rawsCloudCover.size()==aZero)
+                    {
 
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                }
-                else
-                {
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                }
+                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                    }
+                    else
+                    {
+                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                    }
 
                 }
             }
-
         }
     }
     cout<<"Data downloaded and saved...."<<endl;
@@ -4684,29 +4146,6 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     delete cloudhigh;
     delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
     delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
-
-//    const double *cloudlow;
-//    const double *cloudmed;
-//    const double *cloudhigh;
-
-//    const double* rawsWind;
-//    const double* rawsDir;
-//    const double* rawsSolrad;
-//    const double* rawsTemp;
-//    double rawsLatitude;
-//    double rawsLongitude;
-//    const char* rawsStation;
-//    char** rawsDateTime;
-
-//    const double* metarWind;
-//    const double* metarDir;
-//    const double* metarTemp;
-//    double metarLatitude;
-//    double  metarLongitude;
-//    const char* metarStation;
-//    char** metarDateTime;
-
-
 
     cout<<"Fetch Station returned true: "<<true<<endl;
 
@@ -4737,13 +4176,13 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     std::string csvName;
     if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
     {
-    csvName=stationFilename;
-    cout<<".csv exists in stationFilename..."<<endl;
+        csvName=stationFilename;
+        cout<<".csv exists in stationFilename..."<<endl;
     }
     else
     {
-    csvName=stationFilename+".csv";
-    cout<<"Adding .csv to stationFilename..."<<endl;
+        csvName=stationFilename+".csv";
+        cout<<"Adding .csv to stationFilename..."<<endl;
     }
 
     OGRDataSourceH hDS;
@@ -4763,7 +4202,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
         return false;
     }
 
-    //    hLayer = OGR_DS_GetLayerByName(hDS,"OGRGeoJSON");
     hLayer=OGR_DS_GetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
@@ -4817,19 +4255,15 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     outFile.open(csvName.c_str());
     cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
     cout<<"Downloading Data from MesoWest...."<<endl;
-//    outFile << "Station_ID,Coord_Sys,DATUM(WGS84),Lat/YCoord,Lon/XCoord,Height,Height_Units,Speed,Speed_Units,Direction(degrees),Tempertaure,Temperature_Units,Cloud_Cover(%),Radius_of_influence,Radius_of_influence_Units,date_time"<<endl;
     std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
     outFile<<header<<endl;
 
-
     for (int ex=0;ex<fCount;ex++)
     {
-
         hFeature=OGR_L_GetFeature(hLayer,ex);
 
         idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
         mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
-
 
         if (mnetid[ex]==1) //METAR station uses cloud data
         {
@@ -4871,13 +4305,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
             idx8=OGR_F_GetFieldIndex(hFeature,"date_times");
             metarDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx8));
 
-//            FloatPrinter(metarWind,count1,"metarwind");
-//            FloatPrinter(metarDir,count2,"metardir");
-//            FloatPrinter(metarTemp,count3,"metartemp");
-//            FloatPrinter(cloudlow,countxx1,"cloudll");
-//            FloatPrinter(cloudmed,countxx2,"cloudmm");
-//            FloatPrinter(cloudhigh,countxx3,"cloudhh");
-
             vector<std::string>cloudkappa;
             cloudkappa=UnifyClouds(cloudlow,cloudmed,cloudhigh,countxx1,countxx2,countxx3,count3);
             vector<std::string>metarWindDirection;
@@ -4900,7 +4327,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
                  outFile<<metarStation<<",GEOGCS,"<<"WGS84,"<<metarLatitude<<","<<metarLongitude<<",10,"<<"meters,"<<metarWind[ez]<<",mps,"<<metarWindDirection[ez]<<","<<metarTemperature[ez]<<",C,"<<cloudkappa[ez]<<","<<"-1,"<<"km,"<<metarDateTime[ez]<<endl;
                 }
             }
-
         }
 
         if (mnetid[ex]==2) //RAWS STATION, solar radiation
@@ -4934,12 +4360,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
             idx16=OGR_F_GetFieldIndex(hFeature,"date_times");
             rawsDateTime=(OGR_F_GetFieldAsStringList(hFeature,idx16));
 
-
-//            FloatPrinter(rawsWind,count9,"rawswind");
-//            FloatPrinter(rawsDir,count10,"rawsdir");
-//            FloatPrinter(rawsTemp,count11,"rawstemp");
-//            FloatPrinter(rawsSolrad,count12,"rawssol");
-
             int aZero;
             aZero=0;
             std::string baddata="-9999";
@@ -4961,25 +4381,22 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
                 {
                     outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km"<<endl;
                 }
-
             }
             else
             {
                 for (int ez=0;ez<count9;ez++)
                 {
-                if (rawsCloudCover.size()==aZero)
-                {
+                    if (rawsCloudCover.size()==aZero)
+                    {
 
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                }
-                else
-                {
-                    outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
-                }
-
+                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<baddata<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                    }
+                    else
+                    {
+                        outFile<<rawsStation<<",GEOGCS,"<<"WGS84,"<<rawsLatitude<<","<<rawsLongitude<<",10,"<<"meters,"<<rawsWind[ez]<<",mps,"<<rawsWindDirection[ez]<<","<<rawsTemp[ez]<<",C,"<<rawsCloudCover[ez]<<","<<"-1,"<<"km,"<<rawsDateTime[ez]<<endl;
+                    }
                 }
             }
-
         }
     }
     cout<<"Data downloaded and saved...."<<endl;
@@ -4987,7 +4404,6 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
     delete cloudhigh;
     delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
     delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
-
 
     cout<<"Fetch Station returned true: "<<true<<endl;
 
@@ -4999,83 +4415,9 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
 void pointInitialization::fetchTest(std::string stationFilename,
                                     std::string demFile,
                                     std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
-    {
-
+{
     cout<<"inactive"<<endl;
     exit(1);
 
-    }
+}
 
-void pointInitialization::stationCliCaller(bool station_fetch, std::string station_id, int nHours, bool btype,
-                                           std::string fetcher,std::string radius,
-                                           std::string limit, std::string pLat,
-                                           std::string pLon, std::string LLLat,
-                                           std::string LLLon, std::string URLat,
-                                           std::string URLon , std::string yeara,
-                                           std::string montha, std::string daya,
-                                           std::string clocka,std::string yearb,
-                                           std::string monthb,std::string dayb,
-                                           std::string clockb)
-
-    {
-    if(station_fetch==true)
-    {
-        cout<<"true"<<endl;
-//        fetchSingleStation(true,24,"kmso","2016","06","01","1200","2016","06","02","1200");
-//        fetchMultiStation(true,24,"kmso,TR266","2016","06","01","1200","2016","06","02","1200");
-//        fetchPointRadiusStation(true,24,"kmso","30","30","2016","06","01","1200","2016","06","02","1200");
-//        fetchLatLonStation(true,24,"46.92","-114.12","30","30","2016","06","01","1200","2016","06","02","1200");
-//        fetchBboxStation(true,24,"45.7511","-115.2578","47.1486","-112.7591",ndvar,"2016","06","01","1200","2016","06","02","1200");
-//        fetchTest("kmso",24,ndvar);
-
-
-    }
-    else
-    {
-        exit(1);
-        {
-
-        if (fetcher=="single")
-        {
-            //FetchSingleStation(dtoken,btype,nHours,station_id,"wind_speed,wind_direction,air_temp,solar_radiation,cloud_layer_1_code","2016","06","01","1200","2016","06","02","1200");
-            fetchSingleStation(btype,nHours,station_id,
-                                  yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        }
-        if (fetcher=="multi")
-        {
-            fetchMultiStation(btype,nHours,station_id,
-                              yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        }
-        if (fetcher=="point")
-        {
-//            fetchPointRadiusStation(btype,nHours,station_id,
-//                                    radius,limit,
-//                                    yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        }
-        if (fetcher=="latlon")
-        {
-//            fetchLatLonStation(btype,nHours,pLat,pLon,radius,limit,yeara,montha,
-//                               daya,clocka,yearb,monthb,dayb,clockb);
-
-        }
-        if (fetcher=="box")
-        {
-//            fetchBboxStation(btype,nHours,LLLat,LLLon,URLat,URLon,
-//                             yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-            //bbox is the following
-            // lower left to upper right
-        }
-        if (fetcher=="auto")
-        {
-    //        auto_bbox_fetch(dtoken,btype,nHours,LLLat,LLLon,URLat,URLon,dvar,yeara,montha,daya,clocka,yearb,monthb,dayb,clockb);
-        }
-
-        if (fetcher=="test")
-
-        {
-    //        fetchTest(dtoken,true,nHours,station_id,dvar);
-        }
-        }
-    }
-    cout<<"WIP!"<<endl;
-    }
