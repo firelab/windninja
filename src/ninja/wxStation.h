@@ -159,7 +159,6 @@ class wxStation
 
     static eStationFormat stationFormat;
 
-
  private:
 
     std::string stationName;
@@ -189,7 +188,8 @@ class wxStation
     lengthUnits::eLengthUnits influenceRadiusUnits;
     eDatumType datumType;
     eCoordType coordType;
-    vector<boost::local_time::local_date_time> curStep;
+
+    boost::local_time::local_date_time currentTime;
 
     //this is UTC and is used to match data points from MesoWest and Interpolation.
     vector<boost::posix_time::ptime> datetimeList; 

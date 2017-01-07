@@ -31,6 +31,7 @@
 wxStation::eStationFormat wxStation::stationFormat = invalidFormat;  
 
 wxStation::wxStation()
+: currentTime(boost::local_time::not_a_date_time)
 {
     initialize();
 }
@@ -39,34 +40,33 @@ wxStation::wxStation()
  * Copy Constructor for wxStation
  * @param m right hand side wxStation object
  */
-wxStation::wxStation( wxStation const& m )
+wxStation::wxStation( wxStation const& rhs )
+: currentTime(rhs.currentTime)
 {
-    stationName = m.stationName;
-    lat = m.lat;
-    lon = m.lon;
-    projXord = m.projXord;
-    projYord = m.projYord;
-    xord = m.xord;
-    yord = m.yord;
-    heightList = m.heightList;
-    heightUnits = m.heightUnits;
-    speedList = m.speedList;
-    inputSpeedUnits = m.inputSpeedUnits;
-    directionList = m.directionList;
-    w_speed = m.w_speed;
-    w_speedUnits = m.w_speedUnits;
-    temperatureList = m.temperatureList;
-    tempUnits = m.tempUnits;
-    cloudCoverList = m.cloudCoverList;
-    cloudCoverUnits = m.cloudCoverUnits;
-    influenceRadiusList = m.influenceRadiusList;
-    influenceRadiusUnits = m.influenceRadiusUnits;
-    datumType = m.datumType;
-    coordType = m.coordType;
-    datetimeList = m.datetimeList;
-    localDateTimeList=m.localDateTimeList;
-    curStep=m.curStep;
-
+    stationName = rhs.stationName;
+    lat = rhs.lat;
+    lon = rhs.lon;
+    projXord = rhs.projXord;
+    projYord = rhs.projYord;
+    xord = rhs.xord;
+    yord = rhs.yord;
+    heightList = rhs.heightList;
+    heightUnits = rhs.heightUnits;
+    speedList = rhs.speedList;
+    inputSpeedUnits = rhs.inputSpeedUnits;
+    directionList = rhs.directionList;
+    w_speed = rhs.w_speed;
+    w_speedUnits = rhs.w_speedUnits;
+    temperatureList = rhs.temperatureList;
+    tempUnits = rhs.tempUnits;
+    cloudCoverList = rhs.cloudCoverList;
+    cloudCoverUnits = rhs.cloudCoverUnits;
+    influenceRadiusList = rhs.influenceRadiusList;
+    influenceRadiusUnits = rhs.influenceRadiusUnits;
+    datumType = rhs.datumType;
+    coordType = rhs.coordType;
+    datetimeList = rhs.datetimeList;
+    localDateTimeList = rhs.localDateTimeList;
 }
 
 /**
@@ -74,34 +74,34 @@ wxStation::wxStation( wxStation const& m )
  * @param m right hand side wxStation object
  * @return reference to a new wxStation object
  */
-wxStation& wxStation::operator= ( wxStation const& m )
+wxStation& wxStation::operator= ( wxStation const& rhs )
 {
-    if( &m != this ) {
-        stationName = m.stationName;
-        lat = m.lat;
-        lon = m.lon;
-        projXord = m.projXord;
-        projYord = m.projYord;
-        xord = m.xord;
-        yord = m.yord;
-        heightList = m.heightList;
-        heightUnits = m.heightUnits;
-        speedList = m.speedList;
-        inputSpeedUnits = m.inputSpeedUnits;
-        directionList = m.directionList;
-        w_speed = m.w_speed;
-        w_speedUnits = m.w_speedUnits;
-        temperatureList = m.temperatureList;
-        tempUnits = m.tempUnits;
-        cloudCoverList = m.cloudCoverList;
-        cloudCoverUnits = m.cloudCoverUnits;
-        influenceRadiusList = m.influenceRadiusList;
-        influenceRadiusUnits = m.influenceRadiusUnits;
-        datumType = m.datumType;
-        coordType = m.coordType;
-        datetimeList =m.datetimeList;
-        localDateTimeList=m.localDateTimeList;
-        curStep=m.curStep;
+    if( &rhs != this ) {
+        stationName = rhs.stationName;
+        lat = rhs.lat;
+        lon = rhs.lon;
+        projXord = rhs.projXord;
+        projYord = rhs.projYord;
+        xord = rhs.xord;
+        yord = rhs.yord;
+        heightList = rhs.heightList;
+        heightUnits = rhs.heightUnits;
+        speedList = rhs.speedList;
+        inputSpeedUnits = rhs.inputSpeedUnits;
+        directionList = rhs.directionList;
+        w_speed = rhs.w_speed;
+        w_speedUnits = rhs.w_speedUnits;
+        temperatureList = rhs.temperatureList;
+        tempUnits = rhs.tempUnits;
+        cloudCoverList = rhs.cloudCoverList;
+        cloudCoverUnits = rhs.cloudCoverUnits;
+        influenceRadiusList = rhs.influenceRadiusList;
+        influenceRadiusUnits = rhs.influenceRadiusUnits;
+        datumType = rhs.datumType;
+        coordType = rhs.coordType;
+        datetimeList = rhs.datetimeList;
+        localDateTimeList = rhs.localDateTimeList;
+        currentTime = rhs.currentTime;
     }
     return *this;
 }
@@ -502,14 +502,12 @@ boost::local_time::local_date_time wxStation::get_localDateTime(int idx)
 
 boost::local_time::local_date_time wxStation::get_currentTimeStep()
 {
-    boost::local_time::local_date_time current=curStep[0];
-
-    return current;
+    return currentTime;
 }
 
 void wxStation::set_currentTimeStep(boost::local_time::local_date_time step)
 {
-    curStep.assign(1,step);
+    currentTime = step;
 }
 
 bool wxStation::check_station(wxStation station)
