@@ -936,7 +936,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
 vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string demFile)
 {
-    cout<<"converting Interpolated struct to wxStation..."<<endl;
+    CPLDebug("STATION_FETCH", "converting Interpolated struct to wxStation...");
     vector<std::string> stationNames;
     vector<wxStation> stationData;
 
@@ -957,15 +957,12 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     poLayer->ResetReading();
     while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
     {
-    poFeatureDefn = poLayer->GetLayerDefn();
+        poFeatureDefn = poLayer->GetLayerDefn();
 
-    // get Station name
-    oStationName = poFeature->GetFieldAsString( 0 );
-    stationNames.push_back(oStationName);
-//    cout<<oStationName<<endl;
+        // get Station name
+        oStationName = poFeature->GetFieldAsString( 0 );
+        stationNames.push_back(oStationName);
     }
-
-
 
     int statCount;
     statCount=stationNames.size();
@@ -978,8 +975,8 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
     for (int i=0;i<statCount;i++)
     {
-//        cout<<"looks at: "<<q<<endl;
-//        cout<<"starts at: "<<j<<endl;
+        CPLDebug("STATION_FETCH", "looks at: %d", q);
+        CPLDebug("STATION_FETCH", "starts at: %d", j);
 
         int idx1=0;
         for(j;j<specCount;j++)
@@ -994,96 +991,56 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         q=j;
         if (j==statCount)
         {
-//            cout<<"exiting loop"<<endl;
             break;
         }
     }
-    //     cout<<"idxCount size: "<<idxCount.size()<<endl;
-    //     for (int ii=0;ii<idxCount.size();ii++)
-    //     {
-    //         cout<<idxCount[ii]<<endl;
-    //     }
-         vector<int> countLimiter;
 
-         for (int ei=1;ei<=idxCount.size();ei++)
-         {
-         //    cout<<ei<<endl;
-             int rounder=idxCount.size()-ei;
-             int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
-             countLimiter.push_back(e);
-         }
+    CPLDebug("STATION_FETCH", "idxCount size: %ld", idxCount.size());
+    vector<int> countLimiter;
 
-    //     for (int i=0;i<idxCount.size();i++)
-    //     {
-    //         cout<<countLimiter[i]-1<<" "<<stationNames[countLimiter[i]-1]<<endl;
-    //     }
+    for (int ei=1;ei<=idxCount.size();ei++)
+    {
+        int rounder=idxCount.size()-ei;
+        int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
+        countLimiter.push_back(e);
+    }
 
+    vector<vector<preInterpolate> >stationDataList;
+    stationDataList=data;
 
+    //here is where a wxstation is made
+    for (int i=0;i<idxCount.size();i++)
+    {
+        wxStation subDat;
+        subDat.set_stationName(stationDataList[i][0].stationName);
 
-    //    cout<<countLimiter[0]-1<<" "<<stationNames[countLimiter[0]-1]<<endl;
-    //    cout<<countLimiter[1]-1<<" "<<stationNames[countLimiter[1]-1]<<endl;
-    //    cout<<countLimiter[2]-1<<" "<<stationNames[countLimiter[2]-1]<<endl;
-    //     vector<wxStationList> Liszt=wxStationList::readStationFetchFile(csvFile,demFile);
+        std::string CoordSys=stationDataList[i][0].datumType;
 
-         vector<vector<preInterpolate> >stationDataList;
-//     if (inputStation[0][0].get_stationName()=="")
-//     {
-//     vector<vector<wxStationList> >stationDataList=wxStationList::vectorRead(csvFile,demFile);
-//     }
-//     else
-
-        stationDataList=data;
-        //here is where a wxstation is made
-        for (int i=0;i<idxCount.size();i++)
+        if (CoordSys=="projcs")
         {
-            wxStation subDat;
-//            subDat.set_stationName(stationDataList[i][0].get_stationName());
-            subDat.set_stationName(stationDataList[i][0].stationName);
-//            cout<<subDat.get_stationName()<<endl;
-
-            std::string CoordSys=stationDataList[i][0].datumType;
-
-//            int iCT=stationDataList[i][0].get_coordType();
-//            cout<<stationDataList[i][0].coordType<<endl;
-
-            if (CoordSys=="projcs")
-            {
-//             subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
-                cout<<"poo"<<endl;
-            }
-//            if (iCT==1)
-//            {
-//             stCoordDat="WGS84";
-//            }
-//            else
-//            {
-//             cout<<"defaulting to WGS84 "<<endl;
-//             stCoordDat="WGS84";
-//            }
-            else //WGS84!
-            {
+            //do something?
+        }
+        else //WGS84!
+        {
             const char* stCoorDat=CoordSys.c_str();
-//            cout<<stCoorDat<<endl;
             subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
                     demFile,stCoorDat);
-            }
-
-            for (int k=0;k<stationDataList[i].size();k++)
-            {
-             subDat.set_speed(stationDataList[i][k].speed,stationDataList[i][k].inputSpeedUnits);
-             subDat.set_direction(stationDataList[i][k].direction);
-             subDat.set_temperature(stationDataList[i][k].temperature,stationDataList[i][k].tempUnits);
-             subDat.set_cloudCover(stationDataList[i][k].cloudCover,stationDataList[i][k].cloudCoverUnits);
-             subDat.set_influenceRadius(stationDataList[i][k].influenceRadius,stationDataList[i][k].influenceRadiusUnits);
-             subDat.set_height(stationDataList[i][k].height,stationDataList[i][k].heightUnits);
-             subDat.set_datetime(stationDataList[i][k].datetime);
-
-            }
-        //    cout<<subDat.speed.size()<<endl;
-        //    cout<<subDat.direction.size()<<endl;
-            stationData.push_back(subDat);
         }
 
+        for (int k=0;k<stationDataList[i].size();k++)
+        {
+         subDat.set_speed(stationDataList[i][k].speed,stationDataList[i][k].inputSpeedUnits);
+         subDat.set_direction(stationDataList[i][k].direction);
+         subDat.set_temperature(stationDataList[i][k].temperature,stationDataList[i][k].tempUnits);
+         subDat.set_cloudCover(stationDataList[i][k].cloudCover,stationDataList[i][k].cloudCoverUnits);
+         subDat.set_influenceRadius(stationDataList[i][k].influenceRadius,stationDataList[i][k].influenceRadiusUnits);
+         subDat.set_height(stationDataList[i][k].height,stationDataList[i][k].heightUnits);
+         subDat.set_datetime(stationDataList[i][k].datetime);
+
+        }
+
+        stationData.push_back(subDat);
+    }
 
     return stationData;
 }
@@ -1098,10 +1055,11 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
  * @return
  */
 
-
-vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone)
+vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
+                                                    vector<vector<preInterpolate> > vecStations,
+                                                    std::string timeZone)
 {
-    cout<<"no interpolation needed"<<endl;
+    CPLDebug("STATION_FETCH", "no interpolation needed");
 
     vecStations[0][0].cloudCoverUnits=coverUnits::percent;
 
@@ -1117,9 +1075,7 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,v
     for (int i=0;i<refinedDat.size();i++)
     {
         refinedDat[i].datetimeList.assign(1,standard);
-//        cout<<refinedDat[i].get_datetime(0)<<endl;
     }
-
 
     return refinedDat;
 }
@@ -1135,7 +1091,7 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,v
  */
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
-    cout<<"Interpolating Time Data..."<<endl;
+    CPLDebug("STATION_FETCH", "Interpolating time data");
 
     boost::posix_time::ptime tempq;
     boost::posix_time::ptime init;
@@ -1223,7 +1179,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         Selectify.push_back(subSelectify);
     }
 
-    cout<<"Time data Interpolated...\n"<<"Temporally Interpolating wx Data..."<<endl;
+    CPLDebug("STATION_FETCH", "Time data Interpolated...\nTemporally Interpolating wx Data...");
 
     vector<vector<preInterpolate> > lowVec;
     vector<vector<preInterpolate> > highVec;
@@ -1504,44 +1460,44 @@ string pointInitialization::BuildTime(std::string year_0,std::string month_0,
                                       std::string day_1,std::string clock_1)
 {
     //builds the time component of a url
-        std::string start;
-        std::string end;
-        std::string y20;
-        std::string m20;
-        std::string d20;
-        std::string c20;
-        std::string y21;
-        std::string m21;
-        std::string d21;
-        std::string c21;
-        std::string twofull;
-        std::string timemainfull;
-        std::string estartfull;
-        std::string eendfull;
-        std::string startfull;
-        std::string endfull;
+    std::string start;
+    std::string end;
+    std::string y20;
+    std::string m20;
+    std::string d20;
+    std::string c20;
+    std::string y21;
+    std::string m21;
+    std::string d21;
+    std::string c21;
+    std::string twofull;
+    std::string timemainfull;
+    std::string estartfull;
+    std::string eendfull;
+    std::string startfull;
+    std::string endfull;
 
-        start="&start=";
-        y20="2016";
-        m20="05";
-        d20="22";
-        c20="1000";
-        estartfull=start+y20+m20+d20+c20;
-        end="&end=";
-        y21="2016";
-        m21="05";
-        d21="23";
-        c21="1000";
-        eendfull=end+y21+m21+d21+c21;
+    start="&start=";
+    y20="2016";
+    m20="05";
+    d20="22";
+    c20="1000";
+    estartfull=start+y20+m20+d20+c20;
+    end="&end=";
+    y21="2016";
+    m21="05";
+    d21="23";
+    c21="1000";
+    eendfull=end+y21+m21+d21+c21;
 
-        twofull=estartfull+eendfull;
+    twofull=estartfull+eendfull;
 
-        startfull=start+year_0+month_0+day_0+clock_0;
-        endfull=end+year_1+month_1+day_1+clock_1;
+    startfull=start+year_0+month_0+day_0+clock_0;
+    endfull=end+year_1+month_1+day_1+clock_1;
 
-        timemainfull=startfull+endfull;
+    timemainfull=startfull+endfull;
 
-        return timemainfull;
+    return timemainfull;
 }
 
 vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
@@ -1599,7 +1555,7 @@ string pointInitialization::IntConvert(int a)
 //Gets MetaData for stations if turned on
 void pointInitialization::fetchMetaData(string fileName, string demFile, bool write)
 {
-    cout<<"Downloading Station MetaData..."<<endl;
+    CPLDebug("STATION_FETCH", "Downloading Station MetaData...");
     std::string baseurl="http://api.mesowest.net/v2/stations/metadata?";
     std::string bbox;
     std::string component="&network=1,2&output=geojson";
@@ -1619,14 +1575,10 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     std::string LLLat;
     std::string LLLon;
 
-
-
     URLat=CPLSPrintf("%.6f",bounds[0]);
     URLon=CPLSPrintf("%.6f",bounds[1]);
     LLLat=CPLSPrintf("%.6f",bounds[2]);
     LLLon=CPLSPrintf("%.6f",bounds[3]);
-    // LLLAT LLLON URLAT URLON
-    // 1 1 2 2
 
     bbox="&bbox="+LLLon+","+LLLat+","+URLon+","+URLat;
     tokfull="&token="+dtoken;
@@ -1644,7 +1596,7 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     ofstream outFile;
     if (write==true)
     {
-        cout<<"writing MetaData for stations..."<<endl;
+        CPLDebug("STATION_FETCH", "writing MetaData for stations...");
         outFile.open(csvName.c_str());
         std::string header="Station_name,STID,Latitude,Longitude,Elevation,Status,MnetID";
         outFile<<header<<endl;
@@ -1659,7 +1611,7 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     if (hDS==NULL)
     {
         cout<<"metadata bad"<<endl;
-        exit(1);
+        throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
     hLayer=OGR_DS_GetLayer(hDS,0);
@@ -1926,7 +1878,6 @@ const char* pointInitialization::BuildRadiusLatest(std::string station_id,
     network="1,2";
     nEtworkFull="&network="+network;
 
-
     pasthour=past*hour;
     pasthourstr=pointInitialization::IntConvert(pasthour);
 
@@ -2018,7 +1969,6 @@ const char* pointInitialization::BuildLatLonUrl(std::string lat,
     network="1,2";
     nEtworkFull="&network="+network;
 
-
     timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
@@ -2027,7 +1977,6 @@ const char* pointInitialization::BuildLatLonUrl(std::string lat,
     stidfull="&radius="+lat+","+lon+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
-
 
     url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
@@ -2059,7 +2008,6 @@ const char* pointInitialization::BuildLatLonLatest(std::string lat,
     network="1,2";
     nEtworkFull="&network="+network;
 
-
     int pasthour;
     int hour=60;
 
@@ -2073,7 +2021,6 @@ const char* pointInitialization::BuildLatLonLatest(std::string lat,
     stidfull="&radius="+lat+","+lon+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
-
 
     url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
 
@@ -2532,7 +2479,8 @@ vector<string> pointInitialization::CompareClouds(vector<string>low,vector<strin
     return totalCloudcat;
 }
 
-vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const double *dwCloud,const double *dxCloud,int count1,int count2,int count3,int backupcount)
+vector<string> pointInitialization::UnifyClouds(const double *dvCloud, const double *dwCloud,
+                                        const double *dxCloud, int count1, int count2, int count3, int backupcount)
 {
     vector<string> work;
     work.push_back("wip");
@@ -2543,11 +2491,11 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud,const doub
 
     if(count1==0)
     {
-       cout<<"no cloud data exists, using air temp count to zero out data"<<endl;
+       CPLDebug("STATION_FETCH", "no cloud data exists, using air temp count to zero out data");
        count1=backupcount;
        if (backupcount==0)
        {
-           cout<<"this station is terrible, don't use it, writing data as -9999"<<endl;
+           CPLDebug("STATION_FETCH", "this station is terrible, don't use it, writing data as -9999");
            sCloudData.push_back("-9999");
        }
     }
