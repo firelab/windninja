@@ -158,6 +158,7 @@ class pointInitialization : public initialize
         int storeHour(int nHours);
 
     private:
+                std::string rawStationFilename;
                 static const std::string dtoken;
                 static const std::string dvar;
                 static const std::string ndvar;
@@ -178,12 +179,12 @@ class pointInitialization : public initialize
                 void UnifyRadiation(vector<double> radiation);
                 static vector<string> fixWindDir(const double *winddir,std::string filler,int count);
 
-                const char* BuildSingleUrl(std::string token, std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                static const char* BuildSingleLatest(std::string token, std::string station_id,std::string svar,int past, bool extendnetwork,std::string netids);
-                const char* BuildRadiusLatest(std::string token, std::string station_id,std::string radius,std::string limit,std::string svar,int past);
-                const char* BuildRadiusUrl(std::string token, std::string staion_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                const char* BuildLatLonUrl(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
-                const char* BuildLatLonLatest(std::string token,std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past);
+                const char* BuildSingleUrl(std::string station_id, std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                static const char* BuildSingleLatest(std::string station_id,std::string svar,int past, bool extendnetwork,std::string netids);
+                const char* BuildRadiusLatest(std::string station_id,std::string radius,std::string limit,std::string svar,int past);
+                const char* BuildRadiusUrl(std::string staion_id, std::string radius,std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* BuildLatLonUrl(std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
+                const char* BuildLatLonLatest(std::string lat, std::string lon, std::string radius, std::string limit,std::string svar,int past);
 
                 static std::string BuildMultiUrl(std::string station_ids,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 static std::string BuildMultiLatest(std::string station_ids);

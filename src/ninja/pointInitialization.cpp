@@ -30,10 +30,12 @@
 
 #include "pointInitialization.h"
 
- const std::string pointInitialization::dtoken="33e3c8ee12dc499c86de1f2076a9e9d4";
- const std::string pointInitialization::dvar="wind_speed,wind_direction,air_temp,"
+const std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4";
+
+const std::string pointInitialization::dvar = "wind_speed,wind_direction,air_temp,"
                                              "solar_radiation,cloud_layer_1_code";
- const std::string pointInitialization::ndvar="wind_speed,wind_direction,air_temp,"
+
+const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_temp,"
                                               "solar_radiation,cloud_layer_1_code,"
                                               "cloud_layer_2_code,cloud_layer_3_code";
 
@@ -49,6 +51,7 @@ pointInitialization::~pointInitialization()
 {
 	
 }
+
 /**
  * This function initializes the 3d mesh wind field with initial velocity values
  * based on a number of known surface wind locations (wxStations).
@@ -499,13 +502,14 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFilename,
                                               std::string demFile,
-                                              std::vector<boost::posix_time::ptime> timeList,std::string timeZone)
+                                              std::vector<boost::posix_time::ptime> timeList,
+                                              std::string timeZone)
 {
-    std::string csvFile=stationFilename;
+    CPLDebug("STATION_FETCH", "Raw station file name = %s", stationFilename.c_str());
     vector<std::string> stationNames;
 
     OGRDataSourceH hDS;
-    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+    hDS = OGROpen( stationFilename.c_str(), FALSE, NULL );
 
     OGRLayer *poLayer;
     OGRFeature *poFeature;
@@ -515,7 +519,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     std::string oStationName;
 
     OGRLayerH hLayer;
-    hLayer=OGR_DS_GetLayer(hDS,0);
+    hLayer=OGR_DS_GetLayer(hDS, 0);
     OGR_L_ResetReading(hLayer);
 
     poLayer->ResetReading();
@@ -548,7 +552,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
             }
         }
         idxCount.push_back(idx1);
-        j=std::accumulate(idxCount.begin(),idxCount.end(),0);
+        j=std::accumulate(idxCount.begin(), idxCount.end(), 0);
         q=j;
         if (j==statCount)
         {
@@ -569,7 +573,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     {
         cout<<"FATAL: Initial time step must match first time step for in CSV!"<<endl;
         cout<<"This error should only appear if you are using your own data file."<<endl;
-        cout<<"check inputs and "<<csvFile<<" to ensure that the start time matches the first time in your data"<<endl;
+        cout<<"check inputs and "<<stationFilename<<" to ensure that the start time matches the first time in your data"<<endl;
         cout<<"\n"<<endl;
 
         cout<<"Conflicting TimeSteps:"<<endl;
@@ -607,13 +611,13 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     if (wxVector[0][0].datetime==noTime)
     {
         CPLDebug("STATION_FETCH", "noTime");
-        readyToGo=interpolateNull(csvFile,demFile,wxVector,timeZone);
+        readyToGo=interpolateNull(stationFilename,demFile,wxVector,timeZone);
     }
     else
     {
         //does all interpolation
-        interpolatedDataSet=interpolateTimeData(csvFile,demFile,wxVector,timeList); 
-        readyToGo=makeWxStation(interpolatedDataSet,csvFile,demFile);
+        interpolatedDataSet=interpolateTimeData(stationFilename,demFile,wxVector,timeList); 
+        readyToGo=makeWxStation(interpolatedDataSet,stationFilename,demFile);
     }
 
     for (int i=0;i<readyToGo.size();i++)
@@ -634,7 +638,6 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
 
 vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string stationFilename, string demFile)
 {
-    std::string csvFile=stationFilename;
     std::string oErrorString = "";
     preInterpolate oStation;
     std::vector<preInterpolate> oStations;
@@ -644,12 +647,12 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     vecwork.push_back(work);
 
     OGRDataSourceH hDS;
-    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+    hDS = OGROpen( stationFilename.c_str(), FALSE, NULL );
 
     if( hDS == NULL )
     {
         oErrorString = "Cannot open csv file: ";
-        oErrorString += csvFile;
+        oErrorString += stationFilename;
         throw( std::runtime_error( oErrorString ) );
     }
 
@@ -666,7 +669,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     OGR_L_ResetReading(hLayer);
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    CPLDebug("STATION_FETCH", "Reading csvName: %s", csvFile.c_str());
+    CPLDebug("STATION_FETCH", "Reading csvName: %s", stationFilename.c_str());
 
     const char* station;
     int idx=0;
@@ -1713,8 +1716,7 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     delete stid,stationName,latitude,longitude,status,mnetID,elevation;
 }
 
-const char* pointInitialization::BuildSingleUrl(std::string token,
-                                                std::string station_id,
+const char* pointInitialization::BuildSingleUrl(std::string station_id,
                                                 std::string svar,
                                                 std::string yearx,
                                                 std::string monthx,
@@ -1739,7 +1741,7 @@ const char* pointInitialization::BuildSingleUrl(std::string token,
 
     etoken="33e3c8ee12dc499c86de1f2076a9e9d4";
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    etokfull="&token="+token;
+    etokfull="&token="+dtoken;
     estid="stid=kmso";
     et01="&start=201605221000";
     et11="&end=201605231000";
@@ -1765,7 +1767,7 @@ const char* pointInitialization::BuildSingleUrl(std::string token,
 
     timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
 
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="stid="+station_id;
     svarfull="&vars="+svar;
     output="&output=geojson";
@@ -1778,7 +1780,7 @@ const char* pointInitialization::BuildSingleUrl(std::string token,
 
 }
 
-const char* pointInitialization::BuildSingleLatest(std::string token, std::string station_id,
+const char* pointInitialization::BuildSingleLatest(std::string station_id,
                                                    std::string svar,
                                                    int past, bool extendnetwork,
                                                    std::string netids)
@@ -1813,7 +1815,7 @@ const char* pointInitialization::BuildSingleLatest(std::string token, std::strin
     pasthourstr=pointInitialization::IntConvert(pasthour);
 
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="stid="+station_id;
     svarfull="&vars="+svar;
     output="&output=geojson";
@@ -1867,7 +1869,7 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
 
 std::string pointInitialization::BuildMultiLatest(std::string station_ids)
 {
-     //builds a url for multiple known stations for the latest n hours
+    //builds a url for multiple known stations for the latest n hours
     std::string eburl;
     std::string url;
     std::string tokfull;
@@ -1894,11 +1896,9 @@ std::string pointInitialization::BuildMultiLatest(std::string station_ids)
     const char* charurl=url.c_str();
 
     return url;
-
 }
 
-const char* pointInitialization::BuildRadiusLatest(std::string token,
-                                                   std::string station_id,
+const char* pointInitialization::BuildRadiusLatest(std::string station_id,
                                                    std::string radius,
                                                    std::string limit,
                                                    std::string svar,int past)
@@ -1929,7 +1929,7 @@ const char* pointInitialization::BuildRadiusLatest(std::string token,
     timesand="&recent="+pasthourstr;
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
     limiter="&limit="+limit;
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="radius="+station_id+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
@@ -1939,11 +1939,9 @@ const char* pointInitialization::BuildRadiusLatest(std::string token,
     const char* charurl=url.c_str();
 
     return charurl;
-
 }
 
-const char* pointInitialization::BuildRadiusUrl(std::string token,
-                                                std::string station_id,
+const char* pointInitialization::BuildRadiusUrl(std::string station_id,
                                                 std::string radius,
                                                 std::string limit,
                                                 std::string svar,
@@ -1975,7 +1973,7 @@ const char* pointInitialization::BuildRadiusUrl(std::string token,
 
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
     limiter="&limit="+limit;
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="radius="+station_id+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
@@ -1987,8 +1985,7 @@ const char* pointInitialization::BuildRadiusUrl(std::string token,
     return charurl;
 }
 
-const char* pointInitialization::BuildLatLonUrl(std::string token,
-                                                std::string lat,
+const char* pointInitialization::BuildLatLonUrl(std::string lat,
                                                 std::string lon,
                                                 std::string radius,
                                                 std::string limit,
@@ -2022,7 +2019,7 @@ const char* pointInitialization::BuildLatLonUrl(std::string token,
 
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
     limiter="&limit="+limit;
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="&radius="+lat+","+lon+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
@@ -2035,8 +2032,7 @@ const char* pointInitialization::BuildLatLonUrl(std::string token,
     return charurl;
 }
 
-const char* pointInitialization::BuildLatLonLatest(std::string token,
-                                                   std::string lat,
+const char* pointInitialization::BuildLatLonLatest(std::string lat,
                                                    std::string lon,
                                                    std::string radius,
                                                    std::string limit,
@@ -2069,7 +2065,7 @@ const char* pointInitialization::BuildLatLonLatest(std::string token,
     timesand="&recent="+pasthourstr;
     eburl="http://api.mesowest.net/v2/stations/timeseries?";
     limiter="&limit="+limit;
-    tokfull="&token="+token;
+    tokfull="&token="+dtoken;
     stidfull="&radius="+lat+","+lon+","+radius;
     svarfull="&vars="+svar;
     output="&output=geojson";
