@@ -975,6 +975,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 wxStation::SetStationFormat(wxStation::newFormat);
 
+                pointInitialization::SetRawStationFilename(vm["fetch_station_filename"].as<std::string>());
                 pointInitialization::set_stationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>());
 
@@ -1013,16 +1014,15 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 if (vm["fetch_type"].as<std::string>()=="bbox")
                 {
-                    pointInitialization::fetchStationFromBbox( vm["fetch_station_filename"].as<std::string>(),
-                                                            vm["elevation_file"].as<std::string>(),
+                    pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
                                                             timeList,osTimeZone,false);
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
 
-                    pointInitialization::fetchStationByName(vm["fetch_station_filename"].as<std::string>(),
-                                vm["fetch_station_name"].as<std::string>(),timeList,osTimeZone,false);
+                    pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
+                                                            timeList, osTimeZone, false);
                 }
                 else
                 {
@@ -1044,6 +1044,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
             else if (vm["fetch_station"].as<bool>() == false)
             {
+                pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
                 int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());
 

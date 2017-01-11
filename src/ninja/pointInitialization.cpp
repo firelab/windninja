@@ -39,6 +39,8 @@ const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_te
                                               "solar_radiation,cloud_layer_1_code,"
                                               "cloud_layer_2_code,cloud_layer_3_code";
 
+std::string pointInitialization::rawStationFilename = "";
+
 pointInitialization::pointInitialization() : initialize()
 {
     dfInvDistWeight = atof( CPLGetConfigOption( "NINJA_POINT_INV_DIST_WEIGHT",
@@ -50,6 +52,11 @@ pointInitialization::pointInitialization() : initialize()
 pointInitialization::~pointInitialization()
 {
 	
+}
+
+void pointInitialization::SetRawStationFilename(std::string filename)
+{
+    rawStationFilename = filename;	
 }
 
 /**
@@ -500,16 +507,15 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     }
 }
 
-vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFilename,
-                                              std::string demFile,
+vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
                                               std::vector<boost::posix_time::ptime> timeList,
                                               std::string timeZone)
 {
-    CPLDebug("STATION_FETCH", "Raw station file name = %s", stationFilename.c_str());
+    CPLDebug("STATION_FETCH", "Raw station file name = %s", rawStationFilename.c_str());
     vector<std::string> stationNames;
 
     OGRDataSourceH hDS;
-    hDS = OGROpen( stationFilename.c_str(), FALSE, NULL );
+    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
 
     OGRLayer *poLayer;
     OGRFeature *poFeature;
@@ -562,7 +568,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
 
     std::vector<pointInitialization::preInterpolate> diskData;
     std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
-    diskData=readDiskLine(stationFilename,demFile);// reads in data
+    diskData=readDiskLine(demFile);// reads in data
 
     CPLDebug("STATION_FETCH", "Checking first time step...");
 
@@ -573,7 +579,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     {
         cout<<"FATAL: Initial time step must match first time step for in CSV!"<<endl;
         cout<<"This error should only appear if you are using your own data file."<<endl;
-        cout<<"check inputs and "<<stationFilename<<" to ensure that the start time matches the first time in your data"<<endl;
+        cout<<"check inputs and "<<rawStationFilename<<" to ensure that the start time matches the first time in your data"<<endl;
         cout<<"\n"<<endl;
 
         cout<<"Conflicting TimeSteps:"<<endl;
@@ -611,13 +617,13 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     if (wxVector[0][0].datetime==noTime)
     {
         CPLDebug("STATION_FETCH", "noTime");
-        readyToGo=interpolateNull(stationFilename,demFile,wxVector,timeZone);
+        readyToGo=interpolateNull(demFile,wxVector,timeZone);
     }
     else
     {
         //does all interpolation
-        interpolatedDataSet=interpolateTimeData(stationFilename,demFile,wxVector,timeList); 
-        readyToGo=makeWxStation(interpolatedDataSet,stationFilename,demFile);
+        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList); 
+        readyToGo=makeWxStation(interpolatedDataSet,demFile);
     }
 
     for (int i=0;i<readyToGo.size();i++)
@@ -636,7 +642,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string stationFi
     return readyToGo;
 }
 
-vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string stationFilename, string demFile)
+vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string demFile)
 {
     std::string oErrorString = "";
     preInterpolate oStation;
@@ -647,12 +653,12 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     vecwork.push_back(work);
 
     OGRDataSourceH hDS;
-    hDS = OGROpen( stationFilename.c_str(), FALSE, NULL );
+    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
 
     if( hDS == NULL )
     {
         oErrorString = "Cannot open csv file: ";
-        oErrorString += stationFilename;
+        oErrorString += rawStationFilename;
         throw( std::runtime_error( oErrorString ) );
     }
 
@@ -669,7 +675,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     OGR_L_ResetReading(hLayer);
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    CPLDebug("STATION_FETCH", "Reading csvName: %s", stationFilename.c_str());
+    CPLDebug("STATION_FETCH", "Reading csvName: %s", rawStationFilename.c_str());
 
     const char* station;
     int idx=0;
@@ -928,14 +934,14 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 }
 
 
-vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string csvFile, string demFile)
+vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string demFile)
 {
     cout<<"converting Interpolated struct to wxStation..."<<endl;
     vector<std::string> stationNames;
     vector<wxStation> stationData;
 
     OGRDataSourceH hDS;
-    hDS = OGROpen( csvFile.c_str(), FALSE, NULL );
+    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
 
     OGRLayer *poLayer;
     OGRFeature *poFeature;
@@ -1087,21 +1093,20 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 /**
  * @brief pointInitialization::interpolateNull
  * Used if the function is the old PointInitialization.
- * @param csvFileName
  * @param demFileName
  * @param vecStations
  * @return
  */
 
 
-vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone)
+vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone)
 {
     cout<<"no interpolation needed"<<endl;
 
     vecStations[0][0].cloudCoverUnits=coverUnits::percent;
 
     vector<wxStation> refinedDat;
-    refinedDat=makeWxStation(vecStations,csvFileName,demFileName);
+    refinedDat=makeWxStation(vecStations,demFileName);
 
     //fixes time!
     boost::local_time::tz_database tz_db;
@@ -1123,13 +1128,12 @@ vector<wxStation> pointInitialization::interpolateNull(std::string csvFileName,s
 /**
  * @brief interpolates raw data WRT time
  *
- * @param csvFileName: used to verify correct file
  * @param demFileName: used to set coord system in interpolated data
  * @param vecStations: the raw data to be interpolated
  * @param timeList: the desired time and steps
  *
  */
-vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
+vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
 {
     cout<<"Interpolating Time Data..."<<endl;
 
@@ -2843,12 +2847,10 @@ vector<boost::posix_time::ptime> pointInitialization::getSingleTimeList(string t
 
 /**@brief Fetches station data from bounding box.
  *
- * @param stationFilename Filename/path where the station csv will be written.
  * @param demFile Filename/path to the DEM on disk.
  * @param timeList Vector of datetimes in UTC for the simulation.
  */
-bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
-                                    std::string demFile,
+bool pointInitialization::fetchStationFromBbox(std::string demFile,
                                     std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
 {
     GDALDataset  *poDS;
@@ -2915,12 +2917,12 @@ bool pointInitialization::fetchStationFromBbox(std::string stationFilename,
     cout<<"WxData URL: "<<endl;
     cout<<URL<<endl;
 
-    fetchStationData(stationFilename, URL, timeZone, latest);
+    fetchStationData(URL, timeZone, latest);
 
     return true;
 }
 
-bool pointInitialization::fetchStationByName(string stationFilename, string stationList,
+bool pointInitialization::fetchStationByName(string stationList,
                                              std::vector<boost::posix_time::ptime> timeList,
                                              string timeZone, bool latest)
 {
@@ -2942,23 +2944,23 @@ bool pointInitialization::fetchStationByName(string stationFilename, string stat
 
     }
 
-    fetchStationData(stationFilename, URL, timeZone, latest);
+    fetchStationData(URL, timeZone, latest);
 
     return true;
 }
 
-void pointInitialization::fetchStationData(std::string stationFilename, std::string URL,
+void pointInitialization::fetchStationData(std::string URL,
                                 std::string timeZone, bool latest)
 {
     std::string csvName;
-    if (stationFilename.substr(stationFilename.size()-4,4)==".csv")
+    if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv")
     {
-        csvName=stationFilename;
+        csvName=rawStationFilename;
         cout<<".csv exists in stationFilename..."<<endl;
     }
     else
     {
-        csvName=stationFilename+".csv";
+        csvName=rawStationFilename+".csv";
         cout<<"Adding .csv to stationFilename..."<<endl;
     }
 
@@ -3185,8 +3187,7 @@ void pointInitialization::fetchStationData(std::string stationFilename, std::str
 }
 
 //FOR TESTING MW LATEST!!!
-void pointInitialization::fetchTest(std::string stationFilename,
-                                    std::string demFile,
+void pointInitialization::fetchTest(std::string demFile,
                                     std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
 {
     cout<<"inactive"<<endl;

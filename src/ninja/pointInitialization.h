@@ -112,31 +112,29 @@ class pointInitialization : public initialize
             boost::posix_time::ptime datetime;
         };
 
-        static vector<wxStation> interpolateFromDisk(std::string stationFilename, //master function for interpolation, and making wxStation stuff
-                                        std::string demFile,
-                                        std::vector<boost::posix_time::ptime> timeList,std::string timeZone);
-        static vector<preInterpolate> readDiskLine(std::string stationFilename,std::string demFile); //reads in the data from disk
+        //master function for interpolation, and making wxStation stuff
+        static vector<wxStation> interpolateFromDisk(std::string demFile,
+                                                    std::vector<boost::posix_time::ptime> timeList,
+                                                    std::string timeZone);
+
+        static vector<preInterpolate> readDiskLine(std::string demFile); //reads in the data from disk
+
+        static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string demFile); //prepares final product
 
 
-        static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string csvFile, std::string demFile); //prepares final product
-
-
-        static vector<wxStation> interpolateNull(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone);
-        static vector<vector<preInterpolate> > interpolateTimeData(std::string csvFileName,std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
+        static vector<wxStation> interpolateNull(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone);
+        static vector<vector<preInterpolate> > interpolateTimeData(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);
         
-        static void fetchTest(std::string stationFilename,
-                              std::string demFile,
+        static void fetchTest(std::string demFile,
                               std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
-        static bool fetchStationFromBbox(std::string stationFilename,
-                                    std::string demFile,
+        static bool fetchStationFromBbox(std::string demFile,
                                     std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
-        static bool fetchStationByName(std::string stationFilename,
-                                       std::string stationList,
+        static bool fetchStationByName(std::string stationList,
                                        std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
 
@@ -157,8 +155,10 @@ class pointInitialization : public initialize
         void newAuto(AsciiGrid<double> &dem);
         int storeHour(int nHours);
 
+        static void SetRawStationFilename(std::string filename);
+
     private:
-                std::string rawStationFilename;
+                static std::string rawStationFilename;
                 static const std::string dtoken;
                 static const std::string dvar;
                 static const std::string ndvar;
@@ -193,8 +193,7 @@ class pointInitialization : public initialize
                 static std::string BuildBboxLatest(std::string lat1, std::string lon1, std::string lat2, std::string lon2);
                 static std::string BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky);
                 static std::string BuildUnifiedLTBbox(double lat,double lon1, double lat2, double lon2);
-                static void fetchStationData(std::string stationFilename, std::string URL,
-                                    std::string timeZone, bool latest);
+                static void fetchStationData(std::string URL, std::string timeZone, bool latest);
 
                 double dfInvDistWeight;
 

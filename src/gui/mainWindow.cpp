@@ -1838,6 +1838,7 @@ int mainWindow::solve()
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
+        pointInitialization::SetRawStationFilename(pointFile);
         /* right now the only option is the old format */
         wxStation::SetStationFormat(wxStation::oldFormat);
 
