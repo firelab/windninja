@@ -1845,6 +1845,7 @@ int mainWindow::solve()
         boost::posix_time::ptime noTime;
         timeList.push_back(noTime);
         army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
+        nRuns = army->getSize();
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
