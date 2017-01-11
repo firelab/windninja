@@ -83,6 +83,19 @@ int NinjaInitialize()
     const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
     CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+
+#if defined(FIRELAB_PACKAGE)
+    /*
+    ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
+    ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
+    ** >2.1.2. Test with CPL_CURL_VERBOSE.  For #231.
+    **
+    ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
+    */
+    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+#endif /* defined(FIRELAB_PACKAGE) */
+
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
     char *pszExecPath;
     const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
