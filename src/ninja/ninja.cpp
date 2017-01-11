@@ -4646,8 +4646,17 @@ void ninja::set_outputFilenames(double& meshResolution,
     timeOutputFacet->format("%m-%d-%Y_%H%M_");
 
     if( input.diurnalWinds == true ||
-        input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag || input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
+        input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )
+    {
         timestream << input.ninjaTime;
+    }
+    else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
+    {
+        if(wxStation::stationFormat == wxStation::newFormat)
+        {
+            timestream << input.ninjaTime;
+        }
+    }
 #ifdef STABILITY
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
         timestream << input.ninjaTime;
@@ -4688,7 +4697,6 @@ void ninja::set_outputFilenames(double& meshResolution,
 
 
     timeAppend = timestream.str();
-    ostringstream pisStream;
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
     wxModelOutputFacet = new boost::local_time::local_time_facet();
@@ -4725,9 +4733,6 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_point";
         os_ascii << "_point";
         os_pdf   << "_point";
-
-        pisStream<<input.ninjaTime;
-
     }
 
 
