@@ -1,5 +1,5 @@
 <header class="site-header margin-bot-big">
-  <link rel="shortcut icon" type="image/png" href="{{site.url}}/favicon.ico?"> 
+  <link rel="shortcut icon" type="image/png" href="{{site.url}}/favicon.ico?">
 
 
   <div class="wrapper">
@@ -18,11 +18,9 @@
       </a>
 
       <div class="trigger">
-        {% for my_page in site.pages %}
-          {% if my_page.title %}
-          <a class="page-link" href="{{ my_page.url | prepend: site.baseurl }}">{{ my_page.title }}</a>
-          {% endif %}
-        {% endfor %}
+          <a class="page-link" href="http://firelab.github.io/windninja/about/">About</a>
+          <a class="page-link" href="http://firelab.github.io/windninja/help/">Help</a>
+          <a class="page-link" href="http://firelab.github.io/windninja/umap/">User Map</a>
       </div>
     </nav>
 
