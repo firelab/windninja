@@ -2880,6 +2880,7 @@ bool pointInitialization::fetchStationByName(string stationList,
     if (latest==true)
     {
         URL=BuildMultiLatest(stationList);
+        cout<<"WxData URL: "<<endl;
         cout<<URL<<endl;
     }
     if (latest==false)
@@ -2889,6 +2890,7 @@ bool pointInitialization::fetchStationByName(string stationList,
         URL=BuildMultiUrl(stationList,timeUTC[0],timeUTC[1],timeUTC[2],
                 timeUTC[3],timeUTC[4],timeUTC[5],
                 timeUTC[6],timeUTC[7]);
+            cout<<"WxData URL: "<<endl;
 
     }
 

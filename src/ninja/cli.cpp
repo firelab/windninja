@@ -1015,14 +1015,14 @@ int windNinjaCLI(int argc, char* argv[])
                 if (vm["fetch_type"].as<std::string>()=="bbox")
                 {
                     pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
-                                                            timeList,osTimeZone,false);
+                                                            timeList,osTimeZone,vm["fetch_current_station_data"].as<bool>());
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
 
                     pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
-                                                            timeList, osTimeZone, false);
+                                                            timeList, osTimeZone, vm["fetch_current_station_data"].as<bool>());
                 }
                 else
                 {
