@@ -443,7 +443,6 @@ int windNinjaCLI(int argc, char* argv[])
 
         po::parsed_options opts_command = po::command_line_parser(argc, argv).
                         options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
-    //
 
         //write out parsed options for debugging
         if(writeParsed)
@@ -577,7 +576,6 @@ int windNinjaCLI(int argc, char* argv[])
 
         notify(vm);
 
-
         //write out values in vm for debugging
         if(writeValues)
         {
@@ -613,15 +611,15 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-        #ifdef NINJAFOAM
+#ifdef NINJAFOAM
         ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
-        #else
+#else
         ninjaArmy windsim(1); //-Moved to header file
-        #endif
+#endif
 
         /* Do we have to fetch an elevation file */
         
-        #ifdef EMISSIONS
+#ifdef EMISSIONS
         /*------------------------------------------*/
         /* Download DEM covering the fire perimeter */
         /* if elevation_file wasn't specified       */ 
@@ -629,9 +627,8 @@ int windNinjaCLI(int argc, char* argv[])
          
         if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
             OGRDataSourceH hDS = 0;
-            hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(),
-                          FALSE, 0);
-            if (hDS == 0) {
+            hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE, 0);
+            if (hDS == 0){
               fprintf(stderr, "Failed to open fire perimeter file.\n");
               exit(1);
             }
@@ -1012,17 +1009,20 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                 }
+
                 if (vm["fetch_type"].as<std::string>()=="bbox")
                 {
                     pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
-                                                            timeList,osTimeZone,vm["fetch_current_station_data"].as<bool>());
+                                                            timeList, osTimeZone,
+                                                            vm["fetch_current_station_data"].as<bool>());
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
 
                     pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
-                                                            timeList, osTimeZone, vm["fetch_current_station_data"].as<bool>());
+                                                            timeList, osTimeZone,
+                                                            vm["fetch_current_station_data"].as<bool>());
                 }
                 else
                 {

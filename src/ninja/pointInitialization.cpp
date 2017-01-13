@@ -577,15 +577,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
 
     if (timeCheck==false)
     {
-        cout<<"FATAL: Initial time step must match first time step for in CSV!"<<endl;
-        cout<<"This error should only appear if you are using your own data file."<<endl;
-        cout<<"check inputs and "<<rawStationFilename<<" to ensure that the start time matches the first time in your data"<<endl;
-        cout<<"\n"<<endl;
-
-        cout<<"Conflicting TimeSteps:"<<endl;
-        cout<<"timeList (start Time) "<<timeList[0]<<endl;
-        cout<<"Time on File"<<diskData[0].datetime<<endl;
-        exit(1);
+        throw std::runtime_error("Initial time step does not match first time in csv.");
     }
 
     CPLDebug("STATION_FETCH", "First time step check passed...");
@@ -631,11 +623,11 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
         bool a=wxStation::check_station(readyToGo[i]);
         if (a != true)
         {
-            cout<<"!!stationcheck failed on #"<<i<<": \""<<readyToGo[i].get_stationName()<<"\" potential for bad data!!"<<endl;
+            CPLDebug("STATION_FETCH", "check_station failed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
         }
         else
         {
-            cout<<"station check passed, station #"<<i<<": \""<<readyToGo[i].get_stationName()<<"\" has good data"<<endl;
+            CPLDebug("STATION_FETCH", "check_station passed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
         }
     }
 
@@ -1606,11 +1598,9 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
     hDS=OGROpen(url.c_str(),0,NULL);
-    CPLGetLastErrorMsg();
 
     if (hDS==NULL)
     {
-        cout<<"metadata bad"<<endl;
         throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
@@ -2547,76 +2537,8 @@ vector<string> pointInitialization::UnifyClouds(const double *dvCloud, const dou
     return sCloudData;
 }
 
-void pointInitialization::StringPrinter(char **stringdat, int counter, std::string name)
-{
-    //prints a list of strings as a string with a comma delim
-    cout<<name<<endl;
-    for(int i=0;i<counter;i++)
-    {
-        printf("%s, ",stringdat[i]);
-    }
-    printf("\n");
-    cout<<"count of char: "<<counter<<endl;
-    printf("\n");
-}
-
-void pointInitialization::FloatPrinter(const double *data, int counter,std::string name)
-{
-    //prints a list of floating point numbers with a comma delim
-    cout<<name<<endl;
-    for(int i=0;i<counter;i++)
-    {
-        printf("%.3f, ",data[i]);
-    }
-    printf("\n");
-    cout<<"count of doubles: "<<counter<<endl;
-    printf("\n");
-
-}
-
-void pointInitialization::VectorPrinter(std::vector<std::string> stData,std::string name)
-{
-    //prints a vector of strings with a comma delim
-    cout<<name<<endl;
-    int i=0;
-    for (std::vector<string>::const_iterator i = stData.begin(); i != stData.end(); ++i)
-       std::cout << *i << ',';
-
-    printf("\n");
-    int veclen;
-    veclen=stData.size();
-    cout<<"length of vector "<<veclen<<endl;
-    printf("\n");
-}
-
-void pointInitialization::doubleVectorPrinter(vector<const double*> stData,std::string name, int counter)
-{
-    //prints a vector of floats witha  comma delimiter
-    cout<<name<<endl;
-    int i=0;
-    int veclen;
-    veclen=stData.size();
-    for (int k=0;k<veclen;k++)
-    {
-        const double* data;
-        data=stData[k];
-        for(int j=0;j<counter;j++)
-        {
-            printf("%.3f, ",data[j]);
-        }
-        printf("\n");
-        cout<<"set:"<<k<<endl;
-        cout<<"count of doubles: "<<counter<<endl;
-        printf("\n");
-    }
-
-    printf("\n");
-
-    cout<<"length of vector "<<veclen<<endl;
-    printf("\n");
-}
-
-vector<double> pointInitialization::Irradiate(const double* solrad,int smallcount, int largecount,std::string timeZone,double lat, double lon,char** times)
+vector<double> pointInitialization::Irradiate(const double* solrad, int smallcount, int largecount,
+                                            std::string timeZone, double lat, double lon, char** times)
 {
     //will eventually convert solar radiation to cloud cover, this function doesn't work yet.
 
@@ -2805,8 +2727,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
     if (poDS==NULL)
     {
-        cout<<"Could not read DEM file for station fetching"<<endl;
-        cout<<false<<endl;
+        CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
         return false;
     }
 
@@ -2823,7 +2744,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
 
     double buffer;
     buffer=get_stationBuffer();
-    cout<<"Adding "<<buffer<<" m to DEM for station fetching..."<<endl;
+    CPLDebug("STATION_FETCH", "Adding %fm to DEM for station fetching.", buffer);
 
     double projxL=bounds[2];
     double projyL=bounds[3];
@@ -2862,8 +2783,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     {
         URL=BuildUnifiedLTBbox(bounds[2],bounds[3],bounds[0],bounds[1]);
     }
-    cout<<"WxData URL: "<<endl;
-    cout<<URL<<endl;
+    CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
 
     fetchStationData(URL, timeZone, latest);
 
@@ -2880,8 +2800,7 @@ bool pointInitialization::fetchStationByName(string stationList,
     if (latest==true)
     {
         URL=BuildMultiLatest(stationList);
-        cout<<"WxData URL: "<<endl;
-        cout<<URL<<endl;
+        CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
     if (latest==false)
     {
@@ -2890,8 +2809,7 @@ bool pointInitialization::fetchStationByName(string stationList,
         URL=BuildMultiUrl(stationList,timeUTC[0],timeUTC[1],timeUTC[2],
                 timeUTC[3],timeUTC[4],timeUTC[5],
                 timeUTC[6],timeUTC[7]);
-            cout<<"WxData URL: "<<endl;
-
+        CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
 
     fetchStationData(URL, timeZone, latest);
@@ -2906,12 +2824,12 @@ void pointInitialization::fetchStationData(std::string URL,
     if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv")
     {
         csvName=rawStationFilename;
-        cout<<".csv exists in stationFilename..."<<endl;
+        CPLDebug("STATION_FETCH", ".csv exists in stationFilename...");
     }
     else
     {
         csvName=rawStationFilename+".csv";
-        cout<<"Adding .csv to stationFilename..."<<endl;
+        CPLDebug("STATION_FETCH", "Adding .csv to stationFilename...");
     }
 
     OGRDataSourceH hDS;
@@ -2919,15 +2837,10 @@ void pointInitialization::fetchStationData(std::string URL,
     OGRFeatureH hFeature;
 
     hDS=OGROpen(URL.c_str(),0,NULL);
-    CPLGetLastErrorMsg();
     if (hDS==NULL)
     {
-        cout<<URL<<endl;
-        printf("OGROpen could not read file\n try running again ");
-        cout<<"if persists: check URL, possibly no stations exist for given parameters."<<endl;
-        cout<<"if ERROR IS HTTP, Check Internet Connection and server status";
-        cout<<false<<endl;
-        throw std::runtime_error("OGROpen could not read file\nif persists:check URL, possibly not stations\nexist for given parameters,\nIf ERROR is HTTP, check internet connection and server status.");
+        CPLDebug("STATION_FETCH", "URL: %s", URL.c_str());
+        throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
     }
 
     hLayer=OGR_DS_GetLayer(hDS,0);
@@ -2981,8 +2894,8 @@ void pointInitialization::fetchStationData(std::string URL,
 
     ofstream outFile;//writing to csv
     outFile.open(csvName.c_str());
-    cout<<fCount<<" stations "<<"saved to: "<<csvName<<endl;
-    cout<<"Downloading Data from MesoWest...."<<endl;
+    CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, csvName.c_str());
+    CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
     std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
     outFile<<header<<endl;
 
@@ -3127,13 +3040,13 @@ void pointInitialization::fetchStationData(std::string URL,
             }
         }
     }
-    cout<<"Data downloaded and saved...."<<endl;
+    CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
     delete cloudhigh;
     delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
     delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
 
-    cout<<"Fetch Station returned true: "<<true<<endl;
+    CPLDebug("STATION_FETCH", "fetchStationData finished.");
 }
 
 //FOR TESTING MW LATEST!!!

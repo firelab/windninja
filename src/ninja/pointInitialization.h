@@ -171,10 +171,6 @@ class pointInitialization : public initialize
                 static vector<vector<string> > VectorInterpretCloudData(vector<const double*>dbCloud,int smallcount, int largecount);
                 static vector<string> CompareClouds(vector<string>low,vector<string>med,vector<string>high,int countlow,int countmed, int counthigh);
                 static vector<string> UnifyClouds(const double *dvCloud,const double *dwCloud,const double *dxCloud,int count1,int count2,int count3,int backupcount);
-                static void StringPrinter(char **stringdat, int counter, std::string name);
-                static void FloatPrinter(const double *data, int counter,std::string name);
-                static void VectorPrinter(std::vector<std::string> cata,std::string name);
-                void doubleVectorPrinter(vector<const double*> cata,std::string name,int counter);
                 static vector<double> Irradiate(const double* solrad,int smallcount, int largecount,std::string timeZone,double lat, double lon,char** times);
                 void UnifyRadiation(vector<double> radiation);
                 static vector<string> fixWindDir(const double *winddir,std::string filler,int count);
