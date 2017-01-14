@@ -475,6 +475,10 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
+    # Install the CURL_CA_BUNDLE file from the bin folder, and drop it in data/
+    install(FILES ${GIS_INTERNALS_HOME}/bin/curl/curl-ca-bundle.crt DESTINATION
+            share/windninja COMPONENT apps)
+    # Install the dlls GDAL depends on
     file(GLOB dlls ${GIS_INTERNALS_HOME}/bin/*.dll)
     foreach(dll ${dlls})
         install(PROGRAMS ${dll} DESTINATION bin COMPONENT apps)
