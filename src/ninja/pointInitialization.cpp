@@ -89,10 +89,6 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
 void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
-    AsciiGrid<double> height;   //height of diurnal flow above "z=0" in log profile
-    AsciiGrid<double> uDiurnal;
-    AsciiGrid<double> vDiurnal;
-    AsciiGrid<double> wDiurnal;
     Aspect aspect;
     Slope slope;
     Shade shade;
@@ -100,16 +96,6 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
 
     if(input.diurnalWinds == true)  //compute values needed for diurnal computations
     {
-        //height of diurnal flow above "z=0" in log profile
-        height.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), input.dem.get_cellSize(),
-                                input.dem.get_noDataValue(), 0); 
-        uDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(),
-                                 input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        vDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        wDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
         aspect.compute_gridAspect(&input.dem, input.numberCPUs);
         slope.compute_gridSlope(&input.dem, input.numberCPUs);
         double aspect_temp = 0; //just placeholder, basically
