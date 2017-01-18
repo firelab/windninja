@@ -339,8 +339,8 @@ void ninja::importSingleBand(GDALDataset *poDataset)
     if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 100000))
 	    cS = abs(adfGeoTransform[1]);
 	else
-        throw std::runtime_error("Cells rectangular, not square outside of " \
-                                 "WindNinja's Threshold");
+            throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
+                                 "square cells (dx=dy) in the DEM.");
     }
 
     //get band specific header info (no data)
