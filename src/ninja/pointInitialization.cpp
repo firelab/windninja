@@ -42,6 +42,7 @@ pointInitialization::~pointInitialization()
 {
 	
 }
+
 /**
  * This function initializes the 3d mesh wind field with initial velocity values
  * based on a number of known surface wind locations (wxStations).
@@ -166,7 +167,8 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
                 if(input.dem.check_inBounds(input.stationsScratch[ii].get_projXord(),
                     input.stationsScratch[ii].get_projYord()))	
                 {
-                    input.dem.get_cellIndex(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(), &i_, &j_);
+                    input.dem.get_cellIndex(input.stationsScratch[ii].get_projXord(),
+                                            input.stationsScratch[ii].get_projYord(), &i_, &j_);
 
                     profile.Roughness = (input.surface.Roughness)(i_, j_);
                     profile.Rough_h = (input.surface.Rough_h)(i_, j_);
@@ -310,14 +312,12 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     {
         for(int j=0; j<input.dem.get_nCols(); j++)
         {
-            input.surface.windSpeedGrid(i,j) = std::pow((uInitializationGrid(i,j) *
-                                                        uInitializationGrid(i,j) +
-                                                        vInitializationGrid(i,j) *
-                                                        vInitializationGrid(i,j)), 0.5);
+            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
+                    &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
         }
     }
 
-    speedInitializationGrid = input.surface.windSpeedGrid;
+    input.surface.windSpeedGrid = speedInitializationGrid;
 
     if(u)
     {
