@@ -317,6 +317,8 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
         }
     }
 
+    speedInitializationGrid = input.surface.windSpeedGrid;
+
     if(u)
     {
             delete[] u;
