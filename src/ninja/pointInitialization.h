@@ -125,7 +125,6 @@ class pointInitialization : public initialize
                                 std::string day_1, std::string clock_1);
 
         static vector<std::string> UnifyTime(vector<boost::posix_time::ptime> timeList);
-        static std::string IntConvert(int a);
         static vector<std::string> Split(char* str, const char* delim);
         static vector<std::string>  InterpretCloudData(const double *dbCloud, int counter);
 

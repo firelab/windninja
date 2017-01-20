@@ -1333,14 +1333,6 @@ vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::pti
     return buildTimes;
 }
 
-std::string pointInitialization::IntConvert(int a)
-{
-    //converts int to string for "latest" functions
-    ostringstream time;
-    time<<a;
-    return time.str();
-}
-
 //Gets MetaData for stations if turned on
 void pointInitialization::fetchMetaData(std::string fileName, std::string demFile, bool write)
 {
