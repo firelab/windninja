@@ -1278,30 +1278,17 @@ double pointInitialization::interpolateDirection(double lowDir, double highDir)
     return degAverage;
 }
 
-string pointInitialization::BuildTime(std::string year_0, std::string month_0,
+std::string pointInitialization::BuildTime(std::string year_0, std::string month_0,
                                       std::string day_0, std::string clock_0,
                                       std::string year_1, std::string month_1,
                                       std::string day_1, std::string clock_1)
 {
     //builds the time component of a url
-    std::string start = "&start=";
-    std::string y20 = "2016";
-    std::string m20 = "05";
-    std::string d20 = "22";
-    std::string c20 = "1000";
-    std::string estartfull = start + y20 + m20 + d20 + c20;
-    std::string end = "&end=";
-    std::string y21 = "2016";
-    std::string m21 = "05";
-    std::string d21 = "23";
-    std::string c21 = "1000";
-    std::string eendfull = end + y21 + m21 + d21 + c21;
-    std::string twofull = estartfull + eendfull;
-    std::string startfull = start + year_0 + month_0 + day_0 + clock_0;
-    std::string endfull = end + year_1 + month_1 + day_1 + clock_1;
-    std::string timemainfull = startfull + endfull;
+    std::string startTime = "&start=" + year_0 + month_0 + day_0 + clock_0;
+    std::string endTime = "&end=" + year_1 + month_1 + day_1 + clock_1;
+    std::string timeString = startTime + endTime;
 
-    return timemainfull;
+    return timeString;
 }
 
 vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
