@@ -65,9 +65,6 @@ ninja::ninja()
     SK=NULL;
     row_ptr=NULL;
     col_ind=NULL;
-    //L=NULL;
-    //u_star=NULL;
-    //bl_height=NULL;
     uDiurnal=NULL;
     vDiurnal=NULL;
     wDiurnal=NULL;
@@ -126,9 +123,6 @@ ninja::ninja(const ninja &rhs)
 , v0(rhs.v0)
 , w0(rhs.w0)
 , mesh(rhs.mesh)
-, L(rhs.L)
-, u_star(rhs.u_star)
-, bl_height(rhs.bl_height)
 , input(rhs.input)
 {
     input.Com = NULL;   //must be set to null!
@@ -212,9 +206,6 @@ ninja &ninja::operator=(const ninja &rhs)
         u0 = rhs.u0;
         v0 = rhs.v0;
         w0 = rhs.w0;
-        L = rhs.L;
-        u_star = rhs.u_star;
-        bl_height = rhs.bl_height;
 
         mesh = rhs.mesh;
         input = rhs.input;
@@ -354,9 +345,6 @@ int matchingIterCount = 0;
 bool matchFlag = false;
 if(input.matchWxStations == true)
 {
-//    num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
-//    num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
-//    num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
     num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
@@ -369,56 +357,22 @@ do
 
 		if(input.matchWxStations == true)
 		{
-			matchingIterCount++;
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
+                    matchingIterCount++;
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
 		}
 
-		#ifdef _OPENMP
-			startInit = omp_get_wtime();
-		#endif
+#ifdef _OPENMP
+                startInit = omp_get_wtime();
+#endif
 
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
 		//initialize
-		if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-		{
-                    //wxModelInitialization* init;
-		    //wxInit = wxModelInitializationFactory::makeWxInitialization(input.forecastFilename);
-
-		    wxInit.reset(wxModelInitializationFactory::makeWxInitialization(input.forecastFilename));
-                    wxInit->initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-                    
-		}else if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
-		{
-                    domainAverageInitialization init;
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-
-		}else if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-		{
-                    pointInitialization init;
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-		}
-		else if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
-                {
-                    griddedInitialization init;
-		    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-                }
-#ifdef NINJAFOAM
-		else if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag)
-		{
-                    foamInitialization init;
-                    init.inputVelocityGrid= VelocityGrid; //set input grids from cfd solution
-                    init.inputAngleGrid = AngleGrid; //set input grids from cfd solution
-                    init.initializeFields(input, mesh, u0, v0, w0, CloudGrid, L, u_star, bl_height);
-		}
+                init.reset(initializationFactory::makeInitialization(input));
+                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+#ifdef _OPENMP
+                endInit = omp_get_wtime();
 #endif
-		else{
-                     throw std::logic_error("Incorrect wind initialization.");
-		}
-
-		#ifdef _OPENMP
-			endInit = omp_get_wtime();
-		#endif
 
 		checkCancel();
 
@@ -618,7 +572,7 @@ if(input.frictionVelocityFlag == 1){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",endDustEmissions-startDustEmissions);
 			}
 			#endif
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
+			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
 			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
 	#endif
 
@@ -1371,8 +1325,8 @@ void ninja::interp_uvw()
 
                 if(k <= 1)   //if we're in the first cell, use log profile
                 {
-                    profile.ObukovLength = L(i,j);
-                    profile.ABL_height = bl_height(i,j);
+                    profile.ObukovLength = init->L(i,j);
+                    profile.ABL_height = init->bl_height(i,j);
                     profile.Roughness = input.surface.Roughness(i,j);
                     profile.Rough_h = input.surface.Rough_h(i,j);
                     profile.Rough_d = input.surface.Rough_d(i,j);
@@ -1759,7 +1713,7 @@ void ninja::discretize()
     //If the run is a 2D WX model run
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            wxInit->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
+            init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
     {
         stb.Set2dWxInitializationAlpha(input, mesh, CloudGrid);
 
@@ -1778,12 +1732,12 @@ void ninja::discretize()
 	//the potential temp (theta) is available, then use the method below
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            wxInit->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
+            init->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
 
-        stb.Set3dVariableAlpha(input, mesh, wxInit->air3d, u0, v0);
-        wxInit->air3d.deallocate();
+        stb.Set3dVariableAlpha(input, mesh, init->air3d, u0, v0);
+        init->air3d.deallocate();
 
         for(unsigned int k=0; k<mesh.nlayers; k++)
         {
@@ -2289,7 +2243,7 @@ void ninja::prepareOutput()
 	if(!isNullRun)
 		interp_uvw();
  
-        if(input.initializationMethod == WindNinjaInputs::foamInitializationFlag){
+        if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag){
             //Set cloud grid
             int longEdge = input.dem.get_nRows();
             if(input.dem.get_nRows() < input.dem.get_nCols())
@@ -2338,7 +2292,7 @@ void ninja::prepareOutput()
             std::string dt;
 
             if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
-                times = (wxInit->getTimeList(input.ninjaTimeZone));
+                times = (init->getTimeList(input.ninjaTimeZone));
                 dt =  boost::lexical_cast<std::string>(input.ninjaTime);
             }
 
@@ -2348,7 +2302,7 @@ void ninja::prepareOutput()
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){// if it's a wx model run
                     if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
                         output = fopen(input.outputPointsFilename.c_str(), "w");
-                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
+                        if(init->getForecastIdentifier()=="WRF-3D"){ //it's a 2D wx model run
                             fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
                         }
                         else{
@@ -2368,7 +2322,7 @@ void ninja::prepareOutput()
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
                     if(input.ninjaTime == times[0]){ //if it's the first time step write headers to new file
                         output = fopen("output.txt", "w"); //append new time to end of file
-                        if(wxInit->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
+                        if(init->getForecastIdentifier()=="WRF-3D"){ //it's a 3D wx model run
                             fprintf(output, "ID,lat,lon,height,datetime,u,v,w,wx_u,wx_v,wx_w\n");
                         }
                         else{//it's a 2D wx model run
@@ -2418,8 +2372,8 @@ void ninja::prepareOutput()
                     //profile stuff is a little weird bc we are not at nodes
                     //profile is set based on southwest corner of current cell (elem_i, elem_j)
                     //could interpolate these too?
-                    profile.ObukovLength = L(elem_i,elem_j);
-                    profile.ABL_height = bl_height(elem_i,elem_j);
+                    profile.ObukovLength = init->L(elem_i,elem_j);
+                    profile.ABL_height = init->bl_height(elem_i,elem_j);
                     profile.Roughness = input.surface.Roughness(elem_i,elem_j);
                     profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
                     profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
@@ -2444,13 +2398,13 @@ void ninja::prepareOutput()
 
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
 
-                    if(wxInit->getForecastIdentifier() == "WRF-3D"){
+                    if(init->getForecastIdentifier() == "WRF-3D"){
                         fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                                new_u, new_v, new_w, wxInit->u_wxList[i], wxInit->v_wxList[i], wxInit->w_wxList[i]);
+                                new_u, new_v, new_w, init->u_wxList[i], init->v_wxList[i], init->w_wxList[i]);
                     }
                     else{
                     fprintf(output,"%s,%lf,%lf,%lf,%s,%lf,%lf,%lf,%lf,%lf\n", pointName.c_str(), lat, lon, height_above_ground, dt.c_str(),
-                            new_u, new_v, new_w, wxInit->u10List[i], wxInit->v10List[i]);
+                            new_u, new_v, new_w, init->u10List[i], init->v10List[i]);
                     }
                 }
                 else{ //if not a wx model run
@@ -2557,12 +2511,10 @@ bool ninja::matched(int iter)
             wind_sd_to_uv(input.stationsOldOutput[i].get_speed(), input.stationsOldOutput[i].get_direction(), &old_output_u, &old_output_v);
             old_output_w = input.stationsOldOutput[i].get_w_speed();
 
-
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - try_output_u, true_v - try_output_v, true_w - try_output_w);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_u = %lf\tu_solve = %lf\tu_true = %lf", try_input_u, try_output_u, true_u);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_v = %lf\tv_solve = %lf\tv_true = %lf", try_input_v, try_output_v, true_v);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_w = %lf\tw_solve = %lf\tw_true = %lf", try_input_w, try_output_w, true_w);
-
 
 			//Compute new values using formula (from Lopes (2003)):
 			//
@@ -3020,8 +2972,8 @@ void ninja::writeOutputFiles()
 			ninjaKmlFiles.setTime(input.ninjaTime);
 			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
 			{
-			    std::vector<boost::local_time::local_date_time> times(wxInit->getTimeList(input.ninjaTimeZone));
-			    ninjaKmlFiles.setWxModel(wxInit->getForecastIdentifier(), times[0]);
+			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
 
 			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))
@@ -3611,6 +3563,16 @@ void ninja::set_ExistingCaseDirectory(std::string directory)
 {
     input.existingCaseDirectory = directory;
 }
+
+void ninja::set_foamVelocityGrid(AsciiGrid<double> velocityGrid)
+{
+    input.foamVelocityGrid = velocityGrid;
+}
+
+void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
+{
+    input.foamAngleGrid = angleGrid;
+}
 #endif
 
 void ninja::set_speedFile(std::string speedFile)
@@ -4191,10 +4153,6 @@ std::vector<wxStation> ninja::get_wxStations()
 {
     return input.stations;
 }
-//std::vector<std::vector<wxStationList> > ninja::get_wxStatList()
-//{
-//    return input.vecStations;
-//}
 
 
 /** Function sets the vector of weather stations.
@@ -4666,7 +4624,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
     
     if(input.customOutputPath == "!set"){ // if a custom output path was not specified in the cli
-        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ||
+            input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag )	//prepend directory paths to rootFile for wxModel run
         {
             pathName = CPLGetPath(input.forecastFilename.c_str());
             //if it's a .tar, write to directory containing the .tar file
@@ -4702,7 +4661,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     wxModelOutputFacet = new boost::local_time::local_time_facet();
     wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
     wxModelOutputFacet->format("%m-%d-%Y_%H%M");
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ||
+        input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag )
     {
         wxModelTimestream << input.ninjaTime;
     }
@@ -4716,7 +4676,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
-        input.initializationMethod == WindNinjaInputs::foamInitializationFlag )
+        input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);

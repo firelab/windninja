@@ -145,6 +145,8 @@ WindNinjaInputs::WindNinjaInputs()
     stlFile = "!set";
     speedInitGridFilename = "!set";
     dirInitGridFilename= "!set";
+    foamVelocityGrid = -1.0;
+    foamAngleGrid = -1.0;
 #endif
     
     outputPointsFilename = "!set";
@@ -206,6 +208,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
     nonEqBc = rhs.nonEqBc;
     stlFile = rhs.stlFile;
+    foamVelocityGrid = rhs.foamVelocityGrid;
+    foamAngleGrid = rhs.foamAngleGrid;
 #endif
   outputPointsFilename = rhs.outputPointsFilename;
   inputPointsFilename = rhs.inputPointsFilename;
@@ -403,6 +407,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
       nonEqBc = rhs.nonEqBc;
       stlFile = rhs.stlFile;
+      foamVelocityGrid = rhs.foamVelocityGrid;
+      foamAngleGrid = rhs.foamAngleGrid;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;

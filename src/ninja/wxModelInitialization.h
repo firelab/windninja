@@ -92,14 +92,14 @@ class wxModelInitialization : public initialize
 
     wxModelInitialization& operator= ( wxModelInitialization const& A );
 
-
+#ifdef NINJAFOAM
+    virtual void ninjaFoamInitializeFields( WindNinjaInputs &input,
+                                            AsciiGrid<double> &cloud );
+#endif //NINJAFOAM
 
     virtual void initializeFields( WindNinjaInputs &input, Mesh const& mesh,
                            wn_3dScalarField& u0, wn_3dScalarField& v0,
-                           wn_3dScalarField& w0, AsciiGrid<double>& cloud,
-                           AsciiGrid<double>& L,
-                           AsciiGrid<double>& u_star,
-                           AsciiGrid<double>& bl_height );
+                           wn_3dScalarField& w0, AsciiGrid<double>& cloud );
 
     //virtual time list functions
     virtual std::vector<blt::local_date_time> getTimeList(std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
@@ -130,15 +130,6 @@ class wxModelInitialization : public initialize
     
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
     
-    wn_3dScalarField air3d; //perturbation potential temperature
-    
-    std::vector<double> u10List;
-    std::vector<double> v10List;
-    
-    std::vector<double> u_wxList;
-    std::vector<double> v_wxList;
-    std::vector<double> w_wxList;
-
     void SetProgressFunc( GDALProgressFunc );
     void SetProgressArg( void *p );
 
@@ -193,6 +184,32 @@ class wxModelInitialization : public initialize
     wn_3dScalarField wxCloud3d;
 
     GDALProgressFunc pfnProgress;
+
+private:
+    void interpolateWxGridsToNinjaGrids(WindNinjaInputs& input);
+
+    void initializeWindFrom3dData(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+    void interpolate2dDataToPoints(WindNinjaInputs& input,
+                                 const Mesh& mesh);
+
+    void interpolate3dDataToPoints(WindNinjaInputs& input,
+                                 const Mesh& mesh);
+
+    void writeWxModelGrids(WindNinjaInputs &input);
+
+    AsciiGrid<double> airTempGrid_wxModel;
+    AsciiGrid<double> uGrid_wxModel;
+    AsciiGrid<double> vGrid_wxModel;
+    AsciiGrid<double> wGrid_wxModel;
+    AsciiGrid<double> speedInitializationGrid_wxModel;
+    AsciiGrid<double> dirInitializationGrid_wxModel;
+    AsciiGrid<double> cloudCoverGrid_wxModel;
+
 };
 
 #endif /* WX_MODEL_INITIALIZATION_H */

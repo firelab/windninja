@@ -65,15 +65,10 @@
 
 #include "ninja_conv.h"
 
-#include "Elevation.h"
-#include "Aspect.h"
-#include "Slope.h"
-#include "Shade.h"
 #include "constants.h"
 #include "ascii_grid.h"
-#include "surfaceVectorField.h"
-#include "addDiurnalFlow.h"
 #include "SurfProperties.h"
+#include "surfaceVectorField.h"
 #include "WindNinjaInputs.h"
 #include "KmlVector.h"
 #include "ShapeVector.h"
@@ -88,13 +83,15 @@
 #include "initialize.h"
 #include "domainAverageInitialization.h"
 #include "wxModelInitializationFactory.h"
+#include "initializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
 
 
 
 #ifdef NINJAFOAM
-#include "foamInitialization.h"
+#include "foamDomainAverageInitialization.h"
+#include "foamWxModelInitialization.h"
 #endif
 
 #include "wxStation.h"
@@ -296,6 +293,8 @@ public:
     void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_ExistingCaseDirectory(std::string directory); //use existing case for ninjafoam run
+    void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
+    void set_foamAngleGrid(AsciiGrid<double> angleGrid);
 #endif
 
     void set_speedFile(std::string speedFile);
@@ -359,6 +358,7 @@ public:
 protected:
     void checkCancel();
     void write_compare_output();
+    boost::shared_ptr<initialize> init;
 
 private:
 
@@ -381,9 +381,6 @@ private:
     int *row_ptr, *col_ind;
     double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
     double alpha;                //alpha = alphaH/alphaV, determined by stability
-    AsciiGrid<double> L;		//Monin-Obukhov length
-    AsciiGrid<double> u_star;	//Friction velocity
-    AsciiGrid<double> bl_height;	//atmospheric boundary layer height
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;
     Slope *slope;
@@ -395,9 +392,6 @@ private:
     AsciiGrid<double> *vInitializationGrid;
     AsciiGrid<double> *airTempGrid;
     AsciiGrid<double> *cloudCoverGrid;
-
-
-    boost::shared_ptr<wxModelInitialization> wxInit;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)

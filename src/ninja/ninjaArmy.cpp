@@ -210,7 +210,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
+void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
 {
     wxModelInitialization* model;
     
@@ -233,7 +233,12 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         
         for(unsigned int i = 0; i < wxList.size(); i++)
         {
-            ninjas[i] = new ninja();
+            if(momentumFlag == true){
+                ninjas[i] = new NinjaFoam();
+            }
+            else{
+                 ninjas[i] = new ninja();
+            }
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -267,7 +272,12 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone)
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
         {
-            ninjas[i] = new ninja();  //wxModelInitializations only for ninjas now (not ninjafoams)
+            if(momentumFlag == true){
+                ninjas[i] = new NinjaFoam();
+            }
+            else{
+                 ninjas[i] = new ninja();
+            }
         }
 
         for(unsigned int i = 0; i < timeList.size(); i++)
@@ -479,8 +489,19 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
-                diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
+                diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
+                if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                }
+                else if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
+                }
+                else{
+                    throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
+                }
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
+                //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                 diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()");
@@ -537,7 +558,17 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
-                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamInitializationFlag;
+                    diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
+                    diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
+                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
+                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                    }
+                    else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
+                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
+                    }
+                    else{
+                        throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
+                    }
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                     diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
@@ -1180,10 +1211,10 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
             retval = NINJA_SUCCESS;
         }
 #ifdef NINJAFOAM
-        else if( method == "foamInitialization" )
+        else if( method == "foamDomainAverageInitialization" )
         {
             ninjas[ nIndex ]->set_initializationMethod
-                ( WindNinjaInputs::foamInitializationFlag, matchPoints );
+                ( WindNinjaInputs::foamDomainAverageInitializationFlag, matchPoints );
             retval = NINJA_SUCCESS;
         }
 #endif

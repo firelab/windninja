@@ -80,26 +80,32 @@ void pointInitialization::SetRawStationFilename(std::string filename)
  * @see WindNinjaInputs, Mesh, wn_3dScalarField
  */
 void pointInitialization::initializeFields(WindNinjaInputs &input,
-        Mesh const& mesh,
-        wn_3dScalarField& u0,
-        wn_3dScalarField& v0,
-        wn_3dScalarField& w0,
-        AsciiGrid<double>& cloud,
-        AsciiGrid<double>& L,
-        AsciiGrid<double>& u_star,
-        AsciiGrid<double>& bl_height)
+		Mesh const& mesh,
+		wn_3dScalarField& u0,
+		wn_3dScalarField& v0,
+		wn_3dScalarField& w0,
+		AsciiGrid<double>& cloud)
 {
-    int i, j, k;
-    windProfile profile;
-    profile.profile_switch = windProfile::monin_obukov_similarity;  //switch that detemines what profile is used...
+    setGridHeaderData(input, cloud);
     
-    //make sure rough_h is set to zero if profile switch is 0 or 2
+    setInitializationGrids(input);
 
-    //These are only needed if diurnal is turned on...
-    AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
-    AsciiGrid<double> uDiurnal;
-    AsciiGrid<double> vDiurnal;
-    AsciiGrid<double> wDiurnal;
+    initializeWindToZero(mesh, u0, v0, w0);
+
+    initializeBoundaryLayer(input);
+
+    initializeWindFromProfile(input, mesh, u0, v0, w0);
+
+    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
+    {
+        addDiurnalComponent(input, mesh, u0, v0, w0);
+    }
+
+    cloud = cloudCoverGrid;
+}
+
+void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
+{
     Aspect aspect;
     Slope slope;
     Shade shade;
@@ -107,39 +113,13 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
 
     if(input.diurnalWinds == true)  //compute values needed for diurnal computations
     {
-        //height of diurnal flow above "z=0" in log profile
-        height.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(),
-                  input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                  input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);	
-        uDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(),
-                 input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                 input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        vDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(),
-                input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        wDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), 
-                input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
         aspect.compute_gridAspect(&input.dem, input.numberCPUs);
         slope.compute_gridSlope(&input.dem, input.numberCPUs);
-        double aspect_temp = 0;	//just placeholder, basically
-        double slope_temp = 0;	//just placeholder, basically
+        double aspect_temp = 0; //just placeholder, basically
+        double slope_temp = 0;  //just placeholder, basically
         solar.compute_solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
         shade.compute_gridShade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
     }
-
-    AsciiGrid<double> uInitializationGrid(input.dem.get_nCols(), input.dem.get_nRows(), 
-                        input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, 
-                        std::numeric_limits<double>::max(), input.dem.prjString);
-    AsciiGrid<double> vInitializationGrid(input.dem.get_nCols(), input.dem.get_nRows(),
-                        input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, 
-                        std::numeric_limits<double>::max(), input.dem.prjString);
-    AsciiGrid<double> airTempGrid(input.dem.get_nCols(), input.dem.get_nRows(), 
-                        input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, 
-                        std::numeric_limits<double>::max(), input.dem.prjString);
-    AsciiGrid<double> cloudCoverGrid(input.dem.get_nCols(), input.dem.get_nRows(), 
-                        input.dem.xllCorner, input.dem.yllCorner, input.dem.cellSize, 
-                        -9999.0, input.dem.prjString);
 
     double *u, *v, *T, *cc, *X, *Y, *influenceRadius;
     u = new double [input.stationsScratch.size()];
@@ -150,15 +130,15 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     Y = new double [input.stationsScratch.size()];
     influenceRadius = new double [input.stationsScratch.size()];
     //height above ground of highest station, used as height of 2d layer to interpolate horizontally to
-    double maxStationHeight = -1;   
+    double maxStationHeight = -1;	
 
     for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
     {
-        if(input.stationsScratch[ii].get_height() > maxStationHeight){
+        if(input.stationsScratch[ii].get_height() > maxStationHeight)
+        {
             maxStationHeight = input.stationsScratch[ii].get_height();
         }
-        sd_to_uv(input.stationsScratch[ii].get_speed(), 
-                input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
+        sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
         T[ii] = input.stationsScratch[ii].get_temperature();
         cc[ii] = input.stationsScratch[ii].get_cloudCover();
         X[ii] = input.stationsScratch[ii].get_projXord();
@@ -175,29 +155,14 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     //Check one grid to be sure that the interpolation completely filled the grid
     if(cloudCoverGrid.checkForNoDataValues())
     {
-        throw std::runtime_error("Fill interpolation from the wx stations didn't completely fill the grids.  "
-				"To be sure everything is filled, let at least one wx station have an "
-                                "infinite influence radius.  This is specified by defining the influence "
-                                "radius to be a value less than zero in the wx "
-				"station file.");
+        throw std::runtime_error("Fill interpolation from the wx stations didn't completely fill the grids. " \
+                        "To be sure everything is filled, let at least one wx station have an infinite influence radius. " \
+                        "This is specified by defining the influence radius to be a value less than zero in the wx " \
+                        "station file.");
     }
 
-    cloud = cloudCoverGrid;
-
-    //Monin-Obukhov length, surface friction velocity, and atmospheric boundary layer height
-    L.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), 
-                    input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                    input.dem.get_cellSize(), input.dem.get_noDataValue(), 0.0);
-    u_star.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), 
-                    input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                    input.dem.get_cellSize(), input.dem.get_noDataValue(), 0.0);
-    bl_height.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), 
-                    input.dem.get_xllCorner(), input.dem.get_yllCorner(), 
-                    input.dem.get_cellSize(), input.dem.get_noDataValue(), -1.0);
-
+    double U_star, anthropogenic_, cg_, bowen_, albedo_;
     int i_, j_;
-    double albedo_, bowen_, cg_, anthropogenic_;
-    double U_star;
 
     cellDiurnal cDiurnal;
     if( input.diurnalWinds == true ) {
@@ -211,147 +176,163 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
         //interpolate vertically using profile to this height
         if(input.stationsScratch[ii].get_height() != maxStationHeight)	
         {	
-            profile.inputWindHeight = input.stationsScratch[ii].get_height();
-            //get surface properties
-            if(input.dem.check_inBounds(input.stationsScratch[ii].get_projXord(), 
-                        input.stationsScratch[ii].get_projYord()))  //if station is in the dem domain
-            {   
-                input.dem.get_cellIndex(input.stationsScratch[ii].get_projXord(), 
-                                        input.stationsScratch[ii].get_projYord(), &i_, &j_);
-
-                profile.Roughness = (input.surface.Roughness)(i_, j_);
-                profile.Rough_h = (input.surface.Rough_h)(i_, j_);
-                profile.Rough_d = (input.surface.Rough_d)(i_, j_);
-
-                if(input.diurnalWinds == true)	//compute values needed for diurnal computation
+                profile.inputWindHeight = input.stationsScratch[ii].get_height();
+                //get surface properties
+                //if station is in the dem domain
+                if(input.dem.check_inBounds(input.stationsScratch[ii].get_projXord(),
+                    input.stationsScratch[ii].get_projYord()))	
                 {
-                    cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-                                        aspect(i_, j_),slope(i_, j_), cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
-                                        input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_height(),
-                                        (input.surface.Albedo)(i_, j_), (input.surface.Bowen)(i_, j_), 
-                                        (input.surface.Cg)(i_, j_), (input.surface.Anthropogenic)(i_, j_), 
-                                        (input.surface.Roughness)(i_, j_), (input.surface.Rough_h)(i_, j_), 
-                                        (input.surface.Rough_d)(i_, j_));
+                    input.dem.get_cellIndex(input.stationsScratch[ii].get_projXord(),
+                                            input.stationsScratch[ii].get_projYord(), &i_, &j_);
 
-                    cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
-					
-                }
-                else{	//compute neutral ABL height
-					
-                    double f;
-                    double velocity;
+                    profile.Roughness = (input.surface.Roughness)(i_, j_);
+                    profile.Rough_h = (input.surface.Rough_h)(i_, j_);
+                    profile.Rough_d = (input.surface.Rough_d)(i_, j_);
 
-                    //compute f -> Coriolis parameter
-                    if(input.latitude<=90.0 && input.latitude>=-90.0)
+                    if(input.diurnalWinds == true)	//compute values needed for diurnal computation
                     {
-                        // f should be about 10^-4 for mid-latitudes
-                        f = (1.4544e-4) * sin(pi/180 * input.latitude);	// f = 2 * omega * sin(theta)
-                        // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-                        // obtained from Stull 1988 book
-                        if(f<0){
-                            f = -f;
-                        }
-                    }
-                    else{
-                        f = 1e-4;	//if latitude is not available, set f to mid-latitude value
-                    }
-				
-                    if(f==0.0){	//zero will give division by zero below
-                        f = 1e-8;	//if latitude is zero, set f small
-                    }
+                        double projXord = input.stationsScratch[ii].get_projXord();
+                        double projYord = input.stationsScratch[ii].get_projYord();
+                        cDiurnal.initialize(projXord, projYord, aspect(i_, j_), slope(i_, j_), cloudCoverGrid(i_, j_),
+                                            airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
+                                            input.stationsScratch[ii].get_height(), (input.surface.Albedo)(i_, j_),
+                                            (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
+                                            (input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
+                                            (input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
 
-                    //compute neutral ABL height
-                    velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
-                    U_star = velocity*0.4/(log((profile.inputWindHeight+profile.Rough_h-profile.Rough_d)/profile.Roughness));
-                                        
-                    //compute neutral ABL height
-                    //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-                    profile.ABL_height = 0.2 * U_star / f;  
-                    profile.ObukovLength = 0.0;
-                }
-            } 
-            else{	//if station is not in dem domain, use grass roughness
-                profile.Roughness = 0.01;
-                profile.Rough_h = 0.0;
-                profile.Rough_d = 0.0;
-                albedo_ = 0.25;
-                bowen_ = 1.0;
-                cg_ = 0.15;
-                anthropogenic_ = 0.0;
-
-                if(input.diurnalWinds == true)	//compute values needed for diurnal computation
-                {
-                    cDiurnal.initialize(input.stationsScratch[ii].get_projXord(), input.stationsScratch[ii].get_projYord(),
-                        0.0, 0.0, cloudCoverGrid(i_, j_), airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
-                        input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_, anthropogenic_, profile.Roughness,
-                        profile.Rough_h, profile.Rough_d);
-
-                    cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
-                                    
-                }
-                else{  //compute neutral ABL height
-					
-                double f;
-                double velocity;
-
-                //compute f -> Coriolis parameter
-                if(input.latitude<=90.0 && input.latitude>=-90.0)
-                {
-                    f = (1.4544e-4) * sin(pi/180 * input.latitude);	// f = 2 * omega * sin(theta)
-                    // f should be about 10^-4 for mid-latitudes
-                    // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-                    // obtained from Stull 1988 book
-                    if(f<0){
-                        f = -f;
-                    }
-                }
-                else{
-                    f = 1e-4; //if latitude is not available, set f to mid-latitude value
-                }
+                        cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
                             
-                if(f==0.0){ //zero will give division by zero below
-                    f = 1e-8;	//if latitude is zero, set f small
+                    }
+                    else
+                    {
+                        //compute neutral ABL height
+                        double f;
+                        double velocity;
+
+                        //compute f -> Coriolis parameter
+                        if(input.latitude<=90.0 && input.latitude>=-90.0)
+                        {
+                            // f = 2 * omega * sin(theta)
+                            // f should be about 10^-4 for mid-latitudes
+                            // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
+                            // obtained from Stull 1988 book
+                            f = (1.4544e-4) * sin(pi/180 * input.latitude);	
+                            if(f<0)
+                                f = -f;
+                        }
+                        else
+                        {
+                            //if latitude is not available, set f to mid-latitude value
+                            f = 1e-4;	
+                        }
+                        
+                        if(f==0.0)	//zero will give division by zero below
+                            f = 1e-8;	//if latitude is zero, set f small
+
+                        //compute neutral ABL height
+                        velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
+                        U_star = velocity*0.4/(log((profile.inputWindHeight +
+                                                    profile.Rough_h - profile.Rough_d)/profile.Roughness));
+                                
+                        //compute neutral ABL height
+                        profile.ABL_height = 0.2 * U_star / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
+                        profile.ObukovLength = 0.0;
+                    }
+                }
+                else
+                {	
+                    //if station is not in dem domain, use grass roughness
+                    profile.Roughness = 0.01;
+                    profile.Rough_h = 0.0;
+                    profile.Rough_d = 0.0;
+                    albedo_ = 0.25;
+                    bowen_ = 1.0;
+                    cg_ = 0.15;
+                    anthropogenic_ = 0.0;
+
+                    if(input.diurnalWinds == true)	//compute values needed for diurnal computation
+                    {
+                        double projXord = input.stationsScratch[ii].get_projXord();
+                        double projYord = input.stationsScratch[ii].get_projYord();
+                        cDiurnal.initialize(projXord, projYord, 0.0, 0.0,
+                                            cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
+                                            input.stationsScratch[ii].get_speed(),
+                                            input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_,
+                                            anthropogenic_, profile.Roughness, profile.Rough_h, profile.Rough_d);
+
+                        cDiurnal.compute_cell_diurnal_parameters(i_, j_, &profile.ObukovLength, &U_star, &profile.ABL_height);
+                    }
+                    else
+                    {
+                        //compute neutral ABL height
+                        
+                        double f;
+                        double velocity;
+
+                        //compute f -> Coriolis parameter
+                        if(input.latitude<=90.0 && input.latitude>=-90.0)
+                        {
+                            // f should be about 10^-4 for mid-latitudes
+                            // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
+                            // obtained from Stull 1988 book
+                            // f = 2 * omega * sin(theta)
+                            f = (1.4544e-4) * sin(pi/180 * input.latitude);	
+                                if(f<0)
+                                    f = -f;
+                        }
+                        else
+                        {
+                            f = 1e-4;	//if latitude is not available, set f to mid-latitude value
+                        }
+                
+                        if(f==0.0)	//zero will give division by zero below
+                            f = 1e-8;	//if latitude is zero, set f small
+
+                        //compute neutral ABL height
+                        velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
+                        U_star = velocity*0.4/(log((profile.inputWindHeight +
+                                                    profile.Rough_h - profile.Rough_d)/profile.Roughness));
+                        
+                        //compute neutral ABL height
+                        //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
+                        profile.ABL_height = 0.2 * U_star / f;	
+                        profile.ObukovLength = 0.0;
+                    }
                 }
 
-                //compute neutral ABL height
-                velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
-                U_star = velocity*0.4/(log((profile.inputWindHeight+profile.Rough_h-profile.Rough_d)/profile.Roughness));
-                                    
-                //compute neutral ABL height
-                //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-                profile.ABL_height = 0.2 * U_star / f;  
-                profile.ObukovLength = 0.0;
-                }
-            }
+                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                profile.AGL=maxStationHeight + profile.Rough_h;			
 
-            profile.AGL=maxStationHeight + profile.Rough_h; //this is height above THE GROUND!! (not "z=0" for the log profile)
-
-            wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
-            profile.inputWindSpeed = u[ii];
-            u[ii] = profile.getWindSpeed();
-            profile.inputWindSpeed = v[ii];
-            v[ii] = profile.getWindSpeed();
+                wind_sd_to_uv(input.stationsScratch[ii].get_speed(),
+                            input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
+                profile.inputWindSpeed = u[ii];	
+                u[ii] = profile.getWindSpeed();
+                profile.inputWindSpeed = v[ii];
+                v[ii] = profile.getWindSpeed();
         }
-        else{   //else station is already at 2d interp layer height
+        else
+        {
+            //else station is already at 2d interp layer height
             wind_sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
         }
-    }            
-	
+    }
+
     uInitializationGrid.interpolateFromPoints(u, X, Y, influenceRadius, input.stationsScratch.size(), dfInvDistWeight);
     vInitializationGrid.interpolateFromPoints(v, X, Y, influenceRadius, input.stationsScratch.size(), dfInvDistWeight);
 
     input.surface.windSpeedGrid.set_headerData(uInitializationGrid);
     input.surface.windGridExists = true;
 
-    for(i=0;i<input.dem.get_nRows();i++)
+    for(int i=0; i<input.dem.get_nRows(); i++)
     {
-        for(j=0;j<input.dem.get_nCols();j++)
+        for(int j=0; j<input.dem.get_nCols(); j++)
         {
-            input.surface.windSpeedGrid(i,j) = std::pow((uInitializationGrid(i,j)*
-                        uInitializationGrid(i,j)+vInitializationGrid(i,j)*
-                        vInitializationGrid(i,j)), 0.5);
+            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
+                    &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
         }
     }
+
+    input.surface.windSpeedGrid = speedInitializationGrid;
 
     if(u)
     {
@@ -387,123 +368,6 @@ void pointInitialization::initializeFields(WindNinjaInputs &input,
     {
         delete[] influenceRadius;
         influenceRadius = NULL;
-    }
-
-    //initialize u0, v0, w0 equal to zero
-    #pragma omp parallel for default(shared) private(i,j,k)
-    for(k=0;k<mesh.nlayers;k++)
-    {
-        for(i=0;i<mesh.nrows;i++)
-        {
-            for(j=0;j<mesh.ncols;j++)
-            {
-                u0(i, j, k) = 0.0;
-                v0(i, j, k) = 0.0;
-                w0(i, j, k) = 0.0;	
-            }
-        }
-    }
-
-    //compute diurnal wind
-    if(input.diurnalWinds == true)
-    {
-        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L, &u_star, 
-                    &bl_height, &input.dem, &aspect, &slope, &shade, &solar, 
-                    &input.surface, &cloudCoverGrid, &airTempGrid, 
-                    input.numberCPUs, input.downDragCoeff, input.downEntrainmentCoeff,
-                    input.upDragCoeff, input.upEntrainmentCoeff);
-    }
-    else{	//compute neutral ABL height
-        double f, vel;
-
-        //compute f -> Coriolis parameter
-        if(input.latitude<=90.0 && input.latitude>=-90.0)
-        {
-            f = (1.4544e-4) * sin(pi/180 * input.latitude);	// f = 2 * omega * sin(theta)
-            // f should be about 10^-4 for mid-latitudes
-            // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-            // obtained from Stull 1988 book
-            if(f<0){
-                f = -f;
-            }
-        }
-        else{
-                f = 1e-4;	//if latitude is not available, set f to mid-latitude value
-        }
-        if(f==0.0){	//zero will give division by zero below
-            f = 1e-8;	//if latitude is zero, set f small
-        }
-
-        //compute neutral ABL height
-        #pragma omp parallel for default(shared) private(i,j)
-        for(i=0;i<input.dem.get_nRows();i++)
-        {
-            for(j=0;j<input.dem.get_nCols();j++)
-            {
-                vel = std::pow((uInitializationGrid(i,j)*uInitializationGrid(i,j)+
-                            vInitializationGrid(i,j)*vInitializationGrid(i,j)),0.5);
-                u_star(i,j) = vel*0.4/(log((input.inputWindHeight+
-                            input.surface.Rough_h(i,j)-input.surface.Rough_d(i,j))/
-                            input.surface.Roughness(i,j)));
-                            
-                //compute neutral ABL height
-                //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-                bl_height(i,j) = 0.2 * u_star(i,j) / f;	
-            }
-        }
-    }
-
-    //Initialize u0,v0,w0----------------------------------
-    #pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-    for(i=0;i<input.dem.get_nRows();i++)
-    {
-        for(j=0;j<input.dem.get_nCols();j++)
-        {
-            profile.ObukovLength = L(i,j);
-            profile.ABL_height = bl_height(i,j);
-            profile.Roughness = input.surface.Roughness(i,j);
-            profile.Rough_h = input.surface.Rough_h(i,j);
-            profile.Rough_d = input.surface.Rough_d(i,j);
-            profile.inputWindHeight = input.inputWindHeight;
-
-            for(k=0;k<mesh.nlayers;k++)
-            {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
-                profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);
-                            
-                profile.inputWindSpeed = uInitializationGrid(i,j);
-                u0(i, j, k) += profile.getWindSpeed();
-                profile.inputWindSpeed = vInitializationGrid(i,j);
-                v0(i, j, k) += profile.getWindSpeed();
-
-                profile.inputWindSpeed = 0.0;
-                w0(i, j, k) += profile.getWindSpeed();
-
-            }
-        }
-    }
-
-    //Now add diurnal component if desired
-    double AGL=0; //height above top of roughness elements
-    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
-    {
-        #pragma omp parallel for default(shared) private(i,j,k,AGL)
-        for(k=1;k<mesh.nlayers;k++)  //start at 1, not 0 bc ground nodes must be zero for boundary conditions to work properly
-        {
-            for(i=0;i<mesh.nrows;i++)
-            {
-                for(j=0;j<mesh.ncols;j++)
-                {
-                    AGL=mesh.ZORD(i, j, k)-input.dem(i,j);  //this is height above THE GROUND!! (not "z=0" for the log profile)
-                    if((AGL - input.surface.Rough_d(i,j) < height(i,j)))
-                    {
-                        u0(i, j, k) += uDiurnal(i,j);
-                        v0(i, j, k) += vDiurnal(i,j);
-                        w0(i, j, k) += wDiurnal(i,j);
-                    }		
-                }
-            }
-        }
     }
 }
 
@@ -1037,8 +901,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     return stationData;
 }
 
-
-
 /**
  * @brief pointInitialization::interpolateNull
  * Used if the function is the old PointInitialization.
@@ -1071,7 +933,6 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
 
     return refinedDat;
 }
-
 
 /**
  * @brief interpolates raw data WRT time

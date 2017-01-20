@@ -58,32 +58,18 @@
 #include "solar.h"
 #include "math.h"
 
-
-
-
-
 class pointInitialization : public initialize
 {
-	public:
+    public:
+        pointInitialization();
+        virtual ~pointInitialization();
 
-		pointInitialization();								//Default constructor
-		virtual ~pointInitialization();						// Destructor
-		
-		//pointInitialization(pointInitialization const& m);               // Copy constructor
-		//pointInitialization& operator= (pointInitialization const& m);   // Assignment operator
-
-		//Implementation of base class virtual function for initializing volume wind fields using the
-		//domain averaged wind method.
-		virtual void initializeFields(WindNinjaInputs &input,
-		        Mesh const& mesh,
-		        wn_3dScalarField& u0,
-		        wn_3dScalarField& v0,
-		        wn_3dScalarField& w0,
-		        AsciiGrid<double>& cloud,
-		        AsciiGrid<double>& L,
-		        AsciiGrid<double>& u_star,
-		        AsciiGrid<double>& bl_height);
-
+        virtual void initializeFields(WindNinjaInputs &input,
+                        Mesh const& mesh,
+                        wn_3dScalarField& u0,
+                        wn_3dScalarField& v0,
+                        wn_3dScalarField& w0,
+                        AsciiGrid<double>& cloud);
 
         struct preInterpolate
         {
@@ -114,34 +100,33 @@ class pointInitialization : public initialize
 
         //master function for interpolation, and making wxStation stuff
         static vector<wxStation> interpolateFromDisk(std::string demFile,
-                                                    std::vector<boost::posix_time::ptime> timeList,
-                                                    std::string timeZone);
+                                            std::vector<boost::posix_time::ptime> timeList,
+                                            std::string timeZone);
 
         static vector<preInterpolate> readDiskLine(std::string demFile); //reads in the data from disk
 
         static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string demFile); //prepares final product
-
 
         static vector<wxStation> interpolateNull(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::string timeZone);
         static vector<vector<preInterpolate> > interpolateTimeData(std::string demFileName,vector<vector<preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList);
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
         static double interpolateDirection(double lowDir,double highDir);
         static double unixTime(boost::posix_time::ptime time);
-        
+
         static void fetchTest(std::string demFile,
-                              std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
+        std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
         static bool fetchStationFromBbox(std::string demFile,
-                                    std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
+        std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
         static bool fetchStationByName(std::string stationList,
-                                       std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
+        std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest);
 
 
         static std::vector<boost::posix_time::ptime> getTimeList( int startYear, int startMonth,
-                                                int startDay, int startHour, int startMinute, int endYear,
-                                                int endMonth, int endDay, int endHour, int endMinute,
-                                                int nTimeSteps, std::string timeZone );
+        int startDay, int startHour, int startMinute, int endYear,
+                    int endMonth, int endDay, int endHour, int endMinute,
+                                int nTimeSteps, std::string timeZone );
         static std::vector<boost::posix_time::ptime> getSingleTimeList(std::string timeZone);
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
@@ -192,7 +177,7 @@ class pointInitialization : public initialize
                 static void fetchStationData(std::string URL, std::string timeZone, bool latest);
 
                 double dfInvDistWeight;
-
+                void setInitializationGrids(WindNinjaInputs& input);
 };
 
 #endif /* POINT_INITIALIZATION_H */
