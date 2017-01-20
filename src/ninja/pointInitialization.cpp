@@ -40,6 +40,7 @@ const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_te
                                               "cloud_layer_2_code,cloud_layer_3_code";
 
 std::string pointInitialization::rawStationFilename = "";
+double pointInitialization::stationBuffer;
 
 pointInitialization::pointInitialization() : initialize()
 {
@@ -72,12 +73,6 @@ void pointInitialization::SetRawStationFilename(std::string filename)
  * height, the "above vegetation surface" is stair-stepped in regard to
  * distance from the ground.
  * Last, diurnal components are added.
- * @param input WindNinjaInputs object
- * @param mesh associated mesh object
- * @param u0 u component
- * @param v0 v component
- * @param w0 w component
- * @see WindNinjaInputs, Mesh, wn_3dScalarField
  */
 void pointInitialization::initializeFields(WindNinjaInputs &input,
 		Mesh const& mesh,
@@ -498,7 +493,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     return readyToGo;
 }
 
-vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(string demFile)
+vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(std::string demFile)
 {
     std::string oErrorString = "";
     preInterpolate oStation;
@@ -790,7 +785,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 }
 
 
-vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, string demFile)
+vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, std::string demFile)
 {
     CPLDebug("STATION_FETCH", "converting Interpolated struct to wxStation...");
     vector<std::string> stationNames;
@@ -885,14 +880,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
         for (int k=0;k<stationDataList[i].size();k++)
         {
-         subDat.set_speed(stationDataList[i][k].speed,stationDataList[i][k].inputSpeedUnits);
-         subDat.set_direction(stationDataList[i][k].direction);
-         subDat.set_temperature(stationDataList[i][k].temperature,stationDataList[i][k].tempUnits);
-         subDat.set_cloudCover(stationDataList[i][k].cloudCover,stationDataList[i][k].cloudCoverUnits);
-         subDat.set_influenceRadius(stationDataList[i][k].influenceRadius,stationDataList[i][k].influenceRadiusUnits);
-         subDat.set_height(stationDataList[i][k].height,stationDataList[i][k].heightUnits);
-         subDat.set_datetime(stationDataList[i][k].datetime);
-
+            subDat.set_speed(stationDataList[i][k].speed, stationDataList[i][k].inputSpeedUnits);
+            subDat.set_direction(stationDataList[i][k].direction);
+            subDat.set_temperature(stationDataList[i][k].temperature, stationDataList[i][k].tempUnits);
+            subDat.set_cloudCover(stationDataList[i][k].cloudCover, stationDataList[i][k].cloudCoverUnits);
+            subDat.set_influenceRadius(stationDataList[i][k].influenceRadius, stationDataList[i][k].influenceRadiusUnits);
+            subDat.set_height(stationDataList[i][k].height, stationDataList[i][k].heightUnits);
+            subDat.set_datetime(stationDataList[i][k].datetime);
         }
 
         stationData.push_back(subDat);
@@ -900,14 +894,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
     return stationData;
 }
-
-/**
- * @brief pointInitialization::interpolateNull
- * Used if the function is the old PointInitialization.
- * @param demFileName
- * @param vecStations
- * @return
- */
 
 vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
                                                     vector<vector<preInterpolate> > vecStations,
@@ -942,7 +928,9 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
  * @param timeList: the desired time and steps
  *
  */
-vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,vector<vector<pointInitialization::preInterpolate> > vecStations,std::vector<boost::posix_time::ptime> timeList)
+vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,
+                        vector<vector<pointInitialization::preInterpolate> > vecStations,
+                        std::vector<boost::posix_time::ptime> timeList)
 {
     CPLDebug("STATION_FETCH", "Interpolating time data");
 
@@ -951,9 +939,9 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 
     vector<vector<preInterpolate> > Selectify;
 
-    boost::posix_time::time_duration zero(0,0,0,0);
-    boost::posix_time::time_duration max(48,0,0,0);
-    boost::posix_time::time_duration one(0,1,0,0);
+    boost::posix_time::time_duration zero(0, 0, 0, 0);
+    boost::posix_time::time_duration max(48, 0, 0, 0);
+    boost::posix_time::time_duration one(0, 1, 0, 0);
 
     boost::posix_time::time_duration buffer;
     boost::posix_time::time_duration avgBuffer;
@@ -963,50 +951,50 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     int totalsize=vecStations.size();
 
     //Creates a vector of time buffers to be used to interpolate the raw data with the timeList
-    for (int j=0;j<totalsize;j++)
+    for (int j=0; j<totalsize; j++)
     {
         vector<boost::posix_time::time_duration> buffers;
-        for (int i=0;i<vecStations[j].size();i++)
+        for (int i=0; i<vecStations[j].size(); i++)
         {
-            buffer=vecStations[j][i].datetime-vecStations[j][i+1].datetime;
-            if (buffer<=zero)
+            buffer = vecStations[j][i].datetime - vecStations[j][i+1].datetime;
+            if (buffer <= zero)
             {
-                buffer=buffer.invert_sign();
+                buffer = buffer.invert_sign();
             }
-            if (buffer>=max)
+            if (buffer >= max)
             {
-                buffer=buffers[0];
+                buffer = buffers[0];
             }
             buffers.push_back(buffer);
         }
 
-        bufferSum=std::accumulate(buffers.begin(),buffers.end(),zero);
-        avgBuffer=bufferSum/buffers.size();
+        bufferSum = std::accumulate(buffers.begin(), buffers.end(), zero);
+        avgBuffer = bufferSum / buffers.size();
         avgBufferList.push_back(avgBuffer);
     }
 
-    for (int k=0;k<totalsize;k++)
+    for (int k=0; k<totalsize; k++)
     {
-        int timesize=0;
+        int timesize = 0;
         vector<preInterpolate> subSelectify;
         int qq;
-        qq=vecStations[k].size();
+        qq = vecStations[k].size();
 
-        for (int j=0;j<timeList.size();j++)
+        for (int j=0; j<timeList.size(); j++)
         {
-            boost::posix_time::ptime comparator; //robespierre
-            comparator=timeList[j];
+            boost::posix_time::ptime comparator;
+            comparator = timeList[j];
 
             int counter=0;
-            for (int i=0;i<qq;i++)
+            for (int i=0; i<qq; i++)
             {
                 boost::posix_time::time_duration difference;
-                difference=comparator-vecStations[k][i].datetime;
-                if (difference<=zero)
+                difference = comparator - vecStations[k][i].datetime;
+                if (difference <= zero)
                 {
-                    difference=difference.invert_sign();
+                    difference = difference.invert_sign();
                 }
-                if (difference<=avgBufferList[k])
+                if (difference <= avgBufferList[k])
                 {
                     counter++;
 
@@ -1018,7 +1006,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
                     subSelectify.push_back(vecStations[k][i]);
                     continue;
                 }
-                if (difference<=avgBufferList[k]+one && counter<2)
+                if (difference <= avgBufferList[k] + one && counter < 2)
                 {
                     subSelectify.push_back(vecStations[k][i]);
                     counter++;
@@ -1037,42 +1025,41 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     vector<vector<preInterpolate> > lowVec;
     vector<vector<preInterpolate> > highVec;
 
-    for (int j=0;j<Selectify.size();j++)
+    for(int j=0; j<Selectify.size(); j++)
     {
         vector<preInterpolate> lowStations;
         vector<preInterpolate> highstations;
 
-        for (int i=0;i<Selectify[j].size();i+=2)
+        for(int i=0; i<Selectify[j].size(); i+=2)
         {
               lowStations.push_back(Selectify[j][i]);
         }
 
-        for (int k=1;k<Selectify[j].size();k+=2)
+        for(int k=1; k<Selectify[j].size(); k+=2)
         {
             highstations.push_back(Selectify[j][k]);
         }
 
         lowVec.push_back(lowStations);
         highVec.push_back(highstations);
-
     }
 
     //SETTING WX TIMELIST
     vector<vector<preInterpolate> > interpolatedWxData;
-    for (int ey=0;ey<Selectify.size();ey++)
+    for(int ey=0; ey<Selectify.size(); ey++)
     {
         vector<preInterpolate> subInter;
-        for (int ex=0;ex<timeList.size();ex++)
+        for(int ex=0; ex<timeList.size(); ex++)
         {
             preInterpolate timeStorage;
-            timeStorage.datetime=timeList[ex];
+            timeStorage.datetime = timeList[ex];
             subInter.push_back(timeStorage);
         }
         interpolatedWxData.push_back(subInter);
     }
 
     //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
-    for (int k=0;k<Selectify.size();k++)
+    for(int k=0; k<Selectify.size(); k++)
     {
         double latitude;
         double longitude;
@@ -1082,165 +1069,165 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         std::string coord;
         std::string stationName;
 
-        latitude=vecStations[k][0].lat;
-        longitude=vecStations[k][0].lon;
-        height=vecStations[k][0].height;
-        radiusInfluence=vecStations[k][0].influenceRadius;
-        datum=vecStations[k][0].datumType;
-        coord=vecStations[k][0].coordType;
-        const char* newdatum="WGS84";
-        stationName=vecStations[k][0].stationName;
+        latitude = vecStations[k][0].lat;
+        longitude = vecStations[k][0].lon;
+        height = vecStations[k][0].height;
+        radiusInfluence = vecStations[k][0].influenceRadius;
+        datum = vecStations[k][0].datumType;
+        coord = vecStations[k][0].coordType;
+        const char* newdatum = "WGS84";
+        stationName = vecStations[k][0].stationName;
 
-        std::string demfile=demFileName;
+        std::string demfile = demFileName;
 
-        for (int i=0;i<timeList.size();i++)
+        for(int i=0; i<timeList.size(); i++)
         {
-            interpolatedWxData[k][i].lat=latitude;
-            interpolatedWxData[k][i].lon=longitude;
-            interpolatedWxData[k][i].datumType=datum;
-            interpolatedWxData[k][i].coordType=coord;
-            interpolatedWxData[k][i].height=height;
-            interpolatedWxData[k][i].heightUnits=lengthUnits::meters;
-            interpolatedWxData[k][i].influenceRadius=radiusInfluence;
-            interpolatedWxData[k][i].influenceRadiusUnits=lengthUnits::meters;
-            interpolatedWxData[k][i].stationName=stationName;
+            interpolatedWxData[k][i].lat = latitude;
+            interpolatedWxData[k][i].lon = longitude;
+            interpolatedWxData[k][i].datumType = datum;
+            interpolatedWxData[k][i].coordType = coord;
+            interpolatedWxData[k][i].height = height;
+            interpolatedWxData[k][i].heightUnits = lengthUnits::meters;
+            interpolatedWxData[k][i].influenceRadius = radiusInfluence;
+            interpolatedWxData[k][i].influenceRadiusUnits = lengthUnits::meters;
+            interpolatedWxData[k][i].stationName = stationName;
         }
     }
 
     //INTERPOLATING WIND SPEED
-    for (int k=0;k<Selectify.size();k++)
+    for(int k=0; k<Selectify.size(); k++)
     {
-        for (int i=0;i<timeList.size();i++)
+        for(int i=0; i<timeList.size(); i++)
         {
             double low;
             double high;
             double inter;
 
-            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-            boost::posix_time::ptime pInter=timeList[i];
+            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+            boost::posix_time::ptime pInter = timeList[i];
 
-            low=unixTime(pLow);
-            high=unixTime(pHigh);
-            inter=unixTime(pInter);
+            low = unixTime(pLow);
+            high = unixTime(pHigh);
+            inter = unixTime(pInter);
 
             double speed1;
             double speed2;
             double speedI;
 
-            speed1=lowVec[k][i].speed;
-            speed2=highVec[k][i].speed;
+            speed1 = lowVec[k][i].speed;
+            speed2 = highVec[k][i].speed;
 
-            speedI=interpolator(inter,low,high,speed1,speed2);
+            speedI = interpolator(inter,low, high, speed1, speed2);
 
-            if (speedI>113.000)
+            if(speedI > 113.000)
             {
-                speedI=speed1;
+                speedI = speed1;
 
             }
 
-            interpolatedWxData[k][i].speed=speedI;
-            interpolatedWxData[k][i].inputSpeedUnits=vecStations[k][0].inputSpeedUnits;
+            interpolatedWxData[k][i].speed = speedI;
+            interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
         }
     }
 
     //INTERPOLATING WIND DIRECITON
-    for (int k=0;k<Selectify.size();k++)
+    for(int k=0; k<Selectify.size(); k++)
     {
-        for (int i=0;i<timeList.size();i++)
+        for(int i=0; i<timeList.size(); i++)
         {
             double lowDir;
             double highDir;
             double interDir;
 
-            lowDir=lowVec[k][i].direction;
-            highDir=highVec[k][i].direction;
+            lowDir = lowVec[k][i].direction;
+            highDir = highVec[k][i].direction;
 
-            interDir=interpolateDirection(lowDir,highDir);
-            interpolatedWxData[k][i].direction=interDir;
+            interDir = interpolateDirection(lowDir,highDir);
+            interpolatedWxData[k][i].direction = interDir;
         }
     }
 
     //INTERPOLATING TEMPERATURE
-    for (int k=0;k<Selectify.size();k++)
+    for(int k=0; k<Selectify.size(); k++)
     {
-        for (int i=0;i<timeList.size();i++)
+        for(int i=0; i<timeList.size(); i++)
         {
             double low;
             double high;
             double inter;
 
-            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-            boost::posix_time::ptime pInter=timeList[i];
+            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+            boost::posix_time::ptime pInter = timeList[i];
 
-            low=unixTime(pLow);
-            high=unixTime(pHigh);
-            inter=unixTime(pInter);
+            low = unixTime(pLow);
+            high = unixTime(pHigh);
+            inter = unixTime(pInter);
 
             double lowTemp;
             double highTemp;
             double interTemp;
 
-            lowTemp=lowVec[k][i].temperature;
-            highTemp=highVec[k][i].temperature;
-            interTemp=interpolator(inter,low,high,lowTemp,highTemp);
+            lowTemp = lowVec[k][i].temperature;
+            highTemp = highVec[k][i].temperature;
+            interTemp = interpolator(inter, low, high, lowTemp, highTemp);
 
-            if (interTemp>57.0)
+            if(interTemp > 57.0)
             {
-                interTemp=highTemp;
-                if (interTemp>57.0)
+                interTemp = highTemp;
+                if(interTemp > 57.0)
                 {
-                    interTemp=lowTemp;
+                    interTemp = lowTemp;
                 }
-                if (interTemp>57.0)
+                if(interTemp > 57.0)
                 {
-                    interTemp=25;
+                    interTemp = 25;
                 }
             }
 
-            interpolatedWxData[k][i].temperature=interTemp;
-            interpolatedWxData[k][i].tempUnits=vecStations[k][0].tempUnits;
+            interpolatedWxData[k][i].temperature = interTemp;
+            interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
         }
     }
 
     //INTERPOLATING CLOUD COVER
-    for (int k=0;k<Selectify.size();k++)
+    for(int k=0; k<Selectify.size(); k++)
     {
-        for (int i=0;i<timeList.size();i++)
+        for(int i=0; i<timeList.size(); i++)
         {
             double low;
             double high;
             double inter;
 
-            boost::posix_time::ptime pLow=lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh=highVec[k][i].datetime;
-            boost::posix_time::ptime pInter=timeList[i];
+            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+            boost::posix_time::ptime pInter = timeList[i];
 
-            low=unixTime(pLow);
-            high=unixTime(pHigh);
-            inter=unixTime(pInter);
+            low = unixTime(pLow);
+            high = unixTime(pHigh);
+            inter = unixTime(pInter);
 
             double lowCloud;
             double highCloud;
             double interCloud;
 
-            lowCloud=lowVec[k][i].cloudCover;
-            highCloud=highVec[k][i].cloudCover;
+            lowCloud = lowVec[k][i].cloudCover;
+            highCloud = highVec[k][i].cloudCover;
 
-            interCloud=interpolator(inter,low,high,lowCloud,highCloud);
+            interCloud = interpolator(inter, low, high, lowCloud, highCloud);
 
-            if (interCloud>1.0)
+            if(interCloud > 1.0)
             {
-                interCloud=highCloud;
-                if (interCloud>1.0)
+                interCloud = highCloud;
+                if(interCloud > 1.0)
                 {
-                    interCloud=lowCloud;
+                    interCloud = lowCloud;
                 }
             }
 
-            interpolatedWxData[k][i].cloudCover=interCloud;
-            interpolatedWxData[k][i].cloudCoverUnits=coverUnits::percent;
+            interpolatedWxData[k][i].cloudCover = interCloud;
+            interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
         }
     }
 
@@ -1252,138 +1239,100 @@ double pointInitialization::unixTime(boost::posix_time::ptime time)
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
     boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
     double stepDuration;
-    stepDuration=dNew;
+    stepDuration = dNew;
 
     return stepDuration;
 }
 
 double pointInitialization::interpolator(double iPoint, double lowX, double highX, double lowY, double highY)
 {
-    double result;
-    double work=0.00;
-    double slope;
-    slope=(highY-lowY)/(highX-lowX);
-    double pointS;
-    pointS=(iPoint-lowX);
-    result=lowY+pointS*slope;
+    double work = 0.0;
+    double slope = (highY - lowY) / (highX - lowX);
+    double pointS = (iPoint - lowX);
+    double result = lowY + pointS * slope;
 
-    if (result<0.0000)
+    if(result < 0.0000)
     {
-        result=work;
+        result = work;
     }
 
     return result;
 }
 
-//interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian, averages and then returns degrees
-//see this wiki page https://en.wikipedia.org/wiki/Mean_of_circular_quantities
+//interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian,
+//averages and then returns degrees. See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
 double pointInitialization::interpolateDirection(double lowDir, double highDir)
 {
-    double work=0.00;
-    double one_eighty=180.000;
-    double lowRad;
-    lowRad=lowDir*PI/one_eighty;
+    double lowRad = lowDir * PI / 180.0;
+    double highRad = highDir * PI / 180.0;
+    double sinSum = sin(lowRad) + sin(highRad);
+    double cosSum = cos(lowRad) + cos(highRad);
+    double average = atan2(sinSum, cosSum);
+    double degAverage = average * 180.0 / PI;
 
-    double highRad;
-    highRad=highDir*PI/one_eighty;
-
-    double sinSum;
-    double cosSum;
-    sinSum=sin(lowRad)+sin(highRad);
-    cosSum=cos(lowRad)+cos(highRad);
-
-    double average;
-    average=atan2(sinSum,cosSum);
-
-    double degAverage;
-
-    degAverage=average*one_eighty/PI;
-
-    if (degAverage<0)
+    if (degAverage < 0.0)
     {
-        degAverage=degAverage+360.000;
+        degAverage = degAverage + 360.0;
     }
 
     return degAverage;
 }
 
-string pointInitialization::BuildTime(std::string year_0,std::string month_0,
-                                      std::string day_0,std::string clock_0,
-                                      std::string year_1,std::string month_1,
-                                      std::string day_1,std::string clock_1)
+string pointInitialization::BuildTime(std::string year_0, std::string month_0,
+                                      std::string day_0, std::string clock_0,
+                                      std::string year_1, std::string month_1,
+                                      std::string day_1, std::string clock_1)
 {
     //builds the time component of a url
-    std::string start;
-    std::string end;
-    std::string y20;
-    std::string m20;
-    std::string d20;
-    std::string c20;
-    std::string y21;
-    std::string m21;
-    std::string d21;
-    std::string c21;
-    std::string twofull;
-    std::string timemainfull;
-    std::string estartfull;
-    std::string eendfull;
-    std::string startfull;
-    std::string endfull;
-
-    start="&start=";
-    y20="2016";
-    m20="05";
-    d20="22";
-    c20="1000";
-    estartfull=start+y20+m20+d20+c20;
-    end="&end=";
-    y21="2016";
-    m21="05";
-    d21="23";
-    c21="1000";
-    eendfull=end+y21+m21+d21+c21;
-
-    twofull=estartfull+eendfull;
-
-    startfull=start+year_0+month_0+day_0+clock_0;
-    endfull=end+year_1+month_1+day_1+clock_1;
-
-    timemainfull=startfull+endfull;
+    std::string start = "&start=";
+    std::string y20 = "2016";
+    std::string m20 = "05";
+    std::string d20 = "22";
+    std::string c20 = "1000";
+    std::string estartfull = start + y20 + m20 + d20 + c20;
+    std::string end = "&end=";
+    std::string y21 = "2016";
+    std::string m21 = "05";
+    std::string d21 = "23";
+    std::string c21 = "1000";
+    std::string eendfull = end + y21 + m21 + d21 + c21;
+    std::string twofull = estartfull + eendfull;
+    std::string startfull = start + year_0 + month_0 + day_0 + clock_0;
+    std::string endfull = end + year_1 + month_1 + day_1 + clock_1;
+    std::string timemainfull = startfull + endfull;
 
     return timemainfull;
 }
 
-vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
+vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
 {
-    vector<string> buildTimes;
-    vector<string> work;
+    vector<std::string> buildTimes;
+    vector<std::string> work;
     work.push_back("0");
     stringstream startstream;
     stringstream endstream;
-    boost::posix_time::time_facet *facet=new boost::posix_time::time_facet("%Y%m%d%H%M");
-    boost::posix_time::time_duration buffer(1,0,0,0);
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y%m%d%H%M");
+    boost::posix_time::time_duration buffer(1, 0, 0, 0);
 
-    startstream.imbue(locale(startstream.getloc(),facet));
-    timeList[0]=timeList[0]-buffer;
+    startstream.imbue(locale(startstream.getloc(), facet));
+    timeList[0] = timeList[0] - buffer;
     startstream<<timeList[0];
 
-    endstream.imbue(locale(endstream.getloc(),facet));
-    timeList[timeList.size()-1]=timeList[timeList.size()-1]+buffer;
-    endstream<<timeList[timeList.size()-1];
+    endstream.imbue(locale(endstream.getloc(), facet));
+    timeList[timeList.size()-1] = timeList[timeList.size() - 1] + buffer;
+    endstream<<timeList[timeList.size() - 1];
 
-    std::string startString;
-    std::string endString;
-    startString=startstream.str();
-    endString=endstream.str();
+    std::string startString=startstream.str();
+    std::string endString=endstream.str();
 
-    std::string year_0=startString.substr(0,4);
-    std::string month_0=startString.substr(4,2);
-    std::string day_0=startString.substr(6,2);
-    std::string clock_0=startString.substr(8);
-    std::string year_1=endString.substr(0,4);
-    std::string month_1=endString.substr(4,2);
-    std::string day_1=endString.substr(6,2);
-    std::string clock_1=endString.substr(8);
+    std::string year_0 = startString.substr(0, 4);
+    std::string month_0 = startString.substr(4, 2);
+    std::string day_0 = startString.substr(6, 2);
+    std::string clock_0 = startString.substr(8);
+    std::string year_1 = endString.substr(0, 4);
+    std::string month_1 = endString.substr(4, 2);
+    std::string day_1 = endString.substr(6, 2);
+    std::string clock_1 = endString.substr(8);
 
     buildTimes.push_back(year_0);
     buildTimes.push_back(month_0);
@@ -1397,7 +1346,7 @@ vector<string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> t
     return buildTimes;
 }
 
-string pointInitialization::IntConvert(int a)
+std::string pointInitialization::IntConvert(int a)
 {
     //converts int to string for "latest" functions
     ostringstream time;
@@ -1406,12 +1355,12 @@ string pointInitialization::IntConvert(int a)
 }
 
 //Gets MetaData for stations if turned on
-void pointInitialization::fetchMetaData(string fileName, string demFile, bool write)
+void pointInitialization::fetchMetaData(std::string fileName, std::string demFile, bool write)
 {
     CPLDebug("STATION_FETCH", "Downloading Station MetaData...");
-    std::string baseurl="http://api.mesowest.net/v2/stations/metadata?";
-    std::string bbox;
+    std::string baseurl = "http://api.mesowest.net/v2/stations/metadata?";
     std::string component="&network=1,2&output=geojson";
+    std::string bbox;
     std::string url;
     std::string tokfull;
 
@@ -1421,33 +1370,28 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
     double bounds[4];
     bool bRet;
 
-    bRet=GDALGetBounds(poDS,bounds);
+    bRet = GDALGetBounds(poDS, bounds);
 
-    std::string URLat;
-    std::string URLon;
-    std::string LLLat;
-    std::string LLLon;
+    std::string URLat = CPLSPrintf("%.6f", bounds[0]);
+    std::string URLon = CPLSPrintf("%.6f", bounds[1]);
+    std::string LLLat = CPLSPrintf("%.6f", bounds[2]);
+    std::string LLLon = CPLSPrintf("%.6f", bounds[3]);
 
-    URLat=CPLSPrintf("%.6f",bounds[0]);
-    URLon=CPLSPrintf("%.6f",bounds[1]);
-    LLLat=CPLSPrintf("%.6f",bounds[2]);
-    LLLon=CPLSPrintf("%.6f",bounds[3]);
-
-    bbox="&bbox="+LLLon+","+LLLat+","+URLon+","+URLat;
-    tokfull="&token="+dtoken;
-    url=baseurl+bbox+component+tokfull;
+    bbox = "&bbox=" + LLLon + "," + LLLat + "," + URLon + "," + URLat;
+    tokfull = "&token=" + dtoken;
+    url = baseurl + bbox + component + tokfull;
 
     std::string csvName;
-    if (fileName.substr(fileName.size()-4,4)==".csv")
+    if (fileName.substr(fileName.size() - 4, 4) == ".csv")
     {
-        csvName=fileName;
+        csvName = fileName;
     }
     else
     {
-        csvName=fileName+".csv";
+        csvName = fileName + ".csv";
     }
     ofstream outFile;
-    if (write==true)
+    if (write == true)
     {
         CPLDebug("STATION_FETCH", "writing MetaData for stations...");
         outFile.open(csvName.c_str());
@@ -1465,174 +1409,60 @@ void pointInitialization::fetchMetaData(string fileName, string demFile, bool wr
         throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
-    hLayer=OGR_DS_GetLayer(hDS,0);
+    hLayer = OGR_DS_GetLayer(hDS, 0);
     OGR_L_ResetReading(hLayer);
 
-    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+    int fCount = OGR_L_GetFeatureCount(hLayer, 1);
 
-    int idx1=0;
-    int idx2=0;
-    int idx3=0;
-    int idx4=0;
-    int idx5=0;
-    int idx6=0;
-    int idx7=0;
+    int idx1 = 0;
+    int idx2 = 0;
+    int idx3 = 0;
+    int idx4 = 0;
+    int idx5 = 0;
+    int idx6 = 0;
+    int idx7 = 0;
 
     double latitude;
-    double  longitude;
+    double longitude;
     const char* stid;
     const char* stationName;
     const char* status;
     int mnetID;
     const char* elevation;
 
-    for (int ex=0; ex<fCount;ex++)
+    for(int ex=0; ex<fCount; ex++)
     {
-        hFeature=OGR_L_GetFeature(hLayer,ex);
+        hFeature = OGR_L_GetFeature(hLayer, ex);
 
-        idx1=OGR_F_GetFieldIndex(hFeature,"STID");
-        stid=(OGR_F_GetFieldAsString(hFeature,idx1));
+        idx1 = OGR_F_GetFieldIndex(hFeature, "STID");
+        stid = (OGR_F_GetFieldAsString(hFeature, idx1));
 
-        idx2=OGR_F_GetFieldIndex(hFeature,"name");
-        stationName=(OGR_F_GetFieldAsString(hFeature,idx2));
+        idx2 = OGR_F_GetFieldIndex(hFeature, "name");
+        stationName = (OGR_F_GetFieldAsString(hFeature, idx2));
 
-        idx3=OGR_F_GetFieldIndex(hFeature,"latitude");
-        latitude=(OGR_F_GetFieldAsDouble(hFeature,idx3));
+        idx3 = OGR_F_GetFieldIndex(hFeature, "latitude");
+        latitude = (OGR_F_GetFieldAsDouble(hFeature, idx3));
 
-        idx4=OGR_F_GetFieldIndex(hFeature,"longitude");
-        longitude=(OGR_F_GetFieldAsDouble(hFeature,idx4));
+        idx4 = OGR_F_GetFieldIndex(hFeature, "longitude");
+        longitude = (OGR_F_GetFieldAsDouble(hFeature, idx4));
 
-        idx5=OGR_F_GetFieldIndex(hFeature,"status");
-        status=(OGR_F_GetFieldAsString(hFeature,idx5));
+        idx5 = OGR_F_GetFieldIndex(hFeature, "status");
+        status = (OGR_F_GetFieldAsString(hFeature, idx5));
 
-        idx6=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-        mnetID=(OGR_F_GetFieldAsInteger(hFeature,idx6));
+        idx6 = OGR_F_GetFieldIndex(hFeature, "mnet_id");
+        mnetID = (OGR_F_GetFieldAsInteger(hFeature, idx6));
 
-        idx7=OGR_F_GetFieldIndex(hFeature,"elevation");
-        elevation=(OGR_F_GetFieldAsString(hFeature,idx7));
+        idx7 = OGR_F_GetFieldIndex(hFeature, "elevation");
+        elevation = (OGR_F_GetFieldAsString(hFeature, idx7));
 
-        if (write==true)
+        if(write == true)
         {
             outFile<<stid<<",\""<<stationName<<"\","<<latitude<<","<<longitude<<","<<elevation<<","<<status<<","<<mnetID<<endl;
         }
-
     }
 
     OGR_DS_Destroy(poDS);
     OGR_DS_Destroy(hDS);
-    delete stid,stationName,latitude,longitude,status,mnetID,elevation;
-}
-
-const char* pointInitialization::BuildSingleUrl(std::string station_id,
-                                                std::string svar,
-                                                std::string yearx,
-                                                std::string monthx,
-                                                std::string dayx,
-                                                std::string clockx,
-                                                std::string yeary,
-                                                std::string monthy,
-                                                std::string dayy,
-                                                std::string clocky)
-{
-    //builds a url for a single timeseries station with specific start and stop times
-    std::string etoken;
-    std::string eburl;
-    std::string etokfull;
-    std::string estid;
-    std::string et01;
-    std::string et11;
-    std::string esvar;
-    std::string eurl;
-
-    // default url
-
-    etoken="33e3c8ee12dc499c86de1f2076a9e9d4";
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    etokfull="&token="+dtoken;
-    estid="stid=kmso";
-    et01="&start=201605221000";
-    et11="&end=201605231000";
-    esvar="&vars=wind_speed";
-    eurl=eburl+estid+esvar+et01+et11+etokfull;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    const char* a=eurl.c_str();
-
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timestart1;
-    std::string timestop1;
-    std::string timefull;
-    std::string timesand;
-    std::string output;
-
-    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-    tokfull="&token="+dtoken;
-    stidfull="stid="+station_id;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
-
-}
-
-const char* pointInitialization::BuildSingleLatest(std::string station_id,
-                                                   std::string svar,
-                                                   int past, bool extendnetwork,
-                                                   std::string netids)
-{
-    //builds a url for single time series with the latest data for the past n hours
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string pasthourstr;
-    int pasthour;
-    int hour=60;
-
-    std::string network;
-    std::string nEtworkFull;
-
-    if (extendnetwork==true)
-    {
-        network="1,2"+netids;
-        nEtworkFull="&network="+network;
-    }
-    else
-    {
-        network="1,2";
-        nEtworkFull="&network="+network;
-    }
-
-    pasthour=past*hour;
-    pasthourstr=pointInitialization::IntConvert(pasthour);
-
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    tokfull="&token="+dtoken;
-    stidfull="stid="+station_id;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-    timesand="&recent="+pasthourstr;
-
-    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
 }
 
 std::string pointInitialization::BuildMultiUrl(std::string station_ids,
@@ -1646,30 +1476,18 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
                                                std::string clocky)
 {
     // builds a url for multiple known stations for a specific start and stop time
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
+    std::string network = "1,2";
+    std::string nEtworkFull = "&network=" + network;
+    std::string timesand = pointInitialization::BuildTime(yearx, monthx, dayx, clockx,
+                                                          yeary, monthy, dayy, clocky);
+    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
+    std::string tokfull = "&token=" + dtoken;
+    std::string stidfull = "stid=" + station_ids;
+    std::string svarfull = "&vars=" + ndvar;
+    std::string output = "&output=geojson";
+    std::string url = eburl + stidfull + nEtworkFull + svarfull + timesand+output + tokfull;
 
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    tokfull="&token="+dtoken;
-    stidfull="stid="+station_ids;
-    svarfull="&vars="+ndvar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
+    const char* charurl = url.c_str();
 
     return url;
 }
@@ -1677,207 +1495,20 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
 std::string pointInitialization::BuildMultiLatest(std::string station_ids)
 {
     //builds a url for multiple known stations for the latest n hours
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string pasthourstr="60";
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    timesand="&recent="+pasthourstr;
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    tokfull="&token="+dtoken;
-    stidfull="stid="+station_ids;
-    svarfull="&vars="+ndvar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+timesand+output+tokfull;
+    std::string pasthourstr = "60";
+    std::string network = "1,2";
+    std::string nEtworkFull = "&network=" + network;
+    std::string timesand= "&recent=" + pasthourstr;
+    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
+    std::string tokfull = "&token=" + dtoken;
+    std::string stidfull = "stid=" + station_ids;
+    std::string svarfull = "&vars=" + ndvar;
+    std::string output = "&output=geojson";
+    std::string url = eburl + stidfull + nEtworkFull + svarfull + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
     return url;
-}
-
-const char* pointInitialization::BuildRadiusLatest(std::string station_id,
-                                                   std::string radius,
-                                                   std::string limit,
-                                                   std::string svar,int past)
-{
-    //builds a url fetching all stations within x miles of a known station for last n hours specified
-
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string pasthourstr;
-    std::string limiter;
-    int pasthour;
-    int hour=60;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    pasthour=past*hour;
-    pasthourstr=pointInitialization::IntConvert(pasthour);
-
-    timesand="&recent="+pasthourstr;
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    limiter="&limit="+limit;
-    tokfull="&token="+dtoken;
-    stidfull="radius="+station_id+","+radius;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
-}
-
-const char* pointInitialization::BuildRadiusUrl(std::string station_id,
-                                                std::string radius,
-                                                std::string limit,
-                                                std::string svar,
-                                                std::string yearx,
-                                                std::string monthx,
-                                                std::string dayx,
-                                                std::string clockx,
-                                                std::string yeary,
-                                                std::string monthy,
-                                                std::string dayy,
-                                                std::string clocky)
-{
-    //builds a url for a radius around a known station with a specific start and stop time
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string limiter;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    limiter="&limit="+limit;
-    tokfull="&token="+dtoken;
-    stidfull="radius="+station_id+","+radius;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
-}
-
-const char* pointInitialization::BuildLatLonUrl(std::string lat,
-                                                std::string lon,
-                                                std::string radius,
-                                                std::string limit,
-                                                std::string svar,
-                                                std::string yearx,
-                                                std::string monthx,
-                                                std::string dayx,
-                                                std::string clockx,
-                                                std::string yeary,
-                                                std::string monthy,
-                                                std::string dayy,
-                                                std::string clocky)
-{
-    //builds a url for a given latitude longitude location and grabs all stations within x miles and limited to y stations.
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string limiter;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    limiter="&limit="+limit;
-    tokfull="&token="+dtoken;
-    stidfull="&radius="+lat+","+lon+","+radius;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
-}
-
-const char* pointInitialization::BuildLatLonLatest(std::string lat,
-                                                   std::string lon,
-                                                   std::string radius,
-                                                   std::string limit,
-                                                   std::string svar,
-                                                   int past)
-{
-    //builds a url for a given lat/lon coordinate for the most recent n Hours
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string stidfull;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-    std::string limiter;
-    std::string pasthourstr;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    int pasthour;
-    int hour=60;
-
-    pasthour=past*hour;
-    pasthourstr=pointInitialization::IntConvert(pasthour);
-
-    timesand="&recent="+pasthourstr;
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    limiter="&limit="+limit;
-    tokfull="&token="+dtoken;
-    stidfull="&radius="+lat+","+lon+","+radius;
-    svarfull="&vars="+svar;
-    output="&output=geojson";
-
-    url=eburl+stidfull+nEtworkFull+svarfull+limiter+timesand+output+tokfull;
-
-    const char* charurl=url.c_str();
-
-    return charurl;
 }
 
 std::string pointInitialization::BuildBboxUrl(std::string lat1,
@@ -1894,28 +1525,16 @@ std::string pointInitialization::BuildBboxUrl(std::string lat1,
                                               std::string clocky)
 {
     //builds a url for a given box of latitude longitude coordinates
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string bbox;
-    std::string svarfull;
-    std::string timesand;
-    std::string output;
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    timesand=pointInitialization::BuildTime(yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
-
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-    tokfull="&token="+dtoken;
-    bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
-    svarfull="&vars="+ndvar;
-    output="&output=geojson";
-
-    url=eburl+bbox+nEtworkFull+svarfull+timesand+output+tokfull;
+    std::string network = "1,2";
+    std::string nEtworkFull = "&network=" + network;
+    std::string timesand = pointInitialization::BuildTime(yearx, monthx, dayx, clockx,
+                                                          yeary, monthy, dayy, clocky);
+    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
+    std::string tokfull = "&token=" + dtoken;
+    std::string bbox = "&bbox=" + lon1 + "," + lat1 + "," + lon2 + "," + lat2;
+    std::string svarfull = "&vars=" + ndvar;
+    std::string output = "&output=geojson";
+    std::string url = eburl + bbox + nEtworkFull + svarfull + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
@@ -1929,123 +1548,94 @@ std::string pointInitialization::BuildBboxLatest(std::string lat1,
 
 {
     //builds a url for a bounding box within the latest n hours
-    std::string eburl;
-    std::string url;
-    std::string tokfull;
-    std::string bbox;
-    std::string svarfull;
-    std::string active="&status=active";
-    std::string timesand;
-    std::string output;
-    std::string pasthourstr="60";
-
-    timesand="&recent="+pasthourstr;
-    eburl="http://api.mesowest.net/v2/stations/timeseries?";
-
-    std::string network;
-    std::string nEtworkFull;
-    network="1,2";
-    nEtworkFull="&network="+network;
-
-    tokfull="&token="+dtoken;
-    bbox="&bbox="+lon1+","+lat1+","+lon2+","+lat2;
-    svarfull="&vars="+ndvar;
-    output="&output=geojson";
-    url=eburl+bbox+nEtworkFull+svarfull+active+timesand+output+tokfull;
+    std::string active = "&status=active";
+    std::string pasthourstr = "60";
+    std::string timesand = "&recent=" + pasthourstr;
+    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
+    std::string network = "1,2";
+    std::string nEtworkFull = "&network=" + network;
+    std::string tokfull = "&token=" + dtoken;
+    std::string bbox = "&bbox=" + lon1 + "," + lat1 + "," + lon2 + "," + lat2;
+    std::string svarfull = "&vars=" + ndvar;
+    std::string output = "&output=geojson";
+    std::string url = eburl + bbox + nEtworkFull + svarfull + active + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
     return url;
-
 }
 
-std::string pointInitialization::BuildUnifiedBbox(double lat1,double lon1, double lat2,double lon2,std::string yearx,std::string monthx, std::string dayx,std::string clockx,std::string yeary,std::string monthy,std::string dayy,std::string clocky)
+std::string pointInitialization::BuildUnifiedBbox(double lat1, double lon1, double lat2,
+                                                  double lon2, std::string yearx, std::string monthx,
+                                                  std::string dayx, std::string clockx, std::string yeary,
+                                                  std::string monthy, std::string dayy, std::string clocky)
 {
     std::string workUrl="WIP";
-    std::string URLat;
-    std::string URLon;
-    std::string LLLat;
-    std::string LLLon;
 
-    URLat=CPLSPrintf("%.6f",lat2);
-    URLon=CPLSPrintf("%.6f",lon2);
-    LLLat=CPLSPrintf("%.6f",lat1);
-    LLLon=CPLSPrintf("%.6f",lon1);
+    std::string URLat=CPLSPrintf("%.6f",lat2);
+    std::string URLon=CPLSPrintf("%.6f",lon2);
+    std::string LLLat=CPLSPrintf("%.6f",lat1);
+    std::string LLLon=CPLSPrintf("%.6f",lon1);
 
-    std::string URL;
-
-    URL=BuildBboxUrl(LLLat,LLLon,URLat,URLon,yearx,monthx,dayx,clockx,yeary,monthy,dayy,clocky);
+    std::string URL=BuildBboxUrl(LLLat, LLLon, URLat, URLon, yearx, monthx, dayx, clockx,
+                                 yeary, monthy, dayy, clocky);
 
     return URL;
 }
 
 std::string pointInitialization::BuildUnifiedLTBbox(double lat1, double lon1, double lat2, double lon2)
 {
-    std::string URL;
-    std::string URLat;
-    std::string URLon;
-    std::string LLLat;
-    std::string LLLon;
+    std::string URLat = CPLSPrintf("%.6f", lat2);
+    std::string URLon = CPLSPrintf("%.6f", lon2);
+    std::string LLLat = CPLSPrintf("%.6f", lat1);
+    std::string LLLon = CPLSPrintf("%.6f", lon1);
 
-    URLat=CPLSPrintf("%.6f",lat2);
-    URLon=CPLSPrintf("%.6f",lon2);
-    LLLat=CPLSPrintf("%.6f",lat1);
-    LLLon=CPLSPrintf("%.6f",lon1);
-
-    URL=BuildBboxLatest(LLLat,LLLon,URLat,URLon);
+    std::string URL = BuildBboxLatest(LLLat, LLLon, URLat, URLon);
 
     return URL;
 }
 
-
-double pointInitialization::stationBuffer;
-
-void pointInitialization::set_stationBuffer(double buffer, string units)
+void pointInitialization::setStationBuffer(double buffer, std::string units)
 {
     if (units=="km" || units=="kilometers" || units=="kilometres")
     {
-        lengthUnits::toBaseUnits(buffer,lengthUnits::kilometers);
+        lengthUnits::toBaseUnits(buffer, lengthUnits::kilometers);
     }
     if (units=="miles"||units=="mi")
     {
-        lengthUnits::toBaseUnits(buffer,lengthUnits::miles);
+        lengthUnits::toBaseUnits(buffer, lengthUnits::miles);
     }
     if (units=="feet"||units=="ft")
     {
-        lengthUnits::toBaseUnits(buffer,lengthUnits::feet);
+        lengthUnits::toBaseUnits(buffer, lengthUnits::feet);
     }
     if (units=="meters"||units=="m")
     {
-        lengthUnits::toBaseUnits(buffer,lengthUnits::meters);
+        lengthUnits::toBaseUnits(buffer, lengthUnits::meters);
     }
 
-    stationBuffer=buffer;
+    stationBuffer = buffer;
 }
 
-double pointInitialization::get_stationBuffer()
+double pointInitialization::getStationBuffer()
 {
-    return stationBuffer;
+        return stationBuffer;
 }
 
-vector<string> pointInitialization::Split(char* str,const char* delim)
+vector<std::string> pointInitialization::Split(char* str,const char* delim)
 {
     //Splits strings into vectors of strings based on a delimiter, a "," is used for most functions
     char* saveptr;
-    char* token = strtok_r(str,delim,&saveptr);
+    char* token = strtok_r(str, delim, &saveptr);
 
-    vector<string> result;
+    vector<std::string> result;
 
     while(token != NULL)
     {
         result.push_back(token);
-        token = strtok_r(NULL,delim,&saveptr);
+        token = strtok_r(NULL, delim, &saveptr);
     }
     return result;
-}
-
-void pointInitialization::stringtoaster(int null,vector<int> vecnull)
-{
-
 }
 
 /*
@@ -2106,7 +1696,7 @@ void pointInitialization::stringtoaster(int null,vector<int> vecnull)
  *
  * */
 
-vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int counter)
+vector<std::string> pointInitialization::InterpretCloudData(const double *dbCloud, int counter)
 {
     //converts NWS/FAA cloud information to %cloud cover for a single station
     std::string sa;
@@ -2114,18 +1704,18 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
     std::ostringstream ss;
     std::ostringstream st;
 
-    for(int i=0;i<counter;i++)
+    for(int i=0; i<counter; i++)
     {
         ss<<dbCloud[i]<<",";
         sa=(ss.str());
     }
 
     const char* delim(",");
-    char *cloudstr=&sa[0u];
-    vector<string> cloudcata;
-    cloudcata=Split(cloudstr,delim);
+    char *cloudstr = &sa[0u];
+    vector<std::string> cloudcata;
+    cloudcata = Split(cloudstr, delim);
 
-    vector<string> cloudcatb;
+    vector<std::string> cloudcatb;
 
     for(int i=0;i<counter;i++)
     {
@@ -2133,24 +1723,24 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
         sb=(st.str());
     }
 
-    char *cloudstrb=&sb[0u];
-    cloudcatb=Split(cloudstrb,delim);
+    char *cloudstrb = &sb[0u];
+    cloudcatb = Split(cloudstrb, delim);
 
-    std::string few="25";
-    std::string sct="50";
-    std::string bkn="75";
-    std::string ovc="100";
-    std::string clr="0";
-    std::string mesofew="6";
-    std::string mesosct="2";
-    std::string mesobkn="3";
-    std::string mesoovc="4";
-    std::string mesoclr="1";
-    std::string mesonull="0";
+    std::string few = "25";
+    std::string sct = "50";
+    std::string bkn = "75";
+    std::string ovc = "100";
+    std::string clr = "0";
+    std::string mesofew = "6";
+    std::string mesosct = "2";
+    std::string mesobkn = "3";
+    std::string mesoovc = "4";
+    std::string mesoclr = "1";
+    std::string mesonull = "0";
 
-    vector<string> lowclouddat;
+    vector<std::string> lowclouddat;
 
-    for(int i=0;i<counter;i++)
+    for(int i=0; i<counter; i++)
     {
         if (cloudcatb[i]==mesofew)
         {
@@ -2181,219 +1771,136 @@ vector<string> pointInitialization::InterpretCloudData(const double *dbCloud,int
     return lowclouddat;
 }
 
-vector<vector<string> > pointInitialization::VectorInterpretCloudData(vector<const double*>dbCloud,
-                                                                       int smallcount, int largecount)
+vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, vector<std::string>med,
+                                                       vector<std::string>high, int countlow, int countmed,
+                                                       int counthigh)
 {
-    //converts NWS/FAA cloud data to %cloud cover for any given number of stations
-    // used by multi, radius, lat/lon,bbox
-
-    vector<vector<string> > newcloudcat;
-
-    for(int jj=0;jj<smallcount;jj++)
-    {
-        std::string sa;
-        std::string sb;
-        std::ostringstream ss;
-        std::ostringstream st;
-        vector<string> lowclouddat;
-
-        for(int j=0;j<largecount;j++)
-        {
-            ss<<dbCloud[jj][j]<<",";
-            sa=(ss.str());
-        }
-
-         const char* delim(",");
-         char *cloudstr=&sa[0u];
-         vector<string> cloudcata;
-         cloudcata=Split(cloudstr,delim);
-
-         std::string clouda;
-         vector<string> cloudcatb;
-         int counter=(largecount*smallcount);
-
-         for(int k=0;k<largecount;k++)
-         {
-             st<<cloudcata[k][cloudcata[k].size()-1]<<",";
-             sb=(st.str());
-         }
-
-         char *cloudstrb=&sb[0u];
-         cloudcatb=Split(cloudstrb,delim);
-
-         std::string few="25";
-         std::string sct="50";
-         std::string bkn="75";
-         std::string ovc="100";
-         std::string clr="0";
-         std::string mesofew="6";
-         std::string mesosct="2";
-         std::string mesobkn="3";
-         std::string mesoovc="4";
-         std::string mesoclr="1";
-
-         std::ostringstream su;
-         std::string sc;
-
-         for(int l=0;l<largecount;l++)
-         {
-             if (cloudcatb[l]==mesofew)
-             {
-                 lowclouddat.push_back(few);
-             }
-             if (cloudcatb[l]==mesosct)
-             {
-                 lowclouddat.push_back(sct);
-             }
-             if (cloudcatb[l]==mesobkn)
-             {
-                 lowclouddat.push_back(bkn);
-             }
-             if (cloudcatb[l]==mesoovc)
-             {
-                 lowclouddat.push_back(ovc);
-             }
-             if (cloudcatb[l]==mesoclr)
-             {
-                 lowclouddat.push_back(clr);
-             }
-         }
-         newcloudcat.push_back(lowclouddat);
-    }
-    return newcloudcat;
-}
-
-vector<string> pointInitialization::CompareClouds(vector<string>low,vector<string>med,vector<string>high,int countlow,int countmed,int counthigh)
-{
-    vector<string> work;
+    vector<std::string> work;
     work.push_back("wip");
 
     vector<int> lowcloudint;
     vector<int> medcloudint;
     vector<int> highcloudint;
     vector<int> overcloud;
-    vector<string> totalCloudcat;
+    vector<std::string> totalCloudcat;
     std::string aa;
 
-    for (int ti=0;ti<countlow;ti++)
+    for (int ti=0; ti<countlow; ti++)
     {
-        int numa=atoi(low.at(ti).c_str());
+        int numa = atoi(low.at(ti).c_str());
         lowcloudint.push_back(numa);
     }
-    for (int ti=0;ti<countmed;ti++)
+    for (int ti=0; ti<countmed; ti++)
     {
-        int numb=atoi(med.at(ti).c_str());
+        int numb = atoi(med.at(ti).c_str());
         medcloudint.push_back(numb);
     }
-    for (int ti=0;ti<counthigh;ti++)
+    for (int ti=0; ti<counthigh; ti++)
     {
-        int numc=atoi(high.at(ti).c_str());
+        int numc = atoi(high.at(ti).c_str());
         highcloudint.push_back(numc);
     }
-    for (int ti=0;ti<countlow;ti++)
+    for (int ti=0; ti<countlow; ti++)
     {
-
-    if (lowcloudint[ti]>=medcloudint[ti] && lowcloudint[ti]>=highcloudint[ti])
-    {
-        overcloud.push_back(lowcloudint[ti]);
-        continue;
-    }
-    if (highcloudint[ti]>=medcloudint[ti] && highcloudint[ti]>=lowcloudint[ti])
-    {
-        overcloud.push_back(highcloudint[ti]);
-        continue;
-    }
-    if (medcloudint[ti]>=lowcloudint[ti] && medcloudint[ti]>=highcloudint[ti])
-    {
-        overcloud.push_back(medcloudint[ti]);
-        continue;
-    }
-
+        if (lowcloudint[ti] >= medcloudint[ti] && lowcloudint[ti] >= highcloudint[ti])
+        {
+            overcloud.push_back(lowcloudint[ti]);
+            continue;
+        }
+        if (highcloudint[ti] >= medcloudint[ti] && highcloudint[ti] >= lowcloudint[ti])
+        {
+            overcloud.push_back(highcloudint[ti]);
+            continue;
+        }
+        if (medcloudint[ti] >= lowcloudint[ti] && medcloudint[ti] >= highcloudint[ti])
+        {
+            overcloud.push_back(medcloudint[ti]);
+            continue;
+        }
     }
 
-    int overLen=overcloud.size();
+    int overLen = overcloud.size();
 
     std::string cloudstring;
     std::ostringstream cs;
 
     for(int i=0;i<overLen;i++)
     {
-
         cs<<overcloud[i]<<",";
-        cloudstring=(cs.str());
+        cloudstring = (cs.str());
 
     }
     const char* delim(",");
-    char *cloudstr=&cloudstring[0u];
-    totalCloudcat=Split(cloudstr,delim);
+    char *cloudstr = &cloudstring[0u];
+    totalCloudcat = Split(cloudstr, delim);
 
     return totalCloudcat;
 }
 
-vector<string> pointInitialization::UnifyClouds(const double *dvCloud, const double *dwCloud,
+vector<std::string> pointInitialization::UnifyClouds(const double *dvCloud, const double *dwCloud,
                                         const double *dxCloud, int count1, int count2, int count3, int backupcount)
 {
-    vector<string> work;
+    vector<std::string> work;
     work.push_back("wip");
-    vector<string> daCloud;
-    vector<string> dcCloud;
-    vector<string> deCloud;
-    vector<string> sCloudData;
+    vector<std::string> daCloud;
+    vector<std::string> dcCloud;
+    vector<std::string> deCloud;
+    vector<std::string> sCloudData;
 
-    if(count1==0)
+    if(count1 == 0)
     {
        CPLDebug("STATION_FETCH", "no cloud data exists, using air temp count to zero out data");
-       count1=backupcount;
-       if (backupcount==0)
+       count1 = backupcount;
+       if(backupcount == 0)
        {
            CPLDebug("STATION_FETCH", "this station is terrible, don't use it, writing data as -9999");
            sCloudData.push_back("-9999");
        }
     }
-    if(count2==0)
+    if(count2 == 0)
     {
-        count2=count1;
+        count2 = count1;
     }
-    if (count3==0)
+    if(count3 == 0)
     {
-        count3=count1;
+        count3 = count1;
     }
 
-    if (dvCloud==0)
+    if(dvCloud == 0)
     {
-        for(int ska=0;ska<count1;ska++)
+        for(int ska=0; ska<count1; ska++)
         {
             daCloud.push_back("0");
         }
     }
     else
     {
-        daCloud=InterpretCloudData(dvCloud,count1);
+        daCloud = InterpretCloudData(dvCloud, count1);
     }
-    if (dwCloud==0)
+    if(dwCloud == 0)
     {
-        for(int ska=0;ska<count2;ska++)
+        for(int ska=0; ska<count2; ska++)
         {
             dcCloud.push_back("0");
         }
     }
     else
     {
-        dcCloud=InterpretCloudData(dwCloud,count2);
+        dcCloud = InterpretCloudData(dwCloud, count2);
     }
-    if (dxCloud==0)
+    if(dxCloud == 0)
     {
-        for(int ska=0;ska<count3;ska++)
+        for(int ska=0; ska<count3; ska++)
         {
             deCloud.push_back("0");
         }
     }
     else
     {
-        deCloud=InterpretCloudData(dxCloud,count3);
+        deCloud = InterpretCloudData(dxCloud, count3);
     }
 
-    sCloudData=CompareClouds(daCloud,dcCloud,deCloud,count1,count2,count3);
+    sCloudData = CompareClouds(daCloud, dcCloud, deCloud, count1, count2, count3);
 
     return sCloudData;
 }
@@ -2458,20 +1965,14 @@ vector<double> pointInitialization::Irradiate(const double* solrad, int smallcou
     return outCloud;
 }
 
-void pointInitialization::UnifyRadiation(vector<double> radiation)
-{
-
-}
-
-vector<string> pointInitialization::fixWindDir(const double *winddir,std::string filler,int count)
+vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::string filler, int count)
 {
     std::string sa;
     std::ostringstream ss;
-    vector<string>direction;
+    vector<std::string>direction;
 
     if (winddir==0)
     {
-
         for (int jw=0;jw<count;jw++)
         {
             direction.push_back(filler);
@@ -2492,17 +1993,6 @@ vector<string> pointInitialization::fixWindDir(const double *winddir,std::string
     return direction;
 }
 
-int pointInitialization::storeHour(int nHours)
-{
-    int bla=nHours;
-    return bla;
-}
-
-void pointInitialization::newAuto(AsciiGrid<double> &dem)
-{
-    double dz=dem.get_maxValue();
-}
-
 /**@brief Builds the time list for a pointInitialization run.
  *
  * @param startYear Start year for the simulation.
@@ -2520,10 +2010,10 @@ void pointInitialization::newAuto(AsciiGrid<double> &dem)
  * @return Vector of datetimes in UTC.
  */
 std::vector<boost::posix_time::ptime>
-pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
-                                        int startHour, int startMinute, int endYear,
-                                        int endMonth, int endDay, int endHour, int endMinute,
-                                        int nTimeSteps, std::string timeZone )
+pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
+                                    int startHour, int startMinute, int endYear,
+                                    int endMonth, int endDay, int endHour, int endMinute,
+                                    int nTimeSteps, std::string timeZone)
 {
     boost::local_time::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
@@ -2566,23 +2056,14 @@ pointInitialization::getTimeList( int startYear, int startMonth, int startDay,
     return timeList;
 }
 
-vector<boost::posix_time::ptime> pointInitialization::getSingleTimeList(string timeZone)
-{
-    vector<boost::posix_time::ptime> timeList;
-    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
-    timeList.push_back(standard);
-
-    return timeList;
-}
-
-
 /**@brief Fetches station data from bounding box.
  *
  * @param demFile Filename/path to the DEM on disk.
  * @param timeList Vector of datetimes in UTC for the simulation.
  */
 bool pointInitialization::fetchStationFromBbox(std::string demFile,
-                                    std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
+                                               std::vector<boost::posix_time::ptime> timeList,
+                                               std::string timeZone, bool latest)
 {
     GDALDataset  *poDS;
     poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
@@ -2604,7 +2085,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     }
 
     double buffer;
-    buffer=get_stationBuffer();
+    buffer=getStationBuffer();
     CPLDebug("STATION_FETCH", "Adding %fm to DEM for station fetching.", buffer);
 
     double projxL=bounds[2];
@@ -2651,9 +2132,9 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     return true;
 }
 
-bool pointInitialization::fetchStationByName(string stationList,
+bool pointInitialization::fetchStationByName(std::string stationList,
                                              std::vector<boost::posix_time::ptime> timeList,
-                                             string timeZone, bool latest)
+                                             std::string timeZone, bool latest)
 {
     bool test=true;
     std::string URL;
@@ -2865,7 +2346,7 @@ void pointInitialization::fetchStationData(std::string URL,
             int aZero;
             aZero=0;
             std::string baddata="-9999";
-            vector<string>rawsWindDirection;
+            vector<std::string>rawsWindDirection;
             rawsWindDirection=fixWindDir(rawsDir,"0",count9);
             vector<double> rawsCloudCover;
             rawsCloudCover=Irradiate(rawsSolrad,1,count12,timeZone,rawsLatitude,rawsLatitude,rawsDateTime);
@@ -2909,13 +2390,3 @@ void pointInitialization::fetchStationData(std::string URL,
 
     CPLDebug("STATION_FETCH", "fetchStationData finished.");
 }
-
-//FOR TESTING MW LATEST!!!
-void pointInitialization::fetchTest(std::string demFile,
-                                    std::vector<boost::posix_time::ptime> timeList, std::string timeZone, bool latest)
-{
-    cout<<"inactive"<<endl;
-    exit(1);
-
-}
-

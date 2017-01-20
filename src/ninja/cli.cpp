@@ -977,7 +977,7 @@ int windNinjaCLI(int argc, char* argv[])
                 wxStation::SetStationFormat(wxStation::newFormat);
 
                 pointInitialization::SetRawStationFilename(vm["fetch_station_filename"].as<std::string>());
-                pointInitialization::set_stationBuffer(vm["station_buffer"].as<double>(),
+                pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>());
 
                 if (vm["fetch_current_station_data"].as<bool>()==false)
