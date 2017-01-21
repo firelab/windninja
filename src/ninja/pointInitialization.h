@@ -114,7 +114,7 @@ class pointInitialization : public initialize
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
         static void SetRawStationFilename(std::string filename);
-        static void setStationBuffer(double buffer,std::string units);
+        static void setStationBuffer(double buffer, std::string units);
 
     private:
         void setInitializationGrids(WindNinjaInputs& input);
@@ -175,6 +175,7 @@ class pointInitialization : public initialize
         static const std::string dtoken;
         static const std::string dvar;
         static const std::string ndvar;
+        static const std::string baseUrl;
         static double stationBuffer;
         double dfInvDistWeight;
 };

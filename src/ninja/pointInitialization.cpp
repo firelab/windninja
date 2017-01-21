@@ -39,6 +39,7 @@ const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_te
                                               "solar_radiation,cloud_layer_1_code,"
                                               "cloud_layer_2_code,cloud_layer_3_code";
 
+const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/stations/";
 std::string pointInitialization::rawStationFilename = "";
 double pointInitialization::stationBuffer;
 
@@ -1337,7 +1338,7 @@ vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::pti
 void pointInitialization::fetchMetaData(std::string fileName, std::string demFile, bool write)
 {
     CPLDebug("STATION_FETCH", "Downloading Station MetaData...");
-    std::string baseurl = "http://api.mesowest.net/v2/stations/metadata?";
+
     std::string component="&network=1,2&output=geojson";
     std::string bbox;
     std::string url;
@@ -1358,7 +1359,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
 
     bbox = "&bbox=" + LLLon + "," + LLLat + "," + URLon + "," + URLat;
     tokfull = "&token=" + dtoken;
-    url = baseurl + bbox + component + tokfull;
+    url = baseUrl + "metadata?" + bbox + component + tokfull;
 
     std::string csvName;
     if (fileName.substr(fileName.size() - 4, 4) == ".csv")
@@ -1459,12 +1460,11 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
     std::string nEtworkFull = "&network=" + network;
     std::string timesand = pointInitialization::BuildTime(yearx, monthx, dayx, clockx,
                                                           yeary, monthy, dayy, clocky);
-    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
     std::string tokfull = "&token=" + dtoken;
     std::string stidfull = "stid=" + station_ids;
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
-    std::string url = eburl + stidfull + nEtworkFull + svarfull + timesand+output + tokfull;
+    std::string url = baseUrl + "timeseries?" + stidfull + nEtworkFull + svarfull + timesand+output + tokfull;
 
     const char* charurl = url.c_str();
 
@@ -1478,12 +1478,11 @@ std::string pointInitialization::BuildMultiLatest(std::string station_ids)
     std::string network = "1,2";
     std::string nEtworkFull = "&network=" + network;
     std::string timesand= "&recent=" + pasthourstr;
-    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
     std::string tokfull = "&token=" + dtoken;
     std::string stidfull = "stid=" + station_ids;
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
-    std::string url = eburl + stidfull + nEtworkFull + svarfull + timesand + output + tokfull;
+    std::string url = baseUrl + "timeseries?" + stidfull + nEtworkFull + svarfull + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
@@ -1508,12 +1507,11 @@ std::string pointInitialization::BuildBboxUrl(std::string lat1,
     std::string nEtworkFull = "&network=" + network;
     std::string timesand = pointInitialization::BuildTime(yearx, monthx, dayx, clockx,
                                                           yeary, monthy, dayy, clocky);
-    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
     std::string tokfull = "&token=" + dtoken;
     std::string bbox = "&bbox=" + lon1 + "," + lat1 + "," + lon2 + "," + lat2;
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
-    std::string url = eburl + bbox + nEtworkFull + svarfull + timesand + output + tokfull;
+    std::string url = baseUrl + "timeseries?" + bbox + nEtworkFull + svarfull + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
@@ -1530,14 +1528,13 @@ std::string pointInitialization::BuildBboxLatest(std::string lat1,
     std::string active = "&status=active";
     std::string pasthourstr = "60";
     std::string timesand = "&recent=" + pasthourstr;
-    std::string eburl = "http://api.mesowest.net/v2/stations/timeseries?";
     std::string network = "1,2";
     std::string nEtworkFull = "&network=" + network;
     std::string tokfull = "&token=" + dtoken;
     std::string bbox = "&bbox=" + lon1 + "," + lat1 + "," + lon2 + "," + lat2;
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
-    std::string url = eburl + bbox + nEtworkFull + svarfull + active + timesand + output + tokfull;
+    std::string url = baseUrl + "timeseries?" + bbox + nEtworkFull + svarfull + active + timesand + output + tokfull;
 
     const char* charurl=url.c_str();
 
