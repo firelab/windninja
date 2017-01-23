@@ -83,10 +83,16 @@ public:
     //prints the face point indexes for the faces file
     void printFaces();
 
-    //prints the boundary file
-    void printBoundaries();
+    //stuff for printing the boundary file
+    void printBoundaryPatch(std::string patchName,std::string patchType,double nFaces,double startFace,std::string physicalType);  //for printing a patch in the boundaries. I noticed there was a lot of repetition with only one or two small parts changing for each patch and thought it would make a good function.
+    void printBoundaries();     //for printing the boundary file, calls printBoundaryPatch();
 
 //set up extra stuff to be moved elsewhere
+
+    //just a way to group a lot of stuff I was doing in single lines over and over. Should make it more legible and shrink the number of lines of code.
+    //was having a rough time thinking of a good name so maybe need to change this. Was trying to be consistent with names in openFoam format
+    //also, this is designed for only one type of value per patch, which is all right with the basic OpenFoam stuff, but I noticed that in other types of files, there were multiple values given in a single patch, so multiple parts of a single variable each with their value.
+    void printUniformListValues(std::string patchName,std::string uniformValueType,std::string uniformValue,bool extraReturn);
 
     //prints the T file in the 0 directory
     void printScalar();
