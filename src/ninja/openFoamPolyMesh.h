@@ -71,8 +71,7 @@ public:
     //prints the points in the points file
     //note that this exact format gives the exact replicate of the points file from the tutorial
     //note I want to allow decimals for the points when I do it for the regular mesh. Just the tutorial happens to have clean numbers with no decimals and this makes it more comparable
-    void printPoints();
-    void print3dArrayPoints();
+    void printPoints(std::string pointWriteType);
 
     //assigns the number of neighbor's per cell and cell owner's values
     //prints the cellOwners into the owners file
@@ -102,6 +101,13 @@ public:
      * are generated in the mesh conversion.
     */
     void printVelocity(std::string pointWriteType, element elem);
+
+    //prints the densities in the 0 directory
+    /*
+     * looks to be the volumetric flux across faces. Currently not needed, but could be in the future
+     * but we need to figure out how to replicate phi from velocities and scalar for this to work correctly
+    */
+    void printPhi(element elem);
 
 private:
 
@@ -146,6 +152,9 @@ private:
     std::string velocityPath;   //path to the velocity U data file, found in 0 from the case directory
 
     wn_3dScalarField u, v, w; //the velocity profiles in each direction for the mesh
+
+    std::string phiPath;    //path to the density phi data file, found in 0 from the case directory
+
 
 };
 

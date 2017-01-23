@@ -53,7 +53,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
     Ay = ycells*zcells;
     Az = xcells*ycells;
     nfaces = Ax*ypoints+Ay*xpoints+Az*zpoints;
-    ninternalfaces = nfaces-2*(Ax+Ay+Az);
+    ninternalfaces = nfaces-2*(Ax+Ay+Az);   //just realized that long term, this probably won't work if we ever apply this to strange geometries where our mesh is not a nice cube
 
     xmin = x0;
     xmax = xf;
@@ -66,13 +66,15 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
 
     //stuff for other files
     transportPropertiesPath = outputPath+"constant/transportProperties";
-    diffusivityConstant = 0.01;
+    diffusivityConstant = 0.05;
 
     scalarPath = outputPath+"0/T";
-    velocityPath = outputPath+"0/U";
     sourcePath = outputPath+"0/source";
+    velocityPath = outputPath+"0/U";
 
     element elem = NULL;
+
+    phiPath = outputPath+"0/phi";
 
 
     writePolyMeshFiles("points", elem);
@@ -109,7 +111,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScala
 
     //stuff for other files
     transportPropertiesPath = outputPath+"constant/transportProperties";
-    diffusivityConstant = 0.01;
+    diffusivityConstant = 0.05;
 
     scalarPath = outputPath+"0/T";
     sourcePath = outputPath+"0/source";
@@ -120,6 +122,8 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScala
     w = wwind;
 
     element elem(&mesh);
+
+    phiPath = outputPath+"0/phi";
 
     std::cout << "just finished constructor\n";
     writePolyMeshFiles("array", elem);
@@ -139,13 +143,7 @@ bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element el
     //now create points as an OpenFOAM file
     fzout = fopen(pointsPath.c_str(), "w");
     makeFoamHeader("vectorField","points","constant/polyMesh");
-    if (pointWriteType == "points")
-    {
-        printPoints();
-    } else if (pointWriteType == "array")
-    {
-        print3dArrayPoints();
-    }
+    printPoints(pointWriteType);
     makeFoamFooter();
     fclose(fzout);
 
@@ -209,6 +207,12 @@ bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element el
     makeFoamFooter();
     fclose(fzout);
 
+    //fzout = fopen(phiPath.c_str(), "w");
+    //makeFoamHeader("surfaceScalarField","phi","0");
+    //printPhi(elem);
+    //makeFoamFooter();
+    //fclose(fzout);
+
     return true;
 }
 
@@ -242,43 +246,45 @@ void openFoamPolyMesh::makeFoamFooter()
     fprintf(fzout,"\n\n// ************************************************************************* //");
 }
 
-void openFoamPolyMesh::printPoints()
+void openFoamPolyMesh::printPoints(std::string pointWriteType)
 {
-    double dx = (xmax-xmin)/xcells;
-    double dy = (ymax-ymin)/ycells;
-    double dz = (zmax-zmin)/zcells;
-
-    fprintf(fzout, "\n%0.0lf\n(\n", npoints);
-    for(double k=0; k<zpoints; k++)
+    if (pointWriteType == "points")
     {
-        for(double i=0; i<ypoints; i++)
+        double dx = (xmax-xmin)/xcells;
+        double dy = (ymax-ymin)/ycells;
+        double dz = (zmax-zmin)/zcells;
+
+        fprintf(fzout, "\n%0.0lf\n(\n", npoints);
+        for(double k=0; k<zpoints; k++)
         {
-            for (double j = 0;j<xpoints;j++)
+            for(double i=0; i<ypoints; i++)
             {
-                fprintf(fzout, "(%lf %lf %lf)\n", dx*j, dy*i, dz*k);
+                for (double j = 0;j<xpoints;j++)
+                {
+                    fprintf(fzout, "(%lf %lf %lf)\n", dx*j, dy*i, dz*k);
+                }
             }
         }
-    }
-    fprintf(fzout, ")\n");
-}
-
-void openFoamPolyMesh::print3dArrayPoints()
-{
-    //remember, i is for y or the number of rows. j is for x or the number of columns
-    //Print columns before rows in C++ where it is often rows before columns in VBA
-    fprintf(fzout, "\n%0.0lf\n(\n", npoints);
-    for(double k=0; k<zpoints; k++)
+        fprintf(fzout, ")\n");
+    } else if (pointWriteType == "array")
     {
-        for(double i=0; i<ypoints; i++)
+        //remember, i is for y or the number of rows. j is for x or the number of columns
+        //Print columns before rows in C++ where it is often rows before columns in VBA
+        fprintf(fzout, "\n%0.0lf\n(\n", npoints);
+        for(double k=0; k<zpoints; k++)
         {
-            for (double j = 0;j<xpoints;j++)
+            for(double i=0; i<ypoints; i++)
             {
-                fprintf(fzout, "(%lf %lf %lf)\n", x(k*xpoints*ypoints + i*xpoints + j),
-                        y(k*xpoints*ypoints + i*xpoints + j), z(k*xpoints*ypoints + i*xpoints + j));
+                for (double j = 0;j<xpoints;j++)
+                {
+                    fprintf(fzout, "(%lf %lf %lf)\n", x(k*xpoints*ypoints + i*xpoints + j),
+                            y(k*xpoints*ypoints + i*xpoints + j), z(k*xpoints*ypoints + i*xpoints + j));
+                }
             }
         }
+        fprintf(fzout, ")\n");
     }
-    fprintf(fzout, ")\n");
+
 }
 
 void openFoamPolyMesh::printOwners()
@@ -293,39 +299,16 @@ void openFoamPolyMesh::printOwners()
         {
             for (double j = 0; j < xcells; j++)
             {
-                // might need to change the order of the parts in each statement to make them be checked quicker (ie if ycells has to be equal but xcells has to not be equal, switch the order so it skips the statement sooner?)
-                if (j != xcells-1 && i != ycells-1 && k != zcells-1)
+                if (j != xcells-1)
                 {
-                    //print 3 owners
                     fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j == xcells-1 && i != ycells-1 && k != zcells-1)
+                }
+                if (i != ycells-1)
                 {
-                    //print 2 owners
                     fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j != xcells-1 && i == ycells-1 && k != zcells-1)
+                }
+                if (k != zcells-1)
                 {
-                    //print 2 owners
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j == xcells-1 && i == ycells-1 && k != zcells-1)
-                {
-                    //print 1 owner
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j != xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 2 owners
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j == xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 1 owner
-                    fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
-                } else if (j != xcells-1 && i == ycells-1 && k == zcells-1)
-                {
-                    //print 1 owner
                     fprintf(fzout, "%0.0lf\n",k*ycells*xcells+i*xcells+j);
                 }
             }
@@ -967,4 +950,9 @@ void openFoamPolyMesh::printVelocity(std::string pointWriteType, element elem)
         //~/src/meshConversion/build-windninja-Desktop-Default/src/cli/WindNinja_cli ~/Downloads/ninjafoam.cfg
 
     }
+}
+
+void openFoamPolyMesh::printPhi(element elem)
+{
+    //not sure if we need this yet. Have it here just in case, just as a reminder.
 }
