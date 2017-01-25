@@ -92,7 +92,7 @@ public:
     //just a way to group a lot of stuff I was doing in single lines over and over. Should make it more legible and shrink the number of lines of code.
     //was having a rough time thinking of a good name so maybe need to change this. Was trying to be consistent with names in openFoam format
     //also, this is designed for only one type of value per patch, which is all right with the basic OpenFoam stuff, but I noticed that in other types of files, there were multiple values given in a single patch, so multiple parts of a single variable each with their value.
-    void printUniformListValues(std::string patchName,std::string uniformValueType,std::string uniformValue,bool extraReturn);
+    void printListHeader(std::string patchName,std::string ListType,std::string ListValue,bool extraReturn);
 
     //prints the T file in the 0 directory
     void printScalar();
@@ -130,9 +130,12 @@ private:
     double ncells;      //total number of cells in the mesh
     double nfaces;      //total number of faces in the mesh. Also the number of owners in the mesh and the number of internal mesh faces
     double ninternalfaces;  //total number of neighbors in the mesh
-    double Ax;		//number of faces in the x-z plane, also the number of faces in the north and south patches
-    double Ay;		//number of faces in the y-z plane, also the number of faces in the west and east patches
-    double Az;		//number of faces in the x-y plane, also the number of faces in the minZ and maxZ patches
+    double Axpoints;    //number of points in the x-z plane, also the number of points in the north and south patches
+    double Aypoints;    //number of points in the y-z plane, also the number of points in the west and east patches
+    double Azpoints;	//number of points in the x-y plane, also the number of points in the minZ and maxZ patches
+    double Axcells;		//number of faces/cells in the x-z plane, also the number of faces/cells in the north and south patches
+    double Aycells;		//number of faces/cells in the y-z plane, also the number of faces/cells in the west and east patches
+    double Azcells;		//number of faces/cells in the x-y plane, also the number of faces/cells in the minZ and maxZ patches
 
     double xmin;    //smallest x coordinate
     double xmax;    //largest x coordinate
