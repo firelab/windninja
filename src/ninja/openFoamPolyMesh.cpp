@@ -412,44 +412,6 @@ void openFoamPolyMesh::printNeighbors()
                 {
                     fprintf(fzout,"%0.0lf\n",(k+1)*Azcells+i*xcells+j);
                 }
-
-                /*
-                // might need to change the order of the parts in each statement to make them be checked quicker (ie if ycells has to be equal but xcells has to not be equal, switch the order so it skips the statement sooner?)
-                if (j != xcells-1 && i != ycells-1 && k != zcells-1)
-                {
-                    //print 3 neighbors
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+i*xcells+j+1);
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+(i+1)*xcells+j);
-                    fprintf(fzout,"%0.0lf\n",(k+1)*Azcells+i*xcells+j);
-                } else if (j == xcells-1 && i != ycells-1 && k != zcells-1)
-                {
-                    //print 2 neighbors
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+(i+1)*xcells+j);
-                    fprintf(fzout,"%0.0lf\n",(k+1)*Azcells+i*xcells+j);
-                } else if (j != xcells-1 && i == ycells-1 && k != zcells-1)
-                {
-                    //print 2 neighbors
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+i*xcells+j+1);
-                    fprintf(fzout,"%0.0lf\n",(k+1)*Azcells+i*xcells+j);
-                } else if (j == xcells-1 && i == ycells-1 && k != zcells-1)
-                {
-                    //print 1 neighbor
-                    fprintf(fzout,"%0.0lf\n",(k+1)*Azcells+i*xcells+j);
-                } else if (j != xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 2 neighbors
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+i*xcells+j+1);
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+(i+1)*xcells+j);
-                } else if (j == xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 1 neighbor
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+(i+1)*xcells+j);
-                } else if (j != xcells-1 && i == ycells-1 && k == zcells-1)
-                {
-                    //print 1 neighbor
-                    fprintf(fzout,"%0.0lf\n",k*Azcells+i*xcells+j+1);
-                }
-                */
             }
         }
     }
@@ -492,92 +454,6 @@ void openFoamPolyMesh::printFaces()
                             (k+1)*Azpoints+(i+1)*xpoints+j+1,
                             (k+1)*Azpoints+(i+1)*xpoints+j);
                 }
-
-                /*
-                // might need to change the order of the parts in each statement to make them be checked quicker (ie if ycells has to be equal but xcells has to not be equal, switch the order so it skips the statement sooner?)
-                if (j != xcells-1 && i != ycells-1 && k != zcells-1)
-                {
-                    //print 3 faces
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+i*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+i*xpoints+j+1);
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1);
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            (k+1)*Azpoints+i*xpoints+j,
-                            (k+1)*Azpoints+i*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j);
-                } else if (j == xcells-1 && i != ycells-1 && k != zcells-1)
-                {
-                    //print 2 faces
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1);
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            (k+1)*Azpoints+i*xpoints+j,
-                            (k+1)*Azpoints+i*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j);
-                } else if (j != xcells-1 && i == ycells-1 && k != zcells-1)
-                {
-                    //print 2 faces
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+i*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+i*xpoints+j+1);
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            (k+1)*Azpoints+i*xpoints+j,
-                            (k+1)*Azpoints+i*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j);
-                } else if (j == xcells-1 && i == ycells-1 && k != zcells-1)
-                {
-                    //print 1 face
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            (k+1)*Azpoints+i*xpoints+j,
-                            (k+1)*Azpoints+i*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j);
-                } else if (j != xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 2 faces
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+i*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+i*xpoints+j+1);
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1);
-                } else if (j == xcells-1 && i != ycells-1 && k == zcells-1)
-                {
-                    //print 1 face
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1);
-                } else if (j != xcells-1 && i == ycells-1 && k == zcells-1)
-                {
-                    //print 1 face
-                    fprintf(fzout,"4(%0.0lf %0.0lf %0.0lf %0.0lf)\n",
-                            k*Azpoints+i*xpoints+j+1,
-                            k*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+(i+1)*xpoints+j+1,
-                            (k+1)*Azpoints+i*xpoints+j+1);
-                }
-                */
             }
         }
     }
