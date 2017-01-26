@@ -47,7 +47,7 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
                 "this solver is more computationally intensive than the conservation of mass solver,\n"
                 "simulation times will be longer. Typical simulation times for this solver range from\n"
                 "10-30 min, but will depend on your domain, resolution, and computational\n"
-                "resources. Note that some options (e.g., weather model initialization and non-neutral\n"
+                "resources. Note that some options (e.g., point initialization and non-neutral\n"
                 "stability) are not available for this solver at this time. We plan to make these options\n"
                 "available in future releases."
                 ), this);

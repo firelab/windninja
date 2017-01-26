@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE( stl_1 )
     BOOST_REQUIRE( pszPath );
     const char *pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
     const char *pszTmpFile = CPLFormFilename( NULL, CPLGenerateTempFilename( NULL ), ".stl" );
-    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, NULL );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, 0.0, NULL );
     BOOST_CHECK( !rc );
     if( CPLCheckForFile( (char*)pszTmpFile, NULL ) )
         VSIUnlink( pszTmpFile );
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE( stl_2 )
     BOOST_REQUIRE( pszPath );
     const char *pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
     const char *pszTmpFile = CPLFormFilename( NULL, CPLGenerateTempFilename( NULL ), ".stl" );
-    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, NULL );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, -1.0, NinjaStlBinary, 0.0, NULL );
     BOOST_CHECK( !rc );
     VSILFILE *fin = VSIFOpenL( pszTmpFile, "rb" );
     BOOST_REQUIRE( fin );
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( stl_2 )
         VSIUnlink( "test.stl" );
 
     pszFilename = CPLFormFilename( pszPath, "mackay", ".tif" );
-    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, 90.0, NinjaStlBinary, NULL );
+    rc = NinjaElevationToStl( pszFilename, pszTmpFile, 1, 90.0, NinjaStlBinary, 0.0, NULL );
     BOOST_CHECK( !rc );
     fin = VSIFOpenL( pszTmpFile, "rb" );
     BOOST_REQUIRE( fin );

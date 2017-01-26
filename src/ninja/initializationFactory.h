@@ -1,10 +1,10 @@
 /******************************************************************************
  *
- * $Id$
+ * $Id: wxModelInitializationFactory.h 
  *
  * Project:  WindNinja
- * Purpose:  Functions for creating an stl from a gdal dataset
- * Author:   Kyle Shannon <kyle at pobox dot com>
+ * Purpose:  Factory class for initialize derived classes 
+ * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com> 
  *
  ******************************************************************************
  *
@@ -27,39 +27,22 @@
  *
  *****************************************************************************/
 
-#ifndef NINJA_STL_CONVERT_H_
-#define NINJA_STL_CONVERT_H_
+#ifndef INITIALIZATION_FACTORY_H 
+#define INITIALIZATION_FACTORY_H 
 
-#include "cpl_conv.h"
-#ifdef GDAL_COMPUTE_VERSION
-#include "cpl_progress.h"
-#endif
-#include "cpl_vsi.h"
-#include "gdal.h"
+#include "domainAverageInitialization.h"
+#include "pointInitialization.h"
+#include "griddedInitialization.h"
+#include "foamDomainAverageInitialization.h"
+#include "foamWxModelInitialization.h"
+#include "wxModelInitializationFactory.h"
 
-typedef struct _StlPosition
+class initializationFactory
 {
-    float x;
-    float y;
-    float z;
-} StlPosition;
+    public:
 
+        static initialize* makeInitialization(WindNinjaInputs &input);
 
-typedef enum
-{
-    NinjaStlAscii,
-    NinjaStlBinary
-} NinjaStlType;
+}; 
 
-//StlPosition ComputeNormal( StlPosition, S
-
-CPLErr NinjaElevationToStl( const char *pszInput,
-                            const char *pszOutput,
-                            int nBand,
-                            double dfTargetCellSize,
-                            NinjaStlType eType,
-                            double dfOffset,
-                            GDALProgressFunc pfnProgress );
-
-#endif /* NINJA_STL_CONVERT_H_ */
-
+#endif //INITIALIZATION_FACTORY_H

@@ -114,6 +114,14 @@ wxModelInitialization::wxModelInitialization(const wxModelInitialization& A) : i
  */
 wxModelInitialization::~wxModelInitialization()
 {
+    cloudCoverGrid.deallocate();
+    airTempGrid.deallocate();
+    uGrid_wxModel.deallocate();
+    vGrid_wxModel.deallocate();
+    speedInitializationGrid_wxModel.deallocate();
+    dirInitializationGrid_wxModel.deallocate();
+    cloudCoverGrid_wxModel.deallocate();
+    airTempGrid_wxModel.deallocate();
 }
 
 /**
@@ -1053,81 +1061,131 @@ void wxModelInitialization::deallocateTemp()
 }
 #endif
 
+#ifdef NINJAFOAM
 /**
- * Initializes u0, v0, w0, and cloud from a surface wx model.
+ * Sets input speed, direction, temperature, and cloud from a surface wx model.
  * @param input WindNinjaInputs object storing necessary input information.
- * @param mesh Mesh object for simulation.
- * @param u0 Initial field of u speeds.
- * @param v0 Initial field of v speeds.
- * @param w0 Initial field of w speeds.
- * @param cloud Cloud cover grid.
  */
+void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud)
+{
+    input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
+
+    setGridHeaderData(input, cloud);
+
+    setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
+             vGrid_wxModel, wGrid_wxModel );
+
+    interpolateWxGridsToNinjaGrids(input);
+
+    //set average speed
+    input.inputSpeed = speedInitializationGrid.get_meanValue();
+
+    //average u and v components
+    double meanU;
+    double meanV;
+    meanU = uInitializationGrid.get_meanValue();
+    meanV = vInitializationGrid.get_meanValue();
+
+    double meanSpd;
+    double meanDir;
+
+    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
+
+    //set average direction
+    input.inputDirection = meanDir;
+
+    //write wx model grids
+    writeWxModelGrids(input);
+
+    /*
+     * if diurnal is on, set required inputs from grids.
+     * For ninjafoam diurnal simulations, the ninjafoam
+     * run is linked with a diurnal simulation using the native
+     * solver. A foamInitialzation is used for the native solver
+     * run. In foamDomainAverageInitialization, we use the u,v grids
+     * from the ninjafoam simulation, and, for now, just domain-
+     * average temperature and cloud cover.
+     */
+
+    if(input.diurnalWinds == true){
+        input.airTemp = airTempGrid.get_meanValue(); //K
+        input.cloudCover = cloudCoverGrid.get_meanValue(); //fraction
+    }
+
+    cloud = cloudCoverGrid;
+}
+
+#endif //NINJAFOAM
+
 void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          Mesh const& mesh,
                          wn_3dScalarField& u0,
                          wn_3dScalarField& v0,
                          wn_3dScalarField& w0,
-                         AsciiGrid<double>& cloud,
-                         AsciiGrid<double>& L,
-                         AsciiGrid<double>& u_star,
-                         AsciiGrid<double>& bl_height)
+                         AsciiGrid<double>& cloud)
 {
-    int i, j, k;
+    input.inputWindHeight = Get_Wind_Height();
+    input.surface.Z = Get_Wind_Height();
 
-    windProfile profile;
-    profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
+    setGridHeaderData(input, cloud);
 
-    input.surface.Z = (*this).Get_Wind_Height();    //(ACTUALLY READ THE HEIGHT OF THE WINDS FROM THE FORECAST FILE)
-
-    //make sure rough_h is set to zero if profile switch is 0 or 2
-
-    //Read in wxModel grids (includes speed, direction, temperature and cloud cover grids)
-
-    AsciiGrid<double> airTempGrid_wxModel;
-    AsciiGrid<double> cloudCoverGrid_wxModel;
-    AsciiGrid<double> speedInitializationGrid_wxModel;
-    AsciiGrid<double> dirInitializationGrid_wxModel;
-    AsciiGrid<double> uGrid_wxModel;
-    AsciiGrid<double> vGrid_wxModel;
-    AsciiGrid<double> wGrid_wxModel;
-
-
-    setSurfaceGrids( input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
-             vGrid_wxModel, wGrid_wxModel );
-
+    //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
+    setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
+                    vGrid_wxModel, wGrid_wxModel);
 #ifdef NOMADS_ENABLE_3D
     set3dGrids(input, mesh);
 #endif
 
-    //Make final grids with same header as dem
-    AsciiGrid<double> airTempGrid;
-    airTempGrid.set_headerData(input.dem);
+    interpolateWxGridsToNinjaGrids(input);
 
-    cloud.set_headerData(input.dem);
+    //Write wx model grids
+    writeWxModelGrids(input);
 
-    AsciiGrid<double> speedInitializationGrid;
-    speedInitializationGrid.set_headerData(input.dem);
+    initializeWindToZero(mesh, u0, v0, w0);
 
-    AsciiGrid<double> dirInitializationGrid;
-    dirInitializationGrid.set_headerData(input.dem);
+    initializeBoundaryLayer(input);
 
-    AsciiGrid<double> uInitializationGrid;
-    uInitializationGrid.set_headerData(input.dem);
+    //Interpolate 2D wx model data to requested point locations
+    interpolate2dDataToPoints(input, mesh);
 
-    AsciiGrid<double> vInitializationGrid;
-    vInitializationGrid.set_headerData(input.dem);
+    bool wxModel3d = false;
+#ifdef NOMADS_ENABLE_3D
+    if(this->getForecastReadable().find("3D") != std::string::npos){
+        wxModel3d = true;
+    }
+#endif
+    if(wxModel3d == true){
+        initializeWindFrom3dData(input, mesh, u0, v0, w0);
+    } 
+    else{
+        initializeWindFromProfile(input, mesh, u0, v0, w0);
+    }
 
+    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
+    {
+        addDiurnalComponent(input, mesh, u0, v0, w0);
+    }
+
+    cloud = cloudCoverGrid;
+}
+
+void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
+{
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
-    cloud.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
+    cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
+
     /*
     ** Fill in speed and direction grids from interpolated U and V grids.
     */
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j), &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
+            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
+                    &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
         }
     }
 
@@ -1136,20 +1194,248 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     speedInitializationGrid = speedInitializationGrid * input.speedDampeningRatio;
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_sd_to_uv(speedInitializationGrid(i,j), dirInitializationGrid(i,j), &(uInitializationGrid)(i,j), &(vInitializationGrid)(i,j));
+            wind_sd_to_uv(speedInitializationGrid(i,j), dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j), &(vInitializationGrid)(i,j));
         }
     }
 #endif
 
     //Check for noData values
     if(airTempGrid.checkForNoDataValues() ||
-       cloud.checkForNoDataValues() ||
+       cloudCoverGrid.checkForNoDataValues() ||
        speedInitializationGrid.checkForNoDataValues() ||
        dirInitializationGrid.checkForNoDataValues())
     {
         throw std::logic_error("NoData values found in wx model interpolated grids.");
     }
 
+    //Check if grids are coincident
+    if(!input.dem.checkForCoincidentGrids(airTempGrid))
+        throw std::logic_error("Dem and airTempGrid are not coincident in wx model interpolation.");
+    else if(!input.dem.checkForCoincidentGrids(cloudCoverGrid))
+        throw std::logic_error("Dem and cloud are not coincident in wx model interpolation.");
+    else if(!input.dem.checkForCoincidentGrids(speedInitializationGrid))
+        throw std::logic_error("Dem and speedInitializationGrid are not coincident in wx model interpolation.");
+    else if(!input.dem.checkForCoincidentGrids(dirInitializationGrid))
+        throw std::logic_error("Dem and dirInitializationGrid are not coincident in wx model interpolation.");
+    else if(!input.dem.checkForCoincidentGrids(uInitializationGrid))
+        throw std::logic_error("Dem and uInitializationGrid are not coincident in wx model interpolation.");
+    else if(!input.dem.checkForCoincidentGrids(vInitializationGrid))
+        throw std::logic_error("Dem and vInitializationGrid are not coincident in wx model interpolation.");
+}
+
+void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0)
+{ 
+    int kk;
+    int i, j, k;
+    double tempGradient;
+//#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
+    for(i = 0; i < input.dem.get_nRows(); i++){
+        for(j = 0; j < input.dem.get_nCols(); j++){
+
+            profile.ObukovLength = L(i,j);
+            profile.ABL_height = bl_height(i,j);
+            profile.Roughness = input.surface.Roughness(i,j);
+            profile.Rough_h = input.surface.Rough_h(i,j);
+            profile.Rough_d = input.surface.Rough_d(i,j);
+
+            for(k = 0; k < mesh.nlayers; k++){
+                profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);  // height above the ground
+
+                if(u3d(i,j,k) != -9999) {  // if have 3d winds for current cell
+                    u0(i, j, k) = u3d(i,j,k);
+                }
+                else{ // use log profile from first 3d layer down to ground
+                    kk = k;
+                    do{
+                        kk++;
+                        profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
+                        profile.inputWindSpeed = u3d(i,j,kk);
+                    }while (u3d(i,j,kk) == -9999);
+                    u0(i, j, k) += profile.getWindSpeed();
+                }
+                if(v3d(i,j,k) != -9999){  // if have 3d winds for current cell
+                    v0(i, j, k) = v3d(i,j,k);
+                }
+                else{
+                    kk = k;
+                    do{
+                        kk++;
+                        profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
+                        profile.inputWindSpeed = v3d(i,j,kk);
+                    }while (v3d(i,j,kk) == -9999);
+
+                    v0(i, j, k) += profile.getWindSpeed();
+                }
+                if(w3d(i,j,k) != -9999){  // if have 3d winds for current cell
+                    w0(i, j, k) = w3d(i,j,k);
+                }
+                else{
+                    kk = k;
+                    do{
+                        kk++;
+                        profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
+                        profile.inputWindSpeed = w3d(i,j,kk);
+                    }while (w3d(i,j,kk) == -9999);
+
+                    w0(i, j, k) += profile.getWindSpeed();
+                }
+                if(air3d(i,j,k) == -9999){ //if don't have 3d T for current cell
+                    kk = k;
+                    do{ // find lowest 3d layer; these are perturbation potetential temperatures, not temperature!
+                        kk++;
+                    }while (air3d(i,j,kk) == -9999);
+                    tempGradient = ( air3d(i,j,kk) - air3d(i,j,kk+1) ) /
+                                   ( mesh.ZORD(i,j,kk+1) - mesh.ZORD(i,j,kk) ); // find gradient between lowest two 3D layers
+
+                    for(int m = k; m<kk; m++){
+                        air3d(i,j,m) = air3d(i,j,kk) + (tempGradient *
+                                       ( mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,m) )); //apply this gradient to current layer
+                    }
+                }
+            }
+        }
+    }
+    u3d.deallocate();
+    v3d.deallocate();
+    w3d.deallocate();
+
+    /*
+     * Interpolate 3D wx model data to requested point locations
+     */
+    interpolate3dDataToPoints(input, mesh);
+
+    wxU3d.deallocate();
+    wxV3d.deallocate();
+    wxW3d.deallocate();
+}
+
+void wxModelInitialization::interpolate2dDataToPoints(WindNinjaInputs &input, const Mesh& mesh)
+{
+    double X, Y, Z, uTemp, vTemp;
+    element elem(&mesh);
+    int elem_i, elem_j;
+    double u_wn, v_wn;
+
+    for(unsigned int i = 0; i < input.latList.size(); i++){
+        X = input.projXList[i]; //projected (dem) coords
+        Y = input.projYList[i]; //projected (dem) coords
+        Z = input.heightList[i];
+
+        uTemp = uGrid_wxModel.interpolateGrid(X, Y, AsciiGrid<double>::order1);  // wx speed at 10m height
+        vTemp = vGrid_wxModel.interpolateGrid(X, Y, AsciiGrid<double>::order1);  // wx speed at 10m height
+
+        X -= input.dem.xllCorner; //put into wn mesh coords
+        Y -= input.dem.yllCorner; //put into wn mesh coords
+
+        elem.get_uv(X, Y, elem_i, elem_j, u_wn, v_wn); // get u,v in wn mesh
+
+        //profile stuff is a little weird bc we are not at nodes
+        //profile is set based on southwest corner of current cell (elem_i, elem_j)
+        profile.ObukovLength = L(elem_i,elem_j);
+        profile.ABL_height = bl_height(elem_i,elem_j);
+        profile.Roughness = input.surface.Roughness(elem_i,elem_j);
+        profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
+        profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
+        profile.AGL = Z;  // height above the ground
+        profile.inputWindHeight = input.inputWindHeight; // height above vegetation
+
+        profile.inputWindSpeed = uTemp; // get wx speed at 10m height
+        u10List.push_back(profile.getWindSpeed());
+
+        profile.inputWindSpeed = vTemp; // get wx speed at 10m height
+        v10List.push_back(profile.getWindSpeed());
+    }
+}
+
+void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, const Mesh& mesh)
+{
+    element elem(&mesh);
+    std::vector<Mesh> meshList;
+    meshList.push_back(xStaggerWxMesh);
+    meshList.push_back(yStaggerWxMesh);
+    meshList.push_back(zStaggerWxMesh);
+
+    int elem_wx_i, elem_wx_j, elem_wx_k; // wx model cells
+    int elem_i, elem_j, elem_k; // wn cells
+    double u_wx, v_wx, w_wx;
+    double x_wx, y_wx, z_wx;
+    double u_wn, v_wn, w_wn;
+    double x_wn, y_wn, z_wn;
+    int wx_i, wn_i; //element indices for wn and wx model
+    double z_ground; //wn ground
+    double z_temp;
+    double x, y, z; // locations to interpolate to
+
+    for(unsigned int i = 0; i < input.latList.size(); i++){
+        for(unsigned int j = 0; j < meshList.size(); j++){
+            x = input.projXList[i]; //projected (dem) coords
+            y = input.projYList[i]; //projected (dem) coords
+            z = input.heightList[i]; //height above ground
+
+            x -= input.dem.xllCorner; //put into wn mesh coords
+            y -= input.dem.yllCorner; //put into wn mesh coords
+
+            element elem_wx(&meshList[j]);
+
+            elem_wx.get_uv(x, y, elem_wx_i, elem_wx_j, u_wx, v_wx); //get u and v coordinates in wx mesh
+            wx_i = meshList[j].get_elemNum(elem_wx_i, elem_wx_j, 0); //wx_i is element number in wx mesh
+            elem_wx.get_xyz(wx_i, u_wx, v_wx, -1, x_wx, y_wx, z_wx); //get real z_wx at wx model ground
+            z += z_wx; // add height above ground to wx model ground height, z is now the z to interpolate to
+
+            elem_wx.get_uvw(x, y, z, elem_wx_i, elem_wx_j, elem_wx_k, u_wx, v_wx, w_wx); // find elem_k for this point
+            if(elem_wx_k == 0){//if in first layer, use log profile
+                //profile is set based on southwest corner of current cell (elem_i, elem_j)
+                //----set profile stuff based on WN mesh-------------
+                elem.get_uv(x, y, elem_i, elem_j, u_wn, v_wn); // get elem_i, elem_j, u,v in wn mesh
+                wn_i = mesh.get_elemNum(elem_i, elem_j, 0); // wn_i is elem number in wn mesh
+                z_ground = z_wx;
+
+                profile.ObukovLength = L(elem_i,elem_j);
+                profile.ABL_height = bl_height(elem_i,elem_j);
+                profile.Roughness = input.surface.Roughness(elem_i,elem_j);
+                profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
+                profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
+                profile.AGL = input.heightList[i];  // height above the ground
+
+                elem_wx.get_xyz(wx_i, u_wx, v_wx, 1, x_wx, y_wx, z_temp); // get z at first layer in wx model mesh
+
+                profile.inputWindHeight = z_temp - z_ground - input.surface.Rough_h(elem_i, elem_j); // height above vegetation
+
+                if(j==0){
+                    profile.inputWindSpeed = wxU3d.interpolate(x, y, z_temp); // get wx speed at first layer
+                    u_wxList.push_back(profile.getWindSpeed());
+                }
+                else if(j==1){
+                    profile.inputWindSpeed = wxV3d.interpolate(x, y, z_temp); // get wx speed at first layer
+                    v_wxList.push_back(profile.getWindSpeed());
+                }
+                else{
+                    profile.inputWindSpeed = wxW3d.interpolate(x, y, z_temp); // get wx speed at first layer
+                    w_wxList.push_back(profile.getWindSpeed());
+                }
+            }
+            else{//else use linear interpolation
+                if(j==0){
+                    u_wxList.push_back(wxU3d.interpolate(x,y,z));
+                }
+                else if(j==1){
+                    v_wxList.push_back(wxV3d.interpolate(x,y,z));
+                }
+                else{
+                    w_wxList.push_back(wxW3d.interpolate(x,y,z));
+                }
+            }
+        }
+    }
+}
+
+void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
+{
     if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
     {
         speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
@@ -1289,471 +1575,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     }//end omp section
 
     }	//end parallel sections region
-
-    //Check if grids are coincident
-    if(!input.dem.checkForCoincidentGrids(airTempGrid))
-        throw std::logic_error("Dem and airTempGrid are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(cloud))
-        throw std::logic_error("Dem and cloud are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(speedInitializationGrid))
-        throw std::logic_error("Dem and speedInitializationGrid are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(dirInitializationGrid))
-        throw std::logic_error("Dem and dirInitializationGrid are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(uInitializationGrid))
-        throw std::logic_error("Dem and uInitializationGrid are not coincident in wx model interpolation.");
-    else if(!input.dem.checkForCoincidentGrids(vInitializationGrid))
-        throw std::logic_error("Dem and vInitializationGrid are not coincident in wx model interpolation.");
-
-    //Set windspeed grid for diurnal computation
-    input.surface.set_windspeed(speedInitializationGrid);
-
-    //initialize u0, v0, w0 equal to zero
-#pragma omp parallel for default(shared) private(i,j,k)
-    for(k=0;k<mesh.nlayers;k++)
-    {
-        for(i=0;i<mesh.nrows;i++)
-        {
-            for(j=0;j<mesh.ncols;j++)
-            {
-                u0(i, j, k) = 0.0;
-                v0(i, j, k) = 0.0;
-                w0(i, j, k) = 0.0;
-            }
-        }
-    }
-
-    //Monin-Obukhov length, surface friction velocity, and atmospheric boundary layer height
-    L.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0.0);
-    u_star.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0.0);
-    bl_height.set_headerData(input.dem.get_nCols(), input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), -1.0);
-
-    //These are only needed if diurnal is turned on...
-    AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
-    AsciiGrid<double> uDiurnal;
-    AsciiGrid<double> vDiurnal;
-    AsciiGrid<double> wDiurnal;
-
-
-    //compute diurnal wind, Monin-Obukhov length, surface friction velocity, and ABL height
-    if(input.diurnalWinds == true)
-    {
-        height.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);	//height of diurnal flow above "z=0" in log profile
-        uDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        vDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-        wDiurnal.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0);
-
-        double aspect_temp = 0;	//just placeholder, basically
-        double slope_temp = 0;	//just placeholder, basically
-
-        Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
-        Aspect aspect(&input.dem, input.numberCPUs);
-        Slope slope(&input.dem, input.numberCPUs);
-        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
-
-        addDiurnal diurnal(&uDiurnal, &vDiurnal, &wDiurnal, &height, &L,
-                        &u_star, &bl_height, &input.dem, &aspect, &slope,
-                        &shade, &solar, &input.surface, &cloud,
-                        &airTempGrid, input.numberCPUs, input.downDragCoeff,
-                        input.downEntrainmentCoeff, input.upDragCoeff,
-                        input.upEntrainmentCoeff);
-
-
-        ////Testing: Print diurnal component as .kmz file
-        //AsciiGrid<double> *diurnalVelocityGrid, *diurnalAngleGrid;
-        //diurnalVelocityGrid=NULL;
-        //diurnalAngleGrid=NULL;
-
-        //KmlVector diurnalKmlFiles;
-        //diurnalKmlFiles.com = input.Com;
-
-        //diurnalAngleGrid = new AsciiGrid<double> ();
-        //diurnalAngleGrid->set_headerData(input.dem);
-        //diurnalVelocityGrid = new AsciiGrid<double> ();
-        //diurnalVelocityGrid->set_headerData(input.dem);
-
-        //double interMedVal;
-
-        ////Change from u,v components to speed and direction
-        //for(int i=0; i<diurnalVelocityGrid->nRows; i++)
-        //{
-        //	for(int j=0; j<diurnalVelocityGrid->nCols; j++)
-        //	{
-        //
-        //	   (*diurnalVelocityGrid)[i][j]=pow(((uDiurnal)[i][j]*(uDiurnal)[i][j]+(vDiurnal)[i][j]*(vDiurnal)[i][j]),0.5);       //calculate velocity magnitude (in x,y plane; I decided to include z here so the wind is the total magnitude wind)
-        //
-        //             if ((uDiurnal)[i][j]==0.0 && (vDiurnal)[i][j]==0.0)
-        //                  interMedVal=0.0;
-        //             else
-        //  		          interMedVal=-atan2((uDiurnal)[i][j], -(vDiurnal)[i][j]);
-        //             if(interMedVal<0)
-        //                  interMedVal+=2.0*pi;
-        //             (*diurnalAngleGrid)[i][j]=(180.0/pi*interMedVal);
-        //	}
-        //}
-
-        //diurnalVelocityGrid->write_Grid("diurnalSpeed.asc", 2);
-        //
-        //diurnalKmlFiles.setKmlFile("diurnal.kml");
-        //diurnalKmlFiles.setKmzFile("diurnal.kmz");
-        //diurnalKmlFiles.setDemFile(input.dem.fileName);
-        //diurnalKmlFiles.setPrjString(input.prjString);
-        //diurnalKmlFiles.setLegendFile("diurnalLegend.txt");
-        //diurnalKmlFiles.setSpeedGrid(*diurnalVelocityGrid, input.outputSpeedUnits);
-        //diurnalKmlFiles.setDirGrid(*diurnalAngleGrid);
-        //diurnalKmlFiles.setLineWidth(googLineWidth);
-        //diurnalKmlFiles.setTime(input.time);
-        //diurnalKmlFiles.setDate(input.date);
-        //if(diurnalKmlFiles.writeKml(googSpeedScaling))
-        //{
-        //	if(diurnalKmlFiles.makeKmz())
-        //		diurnalKmlFiles.removeKmlFile();
-        //}
-        //if(diurnalAngleGrid)
-        //{
-        //	delete diurnalAngleGrid;
-        //	diurnalAngleGrid=NULL;
-        //}
-        //if(diurnalVelocityGrid)
-        //{
-        //	delete diurnalVelocityGrid;
-        //	diurnalVelocityGrid=NULL;
-        //}
-
-
-        //write files for debugging
-        //shade->write_Grid("shade.asc", -1);
-        //height->write_Grid("height.asc", 0);
-        //aspect->write_Grid("aspect.asc",0);
-        //slope->write_Grid("slope.asc", 1);
-
-    }else{	//compute neutral ABL height
-
-    double f;
-
-    //compute f -> Coriolis parameter
-    if(input.latitude<=90.0 && input.latitude>=-90.0)
-        {
-        f = (1.4544e-4) * sin(pi/180 * input.latitude);	// f = 2 * omega * sin(theta)
-        // f should be about 10^-4 for mid-latitudes
-        // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-        // obtained from Stull 1988 book
-        if(f<0)
-            f = -f;
-        }else{
-        f = 1e-4;	//if latitude is not available, set f to mid-latitude value
-    }
-
-    if(f==0.0)	//zero will give division by zero below
-        f = 1e-8;	//if latitude is zero, set f small
-
-    //compute neutral ABL height
-#pragma omp parallel for default(shared) private(i,j)
-    for(i=0;i<input.dem.get_nRows();i++)
-        {
-        for(j=0;j<input.dem.get_nCols();j++)
-            {
-            u_star(i,j) = speedInitializationGrid(i,j)*0.4/(log((input.inputWindHeight+input.surface.Rough_h(i,j)-input.surface.Rough_d(i,j))/input.surface.Roughness(i,j)));
-
-            //compute neutral ABL height
-            bl_height(i,j) = 0.2 * u_star(i,j) / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-            }
-        }
-    }
-
-    /*
-     * Interpolate 2D wx model data to requested point locations
-     */
-    double X, Y, Z, uTemp, vTemp;
-    element elem(&mesh);
-    int elem_i, elem_j;
-    double u_wn, v_wn;
-
-    for(unsigned int i = 0; i < input.latList.size(); i++){
-        X = input.projXList[i]; //projected (dem) coords
-        Y = input.projYList[i]; //projected (dem) coords
-        Z = input.heightList[i];
-
-        uTemp = uGrid_wxModel.interpolateGrid(X, Y, AsciiGrid<double>::order1);  // wx speed at 10m height
-        vTemp = vGrid_wxModel.interpolateGrid(X, Y, AsciiGrid<double>::order1);  // wx speed at 10m height
-
-        X -= input.dem.xllCorner; //put into wn mesh coords
-        Y -= input.dem.yllCorner; //put into wn mesh coords
-
-        elem.get_uv(X, Y, elem_i, elem_j, u_wn, v_wn); // get u,v in wn mesh
-
-        //profile stuff is a little weird bc we are not at nodes
-        //profile is set based on southwest corner of current cell (elem_i, elem_j)
-        profile.ObukovLength = L(elem_i,elem_j);
-        profile.ABL_height = bl_height(elem_i,elem_j);
-        profile.Roughness = input.surface.Roughness(elem_i,elem_j);
-        profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
-        profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
-        profile.AGL = Z;  // height above the ground
-        profile.inputWindHeight = input.inputWindHeight; // height above vegetation
-
-        profile.inputWindSpeed = uTemp; // get wx speed at 10m height
-        u10List.push_back(profile.getWindSpeed());
-
-        profile.inputWindSpeed = vTemp; // get wx speed at 10m height
-        v10List.push_back(profile.getWindSpeed());
-    }
-
-    //deallocate temporary grids
-    airTempGrid_wxModel.deallocate();
-    cloudCoverGrid_wxModel.deallocate();
-    speedInitializationGrid_wxModel.deallocate();
-    dirInitializationGrid_wxModel.deallocate();
-    uGrid_wxModel.deallocate();
-    vGrid_wxModel.deallocate();
-    wGrid_wxModel.deallocate();
-
-    //----3d WX model-------------------------------------------------
-
-    //Initialize u0,v0,w0----------------------------------
-    bool wxModel3d = false;
-    int kk;
-    double tempGradient;
-    #ifdef NOMADS_ENABLE_3D
-    if(this->getForecastReadable().find("3D") != std::string::npos){
-        wxModel3d = true;
-    }
-    #endif
-    if(wxModel3d == true){
-#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-        for(i = 0; i < input.dem.get_nRows(); i++){
-            for(j = 0; j < input.dem.get_nCols(); j++){
-
-                profile.ObukovLength = L(i,j);
-                profile.ABL_height = bl_height(i,j);
-                profile.Roughness = input.surface.Roughness(i,j);
-                profile.Rough_h = input.surface.Rough_h(i,j);
-                profile.Rough_d = input.surface.Rough_d(i,j);
-
-                for(k = 0; k < mesh.nlayers; k++){
-                    profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);  // height above the ground
-
-                    if(u3d(i,j,k) != -9999) {  // if have 3d winds for current cell
-                        u0(i, j, k) = u3d(i,j,k);
-                    }
-                    else{ // use log profile from first 3d layer down to ground
-                        kk = k;
-                        do{
-                            kk++;
-                            profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
-                            profile.inputWindSpeed = u3d(i,j,kk);
-                        }while (u3d(i,j,kk) == -9999);
-                        u0(i, j, k) += profile.getWindSpeed();
-                    }
-                    if(v3d(i,j,k) != -9999){  // if have 3d winds for current cell
-                        v0(i, j, k) = v3d(i,j,k);
-                    }
-                    else{
-                        kk = k;
-                        do{
-                            kk++;
-                            profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
-                            profile.inputWindSpeed = v3d(i,j,kk);
-                        }while (v3d(i,j,kk) == -9999);
-
-                        v0(i, j, k) += profile.getWindSpeed();
-                    }
-                    if(w3d(i,j,k) != -9999){  // if have 3d winds for current cell
-                        w0(i, j, k) = w3d(i,j,k);
-                    }
-                    else{
-                        kk = k;
-                        do{
-                            kk++;
-                            profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
-                            profile.inputWindSpeed = w3d(i,j,kk);
-                        }while (w3d(i,j,kk) == -9999);
-
-                        w0(i, j, k) += profile.getWindSpeed();
-                    }
-                    if(air3d(i,j,k) == -9999){ //if don't have 3d T for current cell
-                        kk = k;
-                        do{ // find lowest 3d layer; these are perturbation potetential temperatures, not temperature!
-                            kk++;
-                        }while (air3d(i,j,kk) == -9999);
-                        tempGradient = ( air3d(i,j,kk) - air3d(i,j,kk+1) ) /
-                                       ( mesh.ZORD(i,j,kk+1) - mesh.ZORD(i,j,kk) ); // find gradient between lowest two 3D layers
-
-                        for(int m = k; m<kk; m++){
-                            air3d(i,j,m) = air3d(i,j,kk) + (tempGradient *
-                                           ( mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,m) )); //apply this gradient to current layer
-                        }
-                    }
-                }
-            }
-        }
-        u3d.deallocate();
-        v3d.deallocate();
-        w3d.deallocate();
-
-        /*
-         * Interpolate WX model data to requested point locations.
-         */
-
-        element elem(&mesh);
-        std::vector<Mesh> meshList;
-        meshList.push_back(xStaggerWxMesh);
-        meshList.push_back(yStaggerWxMesh);
-        meshList.push_back(zStaggerWxMesh);
-
-        int elem_wx_i, elem_wx_j, elem_wx_k; // wx model cells
-        int elem_i, elem_j, elem_k; // wn cells
-        double u_wx, v_wx, w_wx;
-        double x_wx, y_wx, z_wx;
-        double u_wn, v_wn, w_wn;
-        double x_wn, y_wn, z_wn;
-        int wx_i, wn_i; //element indices for wn and wx model
-        double z_ground; //wn ground
-        double z_temp;
-        double x, y, z; // locations to interpolate to
-
-        for(unsigned int i = 0; i < input.latList.size(); i++){
-            for(unsigned int j = 0; j < meshList.size(); j++){
-                x = input.projXList[i]; //projected (dem) coords
-                y = input.projYList[i]; //projected (dem) coords
-                z = input.heightList[i]; //height above ground
-
-                x -= input.dem.xllCorner; //put into wn mesh coords
-                y -= input.dem.yllCorner; //put into wn mesh coords
-
-                element elem_wx(&meshList[j]);
-
-                elem_wx.get_uv(x, y, elem_wx_i, elem_wx_j, u_wx, v_wx); //get u and v coordinates in wx mesh
-                wx_i = meshList[j].get_elemNum(elem_wx_i, elem_wx_j, 0); //wx_i is element number in wx mesh
-                elem_wx.get_xyz(wx_i, u_wx, v_wx, -1, x_wx, y_wx, z_wx); //get real z_wx at wx model ground
-                z += z_wx; // add height above ground to wx model ground height, z is now the z to interpolate to
-
-                elem_wx.get_uvw(x, y, z, elem_wx_i, elem_wx_j, elem_wx_k, u_wx, v_wx, w_wx); // find elem_k for this point
-                if(elem_wx_k == 0){//if in first layer, use log profile
-                    //profile is set based on southwest corner of current cell (elem_i, elem_j)
-                    //----set profile stuff based on WN mesh-------------
-                    elem.get_uv(x, y, elem_i, elem_j, u_wn, v_wn); // get elem_i, elem_j, u,v in wn mesh
-                    wn_i = mesh.get_elemNum(elem_i, elem_j, 0); // wn_i is elem number in wn mesh
-                    z_ground = z_wx;
-
-                    profile.ObukovLength = L(elem_i,elem_j);
-                    profile.ABL_height = bl_height(elem_i,elem_j);
-                    profile.Roughness = input.surface.Roughness(elem_i,elem_j);
-                    profile.Rough_h = input.surface.Rough_h(elem_i,elem_j);
-                    profile.Rough_d = input.surface.Rough_d(elem_i,elem_j);
-                    profile.AGL = input.heightList[i];  // height above the ground
-
-                    elem_wx.get_xyz(wx_i, u_wx, v_wx, 1, x_wx, y_wx, z_temp); // get z at first layer in wx model mesh
-
-                    profile.inputWindHeight = z_temp - z_ground - input.surface.Rough_h(elem_i, elem_j); // height above vegetation
-
-                    if(j==0){
-                        profile.inputWindSpeed = wxU3d.interpolate(x, y, z_temp); // get wx speed at first layer
-                        u_wxList.push_back(profile.getWindSpeed());
-                    }
-                    else if(j==1){
-                        profile.inputWindSpeed = wxV3d.interpolate(x, y, z_temp); // get wx speed at first layer
-                        v_wxList.push_back(profile.getWindSpeed());
-                    }
-                    else{
-                        profile.inputWindSpeed = wxW3d.interpolate(x, y, z_temp); // get wx speed at first layer
-                        w_wxList.push_back(profile.getWindSpeed());
-                    }
-                }
-                else{//else use linear interpolation
-                    if(j==0){
-                        u_wxList.push_back(wxU3d.interpolate(x,y,z));
-                    }
-                    else if(j==1){
-                        v_wxList.push_back(wxV3d.interpolate(x,y,z));
-                    }
-                    else{
-                        w_wxList.push_back(wxW3d.interpolate(x,y,z));
-                    }
-                }
-            }
-        }
-        wxU3d.deallocate();
-        wxV3d.deallocate();
-        wxW3d.deallocate();
-    } //end if 3d wx model
-    else{//Initialize u0,v0,w0----------------------------------
-#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
-        for(i=0;i<input.dem.get_nRows();i++)
-        {
-            for(j=0;j<input.dem.get_nCols();j++)
-            {
-                profile.ObukovLength = L(i,j);
-                profile.ABL_height = bl_height(i,j);
-                profile.Roughness = input.surface.Roughness(i,j);
-                profile.Rough_h = input.surface.Rough_h(i,j);
-                profile.Rough_d = input.surface.Rough_d(i,j);
-                profile.inputWindHeight = input.inputWindHeight;
-
-                for(k=0;k<mesh.nlayers;k++)
-                {
-                    profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);			//this is height above THE GROUND!! (not "z=0" for the log profile)
-
-                    profile.inputWindSpeed = uInitializationGrid(i,j);
-                    u0(i, j, k) += profile.getWindSpeed();
-
-                    profile.inputWindSpeed = vInitializationGrid(i,j);
-                    v0(i, j, k) += profile.getWindSpeed();
-
-                    profile.inputWindSpeed = 0.0;
-                    w0(i, j, k) += profile.getWindSpeed();
-                }
-            }
-        }
-    }
-
-    // testing
-    //std::string outFilename = "u0_6.png";
-    //std::string scalarLegendFilename = "u0_6_legend";
-    //std::string legendTitle = "u0_6";
-    //std::string legendUnits = "(m/s)";
-    //bool writeLegend = false;
-
-	/*std::string filename;
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
-    testGrid.set_noDataValue(-9999.0);
-
-	for(int k = 0; k < mesh.nlayers; k++){
-        for(int i = 0; i < mesh.nrows; i++){
-            for(int j = 0; j < mesh.ncols; j++ ){
-                testGrid(i,j) = u0(i,j,k);
-                filename = "u0from10mWind_" + boost::lexical_cast<std::string>(k);
-            }
-        }
-        testGrid.write_Grid(filename.c_str(), 2);
-        /*if(k == 6){
-            testGrid.replaceNan( -9999.0 );
-            testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
-        }*/
-	//} testGrid.deallocate();
-
-    //Now add diurnal component if desired
-    double AGL=0;                                //height above top of roughness elements
-    if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
-    {
-#pragma omp parallel for default(shared) private(i,j,k,AGL)
-        for(k=1;k<mesh.nlayers;k++)	//start at 1, not zero because ground nodes must be zero for boundary conditions to work properly
-        {
-            for(i=0;i<mesh.nrows;i++)
-            {
-                for(j=0;j<mesh.ncols;j++)
-                {
-                    AGL=mesh.ZORD(i, j, k)-input.dem(i,j);	//this is height above THE GROUND!! (not "z=0" for the log profile)
-                    if((AGL - input.surface.Rough_d(i,j)) < height(i,j))
-                    {
-                        u0(i, j, k) += uDiurnal(i,j);
-                        v0(i, j, k) += vDiurnal(i,j);
-                        w0(i, j, k) += wDiurnal(i,j);
-                    }
-                }
-            }
-        }
-    }
 }
 
 /**

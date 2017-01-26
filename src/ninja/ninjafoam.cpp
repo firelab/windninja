@@ -123,6 +123,16 @@ bool NinjaFoam::simulate_wind()
 
     checkInputs();
 
+    /* 
+     * if it's a wxModelInitialization, get the average speed,
+     * direction, T, cloud cover from the wx model
+     */
+    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    {
+        init.reset(initializationFactory::makeInitialization(input));
+        init->ninjaFoamInitializeFields(input, CloudGrid);
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
@@ -639,7 +649,7 @@ void NinjaFoam::SetFoamPath(const char* pszPath)
 int NinjaFoam::GenerateFoamDirectory(std::string demName)
 {
     std::string t = NinjaRemoveSpaces(std::string(CPLGetBasename(demName.c_str())));
-    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s_", t.c_str())));
+    pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s", t.c_str())));
     VSIMkdir( pszFoamPath, 0777 );
 
     return NINJA_SUCCESS;
@@ -2203,15 +2213,39 @@ void NinjaFoam::SetOutputResolution()
 void NinjaFoam::SetOutputFilenames()
 {
     //Do file naming string stuff for all output files
-    std::string rootFile, rootName, fileAppend, kmz_fileAppend, \
+    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+
+    boost::local_time::local_time_facet* timeOutputFacet;
+    timeOutputFacet = new boost::local_time::local_time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    std::ostringstream timestream;
+    timestream.imbue(std::locale(std::locale::classic(), timeOutputFacet));
+    timeOutputFacet->format("%m-%d-%Y_%H%M_");
+
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
+        timestream << input.ninjaTime;
+    }
 
     std::string pathName;
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
 
     if(input.customOutputPath == "!set"){
-        pathName = CPLGetPath(input.dem.fileName.c_str());
+        //prepend directory paths to rootFile for wxModel run
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
+            pathName = CPLGetPath(input.forecastFilename.c_str());
+            //if it's a .tar, write to directory containing the .tar file
+            if( strstr(pathName.c_str(), ".tar") ){
+                pathName.erase( pathName.rfind("/") );
+            }
+        }else{
+            pathName = CPLGetPath(input.dem.fileName.c_str());
+        }
     }
     else{
         pathName = input.customOutputPath;
@@ -2223,6 +2257,18 @@ void NinjaFoam::SetOutputFilenames()
     input.outputPath = pathName;
     set_outputPath(pathName);
 
+    timeAppend = timestream.str();
+
+    ostringstream wxModelTimestream;
+    boost::local_time::local_time_facet* wxModelOutputFacet;
+    wxModelOutputFacet = new boost::local_time::local_time_facet();
+    wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
+    wxModelOutputFacet->format("%m-%d-%Y_%H%M");
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    {
+        wxModelTimestream << input.ninjaTime;
+    }
+    wxModelTimeAppend = wxModelTimestream.str();
     mesh_units = "m";
     kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
@@ -2231,13 +2277,15 @@ void NinjaFoam::SetOutputFilenames()
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
 
-    double tempSpeed = input.inputSpeed;
-    velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-    os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
+        double tempSpeed = input.inputSpeed;
+        velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
+        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    }
 
     double meshResolutionTemp = input.dem.get_cellSize();
     double kmzResolutionTemp = input.kmzResolution;
@@ -2253,11 +2301,11 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
-    os << "_" << (long) (meshResolutionTemp+0.5)  << mesh_units;
-    os_kmz << "_" << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
-    os_shp << "_" << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
-    os_ascii << "_" << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
-    os_pdf << "_" << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+    os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
+    os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
+    os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
+    os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
@@ -2324,6 +2372,14 @@ int NinjaFoam::SampleRawOutput()
 
     AngleGrid = foamDir;
     VelocityGrid = foamSpd;
+    // If we failed to fill in the data for the entire grid, we've failed.
+    // Report a better message.
+    if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                "the openfoam output could not be interpolated to a proper "
+                "surface, simulation failed.");
+        return NINJA_E_OTHER;
+    }
     if(VelocityGrid.get_maxValue() > 220.0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
@@ -2736,7 +2792,7 @@ int NinjaFoam::GenerateNewCase()
                         nBand,
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
-                        //NinjaStlAscii,
+                        0,
                         NULL);
 
     CPLFree((void*)pszStlFileName);
@@ -2757,12 +2813,31 @@ int NinjaFoam::GenerateNewCase()
     /*-------------------------------------------------------------------*/
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
-    status = SurfaceTransformPoints();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
-        return NINJA_E_OTHER;
-    }
 
+    // create the output surface stl with NinjaElevationToStl unless
+    // NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS = YES.
+    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS", "NO" ) ) ) {
+        status = SurfaceTransformPoints();
+        if(status != 0){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
+            return NINJA_E_OTHER;
+        }
+    }else{
+        pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath,
+                    CPLGetBasename(input.dem.fileName.c_str()))));
+        stlName = NinjaRemoveSpaces(std::string(pszStlFileName));
+        nBand = 1;
+
+        eErr = NinjaElevationToStl(inFile,
+                            (const char*)stlName.c_str(),
+                            nBand,
+                            input.dem.get_cellSize(),
+                            NinjaStlBinary,
+                            input.outputWindHeight,
+                            NULL);
+
+        CPLFree((void*)pszStlFileName);
+    }
 
     checkCancel();
 	
@@ -2775,7 +2850,6 @@ int NinjaFoam::GenerateNewCase()
     /*  write necessary mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
 
-    //reads from log.json created from surfaceCheck if DEM not available
     status = writeBlockMesh();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlockMesh().");

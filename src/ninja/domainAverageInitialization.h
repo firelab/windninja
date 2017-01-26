@@ -35,28 +35,22 @@
 
 class domainAverageInitialization : public initialize
 {
-	public:
+    public:
 
-		domainAverageInitialization();								//Default constructor
-		virtual ~domainAverageInitialization();                              // Destructor
-		
-		//domainAverageInitialization(domainAverageInitialization const& m);               // Copy constructor
-		//domainAverageInitialization& operator= (domainAverageInitialization const& m);   // Assignment operator
+        domainAverageInitialization();
+        virtual ~domainAverageInitialization();
 
-		//Implementation of base class virtual function for initializing volume wind fields using the
-		//domain averaged wind method.
-		virtual void initializeFields(WindNinjaInputs &input,
-		        Mesh const& mesh,
-		        wn_3dScalarField& u0,
-		        wn_3dScalarField& v0,
-		        wn_3dScalarField& w0,
-		        AsciiGrid<double>& cloud,
-		        AsciiGrid<double>& L,
-		        AsciiGrid<double>& u_star,
-		        AsciiGrid<double>& bl_height);
+        virtual void initializeFields(WindNinjaInputs &input,
+                Mesh const& mesh,
+                wn_3dScalarField& u0,
+                wn_3dScalarField& v0,
+                wn_3dScalarField& w0,
+                AsciiGrid<double>& cloud);
 
-	private:
+    private:
 
+        virtual void initializeBoundaryLayer(WindNinjaInputs& input);
+        void setInitializationGrids(WindNinjaInputs& input);
 };
 
 #endif /* DOMAIN_AVERAGE_INITIALIZATION_H */

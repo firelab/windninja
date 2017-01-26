@@ -38,28 +38,25 @@
 
 class pointInitialization : public initialize
 {
-	public:
+    public:
 
-		pointInitialization();								//Default constructor
-		virtual ~pointInitialization();						// Destructor
-		
-		//pointInitialization(pointInitialization const& m);               // Copy constructor
-		//pointInitialization& operator= (pointInitialization const& m);   // Assignment operator
+        pointInitialization();
+        virtual ~pointInitialization();
+        
+        //pointInitialization(pointInitialization const& m);               // Copy constructor
+        //pointInitialization& operator= (pointInitialization const& m);   // Assignment operator
 
-		//Implementation of base class virtual function for initializing volume wind fields using the
-		//domain averaged wind method.
-		virtual void initializeFields(WindNinjaInputs &input,
-		        Mesh const& mesh,
-		        wn_3dScalarField& u0,
-		        wn_3dScalarField& v0,
-		        wn_3dScalarField& w0,
-		        AsciiGrid<double>& cloud,
-		        AsciiGrid<double>& L,
-		        AsciiGrid<double>& u_star,
-		        AsciiGrid<double>& bl_height);
+        virtual void initializeFields(WindNinjaInputs &input,
+                Mesh const& mesh,
+                wn_3dScalarField& u0,
+                wn_3dScalarField& v0,
+                wn_3dScalarField& w0,
+                AsciiGrid<double>& cloud);
 
-	private:
-                double dfInvDistWeight;
+    private:
+
+        void setInitializationGrids(WindNinjaInputs& input);
+        double dfInvDistWeight;
 
 };
 

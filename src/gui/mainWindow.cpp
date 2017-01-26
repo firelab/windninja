@@ -1331,14 +1331,12 @@ double mainWindow::computeCellSize(int index)
     double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
 
     double dz = GDALMaxValue - GDALMinValue;
-    double zMin = GDALMaxValue * 1.1;
-    double zMax = GDALMaxValue + max((0.1 * max(XLength, YLength)), (dz + 0.1 *dz));
-    double ZLength = zMax - zMin; 
+    double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
 
     double volume;
     double cellCount;
     double cellVolume;
-    
+
     volume = XLength * YLength * ZLength; //volume of blockMesh
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
@@ -1874,7 +1872,7 @@ int mainWindow::solve()
         /* This can throw a badForecastFile */
         try
         {
-            army->makeArmy( weatherFile, timeZone );
+            army->makeArmy( weatherFile, timeZone, useNinjaFoam );
         }
         catch( badForecastFile &e )
         {
@@ -3142,11 +3140,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->point->pointGroupBox->setHidden( true );
         tree->point->ninjafoamConflictLabel->setHidden( false );
         
-        tree->weather->weatherGroupBox->setCheckable( false );
-        tree->weather->weatherGroupBox->setChecked( false );
-        tree->weather->weatherGroupBox->setHidden( true );
-        tree->weather->ninjafoamConflictLabel->setHidden( false );
-        
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
@@ -3156,7 +3149,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->vtk->vtkGroupBox->setHidden( true );
         tree->vtk->vtkGroupBox->setChecked( false );
         tree->vtk->vtkWarningLabel->setHidden( true );
-        
+        tree->vtk->vtkGroupBox->setCheckable(false);
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
@@ -3175,11 +3168,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->point->pointGroupBox->setChecked( false );
         tree->point->pointGroupBox->setHidden( false );
         tree->point->ninjafoamConflictLabel->setHidden( true );
-        
-        tree->weather->weatherGroupBox->setCheckable( true );
-        tree->weather->weatherGroupBox->setChecked( false );
-        tree->weather->weatherGroupBox->setHidden( false );
-        tree->weather->ninjafoamConflictLabel->setHidden( true );
         
         tree->surface->foamCaseGroupBox->setHidden( true );
         tree->surface->timeZoneGroupBox->setHidden( false );
