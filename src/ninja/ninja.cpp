@@ -2734,14 +2734,14 @@ void ninja::writeOutputFiles()
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
     //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",3,3,3,0,1,0,1,0,1);
-    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",mesh, u, v, w);
+    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",mesh,input.dem.xllCorner,input.dem.yllCorner,u,v,w);
 
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
 	{
 		try{
-            volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
+            volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());

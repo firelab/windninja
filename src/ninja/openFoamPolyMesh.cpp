@@ -87,7 +87,8 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
 
 }
 
-openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScalarField const& uwind,
+openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue,
+                                   double yllCornerValue, wn_3dScalarField const& uwind,
                                    wn_3dScalarField const& vwind, wn_3dScalarField const& wwind)
 {
 
@@ -99,6 +100,9 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScala
     xpoints = mesh.ncols;
     ypoints = mesh.nrows;
     zpoints = mesh.nlayers;
+    hozRes = mesh.meshResolution;
+    demCornerX = xllCornerValue;
+    demCornerY = yllCornerValue;
     x = mesh.XORD;
     y = mesh.YORD;
     z = mesh.ZORD;
@@ -293,8 +297,8 @@ void openFoamPolyMesh::printPoints(std::string pointWriteType)
             {
                 for (double j = 0;j<xpoints;j++)
                 {
-                    fprintf(fzout, "(%lf %lf %lf)\n", x(k*Azpoints + i*xpoints + j),
-                            y(k*Azpoints + i*xpoints + j), z(k*Azpoints + i*xpoints + j));
+                    fprintf(fzout, "(%lf %lf %lf)\n", x(k*Azpoints + i*xpoints + j)+demCornerX,
+                            y(k*Azpoints + i*xpoints + j)+demCornerY, z(k*Azpoints + i*xpoints + j));   //demCorner helps to go back to the original utm coordinates
                 }
             }
         }

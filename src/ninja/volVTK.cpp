@@ -35,10 +35,10 @@ volVTK::volVTK()
 }
 
 volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, 
-	       wn_3dArray& y, wn_3dArray& z, int i, int j, int k, 
-	       std::string filename)
+           wn_3dArray& y, wn_3dArray& z, double xllCornerValue, double yllCornerValue, int i, int j, int k,
+           std::string filename)
 {
-  writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
+  writeVolVTK(u, v, w, x, y, z, xllCornerValue, yllCornerValue, i, j, k, filename);
 }
 
 volVTK::~volVTK()
@@ -47,8 +47,8 @@ volVTK::~volVTK()
 }
 
 bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
-			 wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
-			 int i, int j, int k, std::string filename)
+             wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, double xllCornerValue, double yllCornerValue,
+             int i, int j, int k, std::string filename)
 {
   FILE *fout;
   std::string surface_filename;
@@ -76,8 +76,8 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
   {
       for(int jj=0; jj<j; jj++)
 	  {
-		fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj), 
-		  y(1*i*j + ii*j + jj), z(1*i*j + ii*j + jj));
+        fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj)+xllCornerValue,
+          y(1*i*j + ii*j + jj)+yllCornerValue, z(1*i*j + ii*j + jj));
 	  }
   }
   
@@ -104,8 +104,8 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
 	{
 	  for(int jj=0; jj<j; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj), 
-		      y(kk*i*j + ii*j + jj), z(kk*i*j + ii*j + jj));
+          fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj)+xllCornerValue,
+              y(kk*i*j + ii*j + jj)+yllCornerValue, z(kk*i*j + ii*j + jj));
 	    }
 	}
     }
@@ -130,7 +130,8 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
   return true;
 }
 
-bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
+                             double xllCornerValue, double yllCornerValue,
                             int i, int j, int k, std::string filename)
 {
   FILE *fout;
@@ -159,8 +160,8 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
   {
       for(int jj=0; jj<j; jj++)
 	  {
-		fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj), 
-		  y(1*i*j + ii*j + jj), z(1*i*j + ii*j + jj));
+        fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj)+xllCornerValue,
+          y(1*i*j + ii*j + jj)+yllCornerValue, z(1*i*j + ii*j + jj));
 	  }
   }
   
@@ -187,8 +188,8 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
 	{
 	  for(int jj=0; jj<j; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj), 
-		      y(kk*i*j + ii*j + jj), z(kk*i*j + ii*j + jj));
+          fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj)+xllCornerValue,
+              y(kk*i*j + ii*j + jj)+yllCornerValue, z(kk*i*j + ii*j + jj));
 	    }
 	}
     }

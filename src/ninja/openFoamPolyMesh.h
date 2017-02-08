@@ -54,7 +54,7 @@ class openFoamPolyMesh
 public:
 
     openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf);
-    openFoamPolyMesh(std::string outputPath, Mesh mesh, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
+    openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
     ~openFoamPolyMesh();
 
     //this is the equivalent main function
@@ -123,6 +123,11 @@ private:
     double xpoints;		//number of points in the x direction
     double ypoints;		//number of points in the y direction
     double zpoints;		//number of points in the z direction
+    double hozRes;      //horizontal resolution of the mesh
+
+    double demCornerX;  //x coordinate adjuster for taking the dem back to normal coordinates
+    double demCornerY;  //y coordinate adjuster for taking the dem back to normal coordinates
+
     double xcells;      //number of cells in the x direction
     double ycells;      //number of cells in the y direction
     double zcells;      //number of cells in the z direction
