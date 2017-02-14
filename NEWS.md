@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-WindNinja 3.1.2
+WindNinja 3.1.3
 ---------------
 
  - Update lcp fetcher for changes on Landfire server (\#236)
