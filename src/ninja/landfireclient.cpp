@@ -249,10 +249,9 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CSLDestroy( papszTokens );
         return SURF_FETCH_E_IO_ERR;
     }
-
     for( int i = 1; i < nTokens; i++ )
     {
-        if( EQUALN( papszTokens[i], "http://", 7 ) &&
+        if( EQUALN( papszTokens[i], "https://", 6 ) &&
             EQUAL( papszTokens[i - 1], "DOWNLOAD_URL" ) )
         {
             CPLStrlcpy( pszResponse, papszTokens[i], nSize );
@@ -265,7 +264,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     //std::sscanf( (char*) m_poResult->pabyData, LF_REQUEST_RETURN_TEMPLATE, pszResponse);
     CPLHTTPDestroyResult( m_poResult );
 
-    if( !EQUALN( pszResponse, "http://", 7 ) )
+    if( !EQUALN( pszResponse, "https://", 6 ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to generate valid URL for LCP download." );
@@ -293,7 +292,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     //grabs the Job ID from the Download URL response
     std::sscanf( (char*) m_poResult->pabyData, LF_INIT_RESPONSE_TEMPLATE, pszResponse);
     CPLHTTPDestroyResult( m_poResult );
-
    //store the Job Id into a class attribute, so we can reuse pszResponse, but keep
     //the Job Id (needed for future parts)
     m_JobId = std::string( pszResponse );
@@ -355,6 +353,18 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     pszUrl = CPLSPrintf( LF_DOWNLOAD_JOB_TEMPLATE, m_JobId.c_str() );
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get job status" ); 
+
+    /*
+    ** Parse the URL from the returned string
+    */
+    std::string ss((const char*) m_poResult->pabyData );
+    CPLHTTPDestroyResult( m_poResult );
+    std::size_t pos1 = ss.find("https://");
+    std::size_t pos2 = ss.find(".zip");
+    std::string url = ss.substr(pos1, (pos2+4-pos1));
+    pszUrl = url.c_str();
+    m_poResult = CPLHTTPFetch( pszUrl, NULL );
+    CHECK_HTTP_RESULT( "Failed to get job status" );
 
     nSize = m_poResult->nDataLen;
     VSILFILE *fout;
