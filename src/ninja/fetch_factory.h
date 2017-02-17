@@ -54,6 +54,7 @@ class FetchFactory
         static const std::string US_SRTM_STR;
         static const std::string WORLD_SRTM_STR;
         static const std::string RELIEF_STR;
+        static const std::string LCP_STR;
 #ifdef HAVE_GMTED
         static const std::string WORLD_GMTED_STR;
 #endif //HAVE_GMTED

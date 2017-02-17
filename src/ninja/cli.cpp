@@ -279,6 +279,14 @@ int windNinjaCLI(int argc, char* argv[])
 #endif /* WITH_NOMADS_SUPPORT */
         osAvailableWx += ")";
 
+        std::string osSurfaceSources = "source for downloading elevation data (us_srtm, world_srtm";
+#ifdef HAVE_GMTED
+        osSurfaceSources += ", gmted";
+#endif
+#ifdef WITH_LCP_CLIENT
+        osSurfaceSources += ", lcp";
+#endif
+        osSurfaceSources +=")";
 
         // Declare a group of options that will be
         // allowed both on command line and in
@@ -297,11 +305,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("x_buffer", po::value<double>(), "x buffer of elevation domain to download (distance in east-west direction from center to edge of domain)")
                 ("y_buffer", po::value<double>(), "y buffer of elevation domain to download (distance in north-south direction from center to edge of domain)")
                 ("buffer_units", po::value<std::string>()->default_value("miles"), "units for x_buffer and y_buffer of  elevation file to download (kilometers, miles)")
-#ifdef HAVE_GMTED
-                ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "source for downloading elevation data (us_srtm, world_srtm, gmted)")
-#else
-                ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "source for downloading elevation data (us_srtm, world_srtm)")
-#endif
+                ("elevation_source", po::value<std::string>()->default_value("us_srtm"), osSurfaceSources.c_str())
                 ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices are listed in date_time_zonespec.csv)")
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
@@ -668,24 +672,26 @@ int windNinjaCLI(int argc, char* argv[])
                     exit(1);
                 }
                 
-                //fill in no data values
-                GDALDataset *poDS;
-                poDS = (GDALDataset*)GDALOpen(new_elev.c_str(), GA_Update);
-                if(poDS == NULL)
-                {
-                    throw std::runtime_error("Could not open DEM for reading");
-                }
-                int nNoDataValues = 0;
-                if(GDALHasNoData(poDS, 1))
-                {
-                    nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
-                }
-                GDALClose((GDALDatasetH)poDS);
-                if(nNoDataValues > 0)
-                {
-                    std::cerr << "Could not download valid elevation file, " <<
-                                "it contains no data values" << std::endl;
-                    return 1;
+                if( vm["elevation_source"].as<std::string>() != "lcp") {
+                    //fill in no data values
+                    GDALDataset *poDS;
+                    poDS = (GDALDataset*)GDALOpen(new_elev.c_str(), GA_Update);
+                    if(poDS == NULL)
+                    {
+                        throw std::runtime_error("Could not open DEM for reading");
+                    }
+                    int nNoDataValues = 0;
+                    if(GDALHasNoData(poDS, 1))
+                    {
+                        nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
+                    }
+                    GDALClose((GDALDatasetH)poDS);
+                    if(nNoDataValues > 0)
+                    {
+                        std::cerr << "Could not download valid elevation file, " <<
+                                    "it contains no data values" << std::endl;
+                        return 1;
+                    }
                 }
             }
             
@@ -814,7 +820,7 @@ int windNinjaCLI(int argc, char* argv[])
         bFillNoData = TRUE;
 #endif //MOBILE_APP
         /* If we downloaded from our fetcher, we fill */
-        if( vm.count("fetch_elevation" ) )
+        if( vm.count("fetch_elevation" )  && vm["elevation_source"].as<std::string>() != "lcp" )
             bFillNoData = TRUE;
         if( bFillNoData )
         {
