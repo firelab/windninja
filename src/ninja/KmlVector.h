@@ -101,20 +101,22 @@ public:
 
 
 	inline void setLineWidth(double width){lineWidth = width;}
-	bool makeDefaultStyles();
+    bool makeDefaultStyles(std::string cScheme);
 
 	inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 
-	bool writeKml();
-	bool writeKml(egoogSpeedScaling scaling);
+    bool writeKml(string cScheme);
+    bool writeKml(egoogSpeedScaling scaling,std::string cScheme);
 	bool makeKmz();
 	bool removeKmlFile();
+
+    void orangeLegend();
 
 	bool writeHeader(FILE *fileOut);
 	bool writeRegion(FILE *fileOut);
 	bool writeStyles(FILE *fileOut);
 	bool writeHtmlLegend(FILE *fileOut);
-	bool writeScreenOverlayLegend(FILE *fileOut);
+    bool writeScreenOverlayLegend(FILE *fileOut,std::string cScheme);
 	bool writeScreenOverlayDateTimeLegend(FILE *fileOut);
 	bool writeScreenOverlayDateTimeLegendWxModelRun(FILE *fileOut);
 

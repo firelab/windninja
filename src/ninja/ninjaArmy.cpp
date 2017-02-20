@@ -1538,6 +1538,10 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googResolution( resolution, units ) );
 }
+int ninjaArmy::setGoogColor(const int nIndex, string colorScheme)
+{
+    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme));
+}
 
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )

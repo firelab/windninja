@@ -179,13 +179,15 @@ void KmlVector::setWxModel(const std::string& modelName, const boost::local_time
     wxModelStartTime = startTime;
 }
 
-bool KmlVector::makeDefaultStyles()
+bool KmlVector::makeDefaultStyles(string cScheme)
 {
+
 	if(colors)
 		delete[]colors;
 
-	//ostringstream oss;
+    //ostringstream oss;
 	//std::string s;
+
 
 
 	colors = new Style*[numColors];
@@ -195,12 +197,86 @@ bool KmlVector::makeDefaultStyles()
 		//s = oss.str();
 		//colors[i] = new Style(s,alpha,blue, green, red, width);
 	//}
+    //Alpha, B G R
+    if (cScheme=="default")
+    {
 	colors[0] = new Style("blue", 255, 255, 0, 0, lineWidth);
 	colors[1] = new Style("green", 255, 0, 255, 0, lineWidth);
 	colors[2] = new Style("yellow", 255, 0, 255, 255, lineWidth);
 	colors[3] = new Style("orange", 255, 0, 127, 255, lineWidth);
 	colors[4] = new Style("red", 255, 0, 0, 255, lineWidth);
-	return true;
+
+    }
+    if (cScheme=="oranges")
+    {
+    colors[0] = new Style("blue", 255, 217, 240, 254, lineWidth);
+    colors[1] = new Style("green", 255, 138, 204, 253, lineWidth);
+    colors[2] = new Style("yellow", 255, 89, 141, 252, lineWidth);
+    colors[3] = new Style("orange", 255, 51, 74, 227, lineWidth);
+    colors[4] = new Style("red", 255, 0, 0, 179, lineWidth);
+
+    }
+    if(cScheme=="blues")
+    {
+    colors[0] = new Style("blue", 255, 254, 243, 239, lineWidth);
+    colors[1] = new Style("green", 255, 231, 215, 189, lineWidth);
+    colors[2] = new Style("yellow", 255, 214, 174, 107, lineWidth);
+    colors[3] = new Style("orange", 255, 189, 130, 49, lineWidth);
+    colors[4] = new Style("red", 255, 156, 81, 8, lineWidth);
+    }
+    if (cScheme=="greens")
+    {
+    colors[0] = new Style("blue", 255, 233, 248, 237, lineWidth);
+    colors[1] = new Style("green", 255, 179, 228, 186, lineWidth);
+    colors[2] = new Style("yellow", 255, 118, 196, 116, lineWidth);
+    colors[3] = new Style("orange", 255, 84, 163, 49, lineWidth);
+    colors[4] = new Style("red", 255, 44, 109, 0, lineWidth);
+    }
+    if (cScheme=="pinks")
+    {
+    colors[0] = new Style("blue", 255, 246, 238, 241, lineWidth);
+    colors[1] = new Style("green", 255, 216, 181, 215, lineWidth);
+    colors[2] = new Style("yellow", 255, 176, 101, 223, lineWidth);
+    colors[3] = new Style("orange", 255, 119, 28,221, lineWidth);
+    colors[4] = new Style("red", 255, 67, 0, 152, lineWidth);
+    }
+    if (cScheme=="magic_beans")
+    {
+//    colors[4] = new Style("blue", 255, 32, 0, 202, lineWidth);
+//    colors[3] = new Style("green", 255, 130, 165, 244, lineWidth);
+//    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
+//    colors[1] = new Style("orange", 255, 222, 197,146, lineWidth);
+//    colors[0] = new Style("red", 255, 176, 113, 5, lineWidth);
+    colors[4] = new Style("red", 255, 32, 0, 202, lineWidth);
+    colors[3] = new Style("orange", 255, 130, 165, 244, lineWidth);
+    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
+    colors[1] = new Style("green", 255, 222, 197,146, lineWidth);
+    colors[0] = new Style("blue", 255, 176, 113, 5, lineWidth);
+    }
+    if (cScheme=="pink_to_green")
+    {
+//    colors[0] = new Style("blue", 255, 148, 50, 123, lineWidth);
+//    colors[1] = new Style("green", 255, 207, 165, 194, lineWidth);
+//    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
+//    colors[3] = new Style("orange", 255, 160, 219,166, lineWidth);
+//    colors[4] = new Style("red", 255, 55, 136, 0, lineWidth);
+    colors[4] = new Style("red", 255, 148, 50, 123, lineWidth);
+    colors[3] = new Style("orange", 255, 207, 165, 194, lineWidth);
+    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
+    colors[1] = new Style("green", 255, 160, 219,166, lineWidth);
+    colors[0] = new Style("blue", 255, 55, 136, 0, lineWidth);
+    }
+//    else
+//    {
+//        cout<<"color scheme not found, using default..."<<endl;
+//        colors[0] = new Style("blue", 255, 255, 0, 0, lineWidth);
+//        colors[1] = new Style("green", 255, 0, 255, 0, lineWidth);
+//        colors[2] = new Style("yellow", 255, 0, 255, 255, lineWidth);
+//        colors[3] = new Style("orange", 255, 0, 127, 255, lineWidth);
+//        colors[4] = new Style("red", 255, 0, 0, 255, lineWidth);
+
+//    }
+    return true;
 }
 
 bool KmlVector::setOGR()
@@ -233,10 +309,11 @@ bool KmlVector::setOGR()
 }
 
 
-bool KmlVector::writeKml()
+bool KmlVector::writeKml(std::string cScheme)
 {
+    cout<<cScheme<<endl;
 	VSILFILE* fout = 0;
-	makeDefaultStyles();
+    makeDefaultStyles(cScheme);
 	if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
 		return false;
 	else
@@ -253,7 +330,7 @@ bool KmlVector::writeKml()
 			writeRegion(fout);
 			writeStyles(fout);
 			//writeHtmlLegend(fout);
-			writeScreenOverlayLegend(fout);
+            writeScreenOverlayLegend(fout,cScheme);
 
 			if(wxModelName.empty())
 			{
@@ -296,10 +373,12 @@ bool KmlVector::writeKml()
 	}
 }
 
-bool KmlVector::writeKml(egoogSpeedScaling scaling)
+bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme)
 {
 	VSILFILE *fout;
-	makeDefaultStyles();
+    cout<<cScheme<<endl;
+
+    makeDefaultStyles(cScheme);
 	if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
 		return false;
 	else
@@ -331,7 +410,7 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling)
 			writeRegion(fout);
 			writeStyles(fout);
 			//writeHtmlLegend(fout);
-			writeScreenOverlayLegend(fout);
+            writeScreenOverlayLegend(fout,cScheme);
 			if(wxModelName.empty())
 			    writeScreenOverlayDateTimeLegend(fout);
 			else
@@ -520,9 +599,9 @@ bool KmlVector::writeHtmlLegend(VSILFILE *fileOut)
 	return true;
 }
 
-bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
+bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut,std::string cScheme)
 {
-	//make bitmap
+    //make bitmap
 	int legendWidth = 180;
 	int legendHeight = int(legendWidth / 0.75);
 	BMP legend;
@@ -587,32 +666,229 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
 	white.Blue = 255;
 	white.Alpha = 0;
 
-	RGBApixel colors[5];
-	//RGBApixel red, orange, yellow, green, blue;
-	colors[0].Red = 255;
-	colors[0].Green = 0;
-	colors[0].Blue = 0;
-	colors[0].Alpha = 0;
+    RGBApixel colors[5];
+//	RGBApixel red, orange, yellow, green, blue;
+    if(cScheme=="default")
+    {
+        colors[0].Red = 255;//max wind
+        colors[0].Green = 0;
+        colors[0].Blue = 0;
+        colors[0].Alpha = 0;
 
-	colors[1].Red = 255;
-	colors[1].Green = 127;
-	colors[1].Blue = 0;
-	colors[1].Alpha = 0;
+        colors[1].Red = 255;
+        colors[1].Green = 127;
+        colors[1].Blue = 0;
+        colors[1].Alpha = 0;
 
-	colors[2].Red = 255;
-	colors[2].Green = 255;
-	colors[2].Blue = 0;
-	colors[2].Alpha = 0;
+        colors[2].Red = 255;
+        colors[2].Green = 255;
+        colors[2].Blue = 0;
+        colors[2].Alpha = 0;
 
-	colors[3].Red = 0;
-	colors[3].Green = 255;
-	colors[3].Blue = 0;
-	colors[3].Alpha = 0;
+        colors[3].Red = 0;
+        colors[3].Green = 255;
+        colors[3].Blue = 0;
+        colors[3].Alpha = 0;
 
-	colors[4].Red = 0;
-	colors[4].Green = 0;
-	colors[4].Blue = 255;
-	colors[4].Alpha = 0;
+        colors[4].Red = 0;
+        colors[4].Green = 0;
+        colors[4].Blue = 255;
+        colors[4].Alpha = 0;
+
+    }
+    if (cScheme=="oranges")
+    {
+        colors[0].Red = 179; //0=Highest wind speed: its reversed from above...
+        colors[0].Green = 0;
+        colors[0].Blue = 0;
+        colors[0].Alpha = 0;
+
+        colors[1].Red = 227;
+        colors[1].Green = 74;
+        colors[1].Blue = 51;
+        colors[1].Alpha = 0;
+
+        colors[2].Red = 252;
+        colors[2].Green = 141;
+        colors[2].Blue = 89;
+        colors[2].Alpha = 0;
+
+        colors[3].Red = 253;
+        colors[3].Green = 204;
+        colors[3].Blue = 138;
+        colors[3].Alpha = 0;
+
+        colors[4].Red = 254;
+        colors[4].Green = 240;
+        colors[4].Blue = 217;
+        colors[4].Alpha = 0;
+    }
+    if (cScheme=="blues")
+    {
+        colors[4].Red = 239; //0=Highest wind speed: its reversed from above...
+        colors[4].Green = 243;
+        colors[4].Blue = 255;
+        colors[4].Alpha = 0;
+
+        colors[3].Red = 189;
+        colors[3].Green = 215;
+        colors[3].Blue = 231;
+        colors[3].Alpha = 0;
+
+        colors[2].Red = 107;
+        colors[2].Green = 174;
+        colors[2].Blue = 214;
+        colors[2].Alpha = 0;
+
+        colors[1].Red = 49;
+        colors[1].Green = 130;
+        colors[1].Blue = 189;
+        colors[1].Alpha = 0;
+
+        colors[0].Red = 8;
+        colors[0].Green = 81;
+        colors[0].Blue = 156;
+        colors[0].Alpha = 0;
+    }
+    if (cScheme=="greens")
+    {
+        colors[4].Red = 237; //0=Highest wind speed: its reversed from above...
+        colors[4].Green = 248;
+        colors[4].Blue = 233;
+        colors[4].Alpha = 0;
+
+        colors[3].Red = 186;
+        colors[3].Green = 228;
+        colors[3].Blue = 179;
+        colors[3].Alpha = 0;
+
+        colors[2].Red = 116;
+        colors[2].Green = 196;
+        colors[2].Blue = 118;
+        colors[2].Alpha = 0;
+
+        colors[1].Red = 49;
+        colors[1].Green = 163;
+        colors[1].Blue = 84;
+        colors[1].Alpha = 0;
+
+        colors[0].Red = 0;
+        colors[0].Green = 109;
+        colors[0].Blue = 44;
+        colors[0].Alpha = 0;
+    }
+    if (cScheme=="pinks")
+    {
+        colors[4].Red = 241; //0=Highest wind speed: its reversed from above...
+        colors[4].Green = 238;
+        colors[4].Blue = 246;
+        colors[4].Alpha = 0;
+
+        colors[3].Red = 215;
+        colors[3].Green = 181;
+        colors[3].Blue = 216;
+        colors[3].Alpha = 0;
+
+        colors[2].Red = 223;
+        colors[2].Green = 101;
+        colors[2].Blue = 176;
+        colors[2].Alpha = 0;
+
+        colors[1].Red = 221;
+        colors[1].Green = 28;
+        colors[1].Blue = 119;
+        colors[1].Alpha = 0;
+
+        colors[0].Red = 152;
+        colors[0].Green = 0;
+        colors[0].Blue = 67;
+        colors[0].Alpha = 0;
+    }
+    if (cScheme=="magic_beans")
+    {
+        colors[0].Red = 202; //0=Highest wind speed: its reversed from above...
+        colors[0].Green = 0;
+        colors[0].Blue = 32;
+        colors[0].Alpha = 0;
+
+        colors[1].Red = 244;
+        colors[1].Green = 165;
+        colors[1].Blue = 130;
+        colors[1].Alpha = 0;
+
+        colors[2].Red = 247;
+        colors[2].Green = 247;
+        colors[2].Blue = 247;
+        colors[2].Alpha = 0;
+
+        colors[3].Red = 146;
+        colors[3].Green = 197;
+        colors[3].Blue = 222;
+        colors[3].Alpha = 0;
+
+        colors[4].Red = 5;
+        colors[4].Green = 113;
+        colors[4].Blue = 176;
+        colors[4].Alpha = 0;
+    }
+    if (cScheme=="pink_to_green")
+    {
+        colors[0].Red = 123; //0=Highest wind speed: its reversed from above...
+        colors[0].Green = 50;
+        colors[0].Blue = 148;
+        colors[0].Alpha = 0;
+
+        colors[1].Red = 194;
+        colors[1].Green = 165;
+        colors[1].Blue = 207;
+        colors[1].Alpha = 0;
+
+        colors[2].Red = 247;
+        colors[2].Green = 247;
+        colors[2].Blue = 247;
+        colors[2].Alpha = 0;
+
+        colors[3].Red = 146;
+        colors[3].Green = 219;
+        colors[3].Blue = 160;
+        colors[3].Alpha = 0;
+
+        colors[4].Red = 0;
+        colors[4].Green = 136;
+        colors[4].Blue = 55;
+        colors[4].Alpha = 0;
+    }
+//    else
+//    {
+//        cout<<"color scheme not found, using default..."<<endl;
+//        colors[0].Red = 255;//max wind
+//        colors[0].Green = 0;
+//        colors[0].Blue = 0;
+//        colors[0].Alpha = 0;
+
+//        colors[1].Red = 255;
+//        colors[1].Green = 127;
+//        colors[1].Blue = 0;
+//        colors[1].Alpha = 0;
+
+//        colors[2].Red = 255;
+//        colors[2].Green = 255;
+//        colors[2].Blue = 0;
+//        colors[2].Alpha = 0;
+
+//        colors[3].Red = 0;
+//        colors[3].Green = 255;
+//        colors[3].Blue = 0;
+//        colors[3].Alpha = 0;
+
+//        colors[4].Red = 0;
+//        colors[4].Green = 0;
+//        colors[4].Blue = 255;
+//        colors[4].Alpha = 0;
+//    }
+
+
+
 
 	int arrowLength = 40;	//pixels;
 	int arrowHeadLength = 10; // pixels;

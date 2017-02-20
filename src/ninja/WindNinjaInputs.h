@@ -182,6 +182,9 @@ public:
     double outputBufferClipping;	//specifies the percent to clip the output files around the perimeter.  Range 0-50.
     bool writeAtmFile;          //flage specifying if a Farsite .atm file should be written.
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
+
+    std::string googColor; //sets color scheme for output /Colorblind mode
+
     KmlVector::egoogSpeedScaling googSpeedScaling;		//flag specifying the speed scaling for the legend/colors in the *.kmz file (0=>equal colors, 1=>equal interval)
     double googLineWidth;		//drawing line width for google output vectors
     bool wxModelGoogOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
