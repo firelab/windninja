@@ -1,4 +1,4 @@
-// Copyright 2016 Boise State University.  All rights reserved.
+// Copyright 2017 Kyle Shannon.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -15,6 +15,8 @@ import (
 	"path"
 )
 
+const threddsFile = "thredds.csv"
+
 // Handle the phone home call from WindNinja.  Log the IP and if requested,
 // return the thredds csv file
 func visitHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,10 +25,11 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if t := r.FormValue("thredds"); t == "1" || t == "true" {
+	switch r.FormValue("thredds") {
+	case "1", "true", "yes", "csv":
 		// Read in thredds data for download
-		st, err := os.Stat(threddsFile)
-		if err != nil || st.Size() < 1 {
+		fi, err := os.Stat(threddsFile)
+		if os.IsNotExist(err) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -35,7 +38,7 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Length", fmt.Sprintf("%d", st.Size()))
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", fi.Size()))
 		w.Header().Set("Content-Type", "text/csv")
 		w.Header().Set("Content-Dispostion", "attachment")
 		io.Copy(w, fin)

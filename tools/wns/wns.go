@@ -1,3 +1,7 @@
+// Copyright 2017 Kyle Shannon.  All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -12,18 +16,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type geogData struct {
-	Country string `json:"country"`
-	Region  string `json:"region"`
-	Visits  int    `json:"count"`
-}
-
 var db *sql.DB
 
 const (
-	//dbFile      = "/srv/www/marblerye.org/data/ninjavisit.db"
-	dbFile      = "./ninjavisit.db"
-	threddsFile = "/srv/www/marblerye.org/data/thredds.csv"
+	dbFile = "./ninjavisit.db"
 )
 
 func main() {
