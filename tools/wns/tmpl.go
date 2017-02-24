@@ -4,7 +4,17 @@
 
 package main
 
-const templates = `
+import (
+	"html/template"
+)
+
+var templates *template.Template
+
+func init() {
+	templates = template.Must(template.New("templates").Parse(templateData))
+}
+
+const templateData = `
 {{define "geogreport"}}
 <!DOCTYPE html>
 <html>

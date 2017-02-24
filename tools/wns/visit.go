@@ -5,21 +5,14 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
-
-	_ "github.com/mattn/go-sqlite3"
-)
-
-var db *sql.DB
-
-const (
-	dbFile      = "/srv/www/marblerye.org/data/ninjavisit.db"
-	threddsFile = "/srv/www/marblerye.org/data/thredds.csv"
+	"path"
 )
 
 // Handle the phone home call from WindNinja.  Log the IP and if requested,
@@ -49,36 +42,57 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 		fin.Close()
 	}
 	ip := r.RemoteAddr
+	log.Printf("visit from ip: %s", ip)
 	_, err = db.Exec("INSERT INTO visit(timestamp, ip) VALUES(datetime('now'), ?)", ip)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	// Call the geoip server asynchronously
-	go func(ip string) {
-		rows, err := db.Query("SELECT COUNT() FROM ip WHERE ip=?", ip)
-		if err == nil && rows.Next() {
-			var n int
-			rows.Scan(&n)
-			if n < 1 {
-				resp, err := http.Get(fmt.Sprintf("https://freegeoip.net/json/%s", ip))
-				if err != nil {
-					// log error
-					fmt.Printf("%s", err)
-					return
-				}
-				defer resp.Body.Close()
-				dec := json.NewDecoder(resp.Body)
-				var m map[string]interface{}
-				err = dec.Decode(&m)
-				if err == nil {
-					_, err := db.Exec("INSERT INTO ip VALUES(?,?,?,?,?,?)",
-						m["ip"], m["country_code"], m["region_name"], m["city"],
-						m["longitude"], m["latitude"])
-					fmt.Printf("%s", err)
-				} else {
-					fmt.Println(err.Error())
-				}
-			}
+	go func() {
+		log.Printf("fetching data for ip: %s", ip)
+		row := db.QueryRow("SELECT COUNT() FROM ip WHERE ip=?", ip)
+		if err != nil {
+			log.Println(err)
+			return
 		}
-	}(ip)
+		var n int
+		err = row.Scan(&n)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		if n > 0 {
+			// Already logged in our system
+			return
+		}
+		u := url.URL{
+			Scheme: "https",
+			Host:   "freegeoip.net",
+			Path:   "json",
+		}
+		u.Path = path.Join(u.Path, ip)
+		log.Printf("fetching %s", u.String())
+		resp, err := http.Get(u.String())
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("response from geoip: %s", http.StatusText(resp.StatusCode))
+			return
+		}
+		var m map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+			log.Println(err)
+			return
+		}
+		_, err = db.Exec("INSERT INTO ip VALUES(?,?,?,?,?,?)",
+			m["ip"], m["country_code"], m["region_name"], m["city"],
+			m["longitude"], m["latitude"])
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 }
