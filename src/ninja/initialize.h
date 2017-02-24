@@ -34,34 +34,93 @@
 #include "ninjaException.h"
 #include "WindNinjaInputs.h"
 #include "mesh.h"
-#include "addDiurnalFlow.h"
 #include "wxStation.h"
 #include "windProfile.h"
 #include "wn_3dScalarField.h"
 #include <vector>
+#include "cellDiurnal.h"
+#include "SurfProperties.h"
+
+namespace blt = boost::local_time;
 
 class initialize
 {
-	public:
+    public:
+        initialize();
+        virtual ~initialize(); 
+        
+        //Pure virtual function for initializing volume wind fields.
+        virtual void initializeFields(WindNinjaInputs &input,
+                        Mesh const& mesh,
+                        wn_3dScalarField& u0,
+                        wn_3dScalarField& v0,
+                        wn_3dScalarField& w0,
+                        AsciiGrid<double>& cloud) = 0;
+#ifdef NINJAFOAM
+        virtual void ninjaFoamInitializeFields( WindNinjaInputs &input,
+                                                AsciiGrid<double> &cloud ){};
+#endif //NINJAFOAM
 
-		initialize();								//Default constructor
-		virtual ~initialize();                              // Destructor
-		
-		//initialize(initialize const& m);               // Copy constructor
-		//initialize& operator= (initialize const& m);   // Assignment operator
+        /*TODO: refactor so these aren't accessed directly in ninja */
+        virtual std::string  getForecastIdentifier(){};
+        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr){};
+        wn_3dScalarField air3d; //perturbation potential temperature
+        std::vector<double> u10List;
+        std::vector<double> v10List;
+        std::vector<double> u_wxList;
+        std::vector<double> v_wxList;
+        std::vector<double> w_wxList;
 
-		//Pure virtual function for initializing volume wind fields.
-		virtual void initializeFields(WindNinjaInputs &input,
-				Mesh const& mesh,
-				wn_3dScalarField& u0,
-				wn_3dScalarField& v0,
-				wn_3dScalarField& w0,
-				AsciiGrid<double>& cloud,
-				AsciiGrid<double>& L,
-				AsciiGrid<double>& u_star,
-				AsciiGrid<double>& bl_height) = 0;
+        AsciiGrid<double> L;		//Monin-Obukhov length
+        AsciiGrid<double> bl_height;	//atmospheric boundary layer height
 
-	protected:
+    protected:
+	void addDiurnal(WindNinjaInputs& input, Aspect const* asp,
+                    Slope const* slp, Shade const* shd, Solar *inSolar);
+
+        void initializeWindToZero(Mesh const& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+        void initializeWindFromProfile(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+        virtual void initializeBoundaryLayer(WindNinjaInputs& input);
+
+        void addDiurnalComponent(WindNinjaInputs &input,
+                                const Mesh& mesh,
+                                wn_3dScalarField& u0,
+                                wn_3dScalarField& v0,
+                                wn_3dScalarField& w0);
+
+        void setCloudCover(WindNinjaInputs &input);
+
+        void setUniformCloudCover(WindNinjaInputs &input,
+                                    AsciiGrid<double> cloud);
+
+        void setGridHeaderData(WindNinjaInputs& input, AsciiGrid<double>& cloud);
+
+        AsciiGrid<double> u_star;	//Friction velocity
+
+        AsciiGrid<double> height;	//height of diurnal flow above "z=0" in log profile
+        AsciiGrid<double> uDiurnal;
+        AsciiGrid<double> vDiurnal;
+        AsciiGrid<double> wDiurnal;
+        AsciiGrid<double> uInitializationGrid;
+        AsciiGrid<double> vInitializationGrid;
+        AsciiGrid<double> airTempGrid;
+        AsciiGrid<double> cloudCoverGrid;
+        AsciiGrid<double> speedInitializationGrid;
+        AsciiGrid<double> dirInitializationGrid;
+
+        windProfile profile;
+
+    private:
+ 
 
 };
 

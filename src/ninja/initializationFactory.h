@@ -1,10 +1,10 @@
 /******************************************************************************
  *
- * $Id:$
+ * $Id: wxModelInitializationFactory.h 
  *
- * Project:  WindNinja Qt GUI
- * Purpose:  main() function to initiate cli
- * Author:   Kyle Shannon <ksshannon@gmail.com>
+ * Project:  WindNinja
+ * Purpose:  Factory class for initialize derived classes 
+ * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com> 
  *
  ******************************************************************************
  *
@@ -27,41 +27,22 @@
  *
  *****************************************************************************/
 
-#include "cli.h"
-#include "ninjaArmy.h"
-#include "ninjaException.h"
-#include "ninja_init.h"
+#ifndef INITIALIZATION_FACTORY_H 
+#define INITIALIZATION_FACTORY_H 
 
-#include "gdal.h"
-#include "ogr_api.h"
+#include "domainAverageInitialization.h"
+#include "pointInitialization.h"
+#include "griddedInitialization.h"
+#include "foamDomainAverageInitialization.h"
+#include "foamWxModelInitialization.h"
+#include "wxModelInitializationFactory.h"
 
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
-#endif
-
-/**
- * @brief Main function for WindNinja.
- * Allow for a few options:
- * If CORE_RUN is defined, force a core run
- * The 'core run' is a editable command line run.
- * @see core_run.h
- * @param argc argument count
- * @param argv argument value(s)
- */
-int main(int argc, char *argv[])
+class initializationFactory
 {
-    CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
-    NinjaInitialize();
-    int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
+    public:
 
-    result = windNinjaCLI(argc, argv);
+        static initialize* makeInitialization(WindNinjaInputs &input);
 
-#ifdef _OPENMP
-    omp_destroy_lock (&netCDF_lock);
-#endif
+}; 
 
-    return result;
-}
+#endif //INITIALIZATION_FACTORY_H

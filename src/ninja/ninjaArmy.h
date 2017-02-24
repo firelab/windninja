@@ -115,7 +115,7 @@ public:
         ncepGfsSurf
     };
 
-    void makeArmy(std::string forecastFilename, std::string timeZone);
+    void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();

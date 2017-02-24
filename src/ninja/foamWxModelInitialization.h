@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initializing with NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with wx model NinjaFOAM simulations for use with diurnal 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -27,32 +27,44 @@
 *
 *****************************************************************************/
 
-#ifndef FOAM_INITIALIZATION_H
-#define FOAM_INITIALIZATION_H
+#ifndef FOAM_WX_MODEL_INITIALIZATION_H
+#define FOAM_WX_MODEL_INITIALIZATION_H
 
 #include "initialize.h"
 #include "ascii_grid.h"
 
-class foamInitialization : public initialize
+/* 
+ * Right now, there is no difference between this class
+ * and foamDomainAverageInitialization, but this could change.
+ * We could initialize cloud and air from grids, instead of
+ * just setting the corresponding inputs to the grid 
+ * averages. Also, distiguishing between the two initialization
+ * methods allows us to handle things more easily later in the 
+ * simulation (e.g, during output file writing)
+ *
+ * This is a work in progress, not sure if this will stay
+ * or go.
+ */
+
+class foamWxModelInitialization : public initialize
 {
     public:
-        foamInitialization();
-        virtual ~foamInitialization();
+        foamWxModelInitialization();
+        virtual ~foamWxModelInitialization();
     
         virtual void initializeFields(WindNinjaInputs &input,
 		        Mesh const& mesh,
 		        wn_3dScalarField& u0,
 		        wn_3dScalarField& v0,
 		        wn_3dScalarField& w0,
-		        AsciiGrid<double>& cloud,
-		        AsciiGrid<double>& L,
-		        AsciiGrid<double>& u_star,
-		        AsciiGrid<double>& bl_height);
+		        AsciiGrid<double>& cloud);
         
         AsciiGrid<double> inputVelocityGrid;
         AsciiGrid<double> inputAngleGrid;
 
     private:
     
+        void setWn2dGrids(WindNinjaInputs &input);
+        void setInitializationGrids(WindNinjaInputs &input);
 };
-#endif /* FOAM_INITIALIZATION_H */
+#endif /* FOAM_WX_MODEL_INITIALIZATION_H */

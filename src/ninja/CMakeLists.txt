@@ -22,8 +22,7 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${Boost_INCLUDE_DIRS}
                    ${PROJECT_SOURCE_DIR}/src)
 
-set(NINJA_SOURCES addDiurnalFlow.cpp
-                  air.cpp
+set(NINJA_SOURCES air.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp
@@ -44,6 +43,7 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
                   initialize.cpp
+                  initializationFactory.cpp
                   KmlVector.cpp
                   LineStyle.cpp
                   mesh.cpp
@@ -100,7 +100,8 @@ set(NINJA_SOURCES addDiurnalFlow.cpp
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
-                    foamInitialization.cpp)
+                    foamDomainAverageInitialization.cpp
+                    foamWxModelInitialization.cpp)
 endif(NINJAFOAM)
 
 if(WITH_NOMADS_SUPPORT)
