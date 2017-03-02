@@ -1,3 +1,4 @@
+
 /******************************************************************************
 *
 * $Id$
@@ -1404,7 +1405,7 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "goog_out_resolution", "units_goog_out_resolution");
                 windsim.setGoogResolution( i_, vm["goog_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_goog_out_resolution"].as<std::string>()));
-                option_dependency(vm, "write_goog_output","goog_out_color_scheme");
+//                option_dependency(vm, "write_goog_output","goog_out_color_scheme");
                 windsim.setGoogColor(i_,vm["goog_out_color_scheme"].as<std::string>());
 //                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options: default (ROYGB), oranges, blues, greens,pink,and magic_beans")
 
