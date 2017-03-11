@@ -112,6 +112,8 @@ protected:
         
 
 private:
+    QDialog dlg;
+
     double latitude;
     double longitude;
     double northBound;
