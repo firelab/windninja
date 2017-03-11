@@ -71,6 +71,11 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
+    //set application name/version in User-Agent header
+    QString ver = NINJA_VERSION_STRING;
+    app.setApplicationName(QString("WindNinja"));
+    app.setApplicationVersion(ver);
+
     app.setWindowIcon(QIcon(":wn-icon.png"));
 
     QPixmap bigSplashPixmap(":wn-splash.png");
@@ -79,7 +84,6 @@ int main(int argc, char *argv[])
     QPixmap smallSplashPixmap;
     smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
                          Qt::KeepAspectRatioByExpanding);
-    QString ver = NINJA_VERSION_STRING;
     QStringList list;
     list << "Loading the WindNinja " + ver + "...";
     list << "Loading mesh generator...";
