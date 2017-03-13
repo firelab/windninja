@@ -266,6 +266,14 @@ bool KmlVector::makeDefaultStyles(string cScheme)
     colors[1] = new Style("green", 255, 160, 219,166, lineWidth);
     colors[0] = new Style("blue", 255, 55, 136, 0, lineWidth);
     }
+    if (cScheme=="ROPGW") //Red Orange Pink Green White
+    {// Alpha BGR
+    colors[4] = new Style("red", 255, 27, 31, 166, lineWidth); //highest windspeed
+    colors[3] = new Style("orange", 255, 114, 162, 198, lineWidth); //2nd highest
+    colors[2] = new Style("yellow", 255, 216, 204, 222, lineWidth);// moderate
+    colors[1] = new Style("green", 255, 141, 236,229, lineWidth); //moderate low
+    colors[0] = new Style("blue", 255, 229, 243, 239, lineWidth); //very low
+    }
 //    else
 //    {
 //        cout<<"color scheme not found, using default..."<<endl;
@@ -856,6 +864,33 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut,std::string cScheme)
         colors[4].Red = 0;
         colors[4].Green = 136;
         colors[4].Blue = 55;
+        colors[4].Alpha = 0;
+    }
+    if (cScheme=="ROPGW")
+    {
+        colors[0].Red = 166; //0=Highest wind speed: its reversed from above...
+        colors[0].Green = 31; //red
+        colors[0].Blue = 27;
+        colors[0].Alpha = 0;
+
+        colors[1].Red = 198; //orange
+        colors[1].Green = 162;
+        colors[1].Blue = 114;
+        colors[1].Alpha = 0;
+
+        colors[2].Red = 222; //pink
+        colors[2].Green = 204;
+        colors[2].Blue = 216;
+        colors[2].Alpha = 0;
+
+        colors[3].Red = 229; //green
+        colors[3].Green = 236;
+        colors[3].Blue = 141;
+        colors[3].Alpha = 0;
+
+        colors[4].Red = 239;
+        colors[4].Green = 243;//White
+        colors[4].Blue = 229;
         colors[4].Alpha = 0;
     }
 //    else
