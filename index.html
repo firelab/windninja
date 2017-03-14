@@ -7,7 +7,7 @@ layout: default
 
 
 
- <div class="col col-12">
+ <!--<div class="col col-12">
       <div class="col col-3">
           <div class="block glass" style="background-image:url(assets/gravatar2.png); width:230px;height:230px;">
           </div>
@@ -20,7 +20,22 @@ layout: default
             </div>
         </div>
       </div>
+  </div>-->
+  <div class="col col-12">
+  <div class="block glass">
+  <!--  <div class="block-body"> -->
+      <div class="col col-3">
+        <img src="assets/gravatar2.png">
+      </div>
+      <div class="col col-9">
+        <div class="block-body height-1">
+        <h2>WindNinja is a diagnostic wind model developed for use in wildland fire modeling.</h2>
+        <p class="white-text">Wind is one of the most influential environmental factors affecting wildland fire behavior. The complex terrain of fire-prone landscapes causes local changes in wind speed and direction that are not predicted well by standard weather models or expert judgment. WindNinja was developed to help fire managers predict these winds.</p>
+      </div>
+    </div>
   </div>
+</div>
+
   <div class="col col-12">
     {% for port in site.data.portfolio %}
       <div class="col col-{{port.width}}">
@@ -35,21 +50,139 @@ layout: default
       </div>
     {% endfor %}
     </div>
-  <div class="col col-9">
-    {% for post in site.posts %}
-      <div class="col col-{{post.width}}">
-        <div class="block {{post.color}}">
-            <div class="block-body height-{{post.height}}">
-                <span class="post-meta white-text">{{ post.date | date: "%b %-d, %Y" }}</span>
-
-                <h2>
-                  <a class="post-link white-text" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-                </h2>
-            </div>
+    <div class="col col-3">
+      <div class="block green">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/IntheField/">WindNinja In The Field</a>
+          </h2>
+          <span class="post-meta white-text"></span>
         </div>
       </div>
-    {% endfor %}
     </div>
+    <div class="col col-3">
+      <div class="block pink">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/howdoes/">How Does WindNinja Work?</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-6">
+      <div class="block red">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/online/">WindNinja Online Run</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block blue">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/tutorial/">WindNinja Tutorials</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block orange">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/mobile/">WindNinja Mobile</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block pink">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/whois/">Who Uses WindNinja?</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block teal">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/field/">Field Validation</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-6">
+      <div class="block green">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/publications/">Select Publications & Products</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-6">
+      <div class="block purple">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/advanced/">Developers & Advanced Users</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-6">
+      <div class="block blue">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/build/">Building WindNinja from Source</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block red">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/contributors/">Contributors</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+    <div class="col col-3">
+      <div class="block green">
+        <div class="block-body height-1">
+          <span class="post-meta white-text"></span>
+          <h2>
+          <a class="post-link white-text" href="/windninja/indev/">Features in Development</a>
+          </h2>
+          <span class="post-meta white-text"></span>
+        </div>
+      </div>
+    </div>
+        </div>
     <div class="col col-3">
         <div class="block glass">
             <div class="block-body">
