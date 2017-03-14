@@ -42,6 +42,7 @@ func main() {
 	http.HandleFunc("/map", mapHandler)
 	http.HandleFunc("/report", reportHandler)
 	http.HandleFunc("/visit", visitHandler)
+	http.HandleFunc("/user", userReport)
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
@@ -55,4 +56,5 @@ func main() {
 		os.Exit(0)
 	}()
 	srv.ListenAndServe()
+	// srv.ListenAndServeTLS()
 }
