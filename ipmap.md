@@ -34,3 +34,16 @@ permalink: /umap/
 
 ![all time plot2](http://firelab.github.io/windninja/assets/30.png)
 
+
+
+## WindNinja Usage by Country
+<hr />
+<br>
+
+<iframe src="http://windninja.org:34333/map" style="background: #FFFFFF;" height="525"  width="925"></iframe>
+
+Legend indicates number of launches since recordkeeping began.
+
+
+
+
