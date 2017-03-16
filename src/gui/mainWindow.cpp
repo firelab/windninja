@@ -1872,7 +1872,11 @@ int mainWindow::solve()
         /* This can throw a badForecastFile */
         try
         {
+#ifdef NINJAFOAM
             army->makeArmy( weatherFile, timeZone, useNinjaFoam );
+#else
+            army->makeArmy( weatherFile, timeZone, false );
+#endif
         }
         catch( badForecastFile &e )
         {
