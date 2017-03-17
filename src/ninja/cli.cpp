@@ -887,7 +887,7 @@ int windNinjaCLI(int argc, char* argv[])
         //---------------------------------------------------------------------
         //  only some options are possible with momentum solver
         //---------------------------------------------------------------------
-        #ifdef NINJAFOAM 
+#ifdef NINJAFOAM 
         
         if(vm["initialization_method"].as<std::string>()==string("pointInitialization") &&
            vm["momentum_flag"].as<bool>()){
@@ -907,7 +907,7 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
         #endif
         
-        #endif //NINJAFOAM
+#endif //NINJAFOAM
         
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
@@ -922,10 +922,17 @@ int windNinjaCLI(int argc, char* argv[])
                 try
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+#ifdef NINJAFOAM
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
                                                             vm["momentum_flag"].as<bool>() );
+#else
+                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                                                            vm["forecast_duration"].as<int>() ),
+                                                            osTimeZone,
+                                                            false );
+#endif
                 }
                 catch(... )
                 {
@@ -937,9 +944,16 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "forecast_filename", "time_zone");
             if(vm.count("forecast_filename"))   //if a forecast file already exists
             {
+#ifdef NINJAFOAM
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
                                  vm["momentum_flag"].as<bool>());
+#else
+
+                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
+                                 osTimeZone,
+                                 false);
+#endif
             }
         }
 
