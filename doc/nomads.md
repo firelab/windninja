@@ -14,6 +14,8 @@ NOMADS is the National Weather Service data dissemination server/service.  WindN
   <tr><td>HIRES Alaska</td><td>~5 km</td><td>Alaska</td></tr>
   <tr><td>HIRES ARW</td><td>~5 km</td><td>CONUS</td></tr>
   <tr><td>HIRES NMM</td><td>~5 km</td><td>CONUS</td></tr>
+  <tr><td>NAM NEST Alaska</td><td>3 km</td><td>Alaska</td></tr>
+  <tr><td>NAM CONUS</td><td>4 km</td><td>CONUS</td></tr>
   <tr><td>NAM Alaska</td><td>11.25 km</td><td>Alaska</td></tr>
   <tr><td>NAM CONUS</td><td>13 km</td><td>CONUS</td></tr>
   <tr><td>NAM North America</td><td>32 km</td><td>North America</td></tr>
