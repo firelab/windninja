@@ -62,8 +62,9 @@ class initialize
 #endif //NINJAFOAM
 
         /*TODO: refactor so these aren't accessed directly in ninja */
-        virtual std::string  getForecastIdentifier(){};
-        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr){};
+        virtual std::string getForecastIdentifier();
+        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr); 
+
         wn_3dScalarField air3d; //perturbation potential temperature
         std::vector<double> u10List;
         std::vector<double> v10List;
