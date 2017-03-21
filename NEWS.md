@@ -4,7 +4,8 @@ Release Notes
 WindNinja 3.1.4
 ---------------
 
- - Set app name/version in User-Agent header to avoid Google Maps API quota error (\#242)
+ - Use API key to avoid Google Maps API quota error (\#242)
+ - Set app name/version in User-Agent header (\#242)
 
 WindNinja 3.1.3
 ---------------
