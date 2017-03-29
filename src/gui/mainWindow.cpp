@@ -3181,6 +3181,8 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( false );
         tree->vtk->vtkGroupBox->setHidden( false );
+        tree->vtk->vtkGroupBox->setCheckable( true );
+        tree->vtk->vtkGroupBox->setChecked( false );
     }
 }
 #endif
