@@ -110,7 +110,6 @@ public:
         ncepNdfd,
         ncepNamSurf,
         ncepRapSurf,
-        ncepDgexSurf,
         ncepNamAlaskaSurf,
         ncepGfsSurf
     };

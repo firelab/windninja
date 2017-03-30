@@ -183,7 +183,6 @@ void weatherModel::loadModelComboBox()
     modelComboBox->addItem(  QString::fromStdString(ndfd.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(nam.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(rap.getForecastIdentifier() ) );
-    //modelComboBox->addItem( QString::fromStdString(dgex.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
 #ifdef WITH_NOMADS_SUPPORT
@@ -261,8 +260,6 @@ void weatherModel::getData()
         model = new ncepNamSurfInitialization( nam );
     else if( modelChoice == 2 )
         model = new ncepRapSurfInitialization( rap );
-    //else if( modelChoice == 3 )
-    //	model = new ncepDgexSurfInitialization( dgex );
     else if( modelChoice == 3 )
         model = new ncepNamAlaskaSurfInitialization( namAk );
     else if( modelChoice == 4 )
@@ -346,9 +343,6 @@ void weatherModel::checkForModelData()
     /* rap surface */
     filters << QString::fromStdString( rap.getForecastIdentifier() )
             + "-" + QFileInfo( inputFile ).fileName();
-    /* dgex surface */
-    //filters << QString::fromStdString( dgex.getForecastIdentifier() )
-    //	+ "-" + QFileInfo( inputFile ).fileName();
     /* nam alaska surface */
     filters << QString::fromStdString( namAk.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
