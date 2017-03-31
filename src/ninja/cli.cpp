@@ -894,7 +894,6 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "'pointInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
             return -1;
         }
-        //conflicting_options(vm, "momentum_flag", "diurnal_winds");
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         #ifdef FRICTION_VELOCITY

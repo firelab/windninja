@@ -3159,7 +3159,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->diurnal->diurnalGroupBox->setCheckable( true );
         tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( false );
-        tree->diurnal->ninjafoamConflictLabel->setHidden( true );
         
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( true );
