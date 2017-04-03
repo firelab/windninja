@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+WindNinja 3.2.0
+---------------
+
+- Enable weather model initialization with the momentum solver
+
+- Fix an issue that was causing NAM models to fail due to an upgrade on the NOMADS server (\#244)
+
 WindNinja 3.1.4
 ---------------
 
