@@ -102,7 +102,7 @@ typedef int   NinjaErr;
      *  Various Simulation Parameters
      *-----------------------------------------------------------------------------*/
     NinjaErr WINDNINJADLL_EXPORT NinjaSetInitializationMethod
-        (NinjaH * ninja, const int nIndex, const char * initializationMethod );
+        ( NinjaH * ninja, const int nIndex, const char * initializationMethod );
 
     NinjaErr WINDNINJADLL_EXPORT NinjaSetNumberCPUs
         ( NinjaH * ninja, const int nIndex, const int nCPUs );
@@ -157,7 +157,7 @@ typedef int   NinjaErr;
      *-----------------------------------------------------------------------------*/
 #ifdef EMISSIONS
     NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFilename
-        (NinjaH * ninja, const int nIndex, const char* filename );
+        ( NinjaH * ninja, const int nIndex, const char* filename );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFileOut
         ( NinjaH * ninja, const int nIndex, const char* filename );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFlag
@@ -194,12 +194,12 @@ typedef int   NinjaErr;
     NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolutionChoice
         ( NinjaH * ninja, const int nIndex, const char * choice );
 
-	NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
-        (NinjaH * ninja, const int nIndex, const double resolution,
+    NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
+        ( NinjaH * ninja, const int nIndex, const double resolution,
          const char * units );
 
-	NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
-        (NinjaH * ninja, const int nIndex, int vertLayers );
+    NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
+        ( NinjaH * ninja, const int nIndex, int vertLayers );
 
 
     /*-----------------------------------------------------------------------------

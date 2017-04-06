@@ -420,6 +420,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
     ( NinjaH * ninja, const int nIndex, const char * station_filename )
 {
@@ -490,6 +491,7 @@ int WINDNINJADLL_EXPORT NinjaGetDiurnalWindFlag
         return NINJA_E_NULL_PTR;
     }
 }
+
 const char * WINDNINJADLL_EXPORT NinjaGetInitializationMethod
     ( NinjaH * ninja, const int nIndex )
 {
@@ -552,6 +554,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetStabilityFlag
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetAlphaStability
     ( NinjaH * ninja, const int nIndex, const double stability_ )
 {
@@ -582,6 +585,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarTransportFlag
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceStrength
     ( NinjaH * ninja, const int nIndex, const double source_ )
 {
@@ -594,6 +598,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceStrength
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarXcoord
     ( NinjaH * ninja, const int nIndex, const double xcoord_ )
 {
@@ -606,6 +611,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarXcoord
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarYcoord
     ( NinjaH * ninja, const int nIndex, const double ycoord_ )
 {
@@ -636,6 +642,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
         return NINJA_E_NULL_PTR;
     }
 }
+
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
@@ -651,6 +658,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputBufferClipping
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -663,6 +671,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelGoogOutFlag
         return NINJA_E_NULL_PTR;
     }
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelShpOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -676,6 +685,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelShpOutFlag
     }
 
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelAsciiOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -689,6 +699,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelAsciiOutFlag
     }
 
 }
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
