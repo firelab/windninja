@@ -33,17 +33,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-//#include <conio.h>
 #include <string.h>
-//#include <dos.h>
 #include <memory.h>
 #include <time.h>
 #include <ctime>
-//#include <tchar.h>
 #include <iostream>
 
 #include <sstream>
-//#include <string>
 #include <iomanip>
 #include <fstream>
 #include <cstdlib>
@@ -57,8 +53,6 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-//#include "taucsaddon.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -104,7 +98,6 @@
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
 #endif
 
-
 #ifdef STABILITY
 #include "stability.h"
 #endif
@@ -121,17 +114,10 @@
 
 #define LENGTH 256
 
-#ifdef WINDNINJA_EXPORTS
-#define WINDNINJA_API __declspec(dllexport)
-#else
-#define WINDNINJA_API
-#endif
-
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
-
-class WINDNINJA_API ninja
+class ninja
 {
 public:
     ninja();
