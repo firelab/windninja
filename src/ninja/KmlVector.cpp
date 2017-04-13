@@ -268,11 +268,12 @@ bool KmlVector::makeDefaultStyles(string cScheme)
     }
     if (cScheme=="ROPGW") //Red Orange Pink Green White
     {// Alpha BGR
-    colors[4] = new Style("red", 255, 27, 31, 166, lineWidth); //highest windspeed
-    colors[3] = new Style("orange", 255, 114, 162, 198, lineWidth); //2nd highest
-    colors[2] = new Style("yellow", 255, 216, 204, 222, lineWidth);// moderate
-    colors[1] = new Style("green", 255, 141, 236,229, lineWidth); //moderate low
-    colors[0] = new Style("blue", 255, 229, 243, 239, lineWidth); //very low
+    double arrowWidth=1.0;
+    colors[4] = new Style("red", 255, 27, 31, 166, 4.0*arrowWidth); //highest windspeed
+    colors[3] = new Style("orange", 255, 114, 162, 198, 3.0*arrowWidth); //2nd highest
+    colors[2] = new Style("yellow", 255, 216, 204, 222, 1.75*arrowWidth);// moderate
+    colors[1] = new Style("green", 255, 141, 236,229, 1.5*arrowWidth); //moderate low
+    colors[0] = new Style("blue", 255, 229, 243, 239, arrowWidth); //very low
     }
 //    else
 //    {
@@ -319,7 +320,7 @@ bool KmlVector::setOGR()
 
 bool KmlVector::writeKml(std::string cScheme)
 {
-    cout<<cScheme<<endl;
+    cout<<"Using Color Scheme: "<<cScheme<<"..."<<endl;
 	VSILFILE* fout = 0;
     makeDefaultStyles(cScheme);
 	if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
@@ -384,7 +385,7 @@ bool KmlVector::writeKml(std::string cScheme)
 bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme)
 {
 	VSILFILE *fout;
-    cout<<cScheme<<endl;
+    cout<<"Using Color Scheme: "<<cScheme<<"..."<<endl;
 
     makeDefaultStyles(cScheme);
 	if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
@@ -1663,6 +1664,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 
 	return true;
 }
+
 
 /**
 *@brief Uses GDAL VSI to make .kmz files
