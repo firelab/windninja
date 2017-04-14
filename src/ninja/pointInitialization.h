@@ -167,6 +167,8 @@ class pointInitialization : public initialize
                                             std::string yeary, std::string monthy,
                                             std::string dayy, std::string clocky);
 
+//        static std::string generateBasePlate(std::string);
+        static void storeFileNames(vector<std::string> statLoc);
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
         static void fetchStationData(std::string URL, std::string timeZone, bool latest);
         static double getStationBuffer();
@@ -178,5 +180,6 @@ class pointInitialization : public initialize
         static const std::string baseUrl;
         static double stationBuffer;
         double dfInvDistWeight;
+        static std::vector<std::string> stationFiles;
 };
 #endif /* POINT_INITIALIZATION_H */

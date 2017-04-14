@@ -42,6 +42,7 @@ const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_te
 const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/stations/";
 std::string pointInitialization::rawStationFilename = "";
 double pointInitialization::stationBuffer;
+std::vector<std::string> pointInitialization::stationFiles;
 
 pointInitialization::pointInitialization() : initialize()
 {
@@ -2135,20 +2136,15 @@ bool pointInitialization::fetchStationByName(std::string stationList,
     return true;
 }
 
+void pointInitialization::storeFileNames(vector<std::string> statLoc)
+{
+    stationFiles=statLoc;
+}
+
 void pointInitialization::fetchStationData(std::string URL,
                                 std::string timeZone, bool latest)
 {
-    std::string csvName;
-    if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv")
-    {
-        csvName=rawStationFilename;
-        CPLDebug("STATION_FETCH", ".csv exists in stationFilename...");
-    }
-    else
-    {
-        csvName=rawStationFilename+".csv";
-        CPLDebug("STATION_FETCH", "Adding .csv to stationFilename...");
-    }
+
 
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
@@ -2182,6 +2178,10 @@ void pointInitialization::fetchStationData(std::string URL,
     int idx15=0;
     int idx16=0;
 
+    int idxID=0;
+    const char* writeID;
+    vector<char> testId;
+
     vector<int> mnetid;
 
     int idxx1=0;
@@ -2209,20 +2209,53 @@ void pointInitialization::fetchStationData(std::string URL,
     char** metarDateTime;
 
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
+    std::string csvName;
 
-    ofstream outFile;//writing to csv
-    outFile.open(csvName.c_str());
-    CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, csvName.c_str());
-    CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
-    std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
-    outFile<<header<<endl;
+    if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv")
+    {
+        rawStationFilename.erase(rawStationFilename.size()-4,4);
+        csvName=rawStationFilename;
+        CPLDebug("STATION_FETCH", ".csv exists in stationFilename...");
+    }
+    else
+    {
+        csvName=rawStationFilename;
+        CPLDebug("STATION_FETCH", "Adding .csv to stationFilename...");
+    }
+
+    std::vector<std::string> stationCSVNames;
 
     for (int ex=0;ex<fCount;ex++)
     {
+
+
         hFeature=OGR_L_GetFeature(hLayer,ex);
 
         idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
         mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,idx));
+
+        idxID=OGR_F_GetFieldIndex(hFeature,"STID");
+        writeID=(OGR_F_GetFieldAsString(hFeature,idxID));
+
+        boost::posix_time::ptime writeTime = boost::posix_time::second_clock::universal_time();
+
+        std::string tName;
+        stringstream idStream;
+        stringstream timeStream;
+        stringstream ss;
+        ss<<ex;
+        idStream<<writeID;
+        timeStream<<writeTime;
+        tName=csvName+"-"+idStream.str()+"-"+timeStream.str()+"-"+ss.str()+".csv";
+
+        ofstream outFile;//writing to csv
+        outFile.open(tName.c_str());
+        CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, csvName.c_str());
+        CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
+        std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
+        outFile<<header<<endl;
+        stationCSVNames.push_back(tName);
+        storeFileNames(stationCSVNames);
 
         if (mnetid[ex]==1) //METAR station uses cloud data
         {
@@ -2270,6 +2303,7 @@ void pointInitialization::fetchStationData(std::string URL,
             vector<std::string>metarTemperature;
             metarWindDirection=fixWindDir(metarDir,"0",count1);
             metarTemperature=fixWindDir(metarTemp,"-9999",count1);
+
             if (latest==true)
             {
                 count1=1;
@@ -2326,6 +2360,7 @@ void pointInitialization::fetchStationData(std::string URL,
             rawsWindDirection=fixWindDir(rawsDir,"0",count9);
             vector<double> rawsCloudCover;
             rawsCloudCover=Irradiate(rawsSolrad,1,count12,timeZone,rawsLatitude,rawsLatitude,rawsDateTime);
+
             if (latest==true)
             {
                 count9=1;
@@ -2358,6 +2393,7 @@ void pointInitialization::fetchStationData(std::string URL,
             }
         }
     }
+    exit(1);
     CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
     delete cloudhigh;
