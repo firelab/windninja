@@ -369,8 +369,57 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
 }
 
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
-                                              std::vector<boost::posix_time::ptime> timeList,
-                                              std::string timeZone)
+                                                      std::vector<boost::posix_time::ptime> timeList,
+                                                      std::string timeZone)
+{
+    vector<preInterpolate> diskData;
+    vector<vector<preInterpolate> > wxVector;
+
+    for (int i=0;i<stationFiles.size();i++)
+    {
+        vector<preInterpolate> singleStationData;
+        singleStationData = readDiskLine(demFile, stationFiles[i]);
+
+//        diskData.insert(diskData.end(),singleStationData.begin(),singleStationData.end());
+        wxVector.push_back(singleStationData);
+    }
+
+    vector<boost::posix_time::ptime> outaTime;
+    boost::posix_time::ptime noTime;
+    outaTime.push_back(noTime);
+    vector<vector<preInterpolate> > interpolatedDataSet;
+    vector<wxStation> readyToGo;
+    if (wxVector[0][0].datetime==noTime)
+    {
+        CPLDebug("STATION_FETCH", "noTime");
+        readyToGo=interpolateNull(demFile,wxVector,timeZone);
+    }
+    else
+    {
+        //does all interpolation
+        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList);
+        readyToGo=makeWxStation(interpolatedDataSet,demFile);
+    }
+    for (int i=0;i<readyToGo.size();i++)
+    {
+        bool a=wxStation::check_station(readyToGo[i]);
+        if (a != true)
+        {
+            CPLDebug("STATION_FETCH", "check_station failed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
+        }
+        else
+        {
+            CPLDebug("STATION_FETCH", "check_station passed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
+        }
+    }
+    return readyToGo;
+}
+
+
+
+vector<wxStation> pointInitialization::oldInterpolateFromDisk(std::string demFile,
+                                                           std::vector<boost::posix_time::ptime> timeList,
+                                                           std::string timeZone)
 {
     CPLDebug("STATION_FETCH", "Raw station file name = %s", rawStationFilename.c_str());
     vector<std::string> stationNames;
@@ -429,7 +478,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
 
     std::vector<pointInitialization::preInterpolate> diskData;
     std::vector<std::vector<pointInitialization::preInterpolate> > wxVector;
-    diskData=readDiskLine(demFile);// reads in data
+    diskData=OldreadDiskLine(demFile);// reads in data
 
     CPLDebug("STATION_FETCH", "Checking first time step...");
 
@@ -475,7 +524,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     else
     {
         //does all interpolation
-        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList); 
+        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList);
         readyToGo=makeWxStation(interpolatedDataSet,demFile);
     }
 
@@ -495,7 +544,8 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     return readyToGo;
 }
 
-vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(std::string demFile)
+
+vector<pointInitialization::preInterpolate> pointInitialization::OldreadDiskLine(std::string demFile)
 {
     std::string oErrorString = "";
     preInterpolate oStation;
@@ -786,6 +836,330 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     return oStations;
 }
 
+vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(std::string demFile,
+                                                                                 std::string stationLoc)
+{
+    std::string oErrorString = "";
+    preInterpolate oStation;
+    std::vector<preInterpolate> oStations;
+    preInterpolate work;
+    std::vector<preInterpolate> vecwork;
+    work.stationName="aaaaaaaa";
+    vecwork.push_back(work);
+
+    OGRDataSourceH hDS;
+    hDS = OGROpen( stationLoc.c_str(), FALSE, NULL );
+
+    if( hDS == NULL )
+    {
+        oErrorString = "Cannot open csv file: ";
+        oErrorString += stationLoc;
+        throw( std::runtime_error( oErrorString ) );
+    }
+
+    OGRFeatureH hFeature;
+    double dfTempValue = 0.0;
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRFeatureDefn *poFeatureDefn;
+    OGRFieldDefn *poFieldDefn;
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+
+    OGRLayerH hLayer;
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+    int fCount=OGR_L_GetFeatureCount(hLayer,1);
+
+    CPLDebug("STATION_FETCH", "Reading csvName: %s", rawStationFilename.c_str());
+
+    const char* station;
+    int idx=0;
+
+    poLayer->ResetReading();
+
+    const char *pszKey;
+    std::string oStationName;
+    std::string datetime;
+
+    poLayer->ResetReading();
+
+    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
+    {
+        poFeatureDefn = poLayer->GetLayerDefn();
+
+        // get Station name
+        oStationName = poFeature->GetFieldAsString( 0 );
+        oStation.stationName=oStationName;
+        pszKey = poFeature->GetFieldAsString( 1 );
+
+        //LAT LON COORDINATES
+        if( EQUAL( pszKey, "geogcs" ) )
+        {
+            //check for valid latitude in degrees
+            dfTempValue = poFeature->GetFieldAsDouble( 3 );
+
+            if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
+                OGRFeature::DestroyFeature( poFeature );
+                OGR_DS_Destroy( hDS );
+
+                oErrorString = "Bad latitude in weather station csv file";
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+            }
+
+            //check for valid longitude in degrees
+            dfTempValue = poFeature->GetFieldAsDouble( 4 );
+
+            if( dfTempValue < -180.0 || dfTempValue > 360.0 )
+            {
+                OGRFeature::DestroyFeature( poFeature );
+                OGR_DS_Destroy( hDS );
+
+                oErrorString = "Bad longitude in weather station csv file";
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+
+                throw( std::domain_error( oErrorString ) );
+            }
+
+            const char *pszDatum = poFeature->GetFieldAsString( 2 );
+            oStation.lat=poFeature->GetFieldAsDouble(3);
+            oStation.lon=poFeature->GetFieldAsDouble(4);
+            oStation.datumType=pszDatum;
+            oStation.coordType=pszKey;
+
+        }
+        else if( EQUAL( pszKey, "projcs" ) )
+        {
+            oStation.lat=poFeature->GetFieldAsDouble(3);
+            oStation.lon=poFeature->GetFieldAsDouble(4);
+            oStation.coordType=pszKey;
+        }
+        else
+        {
+            oErrorString = "Invalid coordinate system: ";
+            oErrorString += poFeature->GetFieldAsString( 1 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        //MIDDLE STUFF
+        pszKey = poFeature->GetFieldAsString( 6 );
+        dfTempValue = poFeature->GetFieldAsDouble( 5 );
+
+        if( dfTempValue <= 0.0 )
+        {
+            oErrorString = "Invalid height: ";
+            oErrorString += poFeature->GetFieldAsString( 5 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+
+            throw( std::domain_error( oErrorString ) );
+        }
+        if( EQUAL( pszKey, "meters" ) )
+        {
+            oStation.height=dfTempValue;
+            oStation.heightUnits=lengthUnits::meters;
+        }
+        else if( EQUAL( pszKey, "feet" ) )
+        {
+            oStation.height=dfTempValue;
+            oStation.heightUnits=lengthUnits::feet;
+        }
+        else
+        {
+            oErrorString = "Invalid units for height: ";
+            oErrorString += poFeature->GetFieldAsString( 6 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        //WIND SPEED
+        pszKey = poFeature->GetFieldAsString( 8 );
+        dfTempValue = poFeature->GetFieldAsDouble( 7 );
+
+        if( dfTempValue < 0.0 )
+        {
+            dfTempValue=0.0;
+            oErrorString = "Invalid value for speed: ";
+            oErrorString += poFeature->GetFieldAsString( 7 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        if ( EQUAL( pszKey, "mps" ) )
+        {
+            oStation.speed=dfTempValue;
+            oStation.inputSpeedUnits=velocityUnits::metersPerSecond;
+        }
+        else if( EQUAL( pszKey, "mph" ) )
+        {
+            oStation.speed=dfTempValue;
+            oStation.inputSpeedUnits=velocityUnits::milesPerHour;
+        }
+        else if( EQUAL( pszKey, "kph" ) )
+        {
+            oStation.speed=dfTempValue;
+            oStation.inputSpeedUnits=velocityUnits::kilometersPerHour;
+        }
+        else
+        {
+            oErrorString = "Invalid units for speed: ";
+            oErrorString += poFeature->GetFieldAsString( 8 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        //WIND DIRECTION
+        dfTempValue = poFeature->GetFieldAsDouble( 9 );
+
+        if( dfTempValue > 360.1 || dfTempValue < 0.0 )
+        {
+            oErrorString = "Invalid value for direction: ";
+            oErrorString += poFeature->GetFieldAsString( 9 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            dfTempValue=0.0;
+        }
+
+        oStation.direction=dfTempValue;
+
+        //TEMPERATURE
+        pszKey = poFeature->GetFieldAsString( 11 );
+
+        if( EQUAL(pszKey, "f" ) )
+        {
+            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.tempUnits=temperatureUnits::F;
+        }
+        else if( EQUAL( pszKey, "c" ) )
+        {
+            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.tempUnits=temperatureUnits::C;
+        }
+        else if( EQUAL( pszKey, "k" ) )
+        {
+            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.tempUnits=temperatureUnits::K;
+        }
+        else
+        {
+            oErrorString = "Invalid units for temperature: ";
+            oErrorString += poFeature->GetFieldAsString( 11 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        //CLOUD COVER
+        dfTempValue = poFeature->GetFieldAsDouble( 12 );
+
+        if( dfTempValue > 100.0 || dfTempValue < 0.0 )
+        {
+            oErrorString = "Invalid value for cloud cover: ";
+            oErrorString += poFeature->GetFieldAsString( 12 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            dfTempValue=0.0; //TEMPORARY UNTIL SOLRAD IS FIXED
+        }
+
+        oStation.cloudCover=dfTempValue;
+        oStation.cloudCoverUnits=coverUnits::percent;
+
+        //RADIUS OF INFLUENCE
+        pszKey = poFeature->GetFieldAsString( 14 );
+        dfTempValue = poFeature->GetFieldAsDouble( 13 );
+
+        if( EQUAL( pszKey, "miles" ) )
+        {
+            oStation.influenceRadius=dfTempValue;
+            oStation.influenceRadiusUnits=lengthUnits::miles;
+        }
+        else if( EQUAL( pszKey, "feet" ) )
+        {
+            oStation.influenceRadius=dfTempValue;
+            oStation.influenceRadiusUnits=lengthUnits::feet;
+        }
+        else if( EQUAL( pszKey, "km" ) )
+        {
+            oStation.influenceRadius=dfTempValue;
+            oStation.influenceRadiusUnits=lengthUnits::kilometers;
+        }
+        else if( EQUAL( pszKey, "meters" ) )
+        {
+            oStation.influenceRadius=dfTempValue;
+            oStation.influenceRadiusUnits=lengthUnits::meters;
+        }
+        else
+        {
+            oErrorString = "Invalid units for influence radius: ";
+            oErrorString += poFeature->GetFieldAsString( 14 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            throw( std::domain_error( oErrorString ) );
+        }
+
+        datetime=poFeature->GetFieldAsString(15);
+        std::string trunk=datetime.substr(0,datetime.size()-1);
+
+        boost::posix_time::ptime abs_time;
+
+        boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+        fig->set_iso_extended_format();
+        std::istringstream iss(trunk);
+        iss.imbue(std::locale(std::locale::classic(),fig));
+        iss>>abs_time;
+        oStation.datetime=abs_time;
+
+        oStations.push_back(oStation);
+    }
+
+    OGRFeature::DestroyFeature( poFeature );
+    OGR_DS_Destroy( hDS );
+
+    return oStations;
+}
+
+vector<std::string> pointInitialization::fetchWxStationID()
+{
+    vector<std::string> stationNames;
+    for (int k=0;k<stationFiles.size();k++)
+    {
+        OGRDataSourceH hDS;
+        hDS = OGROpen(stationFiles[k].c_str(), FALSE, NULL);
+
+        OGRLayer *poLayer;
+        OGRFeature *poFeature;
+        OGRFeatureDefn *poFeatureDefn;
+        poLayer = (OGRLayer *) OGR_DS_GetLayer(hDS, 0);
+
+        std::string oStationName;
+
+        OGRLayerH hLayer;
+        hLayer = OGR_DS_GetLayer(hDS, 0);
+        OGR_L_ResetReading(hLayer);
+
+        poLayer->ResetReading();
+        while ((poFeature = poLayer->GetNextFeature()) != NULL) {
+            poFeatureDefn = poLayer->GetLayerDefn();
+
+            // get Station name
+            oStationName = poFeature->GetFieldAsString(0);
+            stationNames.push_back(oStationName);
+        }
+    }
+
+    return stationNames;
+}
+
 
 vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, std::string demFile)
 {
@@ -793,29 +1167,30 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     vector<std::string> stationNames;
     vector<wxStation> stationData;
 
-    OGRDataSourceH hDS;
-    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
-
-    OGRLayer *poLayer;
-    OGRFeature *poFeature;
-    OGRFeatureDefn *poFeatureDefn;
-    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
-
-    std::string oStationName;
-
-    OGRLayerH hLayer;
-    hLayer=OGR_DS_GetLayer(hDS,0);
-    OGR_L_ResetReading(hLayer);
-
-    poLayer->ResetReading();
-    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
-    {
-        poFeatureDefn = poLayer->GetLayerDefn();
-
-        // get Station name
-        oStationName = poFeature->GetFieldAsString( 0 );
-        stationNames.push_back(oStationName);
-    }
+//    OGRDataSourceH hDS;
+//    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
+//
+//    OGRLayer *poLayer;
+//    OGRFeature *poFeature;
+//    OGRFeatureDefn *poFeatureDefn;
+//    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+//
+//    std::string oStationName;
+//
+//    OGRLayerH hLayer;
+//    hLayer=OGR_DS_GetLayer(hDS,0);
+//    OGR_L_ResetReading(hLayer);
+//
+//    poLayer->ResetReading();
+//    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
+//    {
+//        poFeatureDefn = poLayer->GetLayerDefn();
+//
+//        // get Station name
+//        oStationName = poFeature->GetFieldAsString( 0 );
+//        stationNames.push_back(oStationName);
+//    }
+    stationNames=fetchWxStationID();
 
     int statCount;
     statCount=stationNames.size();
@@ -2393,7 +2768,6 @@ void pointInitialization::fetchStationData(std::string URL,
             }
         }
     }
-    exit(1);
     CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
     delete cloudhigh;

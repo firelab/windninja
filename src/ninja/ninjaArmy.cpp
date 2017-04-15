@@ -148,8 +148,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
 {
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
-    //interpolate raw data to actual time steps 
+    //interpolate raw data to actual time steps
     stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
+
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
