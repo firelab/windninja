@@ -80,11 +80,7 @@ class pointInitialization : public initialize
         static vector<wxStation> interpolateFromDisk(std::string demFile,
                                             std::vector<boost::posix_time::ptime> timeList,
                                             std::string timeZone);
-        static vector<wxStation> oldInterpolateFromDisk(std::string demFile,
-                                                        std::vector<boost::posix_time::ptime> timeList,
-                                                        std::string timeZone);
 
-        static vector<preInterpolate> OldreadDiskLine(std::string demFile); //reads in the data from disk
         static vector<preInterpolate> readDiskLine(std::string demFile,std::string stationLoc);
         static vector<std::string> fetchWxStationID();
         static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string demFile); //prepares final product
