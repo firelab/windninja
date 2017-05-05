@@ -21,11 +21,9 @@ log = open(logfile, 'w')
 #         Run the cfgs
 #=============================================================================
 for f in os.listdir(cfg):
-    print f
     wn = subprocess.Popen(["WindNinja_cli " + cfg + f], shell = True, stdout=subprocess.PIPE)
     out, err = wn.communicate()
     if wn.returncode != 0:
-        print "non-zero return code!"
         log.write('Time = %s, %s: Failed, stderr = %s \n' % (startTime, f, err))
         log.write(out)
 
