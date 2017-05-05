@@ -30,7 +30,7 @@
 #include "fetch_factory.h"
 
 const std::string FetchFactory::US_SRTM_STR     = "us_srtm";
-const std::string FetchFactory::WORLD_SRTM_STR  = "world";
+const std::string FetchFactory::WORLD_SRTM_STR  = "world_srtm";
 const std::string FetchFactory::RELIEF_STR      = "relief";
 #ifdef HAVE_GMTED
 const std::string FetchFactory::WORLD_GMTED_STR = "gmted";
