@@ -59,7 +59,8 @@ pointInitialization::~pointInitialization()
 
 void pointInitialization::SetRawStationFilename(std::string filename)
 {
-    rawStationFilename = filename;	
+    std::string a="wxStation";
+    rawStationFilename =filename;
 }
 
 /**
@@ -2191,8 +2192,12 @@ void pointInitialization::fetchStationData(std::string URL,
         idxID=OGR_F_GetFieldIndex(hFeature,"STID");
         writeID=(OGR_F_GetFieldAsString(hFeature,idxID));
 
-        boost::posix_time::ptime writeTime = boost::posix_time::second_clock::universal_time();
+        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+        std::ostringstream timestream;
 
+        boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%m-%d-%Y_%H%M_");
+
+        timestream.imbue(std::locale(std::locale::classic(), facet));
         std::string tName;
         stringstream idStream;
         stringstream timeStream;
@@ -2200,11 +2205,11 @@ void pointInitialization::fetchStationData(std::string URL,
         ss<<ex;
         idStream<<writeID;
         timeStream<<writeTime;
-        tName=csvName+"-"+idStream.str()+"-"+timeStream.str()+"-"+ss.str()+".csv";
+        tName=idStream.str()+"-"+timeStream.str()+"-"+ss.str()+".csv";
 
         ofstream outFile;//writing to csv
         outFile.open(tName.c_str());
-        CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, csvName.c_str());
+        CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, tName.c_str());
         CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
         std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
         outFile<<header<<endl;
