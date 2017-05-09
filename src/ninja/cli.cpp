@@ -318,7 +318,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
 //STATION_FETCH
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
-                ("fetch_station_filename", po::value<std::string>(), "path/filename where the downloaded station file will be written")
+                ("fetch_station_path", po::value<std::string>(), "path where the downloaded station file will be written")
                 ("start_year",po::value<int>(),"start year for simulation")
                 ("start_month",po::value<int>(),"start month for simulation")
                 ("start_day",po::value<int>(),"start day for simulation")
@@ -972,17 +972,28 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
-                option_dependency(vm,"station_buffer","station_buffer_units");
 
+                option_dependency(vm,"station_buffer","station_buffer_units");
+                std::string stationPathName;
                 wxStation::SetStationFormat(wxStation::newFormat);
 
-                pointInitialization::SetRawStationFilename(vm["fetch_station_filename"].as<std::string>());
+                if (vm.count("fetch_station_path"))
+                {
+                    stationPathName=vm["fetch_station_path"].as<std::string>();
+                    pointInitialization::SetRawStationFilename(stationPathName);
+                }
+                else
+                {
+                    stationPathName="blank";
+                    pointInitialization::SetRawStationFilename(stationPathName);
+                }
+
                 pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>());
 
                 if (vm["fetch_current_station_data"].as<bool>()==false)
                 {
-                    option_dependency(vm, "fetch_station", "fetch_station_filename");
+//                    option_dependency(vm, "fetch_station", "fetch_station_path");
                     option_dependency(vm, "fetch_station", "start_year");
                     option_dependency(vm, "fetch_station", "start_month");
                     option_dependency(vm, "fetch_station", "start_day");
@@ -1036,7 +1047,7 @@ int windNinjaCLI(int argc, char* argv[])
                 //make the army for a fetched station
                 windsim.makeStationArmy(timeList,
                                         osTimeZone,
-                                        vm["fetch_station_filename"].as<std::string>(),
+                                        stationPathName,
                                         vm["elevation_file"].as<std::string>(),
                                         vm["match_points"].as<bool>());
 

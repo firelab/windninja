@@ -2170,12 +2170,12 @@ void pointInitialization::fetchStationData(std::string URL,
     {
         rawStationFilename.erase(rawStationFilename.size()-4,4);
         csvName=rawStationFilename;
-        CPLDebug("STATION_FETCH", ".csv exists in stationFilename...");
+        CPLDebug("STATION_FETCH", ".csv exists in stationFilename, Removing...");
     }
     else
     {
         csvName=rawStationFilename;
-        CPLDebug("STATION_FETCH", "Adding .csv to stationFilename...");
+        CPLDebug("STATION_FETCH", "Path is Good...");
     }
 
     std::vector<std::string> stationCSVNames;
@@ -2205,8 +2205,17 @@ void pointInitialization::fetchStationData(std::string URL,
         ss<<ex;
         idStream<<writeID;
         timeStream<<writeTime;
-        tName=idStream.str()+"-"+timeStream.str()+"-"+ss.str()+".csv";
 
+
+
+        if(csvName!="blank")
+        {
+            tName = csvName+idStream.str() + "-" + timeStream.str() + "-" + ss.str() + ".csv";
+        }
+        else
+        {
+            tName=idStream.str() + "-" + timeStream.str() + "-" + ss.str() + ".csv";
+        }
         ofstream outFile;//writing to csv
         outFile.open(tName.c_str());
         CPLDebug("STATION_FETCH", "%d stations saved to %s", fCount, tName.c_str());
