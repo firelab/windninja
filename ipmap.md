@@ -8,20 +8,14 @@ permalink: /umap/
 <hr />
 <br>
 
-![Map of User Locations for the past year](http://firelab.github.io/windninja/assets/ipoutput.png)
+![Map of User Locations for the past year](http://windninja.wfmrda.org/ninjadata/globalMap2.png)
 
 
 
-###### Made with [PyGeoMap](https://github.com/pierrrrrrre/PyGeoIpMap) and [GeoLite](http://www.maxmind.com)
+###### This Map Updates Weekly. [Source](https://github.com/tfinney9/wnUserMap)
 
 
 
-## Unique WindNinja Launches From The Past Year (By Country)
-
-<hr />
-<br>
-
-![Map of User Countries for the past year](http://firelab.github.io/windninja/assets/combo.png)
 
 ## Top 30 WindNinja Locations (All Time)
 
@@ -36,14 +30,18 @@ permalink: /umap/
 
 
 
-## WindNinja Usage by Country
+<!-- ## WindNinja Usage by Country
 <hr />
 <br>
 
 <iframe src="http://windninja.org:34333/map" style="background: #FFFFFF;" height="525"  width="925"></iframe>
 
-Legend indicates number of launches since recordkeeping began.
+Legend indicates number of launches since recordkeeping began. -->
 
 
+## Unique WindNinja Launches From The Past Year (By Country)
 
+<hr />
+<br>
 
+![Map of User Countries for the past year](http://firelab.github.io/windninja/assets/combo.png)
