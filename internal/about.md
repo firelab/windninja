@@ -36,14 +36,14 @@ WindNinja is a computer program that computes spatially varying wind fields for 
 <br>
 
  WindNinja can also be run on versions of Linux, however building from source code is required. [See Building WindNinja on Linux](http://firelab.github.io/windninja/main/2016/06/23/buildlinux.html)
-[Instructions Also Available on Github](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
+[Instructions Also Available on GitHub](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
 
 <br>
 
 #### Other Links
 
 
-[Link to main Github Website](https://github.com/firelab/windninja)
+[Link to main GitHub Website](https://github.com/firelab/windninja)
 
 
 [Link to FireLab Website](http://www.firelab.org/project/windninja)
@@ -59,7 +59,7 @@ see [FAQ](http://firelab.github.io/windninja/faq/),
 See the [Change Log](http://firelab.github.io/windninja/internal/devdoc/log.html) for release notes,
 
 
-[Change Log on Github](https://github.com/firelab/windninja/blob/master/NEWS.md),
+[Change Log on GitHub](https://github.com/firelab/windninja/blob/master/NEWS.md),
 
 
 Contact the WindNinja Support Team at [wind.ninja.support@gmail.com](mailto:wind.ninja.support@gmail.com)
