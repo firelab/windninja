@@ -24,9 +24,7 @@ permalink: /umap/
 
 ![all time plot](http://firelab.github.io/windninja/assets/15.png)
 
-<br>
 
-![all time plot2](http://firelab.github.io/windninja/assets/30.png)
 
 
 
@@ -39,9 +37,3 @@ permalink: /umap/
 Legend indicates number of launches since recordkeeping began. -->
 
 
-## Unique WindNinja Launches From The Past Year (By Country)
-
-<hr />
-<br>
-
-![Map of User Countries for the past year](http://firelab.github.io/windninja/assets/combo.png)
