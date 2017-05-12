@@ -17,7 +17,7 @@ permalink: /umap/
 
 
 
-## Top 30 WindNinja Locations (All Time)
+## Top 15 WindNinja Locations (All Time)
 
 <hr />
 <br>
