@@ -17,6 +17,8 @@ logfile = '/home/natalie/src/windninja/nightly_tests/nightlyTests.log'
 startTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 log = open(logfile, 'w')
 
+wn = subprocess.Popen(["export WINDNINJA_DATA=/home/natalie/src/windninja/windninja/data"], shell = True, stdout=subprocess.PIPE)
+
 #=============================================================================
 #         Run the cfgs
 #=============================================================================
@@ -24,8 +26,7 @@ for f in os.listdir(cfg):
     wn = subprocess.Popen(["WindNinja_cli " + cfg + f], shell = True, stdout=subprocess.PIPE)
     out, err = wn.communicate()
     if wn.returncode != 0:
-        log.write('Time = %s, %s: Failed, stderr = %s \n' % (startTime, f, err))
-        log.write(out)
+        log.write('Time = %s, %s: Failed, stdout = %s, stderr = %s \n' % (startTime, f, out, err))
 
 log.close()
 
@@ -38,7 +39,7 @@ if os.stat(logfile).st_size != 0:
     fp.close()
     body = msg
 
-    fromaddr = "sedingaddress@something.com"
+    fromaddr = "sendingaddress@something.com"
     recipients = ['address1@something.com', 'address2@something.com']
     msg['From'] = fromaddr
     msg['To'] = ", ".join(recipients)
