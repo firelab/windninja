@@ -47,7 +47,9 @@
 
 #include "latLonWidget.h"
 
+#ifndef Q_MOC_RUN
 #include "ninja.h"
+#endif
 
 class metaWindWidget : public QWidget
 {
