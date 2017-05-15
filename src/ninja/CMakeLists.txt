@@ -71,6 +71,7 @@ set(NINJA_SOURCES air.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
                   readInputFile.cpp
+                  regcmSurfInitialization.cpp
                   relief_fetch.cpp
                   Shade.cpp
                   ShapeVector.cpp
