@@ -1,9 +1,9 @@
 /******************************************************************************
  *
- * $Id: wxModelInitializationFactory.h 
+ * $Id: regcmSurfInitialization.h 
  *
  * Project:  WindNinja
- * Purpose:  Factory class for wxModelInitialization derived classes 
+ * Purpose:  RegCM Surface Forecast Model Initialization derived class 
  * Author:   Levi Malott <lmnn3@mst.edu> 
  *
  ******************************************************************************
@@ -27,42 +27,44 @@
  *
  *****************************************************************************/
 
-#ifndef WX_MODEL_INITIALIZATION_FACTORY_H 
-#define WX_MODEL_INITIALIZATION_FACTORY_H 
+#ifndef REGCM_SURFACE_INITIALIZATION_H
+#define REGCM_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
-#include "ncepGfsSurfInitialization.h"
-#include "ncepHrrrSurfInitialization.h"
-#include "ncepNamAlaskaSurfInitialization.h"
-#include "ncepNamGrib2SurfInitialization.h"
-#include "ncepNamSurfInitialization.h"
-#include "ncepNdfdInitialization.h"
-#include "ncepRapSurfInitialization.h"
-#include "genericSurfInitialization.h"
-#include "wrfSurfInitialization.h"
-#include "wrf3dInitialization.h"
-#include "regcmSurfInitialization.h"
-#ifdef WITH_NOMADS_SUPPORT
-#include "nomads_wx_init.h"
-#endif
 
-
-/*
- * =====================================================================================
- *        Class:  WxModelInitializationFactory
- *  Description:  Factory class for identifying model types based on the file type, then
- *                returning an instantiated surface model of the given type. 
- * =====================================================================================
+/**
+ * Class to initialize a WindNinja run from a RegCM Surface forecast file.
  */
-class wxModelInitializationFactory
+class regcmSurfInitialization : public wxModelInitialization
 {
-    public:
+ public:
 
-        static wxModelInitialization* makeWxInitialization( std::string fileName );
-        static wxModelInitialization* makeWxInitializationFromId( std::string identifier );
+    regcmSurfInitialization();
+    virtual ~regcmSurfInitialization();
 
-}; 
-/* -----  end of class WxModelInitializationFactory  ----- */
+    regcmSurfInitialization( regcmSurfInitialization const& A );
+    regcmSurfInitialization& operator= ( regcmSurfInitialization const& m );
 
+    virtual bool identify( std::string fileName );
+    virtual std::vector<std::string> getVariableList();
+    virtual std::string getForecastIdentifier();
 
-#endif //WX_MODEL_INITIALIZATION_FACTORY_H
+    virtual std::string getPath();
+    virtual double getGridResolution();
+    virtual int getStartHour();
+    virtual int getEndHour();
+
+    virtual void checkForValidData();
+    virtual double Get_Wind_Height();
+
+ protected:
+    virtual void setSurfaceGrids( WindNinjaInputs &input,
+                                  AsciiGrid<double> &airGrid,
+                                  AsciiGrid<double> &cloudGrid,
+                                  AsciiGrid<double> &uGrid,
+                                  AsciiGrid<double> &vGrid,
+                                  AsciiGrid<double> &wGrid );
+};
+
+#endif //REGCM_SURFACE_INIITALIZATION_H
+

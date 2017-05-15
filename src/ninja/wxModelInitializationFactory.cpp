@@ -52,6 +52,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
+    regcmSurfInitialization regcmSurf;
 
 #ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel nomad;
@@ -109,6 +110,11 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         else if(ncepHrrrSurf.identify(fileName)) {
             ncepHrrrSurf.setModelFileName( fileName );
             return new ncepHrrrSurfInitialization(ncepHrrrSurf);
+        }
+        else if(regcmSurf.identify(fileName)) {
+            regcmSurf.setModelFileName( fileName );
+            CPLDebug("WX_MODEL_INITIALIZATION", "regcmSurf.identify(fileName) = %i\n", regcmSurf.identify(fileName));
+            return new regcmSurfInitialization(regcmSurf);
         }
         else if(genericSurf.identify(fileName)) {
             genericSurf.setModelFileName( fileName );
