@@ -44,6 +44,8 @@
 #include "boost/date_time/gregorian/gregorian_types.hpp"    //no i/o just types
 #endif
 
+extern boost::local_time::tz_database globalTimeZoneDB; //this was missing, making solar_grid not compile
+
 void Usage(const char *pszError)
 {
     printf("solar_grid [--perc-cloud-cover percent] [--minute minute]\n"
@@ -199,7 +201,7 @@ int main(int argc, char *argv[])
 
     boost::local_time::time_zone_ptr ninjaTimeZone;
 
-    ninjaTimeZone = globaTimeZoneDB.time_zone_from_region(pszTimeZone);
+    ninjaTimeZone = globalTimeZoneDB.time_zone_from_region(pszTimeZone);    //mispelled global changed
     if(ninjaTimeZone == NULL)
     {
         ostringstream os;
