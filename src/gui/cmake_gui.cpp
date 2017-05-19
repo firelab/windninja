@@ -52,18 +52,29 @@ omp_lock_t netCDF_lock;
 #endif
 int main(int argc, char *argv[])
 {
-    if(argc > 1)
-    {
-        CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
-        return windNinjaCLI(argc, argv);
-    }
-    NinjaInitialize();
     int result;
 #ifdef _OPENMP
     omp_init_lock (&netCDF_lock);
 #endif
 
+    if(argc > 1)
+    {
+        CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
+        result = windNinjaCLI(argc, argv);
+#ifdef _OPENMP
+        omp_destroy_lock (&netCDF_lock);
+#endif
+        return result;
+    }
+
+    NinjaInitialize();
+
     QApplication app(argc, argv);
+
+    //set application name/version in User-Agent header
+    QString ver = NINJA_VERSION_STRING;
+    app.setApplicationName(QString("WindNinja"));
+    app.setApplicationVersion(ver);
 
     app.setWindowIcon(QIcon(":wn-icon.png"));
 
@@ -73,7 +84,6 @@ int main(int argc, char *argv[])
     QPixmap smallSplashPixmap;
     smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
                          Qt::KeepAspectRatioByExpanding);
-    QString ver = NINJA_VERSION_STRING;
     QStringList list;
     list << "Loading the WindNinja " + ver + "...";
     list << "Loading mesh generator...";

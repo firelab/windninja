@@ -53,12 +53,15 @@ initialize* initializationFactory::makeInitialization(WindNinjaInputs& input)
     else if(input.initializationMethod==WindNinjaInputs::griddedInitializationFlag) {
         return new griddedInitialization;
     }
+#ifdef NINJAFOAM
     else if(input.initializationMethod==WindNinjaInputs::foamDomainAverageInitializationFlag) {
         return new foamDomainAverageInitialization;
     }
     else if(input.initializationMethod==WindNinjaInputs::foamWxModelInitializationFlag) {
         return new foamWxModelInitialization;
-    }else{
+    }
+#endif
+    else{
         std::ostringstream outString;
         outString << "The initialization method was set improperly.";
         throw std::runtime_error(outString.str());

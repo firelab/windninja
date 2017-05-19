@@ -1872,7 +1872,11 @@ int mainWindow::solve()
         /* This can throw a badForecastFile */
         try
         {
+#ifdef NINJAFOAM
             army->makeArmy( weatherFile, timeZone, useNinjaFoam );
+#else
+            army->makeArmy( weatherFile, timeZone, false );
+#endif
         }
         catch( badForecastFile &e )
         {
@@ -3155,7 +3159,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->diurnal->diurnalGroupBox->setCheckable( true );
         tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( false );
-        tree->diurnal->ninjafoamConflictLabel->setHidden( true );
         
         #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( true );
@@ -3177,6 +3180,8 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( false );
         tree->vtk->vtkGroupBox->setHidden( false );
+        tree->vtk->vtkGroupBox->setCheckable( true );
+        tree->vtk->vtkGroupBox->setChecked( false );
     }
 }
 #endif

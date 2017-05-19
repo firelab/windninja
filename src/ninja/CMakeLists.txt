@@ -48,7 +48,6 @@ set(NINJA_SOURCES air.cpp
                   LineStyle.cpp
                   mesh.cpp
                   landfireclient.cpp
-                  ncepDgexSurfInitialization.cpp
                   ncepGfsSurfInitialization.cpp
                   ncepNamAlaskaSurfInitialization.cpp
                   ncepNamSurfInitialization.cpp

@@ -283,3 +283,18 @@ void initialize::setGridHeaderData(WindNinjaInputs& input, AsciiGrid<double>& cl
     uInitializationGrid.set_headerData(input.dem);
     vInitializationGrid.set_headerData(input.dem);
 }
+
+std::string initialize::getForecastIdentifier()
+{
+    std::string s = "NOT-A-FORECAST";
+
+    return s;
+}
+
+std::vector<blt::local_date_time> initialize::getTimeList(blt::time_zone_ptr timeZonePtr) 
+{
+    std::vector<blt::local_date_time> t;
+
+    return t;
+
+}
