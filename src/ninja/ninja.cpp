@@ -2734,8 +2734,8 @@ void ninja::writeOutputFiles()
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
     //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",3,3,3,0,1,0,1,0,1);
-    openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",mesh,input.dem.xllCorner,input.dem.yllCorner,u,v,w);
-
+    //openFoamPolyMesh nativeFMesh("/home/latwood/Downloads/case/",mesh,input.dem.xllCorner,input.dem.yllCorner,u,v,w);
+    openFoamPolyMesh nativeFMesh(input.dem.fileName,mesh,input.dem.xllCorner,input.dem.yllCorner,u,v,w);
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
@@ -2834,7 +2834,7 @@ void ninja::writeOutputFiles()
 			{
 			    farsiteAtm atmosphere;
 			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);///////checkthisout
 			}
 		}
 	}catch (exception& e)
@@ -3171,10 +3171,10 @@ void ninja::deleteDynamicMemory()
 	if(vInitializationGrid)
 	{	delete vInitializationGrid;
 		vInitializationGrid = NULL;
-	}
+    }
 	if(airTempGrid)
 	{	delete airTempGrid;
-		airTempGrid = NULL;
+        airTempGrid = NULL;
 	}
 	if(cloudCoverGrid)
 	{	delete cloudCoverGrid;

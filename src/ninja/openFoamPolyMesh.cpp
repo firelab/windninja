@@ -33,12 +33,9 @@
 openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells,
                                    double x0, double xf, double y0, double yf, double z0, double zf)
 {
+    generateCaseDirectory(outputPath);
 
-    pointsPath = outputPath+"constant/polyMesh/points";
-    ownerPath = outputPath+"constant/polyMesh/owner";
-    neighbourPath = outputPath+"constant/polyMesh/neighbour";
-    facesPath = outputPath+"constant/polyMesh/faces";
-    boundaryPath = outputPath+"constant/polyMesh/boundary";
+//values used for the constant polyMesh directorypointsPath = outputPath+"constant/polyMesh/points";
     xcells = nxcells;
     ycells = nycells;
     zcells = nzcells;
@@ -70,23 +67,12 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, doubl
 
     x,y,z;
 
-    transportPropertiesPath = outputPath+"constant/transportProperties";
     diffusivityConstant = 0.05;
 
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
-    scalarPath = outputPath+"0/T";
-    sourcePath = outputPath+"0/source";
-    velocityPath = outputPath+"0/U";
-
     element elem = NULL;
 
-    phiPath = outputPath+"0/phi";
-
 //values used for system directory
-    controlDictPath = outputPath + "system/controlDict";
-    fvSchemesPath = outputPath + "system/fvSchemes";
-    fvSolutionPath = outputPath + "system/fvSolution";
-    setFieldsDictPath = outputPath + "system/setFieldsDict";
 
     //controlDict variables
     application = "myScalarTransportFoam";
@@ -142,12 +128,9 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
                                    double yllCornerValue, wn_3dScalarField const& uwind,
                                    wn_3dScalarField const& vwind, wn_3dScalarField const& wwind)
 {
+    generateCaseDirectory(outputPath);
 
-    pointsPath = outputPath+"constant/polyMesh/points";
-    ownerPath = outputPath+"constant/polyMesh/owner";
-    neighbourPath = outputPath+"constant/polyMesh/neighbour";
-    facesPath = outputPath+"constant/polyMesh/faces";
-    boundaryPath = outputPath+"constant/polyMesh/boundary";
+//values used for the constant polyMesh directory
     xpoints = mesh.ncols;
     ypoints = mesh.nrows;
     zpoints = mesh.nlayers;
@@ -176,27 +159,16 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     nfaces = Axcells*ypoints+Aycells*xpoints+Azcells*zpoints;
     ninternalfaces = nfaces-2*(Axcells+Aycells+Azcells);
 
-    transportPropertiesPath = outputPath+"constant/transportProperties";
     diffusivityConstant = 0.05;
 
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
-    scalarPath = outputPath+"0/T";
-    sourcePath = outputPath+"0/source";
-    velocityPath = outputPath+"0/U";
-
     u = uwind;
     v = vwind;
     w = wwind;
 
     element elem(&mesh);
 
-    phiPath = outputPath+"0/phi";
-
 //values used for system directory
-    controlDictPath = outputPath + "system/controlDict";
-    fvSchemesPath = outputPath + "system/fvSchemes";
-    fvSolutionPath = outputPath + "system/fvSolution";
-    setFieldsDictPath = outputPath + "system/setFieldsDict";
 
     //controlDict variables
     application = "myScalarTransportFoam";
@@ -253,6 +225,60 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
 openFoamPolyMesh::~openFoamPolyMesh()
 {
 
+}
+
+std::string openFoamPolyMesh::uniqueCaseIdentifier(std::string outputPath)
+{
+    int i = 1;
+    bool unique = false;
+    while (unique == false)
+    {
+        std::stringstream ss;
+        ss << i;
+        std::string str = outputPath + ss.str();
+        if(VSIReadDir(str.c_str()) == NULL)
+        {
+            outputPath = str;
+            unique = true;
+        }
+        i = i + 1;
+    }
+    return outputPath;
+}
+
+void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
+{
+    outputPath = CPLSPrintf("%s/case-%s",CPLGetPath(outputPath.c_str()),CPLGetBasename(outputPath.c_str()));
+    outputPath = uniqueCaseIdentifier(outputPath);  //add unique identifier to case before it is generated
+    static const char *CaseDir = outputPath.c_str();
+    VSIMkdir( CaseDir, 0777 );  //generates the overall case
+    CaseDir = CPLSPrintf("%s/0",outputPath.c_str());
+    VSIMkdir( CaseDir, 0777 );
+    CaseDir = CPLSPrintf("%s/constant",outputPath.c_str());
+    VSIMkdir( CaseDir, 0777 );
+    CaseDir = CPLSPrintf("%s/constant/polyMesh",outputPath.c_str());
+    VSIMkdir( CaseDir, 0777 );
+    CaseDir = CPLSPrintf("%s/system",outputPath.c_str());
+    VSIMkdir( CaseDir, 0777 );
+    std::cout << outputPath << endl;
+
+//values used for the constant polyMesh directory
+    pointsPath = outputPath+"/constant/polyMesh/points";
+    ownerPath = outputPath+"/constant/polyMesh/owner";
+    neighbourPath = outputPath+"/constant/polyMesh/neighbour";
+    facesPath = outputPath+"/constant/polyMesh/faces";
+    boundaryPath = outputPath+"/constant/polyMesh/boundary";
+    transportPropertiesPath = outputPath+"/constant/transportProperties";
+//values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
+    scalarPath = outputPath+"/0/T";
+    sourcePath = outputPath+"/0/source";
+    velocityPath = outputPath+"/0/U";
+    phiPath = outputPath+"/0/phi";
+//values used for system directory
+    controlDictPath = outputPath + "/system/controlDict";
+    fvSchemesPath = outputPath + "/system/fvSchemes";
+    fvSolutionPath = outputPath + "/system/fvSolution";
+    setFieldsDictPath = outputPath + "/system/setFieldsDict";
 }
 
 bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element elem)
