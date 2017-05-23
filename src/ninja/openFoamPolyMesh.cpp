@@ -216,7 +216,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     distributionTValue = "75";
     distributionSourceValue = "75";
 
-    std::cout << "just finished constructor\n";
+    std::cout << "starting meshConversionOutput\n";
     writePolyMeshFiles("array", elem);
     std::cout << "just finished meshConversionOutput\n";
 
@@ -227,58 +227,39 @@ openFoamPolyMesh::~openFoamPolyMesh()
 
 }
 
-std::string openFoamPolyMesh::uniqueCaseIdentifier(std::string outputPath)
-{
-    int i = 1;
-    bool unique = false;
-    while (unique == false)
-    {
-        std::stringstream ss;
-        ss << i;
-        std::string str = outputPath + ss.str();
-        if(VSIReadDir(str.c_str()) == NULL)
-        {
-            outputPath = str;
-            unique = true;
-        }
-        i = i + 1;
-    }
-    return outputPath;
-}
-
 void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
 {
-    outputPath = CPLSPrintf("%s/case-%s",CPLGetPath(outputPath.c_str()),CPLGetBasename(outputPath.c_str()));
-    outputPath = uniqueCaseIdentifier(outputPath);  //add unique identifier to case before it is generated
-    static const char *CaseDir = outputPath.c_str();
-    VSIMkdir( CaseDir, 0777 );  //generates the overall case
-    CaseDir = CPLSPrintf("%s/0",outputPath.c_str());
-    VSIMkdir( CaseDir, 0777 );
-    CaseDir = CPLSPrintf("%s/constant",outputPath.c_str());
-    VSIMkdir( CaseDir, 0777 );
-    CaseDir = CPLSPrintf("%s/constant/polyMesh",outputPath.c_str());
-    VSIMkdir( CaseDir, 0777 );
-    CaseDir = CPLSPrintf("%s/system",outputPath.c_str());
-    VSIMkdir( CaseDir, 0777 );
-    std::cout << outputPath << endl;
+    //force temp dir to DEM location
+    CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(outputPath.c_str()));
+    CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(outputPath.c_str()));
+    CPLSetConfigOption("TEMP", CPLGetDirname(outputPath.c_str()));
+    outputPath = CPLGetBasename(outputPath.c_str());
+    outputPath.erase( std::remove_if( outputPath.begin(), outputPath.end(), ::isspace ), outputPath.end() );
+    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("case-%s", outputPath.c_str())));
+    std::cout << "created case directory? " << VSIMkdir( CaseDir, 0777 ) << endl;
+    VSIMkdir( CPLSPrintf("%s/0",CaseDir), 0777 );
+    VSIMkdir( CPLSPrintf("%s/constant",CaseDir), 0777 );
+    VSIMkdir( CPLSPrintf("%s/constant/polyMesh",CaseDir), 0777 );
+    VSIMkdir( CPLSPrintf("%s/system",CaseDir), 0777 );
+    std::cout << "finished generating new case\n";
 
 //values used for the constant polyMesh directory
-    pointsPath = outputPath+"/constant/polyMesh/points";
-    ownerPath = outputPath+"/constant/polyMesh/owner";
-    neighbourPath = outputPath+"/constant/polyMesh/neighbour";
-    facesPath = outputPath+"/constant/polyMesh/faces";
-    boundaryPath = outputPath+"/constant/polyMesh/boundary";
-    transportPropertiesPath = outputPath+"/constant/transportProperties";
+    pointsPath =CPLSPrintf("%s/constant/polyMesh/points",CaseDir);
+    ownerPath = CPLSPrintf("%s/constant/polyMesh/owner",CaseDir);
+    neighbourPath = CPLSPrintf("%s/constant/polyMesh/neighbour",CaseDir);
+    facesPath = CPLSPrintf("%s/constant/polyMesh/faces",CaseDir);
+    boundaryPath = CPLSPrintf("%s/constant/polyMesh/boundary",CaseDir);
+    transportPropertiesPath = CPLSPrintf("%s/constant/transportProperties",CaseDir);
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
-    scalarPath = outputPath+"/0/T";
-    sourcePath = outputPath+"/0/source";
-    velocityPath = outputPath+"/0/U";
-    phiPath = outputPath+"/0/phi";
+    scalarPath = CPLSPrintf("%s/0/T",CaseDir);
+    sourcePath = CPLSPrintf("%s/0/source",CaseDir);
+    velocityPath = CPLSPrintf("%s/0/U",CaseDir);
+    phiPath = CPLSPrintf("%s/0/phi",CaseDir);
 //values used for system directory
-    controlDictPath = outputPath + "/system/controlDict";
-    fvSchemesPath = outputPath + "/system/fvSchemes";
-    fvSolutionPath = outputPath + "/system/fvSolution";
-    setFieldsDictPath = outputPath + "/system/setFieldsDict";
+    controlDictPath = CPLSPrintf("%s/system/controlDict",CaseDir);
+    fvSchemesPath = CPLSPrintf("%s/system/fvSchemes",CaseDir);
+    fvSolutionPath = CPLSPrintf("%s/system/fvSolution",CaseDir);
+    setFieldsDictPath = CPLSPrintf("%s/system/setFieldsDict",CaseDir);
 }
 
 bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element elem)

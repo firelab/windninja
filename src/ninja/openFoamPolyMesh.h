@@ -57,9 +57,6 @@ public:
     openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
     ~openFoamPolyMesh();
 
-    //takes the case directory created using the dem path and dem name, and adds a unique identifier to the path
-    std::string uniqueCaseIdentifier(std::string outputPath);
-
     //generates a new case using the dem location and dem name
     void generateCaseDirectory(std::string outputPath);
 
