@@ -1742,6 +1742,17 @@ int mainWindow::solve()
     else
     googleScale = KmlVector::equal_color;
 
+    std::string googleScheme;
+    if(tree->google->colorblindBox->isChecked())
+    {
+        QString QgoogleScheme=tree->google->inputColorblindComboBox->currentText();
+        googleScheme=QgoogleScheme.toStdString();
+    //    tree->google->inputColorblindComboBox->
+    }
+    else
+    {
+        googleScheme="default";
+    }
     //ascii raster fb files
     bool writeFb = tree->fb->fbGroupBox->isChecked();
     double fbRes = tree->fb->fbResSpinBox->value();
@@ -2079,6 +2090,7 @@ int mainWindow::solve()
         army->setGoogLineWidth   (i,vectorWidth);
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
+        army->setGoogColor       (i,googleScheme);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);
