@@ -31,6 +31,7 @@
 #define GOOGLEOUTPUT_H
 
 #include <QGroupBox>
+#include <QComboBox>
 #include <QCheckBox>
 #include <QRadioButton>
 #include <QLabel>
@@ -58,12 +59,22 @@ class googleOutput : public QWidget
   QRadioButton *googleMetersRadioButton, *googleFeetRadioButton;
   QCheckBox *useMeshResCheckBox;
   
+  //Colorblind Options
+  QGroupBox *colorblindBox;
+  QComboBox *inputColorblindComboBox;
+
+  QGridLayout *colorLayout;
+
   QHBoxLayout *vectorLayout;
   QVBoxLayout *optionLayout;
   QVBoxLayout *legendOptionLayout;
   QGridLayout *resLayout;
   QVBoxLayout *pageLayout;
   QVBoxLayout *mainLayout;
+
+  public slots:
+  void setColorScheme(int choice);
+
 };
 
 #endif /* GOOGLEOUTPUT_H */

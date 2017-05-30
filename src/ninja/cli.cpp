@@ -343,7 +343,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file (true, false)")
                 ("goog_out_resolution", po::value<double>()->default_value(-1.0), "resolution of Google Earth output file (-1 to use mesh resolution)")
                 ("units_goog_out_resolution", po::value<std::string>()->default_value("m"), "units of Google Earth resolution (ft, m)")
-                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options: default (ROYGB), oranges, blues, greens,pinks, magic_beans, pink_to_green")
+                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options:\n default (ROYGB), oranges, blues, greens,pinks, magic_beans, pink_to_green,ROPGW")
                 ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
@@ -1426,7 +1426,7 @@ int windNinjaCLI(int argc, char* argv[])
                         lengthUnits::getUnit(vm["units_goog_out_resolution"].as<std::string>()));
 //                option_dependency(vm, "write_goog_output","goog_out_color_scheme");
                 windsim.setGoogColor(i_,vm["goog_out_color_scheme"].as<std::string>());
-//                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options: default (ROYGB), oranges, blues, greens,pink,and magic_beans")
+//                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options:\n default (ROYGB), oranges, blues, greens,pink, magic_beans,ROPGW")
 
             }
             if(vm["write_shapefile_output"].as<bool>())

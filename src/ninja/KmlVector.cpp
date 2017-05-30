@@ -188,7 +188,37 @@ bool KmlVector::makeDefaultStyles(string cScheme)
     //ostringstream oss;
 	//std::string s;
 
+//    colors[4] = new Style("red", 255, 27, 31, 166, 4.0*arrowWidth); //highest windspeed
+//    colors[3] = new Style("orange", 255, 114, 162, 198, 3.0*arrowWidth); //2nd highest
+//    colors[2] = new Style("yellow", 255, 216, 204, 222, 1.75*arrowWidth);// moderate
+//    colors[1] = new Style("green", 255, 141, 236,229, 1.5*arrowWidth); //moderate low
+//    colors[0] = new Style("blue", 255, 229, 243, 239, arrowWidth); //very low
 
+
+    bool scaling=false;
+
+    double blueWidth;
+    double greenWidth;
+    double yellowWidth;
+    double orangeWidth;
+    double redWidth;
+
+    if(scaling==true)
+    {
+        redWidth=4.0*lineWidth;
+        orangeWidth=3.0*lineWidth;
+        yellowWidth=1.75*lineWidth;
+        greenWidth=1.5*lineWidth;
+        blueWidth=1.0*lineWidth;
+    }
+    if(scaling==false)
+    {
+        redWidth=lineWidth;
+        orangeWidth=lineWidth;
+        yellowWidth=lineWidth;
+        greenWidth=lineWidth;
+        blueWidth=lineWidth;
+    }
 
 	colors = new Style*[numColors];
 	//for(int i = 0;i < numColors;i++)
@@ -200,45 +230,45 @@ bool KmlVector::makeDefaultStyles(string cScheme)
     //Alpha, B G R
     if (cScheme=="default")
     {
-	colors[0] = new Style("blue", 255, 255, 0, 0, lineWidth);
-	colors[1] = new Style("green", 255, 0, 255, 0, lineWidth);
-	colors[2] = new Style("yellow", 255, 0, 255, 255, lineWidth);
-	colors[3] = new Style("orange", 255, 0, 127, 255, lineWidth);
-	colors[4] = new Style("red", 255, 0, 0, 255, lineWidth);
+    colors[0] = new Style("blue", 255, 255, 0, 0, blueWidth);
+    colors[1] = new Style("green", 255, 0, 255, 0, greenWidth);
+    colors[2] = new Style("yellow", 255, 0, 255, 255, yellowWidth);
+    colors[3] = new Style("orange", 255, 0, 127, 255, orangeWidth);
+    colors[4] = new Style("red", 255, 0, 0, 255, redWidth);
 
     }
     if (cScheme=="oranges")
     {
-    colors[0] = new Style("blue", 255, 217, 240, 254, lineWidth);
-    colors[1] = new Style("green", 255, 138, 204, 253, lineWidth);
-    colors[2] = new Style("yellow", 255, 89, 141, 252, lineWidth);
-    colors[3] = new Style("orange", 255, 51, 74, 227, lineWidth);
-    colors[4] = new Style("red", 255, 0, 0, 179, lineWidth);
+    colors[0] = new Style("blue", 255, 217, 240, 254, blueWidth);
+    colors[1] = new Style("green", 255, 138, 204, 253, greenWidth);
+    colors[2] = new Style("yellow", 255, 89, 141, 252, yellowWidth);
+    colors[3] = new Style("orange", 255, 51, 74, 227, orangeWidth);
+    colors[4] = new Style("red", 255, 0, 0, 179, redWidth);
 
     }
     if(cScheme=="blues")
     {
-    colors[0] = new Style("blue", 255, 254, 243, 239, lineWidth);
-    colors[1] = new Style("green", 255, 231, 215, 189, lineWidth);
-    colors[2] = new Style("yellow", 255, 214, 174, 107, lineWidth);
-    colors[3] = new Style("orange", 255, 189, 130, 49, lineWidth);
-    colors[4] = new Style("red", 255, 156, 81, 8, lineWidth);
+    colors[0] = new Style("blue", 255, 254, 243, 239, blueWidth);
+    colors[1] = new Style("green", 255, 231, 215, 189, greenWidth);
+    colors[2] = new Style("yellow", 255, 214, 174, 107, yellowWidth);
+    colors[3] = new Style("orange", 255, 189, 130, 49, orangeWidth);
+    colors[4] = new Style("red", 255, 156, 81, 8, redWidth);
     }
     if (cScheme=="greens")
     {
-    colors[0] = new Style("blue", 255, 233, 248, 237, lineWidth);
-    colors[1] = new Style("green", 255, 179, 228, 186, lineWidth);
-    colors[2] = new Style("yellow", 255, 118, 196, 116, lineWidth);
-    colors[3] = new Style("orange", 255, 84, 163, 49, lineWidth);
-    colors[4] = new Style("red", 255, 44, 109, 0, lineWidth);
+    colors[0] = new Style("blue", 255, 233, 248, 237, blueWidth);
+    colors[1] = new Style("green", 255, 179, 228, 186, greenWidth);
+    colors[2] = new Style("yellow", 255, 118, 196, 116, yellowWidth);
+    colors[3] = new Style("orange", 255, 84, 163, 49, orangeWidth);
+    colors[4] = new Style("red", 255, 44, 109, 0, redWidth);
     }
     if (cScheme=="pinks")
     {
-    colors[0] = new Style("blue", 255, 246, 238, 241, lineWidth);
-    colors[1] = new Style("green", 255, 216, 181, 215, lineWidth);
-    colors[2] = new Style("yellow", 255, 176, 101, 223, lineWidth);
-    colors[3] = new Style("orange", 255, 119, 28,221, lineWidth);
-    colors[4] = new Style("red", 255, 67, 0, 152, lineWidth);
+    colors[0] = new Style("blue", 255, 246, 238, 241, blueWidth);
+    colors[1] = new Style("green", 255, 216, 181, 215, greenWidth);
+    colors[2] = new Style("yellow", 255, 176, 101, 223, yellowWidth);
+    colors[3] = new Style("orange", 255, 119, 28,221, orangeWidth);
+    colors[4] = new Style("red", 255, 67, 0, 152, redWidth);
     }
     if (cScheme=="magic_beans")
     {
@@ -247,11 +277,11 @@ bool KmlVector::makeDefaultStyles(string cScheme)
 //    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
 //    colors[1] = new Style("orange", 255, 222, 197,146, lineWidth);
 //    colors[0] = new Style("red", 255, 176, 113, 5, lineWidth);
-    colors[4] = new Style("red", 255, 32, 0, 202, lineWidth);
-    colors[3] = new Style("orange", 255, 130, 165, 244, lineWidth);
-    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
-    colors[1] = new Style("green", 255, 222, 197,146, lineWidth);
-    colors[0] = new Style("blue", 255, 176, 113, 5, lineWidth);
+    colors[4] = new Style("red", 255, 32, 0, 202, redWidth);
+    colors[3] = new Style("orange", 255, 130, 165, 244, orangeWidth);
+    colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+    colors[1] = new Style("green", 255, 222, 197,146, greenWidth);
+    colors[0] = new Style("blue", 255, 176, 113, 5, blueWidth);
     }
     if (cScheme=="pink_to_green")
     {
@@ -260,20 +290,19 @@ bool KmlVector::makeDefaultStyles(string cScheme)
 //    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
 //    colors[3] = new Style("orange", 255, 160, 219,166, lineWidth);
 //    colors[4] = new Style("red", 255, 55, 136, 0, lineWidth);
-    colors[4] = new Style("red", 255, 148, 50, 123, lineWidth);
-    colors[3] = new Style("orange", 255, 207, 165, 194, lineWidth);
-    colors[2] = new Style("yellow", 255, 247, 247, 247, lineWidth);
-    colors[1] = new Style("green", 255, 160, 219,166, lineWidth);
-    colors[0] = new Style("blue", 255, 55, 136, 0, lineWidth);
+    colors[4] = new Style("red", 255, 148, 50, 123, redWidth);
+    colors[3] = new Style("orange", 255, 207, 165, 194, orangeWidth);
+    colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+    colors[1] = new Style("green", 255, 160, 219,166, greenWidth);
+    colors[0] = new Style("blue", 255, 55, 136, 0, blueWidth);
     }
     if (cScheme=="ROPGW") //Red Orange Pink Green White
     {// Alpha BGR
-    double arrowWidth=1.0;
-    colors[4] = new Style("red", 255, 27, 31, 166, 4.0*arrowWidth); //highest windspeed
-    colors[3] = new Style("orange", 255, 114, 162, 198, 3.0*arrowWidth); //2nd highest
-    colors[2] = new Style("yellow", 255, 216, 204, 222, 1.75*arrowWidth);// moderate
-    colors[1] = new Style("green", 255, 141, 236,229, 1.5*arrowWidth); //moderate low
-    colors[0] = new Style("blue", 255, 229, 243, 239, arrowWidth); //very low
+    colors[4] = new Style("red", 255, 27, 31, 166, redWidth); //highest windspeed
+    colors[3] = new Style("orange", 255, 114, 162, 198, orangeWidth); //2nd highest
+    colors[2] = new Style("yellow", 255, 216, 204, 222, yellowWidth);// moderate
+    colors[1] = new Style("green", 255, 141, 236,229, greenWidth); //moderate low
+    colors[0] = new Style("blue", 255, 229, 243, 239,blueWidth); //very low
     }
 //    else
 //    {

@@ -114,18 +114,39 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   connect(useMeshResCheckBox, SIGNAL(toggled(bool)), 
 	  googleMetersRadioButton, SLOT(setDisabled(bool)));
   
+  //Colorblind
+   colorblindBox= new QGroupBox(tr("Alternative Color Schemes"));
+   colorblindBox->setCheckable(true);
+   colorblindBox->setChecked(false);
+   inputColorblindComboBox = new QComboBox();
+   inputColorblindComboBox->addItem(tr("Default"));
+   inputColorblindComboBox->addItem(tr("ROPGW"));
+   inputColorblindComboBox->addItem(tr("Oranges"));
+   inputColorblindComboBox->addItem(tr("Blues"));
+   inputColorblindComboBox->addItem(tr("Pinks"));
+   inputColorblindComboBox->addItem(tr("Greens"));
+   inputColorblindComboBox->addItem(tr("Magic Beans"));
+   inputColorblindComboBox->addItem(tr("Pink to Green"));
   
+   colorLayout=new QGridLayout;
+   colorLayout->addWidget(inputColorblindComboBox,0,0);
+   colorblindBox->setLayout(colorLayout);
+
+  //colorBlind
+
   resLayout = new QGridLayout;
   resLayout->addWidget(googleResSpinBox, 0, 0);
   resLayout->addWidget(googleMetersRadioButton, 0, 1);
   resLayout->addWidget(googleFeetRadioButton, 0, 2);
   resLayout->addWidget(useMeshResCheckBox, 1, 0);
+//  resLayout->addWidget(inputColorblindComboBox,2,0);
 
   googleResGroupBox->setLayout(resLayout);
 
   pageLayout = new QVBoxLayout;
   pageLayout->addLayout(optionLayout);
   pageLayout->addWidget(googleResGroupBox);
+  pageLayout->addWidget(colorblindBox);
   pageLayout->addStretch();
   
   googleGroupBox->setLayout(pageLayout);
@@ -135,4 +156,12 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   mainLayout->addStretch();
   
   setLayout(mainLayout);
+}
+
+void googleOutput::setColorScheme(int choice)
+{
+    if(choice==1)
+    {
+
+    }
 }
