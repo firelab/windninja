@@ -234,12 +234,16 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
         
         for(unsigned int i = 0; i < wxList.size(); i++)
         {
+#ifdef NINJAFOAM
             if(momentumFlag == true){
                 ninjas[i] = new NinjaFoam();
             }
             else{
                  ninjas[i] = new ninja();
             }
+#else
+            ninjas[i] = new ninja();
+#endif //NINJAFOAM
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -273,12 +277,16 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
         {
+#ifdef NINJAFOAM
             if(momentumFlag == true){
                 ninjas[i] = new NinjaFoam();
             }
             else{
                  ninjas[i] = new ninja();
             }
+#else
+            ninjas[i] = new ninja();
+#endif
         }
 
         for(unsigned int i = 0; i < timeList.size(); i++)

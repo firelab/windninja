@@ -45,7 +45,6 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     ncepNdfdInitialization ncepNdfd;
     ncepNamSurfInitialization ncepNamSurf;
     ncepRapSurfInitialization ncepRapSurf;
-    ncepDgexSurfInitialization ncepDgexSurf;
     ncepNamAlaskaSurfInitialization ncepNamAlaskaSurf;
     ncepGfsSurfInitialization ncepGfsSurf;
     genericSurfInitialization genericSurf;
@@ -82,10 +81,6 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         else if(ncepRapSurf.identify(fileName)) {
             ncepRapSurf.setModelFileName( fileName );
             return new ncepRapSurfInitialization(ncepRapSurf);
-        }
-        else if(ncepDgexSurf.identify(fileName)) {
-            ncepDgexSurf.setModelFileName( fileName );
-            return new ncepDgexSurfInitialization(ncepDgexSurf);
         }
         else if(ncepNamAlaskaSurf.identify(fileName)) {
             ncepNamAlaskaSurf.setModelFileName( fileName );
@@ -168,7 +163,6 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     ncepNdfdInitialization ncepNdfd;
     ncepNamSurfInitialization ncepNamSurf;
     ncepRapSurfInitialization ncepRapSurf;
-    ncepDgexSurfInitialization ncepDgexSurf;
     ncepNamAlaskaSurfInitialization ncepNamAlaskaSurf;
     ncepGfsSurfInitialization ncepGfsSurf;
     genericSurfInitialization genericSurf;
@@ -188,9 +182,6 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     }
     else if(ncepRapSurf.getForecastReadable() == identifier) {
         return new ncepRapSurfInitialization(ncepRapSurf);
-    }
-    else if(ncepDgexSurf.getForecastReadable() == identifier) {
-        return new ncepDgexSurfInitialization(ncepDgexSurf);
     }
     else if(ncepNamAlaskaSurf.getForecastReadable() == identifier) {
         return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);

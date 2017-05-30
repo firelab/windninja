@@ -659,6 +659,22 @@ void WidgetDownloadDEM::setupGM()
     this->wvGoogleMaps->setPage(new QWebPage());
     wvGoogleMaps->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
     this->wvGoogleMaps->load(QUrl(QString(FindDataPath("map.htm").c_str())));
+
+    //enable QWebInspector for degugging google maps widget
+    if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
+    {
+        wvGoogleMaps->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+        QWebInspector *i = new QWebInspector(this);
+        i->setPage(wvGoogleMaps->page());
+        i->setVisible(true);
+
+        dlg.setLayout(new QVBoxLayout());
+        dlg.layout()->addWidget(i);
+        dlg.setModal(false);
+        dlg.show();
+        dlg.raise();
+        dlg.activateWindow();
+    }
 }
 
 /**

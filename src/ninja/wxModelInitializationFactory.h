@@ -31,7 +31,6 @@
 #define WX_MODEL_INITIALIZATION_FACTORY_H 
 
 #include "wxModelInitialization.h"
-#include "ncepDgexSurfInitialization.h"
 #include "ncepGfsSurfInitialization.h"
 #include "ncepHrrrSurfInitialization.h"
 #include "ncepNamAlaskaSurfInitialization.h"

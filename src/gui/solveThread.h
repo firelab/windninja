@@ -30,7 +30,11 @@
 #ifndef SOLVETHREAD_H
 #define SOLVETHREAD_H
 #include <QThread>
+
+#ifndef Q_MOC_RUN
 #include "ninja.h"
+#endif
+
 #include "ninjaArmy.h"
 //make thread classes
 

@@ -50,8 +50,6 @@ namespace po = boost::program_options;
 
 //#include <QDateTime>
 
-int coreMain(int argc, char *argv[]);
-
 int windNinjaCLI(int argc, char* argv[]);
 
 void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2);

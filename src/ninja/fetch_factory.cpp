@@ -30,11 +30,14 @@
 #include "fetch_factory.h"
 
 const std::string FetchFactory::US_SRTM_STR     = "us_srtm";
-const std::string FetchFactory::WORLD_SRTM_STR  = "world";
+const std::string FetchFactory::WORLD_SRTM_STR  = "world_srtm";
 const std::string FetchFactory::RELIEF_STR      = "relief";
 #ifdef HAVE_GMTED
 const std::string FetchFactory::WORLD_GMTED_STR = "gmted";
 #endif //HAVE_GMTED
+#ifdef WITH_LCP_CLIENT
+const std::string FetchFactory::LCP_STR = "lcp";
+#endif
 
 
 
@@ -52,8 +55,10 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
             pszPath = CPLFormFilename(pszPath, "us", ".vrt");
         else if(type == WORLD_SRTM)
             pszPath = CPLFormFilename(pszPath, "world", ".vrt");
+#ifdef HAVE_GMTED
         else if(type == WORLD_GMTED)
             pszPath = CPLFormFilename(pszPath, "gmted", ".vrt");
+#endif
         return new GDALFetch(std::string(pszPath));
     }
 #ifdef WITH_LCP_CLIENT
@@ -86,6 +91,12 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch( std::string type, std::string path 
     else if( type == WORLD_GMTED_STR )
     {
         return GetSurfaceFetch( WORLD_GMTED );
+    }
+#endif
+#ifdef WITH_LCP_CLIENT
+    else if( type == LCP_STR )
+    {
+        return GetSurfaceFetch( LCP );
     }
 #endif
     else if( type == RELIEF_STR )

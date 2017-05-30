@@ -65,7 +65,6 @@ class diurnalInput : public QWidget
   QGroupBox *diurnalGroupBox;
   QVBoxLayout *diurnalLayout;
   QVBoxLayout *layout;
-  QLabel *ninjafoamConflictLabel;
 
 };
 

@@ -57,11 +57,8 @@ int main(int argc, char *argv[])
     omp_init_lock (&netCDF_lock);
 #endif
 
-#ifdef CORE_RUN
-    result = coreMain(argc, argv);
-#else
     result = windNinjaCLI(argc, argv);
-#endif
+
 #ifdef _OPENMP
     omp_destroy_lock (&netCDF_lock);
 #endif
