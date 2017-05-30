@@ -1,6 +1,23 @@
 Release Notes
 =============
 
+WindNinja 3.1.4
+---------------
+
+- Use API key to avoid Google Maps API quota error (#242)
+
+- Set app name/version in User-Agent header (#242)
+
+WindNinja 3.1.3
+---------------
+
+- Update lcp fetcher for changes on Landfire server (#236)
+
+WindNinja 3.1.2
+---------------
+
+- Fix bug where DEM downloading fails on Windows due to SSL verfification (#231)
+
 WindNinja 3.1.1
 ---------------
 

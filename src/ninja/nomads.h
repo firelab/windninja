@@ -124,6 +124,12 @@ extern "C" {
 #define NOMADS_GENERIC_DATE              "%Y%m%d"
 #define NOMADS_GENERIC_FCST_HOURS        "0:18:6"
 #define NOMADS_GENERIC_RUN_HOURS         "0:36:3,39:86:6"
+#define NOMADS_NEST_RUN_HOURS            "0:60:1"
+/*
+** The extension for all NAM models.  This changed in TIN 16-41, so we move it
+** to a metadata item.
+*/
+#define NOMADS_NAM_FILE_EXT              ".tm00.grib2"
 
 /*
 ** The following list of metadata is for models residing at
@@ -282,7 +288,7 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_alaska",
       "filter_nam_ak.pl",
-      "nam.t%02dz.awak3d%02d.grb2.tm00",
+      "nam.t%02dz.awak3d%02d" NOMADS_NAM_FILE_EXT,
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS,
@@ -297,7 +303,7 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_conus",
       "filter_nam.pl",
-      "nam.t%02dz.awphys%02d.grb2.tm00",
+      "nam.t%02dz.awphys%02d" NOMADS_NAM_FILE_EXT,
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS,
@@ -317,7 +323,7 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_north_america",
       "filter_nam_na.pl",
-      "nam.t%02dz.awip32%02d.tm00.grib2",
+      "nam.t%02dz.awip32%02d" NOMADS_NAM_FILE_EXT,
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS,
@@ -339,14 +345,14 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_nest_alaska",
       "filter_nam_alaskanest.pl",
-      "nam.t%02dz.alaskanest.hiresf%02d.tm00.grib2",
+      "nam.t%02dz.alaskanest.hiresf%02d" NOMADS_NAM_FILE_EXT,
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS,
-      "0:36:1,39:60:3",
+      NOMADS_NEST_RUN_HOURS,
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "6 km",
+      "3 km",
       "NAM NEST Alaska" },
     /*
     ** NAM CONUS NEST
@@ -354,14 +360,14 @@ static const char *apszNomadsKeys[][11] =
     {
       "nam_nest_conus",
       "filter_nam_conusnest.pl",
-      "nam.t%02dz.conusnest.hiresf%02d.tm00.grib2",
+      "nam.t%02dz.conusnest.hiresf%02d" NOMADS_NAM_FILE_EXT,
       NOMADS_GENERIC_DIR,
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS,
-      "0:36:1,39:60:3",
+      NOMADS_NEST_RUN_HOURS,
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
-      "4 km",
+      "3 km",
       "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */

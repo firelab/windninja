@@ -131,7 +131,6 @@ class weatherModel : public QWidget
     ncepNamSurfInitialization nam;
     ncepNdfdInitialization ndfd;
     ncepRapSurfInitialization rap;
-    ncepDgexSurfInitialization dgex;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
 
