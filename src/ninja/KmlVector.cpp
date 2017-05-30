@@ -195,7 +195,7 @@ bool KmlVector::makeDefaultStyles(string cScheme)
 //    colors[0] = new Style("blue", 255, 229, 243, 239, arrowWidth); //very low
 
 
-    bool scaling=false;
+    bool scaling=true;
 
     double blueWidth;
     double greenWidth;
