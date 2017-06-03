@@ -1456,7 +1456,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
         //Write raw model output files
         std::string rootname, path;
-        //rootname = CPLGetBasename(input.forecastFilename.c_str());
+
         if(input.customOutputPath == "!set"){
             path = CPLGetPath(input.forecastFilename.c_str());
         }
