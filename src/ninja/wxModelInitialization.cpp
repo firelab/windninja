@@ -3,7 +3,7 @@
  * $Id: wxModelInitialization.cpp 816 2011-02-15 16:34:53Z jaforthofer $
  *
  * Project:  WindNinja
- * Purpose:  For writing FARSITE atmosphere files (*.atm)
+ * Purpose:  Weather model initialization
  * Author:   Jason Forthofer <jforthofer@gmail.com>
  *
  ******************************************************************************
@@ -131,13 +131,13 @@ wxModelInitialization::~wxModelInitialization()
  */
 wxModelInitialization& wxModelInitialization::operator= (wxModelInitialization const& A)
 {
-    if(&A != this) {
-    initialize::operator=(A);
-    wxModelFileName = A.wxModelFileName;
-    host = A.host;
-    heightVarName = A.heightVarName;
-    path = A.path;
-    pfnProgress = A.pfnProgress;
+    if(&A != this){
+        initialize::operator=(A);
+        wxModelFileName = A.wxModelFileName;
+        host = A.host;
+        heightVarName = A.heightVarName;
+        path = A.path;
+        pfnProgress = A.pfnProgress;
     }
     return *this;
 }
@@ -167,7 +167,7 @@ std::string wxModelInitialization::getPath()
 std::string wxModelInitialization::generateForecastName()
 {
     if( wxModelFileName.empty() )
-    return wxModelFileName;
+        return wxModelFileName;
     std::vector<boost::local_time::local_date_time>timeList;
     timeList = getTimeList();
     std::string filename;
@@ -1450,7 +1450,8 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
                     dirInitializationGrid_wxModel(i,j) = dirInitializationGrid_wxModel.get_NoDataValue();
                 }
                 else
-                    wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j), &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
+                    wind_uv_to_sd(uGrid_wxModel(i,j), vGrid_wxModel(i,j),
+                                 &(speedInitializationGrid_wxModel)(i,j), &(dirInitializationGrid_wxModel)(i,j));
             }
         }
 
