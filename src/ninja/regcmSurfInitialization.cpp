@@ -330,6 +330,8 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         status = nc_get_att_float( ncid, NC_GLOBAL, "longitude_of_projection_origin", &cenLon );
     }
 
+    cout<<"cenLat, cenLon = "<<cenLat<<", "<<cenLon<<endl;
+
     /*
      * Close the dataset
      *
@@ -348,8 +350,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        CPLDebug( "regcmSurfInitialization::setSurfaceGrids()",
-                 "Bad forecast file");
         throw badForecastFile("Cannot open forecast file in regcmSurfInitialization::setSurfaceGrids()");
     }
     else {
@@ -374,8 +374,7 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            CPLDebug( "wrfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            cout<<"Bad forecast file in regcmSurfaceIinitialization::setSurfaceGrids."<<endl;
         }
 
         cout<<"varList[i] = " <<varList[i]<<endl;
@@ -386,7 +385,7 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
          */
 
         std::string projString;
-        if(mapProj == "NORMER"){  //mercator
+        if(mapProj == "NORMER"){  //"normal mercator"
             projString = "PROJCS[\"World_Mercator\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"WGS_1984\",\
                           SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],\
                           UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Mercator_1SP\"],\
@@ -420,20 +419,11 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         double xCenter, yCenter;
         xCenter = (double)cenLon;
         yCenter = (double)cenLat;
-        //double xCenterArray[2] = {-113, -112.3552}; //1st value is MOAD, 2nd is current domain center
-        //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");
-
-        //if(poCT==NULL || !poCT->Transform(2, xCenterArray, yCenterArray))  //for testing
-            //printf("Transformation failed.\n");
-
-        //cout<<"transformed = "<<transformed<<endl;
-        //cout<<"xCenter = "<<xCenter<<endl;
-        //cout<<"yCenter = "<<yCenter<<endl;
 
         /*
          * Set the geostransform for the RegCM file
@@ -451,11 +441,11 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                     (yCenter+(nrows*dy)),
                                     0, -(dy)};
 
-        //cout<<"ulcornerX = " <<(xCenter-(ncols*dx))<<endl;
-        //cout<<"ulcornerY = " <<(yCenter+(nrows*dy))<<endl;
-        //cout<<"ncols = " <<ncols<<endl;
-        //cout<<"nrows = " <<nrows<<endl;
-        //cout<<"dx = "<<dx<<endl;
+        cout<<"ulcornerX = " <<(xCenter-(ncols*dx))<<endl;
+        cout<<"ulcornerY = " <<(yCenter+(nrows*dy))<<endl;
+        cout<<"ncols = " <<ncols<<endl;
+        cout<<"nrows = " <<nrows<<endl;
+        cout<<"dx = "<<dx<<endl;
 
         srcDS->SetGeoTransform(adfGeoTransform);
 
