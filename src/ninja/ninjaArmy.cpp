@@ -191,7 +191,6 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
     //Factory function that identifies the type of forecast file and makes appropriate class.
     else{
         model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
-
         try
         {
             model->checkForValidData();

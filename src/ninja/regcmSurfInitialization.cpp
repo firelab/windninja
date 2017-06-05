@@ -87,7 +87,7 @@ std::vector<std::string> regcmSurfInitialization::getVariableList()
     varList.push_back( "tas" );   // T at 2 m
     varList.push_back( "vas" );  // V at 10 m
     varList.push_back( "uas" );  // U at 10 m
-    varList.push_back( "QCLOUD" );  // cloud water mixing ratio
+    //varList.push_back( "QCLOUD" );  // cloud water mixing ratio
     return varList;
 }
 
@@ -202,6 +202,8 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         AsciiGrid<double> &vGrid,
         AsciiGrid<double> &wGrid )
 {
+
+    cout<<"Setting surface grids..."<<endl;
 
     int bandNum = -1;
 
@@ -359,6 +361,7 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     // open ds one by one, set projection, warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
     std::string temp;
+    const char* pszProj4;
     std::vector<std::string> varList = getVariableList();
 
     /*
@@ -384,26 +387,13 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
          * and geotransformations
          */
 
-        std::string projString;
-        if(mapProj == "NORMER"){  //"normal mercator"
-            projString = "PROJCS[\"World_Mercator\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"WGS_1984\",\
-                          SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],\
-                          UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Mercator_1SP\"],\
-                          PARAMETER[\"False_Easting\",0],\
-                          PARAMETER[\"False_Northing\",0],\
-                          PARAMETER[\"Central_Meridian\","+boost::lexical_cast<std::string>(cenLon)+"],\
-                          PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(cenLat)+"],\
-                          UNIT[\"Meter\",1]]";
-        }
-        else throw badForecastFile("Cannot determine projection from the forecast file information.");
 
-        OGRSpatialReference oSRS, oDemSRS, *poLatLong;
+        OGRSpatialReference oSRS, *poLatLong;
+        pszProj4 = "+proj=merc +lat_ts=-10.06 +lon_0=45.36 +x_0=-10000. +y_0=-10000. +ellps=sphere +a=6371229. +b=6371229. +units=m +no_defs";
+
+        oSRS.importFromProj4( pszProj4 );
         char *srcWKT = NULL;
-        char* prj2 = (char*)projString.c_str();
-        oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
-
-        oDemSRS.importFromEPSG(32612);
 
         printf("%s\n", srcWKT);
 
@@ -422,8 +412,12 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
 
+        cout<<"pre-transform xCenter, yCenter = "<<xCenter<<", "<<yCenter<<endl;
+
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");
+
+        cout<<"post-transform xCenter, yCenter = "<<xCenter<<", "<<yCenter<<endl;
 
         /*
          * Set the geostransform for the RegCM file
@@ -448,13 +442,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         cout<<"dx = "<<dx<<endl;
 
         srcDS->SetGeoTransform(adfGeoTransform);
-
-
-        /*if( varList[i] == "U10" ) {  // just a check
-            AsciiGrid<double> tempSrcGrid;   
-            GDAL2AsciiGrid( srcDS, 12, tempSrcGrid );
-            tempSrcGrid.write_Grid("before_warp", 2);
-        }*/
 
         /*
          * Grab the first band to get the nodata value for the variable,
@@ -495,57 +482,36 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                         GRA_NearestNeighbour,
                                                         1.0, psWarpOptions );
 
-        //=======for testing==================================//
-        /*AsciiGrid<double> tempGrid;
-        AsciiGrid<double> temp2Grid;
-        
-        if( varList[i] == "U10" ) {
-            GDAL2AsciiGrid( wrpDS, 12, tempGrid );
-            if( CPLIsNan( dfNoData ) ) {
-                tempGrid.set_noDataValue(-9999.0);
-                tempGrid.replaceNan( -9999.0 );
-            }
-            tempGrid.write_Grid("after_warp", 2);
 
-
-            //Make final grids with same header as dem
-            temp2Grid.set_headerData(input.dem);
-            temp2Grid.interpolateFromGrid(tempGrid, AsciiGrid<double>::order1);
-            temp2Grid.set_noDataValue(-9999.0);
-            temp2Grid.write_Grid("after_interpolation", 2);
-        }*/
-        //=======end testing=================================//
-
-        //cout<<"bandNum to write is: " <<bandNum<<endl;
-
-        if( varList[i] == "T2" ) {
+        if( varList[i] == "tas" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-        if( CPLIsNan( dfNoData ) ) {
-        airGrid.set_noDataValue(-9999.0);
-        airGrid.replaceNan( -9999.0 );
+            if( CPLIsNan( dfNoData ) ) {
+                airGrid.set_noDataValue(-9999.0);
+                airGrid.replaceNan( -9999.0 );
+            }
         }
-    }
-        else if( varList[i] == "V10" ) {
+        else if( varList[i] == "vas" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-        if( CPLIsNan( dfNoData ) ) {
-        vGrid.set_noDataValue(-9999.0);
-        vGrid.replaceNan( -9999.0 );
+            if( CPLIsNan( dfNoData ) ) {
+                vGrid.set_noDataValue(-9999.0);
+                vGrid.replaceNan( -9999.0 );
+            }
         }
-    }
-        else if( varList[i] == "U10" ) {
+        else if( varList[i] == "uas" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-        if( CPLIsNan( dfNoData ) ) {
-        uGrid.set_noDataValue(-9999.0);
-        uGrid.replaceNan( -9999.0 );
+            if( CPLIsNan( dfNoData ) ) {
+                uGrid.set_noDataValue(-9999.0);
+                uGrid.replaceNan( -9999.0 );
+            }
         }
-    }
-        else if( varList[i] == "QCLOUD" ) {
-            GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( CPLIsNan( dfNoData ) ) {
-        cloudGrid.set_noDataValue(-9999.0);
-        cloudGrid.replaceNan( -9999.0 );
-        }
-    }
+//        else if( varList[i] == "QCLOUD" ) {
+//            //GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
+//            cloudGrid = 0.0;
+//            if( CPLIsNan( dfNoData ) ) {
+//                cloudGrid.set_noDataValue(-9999.0);
+//                cloudGrid.replaceNan( -9999.0 );
+//            }
+//        }
         CPLFree(srcWKT);
         delete poCT;
         GDALDestroyWarpOptions( psWarpOptions );

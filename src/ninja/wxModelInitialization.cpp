@@ -611,7 +611,6 @@ std::vector<blt::local_date_time>
 wxModelInitialization::getTimeList(const char *pszVariable,
                                    blt::time_zone_ptr timeZonePtr)
 {
-
     std::vector<blt::local_date_time>timeList;
 
     //==========If the file is NAM or HRRR GRIB============================================================
@@ -925,6 +924,10 @@ wxModelInitialization::getTimeList(const char *pszVariable,
             pos = refString.find( "Z" );
             refString.erase( pos, 1 );
         }
+        if( refString.find( "UTC" ) != refString.npos ) {
+            pos = refString.find( "UTC" );
+            refString.erase( pos, 3 );
+        }
         while( refString.find( ":" ) != refString.npos ) {
             pos = refString.find( ":" );
             refString.erase( pos, 1 );
@@ -937,6 +940,11 @@ wxModelInitialization::getTimeList(const char *pszVariable,
         if( pos != refString.npos )
         {
             refString.erase(pos, strlen("Hour since "));
+        }
+        pos = refString.find( " " );
+        if( pos != refString.npos )
+        {
+            refString.replace(pos, 1, 1, 'T');
         }
 
         /*
@@ -1134,11 +1142,13 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     //Read in wxModel grids (speed, direction, temperature and cloud cover grids)
     setSurfaceGrids(input, airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel,
                     vGrid_wxModel, wGrid_wxModel);
+    cout<<"Finished setSurfaceGrids..."<<endl;
 #ifdef NOMADS_ENABLE_3D
     set3dGrids(input, mesh);
 #endif
 
     interpolateWxGridsToNinjaGrids(input);
+    cout<<"Interpolated wx grids to ninja grids..."<<endl;
 
     //Write wx model grids
     writeWxModelGrids(input);
@@ -1174,6 +1184,8 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
     //Interpolate from original wxModel grids to dem coincident grids
+    airTempGrid_wxModel.write_Grid("airTemp_wx.asc", 2);
+    uGrid_wxModel.write_Grid("uGrid_wx.asc", 2);
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
     cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
