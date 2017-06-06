@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initialing with RegCM forecasts
+* Purpose:  Initialzing with RegCM forecasts
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -354,5 +354,3 @@ double regcmSurfInitialization::Get_Wind_Height()
 {
     return 10.0;
 }
-
-
