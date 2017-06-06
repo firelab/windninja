@@ -128,7 +128,7 @@ int regcmSurfInitialization::getEndHour()
 */
 void regcmSurfInitialization::checkForValidData()
 {
-    cout<<"No check for valid data!"<<endl;
+    //no check for valid data yet
 }
 
 /**
@@ -202,9 +202,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         AsciiGrid<double> &vGrid,
         AsciiGrid<double> &wGrid )
 {
-
-    cout<<"Setting surface grids..."<<endl;
-
     int bandNum = -1;
 
     //get time list
@@ -215,13 +212,11 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         if(input.ninjaTime == timeList[i])
         {
             bandNum = i + 1;
-            //cout<<"Grabbing band number: " <<bandNum<<endl;
             break;
         }
     }
     if(bandNum < 0)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
-
 
     GDALDataset* poDS;
     //attempt to grab the projection from the dem?
@@ -245,119 +240,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         GDALClose((GDALDatasetH) poDS );
     }
 
-//==========get global attributes to set projection===========================
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
-    /*
-     * Open the dataset
-     */
-    int status, ncid;
-    status = nc_open( wxModelFileName.c_str(), 0, &ncid );
-    if ( status != NC_NOERR ) {
-        ostringstream os;
-        os << "The netcdf file: " << wxModelFileName
-           << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-
-    /*
-     * Get global attribute projection
-     * NORMER = Mercator
-     */
-    size_t len;
-    nc_type type;
-    char* mapproj;
-    status = nc_inq_att( ncid, NC_GLOBAL, "projection", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute 'projection' in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        mapproj = new char[len + 1];
-        status = nc_get_att_text( ncid, NC_GLOBAL, "projection", mapproj );
-        mapproj[len] = '\0';
-    }
-
-    std::string mapProj ( mapproj );
-    cout<<"projection = "<<mapProj<<endl;
-
-    /*
-     * Get global attribute grid_size_in_meters
-     *
-     */
-    float dx, dy;
-    status = nc_inq_att( ncid, NC_GLOBAL, "grid_size_in_meters", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute grid_size_in_meters in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "grid_size_in_meters", &dx );
-        dy = dx;
-    }
-
-    cout <<"dx, dy = "<<dx<<", "<<dy<<endl;
-
-    /*
-     * Get global attributes latitude_of_projection_origin,
-     *                       longitutde_of_projection_origin
-     *
-     */
-    float cenLat, cenLon;
-    status = nc_inq_att( ncid, NC_GLOBAL, "latitude_of_projection_origin", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute latitude_of_projection_origin in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "latitude_of_projection_origin", &cenLat );
-    }
-    status = nc_inq_att( ncid, NC_GLOBAL, "longitude_of_projection_origin", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute longitutde_of_projection_origin in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "longitude_of_projection_origin", &cenLon );
-    }
-
-    cout<<"cenLat, cenLon = "<<cenLat<<", "<<cenLon<<endl;
-
-    /*
-     * Close the dataset
-     *
-     */
-    status = nc_close( ncid );
-    if( status != NC_NOERR ) {
-        ostringstream os;
-        os << "The netcdf file: " << wxModelFileName
-           << " cannot be closed\n";
-        throw std::runtime_error( os.str() );
-    }
-
-//======end get global attributes========================================
-
-    CPLPushErrorHandler(&CPLQuietErrorHandler);
-    poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
-    CPLPopErrorHandler();
-    if( poDS == NULL ) {
-        throw badForecastFile("Cannot open forecast file in regcmSurfInitialization::setSurfaceGrids()");
-    }
-    else {
-        GDALClose((GDALDatasetH) poDS ); // close original wxModel file
-    }
-        
     // open ds one by one, set projection, warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
     std::string temp;
@@ -368,23 +250,18 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
      * Set the initial values in the warped dataset to no data
      */
     GDALWarpOptions* psWarpOptions;
+    double adfGeoTransform[6];
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
         
-        CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
-        CPLPopErrorHandler();
         if( srcDS == NULL ) {
             cout<<"Bad forecast file in regcmSurfaceIinitialization::setSurfaceGrids."<<endl;
         }
 
-        cout<<"varList[i] = " <<varList[i]<<endl;
-
         srcWkt = srcDS->GetProjectionRef();
-
-        cout<<"srcWkt = "<<srcWkt<<endl;
 
         if( srcWkt.empty() ) {
             CPLDebug( "regcmSurfInitialization::setSurfaceGrids()",
@@ -425,10 +302,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             CSLSetNameValue( psWarpOptions->papszWarpOptions,
                              "INIT_DEST", "NO_DATA" );
 
-        /*
-        ** FIXME(kyle): valgrind reporting memory leak as psWarpOptions is
-        ** cloned internally and then not freed
-        */
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,

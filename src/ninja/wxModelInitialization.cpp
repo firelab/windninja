@@ -1184,10 +1184,9 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
     //Interpolate from original wxModel grids to dem coincident grids
-    airTempGrid_wxModel.write_Grid("airTemp_wx.asc", 2);
-    uGrid_wxModel.write_Grid("uGrid_wx.asc", 2);
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
-    cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
+    //cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
+    cloudCoverGrid = 0.0;
     uInitializationGrid.interpolateFromGrid(uGrid_wxModel, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(vGrid_wxModel, AsciiGrid<double>::order1);
 
