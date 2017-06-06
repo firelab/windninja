@@ -361,7 +361,7 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     // open ds one by one, set projection, warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
     std::string temp;
-    const char* pszProj4;
+    std::string srcWkt;
     std::vector<std::string> varList = getVariableList();
 
     /*
@@ -382,66 +382,15 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         cout<<"varList[i] = " <<varList[i]<<endl;
 
-        /*
-         * Set up spatial reference stuff for setting projections
-         * and geotransformations
-         */
+        srcWkt = srcDS->GetProjectionRef();
 
+        cout<<"srcWkt = "<<srcWkt<<endl;
 
-        OGRSpatialReference oSRS, *poLatLong;
-        pszProj4 = "+proj=merc +lat_ts=-10.06 +lon_0=45.36 +x_0=-10000. +y_0=-10000. +ellps=sphere +a=6371229. +b=6371229. +units=m +no_defs";
-
-        oSRS.importFromProj4( pszProj4 );
-        char *srcWKT = NULL;
-        oSRS.exportToWkt(&srcWKT);
-
-        printf("%s\n", srcWKT);
-
-        OGRCoordinateTransformation *poCT;
-        poLatLong = oSRS.CloneGeogCS();
-
-        /*
-         * Transform domain center from lat/long to RegCM space
-         */
-        double zCenter;
-        bool transformed;
-        zCenter = 0;
-        double xCenter, yCenter;
-        xCenter = (double)cenLon;
-        yCenter = (double)cenLat;
-
-        poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
-
-        cout<<"pre-transform xCenter, yCenter = "<<xCenter<<", "<<yCenter<<endl;
-
-        if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
-            printf("Transformation failed.\n");
-
-        cout<<"post-transform xCenter, yCenter = "<<xCenter<<", "<<yCenter<<endl;
-
-        /*
-         * Set the geostransform for the RegCM file
-         * upper corner is calculated from transformed x, y
-         * (in RegCM space)
-         */
-
-        double ncols, nrows;
-        int nXSize = srcDS->GetRasterXSize();
-        int nYSize = srcDS->GetRasterYSize();
-        ncols = (double)(nXSize)/2;
-        nrows = (double)(nYSize)/2;
-
-        double adfGeoTransform[6] = {(xCenter-(ncols*dx)), dx, 0,
-                                    (yCenter+(nrows*dy)),
-                                    0, -(dy)};
-
-        cout<<"ulcornerX = " <<(xCenter-(ncols*dx))<<endl;
-        cout<<"ulcornerY = " <<(yCenter+(nrows*dy))<<endl;
-        cout<<"ncols = " <<ncols<<endl;
-        cout<<"nrows = " <<nrows<<endl;
-        cout<<"dx = "<<dx<<endl;
-
-        srcDS->SetGeoTransform(adfGeoTransform);
+        if( srcWkt.empty() ) {
+            CPLDebug( "regcmSurfInitialization::setSurfaceGrids()",
+                    "Bad forecast file" );
+            //throw
+        }
 
         /*
          * Grab the first band to get the nodata value for the variable,
@@ -454,11 +403,11 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         psWarpOptions = GDALCreateWarpOptions();
 
         int nBandCount = srcDS->GetRasterCount();
-
         psWarpOptions->nBandCount = nBandCount;
-
-        //cout<<"nBandCount = " << nBandCount <<endl;
-
+        psWarpOptions->panSrcBands = 
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
+        psWarpOptions->panDstBands = 
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
         psWarpOptions->padfDstNoDataImag =
@@ -467,21 +416,28 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
             psWarpOptions->padfDstNoDataReal[b] = dfNoData;
             psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-        }
+         }
 
-        if( pbSuccess == false )
+        if( pbSuccess == FALSE )
             dfNoData = -9999.0;
 
         psWarpOptions->papszWarpOptions =
             CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                            "INIT_DEST", "NO_DATA" );
+                             "INIT_DEST", "NO_DATA" );
 
-
-        wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWKT,
+        /*
+        ** FIXME(kyle): valgrind reporting memory leak as psWarpOptions is
+        ** cloned internally and then not freed
+        */
+        wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
                                                         1.0, psWarpOptions );
-
+        if(wrpDS == NULL)
+        {
+            throw badForecastFile("Could not warp the forecast file, "
+                                  "possibly non-uniform grid.");
+        }
 
         if( varList[i] == "tas" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
@@ -512,8 +468,6 @@ void regcmSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 //                cloudGrid.replaceNan( -9999.0 );
 //            }
 //        }
-        CPLFree(srcWKT);
-        delete poCT;
         GDALDestroyWarpOptions( psWarpOptions );
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
