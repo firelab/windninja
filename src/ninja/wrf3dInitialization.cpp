@@ -639,6 +639,14 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
                 cloudGrid.replaceValue(dfNoData, -9999.0);
+                //don't allow small negative values in cloud cover
+                for(int i=0; i<cloudGrid.get_nRows(); i++){
+                    for(int j=0; j<cloudGrid.get_nCols(); j++){
+                        if(cloudGrid(i,j) < 0.0){
+                            cloudGrid(i,j) = 0.0;
+                        }
+                    }
+                }
                 cloudGrid /= 100.0;
                 for(unsigned int i = numStripRows/2; i < cloudGrid.get_nRows()-numStripRows/2; i++){
                     for(unsigned int j = numStripCols/2; j < cloudGrid.get_nCols()-numStripCols/2; j++){
