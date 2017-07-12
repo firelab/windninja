@@ -42,6 +42,7 @@ windInputTable::windInputTable(QWidget *parent) : QWidget(parent)
   inputSpeedUnits->addItem(tr("mph"), 0);
   inputSpeedUnits->addItem(tr("m/s"), 1);
   inputSpeedUnits->addItem(tr("kph"), 2);
+  inputSpeedUnits->addItem(tr("kts"), 3);
   inputSpeedUnits->setEditable(false);
   inputSpeedUnits->setCurrentIndex(0);
 

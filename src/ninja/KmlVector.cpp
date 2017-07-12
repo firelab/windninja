@@ -650,6 +650,9 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
 		case velocityUnits::kilometersPerHour:	// kph
 			PrintString(legend,"Wind Speed (kph)", titleX, titleY, titleTextHeight, white);
 			break;
+		case velocityUnits::knots:	// kts
+			PrintString(legend,"Wind Speed (knots)", titleX, titleY, titleTextHeight, white);
+            break;
 		default:				// default is mph
 			PrintString(legend,"Wind Speed (mph)", titleX, titleY, titleTextHeight, white);
 			break;
