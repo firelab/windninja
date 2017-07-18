@@ -110,6 +110,7 @@ QWidget *pointInputDelegate::createEditor( QWidget *parent,
 	comboBox->addItem( "mph" );
 	comboBox->addItem( "kph" );
 	comboBox->addItem( "mps" );
+	comboBox->addItem( "kts" );
 	return comboBox;
     }
     else if( index.column() == 9 ) {

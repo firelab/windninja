@@ -1679,6 +1679,8 @@ int mainWindow::solve()
     inputSpeedUnits = velocityUnits::milesPerHour;
     else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 1)
     inputSpeedUnits = velocityUnits::metersPerSecond;
+    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 3)
+    inputSpeedUnits = velocityUnits::knots;
     else
     inputSpeedUnits = velocityUnits::kilometersPerHour;
 
@@ -1716,7 +1718,8 @@ int mainWindow::solve()
         outputSpeedUnits = velocityUnits::metersPerSecond;
     else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 2)
         outputSpeedUnits = velocityUnits::kilometersPerHour;
-
+    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 3)
+        outputSpeedUnits = velocityUnits::knots;
 
     //clip buffer?
     int clip = tree->output->bufferSpinBox->value();
