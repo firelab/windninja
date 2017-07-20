@@ -192,7 +192,7 @@ char **wxStation::getValidHeader()
     papszList = CSLAddString( papszList, "Height_Units(meters,feet)" );
     papszList = CSLAddString( papszList, "Speed" );
     papszList = CSLAddString( papszList,
-                    "Speed_Units(mph,kph,mps)" );
+                    "Speed_Units(mph,kph,mps,kts)" );
     papszList = CSLAddString( papszList, "Direction(degrees)" );
     papszList = CSLAddString( papszList, "Temperature" );
     papszList = CSLAddString( papszList,
@@ -507,6 +507,15 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
             poFieldDefn = poFeatureDefn->GetFieldDefn( iField );
             if( !EQUAL( poFieldDefn->GetNameRef(),
                 papszHeader[iField] ) ) {
+
+                const char *oldSpeedHeadStr="Speed_Units(mph,kph,mps)";
+                /*
+                 * This allows us to Use both headers, one with knots and the old one without.
+                 */
+                if (EQUAL(poFieldDefn->GetNameRef(),
+                          oldSpeedHeadStr)){
+                    continue;
+                }
                 OGRFeature::DestroyFeature( poFeature );
                 OGR_DS_Destroy( hDS );
                 CSLDestroy( papszHeader );
@@ -625,6 +634,8 @@ std::vector<wxStation> wxStation::readStationFile( std::string csvFile,
                 velocityUnits::kilometersPerHour );
     else if ( EQUAL( pszKey, "mps" ) )
         oStation.set_speed( dfTempValue, velocityUnits::metersPerSecond );
+    else if ( EQUAL( pszKey, "kts" ) )
+        oStation.set_speed( dfTempValue, velocityUnits::knots );
     else {
         oErrorString = "Invalid units for speed: ";
         oErrorString += poFeature->GetFieldAsString( 8 );

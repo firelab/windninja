@@ -826,6 +826,14 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
     }
+    //don't allow small negative values in cloud cover
+    for(int i=0; i<cloudGrid.get_nRows(); i++){
+        for(int j=0; j<cloudGrid.get_nCols(); j++){
+            if(cloudGrid(i,j) < 0.0){
+                cloudGrid(i,j) = 0.0;
+            }
+        }
+    }
     cloudGrid /= 100.0;
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
