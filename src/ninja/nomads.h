@@ -334,11 +334,6 @@ static const char *apszNomadsKeys[][11] =
       "NAM North America" },
     /* XXX: NAM Caribbean/Central America */
     /* XXX: NAM Pacific */
-#ifdef NOMADS_EXPER_FORECASTS
-    /*
-    ** The nest grids are moving, we don't know if they are anywhere near our
-    ** domain, use HIRES instead.
-    */
     /*
     ** NAM Alaska NEST
     */
@@ -371,6 +366,7 @@ static const char *apszNomadsKeys[][11] =
       "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
+#ifdef NOMADS_EXPER_FORECASTS
     /* Alaska RTMA */
     {
       "rtma_ak",
