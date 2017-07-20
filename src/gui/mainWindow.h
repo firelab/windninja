@@ -163,7 +163,6 @@ class mainWindow : public QMainWindow
   void resampleData();
   void writeBlankStationFile();
   void windNinjaHelp();
-  void displayArcView();
   void displayArcMap();
   void tutorial1();
   void tutorial2();

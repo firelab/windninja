@@ -59,7 +59,6 @@ bool surfaceVectorField::write_shapefile(std::string rootName)
 	double yCoord = 0;
 	double velocity = 0;
 	double direction = 0;
-	double AVdirection = 0;
 	double AMdirection = 0;
 	double phi = 0;
 
@@ -95,8 +94,6 @@ bool surfaceVectorField::write_shapefile(std::string rootName)
 			poX->get_cellPosition(i, j, &xCoord, &yCoord);
 			uvw_to_rThetaPhi((*poX)(i,j), (*poY)(i,j), (*poZ)(i,j), &velocity, &direction, &phi);	//at this point, direction is the direction the wind vector points TO (not from)
 			
-			AVdirection = 360.0 - direction;	//pervert the angle for display in ArcView
-
 			AMdirection = direction - 90.0;	//pervert the angle for display in ArcMap
 			if(AMdirection < 0.0)
 				AMdirection += 360.0;
@@ -106,7 +103,7 @@ bool surfaceVectorField::write_shapefile(std::string rootName)
 				direction -= 360.0;
 			
 
-			WriteShapePoint(xCoord, yCoord, velocity, (long)(direction+0.5), (long)(AVdirection + 0.5), (long)(AMdirection + 0.5));	//write shapefile point, add 0.5 because of double to long conversion
+			WriteShapePoint(xCoord, yCoord, velocity, (long)(direction+0.5), (long)(AMdirection + 0.5));	//write shapefile point, add 0.5 because of double to long conversion
 		}
 	}
 
@@ -174,7 +171,7 @@ void surfaceVectorField::CloseShape()
 }
 
 
-void surfaceVectorField::WriteShapePoint(double xpt, double ypt, double spd, long dir, long view_dir, long map_dir)
+void surfaceVectorField::WriteShapePoint(double xpt, double ypt, double spd, long dir, long map_dir)
 {
      long NumRecord;
 	double zpt=0;
@@ -191,8 +188,7 @@ void surfaceVectorField::WriteShapePoint(double xpt, double ypt, double spd, lon
 //   DBFWriteIntegerAttribute(hDBF, NumRecord, 3, dir);
 	DBFWriteDoubleAttribute(hDBF, NumRecord, 0, spd);
      DBFWriteIntegerAttribute(hDBF, NumRecord, 1, dir);
-     DBFWriteIntegerAttribute(hDBF, NumRecord, 2, view_dir);
-     DBFWriteIntegerAttribute(hDBF, NumRecord, 3, map_dir);
+     DBFWriteIntegerAttribute(hDBF, NumRecord, 2, map_dir);
 }
 
 
