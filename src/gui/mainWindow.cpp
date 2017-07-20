@@ -287,12 +287,6 @@ void mainWindow::createActions()
   connect(windNinjaHelpAction, SIGNAL(triggered()), this,
       SLOT(windNinjaHelp()));
 
-  //arcView action
-  displayShapeFileViewAction = new QAction(tr("How to Display Shapefiles in ArcView"), this);
-  displayShapeFileViewAction->setIcon(QIcon(":page_white_acrobat.png"));
-  connect(displayShapeFileViewAction, SIGNAL(triggered()), this,
-      SLOT(displayArcView()));
-
   //arcMap action
   displayShapeFileMapAction = new QAction(tr("How to Display Shapefiles in ArcMap"), this);
   displayShapeFileMapAction->setIcon(QIcon(":page_white_acrobat.png"));
@@ -1104,20 +1098,6 @@ void mainWindow::displayArcMap()
   pwd.cd("share/windninja/doc");
   writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"));
   if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-void mainWindow::displayArcView()
-{
-  pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcView.pdf"));
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcView.pdf"))))
     {
 
       QMessageBox::warning(this, tr("Broken Link."),
