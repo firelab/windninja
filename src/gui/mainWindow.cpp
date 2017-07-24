@@ -398,8 +398,8 @@ void mainWindow::createMenus()
   //help/tutorial menus
   helpMenu = menuBar()->addMenu(tr("&Help"));
   shapeSubMenu = helpMenu->addMenu(tr("Displaying Shapefiles"));
-  shapeSubMenu->addAction(displayShapeFileViewAction);
   shapeSubMenu->addAction(displayShapeFileMapAction);
+  QMenu *shapeSubMenu;
   tutorialSubMenu = helpMenu->addMenu(tr("Tutorials"));
   tutorialSubMenu->addAction(tutorial1Action);
   tutorialSubMenu->addAction(tutorial2Action);

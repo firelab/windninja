@@ -139,8 +139,6 @@ bool surfaceVectorField::CreateShape()
     	DBFAddField(hDBF, DataBaseID, FTDouble, 16, 6 );
      sprintf(DataBaseID, "%s", "Winddir");
     	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0);
-     sprintf(DataBaseID, "%s", "AV_dir");
-    	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0 );
      sprintf(DataBaseID, "%s", "AM_dir");
     	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0 );
 	DBFClose(hDBF);
