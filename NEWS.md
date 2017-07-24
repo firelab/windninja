@@ -8,7 +8,7 @@ WindNinja 3.3.0
 
 - Add knots as a wind speed unit (\#243)
 
-- Fix an issue that was causing NDFD to fail due to a chaange on the UCAR server (\#257)
+- Fix an issue that was causing NDFD to fail due to a change on the UCAR server (\#257)
 
 WindNinja 3.2.0
 ---------------
