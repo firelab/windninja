@@ -265,6 +265,7 @@ class mainWindow : public QMainWindow
   QMenu *toolsMenu;
   QMenu *helpMenu;
   QMenu *tutorialSubMenu;
+  QMenu *shapeSubMenu;
 
   QLabel *statusLabel;
 
