@@ -128,26 +128,6 @@ int wrfSurfInitialization::getEndHour()
 */
 void wrfSurfInitialization::checkForValidData()
 {
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
-
-    //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
-
-    boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
-
-    //check times
-    for(unsigned int i = 0; i < timeList.size(); i++)
-    {
-        if(timeList[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
-            throw badForecastFile("Bad time in forecast file.");
-        if(timeList[i] < low_time || timeList[i] > high_time)
-            throw badForecastFile("Bad time in forecast file.");
-    }
-
     // open ds variable by variable
     GDALDataset *srcDS;
     std::string temp;
