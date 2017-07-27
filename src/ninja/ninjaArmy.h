@@ -482,6 +482,7 @@ public:
     * - "mps" = metersPerSecond
     * - "mph" = milesPerHour
     * - "kph" = kilometersPerHour
+    * - "kts" = knots
     *
     * \param nIndex index of a ninja
     * \param speed input speed value
@@ -584,6 +585,7 @@ public:
     * - "mps" = metersPerSecond
     * - "mph" = milesPerHour
     * - "kph" = kilometersPerHour
+    * - "kts" = knots
     *
     * \param nIndex index of a ninja
     * \param units string-formatted velocity units

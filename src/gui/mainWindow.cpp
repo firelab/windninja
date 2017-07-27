@@ -287,12 +287,6 @@ void mainWindow::createActions()
   connect(windNinjaHelpAction, SIGNAL(triggered()), this,
       SLOT(windNinjaHelp()));
 
-  //arcView action
-  displayShapeFileViewAction = new QAction(tr("How to Display Shapefiles in ArcView"), this);
-  displayShapeFileViewAction->setIcon(QIcon(":page_white_acrobat.png"));
-  connect(displayShapeFileViewAction, SIGNAL(triggered()), this,
-      SLOT(displayArcView()));
-
   //arcMap action
   displayShapeFileMapAction = new QAction(tr("How to Display Shapefiles in ArcMap"), this);
   displayShapeFileMapAction->setIcon(QIcon(":page_white_acrobat.png"));
@@ -404,8 +398,8 @@ void mainWindow::createMenus()
   //help/tutorial menus
   helpMenu = menuBar()->addMenu(tr("&Help"));
   shapeSubMenu = helpMenu->addMenu(tr("Displaying Shapefiles"));
-  shapeSubMenu->addAction(displayShapeFileViewAction);
   shapeSubMenu->addAction(displayShapeFileMapAction);
+  QMenu *shapeSubMenu;
   tutorialSubMenu = helpMenu->addMenu(tr("Tutorials"));
   tutorialSubMenu->addAction(tutorial1Action);
   tutorialSubMenu->addAction(tutorial2Action);
@@ -1113,20 +1107,6 @@ void mainWindow::displayArcMap()
   pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
   pwd.cdUp();
 }
-void mainWindow::displayArcView()
-{
-  pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcView.pdf"));
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcView.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
 
 void mainWindow::cliInstructions()
 {
@@ -1679,6 +1659,8 @@ int mainWindow::solve()
     inputSpeedUnits = velocityUnits::milesPerHour;
     else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 1)
     inputSpeedUnits = velocityUnits::metersPerSecond;
+    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 3)
+    inputSpeedUnits = velocityUnits::knots;
     else
     inputSpeedUnits = velocityUnits::kilometersPerHour;
 
@@ -1716,7 +1698,8 @@ int mainWindow::solve()
         outputSpeedUnits = velocityUnits::metersPerSecond;
     else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 2)
         outputSpeedUnits = velocityUnits::kilometersPerHour;
-
+    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 3)
+        outputSpeedUnits = velocityUnits::knots;
 
     //clip buffer?
     int clip = tree->output->bufferSpinBox->value();

@@ -75,7 +75,7 @@ private:
 	bool CreateShape();
 	void OpenShape();
 	void CloseShape();
-	void WriteShapePoint(double xpt, double ypt, double spd, long dir, long view_dir, long map_dir);
+	void WriteShapePoint(double xpt, double ypt, double spd, long dir, long map_dir);
 };
 
 

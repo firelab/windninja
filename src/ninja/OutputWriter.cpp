@@ -435,6 +435,9 @@ bool OutputWriter::_createLegend()
     else if(units == velocityUnits::kilometersPerHour){
         unitsText = "kph";
     }
+    else if(units == velocityUnits::knots){
+        unitsText = "knots";
+    }
     else{
         throw std::runtime_error("OutputWriter: velocityUnits set incorrectly.");
     }
