@@ -30,103 +30,10 @@
 
 #include "openFoamPolyMesh.h"
 
-openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells,
-                                   double x0, double xf, double y0, double yf, double z0, double zf)
-{
-    generateCaseDirectory(outputPath);
-
-//values used for the constant polyMesh directorypointsPath = outputPath+"constant/polyMesh/points";
-    xcells = nxcells;
-    ycells = nycells;
-    zcells = nzcells;
-
-    foam_version = "2.0";
-    fzout = NULL;
-    xpoints = xcells+1;
-    ypoints = ycells+1;
-    zpoints = zcells+1;
-    npoints = xpoints*ypoints*zpoints;
-    ncells = xcells*ycells*zcells;
-
-    Axpoints = xpoints*zpoints;
-    Aypoints = ypoints*zpoints;
-    Azpoints = xpoints*ypoints;
-    Axcells = xcells*zcells;
-    Aycells = ycells*zcells;
-    Azcells = xcells*ycells;
-
-    nfaces = Axcells*ypoints+Aycells*xpoints+Azcells*zpoints;
-    ninternalfaces = nfaces-2*(Axcells+Aycells+Azcells);   //just realized that long term, this probably won't work if we ever apply this to strange geometries where our mesh is not a nice cube
-
-    xmin = x0;
-    xmax = xf;
-    ymin = y0;
-    ymax = yf;
-    zmin = z0;
-    zmax = zf;
-
-    x,y,z;
-
-    diffusivityConstant = 0.05;
-
-//values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
-    element elem = NULL;
-
-//values used for system directory
-
-    //controlDict variables
-    application = "myScalarTransportFoam";
-    startFrom = "startTime";
-    startTime = "0";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    stopAt = "endTime";
-    endTime = "3600";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    deltaT = "1.0";
-    writeControl = "timeStep";
-    writeInterval = "300";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    purgeWrite = "0";       // I like a value of 0 for smoke transport
-    writeFormat = "ascii";
-    writePrecision = "10";
-    writeCompression = "uncompressed";
-    timeFormat = "general";
-    timePrecision = "10";
-    runTimeModifiable = "true";
-
-    //fvSchemes variables
-    ddtSchemes_default = "Euler";
-    gradSchemes_default = "Gauss linear";
-    divSchemes_default = "none";
-    divSchemes_divOfPhiAndT = "bounded Gauss upwind";
-    laplacianSchemes_default = "Gauss linear limited 0.333";
-    laplacianSchemes_laplacianOfDTandT = "Gauss linear corrected";
-    interpolationSchemes_default = "linear";
-    SnGradSchemes_default = "corrected";
-    SnGradSchemes_SnGradOfT = "limited 0.5";
-    fluxRequired_default = "no";
-    fluxRequired_T = true;
-
-    //fvSolution variables
-    solvers_T_solver = "PBiCG";
-    solvers_T_preconditioner = "DILU";
-    solvers_T_tolerance = "1e-06";
-    solvers_T_relTol = "0.2";
-    SIMPLE_nNonOrthogonalCorrectors = "0";
-
-    //setFieldsDict variables
-    defaultTvalue = "0";
-    defaultSourceValue = "0";
-    distributionType = "boxToCell";
-    boxMinCoordinates = "726019.742 5206748.293 1210";
-    boxMaxCoordinates = "726283 5207018.3 1440";
-    distributionTValue = "75";
-    distributionSourceValue = "75";
-
-    writePolyMeshFiles("points", elem);
-
-}
-
 openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue,
-                                   double yllCornerValue, wn_3dScalarField const& uwind,
-                                   wn_3dScalarField const& vwind, wn_3dScalarField const& wwind)
+                                   double yllCornerValue, double inputDirectionValue, double UfreeStreamValue,
+                                   double inputWindHeight_VegValue, double RdValue,
+                                   wn_3dScalarField const& uwind,wn_3dScalarField const& vwind, wn_3dScalarField const& wwind)
 {
     generateCaseDirectory(outputPath);
 
@@ -134,7 +41,6 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     xpoints = mesh.ncols;
     ypoints = mesh.nrows;
     zpoints = mesh.nlayers;
-    hozRes = mesh.meshResolution;
     demCornerX = xllCornerValue;
     demCornerY = yllCornerValue;
     x = mesh.XORD;
@@ -162,6 +68,17 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     diffusivityConstant = 0.05;
 
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
+	inputDirection = inputDirectionValue;
+    UfreeStream = UfreeStreamValue;
+    uDirection = "";
+    ComputeUdirection();
+    inputWindHeight_Veg = inputWindHeight_VegValue;
+    z0 = 0.01;  //note that this is the foam roughness as found in the NinjaFoam AddBcBlock function. This has been manually set to 0.01 in NinjaFoam, so watch out if this value ends up changing there.
+    Rd = RdValue;
+    firstCellHeight = z(5*Azpoints)-z(Azpoints); //it takes a while to pull this out, but according to ninjaFoam,
+    //this is essentially (meshvolume/cellcount)^(1/3) where cellcount is half the cells in the blockMesh and
+    //half reserved for refineMesh. I'll just use the height of five cells from the minx and miny position
+    // at least until I figure out how the native mesh decides to vary the heights for the first few layers of mesh
     u = uwind;
     v = vwind;
     w = wwind;
@@ -216,9 +133,8 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     distributionTValue = "75";
     distributionSourceValue = "75";
 
-    std::cout << "starting meshConversionOutput\n";
-    writePolyMeshFiles("array", elem);
-    std::cout << "just finished meshConversionOutput\n";
+    writePolyMeshFiles(elem);
+    std::cout << "Finished meshConversion output\n";
 
 }
 
@@ -236,12 +152,11 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     outputPath = CPLGetBasename(outputPath.c_str());
     outputPath.erase( std::remove_if( outputPath.begin(), outputPath.end(), ::isspace ), outputPath.end() );
     static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("case-%s", outputPath.c_str())));
-    std::cout << "created case directory? " << VSIMkdir( CaseDir, 0777 ) << endl;
+    VSIMkdir( CaseDir, 0777 );
     VSIMkdir( CPLSPrintf("%s/0",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/constant",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/constant/polyMesh",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/system",CaseDir), 0777 );
-    std::cout << "finished generating new case\n";
 
 //values used for the constant polyMesh directory
     pointsPath =CPLSPrintf("%s/constant/polyMesh/points",CaseDir);
@@ -254,7 +169,6 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     scalarPath = CPLSPrintf("%s/0/T",CaseDir);
     sourcePath = CPLSPrintf("%s/0/source",CaseDir);
     velocityPath = CPLSPrintf("%s/0/U",CaseDir);
-    phiPath = CPLSPrintf("%s/0/phi",CaseDir);
 //values used for system directory
     controlDictPath = CPLSPrintf("%s/system/controlDict",CaseDir);
     fvSchemesPath = CPLSPrintf("%s/system/fvSchemes",CaseDir);
@@ -262,7 +176,7 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     setFieldsDictPath = CPLSPrintf("%s/system/setFieldsDict",CaseDir);
 }
 
-bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element elem)
+bool openFoamPolyMesh::writePolyMeshFiles(element elem)
 {
     //this outputs the mesh files, though for now it also outputs all the case files
 
@@ -270,7 +184,7 @@ bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element el
     //now create points as an OpenFOAM file
     fzout = fopen(pointsPath.c_str(), "w");
     makeFoamHeader("vectorField","points","constant/polyMesh");
-    printPoints(pointWriteType);
+    printPoints();
     makeFoamFooter();
     fclose(fzout);
 
@@ -330,15 +244,9 @@ bool openFoamPolyMesh::writePolyMeshFiles(std::string pointWriteType, element el
     //write the velocities
     fzout = fopen(velocityPath.c_str(), "w");
     makeFoamHeader("volVectorField","U","0");
-    printVelocity(pointWriteType, elem);
+    printVelocity(elem);
     makeFoamFooter();
     fclose(fzout);
-
-    //fzout = fopen(phiPath.c_str(), "w");
-    //makeFoamHeader("surfaceScalarField","phi","0");
-    //calculatePhi(elem);
-    //makeFoamFooter();
-    //fclose(fzout);
 
 //now create the system files
     //write the controlDict file
@@ -391,7 +299,7 @@ void openFoamPolyMesh::makeFoamHeader(std::string theClassType, std::string theO
         fprintf(fzout,"    note        \"nPoints: %0.0lf nCells: %0.0lf nFaces: %0.0lf nInternalFaces: %0.0lf\";\n",
                 npoints,ncells,nfaces,ninternalfaces);
     }
-    if (theFoamFileLocation != "" ) //need better error handling code here
+    if (theFoamFileLocation != "" ) //need better error handling code here. Basically plan for whatever cases are normal, and have an else error for anything else
     {
         fprintf(fzout,"    location    \"%s\";\n",theFoamFileLocation.c_str());
     }
@@ -406,45 +314,23 @@ void openFoamPolyMesh::makeFoamFooter()
 
 
 
-void openFoamPolyMesh::printPoints(std::string pointWriteType)
+void openFoamPolyMesh::printPoints()
 {
-    if (pointWriteType == "points")
+    //remember, i is for y or the number of rows. j is for x or the number of columns
+    //Print columns before rows in C++ where it is often rows before columns in VBA
+    fprintf(fzout, "\n%0.0lf\n(\n", npoints);
+    for(double k=0; k<zpoints; k++)
     {
-        double dx = (xmax-xmin)/xcells; //this spacing probably changes quite a bit for a normal mesh. Need to double check. If not, might as well make these a standard variable of the class
-        double dy = (ymax-ymin)/ycells;
-        double dz = (zmax-zmin)/zcells;
-
-        fprintf(fzout, "\n%0.0lf\n(\n", npoints);
-        for(double k=0; k<zpoints; k++)
+        for(double i=0; i<ypoints; i++)
         {
-            for(double i=0; i<ypoints; i++)
+            for (double j = 0;j<xpoints;j++)
             {
-                for (double j = 0;j<xpoints;j++)
-                {
-                    fprintf(fzout, "(%lf %lf %lf)\n", j*dx, i*dy, k*dz);
-                }
+                fprintf(fzout, "(%lf %lf %lf)\n", x(k*Azpoints + i*xpoints + j)+demCornerX,
+                        y(k*Azpoints + i*xpoints + j)+demCornerY, z(k*Azpoints + i*xpoints + j));   //demCorner helps to go back to the original utm coordinates
             }
         }
-        fprintf(fzout, ")\n");
-    } else if (pointWriteType == "array")
-    {
-        //remember, i is for y or the number of rows. j is for x or the number of columns
-        //Print columns before rows in C++ where it is often rows before columns in VBA
-        fprintf(fzout, "\n%0.0lf\n(\n", npoints);
-        for(double k=0; k<zpoints; k++)
-        {
-            for(double i=0; i<ypoints; i++)
-            {
-                for (double j = 0;j<xpoints;j++)
-                {
-                    fprintf(fzout, "(%lf %lf %lf)\n", x(k*Azpoints + i*xpoints + j)+demCornerX,
-                            y(k*Azpoints + i*xpoints + j)+demCornerY, z(k*Azpoints + i*xpoints + j));   //demCorner helps to go back to the original utm coordinates
-                }
-            }
-        }
-        fprintf(fzout, ")\n");
     }
-
+    fprintf(fzout, ")\n");
 }
 
 void openFoamPolyMesh::printOwners()
@@ -741,6 +627,15 @@ void openFoamPolyMesh::printListHeader(std::string patchName,std::string ListTyp
     }else if(ListType == "pressureInletOutletVelocity")
     {
         fprintf(fzout,"        value           nonuniform List<vector>\n");
+    }else if(ListType == "logProfileVelocityInlet")
+    {
+        fprintf(fzout,"        UfreeStream     %lf;\n",UfreeStream);
+        fprintf(fzout,"        uDirection      %s;\n",uDirection.c_str());
+        fprintf(fzout,"        inputWindHeight_Veg %lf;\n",inputWindHeight_Veg);
+        fprintf(fzout,"        z0              %lf;\n",z0);
+        fprintf(fzout,"        Rd              %lf;\n",Rd);
+        fprintf(fzout,"        firstCellHeight %lf;\n",firstCellHeight);
+        fprintf(fzout,"        value           nonuniform List<vector>\n");
     }else
     {
         fprintf(fzout,"    }\n");
@@ -785,277 +680,188 @@ void openFoamPolyMesh::printSource()
 
 }
 
-void openFoamPolyMesh::printVelocity(std::string pointWriteType, element elem)
+void openFoamPolyMesh::ComputeUdirection()
 {
-    if (pointWriteType == "points")
-    {
-        fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
+    double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
 
-/*
-        //should replace this with the new printListInfo() version
-        fprintf(fzout,"internalField   uniform (0 0 0);\n\n");
-        fprintf(fzout,"boundaryField\n{\n");
-        printListHeader("north_face","fixedValue","(1 0 0)",true);
-        printListHeader("west_face","fixedValue","(1 0 0)",true);
-        printListHeader("east_face","zeroGradient","",true);
-        printListHeader("south_face","zeroGradient","",true);
-        printListHeader("minZ","zeroGradient","",true);
-        printListHeader("maxZ","zeroGradient","",false);
-*/
-
-        //the idea of this section was to see how velocities are stored in OpenFoam and see if we could
-        //replicate the velocity files that use a uniform field using individual values
-
-        std::string values = "(0 0 0)\n";
-
-        //first fill out the internal values
-        fprintf(fzout,"internalField   nonuniform List<vector>\n%0.0lf\n(\n",ncells);      //needs to be internal points
-        for (double k = 0; k < zcells; k++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                for (double j = 0; j < xcells; j++)
-                {
-                    fprintf(fzout, "%s", values.c_str());
-                    if (values == "(0 0 0)\n")
-                    {
-                        values = "(1 0 0)\n";
-                    } else
-                    {
-                        values = "(0 0 0)\n";
-                    }
-                }
-            }
-        }
-        fprintf(fzout,")\n;\n\n");
-
-        //this section defines the velocities on the boundaries, something the vtk format may not even do. These also appear to be off somehow
-          //now fill in the north face velocities
-          fprintf(fzout,"boundaryField\n{\n");
-
-          printListHeader("north_face","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Axcells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (j == xcells-1)
-                      {
-                          fprintf(fzout, "(0 0 0)\n");
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n");
-
-          //now fill in the west face velocities
-          printListHeader("west_face","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Aycells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (i == 0)
-                      {
-                          fprintf(fzout, "(0 0 0)\n");
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n");
-
-          //now fill in the east face velocities
-          printListHeader("east_face","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Aycells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (i == ycells-1)
-                      {
-                          fprintf(fzout, "%s", values.c_str());
-                          if (values == "(0 0 0)\n")
-                          {
-                              values = "(1 0 0)\n";
-                          } else
-                          {
-                              values = "(0 0 0)\n";
-                          }
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n");
-
-          //now print the south face velocities
-          printListHeader("south_face","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Axcells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (j == 0)
-                      {
-                          fprintf(fzout, "%s", values.c_str());
-                          if (values == "(0 0 0)\n")
-                          {
-                              values = "(1 0 0)\n";
-                          } else
-                          {
-                              values = "(0 0 0)\n";
-                          }
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n");
-
-          //now print the minZ face velocities
-          printListHeader("minZ","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Azcells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (k == 0)
-                      {
-                          fprintf(fzout, "(0 0 0)\n");
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n");
-
-          //now print the maxZ face velocities
-          printListHeader("maxZ","pressureInletOutletVelocity","",false);
-          fprintf(fzout,"%0.0lf\n(\n",Azcells);
-          for (double k = 0; k < zcells; k++)
-          {
-              for (double i = 0; i < ycells; i++)
-              {
-                  for (double j = 0; j < xcells; j++)
-                  {
-                      if (k == zcells-1)
-                      {
-                          fprintf(fzout, "(0 0 0)\n");
-                      }
-                  }
-              }
-          }
-          fprintf(fzout,")\n;\n    }\n}\n");
-
-
-    } else if (pointWriteType == "array")
-    {
-        fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
-
-        //first fill out the internal values
-        fprintf(fzout,"internalField   nonuniform List<vector>\n%0.0lf\n(\n",ncells);
-        for (double k = 0; k < zcells; k++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                for (double j = 0; j < xcells; j++)
-                {
-                    fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,k,0,0,0),v.interpolate(elem,i,j,k,0,0,0),w.interpolate(elem,i,j,k,0,0,0));
-                }
-            }
-        }
-        fprintf(fzout,")\n;\n\n");
-
-     //this section defines the velocities on the boundaries, something the vtk format may not even do. These are slightly off from the vtk (though in the same position now) because they are cell centers, not point interpolated values
-        fprintf(fzout,"boundaryField\n{\n");
-
-        //now fill in the north face velocities
-        printListHeader("north_face","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Axcells);
-
-        for (double j = 0; j < xcells; j++)
-        {
-            for (double k = 0; k < zcells; k++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,ycells-1,j,k,0,1,0),v.interpolate(elem,ycells-1,j,k,0,1,0),w.interpolate(elem,ycells-1,j,k,0,1,0));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n");
-
-        //now fill in the west face velocities
-        printListHeader("west_face","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Aycells);
-
-        for (double k = 0; k < zcells; k++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,0,k,-1,0,0),v.interpolate(elem,i,0,k,-1,0,0),w.interpolate(elem,i,0,k,-1,0,0));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n");
-
-        //now fill in the east face velocities
-        printListHeader("east_face","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Aycells);
-        for (double k = 0; k < zcells; k++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,xcells-1,k,1,0,0),v.interpolate(elem,i,xcells-1,k,1,0,0),w.interpolate(elem,i,xcells-1,k,1,0,0));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n");
-
-        //now print the south face velocities
-        printListHeader("south_face","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Axcells);
-        for (double j = 0; j < xcells; j++)
-        {
-            for (double k = 0; k < zcells; k++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,0,j,k,0,-1,0),v.interpolate(elem,0,j,k,0,-1,0),w.interpolate(elem,0,j,k,0,-1,0));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n");
-
-        //now print the minZ face velocities
-        printListHeader("minZ","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Azcells);
-        for (double j = 0; j < xcells; j++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,0,0,0,-1),v.interpolate(elem,i,j,0,0,0,-1),w.interpolate(elem,i,j,0,0,0,-1));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n");
-
-        //now print the maxZ face velocities
-        printListHeader("maxZ","pressureInletOutletVelocity","",false);
-        fprintf(fzout,"%0.0lf\n(\n",Azcells);
-        for (double j = 0; j < xcells; j++)
-        {
-            for (double i = 0; i < ycells; i++)
-            {
-                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,zcells-1,0,0,1),v.interpolate(elem,i,j,zcells-1,0,0,1),w.interpolate(elem,i,j,zcells-1,0,0,1));
-            }
-        }
-        fprintf(fzout,")\n;\n    }\n}\n");
-
+    d = UfreeStream - 180; //convert wind direction from --> wind direction to
+    if(d < 0){
+        d += 360;
     }
+
+    if(d > 0 && d < 90){ //quadrant 1
+        d1 = d;
+        d2 = 90 - d;
+        dx = sin(d1 * PI/180);
+        dy = sin(d2 * PI/180);
+    }
+    else if(d > 90 && d < 180){ //quadrant 2
+        d -= 90;
+        d1 = d;
+        d2 = 90 - d;
+        dx = sin(d2 * PI/180);
+        dy = -sin(d1 * PI/180);
+    }
+    else if(d > 180 && d < 270){ //quadrant 3
+        d -= 180;
+        d1 = d;
+        d2 = 90 - d;
+        dx = -sin(d1 * PI/180);
+        dy = -sin(d2 * PI/180);
+    }
+    else if(d > 270 && d < 360){ //quadrant 4
+        d -= 270;
+        d1 = d;
+        d2 = 90 - d;
+        dx = -sin(d2 * PI/180);
+        dy = sin(d1 * PI/180);
+    }
+    else if(d == 0 || d == 360){
+        dx = 0;
+        dy = 1;
+    }
+    else if(d == 90){
+        dx = 1;
+        dy = 0;
+    }
+    else if(d == 180){
+        dx = 0;
+        dy = -1;
+    }
+    else if(d == 270){
+        dx = -1;
+        dy = 0;
+    }
+
+    uDirection = CPLSPrintf("(%.4lf %.4lf 0)",dx,dy);
 }
 
-void openFoamPolyMesh::calculatePhi(element elem)
+void openFoamPolyMesh::printVelocity(element elem)
 {
-    //not sure if we need this yet. Have it here just in case, just as a reminder.
+    fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
+
+    //first fill out the internal values
+    fprintf(fzout,"internalField   nonuniform List<vector>\n%0.0lf\n(\n",ncells);
+    for (double k = 0; k < zcells; k++)
+    {
+        for (double i = 0; i < ycells; i++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,k,0,0,0),v.interpolate(elem,i,j,k,0,0,0),w.interpolate(elem,i,j,k,0,0,0));
+            }
+        }
+    }
+    fprintf(fzout,")\n;\n\n");
+
+ //this section defines the velocities on the boundaries, something the vtk format may not even do. These are slightly off from the vtk (though in the same position now) because they are cell centers, not point interpolated values
+    fprintf(fzout,"boundaryField\n{\n");
+
+    //now fill in the north face velocities
+    if ((inputDirection >= 0 && inputDirection < 90) || (inputDirection <= 360 && inputDirection > 270))
+    {
+        printListHeader("north_face","logProfileVelocityInlet","",false);
+    } else
+    {
+        printListHeader("north_face","pressureInletOutletVelocity","",false);
+    }
+    fprintf(fzout,"%0.0lf\n(\n",Axcells);
+    for (double j = 0; j < xcells; j++)
+    {
+        for (double k = 0; k < zcells; k++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,ycells-1,j,k,0,1,0),v.interpolate(elem,ycells-1,j,k,0,1,0),w.interpolate(elem,ycells-1,j,k,0,1,0));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n");
+
+    //now fill in the west face velocities
+    if (inputDirection > 180 && inputDirection < 360)
+    {
+        printListHeader("west_face","logProfileVelocityInlet","",false);
+    } else
+    {
+        printListHeader("west_face","pressureInletOutletVelocity","",false);
+    }
+    fprintf(fzout,"%0.0lf\n(\n",Aycells);
+    for (double k = 0; k < zcells; k++)
+    {
+        for (double i = 0; i < ycells; i++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,0,k,-1,0,0),v.interpolate(elem,i,0,k,-1,0,0),w.interpolate(elem,i,0,k,-1,0,0));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n");
+
+    //now fill in the east face velocities
+    if (inputDirection > 0 && inputDirection < 180)
+    {
+        printListHeader("east_face","logProfileVelocityInlet","",false);
+    } else
+    {
+        printListHeader("east_face","pressureInletOutletVelocity","",false);
+    }
+    fprintf(fzout,"%0.0lf\n(\n",Aycells);
+    for (double k = 0; k < zcells; k++)
+    {
+        for (double i = 0; i < ycells; i++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,xcells-1,k,1,0,0),v.interpolate(elem,i,xcells-1,k,1,0,0),w.interpolate(elem,i,xcells-1,k,1,0,0));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n");
+
+    //now print the south face velocities
+    if (inputDirection > 90 && inputDirection < 270)
+    {
+        printListHeader("south_face","logProfileVelocityInlet","",false);
+    } else
+    {
+        printListHeader("south_face","pressureInletOutletVelocity","",false);
+    }
+    fprintf(fzout,"%0.0lf\n(\n",Axcells);
+    for (double j = 0; j < xcells; j++)
+    {
+        for (double k = 0; k < zcells; k++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,0,j,k,0,-1,0),v.interpolate(elem,0,j,k,0,-1,0),w.interpolate(elem,0,j,k,0,-1,0));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n");
+
+    //now print the minZ face velocities
+    printListHeader("minZ","fixedValue","(0 0 0)",true);
+
+    //now print the maxZ face velocities
+    printListHeader("maxZ","zeroGradient","",false);
+
+    fprintf(fzout,"}\n");
+
+    /*
+    //now print the minZ face velocities
+    printListHeader("minZ","pressureInletOutletVelocity","",false);
+    fprintf(fzout,"%0.0lf\n(\n",Azcells);
+    for (double j = 0; j < xcells; j++)
+    {
+        for (double i = 0; i < ycells; i++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,0,0,0,-1),v.interpolate(elem,i,j,0,0,0,-1),w.interpolate(elem,i,j,0,0,0,-1));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n");
+
+    //now print the maxZ face velocities
+    printListHeader("maxZ","pressureInletOutletVelocity","",false);
+    fprintf(fzout,"%0.0lf\n(\n",Azcells);
+    for (double j = 0; j < xcells; j++)
+    {
+        for (double i = 0; i < ycells; i++)
+        {
+            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,zcells-1,0,0,1),v.interpolate(elem,i,j,zcells-1,0,0,1),w.interpolate(elem,i,j,zcells-1,0,0,1));
+        }
+    }
+    fprintf(fzout,")\n;\n    }\n}\n");
+    */
 }
 
 void openFoamPolyMesh::writeControlDict()

@@ -34,10 +34,6 @@
 #include <vector>
 #include <math.h>
 
-//volVTK includes
-//#include <stdio.h>
-//#include <string>
-
 #include "mesh.h"
 #include "element.h"
 #include "wn_3dArray.h"
@@ -53,15 +49,16 @@ class openFoamPolyMesh
 {
 public:
 
-    openFoamPolyMesh(std::string outputPath, double nxcells, double nycells, double nzcells, double x0, double xf, double y0, double yf, double z0, double zf);
-    openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
+    openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue,
+                     double inputDirectionValue, double UfreeStreamValue, double inputWindHeight_VegValue,
+                     double RdValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind, wn_3dScalarField const& wwind);
     ~openFoamPolyMesh();
 
     //generates a new case using the dem location and dem name
     void generateCaseDirectory(std::string outputPath);
 
     //this is the equivalent main function
-    bool writePolyMeshFiles(std::string pointWriteType, element elem);
+    bool writePolyMeshFiles(element elem);
 
     //technically not necessary, but it makes it nice for debugging since it makes it easier to replicate
     //and compare with OpenFoam tutorial files.
@@ -74,7 +71,7 @@ public:
     //prints the points in the points file
     //note that this exact format gives the exact replicate of the points file from the tutorial
     //note I want to allow decimals for the points when I do it for the regular mesh. Just the tutorial happens to have clean numbers with no decimals and this makes it more comparable
-    void printPoints(std::string pointWriteType);
+    void printPoints();
 
     //assigns the number of neighbor's per cell and cell owner's values
     //prints the cellOwners into the owners file
@@ -103,20 +100,16 @@ public:
     //prints the initial source file in the 0 directory
     void printSource();
 
+    //computes uDirection for use in printing velocities
+    void ComputeUdirection();
+
     //prints the velocities in the 0 directory
     /*
      * the velocities appear to be stored as cell center values for the internal part of the mesh,
      * and face center values for the external patches, placed in the same order that the points
      * are generated in the mesh conversion.
     */
-    void printVelocity(std::string pointWriteType, element elem);
-
-    //prints the densities in the 0 directory
-    /*
-     * looks to be the volumetric flux across faces. Currently not needed, but could be in the future
-     * but we need to figure out how to replicate phi from velocities and scalar for this to work correctly
-    */
-    void calculatePhi(element elem);
+    void printVelocity(element elem);
 
 //now create the stuff for the system directory
     //creates the controlDict file
@@ -139,7 +132,6 @@ private:
     double xpoints;		//number of points in the x direction
     double ypoints;		//number of points in the y direction
     double zpoints;		//number of points in the z direction
-    double hozRes;      //horizontal resolution of the mesh
 
     double demCornerX;  //x coordinate adjuster for taking the dem back to normal coordinates
     double demCornerY;  //y coordinate adjuster for taking the dem back to normal coordinates
@@ -181,9 +173,14 @@ private:
     std::string sourcePath;     //path to the source data file, found in 0 from the case directory
     std::string velocityPath;   //path to the velocity U data file, found in 0 from the case directory
 
+	double inputDirection;		//the input wind direction set by the user, used to properly set the conditions for each boundary condition
+    double UfreeStream;         //this is the input speed. Used for the inlet velocity boundary condition
+    std::string uDirection;          //this is the velocity vector of the input direction. Used for the inlet velocity boundary condition
+    double inputWindHeight_Veg;
+    double z0;
+    double Rd;
+    double firstCellHeight;
     wn_3dScalarField u, v, w; //the velocity profiles in each direction for the mesh
-
-    std::string phiPath;    //path to the density phi data file, found in 0 from the case directory
 
 //values used for system directory
     std::string controlDictPath;    //path to controlDict file
