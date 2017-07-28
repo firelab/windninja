@@ -55,7 +55,8 @@ set(NINJA_SOURCES air.cpp
                   ncepHrrrSurfInitialization.cpp
                   ncepNdfdInitialization.cpp
                   ncepRapSurfInitialization.cpp
-		  openFoamPolyMesh.cpp
+		  		  openFoamParaView.cpp
+				  openFoamPolyMesh.cpp
                   wrfSurfInitialization.cpp
                   wrf3dInitialization.cpp
                   ninja_conv.cpp

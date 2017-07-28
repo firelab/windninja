@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#ifndef OPENFOAMPOLYMESH_H
-#define OPENFOAMPOLYMESH_H
+#ifndef OPENFOAMPARAVIEW_H
+#define OPENFOAMPARAVIEW_H
 
 #include <fstream>
 #include <vector>
@@ -45,15 +45,15 @@ currently this program is set up to populate the constant/polymesh directory in 
 */
 
 
-class openFoamPolyMesh
+class openFoamParaView
 {
 public:
 
-    openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue,
+    openFoamParaView(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue,
                      double inputDirectionValue, double UfreeStreamValue, double inputWindHeight_VegValue,
                      double RdValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind,
                      wn_3dScalarField const& wwind);
-    ~openFoamPolyMesh();
+    ~openFoamParaView();
 
     //generates a new case using the dem location and dem name
     void generateCaseDirectory(std::string outputPath);
@@ -174,7 +174,7 @@ private:
     std::string sourcePath;     //path to the source data file, found in 0 from the case directory
     std::string velocityPath;   //path to the velocity U data file, found in 0 from the case directory
 
-	double inputDirection;		//the input wind direction set by the user, used to properly set the conditions for each boundary condition
+        double inputDirection;		//the input wind direction set by the user, used to properly set the conditions for each boundary condition
     double UfreeStream;         //this is the input speed. Used for the inlet velocity boundary condition
     std::string uDirection;          //this is the velocity vector of the input direction. Used for the inlet velocity boundary condition
     double inputWindHeight_Veg;
@@ -245,5 +245,4 @@ private:
 };
 
 
-#endif	//OPENFOAMPOLYMESH_H
-
+#endif	//OPENFOAMPARAVIEW_H

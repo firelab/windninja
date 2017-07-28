@@ -28,9 +28,9 @@
  *****************************************************************************/
 
 
-#include "openFoamPolyMesh.h"
+#include "openFoamParaView.h"
 
-openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue,
+openFoamParaView::openFoamParaView(std::string outputPath, Mesh mesh, double xllCornerValue,
                                    double yllCornerValue, double inputDirectionValue, double UfreeStreamValue,
                                    double inputWindHeight_VegValue, double RdValue,
                                    wn_3dScalarField const& uwind,wn_3dScalarField const& vwind,
@@ -69,7 +69,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     diffusivityConstant = 0.05;
 
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
-	inputDirection = inputDirectionValue;
+        inputDirection = inputDirectionValue;
     UfreeStream = UfreeStreamValue;
     uDirection = "";
     ComputeUdirection();
@@ -135,16 +135,16 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     distributionSourceValue = "75";
 
     writePolyMeshFiles(elem);
-    std::cout << "Finished meshConversion output\n";
+    std::cout << "Finished paraViewMesh output\n";
 
 }
 
-openFoamPolyMesh::~openFoamPolyMesh()
+openFoamParaView::~openFoamParaView()
 {
 
 }
 
-void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
+void openFoamParaView::generateCaseDirectory(std::string outputPath)
 {
     //force temp dir to DEM location
     CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(outputPath.c_str()));
@@ -152,7 +152,7 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     CPLSetConfigOption("TEMP", CPLGetDirname(outputPath.c_str()));
     outputPath = CPLGetBasename(outputPath.c_str());
     outputPath.erase( std::remove_if( outputPath.begin(), outputPath.end(), ::isspace ), outputPath.end() );
-    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("case-%s", outputPath.c_str())));
+    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("paraview-%s", outputPath.c_str())));
     VSIMkdir( CaseDir, 0777 );
     VSIMkdir( CPLSPrintf("%s/0",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/constant",CaseDir), 0777 );
@@ -177,7 +177,7 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     setFieldsDictPath = CPLSPrintf("%s/system/setFieldsDict",CaseDir);
 }
 
-bool openFoamPolyMesh::writePolyMeshFiles(element elem)
+bool openFoamParaView::writePolyMeshFiles(element elem)
 {
     //this outputs the mesh files, though for now it also outputs all the case files
 
@@ -281,7 +281,7 @@ bool openFoamPolyMesh::writePolyMeshFiles(element elem)
     return true;
 }
 
-void openFoamPolyMesh::makeFoamHeader(std::string theClassType, std::string theObjectType,
+void openFoamParaView::makeFoamHeader(std::string theClassType, std::string theObjectType,
                                       std::string theFoamFileLocation)
 {
     fprintf(fzout,"/*--------------------------------*- C++ -*----------------------------------*\\\n");
@@ -308,14 +308,14 @@ void openFoamPolyMesh::makeFoamHeader(std::string theClassType, std::string theO
     fprintf(fzout,"}\n// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n\n");
 }
 
-void openFoamPolyMesh::makeFoamFooter()
+void openFoamParaView::makeFoamFooter()
 {
     fprintf(fzout,"\n\n// ************************************************************************* //");
 }
 
 
 
-void openFoamPolyMesh::printPoints()
+void openFoamParaView::printPoints()
 {
     //remember, i is for y or the number of rows. j is for x or the number of columns
     //Print columns before rows in C++ where it is often rows before columns in VBA
@@ -334,7 +334,7 @@ void openFoamPolyMesh::printPoints()
     fprintf(fzout, ")\n");
 }
 
-void openFoamPolyMesh::printOwners()
+void openFoamParaView::printOwners()
 {
 
     fprintf(fzout, "\n%0.0lf\n(\n",nfaces);
@@ -420,7 +420,7 @@ void openFoamPolyMesh::printOwners()
 
 }
 
-void openFoamPolyMesh::printNeighbors()
+void openFoamParaView::printNeighbors()
 {
     fprintf(fzout, "\n%0.0lf\n(\n",ninternalfaces);
 
@@ -450,7 +450,7 @@ void openFoamPolyMesh::printNeighbors()
     fprintf(fzout, ")\n");
 }
 
-void openFoamPolyMesh::printFaces()
+void openFoamParaView::printFaces()
 {
 
     fprintf(fzout, "\n%0.0lf\n(\n",nfaces);
@@ -573,7 +573,7 @@ void openFoamPolyMesh::printFaces()
     fprintf(fzout, ")\n");
 }
 
-void openFoamPolyMesh::printBoundaryPatch(std::string patchName,std::string patchType,double nFaces,double startFace,std::string physicalType)
+void openFoamParaView::printBoundaryPatch(std::string patchName,std::string patchType,double nFaces,double startFace,std::string physicalType)
 {
     fprintf(fzout,"    %s\n    {\n",patchName.c_str());
     fprintf(fzout,"\ttype\t\t%s;\n",patchType.c_str());
@@ -586,9 +586,21 @@ void openFoamPolyMesh::printBoundaryPatch(std::string patchName,std::string patc
     fprintf(fzout,"    }\n");
 }
 
-void openFoamPolyMesh::printBoundaries()
+void openFoamParaView::printBoundaries()
 {
-    fprintf(fzout,"\n6\n(\n");    //the number of boundaries we have in windninja. Should someday make this a variable or something so it can vary? I guess for now we will always have 6
+    fprintf(fzout,"\n%0.0lf\n(\n",6+zcells-1);    //the number of boundaries we have in windninja. Should someday make this a variable or something so it can vary? I guess for now we will always have 6
+
+    //now print out the z layer patches
+    for (double k = 0; k < zcells-1; k++)
+    {
+        //((xcells-1)*3+2)*(ycells-1)+(xcells-1)*2+1
+        //printBoundaryPatch(CPLSPrintf("z%0.0lf",k),"patch",3*xcells*ycells-xcells-ycells,(3*xcells*ycells-xcells-ycells)*k,"");
+        printBoundaryPatch(CPLSPrintf("z%0.0lf",k),"patch",3*Azcells-xcells-ycells,(3*Azcells-xcells-ycells)*k,"");
+    }
+    //top z layer
+    //((xcells-1)*2+1)*(ycells-1)+(xcells-1)
+    //printBoundaryPatch(CPLSPrintf("z%0.0lf",zcells-1),"patch",2*xcells*ycells-xcells-ycells,(3*xcells*ycells-xcells-ycells)*(zcells-1),"");
+    printBoundaryPatch(CPLSPrintf("z%0.0lf",zcells-1),"patch",2*Azcells-xcells-ycells,(3*Azcells-xcells-ycells)*(zcells-1),"");
 
     //now print out the north patch
     printBoundaryPatch("north_face","patch",Axcells,ninternalfaces,"");
@@ -617,7 +629,7 @@ void openFoamPolyMesh::printBoundaries()
 //since the loops change (though they be the same for each type of patch), but could do something like function(functionPointer patchType (for knowing which order to do the loops), functionPointer something to know which print statement to use). So I guess its a function with two function pointers?
 //Anyhow I still think it varies just enough to not be worth it. Plus its not like there's going to be another way to output the points.
 //Maybe the datatype that you are outputing the points for, but not the indices since the format is fixed.
-void openFoamPolyMesh::printListHeader(std::string patchName,std::string ListType,
+void openFoamParaView::printListHeader(std::string patchName,std::string ListType,
                                               std::string ListValue,bool extraReturn)
 {
     fprintf(fzout,"    %s\n    {\n",patchName.c_str());
@@ -647,7 +659,7 @@ void openFoamPolyMesh::printListHeader(std::string patchName,std::string ListTyp
     }
 }
 
-void openFoamPolyMesh::printScalar()
+void openFoamParaView::printScalar()
 {
     fprintf(fzout,"dimensions      [1 -3 0 0 0 0 0];\n\n");
     fprintf(fzout,"internalField   uniform 0;\n\n");
@@ -660,11 +672,17 @@ void openFoamPolyMesh::printScalar()
     printListHeader("minZ","zeroGradient","",true);
     printListHeader("maxZ","zeroGradient","",false);   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
 
+    //now print out the z layer patches
+    for (double k = 0; k < zcells; k++)
+    {
+        printListHeader(CPLSPrintf("z%0.0lf",k),"zeroGradient","",true);
+    }
+
     fprintf(fzout,"}\n");
 
 }
 
-void openFoamPolyMesh::printSource()
+void openFoamParaView::printSource()
 {
     fprintf(fzout,"dimensions      [1 -3 -1 0 0 0 0];\n\n");
     fprintf(fzout,"internalField   uniform 0;\n\n");
@@ -677,11 +695,16 @@ void openFoamPolyMesh::printSource()
     printListHeader("minZ","zeroGradient","",true);
     printListHeader("maxZ","zeroGradient","",false);   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
 
-    fprintf(fzout,"}\n");
+    //now print out the z layer patches
+    for (double k = 0; k < zcells; k++)
+    {
+        printListHeader(CPLSPrintf("z%0.0lf",k),"zeroGradient","",true);
+    }
 
+    fprintf(fzout,"}\n");
 }
 
-void openFoamPolyMesh::ComputeUdirection()
+void openFoamParaView::ComputeUdirection()
 {
     double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
 
@@ -737,7 +760,7 @@ void openFoamPolyMesh::ComputeUdirection()
     uDirection = CPLSPrintf("(%.4lf %.4lf 0)",dx,dy);
 }
 
-void openFoamPolyMesh::printVelocity(element elem)
+void openFoamParaView::printVelocity(element elem)
 {
     fprintf(fzout,"dimensions      [0 1 -1 0 0 0 0];\n\n");
 
@@ -836,6 +859,22 @@ void openFoamPolyMesh::printVelocity(element elem)
     //now print the maxZ face velocities
     printListHeader("maxZ","zeroGradient","",false);
 
+    //now print out the z layer patches
+    for (double k = 0; k < zcells; k++)
+    {
+        printListHeader(CPLSPrintf("z%0.0lf",k),"zeroGradient","",false);
+        /*printListHeader(CPLSPrintf("z%0.0lf",k),"pressureInletOutletVelocity","",false);
+        fprintf(fzout,"%0.0lf\n(\n",Azcells);
+        for (double i = 0; i < ycells; i++)
+        {
+            for (double j = 0; j < xcells; j++)
+            {
+                fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,k,0,0,0),v.interpolate(elem,i,j,k,0,0,0),w.interpolate(elem,i,j,k,0,0,0));
+            }
+        }
+        fprintf(fzout,")\n;\n    }\n");*/
+    }
+
     fprintf(fzout,"}\n");
 
     /*
@@ -865,7 +904,7 @@ void openFoamPolyMesh::printVelocity(element elem)
     */
 }
 
-void openFoamPolyMesh::writeControlDict()
+void openFoamParaView::writeControlDict()
 {
     fprintf(fzout,"application     %s;\n\n",application.c_str());
     fprintf(fzout,"startFrom       %s;\n\n",startFrom.c_str());
@@ -884,7 +923,7 @@ void openFoamPolyMesh::writeControlDict()
     fprintf(fzout,"runTimeModifiable %s;\n",runTimeModifiable.c_str()); //one less new line since last line
 }
 
-void openFoamPolyMesh::writeFvSchemes()
+void openFoamParaView::writeFvSchemes()
 {
     //could possibly write something that is called writeScheme that takes in
     //the scheme name and an array with what parts of the scheme will be written
@@ -932,7 +971,7 @@ void openFoamPolyMesh::writeFvSchemes()
     fprintf(fzout,"}\n");
 }
 
-void openFoamPolyMesh::writeFvSolution()
+void openFoamParaView::writeFvSolution()
 {
     fprintf(fzout,"solvers\n{\n");
 
@@ -952,7 +991,7 @@ void openFoamPolyMesh::writeFvSolution()
     fprintf(fzout,"}\n");
 }
 
-void openFoamPolyMesh::writeSetFieldsDict()
+void openFoamParaView::writeSetFieldsDict()
 {
     fprintf(fzout,"defaultFieldValues\n(\n");
 

@@ -2734,6 +2734,11 @@ void ninja::writeOutputFiles()
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
     openFoamPolyMesh nativeFMesh(input.dem.fileName,mesh,input.dem.xllCorner,input.dem.yllCorner,input.inputDirection,input.inputSpeed,input.inputWindHeight,input.surface.Rough_d.get_meanValue(),u,v,w);
+    bool writeParaViewBlocks = true;
+    if (writeParaViewBlocks == true)
+    {
+        openFoamParaView paraviewFMesh(input.dem.fileName,mesh,input.dem.xllCorner,input.dem.yllCorner,input.inputDirection,input.inputSpeed,input.inputWindHeight,input.surface.Rough_d.get_meanValue(),u,v,w);
+    }
 
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
