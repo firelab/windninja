@@ -69,7 +69,8 @@ public:
     enum eVelocityUnits{
         metersPerSecond,	//base windninja unit
         milesPerHour,
-        kilometersPerHour
+        kilometersPerHour,
+        knots
     };
     static void toBaseUnits(double& value, eVelocityUnits units);
     static void fromBaseUnits(double& value, eVelocityUnits units);

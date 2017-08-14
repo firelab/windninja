@@ -327,6 +327,8 @@ void velocityUnits::toBaseUnits(double& value, velocityUnits::eVelocityUnits uni
         value = value * 0.44704;
     else if (units == kilometersPerHour)
         value = value * 0.27778;
+    else if (units == knots)
+        value=value*0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::toBaseUnits().");
 }
@@ -340,6 +342,8 @@ void velocityUnits::fromBaseUnits(double& value, velocityUnits::eVelocityUnits u
         value = value / 0.44704;
     else if (units == kilometersPerHour)
         value = value / 0.27778;
+    else if (units == knots)
+        value = value / 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::fromBaseUnits().");
 }
@@ -353,6 +357,8 @@ void velocityUnits::toBaseUnits(AsciiGrid<double>& grid, velocityUnits::eVelocit
         grid = grid * 0.44704;
     else if (units == kilometersPerHour)
         grid = grid * 0.27778;
+    else if (units == knots)
+        grid = grid * 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::toBaseUnits().");
 }
@@ -366,6 +372,8 @@ void velocityUnits::fromBaseUnits(AsciiGrid<double>& grid, velocityUnits::eVeloc
         grid = grid / 0.44704;
     else if (units == kilometersPerHour)
         grid = grid / 0.27778;
+    else if (units == knots)
+        grid = grid / 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::fromBaseUnits().");
 }
@@ -379,6 +387,8 @@ void velocityUnits::toBaseUnits(double& value, std::string units)
         value = value * 0.44704;
     else if (units == "kph")
         value = value * 0.27778;
+    else if (units=="kts")
+        value = value * 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::toBaseUnits().");
 }
@@ -392,6 +402,8 @@ void velocityUnits::fromBaseUnits(double& value, std::string units)
         value = value / 0.44704;
     else if (units == "kph")
         value = value / 0.27778;
+    else if (units=="kts")
+        value = value / 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::fromBaseUnits().");
 }
@@ -405,6 +417,8 @@ void velocityUnits::toBaseUnits(AsciiGrid<double>& grid, std::string units)
         grid = grid * 0.44704;
     else if (units == "kph")
         grid = grid * 0.27778;
+    else if (units=="kts")
+        grid = grid * 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::toBaseUnits().");
 }
@@ -418,6 +432,8 @@ void velocityUnits::fromBaseUnits(AsciiGrid<double>& grid, std::string units)
         grid = grid / 0.44704;
     else if (units == "kph")
         grid = grid / 0.27778;
+    else if (units=="kts")
+        grid = grid / 0.51444;
     else
         throw std::domain_error("Velocity units problem in velocityUnits::fromBaseUnits().");
 }
@@ -431,6 +447,8 @@ std::string velocityUnits::getString(eVelocityUnits unit)
         s = "mph";
     else if(unit == kilometersPerHour)
         s = "kph";
+    else if (unit == knots)
+        s = "kts";
     else
         s = "";
 
@@ -445,6 +463,8 @@ velocityUnits::eVelocityUnits velocityUnits::getUnit(std::string unit)
         return  milesPerHour;
     else if(unit == "kph")
         return  kilometersPerHour;
+    else if(unit == "kts")
+        return knots;
     else
         throw std::logic_error("Cannot identify unit.");
 }
