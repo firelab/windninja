@@ -41,16 +41,16 @@
 #endif //__cplusplus
 
 /*-----------------------------------------------------------------------------
- *  Handle Types for Internal Wind Ninja Classes
+ *  Handle Types for Internal WindNinja Classes
  *-----------------------------------------------------------------------------*/
 //Ninja WINDNINJADLL_EXPORT NinjaCreateArmy(int nRuns);
 
 #ifndef WINDNINJADLL_EXPORT
-#if defined(WIN32) && defined(WindNinja_EXPORTS)
-#  define WINDNINJADLL_EXPORT _declspec(dllexport)
+#if defined(WIN32) && defined(WINDNINJA_EXPORTS)
+#define WINDNINJADLL_EXPORT _declspec(dllexport)
 #else
-#  define WINDNINJADLL_EXPORT
-#endif //WIN32 && WindNinja_EXPORTS
+#define WINDNINJADLL_EXPORT
+#endif //WIN32 && WINDNINJA_EXPORTS
 #endif //WINDNINJADLL_EXPORT
 
 #ifndef TRUE
