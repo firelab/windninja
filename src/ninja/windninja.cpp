@@ -32,6 +32,10 @@
 #include "ninjaException.h"
 #include <string>
 
+#ifdef _OPENMP
+    omp_lock_t netCDF_lock;
+#endif
+
 /**
  * \file windninja.cpp
  *
@@ -83,7 +87,7 @@ extern "C"
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 #ifndef NINJAFOAM
-NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
     ( unsigned int numNinjas, char ** papszOptions  )
 {
     try
@@ -98,7 +102,7 @@ NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
 #endif
 
 #ifdef NINJAFOAM
-NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
     ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  )
 {
     try
@@ -124,7 +128,7 @@ NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
  *                       handle was null.  In this case, the function is a
  *                       no-op.
  */
-NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
     ( NinjaH * ninja )
 {
     if( NULL != ninja )
@@ -154,7 +158,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
     ( NinjaH * ninja, const char * forecastFilename,
       const char * timezone,
       bool momentumFlag )
@@ -191,7 +195,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
  * \return NINJA_SUCCESS on succes, non-zero otherwise.
  */
 
-NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
+WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
     ( NinjaH * ninja, const unsigned int nprocessors )
 {
     if( NULL != ninja )
@@ -254,7 +258,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetInitializationMethod
+WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     (NinjaH * ninja, const int nIndex, const char * initializationMethod )
 {
     if( NULL != ninja && NULL != initializationMethod )
@@ -279,7 +283,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetInitializationMethod
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetNumberCPUs
+WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     ( NinjaH * ninja, const int nIndex, const int nCPUs )
 {
     if( NULL != ninja )
@@ -292,7 +296,21 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetNumberCPUs
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetInputSpeed
+WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
+    ( NinjaH * ninja, const int nIndex, const char * fileName)
+{
+    if( NULL != ninja && NULL != fileName )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setDEM
+            ( nIndex, std::string( fileName ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
     ( NinjaH * ninja, const int nIndex, const double speed,
       const char * units )
 {
@@ -307,7 +325,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetInputSpeed
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetInputDirection
+WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
     ( NinjaH * ninja, const int nIndex, const double direction )
 {
     if( NULL != ninja )
@@ -319,7 +337,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetInputDirection
         return NINJA_E_NULL_PTR;
     }
 }
-NinjaErr WINDNINJADLL_EXPORT NinjaSetInputWindHeight
+WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height, const char * units )
 {
     if( NULL != ninja )
@@ -333,7 +351,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetInputWindHeight
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputWindHeight
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height,
       const char * units )
 {
@@ -348,7 +366,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputWindHeight
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputSpeedUnits
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
     ( NinjaH * ninja, const int nIndex, const char * units )
 {
     if( NULL != ninja && NULL != units )
@@ -362,7 +380,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputSpeedUnits
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetDiurnalWinds
+WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -375,7 +393,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetDiurnalWinds
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetUniAirTemp
+WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
     ( NinjaH * ninja, const int nIndex, const double temp,
       const char * units )
 {
@@ -390,7 +408,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetUniAirTemp
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetUniCloudCover
+WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
     ( NinjaH * ninja, const int nIndex, const double cloud_cover,
       const char * units )
 {
@@ -405,7 +423,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetUniCloudCover
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
+WINDNINJADLL_EXPORT NinjaErr NinjaSetDateTime
     ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
       const int day, const int hr, const int min, const int sec,
       const char * timeZoneString )
@@ -421,7 +439,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxStationFilename
     ( NinjaH * ninja, const int nIndex, const char * station_filename )
 {
     if( NULL != ninja )
@@ -435,7 +453,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetUniVegetation
+WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
     ( NinjaH * ninja, const int nIndex, const char * vegetation )
 {
     if( NULL != ninja && NULL != vegetation )
@@ -449,37 +467,10 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetUniVegetation
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolutionChoice
-    ( NinjaH * ninja, const int nIndex, const char * choice )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setMeshResolutionChoice
-            ( nIndex, std::string( choice ) );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
-    ( NinjaH * ninja, const int nIndex, const int nLayers )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setNumVertLayers( nIndex, nLayers );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-char ** WINDNINJADLL_EXPORT NinjaGetWxStations
+WINDNINJADLL_EXPORT char ** NinjaGetWxStations
     ( NinjaH * ninja, const int nIndex );
 
-int WINDNINJADLL_EXPORT NinjaGetDiurnalWindFlag
+WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
     ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja )
@@ -492,7 +483,7 @@ int WINDNINJADLL_EXPORT NinjaGetDiurnalWindFlag
     }
 }
 
-const char * WINDNINJADLL_EXPORT NinjaGetInitializationMethod
+WINDNINJADLL_EXPORT const char * NinjaGetInitializationMethod
     ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja )
@@ -510,7 +501,7 @@ const char * WINDNINJADLL_EXPORT NinjaGetInitializationMethod
  *  Dust Methods
  *-----------------------------------------------------------------------------*/
 #ifdef EMISSIONS
-NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFilename
+WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFilename
     (NinjaH * ninja, const int nIndex, const char* filename )
 {
     if( NULL != ninja )
@@ -524,7 +515,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFilename
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -542,7 +533,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFlag
  *  Stability Methods
  *-----------------------------------------------------------------------------*/
 #ifdef STABILITY
-NinjaErr WINDNINJADLL_EXPORT NinjaSetStabilityFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -555,7 +546,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetStabilityFlag
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetAlphaStability
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
     ( NinjaH * ninja, const int nIndex, const double stability_ )
 {
     if( NULL != ninja )
@@ -573,7 +564,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetAlphaStability
  *  Scalar Methods
  *-----------------------------------------------------------------------------*/
 #ifdef SCALAR
-NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarTransportFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarTransportFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -586,7 +577,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarTransportFlag
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceStrength
+WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceStrength
     ( NinjaH * ninja, const int nIndex, const double source_ )
 {
     if( NULL != ninja )
@@ -599,7 +590,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceStrength
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarXcoord
+WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarXcoord
     ( NinjaH * ninja, const int nIndex, const double xcoord_ )
 {
     if( NULL != ninja )
@@ -612,7 +603,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarXcoord
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarYcoord
+WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarYcoord
     ( NinjaH * ninja, const int nIndex, const double ycoord_ )
 {
     if( NULL != ninja )
@@ -629,7 +620,21 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarYcoord
 /*-----------------------------------------------------------------------------
  *  Mesh Methods
  *-----------------------------------------------------------------------------*/
-NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
+WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolutionChoice
+    ( NinjaH * ninja, const int nIndex, const char * choice )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setMeshResolutionChoice
+            ( nIndex, std::string( choice ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolution
     (NinjaH * ninja, const int nIndex, const double resolution, const char * units )
 {
     if( NULL != ninja && NULL != units )
@@ -643,10 +648,23 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
+    ( NinjaH * ninja, const int nIndex, const int nLayers )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setNumVertLayers( nIndex, nLayers );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
-NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputBufferClipping
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     ( NinjaH * ninja, const int nIndex, const double percent )
 {
     if( NULL != ninja )
@@ -659,7 +677,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputBufferClipping
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelGoogOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -672,7 +690,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelGoogOutFlag
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelShpOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -686,7 +704,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelShpOutFlag
 
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelAsciiOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -700,7 +718,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelAsciiOutFlag
 
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -714,7 +732,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogOutFlag
 
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogResolution
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
 {
@@ -729,7 +747,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogResolution
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogSpeedScaling
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
     ( NinjaH * ninja, const int nIndex, const char * scaling )
 {
     if( NULL != ninja && NULL != scaling )
@@ -743,7 +761,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogSpeedScaling
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogLineWidth
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
     ( NinjaH * ninja, const int nIndex, const double width )
 {
     if( NULL != ninja )
@@ -756,7 +774,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogLineWidth
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetShpOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -770,7 +788,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetShpOutFlag
 
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetShpResolution
+WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
 {
@@ -785,7 +803,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetShpResolution
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -799,7 +817,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiOutFlag
 
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiResolution
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
 {
@@ -814,7 +832,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiResolution
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetVtkOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -827,7 +845,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetVtkOutFlag
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaSetTxtOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
     if( NULL != ninja )
@@ -841,7 +859,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetTxtOutFlag
 
 }
 
-const char * WINDNINJADLL_EXPORT NinjaGetOutputPath
+WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
     ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja )
@@ -858,7 +876,7 @@ const char * WINDNINJADLL_EXPORT NinjaGetOutputPath
  *  Termination Methods
  *-----------------------------------------------------------------------------*/
 
-NinjaErr WINDNINJADLL_EXPORT NinjaReset( NinjaH * ninja )
+WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaH * ninja )
 {
     if( NULL != ninja )
     {
@@ -871,7 +889,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaReset( NinjaH * ninja )
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaCancel( NinjaH * ninja )
+WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaH * ninja )
 {
     if( NULL != ninja )
     {
@@ -884,7 +902,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaCancel( NinjaH * ninja )
     }
 }
 
-NinjaErr WINDNINJADLL_EXPORT NinjaCancelAndReset( NinjaH * ninja )
+WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaH * ninja )
 {
     if( NULL != ninja )
     {

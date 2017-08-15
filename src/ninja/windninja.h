@@ -27,17 +27,15 @@
  *
  *****************************************************************************/
 
-#include "ninja_errors.h"
-
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
  *-----------------------------------------------------------------------------*/
 #ifdef __cplusplus
-#   define WN_C_START       extern "C" {
-#   define WN_C_END         }
+    #define WN_C_START       extern "C" {
+    #define WN_C_END         }
 #else
-#   define WN_C_START
-#   define WN_C_END
+    #define WN_C_START
+    #define WN_C_END
 #endif //__cplusplus
 
 /*-----------------------------------------------------------------------------
@@ -46,11 +44,11 @@
 //Ninja WINDNINJADLL_EXPORT NinjaCreateArmy(int nRuns);
 
 #ifndef WINDNINJADLL_EXPORT
-#if defined(WIN32) && defined(WINDNINJA_EXPORTS)
-#define WINDNINJADLL_EXPORT _declspec(dllexport)
-#else
-#define WINDNINJADLL_EXPORT
-#endif //WIN32 && WINDNINJA_EXPORTS
+    #if defined(WIN32) && defined(WindNinjadll_EXPORTS)
+        #define WINDNINJADLL_EXPORT _declspec(dllexport)
+    #else
+        #define WINDNINJADLL_EXPORT
+    #endif //WIN32 && WINDNINJA_EXPORTS
 #endif //WINDNINJADLL_EXPORT
 
 #ifndef TRUE
@@ -75,24 +73,24 @@ typedef int   NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-    #ifndef NINJAFOAM
-    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+#ifndef NINJAFOAM
+    WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, char ** papszOptions  );
-    #endif
-    #ifdef NINJAFOAM
-    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
+#endif
+#ifdef NINJAFOAM
+    WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
-    #endif
-    NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
+#endif
+    WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
 
     /*-----------------------------------------------------------------------------
      *  Ninja Simulation Executors
      *-----------------------------------------------------------------------------*/
-    NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
+    WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
+    WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
         ( NinjaH * ninja, const char * forecastFilename,
           const char * timezone,
           bool momentumFlag );
@@ -101,66 +99,79 @@ typedef int   NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Various Simulation Parameters
      *-----------------------------------------------------------------------------*/
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetInitializationMethod
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
+    ( NinjaH * ninja, const int nIndex, const char * fileName);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
         ( NinjaH * ninja, const int nIndex, const char * initializationMethod );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetNumberCPUs
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
         ( NinjaH * ninja, const int nIndex, const int nCPUs );
 
     /*  Input Parameters  */
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetInputSpeed
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
         ( NinjaH * ninja, const int nIndex, const double speed,
           const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetInputDirection
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
         ( NinjaH * ninja, const int nIndex, const double direction );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetInputWindHeight
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
         ( NinjaH * ninja, const int nIndex, const double height, const char * units );
 
     /*  Output Parameters  */
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputWindHeight
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
         ( NinjaH * ninja, const int nIndex, const double height,
           const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputSpeedUnits
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
         ( NinjaH * ninja, const int nIndex, const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetDiurnalWinds
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetUniAirTemp
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
         ( NinjaH * ninja, const int nIndex, const double temp,
           const char * units );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetUniCloudCover
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
         ( NinjaH * ninja, const int nIndex, const double cloud_cover,
           const char * units );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetDateTime
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDateTime
         ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
           const int day, const int hr, const int min, const int sec,
           const char * timeZoneString );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxStationFilename
         ( NinjaH * ninja, const int nIndex, const char * station_filename );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetUniVegetation
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
         ( NinjaH * ninja, const int nIndex, const char * vegetation );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetNumVertLayers
         ( NinjaH * ninja, const int nIndex, const int nLayers );
-    char ** WINDNINJADLL_EXPORT NinjaGetWxStations
+
+    WINDNINJADLL_EXPORT char ** NinjaGetWxStations
         ( NinjaH * ninja, const int nIndex );
-    int WINDNINJADLL_EXPORT NinjaGetDiurnalWindFlag
+
+    WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
         ( NinjaH * ninja, const int nIndex );
-    const char * WINDNINJADLL_EXPORT NinjaGetInitializationMethod
+
+    WINDNINJADLL_EXPORT const char * NinjaGetInitializationMethod
         ( NinjaH * ninja, const int nIndex );
 
     /*-----------------------------------------------------------------------------
      *  Dust Methods
      *-----------------------------------------------------------------------------*/
 #ifdef EMISSIONS
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFilename
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFilename
         ( NinjaH * ninja, const int nIndex, const char* filename );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFileOut
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFileOut
         ( NinjaH * ninja, const int nIndex, const char* filename );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetDustFlag
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 #endif //EMISSIONS
 
@@ -168,9 +179,10 @@ typedef int   NinjaErr;
      *  Stability Methods
      *-----------------------------------------------------------------------------*/
 #ifdef STABILITY
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetStabilityFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetAlphaStability
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaH * ninja, const int nIndex, const double stability_ );
 #endif //Stability
 
@@ -178,79 +190,82 @@ typedef int   NinjaErr;
      *  Scalar Methods
      *-----------------------------------------------------------------------------*/
 #ifdef SCALAR
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarTransportFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarTransportFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceStrength
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceStrength
         ( NinjaH * ninja, const int nIndex, const double source_ );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceXcoord
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceXcoord
         ( NinjaH * ninja, const int nIndex, const double xcoord_ );
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetScalarSourceYcoord
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceYcoord
         ( NinjaH * ninja, const int nIndex, const double ycoord_ );
 #endif //SCALAR
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods
      *-----------------------------------------------------------------------------*/
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolutionChoice
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolutionChoice
         ( NinjaH * ninja, const int nIndex, const char * choice );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetMeshResolution
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolution
         ( NinjaH * ninja, const int nIndex, const double resolution,
          const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetNumVertLayers
         ( NinjaH * ninja, const int nIndex, int vertLayers );
 
 
     /*-----------------------------------------------------------------------------
      *  Output Methods
      *-----------------------------------------------------------------------------*/
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetOutputBufferClipping
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaH * ninja, const int nIndex, const double percent );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelGoogOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelShpOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetWxModelAsciiOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogResolution
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
         ( NinjaH * ninja, const int nIndex, const double resolution,
           const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogSpeedScaling
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
         ( NinjaH * ninja, const int nIndex, const char * scaling );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetGoogLineWidth
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
         ( NinjaH * ninja, const int nIndex, const double width );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetShpOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetShpResolution
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
         ( NinjaH * ninja, const int nIndex, const double resolution,
           const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetAsciiResolution
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
         ( NinjaH * ninja, const int nIndex, const double resolution,
           const char * units );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetVtkOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaSetTxtOutFlag
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
-    const char * WINDNINJADLL_EXPORT NinjaGetOutputPath
+    WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
         ( NinjaH * ninja, const int nIndex );
 
 
@@ -258,20 +273,8 @@ typedef int   NinjaErr;
      *  Termination Methods
      *-----------------------------------------------------------------------------*/
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaReset( NinjaH * ninja );
-    NinjaErr WINDNINJADLL_EXPORT NinjaCancel( NinjaH * ninja );
-    NinjaErr WINDNINJADLL_EXPORT NinjaCancelAndReset( NinjaH * ninja );
+    WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaH * ninja );
+    WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaH * ninja );
+    WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaH * ninja );
 
 WN_C_END
-
-
-
-
-
-
-
-
-
-
-
-
