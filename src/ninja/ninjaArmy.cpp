@@ -899,6 +899,27 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
             ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
 }
 
+int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
+                           char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
+        if( comType == "ninjaCLICom" || comType == "cli" )
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication
+                ( nIndex, ninjaComClass::ninjaCLICom );
+            retval = NINJA_SUCCESS;
+        }
+        else
+        {
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+}
+
 #ifdef NINJA_GUI
 int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
                                    char ** papszOptions )

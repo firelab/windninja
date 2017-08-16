@@ -86,6 +86,7 @@ extern "C"
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
+
 #ifndef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
     ( unsigned int numNinjas, char ** papszOptions  )
@@ -296,6 +297,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
+    ( NinjaH * ninja, const int nIndex, const char * comType )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setNinjaCommunication
+            ( nIndex, std::string( comType ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     ( NinjaH * ninja, const int nIndex, const char * fileName)
 {
@@ -303,6 +318,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     {
         return reinterpret_cast<ninjaArmy*>( ninja )->setDEM
             ( nIndex, std::string( fileName ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setPosition
+            ( nIndex );
     }
     else
     {

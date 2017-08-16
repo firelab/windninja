@@ -26,6 +26,8 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
+#include "ninja_errors.h"
+#include <stdbool.h>
 
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
@@ -67,20 +69,20 @@ WN_C_START
 //Use structs instead of void * for type checking by C compilier
 struct NinjaH;
 typedef struct NinjaH NinjaH;
-typedef int   NinjaErr;
+typedef int  NinjaErr;
 
 
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-#ifndef NINJAFOAM
-    WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
-        ( unsigned int numNinjas, char ** papszOptions  );
-#endif
-#ifdef NINJAFOAM
+//#ifndef NINJAFOAM
+//    WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
+//        ( unsigned int numNinjas, char ** papszOptions  );
+//#endif
+//#ifdef NINJAFOAM
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
-#endif
+//#endif
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
 
@@ -100,13 +102,20 @@ typedef int   NinjaErr;
      *  Various Simulation Parameters
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
-    ( NinjaH * ninja, const int nIndex, const char * fileName);
+        ( NinjaH * ninja, const int nIndex, const char * fileName );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
+        ( NinjaH * ninja, const int nIndex );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
         ( NinjaH * ninja, const int nIndex, const char * initializationMethod );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
         ( NinjaH * ninja, const int nIndex, const int nCPUs );
+
+    /*  Communication  */
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
+        ( NinjaH * ninja, const int nIndex, const char * comType );
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

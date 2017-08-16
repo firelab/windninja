@@ -151,6 +151,8 @@ public:
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
+    int setNinjaCommunication( const int nIndex, std::string comType,
+                               char ** papszOptions = NULL);
 #ifdef NINJA_GUI
     /**
     * \brief Set the number of runs for a ninjaCom
