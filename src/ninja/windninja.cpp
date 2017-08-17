@@ -104,7 +104,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
 
 #ifdef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
-    ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  )
+    ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  )
 {
     try
     {
@@ -162,7 +162,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
     ( NinjaH * ninja, const char * forecastFilename,
       const char * timezone,
-      bool momentumFlag )
+      int momentumFlag )
 {
     NinjaErr retval = NINJA_E_INVALID;
     if( NULL != ninja )

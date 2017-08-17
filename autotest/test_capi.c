@@ -12,6 +12,8 @@
  *
  *   gcc -g -Wall -o test_api test_capi.c -lninja
  *
+ *   cl test_capi.c WindNinjadll.lib
+ *
  * =====================================================================================
  */
 
@@ -183,22 +185,22 @@ void checkOutputMethods()
 void checkEnvironmentMethods()
 {
     /*  Check SetDiurnalWinds  */
-    bool flag = false;
+    int flag = 0;
 
-    errval = NinjaSetDiurnalWinds( ninja, 0, true );
+    errval = NinjaSetDiurnalWinds( ninja, 0, 1 );
     assert( errval == NINJA_SUCCESS );
 
     flag = NinjaGetDiurnalWindFlag( ninja, 0 );
     assert( flag );
 
-    errval = NinjaSetDiurnalWinds( ninja, 0, false );
+    errval = NinjaSetDiurnalWinds( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
 
     flag = NinjaGetDiurnalWindFlag( ninja, 0 );
     assert( !flag );
 
     //check with NULL ninja
-    errval = NinjaSetDiurnalWinds( NULL, 0, true );
+    errval = NinjaSetDiurnalWinds( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
     /* Check SetUniAirTemp */
@@ -300,41 +302,41 @@ void checkOutputWritingMethods()
     assert( errval  == NINJA_E_NULL_PTR );
 
     //setWxModelGoogOutFlag checks
-    errval = NinjaSetWxModelGoogOutFlag( ninja, 0, true );
+    errval = NinjaSetWxModelGoogOutFlag( ninja, 0, 1 );
     assert( errval == NINJA_SUCCESS );
 
-    errval = NinjaSetWxModelGoogOutFlag( NULL, 0, true );
+    errval = NinjaSetWxModelGoogOutFlag( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
-    errval = NinjaSetWxModelGoogOutFlag( ninja, 0, false );
+    errval = NinjaSetWxModelGoogOutFlag( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
 
     //SHP output methods
-    errval = NinjaSetWxModelShpOutFlag( ninja, 0, true );
+    errval = NinjaSetWxModelShpOutFlag( ninja, 0, 1 );
     assert( errval == NINJA_SUCCESS );
 
-    errval = NinjaSetWxModelShpOutFlag( NULL, 0, true );
+    errval = NinjaSetWxModelShpOutFlag( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
-    errval = NinjaSetWxModelShpOutFlag( ninja, 0, false );
+    errval = NinjaSetWxModelShpOutFlag( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
 
     /************************ 
      * ASCII output methods *
      ************************/
-    errval = NinjaSetWxModelAsciiOutFlag( ninja, 0, true );
+    errval = NinjaSetWxModelAsciiOutFlag( ninja, 0, 1 );
     assert( errval == NINJA_SUCCESS );
 
-    errval = NinjaSetWxModelAsciiOutFlag( NULL, 0, true );
+    errval = NinjaSetWxModelAsciiOutFlag( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
-    errval = NinjaSetWxModelAsciiOutFlag( ninja, 0, false );
+    errval = NinjaSetWxModelAsciiOutFlag( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
 
     /************************ 
      * Google output methods *
      ************************/
-    errval = NinjaSetGoogOutFlag( ninja, 0, true );
+    errval = NinjaSetGoogOutFlag( ninja, 0, 1 );
     assert( errval == NINJA_SUCCESS );
 
     /*  setGoogResolution  */
@@ -382,10 +384,10 @@ void checkOutputWritingMethods()
 
 
     /*  Invalid inputs for setGoogOutFlag */
-    errval = NinjaSetGoogOutFlag( NULL, 0, true );
+    errval = NinjaSetGoogOutFlag( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
-    errval = NinjaSetGoogOutFlag( ninja, 0, false );
+    errval = NinjaSetGoogOutFlag( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
 
 }
@@ -394,7 +396,7 @@ int runWindNinja()
 {
     NinjaH* ninjaArmy = NULL; 
     int numNinjas = 1;
-    bool momentumFlag = 0;
+    int momentumFlag = 0;
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
     const int nIndex = 0;

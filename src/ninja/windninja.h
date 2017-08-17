@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
-#include <stdbool.h>
 
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
@@ -81,7 +80,7 @@ typedef int  NinjaErr;
 //#endif
 //#ifdef NINJAFOAM
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
-        ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
+        ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 //#endif
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
@@ -95,7 +94,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
         ( NinjaH * ninja, const char * forecastFilename,
           const char * timezone,
-          bool momentumFlag );
+          int momentumFlag );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaInit
         ( );
