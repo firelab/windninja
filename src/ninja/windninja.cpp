@@ -273,6 +273,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaInit
+    ( )
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaInitialize();
+
+    return retval;
+}
+
 /**
  * \brief Set the number of CPUs to use for simulations.
  *
@@ -645,6 +655,26 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarYcoord
     }
 }
 #endif //SCALAR
+
+#ifdef NINJAFOAM
+/*-----------------------------------------------------------------------------
+ *  NinjaFoam Methods
+ *-----------------------------------------------------------------------------*/
+WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
+    ( NinjaH * ninja, const int nIndex, const int meshCount )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setMeshCount
+            ( nIndex, meshCount );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+}
+#endif //NINJAFOAM
 
 /*-----------------------------------------------------------------------------
  *  Mesh Methods

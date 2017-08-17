@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
@@ -118,6 +119,8 @@ public:
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
+    
+    int ninjaInitialize();
 
     /**
     * \brief Return the number of ninjas in the army

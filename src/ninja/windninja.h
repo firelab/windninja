@@ -97,6 +97,8 @@ typedef int  NinjaErr;
           const char * timezone,
           bool momentumFlag );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaInit
+        ( );
 
     /*-----------------------------------------------------------------------------
      *  Various Simulation Parameters
@@ -211,6 +213,14 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceYcoord
         ( NinjaH * ninja, const int nIndex, const double ycoord_ );
 #endif //SCALAR
+
+//#ifdef NINJAFOAM
+    /*-----------------------------------------------------------------------------
+     *  NinjaFoam Methods
+     *-----------------------------------------------------------------------------*/
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
+        ( NinjaH * ninja, const int nIndex, const int meshCount );
+//#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods

@@ -1017,9 +1017,6 @@ int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** pap
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
-
-
-
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -1097,6 +1094,15 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
 /*-----------------------------------------------------------------------------
  *  Simulation Parameter Methods
  *-----------------------------------------------------------------------------*/
+int ninjaArmy::ninjaInitialize()
+{
+    int retval = NINJA_E_INVALID;
+
+    retval = NinjaInitialize();
+    
+    return retval;    
+}
+
 int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
