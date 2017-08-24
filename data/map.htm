@@ -310,18 +310,19 @@ see if it helps.  Testing needed. kss 20130304
         map.setOptions({ draggableCursor: 'crosshair' });
 
         google.maps.event.addListener(map, 'mousedown', function (event) {
-            map.draggable = false;
+            map.setOptions({draggable: false});
             dragging = true;
             latlngStart = event.latLng;
         });
 
         google.maps.event.addListener(map, 'mousemove', function (event) {
+            map.setOptions({draggable: false});
             latlngEnd = event.latLng;
             showRect();
         });
 
         google.maps.event.addListener(map, 'mouseup', function (event) {
-            map.draggable = true;
+            map.setOptions({draggable: true});
             dragging = false;
             map.setOptions({ draggableCursor: null });
             clearListeners();
