@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+WindNinja 3.3.1
+---------------
+
+- Fix bug causing the DEM downloader "Drag Box On Map" option to not work correctly (\#260)
+
 WindNinja 3.3.0
 ---------------
 
