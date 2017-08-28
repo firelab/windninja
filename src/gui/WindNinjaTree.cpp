@@ -216,6 +216,8 @@ void WindNinjaTree::createStack()
 
   wind = new windInput;
   point = new pointInput;
+  /** Station Fetch **/  
+//  tw = new testWidget;
   weather = new weatherModel;
   output = new outputMetaData;
   google = new googleOutput;

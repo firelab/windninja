@@ -1,36 +1,43 @@
 <RCC>
-  <qresource prefix="/">
-    <file alias="wn-splash.png">data/wn-splash.png</file>
-    <file alias="wn-icon.png">images/icons/wn-icon.png</file>
-    <file alias="wn-desktop.ico">images/icons/wn-desktop.ico</file>
-    <file alias="resample.png">images/icons/resample.png</file>
-    <file alias="bug_link.png">images/icons/bug_link.png</file>
-    <file alias="bullet_blue.png">images/icons/bullet_blue.png</file>
-    <file alias="radio_bullet_blue.png">images/icons/jason_bullet_blue.png</file>
-    <file alias="bullet_error.png">images/icons/bullet_error.png</file>
-    <file alias="cross.png">images/icons/cross.png</file>
-    <file alias="disk.png">images/icons/disk.png</file>
-    <file alias="folder_page.png">images/icons/folder_page.png</file>
-    <file alias="cog_go.png">images/icons/cog_go.png</file>
-    <file alias="help.png">images/icons/help.png</file>
-    <file alias="link.png">images/icons/link.png</file>
-    <file alias="page_white_acrobat.png">images/icons/page_white_acrobat.png</file>
-    <file alias="tick.png">images/icons/tick.png</file>
-    <file alias="weather_sun.png">images/icons/weather_sun.png</file>
-    <file alias="server_go.png">images/icons/server_go.png</file>
-    <file alias="application_get.png">images/icons/application_get.png</file>
-    <file alias="cancel.png">images/icons/cancel.png</file>
-    <file alias="noaa_bullet.png">images/icons/noaa_bullet.png</file>
-    <file alias="arrow_rotate_clockwise.png">images/icons/arrow_rotate_clockwise.png</file>
-    <file alias="add.png">images/icons/add.png</file>
-    <file alias="lightning_add.png">images/icons/lightning_add.png</file>
-    <file alias="weather_cloudy.png">images/icons/weather_cloudy.png</file>
-    <file alias="delete.png">images/icons/delete.png</file>
-    <file alias="jason_caution.png">images/icons/jason_caution.png</file>
-    <file alias="folder.png">images/icons/folder.png</file>
-    <file alias="magnifier.png">images/icons/magnifier.png</file>
-    <file alias="swoop_final.png">images/icons/swoop_final.png</file>
-    <file alias="center_click_final.png">images/icons/center_click_final.png</file>
-    <file alias="email.png">images/icons/email.png</file>
-  </qresource>
+    <qresource prefix="/">
+        <file alias="wn-splash.png">data/wn-splash.png</file>
+        <file alias="wn-icon.png">images/icons/wn-icon.png</file>
+        <file alias="wn-desktop.ico">images/icons/wn-desktop.ico</file>
+        <file alias="resample.png">images/icons/resample.png</file>
+        <file alias="bug_link.png">images/icons/bug_link.png</file>
+        <file alias="bullet_blue.png">images/icons/bullet_blue.png</file>
+        <file alias="radio_bullet_blue.png">images/icons/jason_bullet_blue.png</file>
+        <file alias="bullet_error.png">images/icons/bullet_error.png</file>
+        <file alias="cross.png">images/icons/cross.png</file>
+        <file alias="disk.png">images/icons/disk.png</file>
+        <file alias="folder_page.png">images/icons/folder_page.png</file>
+        <file alias="cog_go.png">images/icons/cog_go.png</file>
+        <file alias="help.png">images/icons/help.png</file>
+        <file alias="link.png">images/icons/link.png</file>
+        <file alias="page_white_acrobat.png">images/icons/page_white_acrobat.png</file>
+        <file alias="tick.png">images/icons/tick.png</file>
+        <file alias="weather_sun.png">images/icons/weather_sun.png</file>
+        <file alias="server_go.png">images/icons/server_go.png</file>
+        <file alias="application_get.png">images/icons/application_get.png</file>
+        <file alias="cancel.png">images/icons/cancel.png</file>
+        <file alias="noaa_bullet.png">images/icons/noaa_bullet.png</file>
+        <file alias="arrow_rotate_clockwise.png">images/icons/arrow_rotate_clockwise.png</file>
+        <file alias="add.png">images/icons/add.png</file>
+        <file alias="lightning_add.png">images/icons/lightning_add.png</file>
+        <file alias="weather_cloudy.png">images/icons/weather_cloudy.png</file>
+        <file alias="delete.png">images/icons/delete.png</file>
+        <file alias="jason_caution.png">images/icons/jason_caution.png</file>
+        <file alias="folder.png">images/icons/folder.png</file>
+        <file alias="magnifier.png">images/icons/magnifier.png</file>
+        <file alias="swoop_final.png">images/icons/swoop_final.png</file>
+        <file alias="center_click_final.png">images/icons/center_click_final.png</file>
+        <file alias="email.png">images/icons/email.png</file>
+        <file>images/icons/transmit_blue.png</file>
+        <file alias="transmit.png">images/icons/transmit.png</file>
+        <file>images/icons/weather_clouds.png</file>
+        <file>images/icons/weather_snow.png</file>
+        <file>images/icons/weather_rain.png</file>
+        <file alias="wxLtng.png">images/icons/weather_lightning.png</file>
+        <file alias="world.png">images/icons/world.png</file>
+    </qresource>
 </RCC>

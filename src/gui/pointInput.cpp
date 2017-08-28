@@ -54,16 +54,24 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     readStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
     readStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
-    writeStationFileButton =  new QToolButton( this );
+    writeStationFileButton =  new QCheckBox( this );
     writeStationFileButton->setText( tr( "Write Station File" ) );
-    writeStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
-    writeStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+//    writeStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
+//    writeStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
-    writeStationKmlButton =  new QToolButton( this );
+    writeStationKmlButton =  new QCheckBox( this );
     writeStationKmlButton->setText( tr( "Write Station Kml" ) );
-    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
-    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    writeStationKmlButton->setIcon( QIcon( ":weather_clouds.png" ) );
+//    writeStationKmlButton->setStyle(Qt::ToolButtonTextBesideIcon);
+//    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
+    doTest = new QToolButton( this );
+    doTest->setText( tr( "Open Station Downloader " ));
+    doTest->setIcon(QIcon(":world.png"));
+    doTest->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
+//    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    
     stationTreeView = new QTreeView( this );
     stationTreeView->setModel( &pointData );
 
@@ -73,6 +81,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
          SLOT( writeStationFile() ) );
     connect( writeStationKmlButton, SIGNAL( clicked() ), this,
          SLOT( writeStationKml() ) );
+    connect( doTest ,SIGNAL( clicked () ), this, 
+             SLOT(openStationFetchWidget()));
 
     fileLayout = new QHBoxLayout;
     fileLayout->addWidget( stationFileLineEdit );
@@ -80,8 +90,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget( writeStationFileButton );
-    writeStationFileButton->setVisible( false );
+//    writeStationFileButton->setVisible( false );
     buttonLayout->addWidget( writeStationKmlButton );
+    buttonLayout->addWidget(doTest);
     buttonLayout->addStretch();
 
     pointLayout = new QVBoxLayout;
@@ -131,76 +142,99 @@ void pointInput::readStationFile()
 
 void pointInput::writeStationFile()
 {
-    if( pointData.stations.empty() ) {
-    writeToConsole( "There are no stations to write" );
-    return;
-    }
+    writeToConsole("Written after sim");
+//    if( pointData.stations.empty() ) {
+//    writeToConsole( "There are no stations to write" );
+//    return;
+//    }
 
-    QString fileName;
-    fileName = QFileDialog::getSaveFileName( this,
-                         tr( "Save station file" ),
-                         ".csv",
-                         tr( "Comma separated "	\
-                         "value files (*.csv)" ) );
-    //check for extension, make case insensitive test
-    if( QFileInfo( fileName ).suffix().compare( "csv", Qt::CaseInsensitive ) ) {
-    fileName += ".csv";
-    if( QFileInfo( fileName ).exists() ) {
-        int r = QMessageBox::warning( this, "WindNinja",
-                      "The file " + fileName +
-                          " exists, do you wish to" \
-                          " overwrite it?",
-                      QMessageBox::Yes |
-                      QMessageBox::No |
-                      QMessageBox::Cancel );
-        if( r == QMessageBox::No || r == QMessageBox::Cancel )
-        return;
-    }
-    }
+//    QString fileName;
+//    fileName = QFileDialog::getSaveFileName( this,
+//                         tr( "Save station file" ),
+//                         ".csv",
+//                         tr( "Comma separated "	\
+//                         "value files (*.csv)" ) );
+//    //check for extension, make case insensitive test
+//    if( QFileInfo( fileName ).suffix().compare( "csv", Qt::CaseInsensitive ) ) {
+//    fileName += ".csv";
+//    if( QFileInfo( fileName ).exists() ) {
+//        int r = QMessageBox::warning( this, "WindNinja",
+//                      "The file " + fileName +
+//                          " exists, do you wish to" \
+//                          " overwrite it?",
+//                      QMessageBox::Yes |
+//                      QMessageBox::No |
+//                      QMessageBox::Cancel );
+//        if( r == QMessageBox::No || r == QMessageBox::Cancel )
+//        return;
+//    }
+//    }
 
-    if( fileName.isEmpty() || fileName == ".csv" )
-    return;
-    else
-//    wxStation::writeStationFile( pointData.stations,
-//                     fileName.toStdString() );
-        cout<<"this is disabled until further notice"<<endl;
+//    if( fileName.isEmpty() || fileName == ".csv" )
+//    return;
+//    else
+////    wxStation::writeStationFile( pointData.stations,
+////                     fileName.toStdString() );
+//        cout<<"this is disabled until further notice"<<endl;
 }
 
 void pointInput::writeStationKml()
 {
-    if( pointData.stations.empty() ) {
-    writeToConsole( "There are no stations to write" );
-    return;
-    }
+    writeToConsole("kml will be written after simulation!");
+//    if( pointData.stations.empty() ) {
+//    writeToConsole( "There are no stations to write" );
+//    return;
+//    }
 
-    QString fileName;
-    fileName = QFileDialog::getSaveFileName( this,
-                         tr( "Save station file" ),
-                         ".kml",
-                         tr( "Keyhole Markup  "	\
-                         "files (*.kml)" ) );
-    //check for extension, make case insensitive test
-    if( QFileInfo( fileName ).suffix().compare( "kml", Qt::CaseInsensitive ) ) {
-    fileName += ".kml";
-    if( QFileInfo( fileName ).exists() ) {
-        int r = QMessageBox::warning( this, "WindNinja",
-                      "The file " + fileName +
-                          " exists, do you wish to" \
-                          " overwrite it?",
-                      QMessageBox::Yes |
-                      QMessageBox::No |
-                      QMessageBox::Cancel );
-        if( r == QMessageBox::No || r == QMessageBox::Cancel )
-        return;
-    }
-    }
+//    QString fileName;
+//    fileName = QFileDialog::getSaveFileName( this,
+//                         tr( "Save station file" ),
+//                         ".kml",
+//                         tr( "Keyhole Markup  "	\
+//                         "files (*.kml)" ) );
+//    //check for extension, make case insensitive test
+//    if( QFileInfo( fileName ).suffix().compare( "kml", Qt::CaseInsensitive ) ) {
+//    fileName += ".kml";
+//    if( QFileInfo( fileName ).exists() ) {
+//        int r = QMessageBox::warning( this, "WindNinja",
+//                      "The file " + fileName +
+//                          " exists, do you wish to" \
+//                          " overwrite it?",
+//                      QMessageBox::Yes |
+//                      QMessageBox::No |
+//                      QMessageBox::Cancel );
+//        if( r == QMessageBox::No || r == QMessageBox::Cancel )
+//        return;
+//    }
+//    }
 
-    if( fileName.isEmpty() || fileName == ".kml" )
-    return;
-    else
-//    wxStation::writeKmlFile( pointData.stations,
-//                    fileName.toStdString() );
-        cout<<"disabled"<<endl;
+//    if( fileName.isEmpty() || fileName == ".kml" )
+//    return;
+//    else
+////    wxStation::writeKmlFile( pointData.stations,
+////                    fileName.toStdString() );
+//        cout<<"disabled"<<endl;
+}
+void pointInput::openMainWindow()
+{
+    this->setEnabled(true);
+}
+
+void pointInput::updateTz(QString tz)
+{
+    tzString = tz;    
+}
+
+
+
+void pointInput::openStationFetchWidget()
+{
+    xWidget = new stationFetchWidget();
+    connect(xWidget, SIGNAL(exitDEM()),this, SLOT(openMainWindow()));
+    this->setEnabled(false);    
+    xWidget->setInputFile(demFileName);    
+    xWidget->updatetz(tzString);
+    
 }
 
 void pointInput::setInputFile( QString file )

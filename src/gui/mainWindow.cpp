@@ -592,6 +592,9 @@ void mainWindow::createConnections()
       tree->weather, SLOT(setInputFile(QString)));
   connect(this, SIGNAL(inputFileChanged(QString)),
       tree->point, SLOT(setInputFile(QString)));
+  /** Station Fetch **/
+//  connect(this, SIGNAL(inputFileChanged(QString)),
+//          tree->tw,SLOT(setInputFile(QString)));
 
   //connect other writeToConsoles to the main writeToConsole
   connect( tree->point, SIGNAL( writeToConsole( QString ) ),
@@ -600,6 +603,9 @@ void mainWindow::createConnections()
   //connect timezone combo to weather model tz string
   connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
        tree->weather, SLOT( updateTz( QString ) ) );
+  //connect time zone for station fetch
+  connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
+       tree->point, SLOT( updateTz( QString ) ) );
 
   //connect the initialization check boxes to the others for mutex
   connect( tree->wind->windGroupBox, SIGNAL( toggled( bool ) ),

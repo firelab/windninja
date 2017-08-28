@@ -58,6 +58,7 @@
 #include "latLonWidget.h"
 #include "wxStation.h"
 #include "ninjaUnits.h"
+#include "stationFetchWidget.h"
 
 
 #include <QGridLayout>
@@ -84,8 +85,9 @@ class pointInput : public QWidget
     QToolButton *addStationButton;
     QToolButton *removeStationButton;
     QToolButton *readStationFileButton;
-    QToolButton *writeStationFileButton;
-    QToolButton *writeStationKmlButton;
+    QCheckBox *writeStationFileButton;
+    QCheckBox *writeStationKmlButton;
+    QToolButton *doTest;
 
     QGroupBox *pointGroupBox;
 
@@ -104,16 +106,28 @@ class pointInput : public QWidget
     QTableView *stationTableView;
 
     void updateTable();
+    
+    stationFetchWidget *xWidget;
+    QString tzString;
+    
 
+  public slots:
+    void updateTz(QString tz);
+    
+    
   private slots:
     void readStationFile();
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
+    void openMainWindow();
+    void openStationFetchWidget();
 
  signals:
     void writeToConsole( QString message );
     void stationFileChanged();
+    
+friend class stationFetchWidget;
 };
 
 #endif	/* POINT_INPUT_H */
