@@ -685,7 +685,7 @@ void openFoamPolyMesh::ComputeUdirection()
 {
     double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
 
-    d = UfreeStream - 180; //convert wind direction from --> wind direction to
+    d = inputDirection - 180; //convert wind direction from --> wind direction to
     if(d < 0){
         d += 360;
     }
