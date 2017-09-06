@@ -76,10 +76,17 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     inputWindHeight_Veg = inputWindHeight_VegValue;
     z0 = 0.01;  //note that this is the foam roughness as found in the NinjaFoam AddBcBlock function. This has been manually set to 0.01 in NinjaFoam, so watch out if this value ends up changing there.
     Rd = RdValue;
-    firstCellHeight = z(5*Azpoints)-z(Azpoints); //it takes a while to pull this out, but according to ninjaFoam,
+    //firstCellHeight = z(5*Azpoints)-z(Azpoints); //it takes a while to pull this out, but according to ninjaFoam,
     //this is essentially (meshvolume/cellcount)^(1/3) where cellcount is half the cells in the blockMesh and
     //half reserved for refineMesh. I'll just use the height of five cells from the minx and miny position
     // at least until I figure out how the native mesh decides to vary the heights for the first few layers of mesh
+    double meshVolume = (x(zcells*Azpoints+ycells*xpoints+xcells)-x(0))
+            *(y(zcells*Azpoints+ycells*xpoints+xcells)-y(0))
+            *(z(zcells*Azpoints+ycells*xpoints+xcells)-z(0));
+    firstCellHeight = pow(meshVolume/ncells,(1.0/3.0));
+    std::cout << "meshVolume = " << meshVolume << "\n";
+    std::cout << "cellcount = " << ncells << "\n";
+    std::cout << "firstCellHeight = " << firstCellHeight << "\n";
     u = uwind;
     v = vwind;
     w = wwind;
