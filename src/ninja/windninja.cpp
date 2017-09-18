@@ -723,6 +723,20 @@ WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
+WINDNINJADLL_EXPORT NinjaGridH* NinjaGetOutputSpeedGrid
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+       return reinterpret_cast<NinjaGridH*>
+           ( reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex ));
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     ( NinjaH * ninja, const int nIndex, const double percent )
 {

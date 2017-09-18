@@ -4378,6 +4378,13 @@ void ninja::set_numberCPUs(int CPUs)
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
 
+GDALDatasetH ninja::get_outputSpeedGrid()
+{
+    GDALDatasetH hDS = NULL;
+    hDS = VelocityGrid.ascii2GDAL();
+    return hDS;
+}
+
 void ninja::set_outputBufferClipping(double percent)
 {
     if(percent < 0.0 || percent >= 50.0)

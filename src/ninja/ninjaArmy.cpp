@@ -1541,6 +1541,14 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
 
+GDALDataset* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
+    }
+}
+
 int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {

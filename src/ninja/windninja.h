@@ -67,7 +67,9 @@ WN_C_START
 
 //Use structs instead of void * for type checking by C compilier
 struct NinjaH;
+struct NinjaGridH;
 typedef struct NinjaH NinjaH;
+typedef struct NinjaGridH NinjaGridH;
 typedef int  NinjaErr;
 
 
@@ -238,6 +240,9 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Output Methods
      *-----------------------------------------------------------------------------*/
+    WINDNINJADLL_EXPORT NinjaGridH* NinjaGetOutputSpeedGrid
+        ( NinjaH * ninja, const int nIndex );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaH * ninja, const int nIndex, const double percent );
 

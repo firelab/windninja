@@ -44,7 +44,7 @@ NinjaH * ninja = NULL;
 
 void checkInitializationMethods()
 {
-    const char * init_method;
+    //const char * init_method;
     //check domainAverageInitialization
     errval = NinjaSetInitializationMethod( ninja, 0, "domain" );
     assert( errval == NINJA_SUCCESS );
@@ -395,6 +395,7 @@ void checkOutputWritingMethods()
 int runWindNinja()
 {
     NinjaH* ninjaArmy = NULL; 
+    NinjaGridH* outputSpeedGrid = NULL;
     int numNinjas = 1;
     int momentumFlag = 0;
     char ** papszOptions = NULL;
@@ -417,6 +418,10 @@ int runWindNinja()
     const int meshCount = 100000;
 
     ninjaArmy = NinjaCreateArmy(numNinjas, momentumFlag, papszOptions);
+    if( NULL != ninjaArmy )
+    {
+        printf("NinjaCreateArmy: err = %d\n", err);
+    }
 
     err = NinjaInit();
     if(err != NINJA_SUCCESS)
@@ -529,6 +534,14 @@ int runWindNinja()
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
+
+
+    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy);
+    if( NULL != outputSpeedGrid )
+    {
+        printf("NinjaGetOutputSpeedGrid: err = %d\n", err);
+    }
+
 
     err = NinjaDestroyArmy(ninjaArmy);
     if(err != NINJA_SUCCESS)

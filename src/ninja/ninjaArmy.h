@@ -853,6 +853,14 @@ public:
     */
     int setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output speed grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output_speed_grid Pointer to the output speed grid as a GDALDataset
+    */
+    GDALDataset* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja
