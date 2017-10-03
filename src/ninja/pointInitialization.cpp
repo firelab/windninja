@@ -332,41 +332,20 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
 
     input.surface.windSpeedGrid = speedInitializationGrid;
 
-    if(u)
-    {
-            delete[] u;
-            u = NULL;
-    }
-    if(v)
-    {
-            delete[] v;
-            v = NULL;
-    }
-    if(T)
-    {
-            delete[] T;
-            T = NULL;
-    }
-    if(cc)
-    {
-            delete[] cc;
-            cc = NULL;
-    }
-    if(X)
-    {
-            delete[] X;
-            X = NULL;
-    }
-    if(Y)
-    {
-            delete[] Y;
-            Y = NULL;
-    }
-    if(influenceRadius)
-    {
-        delete[] influenceRadius;
-        influenceRadius = NULL;
-    }
+    delete[] u;
+    u = NULL;
+    delete[] v;
+    v = NULL;
+    delete[] T;
+    T = NULL;
+    delete[] cc;
+    cc = NULL;
+    delete[] X;
+    X = NULL;
+    delete[] Y;
+    Y = NULL;
+    delete[] influenceRadius;
+    influenceRadius = NULL;
 }
 
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
@@ -2142,22 +2121,22 @@ void pointInitialization::fetchStationData(std::string URL,
     int idxx1=0;
     int idxx2=0;
     int idxx3=0;
-    const double *cloudlow;
-    const double *cloudmed;
-    const double *cloudhigh;
+    const double *cloudlow = 0;
+    const double *cloudmed = 0;
+    const double *cloudhigh = 0;
 
-    const double* rawsWind;
-    const double* rawsDir;
-    const double* rawsSolrad;
-    const double* rawsTemp;
-    double rawsLatitude;
-    double rawsLongitude;
-    const char* rawsStation;
-    char** rawsDateTime;
+    const double* rawsWind = 0;
+    const double* rawsDir = 0;
+    const double* rawsSolrad = 0;
+    const double* rawsTemp = 0;
+    double rawsLatitude = 0;
+    double rawsLongitude = 0;
+    const char* rawsStation = 0;
+    char** rawsDateTime = 0;
 
-    const double* metarWind;
-    const double* metarDir;
-    const double* metarTemp;
+    const double* metarWind = 0;
+    const double* metarDir = 0;
+    const double* metarTemp = 0;
     double metarLatitude;
     double  metarLongitude;
     const char* metarStation;
@@ -2363,9 +2342,5 @@ void pointInitialization::fetchStationData(std::string URL,
     }
     CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
-    delete cloudhigh;
-    delete cloudlow,rawsWind,rawsDir,rawsSolrad,rawsTemp,rawsLatitude,rawsLongitude,rawsStation,rawsDateTime;
-    delete metarWind,metarDir,metarTemp,metarLatitude,metarLongitude,metarStation,metarDateTime;
-
     CPLDebug("STATION_FETCH", "fetchStationData finished.");
 }
