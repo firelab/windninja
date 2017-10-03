@@ -890,7 +890,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     for (int j=0; j<totalsize; j++)
     {
         vector<boost::posix_time::time_duration> buffers;
-        for (int i=0; i<vecStations[j].size(); i++)
+        for (int i=0; i<vecStations[j].size()-1; i++)
         {
             buffer = vecStations[j][i].datetime - vecStations[j][i+1].datetime;
             if (buffer <= zero)
