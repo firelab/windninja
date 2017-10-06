@@ -80,7 +80,7 @@ ninja::ninja()
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
-                                                  "150" ) );
+                                                  "10" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
 
     //ninjaCom stuff
