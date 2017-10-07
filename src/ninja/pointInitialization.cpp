@@ -44,6 +44,8 @@ std::string pointInitialization::rawStationFilename = "";
 double pointInitialization::stationBuffer;
 std::vector<std::string> pointInitialization::stationFiles;
 
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 pointInitialization::pointInitialization() : initialize()
 {
     dfInvDistWeight = atof( CPLGetConfigOption( "NINJA_POINT_INV_DIST_WEIGHT",
@@ -840,10 +842,8 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
     refinedDat=makeWxStation(vecStations,demFileName);
 
     //fixes time!
-    boost::local_time::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     boost::local_time::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
     for (int i=0;i<refinedDat.size();i++)
     {
@@ -2326,6 +2326,7 @@ void pointInitialization::fetchStationData(std::string URL,
                 }
             }
         }
+        OGR_F_Destroy( hFeature );
     }
     CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
