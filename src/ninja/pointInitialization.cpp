@@ -416,7 +416,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         throw( std::runtime_error( oErrorString ) );
     }
 
-    OGRFeatureH hFeature;
     double dfTempValue = 0.0;
     OGRLayer *poLayer;
     OGRFeature *poFeature;
@@ -697,7 +696,6 @@ vector<std::string> pointInitialization::fetchWxStationID()
 
         OGRLayer *poLayer;
         OGRFeature *poFeature;
-        OGRFeatureDefn *poFeatureDefn;
         poLayer = (OGRLayer *) OGR_DS_GetLayer(hDS, 0);
 
         std::string oStationName;
@@ -708,8 +706,6 @@ vector<std::string> pointInitialization::fetchWxStationID()
 
         poLayer->ResetReading();
         while ((poFeature = poLayer->GetNextFeature()) != NULL) {
-            poFeatureDefn = poLayer->GetLayerDefn();
-
             // get Station name
             oStationName = poFeature->GetFieldAsString(0);
             stationNames.push_back(oStationName);
@@ -1401,8 +1397,6 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
     std::string output = "&output=geojson";
     std::string url = baseUrl + "timeseries?" + stidfull + nEtworkFull + svarfull + timesand+output + tokfull;
 
-    const char* charurl = url.c_str();
-
     return url;
 }
 
@@ -1418,8 +1412,6 @@ std::string pointInitialization::BuildMultiLatest(std::string station_ids)
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
     std::string url = baseUrl + "timeseries?" + stidfull + nEtworkFull + svarfull + timesand + output + tokfull;
-
-    const char* charurl=url.c_str();
 
     return url;
 }
@@ -1448,8 +1440,6 @@ std::string pointInitialization::BuildBboxUrl(std::string lat1,
     std::string output = "&output=geojson";
     std::string url = baseUrl + "timeseries?" + bbox + nEtworkFull + svarfull + timesand + output + tokfull;
 
-    const char* charurl=url.c_str();
-
     return url;
 }
 
@@ -1470,8 +1460,6 @@ std::string pointInitialization::BuildBboxLatest(std::string lat1,
     std::string svarfull = "&vars=" + ndvar;
     std::string output = "&output=geojson";
     std::string url = baseUrl + "timeseries?" + bbox + nEtworkFull + svarfull + active + timesand + output + tokfull;
-
-    const char* charurl=url.c_str();
 
     return url;
 }
@@ -2047,7 +2035,6 @@ bool pointInitialization::fetchStationByName(std::string stationList,
                                              std::vector<boost::posix_time::ptime> timeList,
                                              std::string timeZone, bool latest)
 {
-    bool test=true;
     std::string URL;
 
     if (latest==true)
@@ -2098,7 +2085,6 @@ void pointInitialization::fetchStationData(std::string URL,
     int idx1=0;
     int idx2=0;
     int idx3=0;
-    int idx4=0;
     int idx5=0;
     int idx6=0;
     int idx7=0;
@@ -2209,7 +2195,6 @@ void pointInitialization::fetchStationData(std::string URL,
             int count1=0;
             int count2=0;
             int count3=0;
-            int count4=0;
             int countxx1=0;
             int countxx2=0;
             int countxx3=0;
