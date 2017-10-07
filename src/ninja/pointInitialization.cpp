@@ -678,9 +678,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oStation.datetime=abs_time;
 
         oStations.push_back(oStation);
+        OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGRFeature::DestroyFeature( poFeature );
     OGR_DS_Destroy( hDS );
 
     return oStations;
@@ -709,6 +709,7 @@ vector<std::string> pointInitialization::fetchWxStationID()
             // get Station name
             oStationName = poFeature->GetFieldAsString(0);
             stationNames.push_back(oStationName);
+            OGRFeature::DestroyFeature( poFeature );
         }
     }
 
@@ -1370,6 +1371,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         {
             outFile<<stid<<",\""<<stationName<<"\","<<latitude<<","<<longitude<<","<<elevation<<","<<status<<","<<mnetID<<endl;
         }
+        OGR_F_Destroy( hFeature );
     }
 
     OGR_DS_Destroy(poDS);
