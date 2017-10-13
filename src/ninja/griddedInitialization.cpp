@@ -132,6 +132,9 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
     uInitializationGrid.interpolateFromGrid(inputUGrid, AsciiGrid<double>::order1);
     vInitializationGrid.interpolateFromGrid(inputVGrid, AsciiGrid<double>::order1);
 
+    inputUGrid.deallocate();
+    inputVGrid.deallocate();
+
     //fill the speed and dir initialization grids
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
