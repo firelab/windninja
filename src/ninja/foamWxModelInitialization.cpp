@@ -77,7 +77,6 @@ void foamWxModelInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     setWn2dGrids(input);
 
-    int i, j;
     //set the u and v initialization grids
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
