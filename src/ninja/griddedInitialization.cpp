@@ -115,20 +115,30 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         inputAngleGrid.BufferGridInPlace();
     }
 
-    //Interpolate from input grids to dem coincident grids
-    speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
-    dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
-    
-    CPLDebug("NINJA", "check for coincident grids: u = %d", speedInitializationGrid.checkForCoincidentGrids(uInitializationGrid));
+    //convert speed/dir to u/v for direction interpolation
+    AsciiGrid<double> inputUGrid;
+    AsciiGrid<double> inputVGrid;
+    inputUGrid.set_headerData(inputVelocityGrid);
+    inputVGrid.set_headerData(inputVelocityGrid);
 
-    int i, j, k;
-    //set the u and v initialization grids
-    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
-        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
-            wind_sd_to_uv(speedInitializationGrid(i,j),
-                    dirInitializationGrid(i,j),
-                    &(uInitializationGrid)(i,j),
-                    &(vInitializationGrid)(i,j));
+    for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
+        for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
+            wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
+                    &(inputUGrid)(i,j), &(inputVGrid)(i,j));
         }
     }
+
+    //Interpolate from input grids to dem coincident grids
+    uInitializationGrid.interpolateFromGrid(inputUGrid, AsciiGrid<double>::order1);
+    vInitializationGrid.interpolateFromGrid(inputVGrid, AsciiGrid<double>::order1);
+
+    //fill the speed and dir initialization grids
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
+                     &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
+        }
+    }
+
+    CPLDebug("NINJA", "check for coincident grids: u = %d", speedInitializationGrid.checkForCoincidentGrids(uInitializationGrid));
 }
