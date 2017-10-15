@@ -1277,6 +1277,7 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 
                 verify_option_set(vm, "input_speed_grid");
+                option_dependency(vm, "input_speed_grid", "input_speed_units");
                 verify_option_set(vm, "input_dir_grid");
                 
                 verify_option_set(vm, "input_wind_height");
@@ -1318,9 +1319,10 @@ int windNinjaCLI(int argc, char* argv[])
                                         osTimeZone);
                 }
                 
-                windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>());
-                windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
+                windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>(),
+                        velocityUnits::getUnit( vm["input_speed_units"].as<std::string>() ) );
 
+                windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
             }
 
             //check if lcp to determine if surface veg needs to be set or not

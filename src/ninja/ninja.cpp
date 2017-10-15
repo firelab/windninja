@@ -3573,12 +3573,14 @@ void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 }
 #endif
 
-void ninja::set_speedFile(std::string speedFile)
+void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)
 {
     input.speedInitGridFilename = speedFile;
     if(!CPLCheckForFile((char*)speedFile.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 speedFile + " does not exist or may be in use by another program.");
+
+    input.inputSpeedUnits = units; //units set here, conversion to base units in griddedInitialization
 }
 
 void ninja::set_dirFile(std::string dirFile)

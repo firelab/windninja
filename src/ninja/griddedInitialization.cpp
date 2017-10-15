@@ -115,6 +115,9 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         inputAngleGrid.BufferGridInPlace();
     }
 
+    //convert to base units
+    velocityUnits::toBaseUnits(inputVelocityGrid, input.inputSpeedUnits);
+
     //convert speed/dir to u/v for direction interpolation
     AsciiGrid<double> inputUGrid;
     AsciiGrid<double> inputVGrid;
