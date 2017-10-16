@@ -351,6 +351,14 @@ void mainWindow::createActions()
   connect(aboutWindNinjaAction, SIGNAL(triggered()), this,
       SLOT(aboutWindNinja()));
 
+  //citation wn action
+  citeWindNinjaAction = new QAction(tr("&Citation"), this);
+  citeWindNinjaAction->setIcon(QIcon(":citation.png"));
+  citeWindNinjaAction->setShortcut(tr("Ctrl+T"));
+  citeWindNinjaAction->setStatusTip(tr("How to cite WindNinja"));
+  connect(citeWindNinjaAction, SIGNAL(triggered()), this,
+      SLOT(citeWindNinja()));
+
   //support email action
   supportEmailAction = new QAction(tr("&Email Us"), this);
   supportEmailAction->setIcon(QIcon(":email.png"));
@@ -409,6 +417,7 @@ void mainWindow::createMenus()
   helpMenu->addAction(fetchDemAction);
   helpMenu->addAction(cliInstructionsAction);
   helpMenu->addAction(aboutWindNinjaAction);
+  helpMenu->addAction(citeWindNinjaAction);
   helpMenu->addAction(supportEmailAction);
   helpMenu->addAction(submitBugReportAction);
 
@@ -1161,6 +1170,21 @@ void mainWindow::aboutWindNinja()
 
   QMessageBox::about(this, tr("About WindNinja"),
              aboutText);
+}
+
+void mainWindow::citeWindNinja()
+{
+  QString citeText = "<h2>WindNinja</h2>\n";
+
+  citeText.append("<h4>To cite WindNinja in a publication use:</h4>");
+  citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison US Forest Service<br />");
+  citeText.append("of three approaches for simulating fine-scale surface winds in ");
+  citeText.append("support of wildland fire management. Part I. Model formulation and ");
+  citeText.append("comparison against measurements. International Journal of Wildland ");
+  citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.</p>");
+
+  QMessageBox::about(this, tr("Cite WindNinja"),
+             citeText);
 }
 
 void mainWindow::writeToConsole(QString message, QColor color)

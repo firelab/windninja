@@ -254,6 +254,7 @@ int windNinjaCLI(int argc, char* argv[])
                                 "configuration file ('config_file' flag not required)")
                         ("response_file", po::value<std::string>(),
                                  "response file (can be specified with '@name', also)")
+                        ("citation", "how to cite WindNinja in a publication")
                                 ;
         /*
         ** Set the available wx model names using hard codes for UCAR and api
@@ -494,6 +495,21 @@ int windNinjaCLI(int argc, char* argv[])
 
         if (vm.count("help")) {
             cout << visible << "\n";
+            return 0;
+        }
+
+        if (vm.count("citation")) {
+            cout << "To cite WindNinja in a publication use: " << "\n\n";
+
+            cout << "Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison " << "\n";
+            cout << "of three approaches for simulating fine-scale surface winds in " << "\n";
+            cout << "support of wildland fire management. Part I. Model formulation and " << "\n";
+            cout << "comparison against measurements. International Journal of Wildland " << "\n";
+            cout << "Fire, 23:969-931. doi: 10.1071/WF12089." << "\n\n";
+
+            cout << "See here for additional WindNinja publications:" << "\n\n";
+            cout << "http://firelab.github.io/windninja/publications/" << "\n\n";
+
             return 0;
         }
 
