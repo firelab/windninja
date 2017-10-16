@@ -32,6 +32,6 @@
     <file alias="swoop_final.png">images/icons/swoop_final.png</file>
     <file alias="center_click_final.png">images/icons/center_click_final.png</file>
     <file alias="email.png">images/icons/email.png</file>
-    <file alias="citation.png">images/icons/email.png</file>
+    <file alias="citation.png">images/icons/citation.png</file>
   </qresource>
 </RCC>
