@@ -1177,7 +1177,7 @@ void mainWindow::citeWindNinja()
   QString citeText = "<h2>WindNinja</h2>\n";
 
   citeText.append("<h4>To cite WindNinja in a publication use:</h4>");
-  citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison US Forest Service<br />");
+  citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison ");
   citeText.append("of three approaches for simulating fine-scale surface winds in ");
   citeText.append("support of wildland fire management. Part I. Model formulation and ");
   citeText.append("comparison against measurements. International Journal of Wildland ");
