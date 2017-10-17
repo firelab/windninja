@@ -1180,7 +1180,10 @@ void mainWindow::citeWindNinja()
   citeText.append("of three approaches for simulating fine-scale surface winds in ");
   citeText.append("support of wildland fire management. Part I. Model formulation and ");
   citeText.append("comparison against measurements. International Journal of Wildland ");
-  citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.</p>");
+  citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
+
+  citeText.append("<h4>For additional WindNinja publications visit:</h4>");
+  citeText.append("http://firelab.github.io/windninja/publications/");
 
   QMessageBox::about(this, tr("Cite WindNinja"),
              citeText);
