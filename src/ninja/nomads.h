@@ -216,6 +216,7 @@ static const char *apszNomadsKeys[][11] =
       /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:240:3,252:384:12",
 #else
+      /* Hourly for 1/4 degree */
       "0:120:1,123:240:3,252:384:12",
 #endif /* defined(NOMADS_GFS_0P5DEG) || defined(NOMADS_GFS_1P0DEG) */
       /* Variable list */
