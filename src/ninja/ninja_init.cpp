@@ -94,6 +94,23 @@ int NinjaInitialize()
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
+  /*
+  ** If there is more that one GDAL installation on a windows machine, it's
+  ** possible to load plugins with mismatched versions.  For #264.
+  **
+  ** Only set this if it hasn't been set by the user, and in
+  ** WIN32/FIRELAB_PACKAGE
+  */
+
+  char aszExecPath[MAX_PATH];
+  rc = CPLGetExecPath(aszExecPath, MAX_PATH);
+  const char *pszExecPath = CPLGetPath(aszExecPath);
+  if (rc != FALSE) {
+    const char *pszPluginPath =
+        CPLGetConfigOption("GDAL_DRIVER_PATH", aszExecPath);
+    CPLSetConfigOption("GDAL_DRIVER_PATH", pszPluginPath);
+  }
+
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
@@ -121,7 +138,9 @@ int NinjaInitialize()
     CPLFree( (void*)pszExecPath );
 #endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
-#endif
+#else /* WIN32 */
+  (void)rc;
+#endif /* WIN32 */
     /*
     ** Set windninja data if it isn't set.
     */
