@@ -73,6 +73,10 @@ static const char *apszValidHeader2[] = {
     "Temperature_Units(F,C)", "Cloud_Cover(%)", "Radius_of_Influence",
     "Radius_of_Influence_Units(miles,feet,meters,km)", "date_time", NULL};
 
+//static const char *apszValidHeader3[] = {
+//    "Station_File_List", NULL};
+
+
 /** Class representing a weather station
  */
 class wxStation
@@ -156,6 +160,7 @@ class wxStation
     static int GetHeaderVersion(const char *pszFilename);
     static void SetStationFormat(eStationFormat format);
     static wxStation::eStationFormat GetStationFormat();
+    static int CheckForStationList(const char *csvFile);
 
     static eStationFormat stationFormat;
 

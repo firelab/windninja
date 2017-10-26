@@ -350,6 +350,80 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     influenceRadius = NULL;
 }
 
+vector<string> pointInitialization::openCSVList(string csvPath)
+{
+    vector<string> csvList;
+    FILE *wxStationList = VSIFOpen( csvPath.c_str(), "r" );
+    while(1){
+        const char* f = CPLReadLine(wxStationList);
+//        cout<<f<<endl;
+        if (f == NULL)
+            break;
+        if(strstr(f,".csv")){
+//            cout<<"f is what we are looking for!"<<f<<endl;            
+            csvList.push_back(f);
+        }
+//        else{
+//        cout<<"f is NOT WHAT we are looking for!"<<f<<endl;  
+//        }
+        
+        
+    }
+    VSIFClose(wxStationList);
+        
+    
+    return csvList;
+}
+
+vector<wxStation> pointInitialization::readWxStations(string demFileName, string timeZone) //This is how we handle the old format now!
+{
+    vector<wxStation> tWork;
+//    cout<<rawStationFilename<<endl;
+    vector<string>wxLoc;
+    wxLoc.push_back(rawStationFilename);
+    storeFileNames(wxLoc);
+    
+    vector<string>stationLocs;
+    stationLocs=fetchWxStationID();
+    
+    vector<vector<preInterpolate> > wxVector;  
+    vector<vector<preInterpolate> > wxOrganized;
+    
+//    for (int i=0;i<stationLocs.size();i++)
+//    {
+    vector<preInterpolate> singleStationData;
+    singleStationData = readDiskLine(demFileName, rawStationFilename);    
+    wxVector.push_back(singleStationData);
+//    cout<<wxVector[0].size()<<endl;
+//        for (int i=0;i<wxVector[0].size();i++)
+//        {
+//          cout<<wxVector[0][i].stationName<<endl;
+//        }
+        for (int i=0;i<wxVector[0].size();i++)
+        {
+            vector<preInterpolate> tempVec;
+            tempVec.push_back(wxVector[0][i]);
+            wxOrganized.push_back(tempVec);
+        }
+//        cout<<wxOrganized.size()<<endl;
+//        for (int i=0;i<wxOrganized.size();i++)
+//        {
+//            cout<<"i "<<i<<endl;
+//            for (int k=0;k<wxOrganized[i].size();k++)
+//            {
+//                cout<<"k "<<k<<endl;
+//                cout<<wxOrganized[i][k].stationName<<endl;
+//            }
+//        }
+        vector<wxStation> readyToGo;
+        readyToGo=interpolateNull(demFileName,wxOrganized,timeZone);
+        
+
+    
+    
+    return readyToGo;
+}
+
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
                                                       std::vector<boost::posix_time::ptime> timeList,
                                                       std::string timeZone)
@@ -365,20 +439,20 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
 //        diskData.insert(diskData.end(),singleStationData.begin(),singleStationData.end());
         wxVector.push_back(singleStationData);
     }
-
     vector<boost::posix_time::ptime> outaTime;
     boost::posix_time::ptime noTime;
     outaTime.push_back(noTime);
     vector<vector<preInterpolate> > interpolatedDataSet;
-    vector<wxStation> readyToGo;
+    vector<wxStation> readyToGo;   
+       
     if (wxVector[0][0].datetime==noTime)
-    {
+    {        
         CPLDebug("STATION_FETCH", "noTime");
         readyToGo=interpolateNull(demFile,wxVector,timeZone);
     }
     else
     {
-        //does all interpolation
+        //does all interpolation 
         interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList);
         readyToGo=makeWxStation(interpolatedDataSet,demFile);
     }
@@ -724,7 +798,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     CPLDebug("STATION_FETCH", "converting Interpolated struct to wxStation...");
     vector<std::string> stationNames;
     vector<wxStation> stationData;
-
 //    OGRDataSourceH hDS;
 //    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
 //
@@ -790,10 +863,8 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
         countLimiter.push_back(e);
     }
-
     vector<vector<preInterpolate> >stationDataList;
     stationDataList=data;
-
     //here is where a wxstation is made
     for (int i=0;i<idxCount.size();i++)
     {
@@ -814,7 +885,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         }
 
         for (int k=0;k<stationDataList[i].size();k++)
-        {
+        {    
             subDat.set_speed(stationDataList[i][k].speed, stationDataList[i][k].inputSpeedUnits);
             subDat.set_direction(stationDataList[i][k].direction);
             subDat.set_temperature(stationDataList[i][k].temperature, stationDataList[i][k].tempUnits);
@@ -826,6 +897,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
         stationData.push_back(subDat);
     }
+    
 
     return stationData;
 }
@@ -840,7 +912,6 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
 
     vector<wxStation> refinedDat;
     refinedDat=makeWxStation(vecStations,demFileName);
-
     //fixes time!
     boost::local_time::time_zone_ptr timeZonePtr;
     timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
@@ -957,7 +1028,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 
     vector<vector<preInterpolate> > lowVec;
     vector<vector<preInterpolate> > highVec;
-
     for(int j=0; j<Selectify.size(); j++)
     {
         vector<preInterpolate> lowStations;
@@ -976,7 +1046,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         lowVec.push_back(lowStations);
         highVec.push_back(highstations);
     }
-
     //SETTING WX TIMELIST
     vector<vector<preInterpolate> > interpolatedWxData;
     for(int ey=0; ey<Selectify.size(); ey++)
@@ -990,7 +1059,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         }
         interpolatedWxData.push_back(subInter);
     }
-
     //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
     for(int k=0; k<Selectify.size(); k++)
     {
@@ -1026,7 +1094,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpolatedWxData[k][i].stationName = stationName;
         }
     }
-
     //INTERPOLATING WIND SPEED
     for(int k=0; k<Selectify.size(); k++)
     {
@@ -1035,7 +1102,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             double low;
             double high;
             double inter;
-
             boost::posix_time::ptime pLow = lowVec[k][i].datetime;
             boost::posix_time::ptime pHigh = highVec[k][i].datetime;
             boost::posix_time::ptime pInter = timeList[i];
@@ -1052,7 +1118,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             speed2 = highVec[k][i].speed;
 
             speedI = interpolator(inter,low, high, speed1, speed2);
-
             if(speedI > 113.000)
             {
                 speedI = speed1;
@@ -1063,7 +1128,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
         }
     }
-
     //INTERPOLATING WIND DIRECITON
     for(int k=0; k<Selectify.size(); k++)
     {
@@ -1163,7 +1227,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
         }
     }
-
     return interpolatedWxData;
 }
 
@@ -2062,6 +2125,27 @@ bool pointInitialization::fetchStationByName(std::string stationList,
 void pointInitialization::storeFileNames(vector<std::string> statLoc)
 {
     stationFiles=statLoc;
+}
+void pointInitialization::writeStationLocationFile(std::string demFile){
+    std::string cName;
+    stringstream statLen;
+    statLen<<stationFiles.size();
+    std::string pathName,rootFile;
+    std::string baseName(CPLGetBasename(demFile.c_str()));
+    pathName = CPLGetPath(demFile.c_str());
+    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);    
+//    cout<<baseName<<endl;
+//    cout<<baseName<<endl;
+//    cout<<rootFile<<endl;
+    cName=rootFile + "_" + "stations_" + statLen.str() + ".csv";
+    cout<<cName<<endl;
+//    exit(1);
+    ofstream outFile;
+    outFile.open(cName.c_str());    
+    outFile<<"Station_File_List,"<<endl;
+    for(int i=0;i<stationFiles.size();i++){
+        outFile<<stationFiles[i]<<endl;
+    }
 }
 
 void pointInitialization::fetchStationData(std::string URL,

@@ -77,6 +77,8 @@ class pointInitialization : public initialize
                         AsciiGrid<double>& cloud);
 
         //master function for interpolation, and making wxStation stuff
+        static vector<string> openCSVList(std::string csvPath);        
+        static vector<wxStation> readWxStations(std::string demFileName,std::string timeZone);
         static vector<wxStation> interpolateFromDisk(std::string demFile,
                                             std::vector<boost::posix_time::ptime> timeList,
                                             std::string timeZone);
@@ -105,6 +107,7 @@ class pointInitialization : public initialize
                                         std::vector<boost::posix_time::ptime> timeList,
                                         std::string timeZone, bool latest);
 
+        static void writeStationLocationFile(std::string demFile);
         static std::vector<boost::posix_time::ptime> getTimeList(int startYear, int startMonth,
                                                                 int startDay, int startHour,
                                                                 int startMinute, int endYear,
@@ -115,6 +118,7 @@ class pointInitialization : public initialize
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
         static void SetRawStationFilename(std::string filename);
         static void setStationBuffer(double buffer, std::string units);
+        static void storeFileNames(vector<std::string> statLoc);
 
     private:
         void setInitializationGrids(WindNinjaInputs& input);
@@ -168,7 +172,6 @@ class pointInitialization : public initialize
                                             std::string dayy, std::string clocky);
 
 //        static std::string generateBasePlate(std::string);
-        static void storeFileNames(vector<std::string> statLoc);
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
         static void fetchStationData(std::string URL, std::string timeZone, bool latest);
         static double getStationBuffer();

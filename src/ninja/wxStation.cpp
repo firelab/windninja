@@ -638,7 +638,13 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
         OGR_DS_Destroy(hDS);
         return -1;
     }
-
+    
+    OGRFieldDefnH hFldDefo = NULL;
+    hFldDefo = OGR_FD_GetFieldDefn(hDefn, 0);
+    if(EQUAL(OGR_Fld_GetNameRef(hFldDefo),"Station_File_List")){
+        return 3;
+    }
+    
     /*
     ** Iterate through the expected columns.  If the layer doesn't runs out of
     ** fields before we get to the end of the expected header, GetFieldDefn() will
@@ -648,7 +654,6 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     int n = CSLCount((char **)apszValidHeader1);
     /* We'll use our index later to check for more fields */
     int i = 0;
-
     assert(rc == 0);
     OGRFieldDefnH hFldDefn = NULL;
     for (i = 0; i < n; i++) {
@@ -656,11 +661,14 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
         if (hFldDefn == NULL) {
             rc = -1;
         }
+//        cout<<OGR_Fld_GetNameRef(hFldDefn)<<endl;
+//        if(EQUAL(OGR_Fld_GetNameRef(hFldDefn),"Station_File_List")){
+//            return 3;
+//        }
         if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
             rc = -1;
         }
     }
-
     // If we failed to get version 1 columns, bail
     if (rc == -1) {
         OGR_DS_Destroy(hDS);
@@ -683,6 +691,38 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     }
     OGR_DS_Destroy(hDS);
     return rc;
+}
+
+int wxStation::CheckForStationList(const char *csvFile)
+{
+    int rVal = 0;
+    OGRDataSourceH hDS = NULL;
+    hDS = OGROpen(csvFile, FALSE, NULL);
+    int rc = 0;
+    if (hDS == NULL) {
+        return -1;
+    }
+    OGRLayerH hLayer = NULL;
+    hLayer = OGR_DS_GetLayer(hDS, 0);
+    if (hLayer == NULL) {
+        rc = -1;
+    }
+    OGRFeatureDefnH hDefn = NULL;
+    hDefn = OGR_L_GetLayerDefn(hLayer);
+    if (hDefn == NULL) {
+        rc = -1;
+    }
+    cout<<hDefn<<endl;
+    OGRFieldDefnH hFldDefn = NULL;
+    hFldDefn = OGR_FD_GetFieldDefn(hDefn, 0);
+//    cout<<OGR_Fld_GetNameRef(hFldDefn)<<endl;
+    if(EQUAL(OGR_Fld_GetNameRef(hFldDefn),"Station_File_List"))
+    {
+            cout<<"equal"<<endl;
+    }
+    
+    
+    return rVal;
 }
 
 /**Write a csv file with no data, just a header
