@@ -104,10 +104,10 @@ int NinjaInitialize()
 
   char aszExecPath[MAX_PATH];
   rc = CPLGetExecPath(aszExecPath, MAX_PATH);
-  const char *pszExecPath = CPLGetPath(aszExecPath);
+  const char *pszExecDir = CPLGetPath(aszExecPath);
   if (rc != FALSE) {
     const char *pszPluginPath =
-        CPLGetConfigOption("GDAL_DRIVER_PATH", pszExecPath);
+        CPLGetConfigOption("GDAL_DRIVER_PATH", pszExecDir);
     CPLSetConfigOption("GDAL_DRIVER_PATH", pszPluginPath);
   }
 
