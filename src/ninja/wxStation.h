@@ -62,14 +62,14 @@
 static const char *apszValidHeader1[] = {
     "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
     "Lat/YCoord", "Lon/XCoord", "Height", "Height_Units(meters,feet)", "Speed",
-    "Speed_Units(mph,kph,mps)", "Direction(degrees)", "Temperature",
+    "Speed_Units(mph,kph,mps,kts)", "Direction(degrees)", "Temperature",
     "Temperature_Units(F,C)", "Cloud_Cover(%)", "Radius_of_Influence",
     "Radius_of_Influence_Units(miles,feet,meters,km)", NULL};
 
 static const char *apszValidHeader2[] = {
     "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
     "Lat/YCoord", "Lon/XCoord", "Height", "Height_Units(meters,feet)", "Speed",
-    "Speed_Units(mph,kph,mps)", "Direction(degrees)", "Temperature",
+    "Speed_Units(mph,kph,mps,kts)", "Direction(degrees)", "Temperature",
     "Temperature_Units(F,C)", "Cloud_Cover(%)", "Radius_of_Influence",
     "Radius_of_Influence_Units(miles,feet,meters,km)", "date_time", NULL};
 

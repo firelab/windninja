@@ -650,7 +650,7 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     ** fields before we get to the end of the expected header, GetFieldDefn() will
     ** return NULL, so there is no explicit count check needed.
     */
-
+    const char *oldSpeedHeadStr="Speed_Units(mph,kph,mps)";
     int n = CSLCount((char **)apszValidHeader1);
     /* We'll use our index later to check for more fields */
     int i = 0;
@@ -662,7 +662,10 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
             rc = -1;
         }
         if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
-            rc = -1;
+            if(!EQUAL(OGR_Fld_GetNameRef(hFldDefn), oldSpeedHeadStr))
+            {
+                rc = -1;
+            }
         }
     }
     // If we failed to get version 1 columns, bail
