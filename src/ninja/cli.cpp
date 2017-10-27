@@ -988,7 +988,6 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "fetch_metadata","metadata_filename");
 
             std::vector<boost::posix_time::ptime> timeList;
-
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
 
@@ -1083,11 +1082,9 @@ int windNinjaCLI(int argc, char* argv[])
                 pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
                 int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());
-
                 if (stationFormat==2) //new format
                 {
                     wxStation::SetStationFormat(wxStation::newFormat);
-
                     option_dependency(vm, "wx_station_filename", "start_year");
                     option_dependency(vm, "wx_station_filename", "start_month");
                     option_dependency(vm, "wx_station_filename", "start_day");
@@ -1121,7 +1118,6 @@ int windNinjaCLI(int argc, char* argv[])
                 else if (stationFormat==1) //old format
                 {
                     wxStation::SetStationFormat(wxStation::oldFormat);
-
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
@@ -1153,19 +1149,14 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
                     std::vector<std::string> sFiles;
-//                    cout<<vm["wx_station_filename"].as<std::string>()<<endl;
-                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
-//                    for(int i=0;i<sFiles.size();i++)
-//                    {
-//                        cout<<sFiles[i]<<endl;
-//                    }
-                    
+                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
-//                    int stationList=wxStation::CheckForStationList(stationFile.c_str());
-//                    cout<<stationList<<endl;
-//                    exit(1);
+                }
+                else
+                {
+                    throw std::runtime_error("Problem Opening Weather Station CSV file.");
                 }
             }
         }

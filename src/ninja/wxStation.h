@@ -160,7 +160,6 @@ class wxStation
     static int GetHeaderVersion(const char *pszFilename);
     static void SetStationFormat(eStationFormat format);
     static wxStation::eStationFormat GetStationFormat();
-    static int CheckForStationList(const char *csvFile);
 
     static eStationFormat stationFormat;
 

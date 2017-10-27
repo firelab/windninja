@@ -661,10 +661,6 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
         if (hFldDefn == NULL) {
             rc = -1;
         }
-//        cout<<OGR_Fld_GetNameRef(hFldDefn)<<endl;
-//        if(EQUAL(OGR_Fld_GetNameRef(hFldDefn),"Station_File_List")){
-//            return 3;
-//        }
         if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
             rc = -1;
         }
@@ -691,38 +687,6 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     }
     OGR_DS_Destroy(hDS);
     return rc;
-}
-
-int wxStation::CheckForStationList(const char *csvFile)
-{
-    int rVal = 0;
-    OGRDataSourceH hDS = NULL;
-    hDS = OGROpen(csvFile, FALSE, NULL);
-    int rc = 0;
-    if (hDS == NULL) {
-        return -1;
-    }
-    OGRLayerH hLayer = NULL;
-    hLayer = OGR_DS_GetLayer(hDS, 0);
-    if (hLayer == NULL) {
-        rc = -1;
-    }
-    OGRFeatureDefnH hDefn = NULL;
-    hDefn = OGR_L_GetLayerDefn(hLayer);
-    if (hDefn == NULL) {
-        rc = -1;
-    }
-    cout<<hDefn<<endl;
-    OGRFieldDefnH hFldDefn = NULL;
-    hFldDefn = OGR_FD_GetFieldDefn(hDefn, 0);
-//    cout<<OGR_Fld_GetNameRef(hFldDefn)<<endl;
-    if(EQUAL(OGR_Fld_GetNameRef(hFldDefn),"Station_File_List"))
-    {
-            cout<<"equal"<<endl;
-    }
-    
-    
-    return rVal;
 }
 
 /**Write a csv file with no data, just a header
