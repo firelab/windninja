@@ -230,10 +230,15 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
     //for a list of paths forecast files
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
+        if(fcastList == NULL){
+            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
+                  std::string(" cannot be opened."));
+        }
         while(1){
             const char* f = CPLReadLine(fcastList);
-            if (f == NULL)
+            if(f == NULL){
                 break;
+            }
             wxList.push_back(f);
         }
         VSIFClose(fcastList);
@@ -337,12 +342,14 @@ bool ninjaArmy::startRuns(int numProcessors)
     if(ninjas.size()<1 || numProcessors<1)
         return false;
 
-    //check for duplicate runs before we start the simulations 
+    //check for duplicate runs before we start the simulations
+    //this is mostly for batch domain avg runs in the GUI
     if(ninjas.size() > 1){
         for(unsigned int i=0; i<ninjas.size()-1; i++){
             for(unsigned int j=i+1; j<ninjas.size(); j++){
-                if(ninjas[i]->input == ninjas[j]->input){
-                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+                if(ninjas[i]->input == ninjas[j]->input &&
+                   ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
+                        throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
         }
@@ -1172,9 +1179,10 @@ int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOp
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
 }
 
-int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
+int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile,
+                                 const velocityUnits::eVelocityUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile, units ) );
 }
 
 int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )

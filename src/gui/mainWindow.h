@@ -163,7 +163,6 @@ class mainWindow : public QMainWindow
   void resampleData();
   void writeBlankStationFile();
   void windNinjaHelp();
-  void displayArcView();
   void displayArcMap();
   void tutorial1();
   void tutorial2();
@@ -173,6 +172,7 @@ class mainWindow : public QMainWindow
   void fetchDem();
   void cliInstructions();
   void aboutWindNinja();
+  void citeWindNinja();
   void supportEmail();
   void bugReport();
   int openHelp(int target = 0);
@@ -254,6 +254,7 @@ class mainWindow : public QMainWindow
   QAction *cliInstructionsAction;
   QAction *aboutWindNinjaAction;
   QAction *aboutQtAction;
+  QAction *citeWindNinjaAction;
   QAction *supportEmailAction;
   QAction *submitBugReportAction;
 

@@ -128,26 +128,6 @@ int wrfSurfInitialization::getEndHour()
 */
 void wrfSurfInitialization::checkForValidData()
 {
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
-
-    //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
-
-    boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
-
-    //check times
-    for(unsigned int i = 0; i < timeList.size(); i++)
-    {
-        if(timeList[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
-            throw badForecastFile("Bad time in forecast file.");
-        if(timeList[i] < low_time || timeList[i] > high_time)
-            throw badForecastFile("Bad time in forecast file.");
-    }
-
     // open ds variable by variable
     GDALDataset *srcDS;
     std::string temp;
@@ -165,7 +145,7 @@ void wrfSurfInitialization::checkForValidData()
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
+        temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
         //cout << "temp = " <<temp<<endl;
 
         CPLPushErrorHandler(&CPLQuietErrorHandler);
@@ -601,7 +581,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
+        temp = "NETCDF:\"" + input.forecastFilename + "\":" + varList[i];
         
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
@@ -825,6 +805,14 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         GDALDestroyWarpOptions( psWarpOptions );
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
+    }
+    //don't allow small negative values in cloud cover
+    for(int i=0; i<cloudGrid.get_nRows(); i++){
+        for(int j=0; j<cloudGrid.get_nCols(); j++){
+            if(cloudGrid(i,j) < 0.0){
+                cloudGrid(i,j) = 0.0;
+            }
+        }
     }
     cloudGrid /= 100.0;
     wGrid.set_headerData( uGrid );

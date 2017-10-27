@@ -134,8 +134,8 @@ public:
     std::string dirInitGridFilename;  //raster file of gridded wind directions
     eInitializationMethod initializationMethod;	//method to initialize WindNinja
     std::string forecastFilename;	//name of coarse weather model initialization file (NDFD, NAM, GFS, RUC, etc.)
-    velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
-    velocityUnits::eVelocityUnits outputSpeedUnits;			//units of output windspeed (0=>m/s, 1=>mph, 2=>kph)
+    velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
+    velocityUnits::eVelocityUnits outputSpeedUnits;			//units of output windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts)
     double inputSpeed;			//input wind speed in m/s
     double inputDirection;		//input wind direction (measured in degrees clockwise from North; DIRECTION WIND COMES FROM)
     lengthUnits::eLengthUnits inputWindHeightUnits;	//units of inputWindHeight when read in (always stored in meters!)

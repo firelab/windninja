@@ -1,6 +1,27 @@
 Release Notes
 =============
 
+WindNinja 3.3.1
+---------------
+
+- Fix bug causing the DEM downloader "Drag Box On Map" option to not work correctly (\#260)
+
+WindNinja 3.3.0
+---------------
+
+- Add NOMADS-NAM-NEST-CONUS-3-KM and NOMADS-NAM-NEST-ALASKA-3-KM models (\#245)
+
+- Add knots as a wind speed unit (\#243)
+
+- Fix an issue that was causing NDFD to fail due to a change on the UCAR server (\#257)
+
+WindNinja 3.2.0
+---------------
+
+- Enable weather model initialization with the momentum solver
+
+- Fix an issue that was causing NAM models to fail due to an upgrade on the NOMADS server (\#244)
+
 WindNinja 3.1.4
 ---------------
 
