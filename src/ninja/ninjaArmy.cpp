@@ -100,10 +100,7 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-       delete ninjas[i];
-    }
+    delete ninjas[0];
     destoryLocalData();
 }
 
@@ -686,7 +683,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
                
-                if( wxList.size() > 1 )
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0  )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;

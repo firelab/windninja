@@ -2239,8 +2239,7 @@ int mainWindow::solve()
     progressDialog->setValue(progressDialog->maximum());
     progressDialog->setCancelButtonText("Close");
 
-
-     //Everything went okay? enable output path button
+    //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
     outputPath = QString::fromStdString( army->getOutputPath( 0 ) );
 
