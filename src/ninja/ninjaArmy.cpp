@@ -600,6 +600,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     //set output path on original ninja for the GUI
                     ninjas[i]->input.outputPath = diurnal_ninja->input.outputPath;
+
+                    //set filenames for atm file writing
+                    ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
+                    ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
+                    ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
                 } 
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
