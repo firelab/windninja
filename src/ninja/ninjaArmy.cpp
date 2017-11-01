@@ -601,9 +601,20 @@ bool ninjaArmy::startRuns(int numProcessors)
                     //set output path on original ninja for the GUI
                     ninjas[i]->input.outputPath = diurnal_ninja->input.outputPath;
                 } 
-                //write farsite atmosphere file
-                writeFarsiteAtmosphereFile();
-            
+                //store data for atmosphere file
+                if(writeFarsiteAtmFile)
+                {
+                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
+                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                }
+
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0  )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+
             }catch (bad_alloc& e)
             {
                 std::cout << "Exception bad_alloc caught: " << e.what() << endl;
@@ -622,6 +633,33 @@ bool ninjaArmy::startRuns(int numProcessors)
                 std::cout << "Exception caught: Cannot determine exception type." << endl;
                 status = false;
             }
+        }
+        try{
+            //write farsite atmosphere file
+            if(writeFarsiteAtmFile)
+                writeFarsiteAtmosphereFile();
+
+        }catch (bad_alloc& e)
+        {
+            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+            std::cout << "WindNinja appears to have run out of memory." << endl;
+            status = false;
+            throw;
+        }catch (cancelledByUser& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (exception& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (...)
+        {
+            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            status = false;
+            throw;
         }
     }
 #endif //NINJAFOAM            
@@ -687,7 +725,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
                 {
-                    checkConsistencyForFarsiteAtm(ninjas[i]);
                     atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
@@ -887,48 +924,6 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
                                               ninjas[0]->get_outputWindHeight() );
         }
     }
-}
-
-void ninjaArmy::checkConsistencyForFarsiteAtm(ninja* thisNinja)
-{
-    //Check that all files have that same directory path, if not throw()
-    //Also check that they all have the same outputSpeedUnits and outputWindHeight
-    std::string tempStr;
-    std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
-
-    //Check vel file
-    tempStr = CPLGetPath(thisNinja->get_VelFileName().c_str());
-    if(tempStr != filePath)
-    {
-        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                "are not equal.");
-    }
-
-    //Check ang file
-    tempStr = CPLGetPath(thisNinja->get_AngFileName().c_str());
-    if(tempStr != filePath)
-    {
-        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                "are not equal.");
-    }
-
-    //Check cld file
-    tempStr = CPLGetPath(thisNinja->get_CldFileName().c_str());
-    if(tempStr != filePath)
-    {
-        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                "are not equal.");
-    }
-
-    //Check outputSpeedUnits
-    if(thisNinja->get_outputSpeedUnits() != ninjas[0]->get_outputSpeedUnits())
-        throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja speed " \
-                "units are not equal.");
-
-    //Check outputWindHeight
-    if(thisNinja->get_outputWindHeight() != ninjas[0]->get_outputWindHeight() )
-        throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja " \
-                "outputWindHeights are not equal.");
 }
 
 /**
