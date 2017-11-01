@@ -531,11 +531,17 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 //set output path on original ninja for the GUI
                 ninjas[0]->input.outputPath = diurnal_ninja->input.outputPath;
+
+                //set filenames for atm file writing
+                ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
+                ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
+                ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
             } 
 #endif //NINJAFOAM            
 
             //write farsite atmosphere file
-            writeFarsiteAtmosphereFile();
+            if(writeFarsiteAtmFile)
+                writeFarsiteAtmosphereFile();
 
         }catch (bad_alloc& e)
         {
