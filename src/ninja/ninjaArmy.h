@@ -1180,7 +1180,9 @@ protected:
     void copyLocalData( const ninjaArmy &A );
 
 private:
+    void checkConsistencyForFarsiteAtm(ninja* thisNinja);
     char *pszTmpColorRelief;
+    farsiteAtm atmosphere;
 };
 
 #endif /* NINJA_ARMY_H */

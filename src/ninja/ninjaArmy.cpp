@@ -680,9 +680,18 @@ bool ninjaArmy::startRuns(int numProcessors)
                     
                     delete model;
                 }
+
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
-               
+
+                //store data for atmosphere file
+                if(writeFarsiteAtmFile)
+                {
+                    checkConsistencyForFarsiteAtm(ninjas[i]);
+                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
+                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                }
+
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 if( i != 0  )
                 {
@@ -856,65 +865,11 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
     if(writeFarsiteAtmFile)
     {
         //If wxModelInitialization, make one .atm with all runs (times) listed, else the setAtmFlags() function
-        //  has already set each ninja to write their own atm file, so don't do it here!
+        //has already set each ninja to write their own atm file, so don't do it here!
         if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag)
         {
             //Set directory path from first ninja's velocity file
             std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
-            std::string tempStr;
-
-            //Check that all files have that same directory path, if not throw()
-            //  Also check that they all have the same outputSpeedUnits and outputWindHeight
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
-                //Check vel file
-                //tempStr = CPLGetPath(ninja->get_VelFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_VelFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check ang file
-                //tempStr = CPLGetPath(ninja->get_AngFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_AngFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check cld file
-                //tempStr = CPLGetPath(ninja->get_CldFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_CldFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check outputSpeedUnits
-                //if(ninja->get_outputSpeedUnits() != ninjas[0].get_outputSpeedUnits())
-                if(ninjas[i]->get_outputSpeedUnits() != ninjas[0]->get_outputSpeedUnits())
-                    throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja speed " \
-                            "units are not equal.");
-
-                //Check outputWindHeight
-                //if(ninja->get_outputWindHeight() != ninjas[0].get_outputWindHeight() )
-                if(ninjas[i]->get_outputWindHeight() != ninjas[0]->get_outputWindHeight() )
-                    throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja " \
-                            "outputWindHeights are not equal.");
-            }
-
-            farsiteAtm atmosphere;
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
-                atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                 ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
-            }
 
             //Get filename from first ninja's velFile
             std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
@@ -933,6 +888,49 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
         }
     }
 }
+
+void ninjaArmy::checkConsistencyForFarsiteAtm(ninja* thisNinja)
+{
+    //Check that all files have that same directory path, if not throw()
+    //Also check that they all have the same outputSpeedUnits and outputWindHeight
+    std::string tempStr;
+    std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
+
+    //Check vel file
+    tempStr = CPLGetPath(thisNinja->get_VelFileName().c_str());
+    if(tempStr != filePath)
+    {
+        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
+                "are not equal.");
+    }
+
+    //Check ang file
+    tempStr = CPLGetPath(thisNinja->get_AngFileName().c_str());
+    if(tempStr != filePath)
+    {
+        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
+                "are not equal.");
+    }
+
+    //Check cld file
+    tempStr = CPLGetPath(thisNinja->get_CldFileName().c_str());
+    if(tempStr != filePath)
+    {
+        throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
+                "are not equal.");
+    }
+
+    //Check outputSpeedUnits
+    if(thisNinja->get_outputSpeedUnits() != ninjas[0]->get_outputSpeedUnits())
+        throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja speed " \
+                "units are not equal.");
+
+    //Check outputWindHeight
+    if(thisNinja->get_outputWindHeight() != ninjas[0]->get_outputWindHeight() )
+        throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja " \
+                "outputWindHeights are not equal.");
+}
+
 /**
  * @brief Determine what type of atm file to write.
  *
