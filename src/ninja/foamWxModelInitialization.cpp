@@ -77,7 +77,6 @@ void foamWxModelInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     setWn2dGrids(input);
 
-    int i, j;
     //set the u and v initialization grids
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
@@ -102,7 +101,31 @@ void foamWxModelInitialization::setWn2dGrids(WindNinjaInputs &input)
         CPLDebug("NINJA", "Buffering in foamWxModelInitialization...");
     }
 
+    //convert speed/dir to u/v for direction interpolation
+    AsciiGrid<double> inputUGrid;
+    AsciiGrid<double> inputVGrid;
+    inputUGrid.set_headerData(inputVelocityGrid);
+    inputVGrid.set_headerData(inputVelocityGrid);
+
+    for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
+        for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
+            wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
+                    &(inputUGrid)(i,j), &(inputVGrid)(i,j));
+        }
+    }
+
     //Interpolate from input grids to dem coincident grids
-    speedInitializationGrid.interpolateFromGrid(inputVelocityGrid, AsciiGrid<double>::order0);
-    dirInitializationGrid.interpolateFromGrid(inputAngleGrid, AsciiGrid<double>::order0);
+    uInitializationGrid.interpolateFromGrid(inputUGrid, AsciiGrid<double>::order1);
+    vInitializationGrid.interpolateFromGrid(inputVGrid, AsciiGrid<double>::order1);
+
+    inputUGrid.deallocate();
+    inputVGrid.deallocate();
+
+    //fill the speed and dir initialization grids
+    for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
+        for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
+            wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
+                     &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
+        }
+    }
 }

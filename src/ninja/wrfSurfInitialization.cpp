@@ -145,7 +145,7 @@ void wrfSurfInitialization::checkForValidData()
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
+        temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
         //cout << "temp = " <<temp<<endl;
 
         CPLPushErrorHandler(&CPLQuietErrorHandler);
@@ -581,7 +581,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
+        temp = "NETCDF:\"" + input.forecastFilename + "\":" + varList[i];
         
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );

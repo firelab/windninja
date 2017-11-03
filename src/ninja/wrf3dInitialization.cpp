@@ -275,7 +275,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         
         //cout<<"var3dList.size() = "<<var3dList.size()<<endl;
         
-        temp = "NETCDF:" + input.forecastFilename + ":" + var3dList[i];
+        temp = "NETCDF:\"" + input.forecastFilename + "\":" + var3dList[i];
         
         CPLPushErrorHandler(CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
