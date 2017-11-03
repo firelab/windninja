@@ -298,7 +298,6 @@ endif(NOT WIN32)
 
 # Optional utilities
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
-option(BUILD_FETCH_STATION "Build a standalone command line interface station fetching utility" OFF)
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
