@@ -539,32 +539,32 @@ bool wxStation::check_station(wxStation station)
     }
 
     for (int i=0;i<station.heightList.size();i++)
-    {
-        if(station.heightList[i] < 0.0)
+    {        
+        if(station.heightList[i] < 0.0|| isnan(station.heightList[i]))
         {
             cout<<"failed height Check on "<<i<<endl;
             cout<<station.heightList[i]<<endl;
             return false;
         }
-        if(station.speedList[i] < 0.0)
+        if(station.speedList[i] < 0.0 || isnan(station.speedList[i]))
         {
             cout<<"failed speed Check on "<<i<<endl;
             cout<<station.speedList[i]<<endl;
             return false;
         }
-        if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0)
+        if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0 || isnan(station.directionList[i]))
         {
             cout<<"failed direction Check on "<<i<<endl;
             cout<<station.directionList[i]<<endl;
             return false;
         }
-        if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00)
+        if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00 || isnan(station.temperatureList[i]))
         {
             cout<<"failed temperature Check on "<<i<<endl;
             cout<<station.temperatureList[i]<<endl;
             return false;
         }
-        if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10)
+        if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10 || isnan(station.cloudCoverList[i]))
         {
             cout<<"failed cloud check on "<<i<<endl;
             cout<<station.cloudCoverList[i]<<endl;
@@ -572,7 +572,7 @@ bool wxStation::check_station(wxStation station)
         }
     }
 
-    if(station.w_speed < 0.0)
+    if(station.w_speed < 0.0 || isnan(station.w_speed))
     {
         cout<<"failed vert_speed Check"<<endl;
         return false;

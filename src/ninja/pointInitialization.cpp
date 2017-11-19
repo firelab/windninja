@@ -1252,7 +1252,7 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     double pointS = (iPoint - lowX);
     double result = lowY + pointS * slope;
 
-    if(result < 0.0000)
+    if(result < 0.0000 || isnan(result))
     {
         result = work;
     }
