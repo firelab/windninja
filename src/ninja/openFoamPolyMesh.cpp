@@ -34,7 +34,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
                                    double yllCornerValue, double inputDirectionValue, double UfreeStreamValue,
                                    double inputWindHeight_VegValue, double RdValue,
                                    wn_3dScalarField const& uwind,wn_3dScalarField const& vwind,
-                                   wn_3dScalarField const& wwind)
+                                   wn_3dScalarField const& wwind,std::string BCtypeValue)
 {
     generateCaseDirectory(outputPath);
 
@@ -66,9 +66,19 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     nfaces = Axcells*ypoints+Aycells*xpoints+Azcells*zpoints;
     ninternalfaces = nfaces-2*(Axcells+Aycells+Azcells);
 
-    diffusivityConstant = 0.05;
+//values used for the constant non-polyMesh directory
+    transportModel = "Newtonian";   // changing this might mean a need to change structure for other values
+    thermalDiffusivityConstant = "0.05"; // 0.05 m^2/s was our guess based off of diffusivity comparison videos
+    dynamicViscosity = "1.846e-05";            // 1.846*10^05 kg/(m*s) for air at 300 K
+    kinematicViscosity = "1.58946099535e-05";  // 1.589*10^-5 m^2/s for air at 300 K
+    density = "1.1614";                     // 1.1614 kg/m^3 for air at 300 K
+    thermalExpansionCoefficient = "3e-03";    // around 0.0034 1/K for air
+    Tref = "300";                        // 300 K is reference temperature found in hot room examples
+    laminarPrandtlNumber = "0.707";        // Early hot room had this as 0.9 dimensionless, but later changed to 0.707 dimensionless which is the value for air at 300 K
+    turbulentPrandtlNumber = "0.85";       // Early hot room had this as 0.7 dimensionless, but later changed to 0.85 dimensionless
 
 //values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
+    BCtype = BCtypeValue;
 	inputDirection = inputDirectionValue;
     UfreeStream = UfreeStreamValue;
     uDirection = "";
@@ -76,17 +86,27 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     inputWindHeight_Veg = inputWindHeight_VegValue;
     z0 = 0.01;  //note that this is the foam roughness as found in the NinjaFoam AddBcBlock function. This has been manually set to 0.01 in NinjaFoam, so watch out if this value ends up changing there.
     Rd = RdValue;
-    //firstCellHeight = z(5*Azpoints)-z(Azpoints); //it takes a while to pull this out, but according to ninjaFoam,
-    //this is essentially (meshvolume/cellcount)^(1/3) where cellcount is half the cells in the blockMesh and
-    //half reserved for refineMesh. I'll just use the height of five cells from the minx and miny position
-    // at least until I figure out how the native mesh decides to vary the heights for the first few layers of mesh
+    /*
+     * WindNinja does the following to compute firstCellHeight for the momentum solver
+     * After breaking down the formula, it looks to be essentially (meshvolume/cellcount)^(1/3)
+     * where cellcount is half the cells in the blockMesh and half reserved for refineMesh.
+     *
+     * So in the past I did the following calculation
     double meshVolume = (x(zcells*Azpoints+ycells*xpoints+xcells)-x(0))
             *(y(zcells*Azpoints+ycells*xpoints+xcells)-y(0))
             *(z(zcells*Azpoints+ycells*xpoints+xcells)-z(0));
     firstCellHeight = pow(meshVolume/ncells,(1.0/3.0));
-    std::cout << "meshVolume = " << meshVolume << "\n";
-    std::cout << "cellcount = " << ncells << "\n";
-    std::cout << "firstCellHeight = " << firstCellHeight << "\n";
+
+
+     * But I have since learned that firstCellHeight is really the first cell height.
+     * So it should be the following
+    firstCellHeight = z(1*Azpoints+0*xpoints+0)-z(0*Azpoints + 0*xpoints + 0). So z(Azpoints)-z(0)
+    Hm, this is way smaller than the other value! In fact, the minZ cell height at the middle of vshaped valley is 2 m tall, where on its edges is 0.333 m tall!
+    For now use the z method
+    */
+    firstCellHeight = z(Azpoints)-z(0);
+    std::cout << "z(Azpoints) = " << z(Azpoints) << ", z(0) = " << z(0) <<
+                 ", firstCellHeight = " << firstCellHeight << "\n";
     u = uwind;
     v = vwind;
     w = wwind;
@@ -94,7 +114,6 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     element elem(&mesh);
 
 //values used for system directory
-
     //controlDict variables
     application = "myScalarTransportFoam";
     startFrom = "startTime";
@@ -159,7 +178,7 @@ void openFoamPolyMesh::generateCaseDirectory(std::string outputPath)
     CPLSetConfigOption("TEMP", CPLGetDirname(outputPath.c_str()));
     outputPath = CPLGetBasename(outputPath.c_str());
     outputPath.erase( std::remove_if( outputPath.begin(), outputPath.end(), ::isspace ), outputPath.end() );
-    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("case-%s", outputPath.c_str())));
+    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("POLYMESH_%s", outputPath.c_str())));
     VSIMkdir( CaseDir, 0777 );
     VSIMkdir( CPLSPrintf("%s/0",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/constant",CaseDir), 0777 );
@@ -230,7 +249,7 @@ bool openFoamPolyMesh::writePolyMeshFiles(element elem)
     //now create the transportProperties file
     fzout = fopen(transportPropertiesPath.c_str(), "w");
     makeFoamHeader("dictionary","transportProperties","constant");
-    fprintf(fzout,"DT              DT [ 0 2 -1 0 0 0 0 ] %lf;\n",diffusivityConstant);
+    printTransportProperties();
     makeFoamFooter();
     fclose(fzout);
 
@@ -619,23 +638,53 @@ void openFoamPolyMesh::printBoundaries()
     fprintf(fzout, ")\n");
 }
 
-//maybe change this to printListValues and add in the way to do it with other stuff that is non-uniform.
-//Man I just realized how the function pointers could be handy here. Still might not be the right choice
-//since the loops change (though they be the same for each type of patch), but could do something like function(functionPointer patchType (for knowing which order to do the loops), functionPointer something to know which print statement to use). So I guess its a function with two function pointers?
-//Anyhow I still think it varies just enough to not be worth it. Plus its not like there's going to be another way to output the points.
-//Maybe the datatype that you are outputing the points for, but not the indices since the format is fixed.
-void openFoamPolyMesh::printListHeader(std::string patchName,std::string ListType,
-                                              std::string ListValue,bool extraReturn)
+void openFoamPolyMesh::printTransportProperties()
+{
+    fprintf(fzout,"transportModel  %s;\n\n",transportModel.c_str());
+    fprintf(fzout,"//Thermal Diffusivity Constant. 0.05 m^2/s was our guess based off of diffusivity comparison videos\n");
+    fprintf(fzout,"DT              DT [ 0 2 -1 0 0 0 0 ]   %s;\n\n",thermalDiffusivityConstant.c_str());
+    fprintf(fzout,"//Dynamic Viscosity. 1.846*10^05 kg/(m*s) for air at 300 K\n");
+    fprintf(fzout,"mu              mu [1 -1 -1 0 0 0 0]    %s;\n\n",dynamicViscosity.c_str());
+    fprintf(fzout,"//Kinematic Viscosity. 1.589*10^-5 m^2/s for air at 300 K\n");
+    fprintf(fzout,"nu              nu [0 2 -1 0 0 0 0]     %s;\n\n",kinematicViscosity.c_str());
+    fprintf(fzout,"//Density. 1.1614 kg/m^3 for air at 300 K\n");
+    fprintf(fzout,"rho             rho [1 -3 0 0 0 0 0]    %s;\n\n",density.c_str());
+    fprintf(fzout,"//Thermal Expansion Coefficient. Value is around 0.0034 1/K for air\n");
+    fprintf(fzout,"beta            beta [0 0 0 -1 0 0 0]   %s;\n\n",thermalExpansionCoefficient.c_str());
+    fprintf(fzout,"//Reference Temperature. Value is 300 K in hot room examples\n");
+    fprintf(fzout,"TRef            TRef [0 0 0 1 0 0 0]    %s;\n\n",Tref.c_str());
+    fprintf(fzout,"//Laminar Prandtl Number. Early hot room had this as 0.9 dimensionless, but later changed to 0.707 dimensionless which is the value for air at 300 K\n");
+    fprintf(fzout,"Pr              Pr [0 0 0 0 0 0 0]      %s;\n\n",laminarPrandtlNumber.c_str());
+    fprintf(fzout,"//Turbulent Prandtl Number. Early hot room had this as 0.7 dimensionless, but later changed to 0.85 dimensionless\n");
+    fprintf(fzout,"Prt             Prt [0 0 0 0 0 0 0]     %s;\n\n",turbulentPrandtlNumber.c_str());
+}
+
+//Currently, this is
+//Might be able to figure out a way to improve this method using function pointers.
+void openFoamPolyMesh::printFieldHeader(std::string patchName,std::string ListType,bool isNonuniformValue /*=false*/,
+                                        std::string ListValue /*=""*/,bool extraReturn /*=false*/)
 {
     fprintf(fzout,"    %s\n    {\n",patchName.c_str());
     fprintf(fzout,"        type            %s;\n",ListType.c_str());
     if(ListType == "fixedValue")
     {
-        fprintf(fzout,"        value           uniform %s;\n}\n",ListValue.c_str());    //this allows arrays as well as points
-    }else if(ListType == "pressureInletOutletVelocity")
+        if(isNonuniformValue == false)
+        {
+            fprintf(fzout,"        value           uniform %s;\n}\n",ListValue.c_str());
+        } else
+        {
+            fprintf(fzout,"        value           nonuniform List<vector>\n");
+        }
+    } else if(ListType == "pressureInletOutletVelocity")
     {
-        fprintf(fzout,"        value           nonuniform List<vector>\n");
-    }else if(ListType == "logProfileVelocityInlet")
+        if(isNonuniformValue == false)
+        {
+            fprintf(fzout,"        value           uniform %s;\n}\n",ListValue.c_str());
+        } else
+        {
+            fprintf(fzout,"        value           nonuniform List<vector>\n");
+        }
+    } else if(ListType == "logProfileVelocityInlet")
     {
         fprintf(fzout,"        UfreeStream     %lf;\n",UfreeStream);
         fprintf(fzout,"        uDirection      %s;\n",uDirection.c_str());
@@ -643,9 +692,16 @@ void openFoamPolyMesh::printListHeader(std::string patchName,std::string ListTyp
         fprintf(fzout,"        z0              %lf;\n",z0);
         fprintf(fzout,"        Rd              %lf;\n",Rd);
         fprintf(fzout,"        firstCellHeight %lf;\n",firstCellHeight);
-        fprintf(fzout,"        value           nonuniform List<vector>\n");
-    }else
+        if(isNonuniformValue == false)
+        {
+            fprintf(fzout,"        value           uniform %s;\n}\n",ListValue.c_str());
+        } else
+        {
+            fprintf(fzout,"        value           nonuniform List<vector>\n");
+        }
+    } else
     {
+        // this accounts for type zeroGradient
         fprintf(fzout,"    }\n");
     }
     if(extraReturn == true)
@@ -660,12 +716,12 @@ void openFoamPolyMesh::printScalar()
     fprintf(fzout,"internalField   uniform 0;\n\n");
     fprintf(fzout,"boundaryField\n{\n");
 
-    printListHeader("north_face","zeroGradient","",true);
-    printListHeader("west_face","zeroGradient","",true);
-    printListHeader("east_face","zeroGradient","",true);
-    printListHeader("south_face","zeroGradient","",true);
-    printListHeader("minZ","zeroGradient","",true);
-    printListHeader("maxZ","zeroGradient","",false);   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+    printFieldHeader("north_face","zeroGradient");
+    printFieldHeader("west_face","zeroGradient");
+    printFieldHeader("east_face","zeroGradient");
+    printFieldHeader("south_face","zeroGradient");
+    printFieldHeader("minZ","zeroGradient");
+    printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
 
     fprintf(fzout,"}\n");
 
@@ -677,12 +733,12 @@ void openFoamPolyMesh::printSource()
     fprintf(fzout,"internalField   uniform 0;\n\n");
     fprintf(fzout,"boundaryField\n{\n");
 
-    printListHeader("north_face","zeroGradient","",true);
-    printListHeader("west_face","zeroGradient","",true);
-    printListHeader("east_face","zeroGradient","",true);
-    printListHeader("south_face","zeroGradient","",true);
-    printListHeader("minZ","zeroGradient","",true);
-    printListHeader("maxZ","zeroGradient","",false);   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+    printFieldHeader("north_face","zeroGradient");
+    printFieldHeader("west_face","zeroGradient");
+    printFieldHeader("east_face","zeroGradient");
+    printFieldHeader("south_face","zeroGradient");
+    printFieldHeader("minZ","zeroGradient");
+    printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
 
     fprintf(fzout,"}\n");
 
@@ -768,10 +824,19 @@ void openFoamPolyMesh::printVelocity(element elem)
     //now fill in the north face velocities
     if ((inputDirection >= 0 && inputDirection < 90) || (inputDirection <= 360 && inputDirection > 270))
     {
-        printListHeader("north_face","logProfileVelocityInlet","",false);
+        if(BCtype == "WindNinja")
+        {
+            printFieldHeader("north_face","logProfileVelocityInlet",true);
+        } else if(BCtype == "OpenFOAM")
+        {
+            printFieldHeader("north_face","fixedValue",true);
+        } else
+        {
+            std::cout << "Error in openFoamPolyMesh! BCtype is invalid!\n";
+        }
     } else
     {
-        printListHeader("north_face","pressureInletOutletVelocity","",false);
+        printFieldHeader("north_face","pressureInletOutletVelocity",true);
     }
     fprintf(fzout,"%0.0lf\n(\n",Axcells);
     for (double j = 0; j < xcells; j++)
@@ -786,10 +851,19 @@ void openFoamPolyMesh::printVelocity(element elem)
     //now fill in the west face velocities
     if (inputDirection > 180 && inputDirection < 360)
     {
-        printListHeader("west_face","logProfileVelocityInlet","",false);
+        if(BCtype == "WindNinja")
+        {
+            printFieldHeader("west_face","logProfileVelocityInlet",true);
+        } else if(BCtype == "OpenFOAM")
+        {
+            printFieldHeader("west_face","fixedValue",true);
+        } else
+        {
+            std::cout << "Error in openFoamPolyMesh! BCtype is invalid!\n";
+        }
     } else
     {
-        printListHeader("west_face","pressureInletOutletVelocity","",false);
+        printFieldHeader("west_face","pressureInletOutletVelocity",true);
     }
     fprintf(fzout,"%0.0lf\n(\n",Aycells);
     for (double k = 0; k < zcells; k++)
@@ -804,10 +878,19 @@ void openFoamPolyMesh::printVelocity(element elem)
     //now fill in the east face velocities
     if (inputDirection > 0 && inputDirection < 180)
     {
-        printListHeader("east_face","logProfileVelocityInlet","",false);
+        if(BCtype == "WindNinja")
+        {
+            printFieldHeader("east_face","logProfileVelocityInlet",true);
+        } else if(BCtype == "OpenFOAM")
+        {
+            printFieldHeader("east_face","fixedValue",true);
+        } else
+        {
+            std::cout << "Error in openFoamPolyMesh! BCtype is invalid!\n";
+        }
     } else
     {
-        printListHeader("east_face","pressureInletOutletVelocity","",false);
+        printFieldHeader("east_face","pressureInletOutletVelocity",true);
     }
     fprintf(fzout,"%0.0lf\n(\n",Aycells);
     for (double k = 0; k < zcells; k++)
@@ -822,10 +905,19 @@ void openFoamPolyMesh::printVelocity(element elem)
     //now print the south face velocities
     if (inputDirection > 90 && inputDirection < 270)
     {
-        printListHeader("south_face","logProfileVelocityInlet","",false);
+        if(BCtype == "WindNinja")
+        {
+            printFieldHeader("south_face","logProfileVelocityInlet",true);
+        } else if(BCtype == "OpenFOAM")
+        {
+            printFieldHeader("south_face","fixedValue",true);
+        } else
+        {
+            std::cout << "Error in openFoamPolyMesh! BCtype is invalid!\n";
+        }
     } else
     {
-        printListHeader("south_face","pressureInletOutletVelocity","",false);
+        printFieldHeader("south_face","pressureInletOutletVelocity",true);
     }
     fprintf(fzout,"%0.0lf\n(\n",Axcells);
     for (double j = 0; j < xcells; j++)
@@ -838,38 +930,61 @@ void openFoamPolyMesh::printVelocity(element elem)
     fprintf(fzout,")\n;\n    }\n");
 
     //now print the minZ face velocities
-    printListHeader("minZ","fixedValue","(0 0 0)",true);
+    printFieldHeader("minZ","fixedValue",false,"(0 0 0)");
 
     //now print the maxZ face velocities
-    printListHeader("maxZ","zeroGradient","",false);
+    printFieldHeader("maxZ","zeroGradient");
 
     fprintf(fzout,"}\n");
+}
 
-    /*
-    //now print the minZ face velocities
-    printListHeader("minZ","pressureInletOutletVelocity","",false);
-    fprintf(fzout,"%0.0lf\n(\n",Azcells);
-    for (double j = 0; j < xcells; j++)
-    {
-        for (double i = 0; i < ycells; i++)
-        {
-            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,0,0,0,-1),v.interpolate(elem,i,j,0,0,0,-1),w.interpolate(elem,i,j,0,0,0,-1));
-        }
-    }
-    fprintf(fzout,")\n;\n    }\n");
-
-    //now print the maxZ face velocities
-    printListHeader("maxZ","pressureInletOutletVelocity","",false);
-    fprintf(fzout,"%0.0lf\n(\n",Azcells);
-    for (double j = 0; j < xcells; j++)
-    {
-        for (double i = 0; i < ycells; i++)
-        {
-            fprintf(fzout, "(%lf %lf %lf)\n", u.interpolate(elem,i,j,zcells-1,0,0,1),v.interpolate(elem,i,j,zcells-1,0,0,1),w.interpolate(elem,i,j,zcells-1,0,0,1));
-        }
-    }
-    fprintf(fzout,")\n;\n    }\n}\n");
-    */
+void openFoamPolyMesh::writeLibWindNinja()
+{
+    fprintf(fzout,"libs (\"libWindNinja.so\")\n");
+    fprintf(fzout,"functions\n(\n");
+    fprintf(fzout,"/*\n    Surface-0\n");
+    fprintf(fzout,"/*    {\n");
+    fprintf(fzout,"    type faceSource;//patchAverage; //patchAverage, patchFieldFlow, patchIntegrate\n");
+    fprintf(fzout,"    functionObjectLibs (\"libFieldFunctionObjects.so\");\n");
+    fprintf(fzout,"    outputControl timeStep;\n");
+    fprintf(fzout,"    outputInterval 1;\n");
+    fprintf(fzout,"    verbose true;\n");
+    fprintf(fzout,"    log yes;\n");
+    fprintf(fzout,"    source faceZone;\n");
+    fprintf(fzout,"    sourceName mixer_1;\n");
+    fprintf(fzout,"    operation weightedAverage;\n");
+    fprintf(fzout,"    fields\n    (\n        U\n    );\n");
+    fprintf(fzout,"   // patches\n   // (\n   //     pressure_outlet.8\n");
+    fprintf(fzout,"   // );\n   // factor 1.1614;\n");
+    fprintf(fzout,"    }*/\n");
+    fprintf(fzout,"{\n");
+    fprintf(fzout,"        type            faceSource;\n");
+    fprintf(fzout,"        functionObjectLibs (\"libfieldFunctionObjects.so\");\n");
+    fprintf(fzout,"        enabled         yes;\n");
+    fprintf(fzout,"        outputControl   timeStep;//outputTime;\n");
+    fprintf(fzout,"        outputInterval  1;\n");
+    fprintf(fzout,"        log             yes;\n");
+    fprintf(fzout,"        valueOutput     no;\n");
+    fprintf(fzout,"        source          sampledSurface;//faceZone;\n\n");
+    fprintf(fzout,"        sampledSurfaceDict\n");
+    fprintf(fzout,"        {\n");
+    fprintf(fzout,"            // Sampling on triSurface\n");
+    fprintf(fzout,"            type        sampledTriSurfaceMesh;\n");
+    fprintf(fzout,"            surface     disc2.stl;\n");
+    fprintf(fzout,"            source      cells;  // sample cells or boundaryFaces\n");
+    fprintf(fzout,"            interpolate true;\n");
+    fprintf(fzout,"        }\n\n");
+    fprintf(fzout,"        // Operation: areaAverage/sum/weightedAverage ...\n");
+    fprintf(fzout,"        //sourceName      maxX2minX0MasterZone;\n");
+    fprintf(fzout,"        operation       areaAverage;//weightedAverage;\n");
+    fprintf(fzout,"        //weightField     phi;\n");
+    fprintf(fzout,"        autoInterpolate true;\n");
+    fprintf(fzout,"        fields\n        (\n");
+    fprintf(fzout,"            U\n");
+    fprintf(fzout,"            p\n");
+    fprintf(fzout,"        );\n");
+    fprintf(fzout,"    }\n");
+    fprintf(fzout,"*/\n);\n");
 }
 
 void openFoamPolyMesh::writeControlDict()
@@ -888,7 +1003,11 @@ void openFoamPolyMesh::writeControlDict()
     fprintf(fzout,"writeCompression %s;\n\n",writeCompression.c_str());
     fprintf(fzout,"timeFormat      %s;\n\n",timeFormat.c_str());
     fprintf(fzout,"timePrecision   %s;\n\n",timePrecision.c_str());
-    fprintf(fzout,"runTimeModifiable %s;\n",runTimeModifiable.c_str()); //one less new line since last line
+    fprintf(fzout,"runTimeModifiable %s;\n\n",runTimeModifiable.c_str());
+    if(BCtype == "WindNinja")
+    {
+        writeLibWindNinja();
+    }
 }
 
 void openFoamPolyMesh::writeFvSchemes()

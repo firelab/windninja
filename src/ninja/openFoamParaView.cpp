@@ -152,7 +152,7 @@ void openFoamParaView::generateCaseDirectory(std::string outputPath)
     CPLSetConfigOption("TEMP", CPLGetDirname(outputPath.c_str()));
     outputPath = CPLGetBasename(outputPath.c_str());
     outputPath.erase( std::remove_if( outputPath.begin(), outputPath.end(), ::isspace ), outputPath.end() );
-    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("paraview-%s", outputPath.c_str())));
+    static const char *CaseDir = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("PARAMESH_%s", outputPath.c_str())));
     VSIMkdir( CaseDir, 0777 );
     VSIMkdir( CPLSPrintf("%s/0",CaseDir), 0777 );
     VSIMkdir( CPLSPrintf("%s/constant",CaseDir), 0777 );

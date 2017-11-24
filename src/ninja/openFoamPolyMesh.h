@@ -52,7 +52,7 @@ public:
     openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue, double yllCornerValue,
                      double inputDirectionValue, double UfreeStreamValue, double inputWindHeight_VegValue,
                      double RdValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind,
-                     wn_3dScalarField const& wwind);
+                     wn_3dScalarField const& wwind, std::string BCtypeValue);
     ~openFoamPolyMesh();
 
     //generates a new case using the dem location and dem name
@@ -88,12 +88,14 @@ public:
     void printBoundaryPatch(std::string patchName,std::string patchType,double nFaces,double startFace,std::string physicalType);  //for printing a patch in the boundaries. I noticed there was a lot of repetition with only one or two small parts changing for each patch and thought it would make a good function.
     void printBoundaries();     //for printing the boundary file, calls printBoundaryPatch();
 
+//above stuff is technically for the constant polymesh directory. This stuff is for the rest of the constant directory.
+    void printTransportProperties();
+
 //above stuff is technically for the constant directory. This stuff is for the time 0 directory.
 
     //just a way to group a lot of stuff I was doing in single lines over and over. Should make it more legible and shrink the number of lines of code.
-    //was having a rough time thinking of a good name so maybe need to change this. Was trying to be consistent with names in openFoam format
-    //also, this is designed for only one type of value per patch, which is all right with the basic OpenFoam stuff, but I noticed that in other types of files, there were multiple values given in a single patch, so multiple parts of a single variable each with their value.
-    void printListHeader(std::string patchName,std::string ListType,std::string ListValue,bool extraReturn);
+    void printFieldHeader(std::string patchName,std::string ListType,bool isNonuniformValue = false,
+                                            std::string ListValue = "",bool extraReturn = false);
 
     //prints the T file in the 0 directory
     void printScalar();
@@ -114,6 +116,7 @@ public:
 
 //now create the stuff for the system directory
     //creates the controlDict file
+    void writeLibWindNinja();
     void writeControlDict();
 
     //creates the fvSchemes file
@@ -166,14 +169,26 @@ private:
 
     wn_3dArray x, y, z;  //the x,y,z values for the mesh
 
-//values used for time directory. Stuff above is for constant directory, but sometimes used for other stuff below as well
+//values used for constant non-polymesh directory. Stuff above is for constant/polymesh directory, but sometimes used for other stuff below as well
     std::string transportPropertiesPath;    //path to the transportProperties file, found in constant from the case directory
-    double diffusivityConstant;    //the diffusivity constant
 
+    std::string transportModel;         // the transport model used in the transport properties (probably viscosity model)
+    std::string thermalDiffusivityConstant;    //the thermal diffusivity constant
+    std::string dynamicViscosity;            // this is for a newtonian transport model
+    std::string kinematicViscosity;          // this is for a newtonian transport model
+    std::string density;                     // density of the fluid (I believe for a single fluid)
+    std::string thermalExpansionCoefficient;    // thermal expansion coefficient
+    std::string Tref;                        // reference temperature
+    std::string laminarPrandtlNumber;        // laminarPrandtlNumber
+    std::string turbulentPrandtlNumber;      // turbulent prandtl number
+    // technically could add in the Coeffs for other models, but need to think of the best way to do that
+
+//values used for time directory. Stuff above is for constant/polymesh directory, but sometimes used for other stuff below as well
     std::string scalarPath;     //path to the scalar T data file, found in 0 from the case directory
     std::string sourcePath;     //path to the source data file, found in 0 from the case directory
     std::string velocityPath;   //path to the velocity U data file, found in 0 from the case directory
 
+    std::string BCtype;         // the boundary condition type, so WindNinja or OpenFOAM for now, where WindNinja is as close to WindNinja standard BCs where OpenFOAM is as close to standard OpenFOAM BCs as there are
 	double inputDirection;		//the input wind direction set by the user, used to properly set the conditions for each boundary condition
     double UfreeStream;         //this is the input speed. Used for the inlet velocity boundary condition
     std::string uDirection;          //this is the velocity vector of the input direction. Used for the inlet velocity boundary condition
