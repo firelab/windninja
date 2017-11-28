@@ -40,6 +40,8 @@
 #include "wn_3dScalarField.h"
 #include "ninjaException.h"
 
+#include "openFoam_fvSchemes.h"
+
 /*
 currently this program is set up to populate the constant/polymesh directory in a given case folder with files that replicate the OpenFoam cavity tutorial, not the windninja mesh points. The idea is to get a better understanding of how the faces and neighbors need to be written. After this works for normal points, I'm going to adjust it to mesh specific stuff.
 */
@@ -54,6 +56,8 @@ public:
                      double RdValue, wn_3dScalarField const& uwind, wn_3dScalarField const& vwind,
                      wn_3dScalarField const& wwind, std::string BCtypeValue);
     ~openFoamPolyMesh();
+
+private:
 
     //generates a new case using the dem location and dem name
     void generateCaseDirectory(std::string outputPath);
@@ -114,6 +118,18 @@ public:
     */
     void printVelocity(element elem);
 
+
+    /*
+     * this section is a bit tricky because there are 3 types of simulations that can be done
+     * each with their different dict files. 1) can output files like a standard WindNinja momentum run
+     * 2) can output files to do smoke transport 3) can output files for doing an energy eqn simulation
+     * Technically the time directory and constant non-polymesh files can also be different depending
+     * on for which of these types of simulations the files are created.
+     * So far, I've set stuff up so that everything could be used for whatever and is as generically close
+     * to what is needed for each of the 3 types of simulations, but the dict files are more tricky.
+     * Currently they are set up to do smoke transport, so the user would need to adjust these files as needed.
+     */
+
 //now create the stuff for the system directory
     //creates the controlDict file
     void writeLibWindNinja();
@@ -128,8 +144,9 @@ public:
     //creates the setFieldsDict file
     void writeSetFieldsDict();
 
-private:
 
+// now declare variables
+    std::string simulationType; // this is for adjusting what types of file output you get, depending on the type of solver the files will be used for
     std::string foam_version;	//the foam version number, probably will get rid of this later
     FILE *fzout;		//changing file to which information will be written
 
@@ -220,19 +237,38 @@ private:
     std::string timeFormat;         //choice of name format for the time directories. Options are: fixed, scientific, general
     std::string timePrecision;      //number of decimal places for the time directory names
     std::string runTimeModifiable;  //allow controlDict to change, thus changing simulation, in the middle of simulation
+    std::string adjustTimeStep;     //allow the use of a courant number. Not applicable in steady state solvers
+    std::string maxCo;              //maximum courant number, for use with adjustTimeStep
 
+    // I originally had a ton of variables here, but found it easier to create a class since everything was so repetitive
     //fvSchemes variables
-    std::string ddtSchemes_default;     //default ddtSchemes: Euler or SteadyState
+    openFoam_fvSchemes foam_fvSchemes;
+    /*std::string ddtSchemes_default;     //default ddtSchemes: Euler or SteadyState
+    std::vector<std::string> ddtSchemes_names;
+    std::vector<std::string> ddtSchemes_values;
     std::string gradSchemes_default;    //default gradSchemes: Gauss linear or cellMDlimited leastSquares 0.5, lots of combinations
+    std::vector<std::string> gradSchemes_names;
+    std::vector<std::string> gradSchemes_values;
     std::string divSchemes_default;     //default divSchemes: usually set to none or Gauss limitedLinear
-    std::string divSchemes_divOfPhiAndT;    //divSchemes div(phi,T): Gauss limitedLinear 1 or bounded Gauss upwind
+    std::vector<std::string> divSchemes_names;
+    std::vector<std::string> divSchemes_values;
+    //std::string divSchemes_divOfPhiAndT;    //divSchemes div(phi,T): Gauss limitedLinear 1 or bounded Gauss upwind
     std::string laplacianSchemes_default;   //default laplacianSchemes: usually set to none or Gauss linear limited
-    std::string laplacianSchemes_laplacianOfDTandT; //laplacianSchemes laplacian(DT,T): usually Gauss linear corrected
+    std::vector<std::string> laplacianSchemes_names;
+    std::vector<std::string> laplacianSchemes_values;
+    //std::string laplacianSchemes_laplacianOfDTandT; //laplacianSchemes laplacian(DT,T): usually Gauss linear corrected
     std::string interpolationSchemes_default;       //default interpolationSchemes: usually linear
+    std::vector<std::string> interpolationSchemes_names;
+    std::vector<std::string> interpolationSchemes_values;
     std::string SnGradSchemes_default;          //default SnGradSchemes: usually corrected
-    std::string SnGradSchemes_SnGradOfT;        //SnGradSchemes SnGrad(T): limited 0.5
+    std::vector<std::string> SnGradSchemes_names;
+    std::vector<std::string> SnGradSchemes_values;
+    //std::string SnGradSchemes_SnGradOfT;        //SnGradSchemes SnGrad(T): limited 0.5
+    // This one differs from the rest, so don't make it into a class, or use the same class,
+    // but have the code get rid of spaces between the name and values if the values is "".
     std::string fluxRequired_default;       //default fluxRequired setting
-    bool fluxRequired_T;         //Write T or not as needing a flux
+    std::vector<std::string> fluxRequired_names;
+    //bool fluxRequired_T;         //Write T or not as needing a flux*/
 
     //fvSolution variables
     //note this is trickier than the others because there are so many extra things done for the momentum solver

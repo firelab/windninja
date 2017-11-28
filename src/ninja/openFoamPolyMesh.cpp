@@ -38,6 +38,9 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
 {
     generateCaseDirectory(outputPath);
 
+    // for now, output everything as if it is myScalarTransportFoam despite the setting of this variable. They can adjust the files as they need for the other types
+    simulationType = "myScalarTransportFoam";   // myScalarTransportFoam, simpleFoam, buoyantBoussinesqPimpleFoam
+
 //values used for the constant polyMesh directory
     xpoints = mesh.ncols;
     ypoints = mesh.nrows;
@@ -67,6 +70,8 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     ninternalfaces = nfaces-2*(Axcells+Aycells+Azcells);
 
 //values used for the constant non-polyMesh directory
+    // this works the same regardless of the simulation type
+    // but do we want to add in some of the other files?
     transportModel = "Newtonian";   // changing this might mean a need to change structure for other values
     thermalDiffusivityConstant = "0.05"; // 0.05 m^2/s was our guess based off of diffusivity comparison videos
     dynamicViscosity = "1.846e-05";            // 1.846*10^05 kg/(m*s) for air at 300 K
@@ -115,34 +120,134 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
 
 //values used for system directory
     //controlDict variables
-    application = "myScalarTransportFoam";
-    startFrom = "startTime";
-    startTime = "0";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    stopAt = "endTime";
-    endTime = "3600";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    deltaT = "1.0";
-    writeControl = "timeStep";
-    writeInterval = "300";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
-    purgeWrite = "0";       // I like a value of 0 for smoke transport
-    writeFormat = "ascii";
-    writePrecision = "10";
-    writeCompression = "uncompressed";
-    timeFormat = "general";
-    timePrecision = "10";
-    runTimeModifiable = "true";
+    if(simulationType == "simpleFoam")
+    {
+        application = "simpleFoam";
+        startFrom = "latestTime";
+        startTime = "latestTime";
+        stopAt = "endTime";
+        endTime = "352";
+        deltaT = "1.0";
+        writeControl = "timeStep";
+        writeInterval = "300";
+        purgeWrite = "1";
+        writeFormat = "ascii";
+        writePrecision = "10";
+        writeCompression = "uncompressed";
+        timeFormat = "general";
+        timePrecision = "10";
+        runTimeModifiable = "true";
+        adjustTimeStep = "false";
+        maxCo = "";
+    } else if(simulationType == "buoyantBoussinesqPimpleFoam")
+    {
+        application = "buoyantBoussinesqPimpleFoam";
+        startFrom = "startTime";
+        startTime = "0";
+        stopAt = "endTime";
+        endTime = "3600";
+        deltaT = "1.0";
+        writeControl = "adjustableRunTime";
+        writeInterval = "60";
+        purgeWrite = "0";
+        writeFormat = "ascii";
+        writePrecision = "10";
+        writeCompression = "uncompressed";
+        timeFormat = "general";
+        timePrecision = "10";
+        runTimeModifiable = "true";
+        adjustTimeStep = "true";
+        maxCo = "0.5";
+    } else
+    {
+        // assume it is a myScalarTransportFoam solution
+        application = "myScalarTransportFoam";
+        startFrom = "startTime";
+        startTime = "0";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
+        stopAt = "endTime";
+        endTime = "3600";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
+        deltaT = "1.0";
+        writeControl = "timeStep";
+        writeInterval = "300";    // I feel like this varies a lot depending on the different situations. So I guess this is the default value
+        purgeWrite = "0";       // I like a value of 0 for smoke transport
+        writeFormat = "ascii";
+        writePrecision = "10";
+        writeCompression = "uncompressed";
+        timeFormat = "general";
+        timePrecision = "10";
+        runTimeModifiable = "true";
+        adjustTimeStep = "false";
+        maxCo = "";
+    }
 
     //fvSchemes variables
-    ddtSchemes_default = "Euler";
-    gradSchemes_default = "Gauss linear";
-    divSchemes_default = "none";
-    divSchemes_divOfPhiAndT = "bounded Gauss upwind";
-    laplacianSchemes_default = "Gauss linear limited 0.333";
-    laplacianSchemes_laplacianOfDTandT = "Gauss linear corrected";
-    interpolationSchemes_default = "linear";
-    SnGradSchemes_default = "corrected";
-    SnGradSchemes_SnGradOfT = "limited 0.5";
-    fluxRequired_default = "no";
-    fluxRequired_T = true;
+    if(simulationType == "simpleFoam")
+    {
+        foam_fvSchemes.add_default("ddtSchemes","steadyState");
+        foam_fvSchemes.add_default("gradSchemes","cellMDLimited leastSquares 0.5");
+        foam_fvSchemes.add_default("divSchemes","none");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,U)","bounded Gauss linearUpwind grad(U)");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,k)","bounded Gauss upwind");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,epsilon)","bounded Gauss upwind");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,omega)","bounded Gauss 1.0");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,nuTilda)","bounded Gauss 1.0");
+        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(T(grad(U)))))","Gauss linear");
+        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(grad(U).T())))","Gauss linear");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss limitedLinear 1");
+        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
+        foam_fvSchemes.add_default("interpolationSchemes","linear");
+        foam_fvSchemes.add_nondefault("interpolationSchemes","interpolate(U)","linear");
+        foam_fvSchemes.add_default("SnGradSchemes","corrected");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(T)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(k)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(epsilon)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(omega)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(nuTilda)","limited 0.5");
+        foam_fvSchemes.add_default("fluxRequired","no");
+        foam_fvSchemes.add_nondefault("fluxRequired","p","");
+    } else if(simulationType == "buoyantBoussinesqPimpleFoam")
+    {
+        // these are almost the same as a WindNinja simulation
+        foam_fvSchemes.add_default("ddtSchemes","Euler");
+        foam_fvSchemes.add_default("gradSchemes","cellMDLimited leastSquares 0.5");
+        foam_fvSchemes.add_default("divSchemes","none");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,U)","bounded Gauss linearUpwind grad(U)");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,k)","bounded Gauss upwind");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,epsilon)","bounded Gauss upwind");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,omega)","bounded Gauss 1.0");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,nuTilda)","bounded Gauss 1.0");
+        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(T(grad(U)))))","Gauss linear");
+        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(grad(U).T())))","Gauss linear");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss limitedLinear 1");
+        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
+        foam_fvSchemes.add_nondefault("laplacianSchemes","laplacian(DT,T)","Gauss linear corrected");
+        foam_fvSchemes.add_default("interpolationSchemes","linear");
+        foam_fvSchemes.add_nondefault("interpolationSchemes","interpolate(U)","linear");
+        foam_fvSchemes.add_default("SnGradSchemes","corrected");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(T)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(k)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(epsilon)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(omega)","limited 0.5");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(nuTilda)","limited 0.5");
+        foam_fvSchemes.add_default("fluxRequired","no");
+        foam_fvSchemes.add_nondefault("fluxRequired","p","");
+        foam_fvSchemes.add_nondefault("fluxRequired","p_rgh","");
+    } else
+    {
+        // assume it is a myScalarTransportFoam solution
+        foam_fvSchemes.add_default("ddtSchemes","Euler");
+        foam_fvSchemes.add_default("gradSchemes","Gauss linear");
+        foam_fvSchemes.add_default("divSchemes","none");
+        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss upwind");
+        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
+        foam_fvSchemes.add_nondefault("laplacianSchemes","laplacian(DT,T)","Gauss linear corrected");
+        foam_fvSchemes.add_default("interpolationSchemes","linear");
+        foam_fvSchemes.add_default("SnGradSchemes","corrected");
+        foam_fvSchemes.add_nondefault("SnGradSchemes","SnGrad(T)","limited 0.5");
+        foam_fvSchemes.add_default("fluxRequired","no");
+        foam_fvSchemes.add_nondefault("fluxRequired","T","");
+    }
+
 
     //fvSolution variables
     solvers_T_solver = "PBiCG";
@@ -261,12 +366,15 @@ bool openFoamPolyMesh::writePolyMeshFiles(element elem)
     makeFoamFooter();
     fclose(fzout);
 
-    //create the source field file, note this will get changed by the setFields dict
-    fzout = fopen(sourcePath.c_str(), "w");
-    makeFoamHeader("volScalarField","source","");
-    printSource();
-    makeFoamFooter();
-    fclose(fzout);
+    if(simulationType == "myScalarTransportFoam")
+    {
+        //create the source field file, note this will get changed by the setFields dict
+        fzout = fopen(sourcePath.c_str(), "w");
+        makeFoamHeader("volScalarField","source","");
+        printSource();
+        makeFoamFooter();
+        fclose(fzout);
+    }
 
     //write the velocities
     fzout = fopen(velocityPath.c_str(), "w");
@@ -712,19 +820,36 @@ void openFoamPolyMesh::printFieldHeader(std::string patchName,std::string ListTy
 
 void openFoamPolyMesh::printScalar()
 {
-    fprintf(fzout,"dimensions      [1 -3 0 0 0 0 0];\n\n");
-    fprintf(fzout,"internalField   uniform 0;\n\n");
-    fprintf(fzout,"boundaryField\n{\n");
+    if(simulationType == "buoyantBoussinesqPimpleFoam")
+    {
+        fprintf(fzout,"dimensions      [0 0 0 1 0 0 0];\n\n");
+        fprintf(fzout,"internalField   uniform 300;\n\n");
+        fprintf(fzout,"boundaryField\n{\n");
 
-    printFieldHeader("north_face","zeroGradient");
-    printFieldHeader("west_face","zeroGradient");
-    printFieldHeader("east_face","zeroGradient");
-    printFieldHeader("south_face","zeroGradient");
-    printFieldHeader("minZ","zeroGradient");
-    printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+        printFieldHeader("north_face","zeroGradient");
+        printFieldHeader("west_face","zeroGradient");
+        printFieldHeader("east_face","zeroGradient");
+        printFieldHeader("south_face","zeroGradient");
+        printFieldHeader("minZ","fixedValue",false,"310");
+        printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
 
-    fprintf(fzout,"}\n");
+        fprintf(fzout,"}\n");
+    } else
+    {
+        // assume that everything else is myScalarTransportFoam
+        fprintf(fzout,"dimensions      [1 -3 0 0 0 0 0];\n\n");
+        fprintf(fzout,"internalField   uniform 0;\n\n");
+        fprintf(fzout,"boundaryField\n{\n");
 
+        printFieldHeader("north_face","zeroGradient");
+        printFieldHeader("west_face","zeroGradient");
+        printFieldHeader("east_face","zeroGradient");
+        printFieldHeader("south_face","zeroGradient");
+        printFieldHeader("minZ","zeroGradient");
+        printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+
+        fprintf(fzout,"}\n");
+    }
 }
 
 void openFoamPolyMesh::printSource()
@@ -1004,6 +1129,11 @@ void openFoamPolyMesh::writeControlDict()
     fprintf(fzout,"timeFormat      %s;\n\n",timeFormat.c_str());
     fprintf(fzout,"timePrecision   %s;\n\n",timePrecision.c_str());
     fprintf(fzout,"runTimeModifiable %s;\n\n",runTimeModifiable.c_str());
+    if(adjustTimeStep == "true")
+    {
+        fprintf(fzout,"adjustTimeStep  %s;\n\n",adjustTimeStep.c_str());
+        fprintf(fzout,"maxCo           %s;\n\n",maxCo.c_str());
+    }
     if(BCtype == "WindNinja")
     {
         writeLibWindNinja();
@@ -1012,50 +1142,23 @@ void openFoamPolyMesh::writeControlDict()
 
 void openFoamPolyMesh::writeFvSchemes()
 {
-    //could possibly write something that is called writeScheme that takes in
-    //the scheme name and an array with what parts of the scheme will be written
-
-    //write the ddtSchemes
-    fprintf(fzout,"ddtSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",ddtSchemes_default.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the gradSchemes
-    fprintf(fzout,"gradSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",gradSchemes_default.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the divSchemes
-    fprintf(fzout,"divSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",divSchemes_default.c_str());
-    fprintf(fzout,"    div(phi,T)      %s;\n",divSchemes_divOfPhiAndT.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the laplacianSchemes
-    fprintf(fzout,"laplacianSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",laplacianSchemes_default.c_str());
-    fprintf(fzout,"    laplacian(DT,T) %s;\n",laplacianSchemes_laplacianOfDTandT.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the interpolationSchemes
-    fprintf(fzout,"interpolationSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",interpolationSchemes_default.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the SnGradSchemes
-    fprintf(fzout,"SnGradSchemes\n{\n");
-    fprintf(fzout,"    default         %s;\n",SnGradSchemes_default.c_str());
-    fprintf(fzout,"    SnGrad(T)       %s;\n",SnGradSchemes_SnGradOfT.c_str());
-    fprintf(fzout,"}\n\n");
-
-    //write the fluxRequired part
-    fprintf(fzout,"fluxRequired\n{\n");
-    fprintf(fzout,"    default         %s;\n",fluxRequired_default.c_str());
-    if(fluxRequired_T == true)
+    // need a separate variable with separate variables for each scheme type, if you don't use a class
+    // becomes a simple function when using a class
+    for(size_t j = 0; j < foam_fvSchemes.get_numOfTypes(); j++)
     {
-        fprintf(fzout,"    T;\n");
+        fprintf(fzout,"%s\n",foam_fvSchemes.get_type(j).c_str());
+        fprintf(fzout,"{\n");
+        fprintf(fzout,"    default");
+        fprintf(fzout,"%s",foam_fvSchemes.get_defaultwhitespace(j).c_str());
+        fprintf(fzout,"%s;\n",foam_fvSchemes.get_defaultvalue(j).c_str());
+        for(size_t i = 0; i < foam_fvSchemes.get_type_numOfVals(j); i++)
+        {
+            fprintf(fzout,"    %s",foam_fvSchemes.get_name(j,i).c_str());
+            fprintf(fzout,"%s",foam_fvSchemes.get_whitespace(j,i).c_str());
+            fprintf(fzout,"%s;\n",foam_fvSchemes.get_value(j,i).c_str());
+        }
+        fprintf(fzout,"}\n\n");
     }
-    fprintf(fzout,"}\n");
 }
 
 void openFoamPolyMesh::writeFvSolution()
