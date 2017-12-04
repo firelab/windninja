@@ -41,6 +41,7 @@
 #include "ninjaException.h"
 
 #include "openFoam_fvSchemes.h"
+#include "openFoam_fvSolutions.h"
 
 /*
 currently this program is set up to populate the constant/polymesh directory in a given case folder with files that replicate the OpenFoam cavity tutorial, not the windninja mesh points. The idea is to get a better understanding of how the faces and neighbors need to be written. After this works for normal points, I'm going to adjust it to mesh specific stuff.
@@ -125,9 +126,6 @@ private:
      * 2) can output files to do smoke transport 3) can output files for doing an energy eqn simulation
      * Technically the time directory and constant non-polymesh files can also be different depending
      * on for which of these types of simulations the files are created.
-     * So far, I've set stuff up so that everything could be used for whatever and is as generically close
-     * to what is needed for each of the 3 types of simulations, but the dict files are more tricky.
-     * Currently they are set up to do smoke transport, so the user would need to adjust these files as needed.
      */
 
 //now create the stuff for the system directory
@@ -198,6 +196,8 @@ private:
     std::string Tref;                        // reference temperature
     std::string laminarPrandtlNumber;        // laminarPrandtlNumber
     std::string turbulentPrandtlNumber;      // turbulent prandtl number
+    std::string heatCapacity;              // constant pressure heat capacity
+    std::string rho0;                      // density used by wallHeatFluxIncompressible utility
     // technically could add in the Coeffs for other models, but need to think of the best way to do that
 
 //values used for time directory. Stuff above is for constant/polymesh directory, but sometimes used for other stuff below as well
@@ -240,51 +240,17 @@ private:
     std::string adjustTimeStep;     //allow the use of a courant number. Not applicable in steady state solvers
     std::string maxCo;              //maximum courant number, for use with adjustTimeStep
 
-    // I originally had a ton of variables here, but found it easier to create a class since everything was so repetitive
     //fvSchemes variables
     openFoam_fvSchemes foam_fvSchemes;
-    /*std::string ddtSchemes_default;     //default ddtSchemes: Euler or SteadyState
-    std::vector<std::string> ddtSchemes_names;
-    std::vector<std::string> ddtSchemes_values;
-    std::string gradSchemes_default;    //default gradSchemes: Gauss linear or cellMDlimited leastSquares 0.5, lots of combinations
-    std::vector<std::string> gradSchemes_names;
-    std::vector<std::string> gradSchemes_values;
-    std::string divSchemes_default;     //default divSchemes: usually set to none or Gauss limitedLinear
-    std::vector<std::string> divSchemes_names;
-    std::vector<std::string> divSchemes_values;
-    //std::string divSchemes_divOfPhiAndT;    //divSchemes div(phi,T): Gauss limitedLinear 1 or bounded Gauss upwind
-    std::string laplacianSchemes_default;   //default laplacianSchemes: usually set to none or Gauss linear limited
-    std::vector<std::string> laplacianSchemes_names;
-    std::vector<std::string> laplacianSchemes_values;
-    //std::string laplacianSchemes_laplacianOfDTandT; //laplacianSchemes laplacian(DT,T): usually Gauss linear corrected
-    std::string interpolationSchemes_default;       //default interpolationSchemes: usually linear
-    std::vector<std::string> interpolationSchemes_names;
-    std::vector<std::string> interpolationSchemes_values;
-    std::string SnGradSchemes_default;          //default SnGradSchemes: usually corrected
-    std::vector<std::string> SnGradSchemes_names;
-    std::vector<std::string> SnGradSchemes_values;
-    //std::string SnGradSchemes_SnGradOfT;        //SnGradSchemes SnGrad(T): limited 0.5
-    // This one differs from the rest, so don't make it into a class, or use the same class,
-    // but have the code get rid of spaces between the name and values if the values is "".
-    std::string fluxRequired_default;       //default fluxRequired setting
-    std::vector<std::string> fluxRequired_names;
-    //bool fluxRequired_T;         //Write T or not as needing a flux*/
 
     //fvSolution variables
-    //note this is trickier than the others because there are so many extra things done for the momentum solver
-    //and the structure is different so will need a lot of work to change stuff here eventually, or just simply write out every single option
-    std::string solvers_T_solver;       //the solver used to solve for T found in the solvers section
-    std::string solvers_T_preconditioner;   //the preconditioner used for T found in the solvers section
-    std::string solvers_T_tolerance;        //the tolerance used to solve for T found in the solvers section
-    std::string solvers_T_relTol;       //the relative tolerance used to solve for T found int he solvers section
-    std::string SIMPLE_nNonOrthogonalCorrectors;    //how to correct for NonOrthogonality
-    //there's a ton more stuff, almost would be better to copy and paste a file that is the same every time
-    //for now, just won't write any of it and hopefully it doesn't change the simulation at all
+    //note this is similar to fvSchemes, but trickier. You can see where writing out the file stops
+    //being as effective as using a template file that only needs minor changes
+    openFoam_fvSolutions foam_fvSolutions;
 
-    //not entirely sure how to do this for other ways to specify values. Right now I'm just writing this
-    //for the current scalar transport case. Will probably want some kind of pointer function so it is easy
-    //to know what to pass in
     //setFieldsDict variables
+    //I think the easiest way to do this is to have a writer class that just writes information
+    //and a separate class that obtains the information
     std::string defaultTvalue;      //default scalar value, so value to be placed everywhere where not specified
     std::string defaultSourceValue; //default source value, so value to be placed everywhere where not specified
     std::string distributionType;   //method to be used. If boxToCell, then will use a bounding box for specifying the source

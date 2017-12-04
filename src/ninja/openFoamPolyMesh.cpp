@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 
-
 #include "openFoamPolyMesh.h"
 
 openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xllCornerValue,
@@ -36,10 +35,11 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
                                    wn_3dScalarField const& uwind,wn_3dScalarField const& vwind,
                                    wn_3dScalarField const& wwind,std::string BCtypeValue)
 {
+    std::cout << "starting meshConversion openFoam output case\n";
     generateCaseDirectory(outputPath);
 
-    // for now, output everything as if it is myScalarTransportFoam despite the setting of this variable. They can adjust the files as they need for the other types
-    simulationType = "myScalarTransportFoam";   // myScalarTransportFoam, simpleFoam, buoyantBoussinesqPimpleFoam
+    // determine what types and styles of files are written
+    simulationType = "buoyantBoussinesqPimpleFoam";   // myScalarTransportFoam, simpleFoam, buoyantBoussinesqPimpleFoam
 
 //values used for the constant polyMesh directory
     xpoints = mesh.ncols;
@@ -101,7 +101,6 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
             *(y(zcells*Azpoints+ycells*xpoints+xcells)-y(0))
             *(z(zcells*Azpoints+ycells*xpoints+xcells)-z(0));
     firstCellHeight = pow(meshVolume/ncells,(1.0/3.0));
-
 
      * But I have since learned that firstCellHeight is really the first cell height.
      * So it should be the following
@@ -181,80 +180,10 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     }
 
     //fvSchemes variables
-    if(simulationType == "simpleFoam")
-    {
-        foam_fvSchemes.add_default("ddtSchemes","steadyState");
-        foam_fvSchemes.add_default("gradSchemes","cellMDLimited leastSquares 0.5");
-        foam_fvSchemes.add_default("divSchemes","none");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,U)","bounded Gauss linearUpwind grad(U)");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,k)","bounded Gauss upwind");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,epsilon)","bounded Gauss upwind");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,omega)","bounded Gauss 1.0");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,nuTilda)","bounded Gauss 1.0");
-        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(T(grad(U)))))","Gauss linear");
-        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(grad(U).T())))","Gauss linear");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss limitedLinear 1");
-        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
-        foam_fvSchemes.add_default("interpolationSchemes","linear");
-        foam_fvSchemes.add_nondefault("interpolationSchemes","interpolate(U)","linear");
-        foam_fvSchemes.add_default("SnGradSchemes","corrected");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(T)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(k)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(epsilon)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(omega)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(nuTilda)","limited 0.5");
-        foam_fvSchemes.add_default("fluxRequired","no");
-        foam_fvSchemes.add_nondefault("fluxRequired","p","");
-    } else if(simulationType == "buoyantBoussinesqPimpleFoam")
-    {
-        // these are almost the same as a WindNinja simulation
-        foam_fvSchemes.add_default("ddtSchemes","Euler");
-        foam_fvSchemes.add_default("gradSchemes","cellMDLimited leastSquares 0.5");
-        foam_fvSchemes.add_default("divSchemes","none");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,U)","bounded Gauss linearUpwind grad(U)");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,k)","bounded Gauss upwind");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,epsilon)","bounded Gauss upwind");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,omega)","bounded Gauss 1.0");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,nuTilda)","bounded Gauss 1.0");
-        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(T(grad(U)))))","Gauss linear");
-        foam_fvSchemes.add_nondefault("divSchemes","div((nuEff*dev(grad(U).T())))","Gauss linear");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss limitedLinear 1");
-        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
-        foam_fvSchemes.add_nondefault("laplacianSchemes","laplacian(DT,T)","Gauss linear corrected");
-        foam_fvSchemes.add_default("interpolationSchemes","linear");
-        foam_fvSchemes.add_nondefault("interpolationSchemes","interpolate(U)","linear");
-        foam_fvSchemes.add_default("SnGradSchemes","corrected");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(T)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(k)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(epsilon)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(omega)","limited 0.5");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","snGrad(nuTilda)","limited 0.5");
-        foam_fvSchemes.add_default("fluxRequired","no");
-        foam_fvSchemes.add_nondefault("fluxRequired","p","");
-        foam_fvSchemes.add_nondefault("fluxRequired","p_rgh","");
-    } else
-    {
-        // assume it is a myScalarTransportFoam solution
-        foam_fvSchemes.add_default("ddtSchemes","Euler");
-        foam_fvSchemes.add_default("gradSchemes","Gauss linear");
-        foam_fvSchemes.add_default("divSchemes","none");
-        foam_fvSchemes.add_nondefault("divSchemes","div(phi,T)","bounded Gauss upwind");
-        foam_fvSchemes.add_default("laplacianSchemes","Gauss linear limited 0.333");
-        foam_fvSchemes.add_nondefault("laplacianSchemes","laplacian(DT,T)","Gauss linear corrected");
-        foam_fvSchemes.add_default("interpolationSchemes","linear");
-        foam_fvSchemes.add_default("SnGradSchemes","corrected");
-        foam_fvSchemes.add_nondefault("SnGradSchemes","SnGrad(T)","limited 0.5");
-        foam_fvSchemes.add_default("fluxRequired","no");
-        foam_fvSchemes.add_nondefault("fluxRequired","T","");
-    }
-
+    foam_fvSchemes.setupDesiredValues(simulationType);
 
     //fvSolution variables
-    solvers_T_solver = "PBiCG";
-    solvers_T_preconditioner = "DILU";
-    solvers_T_tolerance = "1e-06";
-    solvers_T_relTol = "0.2";
-    SIMPLE_nNonOrthogonalCorrectors = "0";
+    foam_fvSolutions.setupDesiredValues(simulationType);
 
     //setFieldsDict variables
     defaultTvalue = "0";
@@ -748,6 +677,10 @@ void openFoamPolyMesh::printBoundaries()
 
 void openFoamPolyMesh::printTransportProperties()
 {
+    // could put if statements around each one of these lines,
+    // or just keep it all the same since it doesn't mess stuff up to have extra entries in this file
+    // it could possibly be confusing to a new user, but you just comment stuff out to find what
+    // is actually needed. A single universal file for this seems like a good thing
     fprintf(fzout,"transportModel  %s;\n\n",transportModel.c_str());
     fprintf(fzout,"//Thermal Diffusivity Constant. 0.05 m^2/s was our guess based off of diffusivity comparison videos\n");
     fprintf(fzout,"DT              DT [ 0 2 -1 0 0 0 0 ]   %s;\n\n",thermalDiffusivityConstant.c_str());
@@ -765,9 +698,13 @@ void openFoamPolyMesh::printTransportProperties()
     fprintf(fzout,"Pr              Pr [0 0 0 0 0 0 0]      %s;\n\n",laminarPrandtlNumber.c_str());
     fprintf(fzout,"//Turbulent Prandtl Number. Early hot room had this as 0.7 dimensionless, but later changed to 0.85 dimensionless\n");
     fprintf(fzout,"Prt             Prt [0 0 0 0 0 0 0]     %s;\n\n",turbulentPrandtlNumber.c_str());
+    fprintf(fzout,"//Constant pressure heat capacity. 1.005 kJ/(kg*K) for air at 300 K, which is 1005 (kg*m^2/s^2)/(kg*K) = 1005 m^2/(s^2*K)\n");
+    fprintf(fzout,"Cp0             Cp0 [0 2 -2 -1 0 0 0]   %s;\n\n",heatCapacity.c_str());
+    fprintf(fzout,"//Density used by wallHeatFluxIncompressible utility. Technically it's the same thing as rho, but the utility is currently written to use this separate value\n");
+    fprintf(fzout,"rho0            rho0 [1 -3 0 0 0 0 0]   %s;\n\n",rho0.c_str());
+
 }
 
-//Currently, this is
 //Might be able to figure out a way to improve this method using function pointers.
 void openFoamPolyMesh::printFieldHeader(std::string patchName,std::string ListType,bool isNonuniformValue /*=false*/,
                                         std::string ListValue /*=""*/,bool extraReturn /*=false*/)
@@ -831,7 +768,7 @@ void openFoamPolyMesh::printScalar()
         printFieldHeader("east_face","zeroGradient");
         printFieldHeader("south_face","zeroGradient");
         printFieldHeader("minZ","fixedValue",false,"310");
-        printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+        printFieldHeader("maxZ","zeroGradient");
 
         fprintf(fzout,"}\n");
     } else
@@ -846,7 +783,7 @@ void openFoamPolyMesh::printScalar()
         printFieldHeader("east_face","zeroGradient");
         printFieldHeader("south_face","zeroGradient");
         printFieldHeader("minZ","zeroGradient");
-        printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+        printFieldHeader("maxZ","zeroGradient");
 
         fprintf(fzout,"}\n");
     }
@@ -863,7 +800,7 @@ void openFoamPolyMesh::printSource()
     printFieldHeader("east_face","zeroGradient");
     printFieldHeader("south_face","zeroGradient");
     printFieldHeader("minZ","zeroGradient");
-    printFieldHeader("maxZ","zeroGradient");   //notice this doesn't have the extra space, because it has a slightly different end (another bracket)
+    printFieldHeader("maxZ","zeroGradient");
 
     fprintf(fzout,"}\n");
 
@@ -1143,19 +1080,27 @@ void openFoamPolyMesh::writeControlDict()
 void openFoamPolyMesh::writeFvSchemes()
 {
     // need a separate variable with separate variables for each scheme type, if you don't use a class
-    // becomes a simple function when using a class
-    for(size_t j = 0; j < foam_fvSchemes.get_numOfTypes(); j++)
+    // becomes a simple function when using a class, and the sizes stay protected
+    // just barely starts to be complex enough that it might be easier to use a template file
+    // notice how much more complex fvSolution is, when it really isn't that different, just has another layer
+    std::vector<std::string> fvScheme_types = foam_fvSchemes.get_types();
+    std::vector<std::string> fvScheme_defaultwhitespace = foam_fvSchemes.get_defaultwhitespace();
+    std::vector<std::string> fvScheme_defaultvalues = foam_fvSchemes.get_defaultvalues();
+    std::vector< std::vector<std::string> > fvScheme_nondefaultnames = foam_fvSchemes.get_nondefaultnames();
+    std::vector< std::vector<std::string> > fvScheme_nondefaultwhitespace = foam_fvSchemes.get_nondefaultwhitespace();
+    std::vector< std::vector<std::string> > fvScheme_nondefaultvalues = foam_fvSchemes.get_nondefaultvalues();
+    for(size_t j = 0; j < fvScheme_types.size(); j++)
     {
-        fprintf(fzout,"%s\n",foam_fvSchemes.get_type(j).c_str());
+        fprintf(fzout,"%s\n",fvScheme_types[j].c_str());
         fprintf(fzout,"{\n");
         fprintf(fzout,"    default");
-        fprintf(fzout,"%s",foam_fvSchemes.get_defaultwhitespace(j).c_str());
-        fprintf(fzout,"%s;\n",foam_fvSchemes.get_defaultvalue(j).c_str());
-        for(size_t i = 0; i < foam_fvSchemes.get_type_numOfVals(j); i++)
+        fprintf(fzout,"%s",fvScheme_defaultwhitespace[j].c_str());
+        fprintf(fzout,"%s;\n",fvScheme_defaultvalues[j].c_str());
+        for(size_t i = 0; i < fvScheme_nondefaultnames[j].size(); i++)
         {
-            fprintf(fzout,"    %s",foam_fvSchemes.get_name(j,i).c_str());
-            fprintf(fzout,"%s",foam_fvSchemes.get_whitespace(j,i).c_str());
-            fprintf(fzout,"%s;\n",foam_fvSchemes.get_value(j,i).c_str());
+            fprintf(fzout,"    %s",fvScheme_nondefaultnames[j][i].c_str());
+            fprintf(fzout,"%s",fvScheme_nondefaultwhitespace[j][i].c_str());
+            fprintf(fzout,"%s;\n",fvScheme_nondefaultvalues[j][i].c_str());
         }
         fprintf(fzout,"}\n\n");
     }
@@ -1163,22 +1108,76 @@ void openFoamPolyMesh::writeFvSchemes()
 
 void openFoamPolyMesh::writeFvSolution()
 {
-    fprintf(fzout,"solvers\n{\n");
+    // this is basically the same thing as fvSchemes, but I tried to make it into a more generic function
+    // turns out that adding in just one vector layer more than fvSchemes made it super complex. It doesn't help
+    // that there are small things different for each section that make it necessary to add small tweaks
+    // I definitely think that this would be simpler if the sections vector were broken up into separate variables
+    // this would be even simpler to just use a template file and replace keys, like in ninjaFoam.cpp
+    // just look at all the exceptions I had to throw in to get the right format, throwing the different sections into one generic type
+    std::vector<std::string> fvSolution_sections = foam_fvSolutions.get_sections();
+    std::vector< std::vector<std::string> > fvSolution_headers = foam_fvSolutions.get_headers();
+    std::vector< std::vector< std::vector<std::string> > > fvSolution_keyWords = foam_fvSolutions.get_keyWords();
+    std::vector< std::vector< std::vector<std::string> > > fvSolution_whitespace = foam_fvSolutions.get_whitespace();
+    std::vector< std::vector< std::vector<std::string> > > fvSolution_keyWordValues = foam_fvSolutions.get_keyWordValues();
 
-    fprintf(fzout,"    T\n    {\n");
-    fprintf(fzout,"        solver          %s;\n",solvers_T_solver.c_str());
-    fprintf(fzout,"        preconditioner  %s;\n",solvers_T_preconditioner.c_str());
-    fprintf(fzout,"        tolerance       %s;\n",solvers_T_tolerance.c_str());
-    fprintf(fzout,"        relTol          %s;\n",solvers_T_relTol.c_str());
-    fprintf(fzout,"    }\n");
-
-    fprintf(fzout,"}\n\n");
-
-    fprintf(fzout,"SIMPLE\n{\n");
-
-    fprintf(fzout,"    nNonOrthogonalCorrectors %s;\n",SIMPLE_nNonOrthogonalCorrectors.c_str());
-
-    fprintf(fzout,"}\n");
+    for(size_t j = 0; j < fvSolution_sections.size(); j++)
+    {
+        fprintf(fzout,"%s\n",fvSolution_sections[j].c_str());
+        fprintf(fzout,"{\n");
+        for(size_t i = 0; i < fvSolution_headers[j].size(); i++)
+        {
+            if(fvSolution_headers[j][i] == "noheader")
+            {
+                for(size_t k = 0; k < fvSolution_keyWords[j][i].size(); k++)
+                {
+                    fprintf(fzout,"    %s",fvSolution_keyWords[j][i][k].c_str());
+                    fprintf(fzout,"%s",fvSolution_whitespace[j][i][k].c_str());
+                    fprintf(fzout,"%s;\n",fvSolution_keyWordValues[j][i][k].c_str());
+                }
+                if(fvSolution_sections[j] == "PIMPLE" && i != fvSolution_headers[j].size())  // note this will only work if we assume there is always a "noheader" header for PIMPLE
+                {
+                    fprintf(fzout,"\n");
+                    fprintf(fzout,"    residualControl\n");
+                    fprintf(fzout,"    {\n");
+                }
+            } else
+            {
+                if(fvSolution_sections[j] == "PIMPLE")
+                {
+                    fprintf(fzout,"        %s\n",fvSolution_headers[j][i].c_str());
+                    fprintf(fzout,"        {\n");
+                    for(size_t k = 0; k < fvSolution_keyWords[j][i].size(); k++)
+                    {
+                        fprintf(fzout,"            %s",fvSolution_keyWords[j][i][k].c_str());
+                        fprintf(fzout,"%s",fvSolution_whitespace[j][i][k].c_str());
+                        fprintf(fzout,"%s;\n",fvSolution_keyWordValues[j][i][k].c_str());
+                    }
+                    fprintf(fzout,"        }\n");
+                    if(i == fvSolution_headers[j].size())
+                    {
+                        // got to the end of the loop, need end part
+                        fprintf(fzout,"    }\n");
+                    }
+                } else
+                {
+                    if(fvSolution_headers[j][i] == "residualControl")
+                    {
+                        fprintf(fzout,"\n");
+                    }
+                    fprintf(fzout,"    %s\n",fvSolution_headers[j][i].c_str());
+                    fprintf(fzout,"    {\n");
+                    for(size_t k = 0; k < fvSolution_keyWords[j][i].size(); k++)
+                    {
+                        fprintf(fzout,"        %s",fvSolution_keyWords[j][i][k].c_str());
+                        fprintf(fzout,"%s",fvSolution_whitespace[j][i][k].c_str());
+                        fprintf(fzout,"%s;\n",fvSolution_keyWordValues[j][i][k].c_str());
+                    }
+                    fprintf(fzout,"    }\n");
+                }
+            }
+        }
+        fprintf(fzout,"}\n\n");
+    }
 }
 
 void openFoamPolyMesh::writeSetFieldsDict()

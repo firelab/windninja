@@ -1,0 +1,3 @@
+myBuoyantBoussinesqPimpleFoam.C
+
+EXE = $(FOAM_APPBIN)/myBuoyantBoussinesqPimpleFoam
