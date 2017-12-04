@@ -1522,7 +1522,25 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["write_farsite_atm"].as<bool>())
         {
             option_dependency(vm, "write_farsite_atm", "write_ascii_output");
-            windsim.set_writeFarsiteAtmFile(true);
+
+            if((vm["output_wind_height"].as<double>() == 20 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::feet &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::milesPerHour) ||
+               (vm["output_wind_height"].as<double>() == 10 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::meters &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::kilometersPerHour))
+            {
+                windsim.set_writeFarsiteAtmFile(true);
+            }
+
+            else
+            {
+                throw std::runtime_error("The output wind settings for atm files must "
+                       "either be 10m for output height and "
+                       "output speed units in kph, or "
+                       "20ft for output height and "
+                       "output speed units in mph.");
+            }
         }
 
         //run the simulations

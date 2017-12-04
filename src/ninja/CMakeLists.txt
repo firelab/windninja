@@ -18,7 +18,8 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(NINJA_INCLUDES ${NETCDF_INCLUDES}
-                   ${GDAL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS}
+                   ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
+                   ${CURL_INCLUDE_DIRS}
                    ${Boost_INCLUDE_DIRS}
                    ${PROJECT_SOURCE_DIR}/src)
 

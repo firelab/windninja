@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 2.6)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/ninja
                     ${NETCDF_INCLUDES}
-                    ${GDAL_INCLUDE_DIR}
+                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
                     ${CURL_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS})
 
