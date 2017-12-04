@@ -447,6 +447,10 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
         int nBandCount = srcDS->GetRasterCount();
 
+        psWarpOptions->panSrcBands[b] = b + 1;
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
+        psWarpOptions->panDstBands[b] = b + 1;
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
         psWarpOptions->padfDstNoDataImag =
