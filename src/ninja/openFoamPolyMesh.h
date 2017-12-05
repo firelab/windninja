@@ -42,6 +42,7 @@
 
 #include "openFoam_fvSchemes.h"
 #include "openFoam_fvSolutions.h"
+#include "openFoam_setFields.h"
 
 /*
 currently this program is set up to populate the constant/polymesh directory in a given case folder with files that replicate the OpenFoam cavity tutorial, not the windninja mesh points. The idea is to get a better understanding of how the faces and neighbors need to be written. After this works for normal points, I'm going to adjust it to mesh specific stuff.
@@ -251,14 +252,8 @@ private:
     //setFieldsDict variables
     //I think the easiest way to do this is to have a writer class that just writes information
     //and a separate class that obtains the information
-    std::string defaultTvalue;      //default scalar value, so value to be placed everywhere where not specified
-    std::string defaultSourceValue; //default source value, so value to be placed everywhere where not specified
-    std::string distributionType;   //method to be used. If boxToCell, then will use a bounding box for specifying the source
-    std::string boxMinCoordinates;  //set of xmin, ymin, and zmin coordinates for the bounding box if using boxToCell distribution method
-    std::string boxMaxCoordinates;  //set of xmax, ymax, and zmax coordinates for the bounding box if using boxToCell distribution method
-    std::string distributionTValue; //value of scalar in the location to be specified
-    std::string distributionSourceValue;    //value of source in the location to be specified
-
+    // for now, just have them both in one. But later the writer class can be called at different times to get time varying information
+    openFoam_setFields foam_setFields;
 };
 
 

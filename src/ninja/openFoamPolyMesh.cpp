@@ -39,7 +39,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     generateCaseDirectory(outputPath);
 
     // determine what types and styles of files are written
-    simulationType = "buoyantBoussinesqPimpleFoam";   // myScalarTransportFoam, simpleFoam, buoyantBoussinesqPimpleFoam
+    simulationType = "myScalarTransportFoam";   // myScalarTransportFoam, simpleFoam, buoyantBoussinesqPimpleFoam
 
 //values used for the constant polyMesh directory
     xpoints = mesh.ncols;
@@ -186,13 +186,7 @@ openFoamPolyMesh::openFoamPolyMesh(std::string outputPath, Mesh mesh, double xll
     foam_fvSolutions.setupDesiredValues(simulationType);
 
     //setFieldsDict variables
-    defaultTvalue = "0";
-    defaultSourceValue = "0";
-    distributionType = "boxToCell";
-    boxMinCoordinates = "726019.742 5206748.293 1210";
-    boxMaxCoordinates = "726283 5207018.3 1440";
-    distributionTValue = "75";
-    distributionSourceValue = "75";
+    foam_setFields.setupDesiredValues(simulationType);
 
     writePolyMeshFiles(elem);
     std::cout << "Finished meshConversion output\n";
@@ -1182,22 +1176,43 @@ void openFoamPolyMesh::writeFvSolution()
 
 void openFoamPolyMesh::writeSetFieldsDict()
 {
-    fprintf(fzout,"defaultFieldValues\n(\n");
+    std::vector<std::string> fieldNames = foam_setFields.get_fieldNames();
+    std::vector<std::string> fieldTypes = foam_setFields.get_fieldTypes();
+    std::vector<std::string> fieldDefaultValues = foam_setFields.get_fieldDefaultValues();
+    std::vector< std::vector<std::string> > fieldRegions = foam_setFields.get_fieldRegions();
+    std::vector< std::vector< std::vector<std::string> > > fieldRegionInfo = foam_setFields.get_fieldRegionInfo();
+    std::vector< std::vector< std::vector<std::string> > > fieldRegionValues = foam_setFields.get_fieldRegionValues();
 
-    fprintf(fzout,"    volScalarFieldValue T %s\n",defaultTvalue.c_str());
-    fprintf(fzout,"    volScalarFieldValue source %s\n",defaultSourceValue.c_str());
-
-    fprintf(fzout,");\n\n");
-
-    fprintf(fzout,"regions\n(\n");
-    if(distributionType == "boxToCell")
+    fprintf(fzout,"defaultFieldValues\n");
+    fprintf(fzout,"(\n");
+    for(size_t j = 0; j < fieldNames.size(); j++)
     {
-        fprintf(fzout,"    boxToCell\n    {\n");
-        fprintf(fzout,"        box (%s) (%s);\n",boxMinCoordinates.c_str(),boxMaxCoordinates.c_str());
-        fprintf(fzout,"        fieldValues\n        (\n");
-        fprintf(fzout,"            volScalarFieldValue T %s\n",distributionTValue.c_str());
-        fprintf(fzout,"            volScalarFieldValue source %s\n",distributionSourceValue.c_str());
-        fprintf(fzout,"        );\n    }\n");
+        fprintf(fzout,"    %s %s %s\n",fieldTypes[j].c_str(),fieldNames[j].c_str(),fieldDefaultValues[j].c_str());
+    }
+    fprintf(fzout,");\n");
+    fprintf(fzout,"\n");
+    fprintf(fzout,"regions\n");
+    fprintf(fzout,"(\n");
+    // hmm, should this actually be where regions is independent of names? So restructure by regions, but make sure there are only so many names?
+    for(size_t j = 0; j < fieldNames.size(); j++)
+    {
+        for(size_t i = 0; i < fieldRegions[j].size(); i++)
+        {
+            fprintf(fzout,"    %s\n",fieldRegions[j][i].c_str());
+            fprintf(fzout,"    {\n");
+            for(size_t k = 0; k < fieldRegionInfo[j][i].size(); k++)
+            {
+                fprintf(fzout,"        %s\n",fieldRegionInfo[j][i][k].c_str());
+            }
+            fprintf(fzout,"        fieldValues\n");
+            fprintf(fzout,"        (\n");
+            for(size_t k = 0; k < fieldRegionValues[j][i].size(); k++)
+            {
+                fprintf(fzout,"            %s %s %s\n",fieldTypes[j].c_str(),fieldNames[j].c_str(),fieldRegionValues[j][i][k].c_str());
+            }
+            fprintf(fzout,"        );\n");
+            fprintf(fzout,"    }\n");
+        }
     }
     fprintf(fzout,");\n");
 }
