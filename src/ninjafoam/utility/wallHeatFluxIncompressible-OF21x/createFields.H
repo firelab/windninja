@@ -117,9 +117,9 @@
         incompressible::turbulenceModel::New(U, phi, laminarTransport)
     );
 
-	Info << "Reading turbulence properties\n";
+	//Info << "Reading turbulence properties\n";
     turbulence->read();
 
-	Info << "Correcting T boundaries\n";
+	Info << "Correcting T boundaries (updateCoeffs for wall function)\n";
     //Correct boundaries only after all fields are loaded in
     T.correctBoundaryConditions();

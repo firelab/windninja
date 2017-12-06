@@ -1,0 +1,5 @@
+This is a variation of the turbulentHeatFluxTemperature (deprecated in later versions of OpenFOAM). Basically I was having trouble getting it to work with the wallHeatFluxIncompressible utility, and the way it was looking for Cp0 was just kind of ridiculous. So I edited it and fixed these problems and added it into libWindNinja.so library. I still am not fully satisfied with how this is implemented, but I think that it is close enough.
+
+It might be handy to add another function that can be called by myApplyInit or some kind of utility, that calculates the initial T using the innerField near wall cell values. Maybe this introduces problems because two equal values could be subtracted in the heat equation, so this is an idea. More importantly, need to calculate initial q field that adjusts for the size of the near wall cells, or the size of the faces. Basically improve control of the function by improving the q calculation so that we can make a specific wall function for our needs to get the heat flux that would normally be generated in the solar_grid calculations.
+
+

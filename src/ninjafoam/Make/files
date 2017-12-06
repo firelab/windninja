@@ -4,6 +4,7 @@ inletBC/logProfileTurbulentKineticEnergyInlet/logProfileTurbulentKineticEnergyIn
 myKEpsilonNonEq/myKEpsilonNonEq.C
 nutNonEquiWallFunction/nutNonEquiWallFunctionFvPatchScalarField.H
 epsilonNonEquiWallFunction/epsilonNonEquiWallFunctionFvPatchScalarField.H
+myTurbulentHeatFluxTemperature/myTurbulentHeatFluxTemperatureFvPatchScalarField.C
 
 LIB = $(FOAM_USER_LIBBIN)/libWindNinja
 

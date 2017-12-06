@@ -1,0 +1,4 @@
+This is a copy of the original bouyantBoussinesqPimpleFoam solver, but set up to output some of the intermediate values. Similar steps need done with the wall, inlet, and outlet functions of the mesh if the desired values want to be easily displayed.
+
+In all honesty, probably fine just using the regular buoyantBoussinesqPimpleFoam solver, because the additional output values aren't that different from what is already outputted. But it is very valuable to compare this solver to the original solver, to see how to adjust stuff to control output of additional variables.
+

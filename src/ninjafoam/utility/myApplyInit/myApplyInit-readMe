@@ -1,0 +1,4 @@
+myApplyInit sets the inner temperature field of the startTime in a given mesh. This is usually run just before running a solver on a mesh. The goal is to also use it to set temperature or other properties on the faces of the mesh, but that turns out to be a bit trickier. This is no substitute for a wall function as it just sets a fixed value one time at the given locations. Wall functions are called multiple times during a simulation so they keep updating the wall values. Same thing with inlet and outlet functions.
+
+I made some later improvements that allowed it to set values over the different faces. Probably will need to make some adjustments to the potential temperature, but now it has a few different options for setting stuff, depending on what you comment out.
+

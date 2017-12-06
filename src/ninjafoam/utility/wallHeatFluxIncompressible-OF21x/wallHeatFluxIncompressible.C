@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
 #       include "readTransportProperties.H"
 
          // update the turbulence fields
-		Info << "\nReading turbulence properties\n";
+		//Info << "\nReading turbulence properties\n";
         turbulence->read();
 		
-		Info << "Determining needed kappat\n";
+		//Info << "Determining needed kappat\n";
         if (!(IOobject("kappat", runTime.timeName(), mesh).headerOk()))
         {
             Info<< "\nCalculating turbulent heat conductivity " << endl;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             Info<< "\nRead turbulent heat conductivity kappat" << endl;
         }
 
-		Info << "Determining needed kappaEff\n";
+		//Info << "Determining needed kappaEff\n";
         if (!(IOobject("kappaEff", runTime.timeName(), mesh).headerOk()))
         {
             Info<< "\nCalculating effective heat conductivity " << endl;
@@ -98,10 +98,10 @@ int main(int argc, char *argv[])
             Info<< "\nRead effective heat conductivity kappaEff" << endl;
         }
 
-		Info << "\nCalculating gradT\n";
+		//Info << "\nCalculating gradT\n";
         gradT=fvc::snGrad(T);
 
-		Info << "Calculating heatFlux\n";
+		//Info << "Calculating heatFlux\n";
         surfaceScalarField heatFlux =fvc::interpolate(kappaEff*Cp0*rho0)*gradT;
 
         const surfaceScalarField::GeometricBoundaryField& patchGradT =

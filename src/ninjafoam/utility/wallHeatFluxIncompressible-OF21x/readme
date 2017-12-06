@@ -15,8 +15,8 @@ Pr              Pr [0 0 0 0 0 0 0] 0.9;
 Prt             Prt [0 0 0 0 0 0 0] 0.85;
 
 // Cp0 value needed for wallHeatFluxIncompressible
-rho0             rho0 [1 -3 0 0 0 0 0] 1.2;
+Cp0             Cp0 [1 -3 0 0 0 0 0] 1.2;
 
 // rho0 value needed for wallHeatFluxIncompressible
-Cp0             Cp0 [0 2 -2 -1 0 0 0] 1.0;
+rho0             rho0 [0 2 -2 -1 0 0 0] 1.0;
 

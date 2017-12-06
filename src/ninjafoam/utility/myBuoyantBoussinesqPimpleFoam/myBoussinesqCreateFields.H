@@ -61,7 +61,7 @@
             runTime.timeName(),
             mesh,
 			IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         1.0 - beta*(T - TRef)
     );
@@ -85,7 +85,7 @@
 	(
 	"fakeKappaEff",
 	dimensionSet(0,2,-1,0,0,0,0),
-	scalar(75)
+	scalar(0)
 	);
 	
 	Info<< "Reading field kappaEff\n" << endl;
@@ -113,7 +113,7 @@
             runTime.timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         g & mesh.C()
     );
