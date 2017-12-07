@@ -413,24 +413,31 @@ static void NomadsFetchAsync( void *pData )
 
 static double NomadsGetMinSize( const char **ppszModel )
 {
+    double x = 0;
     double dfRes = 0;
     char **papszTokens = CSLTokenizeString2( ppszModel[NOMADS_GRID_RES], " ", 0 );
     if( papszTokens == NULL || CSLCount( papszTokens ) < 2 )
     {
+        CSLDestroy( papszTokens );
+        assert( 0 );
         return 0;
     }
-    dfRes = atof( papszTokens[0] );
+    x = atof( papszTokens[0] );
     if( EQUAL( papszTokens[1], "deg" ) )
     {
-        return dfRes;
+        dfRes = x;
     }
     else if( EQUAL( papszTokens[1], "km" ) )
     {
         /* https://en.wikipedia.org/wiki/Decimal_degrees */
-        return dfRes / 111.32;
+        dfRes = x / 111.32;
     }
-    assert( 0 );
-    return 0;
+    else
+    {
+        assert( 0 );
+    }
+    CSLDestroy( papszTokens );
+    return dfRes;
 }
 
 /*

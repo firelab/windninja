@@ -457,7 +457,8 @@ public:
     * \param stlFile path/filename of gridded speed file
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions=NULL );
+    int setSpeedInitGrid( const int nIndex, const std::string speedFile,
+                          const velocityUnits::eVelocityUnits units, char ** papszOptions=NULL );
     
     /**
     * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal

@@ -1459,6 +1459,9 @@ int NinjaFoam::RefineSurfaceLayer(){
         meshResolution /= 2.0;
         
         UpdateDictFiles();
+
+        pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         
         CopyFile(pszInput, pszOutput, 
                 CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),

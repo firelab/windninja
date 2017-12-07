@@ -275,7 +275,7 @@ public:
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
 #endif
 
-    void set_speedFile(std::string speedFile);
+    void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);
     void set_dirFile(std::string dirFile);
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
