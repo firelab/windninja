@@ -1737,6 +1737,10 @@ int mainWindow::solve()
     //google
     bool writeGoogle = tree->google->googleGroupBox->isChecked();
     double googleRes = tree->google->googleResSpinBox->value();
+    if(tree->google->useMeshResCheckBox->isChecked() == true)
+    {
+        googleRes = -1;
+    }
     double vectorWidth = tree->google->vectorWidthDoubleSpinBox->value();
     lengthUnits::eLengthUnits googleUnits;
     KmlVector::egoogSpeedScaling googleScale;
@@ -1754,6 +1758,10 @@ int mainWindow::solve()
     //ascii raster fb files
     bool writeFb = tree->fb->fbGroupBox->isChecked();
     double fbRes = tree->fb->fbResSpinBox->value();
+    if(tree->fb->useMeshResCheckBox->isChecked() == true)
+    {
+        fbRes = -1;
+    }
     lengthUnits::eLengthUnits fbUnits;
     if(tree->fb->fbMetersRadioButton->isChecked())
     fbUnits = lengthUnits::meters;
@@ -1788,6 +1796,10 @@ int mainWindow::solve()
     //shape
     bool writeShape = tree->shape->shapeGroupBox->isChecked();
     double shapeRes = tree->shape->shapeResSpinBox->value();
+    if(tree->shape->useMeshResCheckBox->isChecked() == true)
+    {
+        shapeRes = -1;
+    }
     lengthUnits::eLengthUnits shapeUnits;
     if(tree->shape->shapeMetersRadioButton->isChecked())
     shapeUnits = lengthUnits::meters;
@@ -1796,6 +1808,10 @@ int mainWindow::solve()
     //pdf
     bool writePdf = tree->pdf->pdfGroupBox->isChecked();
     double pdfRes = tree->pdf->pdfResSpinBox->value();
+    if(tree->pdf->useMeshResCheckBox->isChecked() == true)
+    {
+        pdfRes = -1;
+    }
     double pdfLineWidth = tree->pdf->vectorWidthDoubleSpinBox->value();
     lengthUnits::eLengthUnits pdfUnits;
     if(tree->pdf->pdfMetersRadioButton->isChecked())
