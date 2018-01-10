@@ -861,7 +861,7 @@ public:
     * \param nIndex index of a ninja
     * \return output_speed_grid Pointer to the output speed grid as a GDALDataset
     */
-    GDALDataset* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+    double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja

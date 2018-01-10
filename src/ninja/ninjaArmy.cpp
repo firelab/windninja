@@ -1549,7 +1549,7 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
 
-GDALDataset* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {

@@ -79,6 +79,7 @@ ninja::ninja()
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
+    outSpeedGrid=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -178,6 +179,7 @@ ninja::ninja(const ninja &rhs)
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
+    outSpeedGrid=NULL;
 }
 
 /**
@@ -257,6 +259,7 @@ ninja &ninja::operator=(const ninja &rhs)
         vInitializationGrid=NULL;
         airTempGrid=NULL;
         cloudCoverGrid=NULL;
+        outSpeedGrid=NULL;
     }
     return *this;
 }
@@ -3176,6 +3179,10 @@ void ninja::deleteDynamicMemory()
 	{	delete cloudCoverGrid;
 		cloudCoverGrid = NULL;
 	}
+	if(outSpeedGrid)
+	{	delete outSpeedGrid;
+		outSpeedGrid = NULL;
+	}
 
 	u0.deallocate();
 	v0.deallocate();
@@ -4380,11 +4387,17 @@ void ninja::set_numberCPUs(int CPUs)
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
 
-GDALDatasetH ninja::get_outputSpeedGrid()
+double* ninja::get_outputSpeedGrid()
 {
-    GDALDatasetH hDS = NULL;
-    hDS = VelocityGrid.ascii2GDAL();
-    return hDS;
+//    outSpeedGrid = new double[VelocityGrid.get_arraySize()];
+
+//    for(int i=0; i<VelocityGrid.get_nrows(); i++){
+//        for(int j=0; j<VelocityGrid.get_ncols(); j++){
+//            outSpeedGrid[i] = VelocityGrid(i,j)
+//        }
+//    }
+
+    return outSpeedGrid;
 }
 
 void ninja::set_outputBufferClipping(double percent)

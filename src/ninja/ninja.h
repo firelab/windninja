@@ -295,7 +295,7 @@ public:
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
     void set_numberCPUs(int CPUs);
-    GDALDatasetH get_outputSpeedGrid();
+    double *get_outputSpeedGrid();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
@@ -371,6 +371,8 @@ private:
     AsciiGrid<double> *vInitializationGrid;
     AsciiGrid<double> *airTempGrid;
     AsciiGrid<double> *cloudCoverGrid;
+
+    double *outSpeedGrid; //output speed array for in-memory output in API
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
