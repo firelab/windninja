@@ -723,17 +723,75 @@ WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
-WINDNINJADLL_EXPORT NinjaGridH* NinjaGetOutputSpeedGrid
+WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja )
     {
-       return reinterpret_cast<NinjaGridH*>
-           ( reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex ));
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     }
     else
     {
-        return NULL;
+    }
+}
+
+WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
+    }
+    else
+    {
+    }
+}
+
+WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridProjection( nIndex );
+    }
+    else
+    {
+    }
+}
+
+WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridCellSize( nIndex );
+    }
+    else
+    {
+    }
+}
+
+WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridxllCorner( nIndex );
+    }
+    else
+    {
+    }
+}
+
+WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridyllCorner( nIndex );
+    }
+    else
+    {
     }
 }
 
@@ -941,7 +999,6 @@ WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
     }
     else
     {
-        return NULL;
     }
 }
 

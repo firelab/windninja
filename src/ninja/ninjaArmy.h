@@ -859,9 +859,49 @@ public:
     * \brief Get the output speed grid for a ninja
     *
     * \param nIndex index of a ninja
-    * \return output_speed_grid Pointer to the output speed grid as a GDALDataset
+    * \return Pointer to the output speed array
     */
-    double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+    const double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output direction grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return Pointer to the output direction array
+    */
+    const double* getOutputDirectionGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid projection string for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid projection string
+    */
+    const char* getOutputGridProjection( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid cell size for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid cell size in meters
+    */
+    const double getOutputGridCellSize( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid xllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid xllCorner
+    */
+    const double getOutputGridxllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid yllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid yllCorner
+    */
+    const double getOutputGridyllCorner( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja

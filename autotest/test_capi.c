@@ -382,21 +382,33 @@ void checkOutputWritingMethods()
     assert( errval == NINJA_E_NULL_PTR );
 
 
-
     /*  Invalid inputs for setGoogOutFlag */
     errval = NinjaSetGoogOutFlag( NULL, 0, 1 );
     assert( errval == NINJA_E_NULL_PTR );
 
     errval = NinjaSetGoogOutFlag( ninja, 0, 0 );
     assert( errval == NINJA_SUCCESS );
+}
 
+void checkInMemoryOutputMethods()
+{
+    //check in-memory output grid retrieval
+    const double* outputSpeedGrid = NULL;
+    outputSpeedGrid = NinjaGetOutputSpeedGrid( ninja, 0 );
+    assert( outputSpeedGrid != NULL );
+
+    const double* outputDirectionGrid = NULL;
+    outputDirectionGrid = NinjaGetOutputDirectionGrid( ninja, 0 );
+    assert( outputDirectionGrid != NULL );
 }
 
 int runWindNinja()
 {
     NinjaH* ninjaArmy = NULL; 
-    NinjaGridH* outputSpeedGrid = NULL;
-    int numNinjas = 1;
+    const double* outputSpeedGrid = NULL;
+    const double* outputDirectionGrid = NULL;
+    const char* outputGridProjection = NULL;
+    int numNinjas = 1; //Right now this has to be 1
     int momentumFlag = 0;
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
@@ -418,87 +430,87 @@ int runWindNinja()
     const int meshCount = 100000;
 
     ninjaArmy = NinjaCreateArmy(numNinjas, momentumFlag, papszOptions);
-    if( NULL != ninjaArmy )
+    if( NULL == ninjaArmy )
     {
-        printf("NinjaCreateArmy: err = %d\n", err);
+      printf("NinjaCreateArmy: ninjaArmy = NULL\n");
     }
 
     err = NinjaInit();
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaInit: err = %d\n", err);
+      printf("NinjaInit: err = %d\n", err);
     }
 
     err = NinjaSetCommunication(ninjaArmy, nIndex, comType);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetCommunication: err = %d\n", err);
+      printf("NinjaSetCommunication: err = %d\n", err);
     }
 
     err = NinjaSetNumberCPUs(ninjaArmy, nIndex, nCPUs);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetNumberCPUs: err = %d\n", err);
+      printf("NinjaSetNumberCPUs: err = %d\n", err);
     }
 
     err = NinjaSetInitializationMethod(ninjaArmy, nIndex, initializationMethod);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetInitializationMethod: err = %d\n", err);
+      printf("NinjaSetInitializationMethod: err = %d\n", err);
     }
 
     err = NinjaSetDem(ninjaArmy, nIndex, demFile);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetDem: err = %d\n", err);
+      printf("NinjaSetDem: err = %d\n", err);
     }
 
     err = NinjaSetPosition(ninjaArmy, nIndex);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetPosition: err = %d\n", err);
+      printf("NinjaSetPosition: err = %d\n", err);
     }
 
     err = NinjaSetInputSpeed(ninjaArmy, nIndex, speed, speedUnits);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetInputSpeed: err = %d\n", err);
+      printf("NinjaSetInputSpeed: err = %d\n", err);
     }
 
-    err = NinjaSetInputDirection(ninjaArmy, nIndex, direction);
+   err = NinjaSetInputDirection(ninjaArmy, nIndex, direction);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetInputDirection: err = %d\n", err);
+      printf("NinjaSetInputDirection: err = %d\n", err);
     }
 
-    err = NinjaSetInputWindHeight(ninjaArmy, nIndex, height, heightUnits);
+   err = NinjaSetInputWindHeight(ninjaArmy, nIndex, height, heightUnits);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetInputWindHeight: err = %d\n", err);
+      printf("NinjaSetInputWindHeight: err = %d\n", err);
     }
 
-    err = NinjaSetOutputWindHeight(ninjaArmy, nIndex, height, heightUnits);
+   err = NinjaSetOutputWindHeight(ninjaArmy, nIndex, height, heightUnits);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetOutputWindHeight: err = %d\n", err);
+      printf("NinjaSetOutputWindHeight: err = %d\n", err);
     }
 
     err = NinjaSetOutputSpeedUnits(ninjaArmy, nIndex, speedUnits);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
+      printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
     }
 
     err = NinjaSetDiurnalWinds(ninjaArmy, nIndex, diurnalFlag);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetDiurnalWinds: err = %d\n", err);
+      printf("NinjaSetDiurnalWinds: err = %d\n", err);
     }
 
     err = NinjaSetUniVegetation(ninjaArmy, nIndex, vegetation);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetUniVegetation: err = %d\n", err);
+      printf("NinjaSetUniVegetation: err = %d\n", err);
     }
 
     err = NinjaSetMeshResolutionChoice(ninjaArmy, nIndex, meshChoice);
@@ -530,18 +542,40 @@ int runWindNinja()
     }
 
     err = NinjaStartRuns(ninjaArmy, nCPUs);
-    if(err != NINJA_SUCCESS)
+    if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-
-    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy);
-    if( NULL != outputSpeedGrid )
+    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
+    printf("outputSpeedGrid[0] = %f\n", outputSpeedGrid[0]);
+    if( NULL == outputSpeedGrid )
     {
-        printf("NinjaGetOutputSpeedGrid: err = %d\n", err);
+        printf("Error in NinjaGetOutputSpeedGrid");
     }
 
+    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex);
+    printf("outputDirectionGrid[0] = %f\n", outputDirectionGrid[0]);
+    if( NULL == outputDirectionGrid )
+    {
+        printf("Error in NinjaGetOutputDirectionGrid");
+    }
+
+    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex);
+    printf("outputGridProjection = %s\n", outputGridProjection);
+    if( NULL == outputGridProjection )
+    {
+        printf("Error in NinjaGetOutputGridProjection");
+    }
+
+    const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
+    printf("outputGridCellSize = %f\n", cellSize);
+
+    const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
+    printf("outputGridxllCorner = %f\n", xllCorner);
+
+    const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
+    printf("outputGridyllCorner = %f\n", yllCorner);
 
     err = NinjaDestroyArmy(ninjaArmy);
     if(err != NINJA_SUCCESS)
@@ -555,7 +589,7 @@ int runWindNinja()
 int main()
 {
     //Create an army
-    ninja  = NinjaCreateArmy( 1, 0, NULL );
+    ninja  = NinjaCreateArmy( 1, 0, NULL ); //can only create army of 1 right now
     assert( NULL != ninja );
 
     checkInitializationMethods();

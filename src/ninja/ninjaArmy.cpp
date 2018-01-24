@@ -1548,15 +1548,48 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-
-double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
-
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputDirectionGrid( );
+    }
+}
+const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridProjection( );
+    }
+}
+const double ninjaArmy::getOutputGridCellSize( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridCellSize( );
+    }
+}
+const double ninjaArmy::getOutputGridxllCorner( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridxllCorner( );
+    }
+}
+const double ninjaArmy::getOutputGridyllCorner( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridyllCorner( );
+    }
+}
 int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {

@@ -79,7 +79,6 @@ ninja::ninja()
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
-    outSpeedGrid=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -111,6 +110,8 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+, outputSpeedArray(rhs.outputSpeedArray)
+, outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
 , DustGrid(rhs.DustGrid)
 #endif
@@ -179,7 +180,6 @@ ninja::ninja(const ninja &rhs)
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
-    outSpeedGrid=NULL;
 }
 
 /**
@@ -196,6 +196,7 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+        outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
         #endif
@@ -259,7 +260,6 @@ ninja &ninja::operator=(const ninja &rhs)
         vInitializationGrid=NULL;
         airTempGrid=NULL;
         cloudCoverGrid=NULL;
-        outSpeedGrid=NULL;
     }
     return *this;
 }
@@ -3179,9 +3179,9 @@ void ninja::deleteDynamicMemory()
 	{	delete cloudCoverGrid;
 		cloudCoverGrid = NULL;
 	}
-	if(outSpeedGrid)
-	{	delete outSpeedGrid;
-		outSpeedGrid = NULL;
+	if(outputDirectionArray)
+	{	delete outputDirectionArray;
+		outputDirectionArray = NULL;
 	}
 
 	u0.deallocate();
@@ -4222,7 +4222,7 @@ bool ninja::set_position()
                         GA_ReadOnly);
 
     if(poDS == NULL)
-    throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
+        throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
 
     double lonLat[2];
 
@@ -4389,15 +4389,81 @@ void ninja::set_numberCPUs(int CPUs)
 
 double* ninja::get_outputSpeedGrid()
 {
-//    outSpeedGrid = new double[VelocityGrid.get_arraySize()];
+    outputSpeedArray = new double[VelocityGrid.get_arraySize()];
 
-//    for(int i=0; i<VelocityGrid.get_nrows(); i++){
-//        for(int j=0; j<VelocityGrid.get_ncols(); j++){
-//            outSpeedGrid[i] = VelocityGrid(i,j)
-//        }
-//    }
+    for(int i=0; i<VelocityGrid.get_nRows(); i++){
+        for(int j=0; j<VelocityGrid.get_nCols(); j++){
+            outputSpeedArray[i] = VelocityGrid(i,j);
+        }
+    }
 
-    return outSpeedGrid;
+    return outputSpeedArray;
+}
+
+double* ninja::get_outputDirectionGrid()
+{
+    outputDirectionArray = new double[AngleGrid.get_arraySize()];
+
+    for(int i=0; i<AngleGrid.get_nRows(); i++){
+        for(int j=0; j<AngleGrid.get_nCols(); j++){
+            outputDirectionArray[i] = AngleGrid(i,j);
+        }
+    }
+
+    return outputDirectionArray;
+}
+
+const char* ninja::get_outputGridProjection()
+{
+    return VelocityGrid.prjString.c_str();
+}
+
+double ninja::get_outputGridCellSize()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_cellSize();
+}
+
+double ninja::get_outputGridxllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_xllCorner();
+}
+
+double ninja::get_outputGridyllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_yllCorner();
 }
 
 void ninja::set_outputBufferClipping(double percent)
