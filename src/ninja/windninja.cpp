@@ -730,9 +730,6 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     }
-    else
-    {
-    }
 }
 
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
@@ -741,9 +738,6 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
     if( NULL != ninja )
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
-    }
-    else
-    {
     }
 }
 
@@ -754,9 +748,6 @@ WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridProjection( nIndex );
     }
-    else
-    {
-    }
 }
 
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
@@ -765,9 +756,6 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
     if( NULL != ninja )
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridCellSize( nIndex );
-    }
-    else
-    {
     }
 }
 
@@ -778,9 +766,6 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridxllCorner( nIndex );
     }
-    else
-    {
-    }
 }
 
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
@@ -789,9 +774,6 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
     if( NULL != ninja )
     {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridyllCorner( nIndex );
-    }
-    else
-    {
     }
 }
 
@@ -996,9 +978,6 @@ WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
     if( NULL != ninja )
     {
         return reinterpret_cast<ninjaArmy*>( ninja )->getOutputPath( nIndex ).c_str();
-    }
-    else
-    {
     }
 }
 
