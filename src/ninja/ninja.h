@@ -378,12 +378,6 @@ private:
     Slope *slope;
     Shade *shade;
     Solar *solar;
-    AsciiGrid<double> *speedInitializationGrid;
-    AsciiGrid<double> *dirInitializationGrid;
-    AsciiGrid<double> *uInitializationGrid;
-    AsciiGrid<double> *vInitializationGrid;
-    AsciiGrid<double> *airTempGrid;
-    AsciiGrid<double> *cloudCoverGrid;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
