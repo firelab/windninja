@@ -79,6 +79,7 @@ ninja::ninja()
     vInitializationGrid=NULL;
     airTempGrid=NULL;
     cloudCoverGrid=NULL;
+    outputDirectionArray=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -3180,7 +3181,7 @@ void ninja::deleteDynamicMemory()
 		cloudCoverGrid = NULL;
 	}
 	if(outputDirectionArray)
-	{	delete outputDirectionArray;
+	{	delete[] outputDirectionArray;
 		outputDirectionArray = NULL;
 	}
 
