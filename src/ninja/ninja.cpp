@@ -3138,30 +3138,6 @@ void ninja::deleteDynamicMemory()
 	{	delete[] DIAG;
 		DIAG=NULL;
 	}
-	if(speedInitializationGrid)
-	{	delete speedInitializationGrid;
-		speedInitializationGrid = NULL;
-	}
-	if(dirInitializationGrid)
-	{	delete dirInitializationGrid;
-		dirInitializationGrid = NULL;
-	}
-	if(uInitializationGrid)
-	{	delete uInitializationGrid;
-		uInitializationGrid = NULL;
-	}
-	if(vInitializationGrid)
-	{	delete vInitializationGrid;
-		vInitializationGrid = NULL;
-	}
-	if(airTempGrid)
-	{	delete airTempGrid;
-		airTempGrid = NULL;
-	}
-	if(cloudCoverGrid)
-	{	delete cloudCoverGrid;
-		cloudCoverGrid = NULL;
-	}
 	if(outputDirectionArray)
 	{	delete[] outputDirectionArray;
 		outputDirectionArray = NULL;
