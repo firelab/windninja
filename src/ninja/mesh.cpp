@@ -89,12 +89,12 @@ Mesh::Mesh(Mesh const& m) // Copy constructor
     targetNumHorizCells = m.targetNumHorizCells;
     maxAspectRatio = m.maxAspectRatio;
 
-    coarseTargetCells = m.coarseTargetCells; //IF THESE ARE CHANGED, make sure to change the ones in the windninja GUI
+    coarseTargetCells = m.coarseTargetCells;
     mediumTargetCells = m.mediumTargetCells;
     fineTargetCells = m.fineTargetCells;
 }
 
-Mesh& Mesh::operator= (Mesh const& m) // Assignment operator
+Mesh& Mesh::operator= (Mesh const& m)
 {
     if(&m != this)
     {
@@ -122,7 +122,7 @@ Mesh& Mesh::operator= (Mesh const& m) // Assignment operator
         targetNumHorizCells = m.targetNumHorizCells;
         maxAspectRatio = m.maxAspectRatio;
 
-        coarseTargetCells = m.coarseTargetCells; //IF THESE ARE CHANGED, make sure to change the ones in the windninja GUI
+        coarseTargetCells = m.coarseTargetCells;
         mediumTargetCells = m.mediumTargetCells;
         fineTargetCells = m.fineTargetCells;
     }
@@ -145,19 +145,19 @@ void Mesh::buildFrom3dWeatherModel(const WindNinjaInputs &input,
     nlayers = layers;
     numVertLayers = layers;
 
-	nrowsElem = nrows - 1;
-	ncolsElem = ncols - 1;
-	nlayersElem = nlayers - 1;
+    nrowsElem = nrows - 1;
+    ncolsElem = ncols - 1;
+    nlayersElem = nlayers - 1;
 
     NUMNP=nrows*ncols*nlayers;              //number of nodal points
     NUMEL=(nrows-1)*(ncols-1)*(nlayers-1);  //number of elements
     //hexahedral elements are being used
     NNPE=8;                                 //number of nodes per element
 
-	
-	/*
-	 * reset unused generic mesh variables (?)
-	 */
+
+    /*
+     * reset unused generic mesh variables (?)
+     */
 	
     /*vertGrowth = -1;
     meshResChoice = coarse;
@@ -166,56 +166,41 @@ void Mesh::buildFrom3dWeatherModel(const WindNinjaInputs &input,
     coarseTargetCells=-1;
     mediumTargetCells=-1;
     fineTargetCells=-1;*/
-	
-	XORD.allocate(nrows, ncols, nlayers);
-	YORD.allocate(nrows, ncols, nlayers);
-	ZORD.allocate(nrows, ncols, nlayers);
 
-	//Set xyz coordinates ---------------------------------------------------------------
-	#pragma omp parallel for default(shared) private(i,j,k)
-	for(k=0;k<nlayers;k++) // k = 0 is cell center of 1st wx model layer
-	{
-		for(i=0;i<nrows;i++)
-		{
-			for(j=0;j<ncols;j++)
-			{
-				//Note that the XORDs and YORDs are the WindNinja nodal locations.
+    XORD.allocate(nrows, ncols, nlayers);
+    YORD.allocate(nrows, ncols, nlayers);
+    ZORD.allocate(nrows, ncols, nlayers);
+
+    //Set xyz coordinates ---------------------------------------------------------------
+    #pragma omp parallel for default(shared) private(i,j,k)
+    for(k=0;k<nlayers;k++) // k = 0 is cell center of 1st wx model layer
+    {
+        for(i=0;i<nrows;i++)
+        {
+            for(j=0;j<ncols;j++)
+            {
+                //Note that the XORDs and YORDs are the WindNinja nodal locations.
                 //These are in a coordinate system with xy-location (0,0) at the lower left corner of the DEM.
                 //Since the DEM is cell centered and the XORD/YORD are nodes, the mesh is built with the nodes
                 //on the DEM cell center locations.
                 //So, for example, XORD(0,0,0) = 0.5*cellsize.
-				//These must later be "shifted" to the xllcorner and yllcorner of DEM for output products.
-				//This is done to try to reduce roundoff error in calculations.
+                //These must later be "shifted" to the xllcorner and yllcorner of DEM for output products.
+                //This is done to try to reduce roundoff error in calculations.
 
-				XORD(i, j, k) = (double)j*meshResolution + xOffset + 0.5*meshResolution;
+                XORD(i, j, k) = (double)j*meshResolution + xOffset + 0.5*meshResolution;
                 YORD(i, j, k) = (double)i*meshResolution + yOffset + 0.5*meshResolution;
                 ZORD(i, j, k) = elevationArray(i,j,k);
             }
         }
     }
-	
-	// testing
-        /*
-	std::string filename;
-    AsciiGrid<double> testGrid(input.dem);
-	
-	for(int k = 0; k<nlayers; k++){
-        for(int i = 0; i<testGrid.get_nRows(); i++){
-            for(int j = 0; j<testGrid.get_nCols(); j++ ){
-                testGrid(i,j) = ZORD(i,j,k);
-                filename = "elevation" + boost::lexical_cast<std::string>(k) + ".asc";
-                
-            }
-        }
-        testGrid.write_Grid(filename.c_str(), 2);
-    }
-    testGrid.deallocate();
-    */
 
-	domainHeight = 0;
-    for(int i = 0; i < nrows; i++){
-        for(int j = 0; j < ncols; j++ ){
-            if(ZORD(i, j, nlayers - 1) > domainHeight){
+    domainHeight = 0;
+    for(int i = 0; i < nrows; i++)
+    {
+        for(int j = 0; j < ncols; j++)
+        {
+            if(ZORD(i, j, nlayers - 1) > domainHeight)
+            {
                 domainHeight = ZORD(i, j, nlayers - 1);
             }
         }
@@ -224,534 +209,535 @@ void Mesh::buildFrom3dWeatherModel(const WindNinjaInputs &input,
 
 void Mesh::buildStandardMesh(WindNinjaInputs& input)
 {
-	 int i;   //"i" is row number with 0 being the South row
-     int j;   //"j" is column number with 0 being the West row
-     int k;   //"k" is layer number with 0 being the ground layer
-     double aspect_ratio=0.0, equiangle_skew=0.0;
-     //double minnearwallz=0.0, largenearwallz=0.0;
+    int i;   //"i" is row number with 0 being the South row
+    int j;   //"j" is column number with 0 being the West row
+    int k;   //"k" is layer number with 0 being the ground layer
+    double aspect_ratio=0.0, equiangle_skew=0.0;
+    //double minnearwallz=0.0, largenearwallz=0.0;
 
-     int check_aspect_ratio;    //Flag to check aspect ratio of cells:  0=>don't check ratio   1=>check ratio
-     int check_equiangle_skew;  //Flag to check equiangle skew of cells:  0=>don't check skewness   1=>check skewness
-
+    int check_aspect_ratio;    //Flag to check aspect ratio of cells:  0=>don't check ratio   1=>check ratio
+    int check_equiangle_skew;  //Flag to check equiangle skew of cells:  0=>don't check skewness   1=>check skewness
 
 #ifdef NINJA_DEBUG
-      check_aspect_ratio=1;    //check
-      check_equiangle_skew=1;  //check
+    check_aspect_ratio=1;    //check
+    check_equiangle_skew=1;  //check
 #else
-      check_aspect_ratio=0;    //don't check
-      check_equiangle_skew=0;  //don't check
+    check_aspect_ratio=0;    //don't check
+    check_equiangle_skew=0;  //don't check
 #endif
 
-      //If horizontal cellsize hasn't been set yet.
-      if(meshResolution < 0.0)
-          compute_cellsize(input.dem);
+    //If horizontal cellsize hasn't been set yet.
+    if(meshResolution < 0.0)
+        compute_cellsize(input.dem);
 
-      //If domainHeight wasn't set with set_domainHeight(), set using other parameters (numVertLayers, vertGrowth, etc.)
-      if(domainHeight < 0.0)
-          compute_domain_height(input);
+    //If domainHeight wasn't set with set_domainHeight(), set using other parameters (numVertLayers, vertGrowth, etc.)
+    if(domainHeight < 0.0)
+        compute_domain_height(input);
 
-      if(meshResolution < 0.0)
-          throw std::out_of_range("The mesh resolution cannot be less than 0.");
-      if(domainHeight < input.dem.get_maxValue())
-          throw std::out_of_range("Domain height is below the elevation of the tallest mountain in Mesh::set_domainHeight().");
-      if(numVertLayers <= 0)
-          throw std::out_of_range("The number of vertical layers in the mesh cannot be less than or equal to 0.");
-      if(vertGrowth < 0.0)
-          throw std::out_of_range("The vertical mesh growth rate cannot be less than 0.");
-      if(maxAspectRatio < 0.0)
-              throw std::out_of_range("maxAspectRatio is less than 0.");
+    if(meshResolution < 0.0)
+        throw std::out_of_range("The mesh resolution cannot be less than 0.");
+    if(domainHeight < input.dem.get_maxValue())
+        throw std::out_of_range("Domain height is below the elevation of the tallest mountain in Mesh::set_domainHeight().");
+    if(numVertLayers <= 0)
+        throw std::out_of_range("The number of vertical layers in the mesh cannot be less than or equal to 0.");
+    if(vertGrowth < 0.0)
+        throw std::out_of_range("The vertical mesh growth rate cannot be less than 0.");
+    if(maxAspectRatio < 0.0)
+        throw std::out_of_range("maxAspectRatio is less than 0.");
 
-     if(vertGrowth==1)
-		 throw std::range_error("Mesh::buildStandardMesh(WindNinjaInputs& input) detected a bad \"vertGrowth\" value.");
+    if(vertGrowth==1)
+        throw std::range_error("Mesh::buildStandardMesh(WindNinjaInputs& input) detected a bad \"vertGrowth\" value.");
 
-	//Resample DEM to desired computational resolution
-     if(meshResolution < input.dem.get_cellSize())
-     {
-         input.dem.resample_Grid_in_place(meshResolution, Elevation::order1);	//make the grid finer
-         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
-								//NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
-     }else if(meshResolution > input.dem.get_cellSize())
-     {
-		 input.dem.resample_Grid_in_place(meshResolution, Elevation::order0);	//coarsen the grid
-		 input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0);		//coarsen the grids
-         
-         input.dem.BufferGridInPlace();  //make sure grid at least covers the original domain
-         input.surface.BufferGridInPlace();
-     }
-
-	 nrows = input.dem.get_nRows();
-	 ncols = input.dem.get_nCols();
-	 nlayers = numVertLayers;
-
-	 nrowsElem = nrows - 1;
-	 ncolsElem = ncols - 1;
-	 nlayersElem = nlayers - 1;
-
-     NUMNP=nrows*ncols*nlayers;              //number of nodal points
-     NUMEL=(nrows-1)*(ncols-1)*(nlayers-1);  //number of elements
-     //hexahedral elements are being used
-     NNPE=8;                                 //number of nodes per element
+    //Resample DEM to desired computational resolution
+    //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
+    if(meshResolution < input.dem.get_cellSize())
+    {
+        input.dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
+        input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
+    }else if(meshResolution > input.dem.get_cellSize())
+    {
+        input.dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
+        input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
      
-	 XORD.allocate(nrows, ncols, nlayers);
-	 YORD.allocate(nrows, ncols, nlayers);
-	 ZORD.allocate(nrows, ncols, nlayers);
+        input.dem.BufferGridInPlace(); //make sure grid at least covers the original domain
+        input.surface.BufferGridInPlace();
+    }
 
+    nrows = input.dem.get_nRows();
+    ncols = input.dem.get_nCols();
+    nlayers = numVertLayers;
 
-	//Set xyz coordinates ---------------------------------------------------------------
-	#pragma omp parallel for default(shared) private(i,j,k)
-	for(k=0;k<nlayers;k++)
-	{
-		for(i=0;i<nrows;i++)
-		{
-			for(j=0;j<ncols;j++)
-			{
-				//Note that the XORDs and YORDs are the WindNinja nodal locations.
+    nrowsElem = nrows - 1;
+    ncolsElem = ncols - 1;
+    nlayersElem = nlayers - 1;
+
+    NUMNP=nrows*ncols*nlayers; //number of nodal points
+    NUMEL=(nrows-1)*(ncols-1)*(nlayers-1); //number of elements
+    //hexahedral elements are being used
+    NNPE=8; //number of nodes per element
+
+    XORD.allocate(nrows, ncols, nlayers);
+    YORD.allocate(nrows, ncols, nlayers);
+    ZORD.allocate(nrows, ncols, nlayers);
+
+    //Set xyz coordinates ---------------------------------------------------------------
+    #pragma omp parallel for default(shared) private(i,j,k)
+    for(k=0;k<nlayers;k++)
+    {
+        for(i=0;i<nrows;i++)
+        {
+            for(j=0;j<ncols;j++)
+            {
+                //Note that the XORDs and YORDs are the WindNinja nodal locations.
                 //These are in a coordinate system with xy-location (0,0) at the lower left corner of the DEM.
                 //Since the DEM is cell centered and the XORD/YORD are nodes, the mesh is built with the nodes
                 //on the DEM cell center locations.
                 //So, for example, XORD(0,0,0) = 0.5*cellsize.
-				//These must later be "shifted" to the xllcorner and yllcorner of DEM for output products.
-				//This is done to try to reduce roundoff error in calculations.
+                //These must later be "shifted" to the xllcorner and yllcorner of DEM for output products.
+                //This is done to try to reduce roundoff error in calculations.
 
-				XORD(i, j, k) = (double)j*meshResolution + 0.5*meshResolution;
+                XORD(i, j, k) = (double)j*meshResolution + 0.5*meshResolution;
                 YORD(i, j, k) = (double)i*meshResolution + 0.5*meshResolution;
                 if(k==0)
                 {
-                     ZORD(i, j, k) = input.dem(i,j);
+                    ZORD(i, j, k) = input.dem(i,j);
                 }else
                 {
-                     ZORD(i, j, k) = get_z(i, j, k, input.dem(i,j));
+                    ZORD(i, j, k) = get_z(i, j, k, input.dem(i,j));
                 }
-			}
-		}
-	}
+            }
+        }
+    }
 
-     if(check_aspect_ratio==1)
-          aspect_ratio=get_aspect_ratio(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
-     if(check_equiangle_skew==1)
-          equiangle_skew=get_equiangle_skew(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
+    if(check_aspect_ratio==1)
+        aspect_ratio=get_aspect_ratio(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
+    if(check_equiangle_skew==1)
+        equiangle_skew=get_equiangle_skew(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
 #ifdef NINJA_DEBUG_VERBOSE
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "\n--------MESH INFORMATION--------");
-//          input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Ground roughness = %lf",roughness);
-      //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Smallest ground cell = %lf",minnearwallz);
-      //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest ground cell = %lf",largenearwallz);
-      if(check_aspect_ratio==1)
-           input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest aspect ratio = %lf",aspect_ratio);
-      if(check_equiangle_skew==1)
-           input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest equiangle skew = %lf",equiangle_skew);
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of columns = %d",input.dem.get_nCols());
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of rows = %d",input.dem.get_nRows());
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of nodes = %ld",NUMNP);
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of elements = %ld",NUMEL);
-      input.Com->ninjaCom(ninjaComClass::ninjaDebug, "--------------------------------");
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "\n--------MESH INFORMATION--------");
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Ground roughness = %lf",roughness);
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Smallest ground cell = %lf",minnearwallz);
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest ground cell = %lf",largenearwallz);
+    if(check_aspect_ratio==1)
+        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest aspect ratio = %lf",aspect_ratio);
+    if(check_equiangle_skew==1)
+        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest equiangle skew = %lf",equiangle_skew);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of columns = %d",input.dem.get_nCols());
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of rows = %d",input.dem.get_nRows());
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of nodes = %ld",NUMNP);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of elements = %ld",NUMEL);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "--------------------------------");
 #endif //NINJA_DEBUG_VERBOSE
-
 }
 
 double Mesh::get_z(const int& i, const int& j, const int& k, const double& elev)
 {
-        double z;
-        z=(domainHeight-elev)*((std::pow(vertGrowth,int(k-numVertLayers+1))-std::pow(vertGrowth,int(1-numVertLayers)))/(1-std::pow(vertGrowth,int(1-numVertLayers))))+elev;
-        return z;
+    double z;
+    z=(domainHeight-elev)*((std::pow(vertGrowth,
+                    int(k-numVertLayers+1))-std::pow(vertGrowth,
+                    int(1-numVertLayers)))/(1-std::pow(vertGrowth,
+                    int(1-numVertLayers))))+elev;
+    return z;
 }
 
-
-double Mesh::get_aspect_ratio(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers)
+double Mesh::get_aspect_ratio(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD,
+                              wn_3dArray& ZORD, int nrows, int ncols, int nlayers)
 {
-     double aspect_ratio=1.0;
-     double e1, e2, e3, l1, l2, l3, l4, x, y, z, temp_asp_ratio, temp;
-     int i, j, k;
+    double aspect_ratio=1.0;
+    double e1, e2, e3, l1, l2, l3, l4, x, y, z, temp_asp_ratio, temp;
+    int i, j, k;
 
-     for(i=0;i<(nrows-1);i++)      //loop through all the elements in the first layer (first layer elements should be the most degenerate)
-     {
-          for(j=0;j<(ncols-1);j++)
-          {
+    //loop through all the elements in the first layer (first layer elements should be the most degenerate)
+    for(i=0;i<(nrows-1);i++)
+    {
+        for(j=0;j<(ncols-1);j++)
+        {
+            k=0;
 
-               k=0;
+            //compute in i/x direction
+            x=XORD(i, j+1, k)-XORD(i, j, k);
+            y=YORD(i, j+1, k)-YORD(i, j, k);
+            z=ZORD(i, j+1, k)-ZORD(i, j, k);
+            l1=std::sqrt(x*x+y*y+z*z);
 
-               //compute in i/x direction
-               x=XORD(i, j+1, k)-XORD(i, j, k);
-               y=YORD(i, j+1, k)-YORD(i, j, k);
-               z=ZORD(i, j+1, k)-ZORD(i, j, k);
-               l1=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j+1, k)-XORD(i+1, j, k);
+            y=YORD(i+1, j+1, k)-YORD(i+1, j, k);
+            z=ZORD(i+1, j+1, k)-ZORD(i+1, j, k);
+            l2=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j+1, k)-XORD(i+1, j, k);
-               y=YORD(i+1, j+1, k)-YORD(i+1, j, k);
-               z=ZORD(i+1, j+1, k)-ZORD(i+1, j, k);
-               l2=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i, j+1, k+1)-XORD(i, j, k+1);
+            y=YORD(i, j+1, k+1)-YORD(i, j, k+1);
+            z=ZORD(i, j+1, k+1)-ZORD(i, j, k+1);
+            l3=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i, j+1, k+1)-XORD(i, j, k+1);
-               y=YORD(i, j+1, k+1)-YORD(i, j, k+1);
-               z=ZORD(i, j+1, k+1)-ZORD(i, j, k+1);
-               l3=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j+1, k+1)-XORD(i+1, j, k+1);
+            y=YORD(i+1, j+1, k+1)-YORD(i+1, j, k+1);
+            z=ZORD(i+1, j+1, k+1)-ZORD(i+1, j, k+1);
+            l4=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j+1, k+1)-XORD(i+1, j, k+1);
-               y=YORD(i+1, j+1, k+1)-YORD(i+1, j, k+1);
-               z=ZORD(i+1, j+1, k+1)-ZORD(i+1, j, k+1);
-               l4=std::sqrt(x*x+y*y+z*z);
+            e1=(l1+l2+l3+l4)/4.0;
 
-               e1=(l1+l2+l3+l4)/4.0;
+            //compute in j/y direction
+            x=XORD(i+1, j, k)-XORD(i, j, k);
+            y=YORD(i+1, j, k)-YORD(i, j, k);
+            z=ZORD(i+1, j, k)-ZORD(i, j, k);
+            l1=std::sqrt(x*x+y*y+z*z);
 
-               //compute in j/y direction
-               x=XORD(i+1, j, k)-XORD(i, j, k);
-               y=YORD(i+1, j, k)-YORD(i, j, k);
-               z=ZORD(i+1, j, k)-ZORD(i, j, k);
-               l1=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j+1, k)-XORD(i, j+1, k);
+            y=YORD(i+1, j+1, k)-YORD(i, j+1, k);
+            z=ZORD(i+1, j+1, k)-ZORD(i, j+1, k);
+            l2=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j+1, k)-XORD(i, j+1, k);
-               y=YORD(i+1, j+1, k)-YORD(i, j+1, k);
-               z=ZORD(i+1, j+1, k)-ZORD(i, j+1, k);
-               l2=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j, k+1)-XORD(i, j, k+1);
+            y=YORD(i+1, j, k+1)-YORD(i, j, k+1);
+            z=ZORD(i+1, j, k+1)-ZORD(i, j, k+1);
+            l3=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j, k+1)-XORD(i, j, k+1);
-               y=YORD(i+1, j, k+1)-YORD(i, j, k+1);
-               z=ZORD(i+1, j, k+1)-ZORD(i, j, k+1);
-               l3=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j+1, k+1)-XORD(i, j+1, k+1);
+            y=YORD(i+1, j+1, k+1)-YORD(i, j+1, k+1);
+            z=ZORD(i+1, j+1, k+1)-ZORD(i, j+1, k+1);
+            l4=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j+1, k+1)-XORD(i, j+1, k+1);
-               y=YORD(i+1, j+1, k+1)-YORD(i, j+1, k+1);
-               z=ZORD(i+1, j+1, k+1)-ZORD(i, j+1, k+1);
-               l4=std::sqrt(x*x+y*y+z*z);
+            e2=(l1+l2+l3+l4)/4.0;
 
-               e2=(l1+l2+l3+l4)/4.0;
+            //compute in k/z direction
+            x=XORD(i, j, k+1)-XORD(i, j, k);
+            y=YORD(i, j, k+1)-YORD(i, j, k);
+            z=ZORD(i, j, k+1)-ZORD(i, j, k);
+            l1=std::sqrt(x*x+y*y+z*z);
 
-               //compute in k/z direction
-               x=XORD(i, j, k+1)-XORD(i, j, k);
-               y=YORD(i, j, k+1)-YORD(i, j, k);
-               z=ZORD(i, j, k+1)-ZORD(i, j, k);
-               l1=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i, j+1, k+1)-XORD(i, j+1, k);
+            y=YORD(i, j+1, k+1)-YORD(i, j+1, k);
+            z=ZORD(i, j+1, k+1)-ZORD(i, j+1, k);
+            l2=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i, j+1, k+1)-XORD(i, j+1, k);
-               y=YORD(i, j+1, k+1)-YORD(i, j+1, k);
-               z=ZORD(i, j+1, k+1)-ZORD(i, j+1, k);
-               l2=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j, k+1)-XORD(i+1, j, k);
+            y=YORD(i+1, j, k+1)-YORD(i+1, j, k);
+            z=ZORD(i+1, j, k+1)-ZORD(i+1, j, k);
+            l3=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j, k+1)-XORD(i+1, j, k);
-               y=YORD(i+1, j, k+1)-YORD(i+1, j, k);
-               z=ZORD(i+1, j, k+1)-ZORD(i+1, j, k);
-               l3=std::sqrt(x*x+y*y+z*z);
+            x=XORD(i+1, j+1, k+1)-XORD(i+1, j+1, k);
+            y=YORD(i+1, j+1, k+1)-YORD(i+1, j+1, k);
+            z=ZORD(i+1, j+1, k+1)-ZORD(i+1, j+1, k);
+            l4=std::sqrt(x*x+y*y+z*z);
 
-               x=XORD(i+1, j+1, k+1)-XORD(i+1, j+1, k);
-               y=YORD(i+1, j+1, k+1)-YORD(i+1, j+1, k);
-               z=ZORD(i+1, j+1, k+1)-ZORD(i+1, j+1, k);
-               l4=std::sqrt(x*x+y*y+z*z);
+            e3=(l1+l2+l3+l4)/4.0;
 
-               e3=(l1+l2+l3+l4)/4.0;
-
-               //sort e's from largest (e1) to smallest (e3)
-               if(e2>e1)
-               {
-                    temp=e1;
-                    e1=e2;
-                    e2=temp;
-               }
-               if(e3>e1)
-               {
-                    temp=e3;
-                    e3=e2;
-                    e2=e1;
-                    e1=temp;
-               }else if(e3>e2)
-               {
-                    temp=e3;
-                    e3=e2;
-                    e2=temp;
-               }
-               temp_asp_ratio=e1/e3;
-               if(temp_asp_ratio>aspect_ratio)
-                    aspect_ratio=temp_asp_ratio;
-          }
-     }
-
+            //sort e's from largest (e1) to smallest (e3)
+            if(e2>e1)
+            {
+                temp=e1;
+                e1=e2;
+                e2=temp;
+            }
+            if(e3>e1)
+            {
+                temp=e3;
+                e3=e2;
+                e2=e1;
+                e1=temp;
+            }else if(e3>e2)
+            {
+                temp=e3;
+                e3=e2;
+                e2=temp;
+            }
+            temp_asp_ratio=e1/e3;
+            if(temp_asp_ratio>aspect_ratio)
+                aspect_ratio=temp_asp_ratio;
+        }
+    }
 
      return aspect_ratio;
 }
 
-double Mesh::get_equiangle_skew(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers)
+double Mesh::get_equiangle_skew(int NUMEL, int NUMNP, wn_3dArray& XORD,
+                                wn_3dArray& YORD, wn_3dArray& ZORD, int nrows,
+                                int ncols, int nlayers)
 {
-     double equiangle_skew=0;
-     double cell_max_angle, cell_min_angle, temp;
-     double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
-     int i, j, k;
+    double equiangle_skew=0;
+    double cell_max_angle, cell_min_angle, temp;
+    double x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
+    int i, j, k;
 
-     k=0;
+    k=0;
 
-     for(i=0;i<(nrows-1);i++)      //loop through all the elements in the first layer (first layer elements should be the most degenerate)
-     {
-          for(j=0;j<(ncols-1);j++)
-          {
+    //loop through all the elements in the first layer (first layer elements should be the most degenerate)
+    for(i=0;i<(nrows-1);i++)
+    {
+        for(j=0;j<(ncols-1);j++)
+        {
+            cell_max_angle=0.0;
+            cell_min_angle=180.0;
 
-               cell_max_angle=0.0;
-               cell_min_angle=180.0;
+            //rename points to a cell local numbering starting at cell bottom,
+            //lower left and counting counter-clockwise
+            x1=XORD(i, j, k);
+            y1=YORD(i, j, k);
+            z1=ZORD(i, j, k);
 
-               //rename points to a cell local numbering starting at cell bottom, lower left and counting counter-clockwise
-               x1=XORD(i, j, k);
-               y1=YORD(i, j, k);
-               z1=ZORD(i, j, k);
+            x2=XORD(i, j+1, k);
+            y2=YORD(i, j+1, k);
+            z2=ZORD(i, j+1, k);
 
-               x2=XORD(i, j+1, k);
-               y2=YORD(i, j+1, k);
-               z2=ZORD(i, j+1, k);
+            x3=XORD(i+1, j+1, k);
+            y3=YORD(i+1, j+1, k);
+            z3=ZORD(i+1, j+1, k);
 
-               x3=XORD(i+1, j+1, k);
-               y3=YORD(i+1, j+1, k);
-               z3=ZORD(i+1, j+1, k);
+            x4=XORD(i+1, j, k);
+            y4=YORD(i+1, j, k);
+            z4=ZORD(i+1, j, k);
 
-               x4=XORD(i+1, j, k);
-               y4=YORD(i+1, j, k);
-               z4=ZORD(i+1, j, k);
+            x5=XORD(i, j, k+1);
+            y5=YORD(i, j, k+1);
+            z5=ZORD(i, j, k+1);
 
-               x5=XORD(i, j, k+1);
-               y5=YORD(i, j, k+1);
-               z5=ZORD(i, j, k+1);
+            x6=XORD(i, j+1, k+1);
+            y6=YORD(i, j+1, k+1);
+            z6=ZORD(i, j+1, k+1);
 
-               x6=XORD(i, j+1, k+1);
-               y6=YORD(i, j+1, k+1);
-               z6=ZORD(i, j+1, k+1);
+            x7=XORD(i+1, j+1, k+1);
+            y7=YORD(i+1, j+1, k+1);
+            z7=ZORD(i+1, j+1, k+1);
 
-               x7=XORD(i+1, j+1, k+1);
-               y7=YORD(i+1, j+1, k+1);
-               z7=ZORD(i+1, j+1, k+1);
+            x8=XORD(i+1, j, k+1);
+            y8=YORD(i+1, j, k+1);
+            z8=ZORD(i+1, j, k+1);
 
-               x8=XORD(i+1, j, k+1);
-               y8=YORD(i+1, j, k+1);
-               z8=ZORD(i+1, j, k+1);
+            //bottom face
+            get_cell_angles(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, cell_max_angle, cell_min_angle);
+            //top face
+            get_cell_angles(x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8, cell_max_angle, cell_min_angle);
+            //north face
+            get_cell_angles(x4, y4, z4, x8, y8, z8, x7, y7, z7, x3, y3, z3, cell_max_angle, cell_min_angle);
+            //south face
+            get_cell_angles(x1, y1, z1, x5, y5, z5, x6, y6, z6, x2, y2, z2, cell_max_angle, cell_min_angle);
+            //west face
+            get_cell_angles(x4, y4, z4, x8, y8, z8, x5, y5, z5, x1, y1, z1, cell_max_angle, cell_min_angle);
+            //east face
+            get_cell_angles(x2, y2, z2, x6, y6, z6, x7, y7, z7, x3, y3, z3, cell_max_angle, cell_min_angle);
 
-
-               //bottom face
-               get_cell_angles(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, cell_max_angle, cell_min_angle);
-               //top face
-               get_cell_angles(x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8, cell_max_angle, cell_min_angle);
-               //north face
-               get_cell_angles(x4, y4, z4, x8, y8, z8, x7, y7, z7, x3, y3, z3, cell_max_angle, cell_min_angle);
-               //south face
-               get_cell_angles(x1, y1, z1, x5, y5, z5, x6, y6, z6, x2, y2, z2, cell_max_angle, cell_min_angle);
-               //west face
-               get_cell_angles(x4, y4, z4, x8, y8, z8, x5, y5, z5, x1, y1, z1, cell_max_angle, cell_min_angle);
-               //east face
-               get_cell_angles(x2, y2, z2, x6, y6, z6, x7, y7, z7, x3, y3, z3, cell_max_angle, cell_min_angle);
-
-               //Compute cell equiangle skew
-               temp=maxj((cell_max_angle-90.0)/(90.0),(90.0-cell_min_angle)/(90.0));
-               if(temp>equiangle_skew)
-                    equiangle_skew=temp;
-          }
-     }
-
+            //Compute cell equiangle skew
+            temp=maxj((cell_max_angle-90.0)/(90.0),(90.0-cell_min_angle)/(90.0));
+            if(temp>equiangle_skew)
+                equiangle_skew=temp;
+        }
+    }
 
      return equiangle_skew;
 }
 
-void Mesh::get_cell_angles(double xa, double ya, double za, double xb, double yb, double zb, double xc, double yc, double zc, double xd, double yd, double zd, double &cell_max_angle, double &cell_min_angle)
+void Mesh::get_cell_angles(double xa, double ya, double za, double xb, double yb,
+                           double zb, double xc, double yc, double zc, double xd,
+                           double yd, double zd, double &cell_max_angle, double &cell_min_angle)
 {
-     double angle;
+    double angle;
 
-     //LL angle
-     angle=get_angle(xd, yd, zd, xa, ya, za, xb, yb, zb);
-     if(angle>cell_max_angle)
-          cell_max_angle=angle;
-     if(angle<cell_min_angle)
-          cell_min_angle=angle;
+    //LL angle
+    angle=get_angle(xd, yd, zd, xa, ya, za, xb, yb, zb);
+    if(angle>cell_max_angle)
+        cell_max_angle=angle;
+    if(angle<cell_min_angle)
+        cell_min_angle=angle;
 
-     //LR angle
-     angle=get_angle(xa, ya, za, xb, yb, zb, xc, yc, zc);
-     if(angle>cell_max_angle)
-          cell_max_angle=angle;
-     if(angle<cell_min_angle)
-          cell_min_angle=angle;
+    //LR angle
+    angle=get_angle(xa, ya, za, xb, yb, zb, xc, yc, zc);
+    if(angle>cell_max_angle)
+        cell_max_angle=angle;
+    if(angle<cell_min_angle)
+        cell_min_angle=angle;
 
-     //UR angle
-     angle=get_angle(xb, yb, zb, xc, yc, zc, xd, yd, zd);
-     if(angle>cell_max_angle)
-          cell_max_angle=angle;
-     if(angle<cell_min_angle)
-          cell_min_angle=angle;
+    //UR angle
+    angle=get_angle(xb, yb, zb, xc, yc, zc, xd, yd, zd);
+    if(angle>cell_max_angle)
+        cell_max_angle=angle;
+    if(angle<cell_min_angle)
+        cell_min_angle=angle;
 
-     //UL angle
-     angle=get_angle(xc, yc, zc, xd, yd, zd, xa, ya, za);
-     if(angle>cell_max_angle)
-          cell_max_angle=angle;
-     if(angle<cell_min_angle)
-          cell_min_angle=angle;
-
-
+    //UL angle
+    angle=get_angle(xc, yc, zc, xd, yd, zd, xa, ya, za);
+    if(angle>cell_max_angle)
+        cell_max_angle=angle;
+    if(angle<cell_min_angle)
+        cell_min_angle=angle;
 }
 
-double Mesh::get_angle(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3)
+double Mesh::get_angle(double x1, double y1, double z1, double x2, double y2,
+                       double z2, double x3, double y3, double z3)
 {
-     //Function finds the angle between two vectors, assuming that point 2 is the common point shared by the two vectors and points 1 and 3 are the endpoints
+    //Function finds the angle between two vectors, assuming that point 2 is the
+    //common point shared by the two vectors and points 1 and 3 are the endpoints
 
-     double angle, v_norm, w_norm;
+    double angle, v_norm, w_norm;
 
-     x1=x1-x2;      //shift coordinates so they are local to point 2
-     x3=x3-x2;
+    x1=x1-x2; //shift coordinates so they are local to point 2
+    x3=x3-x2;
 
-     y1=y1-y2;
-     y3=y3-y2;
+    y1=y1-y2;
+    y3=y3-y2;
 
-     z1=z1-z2;
-     z3=z3-z2;
+    z1=z1-z2;
+    z3=z3-z2;
 
-     v_norm=std::sqrt(x1*x1+y1*y1+z1*z1);
-     w_norm=std::sqrt(x3*x3+y3*y3+z3*z3);
-     angle=180.0/pi*acos((x1*x3+y1*y3+z1*z3)/(v_norm*w_norm));
+    v_norm=std::sqrt(x1*x1+y1*y1+z1*z1);
+    w_norm=std::sqrt(x3*x3+y3*y3+z3*z3);
+    angle=180.0/pi*acos((x1*x3+y1*y3+z1*z3)/(v_norm*w_norm));
 
-     return angle;
+    return angle;
 }
 
 double Mesh::maxj(double value1, double value2)
 {
-     return ( (value1 > value2) ? value1 : value2);
+    return ( (value1 > value2) ? value1 : value2);
 }
 
 int Mesh::get_node0(const int &elemNum) const
 {
-     //Calculates the global node number of element elemNum's local node number 0
-     int node, row, col, layer, layer_elements;
-     layer_elements=(nrows-1)*(ncols-1);
-     layer=elemNum/(layer_elements);
-     row=(elemNum-layer*layer_elements)/(ncols-1);
-     col=elemNum-layer*layer_elements-row*(ncols-1);
-     node=layer*(ncols*nrows)+row*ncols+col;
+    //Calculates the global node number of element elemNum's local node number 0
+    int node, row, col, layer, layer_elements;
+    layer_elements=(nrows-1)*(ncols-1);
+    layer=elemNum/(layer_elements);
+    row=(elemNum-layer*layer_elements)/(ncols-1);
+    col=elemNum-layer*layer_elements-row*(ncols-1);
+    node=layer*(ncols*nrows)+row*ncols+col;
 
-     return node;
+    return node;
 }
 
 int Mesh::get_node0(const int &elem_i, const int &elem_j, const int &elem_k) const
 {
-     //Calculates the global node number of element (i,j,k)'s local node number 0
-
-     return elem_k*(ncols*nrows)+elem_i*ncols+elem_j;
+    //Calculates the global node number of element (i,j,k)'s local node number 0
+    return elem_k*(ncols*nrows)+elem_i*ncols+elem_j;
 }
 
 int Mesh::get_elemNum(const int &elem_i, const int &elem_j, const int &elem_k) const
 {
-	//Calculates the global element number given the element's (i,j,k) index
-
-	return elem_k*(ncolsElem*nrowsElem)+elem_i*ncolsElem+elem_j;
+    //Calculates the global element number given the element's (i,j,k) index
+    return elem_k*(ncolsElem*nrowsElem)+elem_i*ncolsElem+elem_j;
 }
 
 void Mesh::get_elemIndex(const int &elemNum, int &elem_i, int &elem_j, int &elem_k) const
 {
-	//Calculates the element's (i,j,k) index given the global element number elemNum
-	int layer_elements;
-	layer_elements=nrowsElem*ncolsElem;
-	elem_k=elemNum/layer_elements;
-	elem_i=(elemNum-elem_k*layer_elements)/ncolsElem;
-	elem_j=elemNum-elem_k*layer_elements-elem_i*ncolsElem;
+    //Calculates the element's (i,j,k) index given the global element number elemNum
+    int layer_elements;
+    layer_elements=nrowsElem*ncolsElem;
+    elem_k=elemNum/layer_elements;
+    elem_i=(elemNum-elem_k*layer_elements)/ncolsElem;
+    elem_j=elemNum-elem_k*layer_elements-elem_i*ncolsElem;
 }
 
 int Mesh::get_global_node(const int &locNodeNum, const int &elemNum) const
 {
-     //Function calculates the global node number of local node "locNodeNum" in the element "elemNum"
-     //with local node 0 equal to global node "node0".
+    //Function calculates the global node number of local node "locNodeNum" in the element "elemNum"
+    //with local node 0 equal to global node "node0".
 
-	//NOTE that local node numbering goes counter clockwise and from bottom to top starting at
-	//the lower left cell corner as shown below
-	//
-	//		7----6
-	//      |    |    at the upper level (higher z)
-	//      |    |
-	//      4----5
-	//
-	//
-	//
-	//		3----2
-	//      |    |    at the lower level (lower z)
-	//      |    |
-	//      0----1
+    //NOTE that local node numbering goes counter clockwise and from bottom to top starting at
+    //the lower left cell corner as shown below
+    //
+    //      7----6
+    //      |    |    at the upper level (higher z)
+    //      |    |
+    //      4----5
+    //
+    //
+    //
+    //      3----2
+    //      |    |    at the lower level (lower z)
+    //      |    |
+    //      0----1
 
 
-	 int node0 = get_node0(elemNum);
+    int node0 = get_node0(elemNum);
 
-     int node;
+    int node;
 
-     if(locNodeNum==0)
-          node=node0;
-	 else if(locNodeNum==1)
-          node=node0+1;
-     else if(locNodeNum==2)
-          node=node0+ncols+1;
-     else if(locNodeNum==3)
-          node=node0+ncols;
-     else if(locNodeNum==4)
-          node=node0+(ncols*nrows);
-     else if(locNodeNum==5)
-          node=node0+(ncols*nrows)+1;
-     else if(locNodeNum==6)
-          node=node0+(ncols*nrows)+ncols+1;
-     else if(locNodeNum==7)
-          node=node0+(ncols*nrows)+ncols;
-     else
-		  throw std::logic_error("Error in function \"get_global_node()\"");
+    if(locNodeNum==0)
+        node=node0;
+    else if(locNodeNum==1)
+        node=node0+1;
+    else if(locNodeNum==2)
+        node=node0+ncols+1;
+    else if(locNodeNum==3)
+        node=node0+ncols;
+    else if(locNodeNum==4)
+        node=node0+(ncols*nrows);
+    else if(locNodeNum==5)
+        node=node0+(ncols*nrows)+1;
+    else if(locNodeNum==6)
+        node=node0+(ncols*nrows)+ncols+1;
+    else if(locNodeNum==7)
+        node=node0+(ncols*nrows)+ncols;
+    else
+        throw std::logic_error("Error in function \"get_global_node()\"");
 
-     return node;
+    return node;
 }
 
-int Mesh::get_global_node(const int &locNodeNum, const int &cell_i, const int &cell_j, const int &cell_k) const
+int Mesh::get_global_node(const int &locNodeNum, const int &cell_i,
+                          const int &cell_j, const int &cell_k) const
 {
-     //Function calculates the global node number of local node "locNodeNum" in the element "elemNum"
-     //with local node 0 equal to global node "node0".
+    //Function calculates the global node number of local node "locNodeNum" in the element "elemNum"
+    //with local node 0 equal to global node "node0".
 
-	//NOTE that local node numbering goes counter clockwise and from bottom to top starting at
-	//the lower left cell corner as shown below
-	//
-	//		7----6
-	//      |    |    at the upper level (higher z)
-	//      |    |
-	//      4----5
-	//
-	//
-	//
-	//		3----2
-	//      |    |    at the lower level (lower z)
-	//      |    |
-	//      0----1
+    //NOTE that local node numbering goes counter clockwise and from bottom to top starting at
+    //the lower left cell corner as shown below
+    //
+    //      7----6
+    //      |    |    at the upper level (higher z)
+    //      |    |
+    //      4----5
+    //
+    //
+    //
+    //      3----2
+    //      |    |    at the lower level (lower z)
+    //      |    |
+    //      0----1
 
-	 int node0 = get_node0(cell_i, cell_j, cell_k);
+    int node0 = get_node0(cell_i, cell_j, cell_k);
 
-     int node;
+    int node;
 
-     if(locNodeNum==0)
-          node=node0;
-	 else if(locNodeNum==1)
-          node=node0+1;
-     else if(locNodeNum==2)
-          node=node0+ncols+1;
-     else if(locNodeNum==3)
-          node=node0+ncols;
-     else if(locNodeNum==4)
-          node=node0+(ncols*nrows);
-     else if(locNodeNum==5)
-          node=node0+(ncols*nrows)+1;
-     else if(locNodeNum==6)
-          node=node0+(ncols*nrows)+ncols+1;
-     else if(locNodeNum==7)
-          node=node0+(ncols*nrows)+ncols;
-     else
-		  throw std::logic_error("Error in function \"get_global_node()\"");
+    if(locNodeNum==0)
+        node=node0;
+    else if(locNodeNum==1)
+        node=node0+1;
+    else if(locNodeNum==2)
+        node=node0+ncols+1;
+    else if(locNodeNum==3)
+        node=node0+ncols;
+    else if(locNodeNum==4)
+        node=node0+(ncols*nrows);
+    else if(locNodeNum==5)
+        node=node0+(ncols*nrows)+1;
+    else if(locNodeNum==6)
+        node=node0+(ncols*nrows)+ncols+1;
+    else if(locNodeNum==7)
+        node=node0+(ncols*nrows)+ncols;
+    else
+        throw std::logic_error("Error in function \"get_global_node()\"");
 
-     return node;
+    return node;
 }
 
 
 int Mesh::get_node_type(const int &i, const int &j, const int &k) const
 {
-     //This function returns the "type" of node.  The node is specified using the i,j,k notation.
-     int test=0;
-     if((i==0)||(i==nrows-1))
-     {
-          test=test+1;
-     }
-     if((j==0)||(j==ncols-1))
-     {
-          test=test+1;
-     }
-     if((k==0)||(k==nlayers-1))
-     {
-          test=test+1;
-     }
-     return test;   //if test=0 => internal node
+    //This function returns the "type" of node.  The node is specified using the i,j,k notation.
+    int test=0;
+    if((i==0)||(i==nrows-1))
+    {
+      test=test+1;
+    }
+    if((j==0)||(j==ncols-1))
+    {
+      test=test+1;
+    }
+    if((k==0)||(k==nlayers-1))
+    {
+      test=test+1;
+    }
+    return test;    //if test=0 => internal node
                     //   test=1 => surface node
                     //   test=2 => edge node
                     //   test=3 => corner node
@@ -781,6 +767,7 @@ void Mesh::set_targetNumHorizCells(long cells)
     //set the target number of horizontal cells
     if(cells<0)
         throw std::range_error("The target number of cells must be greater than zero.");
+
     targetNumHorizCells = cells;
 }
 
@@ -799,19 +786,19 @@ void Mesh::set_meshResChoice(eMeshChoice choice)
 
 void Mesh::compute_cellsize(Elevation& dem)
 {
-     double nXcells, nYcells, Xlength, Ylength, Xcellsize, Ycellsize;
+    double nXcells, nYcells, Xlength, Ylength, Xcellsize, Ycellsize;
 
-     Xlength=(dem.get_nCols()+1)*dem.get_cellSize();
-     Ylength=(dem.get_nRows()+1)*dem.get_cellSize();
+    Xlength=(dem.get_nCols()+1)*dem.get_cellSize();
+    Ylength=(dem.get_nRows()+1)*dem.get_cellSize();
 
-     nXcells=2*std::sqrt((double)targetNumHorizCells)*(Xlength/(Xlength+Ylength));
-     nYcells=2*std::sqrt((double)targetNumHorizCells)*(Ylength/(Xlength+Ylength));
+    nXcells=2*std::sqrt((double)targetNumHorizCells)*(Xlength/(Xlength+Ylength));
+    nYcells=2*std::sqrt((double)targetNumHorizCells)*(Ylength/(Xlength+Ylength));
 
-     Xcellsize=Xlength/nXcells;
-     Ycellsize=Ylength/nYcells;
-     meshResolution=(Xcellsize+Ycellsize)/2;
+    Xcellsize=Xlength/nXcells;
+    Ycellsize=Ylength/nYcells;
+    meshResolution=(Xcellsize+Ycellsize)/2;
 
-     meshResolutionUnits = lengthUnits::meters;
+    meshResolutionUnits = lengthUnits::meters;
 }
 
 /*
@@ -881,10 +868,12 @@ bool Mesh::checkInBounds(const Mesh &wnMesh, const int &i, const int &j)
     if(this->XORD(i,j,0) > wnMesh.XORD(0, 0, 0) && 
        this->YORD(i,j,0) > wnMesh.YORD(0, 0, 0) &&
        this->XORD(i,j,0) < wnMesh.XORD(wnMesh.nrows-1, wnMesh.ncols-1, 0) && 
-       this->YORD(i,j,0) < wnMesh.YORD(wnMesh.nrows-1, wnMesh.ncols-1, 0)){ //just check ground layer x,y
+       this->YORD(i,j,0) < wnMesh.YORD(wnMesh.nrows-1, wnMesh.ncols-1, 0))
+    {//just check ground layer x,y
         return true;
     }
-    else{
+    else
+    {
         return false;
     }
 }
