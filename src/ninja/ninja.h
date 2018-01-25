@@ -370,12 +370,6 @@ private:
     Slope *slope;
     Shade *shade;
     Solar *solar;
-    AsciiGrid<double> *speedInitializationGrid;
-    AsciiGrid<double> *dirInitializationGrid;
-    AsciiGrid<double> *uInitializationGrid;
-    AsciiGrid<double> *vInitializationGrid;
-    AsciiGrid<double> *airTempGrid;
-    AsciiGrid<double> *cloudCoverGrid;
 
     double* outputSpeedArray; //output speed array returned in the API
     double* outputDirectionArray; //output direction array returned in the API

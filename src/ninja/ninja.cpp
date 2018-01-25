@@ -73,12 +73,6 @@ ninja::ninja()
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
     outputDirectionArray=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
@@ -175,12 +169,6 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
 }
 
 /**
@@ -255,12 +243,6 @@ ninja &ninja::operator=(const ninja &rhs)
         slope=NULL;
         shade=NULL;
         solar=NULL;
-        speedInitializationGrid=NULL;
-        dirInitializationGrid=NULL;
-        uInitializationGrid=NULL;
-        vInitializationGrid=NULL;
-        airTempGrid=NULL;
-        cloudCoverGrid=NULL;
     }
     return *this;
 }
