@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
                          Qt::KeepAspectRatioByExpanding);
     QStringList list;
-    list << "Loading the WindNinja " + ver + "...";
+    list << "Loading WindNinja " + ver + "...";
     list << "Loading mesh generator...";
     list << "Loading conjugate gradient solver...";
     list << "Loading preconditioner...";

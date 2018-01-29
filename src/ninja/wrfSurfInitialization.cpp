@@ -668,6 +668,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
+        delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");

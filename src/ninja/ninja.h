@@ -289,7 +289,7 @@ public:
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
 #endif
 
-    void set_speedFile(std::string speedFile);
+    void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);
     void set_dirFile(std::string dirFile);
 
     void set_position(double lat_degrees, double long_degrees);//input as decimal degrees
@@ -378,12 +378,6 @@ private:
     Slope *slope;
     Shade *shade;
     Solar *solar;
-    AsciiGrid<double> *speedInitializationGrid;
-    AsciiGrid<double> *dirInitializationGrid;
-    AsciiGrid<double> *uInitializationGrid;
-    AsciiGrid<double> *vInitializationGrid;
-    AsciiGrid<double> *airTempGrid;
-    AsciiGrid<double> *cloudCoverGrid;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)

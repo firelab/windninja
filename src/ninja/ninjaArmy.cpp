@@ -1088,9 +1088,10 @@ int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOp
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
 }
 
-int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile, char ** papszOptions )
+int ninjaArmy::setSpeedInitGrid( const int nIndex, const std::string speedFile,
+                                 const velocityUnits::eVelocityUnits units, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_speedFile( speedFile, units ) );
 }
 
 int ninjaArmy::setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions )

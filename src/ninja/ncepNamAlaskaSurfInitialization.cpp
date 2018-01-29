@@ -469,6 +469,8 @@ void ncepNamAlaskaSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
         psWarpOptions->padfDstNoDataReal[b] = dfNoData;
         psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
     }
 
     if( pbSuccess == false )
