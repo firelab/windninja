@@ -162,9 +162,9 @@ void ninja::importLCP(GDALDataset *poDataset)
     //read the elevation band and write it to the Elevation class
     poBand = poDataset->GetRasterBand(1);
 
-    int *hasNdv = NULL;
-    nDV = poBand->GetNoDataValue(hasNdv);
-    if(hasNdv == false)
+    int hasNdv = FALSE;
+    nDV = poBand->GetNoDataValue(&hasNdv);
+    if(hasNdv == FALSE)
         nDV = -9999.0;
 
     szTemp = poBand->GetMetadataItem("ELEVATION_UNIT");
