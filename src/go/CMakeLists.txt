@@ -18,5 +18,9 @@
 cmake_minimum_required(VERSION 2.6)
 
 add_custom_target(ninjago ALL DEPENDS ninjago)
-add_custom_command(TARGET ninjago COMMAND go ARGS build -o ${CMAKE_CURRENT_BINARY_DIR}/ninjago.a -buildmode=c-archive 
-    ${CMAKE_CURRENT_SOURCE_DIR}/ninja.go)
+add_custom_command(TARGET ninjago
+                   COMMAND go
+                   ARGS build -o
+                   ${CMAKE_CURRENT_BINARY_DIR}/ninjago.a
+                   -buildmode=c-archive
+                   ${CMAKE_CURRENT_SOURCE_DIR}/ninja.go)

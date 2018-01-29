@@ -43,8 +43,7 @@ func arrayToSlice(data *C.double, n C.int) []float64 {
 // See legend.DrawLegend for documentation
 //export ninja_draw_legend
 func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme *C.char, units *C.char) C.int {
-	p := C.GoString(path)
-	f, err := os.Create(p)
+	f, err := os.Create(C.GoString(path))
 	if err != nil {
 		return 1
 	}
@@ -53,9 +52,7 @@ func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme *C.char, 
 	if s == nil {
 		return C.int(2)
 	}
-	sc := C.GoString(scheme)
-	u := C.GoString(units)
-	err = legend.DrawLegend(f, s, sc, u)
+	err = legend.DrawLegend(f, s, C.GoString(scheme), C.GoString(units))
 	if err != nil {
 		return 1
 	}
@@ -68,15 +65,13 @@ func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme *C.char, 
 // See thredds.Download for documentation
 //export ninja_thredds_download
 func ninja_thredds_download(path *C.char, name *C.char, minX, maxX, minY, maxY C.double, hours C.int) C.int {
-	p := C.GoString(path)
-	f, err := os.Create(p)
+	f, err := os.Create(C.GoString(path))
 	if err != nil {
 		return 1
 	}
 	defer f.Close()
-	n := C.GoString(name)
 	d := time.Hour * time.Duration(hours)
-	err = thredds.Download(f, n, float64(minX), float64(maxX), float64(minY), float64(maxY), d)
+	err = thredds.Download(f, C.GoString(name), float64(minX), float64(maxX), float64(minY), float64(maxY), d)
 	if err != nil {
 		return 1
 	}
