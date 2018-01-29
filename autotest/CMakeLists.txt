@@ -135,6 +135,9 @@ add_test(test_gdal_output_shapefile
 add_test(test_gdal_output_write_arrow
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/write_arrow)
 
+add_test(test_gdal_output_arrow_west
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/arrow_west)
+
 add_test(test_gdal_output_kml
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kml)
 

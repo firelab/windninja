@@ -46,7 +46,28 @@ BOOST_AUTO_TEST_CASE(write_arrow) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("ESRI Shapefile", "arrow.shp", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  for (int i = 0; i < dir.get_nRows(); i++) {
+    for (int j = 0; j < dir.get_nCols(); j++) {
+      dir.set_cellValue(i, j, i * j % 360);
+    }
+  }
+  rc = NinjaGDALOutput("ESRI Shapefile", "arrow.shp", NINJA_OUTPUT_ARROWS, spd,
+                       dir, 0);
+  BOOST_REQUIRE(rc == 0);
+}
+
+BOOST_AUTO_TEST_CASE(arrow_west) {
+  GDALAllRegister();
+  int rc = 0;
+  AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
+  AsciiGrid<double> dir(spd);
+  for (int i = 0; i < dir.get_nRows(); i++) {
+    for (int j = 0; j < dir.get_nCols(); j++) {
+      dir.set_cellValue(i, j, 270);
+    }
+  }
+  rc = NinjaGDALOutput("ESRI Shapefile", "west.shp", NINJA_OUTPUT_ARROWS, spd,
+                       dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
