@@ -18,7 +18,7 @@ before_install:
 install:
   - export PATH=$PATH:/usr/local/go/bin
   - mkdir .go
-  - export $GOPATH=$PWD/.go
+  - export GOPATH=$PWD/.go
   - go get golang.org/x/image/...
   - export WINDNINJA_DATA=$PWD/data
   - mkdir build
