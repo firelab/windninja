@@ -7,8 +7,8 @@ import (
 )
 
 func TestColorSchemes(t *testing.T) {
-	pngFiles, _ := filepath.Glob("./test/*.png")
-	for _, png := range pngFiles {
+	for _, cs := range colorSchemes {
+		png := filepath.Join("./", "test", cs.name+".png")
 		os.Remove(png)
 	}
 	breaks := []float64{0.0, 1.0, 2.0, 3.0, 4.0, 5.0}
