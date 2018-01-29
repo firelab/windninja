@@ -39,8 +39,9 @@ set(NINJA_SOURCES air.cpp
                   fetch_factory.cpp
                   fluid.cpp
                   frictionVelocity.cpp
-                  gdal_util.cpp
                   gdal_fetch.cpp
+                  gdal_output.cpp
+                  gdal_util.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
                   initialize.cpp

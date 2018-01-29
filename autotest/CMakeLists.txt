@@ -41,6 +41,7 @@ set(TEST_SOURCES test_main.cpp
                  test_contain.cpp
                  test_srtm.cpp
                  test_gdal_fetch.cpp
+                 test_gdal_output.cpp
                  test_grid_interp.cpp
                  test_array2d.cpp
                  test_timezone.cpp
@@ -73,8 +74,8 @@ add_executable(test_main ${TEST_SOURCES})
 add_dependencies(test_main ninja)
 #ADD_DEPENDENCIES(test_api  ninja)
 
-
 target_link_libraries(test_main ${LINK_LIBS})
+
 set(TEST_API FALSE)
 if(TEST_API)
     add_executable( test_api test_capi.c )
@@ -128,7 +129,17 @@ if(NOT NINJA_QTGUI)
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=input_points/mackay )
 endif(NOT NINJA_QTGUI)
 
+add_test(test_gdal_output_shapefile
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/shapefile)
 
+add_test(test_gdal_output_write_arrow
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/write_arrow)
+
+add_test(test_gdal_output_kml
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kml)
+
+add_test(test_gdal_output_kmz
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz)
 
 # ******************************************************************************
 # Slow test section
