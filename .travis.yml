@@ -14,7 +14,7 @@ before_install:
   - sudo apt-get install -qq cmake python libspatialite-dev libgeos-c1v5 libgdal-dev libgdal20 libnetcdf-dev libboost-date-time-dev libboost-program-options-dev libboost-test-dev
   - sudo curl -L -O https://dl.google.com/go/go1.9.3.linux-amd64.tar.gz
   - sudo tar -C /usr/local -xzf go1.9.3.linux-amd64.tar.gz
-  - echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
+  - sudo echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
   - sudo go get golang.org/x/image/...
 
 install:
