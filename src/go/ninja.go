@@ -14,13 +14,13 @@ import (
 //#define NINJA_OK    0
 //#define NINJA_IOERR 1
 //
-//#define NINJA_CS_DEFAULT      0
-//#define NINJA_CS_BLUES        1
-//#define NINJA_CS_GREENS       2
-//#define NINJA_CS_PINKS        3
-//#define NINJA_CS_MAGICBEANS   4
-//#define NINJA_CS_PINKTOGREEN  5
-//#define NINJA_CS_ROPGW        6
+//#define NINJA_CS_DEFAULT      "default"
+//#define NINJA_CS_BLUES        "blues"
+//#define NINJA_CS_GREENS       "greens"
+//#define NINJA_CS_PINKS        "pinks"
+//#define NINJA_CS_MAGICBEANS   "magic_beans"
+//#define NINJA_CS_PINKTOGREEN  "pink_to_green"
+//#define NINJA_CS_ROPGW        "ropgw"
 //#include <stdlib.h>
 import "C"
 
@@ -42,7 +42,7 @@ func arrayToSlice(data *C.double, n C.int) []float64 {
 //
 // See legend.DrawLegend for documentation
 //export ninja_draw_legend
-func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme C.int, units *C.char) C.int {
+func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme *C.char, units *C.char) C.int {
 	p := C.GoString(path)
 	f, err := os.Create(p)
 	if err != nil {
@@ -53,8 +53,9 @@ func ninja_draw_legend(path *C.char, breaks *C.double, n C.int, scheme C.int, un
 	if s == nil {
 		return C.int(2)
 	}
+	sc := C.GoString(scheme)
 	u := C.GoString(units)
-	err = legend.DrawLegend(f, s, int(scheme), u)
+	err = legend.DrawLegend(f, s, sc, u)
 	if err != nil {
 		return 1
 	}
