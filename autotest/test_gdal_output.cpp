@@ -89,6 +89,21 @@ BOOST_AUTO_TEST_CASE(kmz) {
   BOOST_REQUIRE(rc == 0);
 }
 
+BOOST_AUTO_TEST_CASE(kmz_color) {
+  GDALAllRegister();
+  int rc = 0;
+  AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
+  AsciiGrid<double> dir(spd);
+  for (int i = 0; i < dir.get_nRows(); i++) {
+    for (int j = 0; j < dir.get_nCols(); j++) {
+      dir.set_cellValue(i, j, 270);
+      spd.set_cellValue(i, j, i * j);
+    }
+  }
+  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  BOOST_REQUIRE(rc == 0);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 #endif /* WIN32 */

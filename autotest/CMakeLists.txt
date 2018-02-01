@@ -144,6 +144,8 @@ add_test(test_gdal_output_kml
 add_test(test_gdal_output_kmz
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz)
 
+add_test(test_gdal_output_kmz_color
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz_color)
 # ******************************************************************************
 # Slow test section
 # ******************************************************************************

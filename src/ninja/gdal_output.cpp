@@ -117,7 +117,6 @@ static OGRGeometryH drawArrow(double x, double y, double s, double d,
   OGR_G_DestroyGeometry(hLine);
 
   return hGeom;
-
 }
 
 int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
@@ -152,10 +151,11 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   hSRS = OSRNewSpatialReference(spd.prjString.c_str());
 
-  if(nFlags&NINJA_OUTPUT_ARROWS) {
-      hLayer = GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbLineString, papszOptions);
+  if (nFlags & NINJA_OUTPUT_ARROWS) {
+    hLayer =
+        GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbLineString, papszOptions);
   } else {
-      hLayer = GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbPoint, papszOptions);
+    hLayer = GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbPoint, papszOptions);
   }
   if (hLayer == 0) {
     GDALClose(hDS);
@@ -174,8 +174,10 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     OGR_Fld_Destroy(hFieldDefn);
   }
 
-  double x, y, s, d;
+  double splits[5];
+  spd.divide_gridData(splits, 5);
 
+  double x, y, s, d;
   for (int i = 0; i < spd.get_nRows(); i++) {
     for (int j = 0; j < spd.get_nCols(); j++) {
       hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
@@ -183,9 +185,20 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
       d = dir.get_cellValue(i, j);
       OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
       OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
+      if (s <= splits[1]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#0000ff;w:10px);");
+      } else if (s <= splits[2]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#00ff00;w:10px);");
+      } else if (s <= splits[3]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ffff00;w:10px);");
+      } else if (s <= splits[4]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ffa500;w:10px);");
+      } else {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ff0000;w:10px);");
+      }
       spd.get_cellPosition(i, j, &x, &y);
       if (nFlags & NINJA_OUTPUT_ARROWS) {
-        hGeom = drawArrow(x, y, s, d, 1.0,spd.get_cellSize());
+        hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
       } else {
         hGeom = OGR_G_CreateGeometry(wkbPoint);
       }
@@ -195,6 +208,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
         GDALClose(hDS);
         return 1;
       }
+      // OGR_F_SetStyleTable(hFeat, hStyleTable);
       OGR_G_DestroyGeometry(hGeom);
       OGR_F_Destroy(hFeat);
     }
