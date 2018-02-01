@@ -208,7 +208,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
         GDALClose(hDS);
         return 1;
       }
-      // OGR_F_SetStyleTable(hFeat, hStyleTable);
       OGR_G_DestroyGeometry(hGeom);
       OGR_F_Destroy(hFeat);
     }
