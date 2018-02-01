@@ -130,7 +130,10 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   OGRFieldDefnH hFieldDefn = 0;
 
+  OGRSpatialReferenceH hDstSRS = 0;
   OGRSpatialReferenceH hSRS = 0;
+  OGRSpatialReferenceH h4326 = 0;
+  OGRCoordinateTransformationH hCT = 0;
 
   int rc = 0;
 
@@ -150,12 +153,25 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   }
 
   hSRS = OSRNewSpatialReference(spd.prjString.c_str());
+  h4326 = OSRNewSpatialReference(0);
+  rc = OSRImportFromEPSG(h4326, 4326);
+  if(rc!= OGRERR_NONE) {
+      //cleanup
+      GDALClose(hDS);
+      return 1;
+  }
 
+  hCT = OCTNewCoordinateTransformation(hSRS, h4326);
+
+  if (EQUAL(pszDriver, "LIBKML")) {
+    hDstSRS = h4326;
+  }
   if (nFlags & NINJA_OUTPUT_ARROWS) {
-    hLayer =
-        GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbLineString, papszOptions);
+    hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
+                                    papszOptions);
   } else {
-    hLayer = GDALDatasetCreateLayer(hDS, "wind", hSRS, wkbPoint, papszOptions);
+    hLayer =
+        GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbPoint, papszOptions);
   }
   if (hLayer == 0) {
     GDALClose(hDS);
@@ -172,6 +188,19 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
       return 1;
     }
     OGR_Fld_Destroy(hFieldDefn);
+  }
+
+  if (EQUAL(pszDriver, "LIBKML")) {
+    h4326 = OSRNewSpatialReference(0);
+    if (h4326 == 0) {
+      GDALClose(hDS);
+      return 1;
+    }
+    rc = OSRImportFromEPSG(h4326, 4326);
+    if (rc != OGRERR_NONE) {
+      GDALClose(hDS);
+      return 1;
+    }
   }
 
   double splits[5];
@@ -201,10 +230,14 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
         hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
       } else {
         hGeom = OGR_G_CreateGeometry(wkbPoint);
+        OGR_G_SetPoint_2D(hGeom, 0, x, y);
       }
-      OGR_G_SetPoint_2D(hGeom, 0, x, y);
+      if (EQUAL(pszDriver, "LIBKML")) {
+        OGR_G_Transform(hGeom, hCT);
+      }
       OGR_F_SetGeometry(hFeat, hGeom);
       if (OGR_L_CreateFeature(hLayer, hFeat) != OGRERR_NONE) {
+        OGR_G_DestroyGeometry(hGeom);
         GDALClose(hDS);
         return 1;
       }
@@ -212,6 +245,9 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
       OGR_F_Destroy(hFeat);
     }
   }
+  OSRDestroySpatialReference(hSRS);
+  OSRDestroySpatialReference(h4326);
+  OCTDestroyCoordinateTransformation(hCT);
   GDALClose(hDS);
   return 0;
 }

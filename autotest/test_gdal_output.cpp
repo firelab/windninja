@@ -26,6 +26,8 @@
  *****************************************************************************/
 
 #ifndef WIN32
+#include "ninja_conv.h"
+
 #include <boost/test/unit_test.hpp>
 
 #include "gdal_output.h"
@@ -100,7 +102,29 @@ BOOST_AUTO_TEST_CASE(kmz_color) {
       spd.set_cellValue(i, j, i * j);
     }
   }
-  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_ARROWS, spd,
+                       dir, 0);
+  BOOST_REQUIRE(rc == 0);
+}
+
+BOOST_AUTO_TEST_CASE(mackay) {
+  GDALAllRegister();
+  int rc = 0;
+  AsciiGrid<double> spd;
+  AsciiGrid<double> dir;
+  std::string mack = "/home/kyle/src/windninja/data/mackay.tif";
+  spd.GDALReadGrid(mack);
+  dir.GDALReadGrid(mack);
+  spd.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
+  dir.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
+  for (int i = 0; i < dir.get_nRows(); i++) {
+    for (int j = 0; j < dir.get_nCols(); j++) {
+      dir.set_cellValue(i, j, (int)dir.get_cellValue(i, j) % 360);
+      spd.set_cellValue(i, j, i * j);
+    }
+  }
+  rc =
+      NinjaGDALOutput("LIBKML", "mackay.kmz", NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
