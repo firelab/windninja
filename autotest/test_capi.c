@@ -580,6 +580,7 @@ int runWindNinja()
         printf("Error in NinjaGetOutputGridProjection");
     }
 
+    const char* prj = NinjaGetOutputGridProjection(ninjaArmy, nIndex);
     const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
     const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
     const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
