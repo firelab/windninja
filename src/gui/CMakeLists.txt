@@ -58,7 +58,7 @@ set(NINJA_GUI_INCLUDES consoleDockWidget.h
 include_directories(${QT_INCLUDES}
                     ${Boost_INCLUDE_DIRS}
                     ${NETCDF_INCLUDES}
-                    ${GDAL_INCLUDE_DIR}
+                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
                     ${CURL_INCLUDE_DIR}
                     ${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja

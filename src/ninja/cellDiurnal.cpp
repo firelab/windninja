@@ -312,7 +312,12 @@ void cellDiurnal::compute_Qsw()
     }
 
     Qsw = (a1 * sinPsi + a2) * (1.0 + b1 * std::pow(CloudCover, b2));
-    
+
+    //incident solar radiation cannot be less than 0.0
+    if(Qsw < 0.0)
+    {
+        Qsw = 0.0;
+    }
 }
 
 void cellDiurnal::compute_Qh()	//compute sensible heat flux

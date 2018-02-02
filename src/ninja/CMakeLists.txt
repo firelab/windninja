@@ -18,7 +18,8 @@
 cmake_minimum_required(VERSION 2.6)
 
 set(NINJA_INCLUDES ${NETCDF_INCLUDES}
-                   ${GDAL_INCLUDE_DIR} ${CURL_INCLUDE_DIRS}
+                   ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
+                   ${CURL_INCLUDE_DIRS}
                    ${Boost_INCLUDE_DIRS}
                    ${PROJECT_SOURCE_DIR}/src)
 
@@ -38,8 +39,9 @@ set(NINJA_SOURCES air.cpp
                   fetch_factory.cpp
                   fluid.cpp
                   frictionVelocity.cpp
-                  gdal_util.cpp
                   gdal_fetch.cpp
+                  gdal_output.cpp
+                  gdal_util.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
                   initialize.cpp

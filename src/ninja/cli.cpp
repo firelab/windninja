@@ -935,6 +935,7 @@ int windNinjaCLI(int argc, char* argv[])
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
+        conflicting_options(vm, "momentum_flag", "mesh_resolution");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1214,8 +1215,6 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
-                conflicting_options(vm, "mesh_resolution", "mesh_count");
-                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
@@ -1767,7 +1766,25 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["write_farsite_atm"].as<bool>())
         {
             option_dependency(vm, "write_farsite_atm", "write_ascii_output");
-            windsim.set_writeFarsiteAtmFile(true);
+
+            if((vm["output_wind_height"].as<double>() == 20 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::feet &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::milesPerHour) ||
+               (vm["output_wind_height"].as<double>() == 10 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::meters &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::kilometersPerHour))
+            {
+                windsim.set_writeFarsiteAtmFile(true);
+            }
+
+            else
+            {
+                throw std::runtime_error("The output wind settings for atm files must "
+                       "either be 10m for output height and "
+                       "output speed units in kph, or "
+                       "20ft for output height and "
+                       "output speed units in mph.");
+            }
         }
 
         //run the simulations

@@ -259,6 +259,9 @@ int main(int argc, char *argv[])
                 sinPsi = solar.get_solarIntensity() / 1353.0;
             solar_grid(i,j) = (a1 * sinPsi + a2) * 
                               (1.0 + b1 * std::pow(CloudCover(i,j), b2));
+            //incident solar radiation cannot be less than 0.0
+            if(solar_grid(i,j) < 0.0)
+                solar_grid(i,j) = 0.0;
         }
     }
     

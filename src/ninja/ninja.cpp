@@ -73,12 +73,6 @@ ninja::ninja()
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -172,12 +166,6 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
 }
 
 /**
@@ -251,12 +239,6 @@ ninja &ninja::operator=(const ninja &rhs)
         slope=NULL;
         shade=NULL;
         solar=NULL;
-        speedInitializationGrid=NULL;
-        dirInitializationGrid=NULL;
-        uInitializationGrid=NULL;
-        vInitializationGrid=NULL;
-        airTempGrid=NULL;
-        cloudCoverGrid=NULL;
     }
     return *this;
 }
@@ -3153,30 +3135,6 @@ void ninja::deleteDynamicMemory()
 	if(DIAG)
 	{	delete[] DIAG;
 		DIAG=NULL;
-	}
-	if(speedInitializationGrid)
-	{	delete speedInitializationGrid;
-		speedInitializationGrid = NULL;
-	}
-	if(dirInitializationGrid)
-	{	delete dirInitializationGrid;
-		dirInitializationGrid = NULL;
-	}
-	if(uInitializationGrid)
-	{	delete uInitializationGrid;
-		uInitializationGrid = NULL;
-	}
-	if(vInitializationGrid)
-	{	delete vInitializationGrid;
-		vInitializationGrid = NULL;
-	}
-	if(airTempGrid)
-	{	delete airTempGrid;
-		airTempGrid = NULL;
-	}
-	if(cloudCoverGrid)
-	{	delete cloudCoverGrid;
-		cloudCoverGrid = NULL;
 	}
 
 	u0.deallocate();
