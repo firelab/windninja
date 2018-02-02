@@ -406,27 +406,30 @@ int runWindNinja()
 {
     NinjaH* ninjaArmy = NULL; 
     int numNinjas = 2;
-    int momentumFlag = 0;
+    const char * comType = "cli";
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
+
+    /* inputs that apply to the whole army (must be the same for all ninjas) */
+    const int nCPUs = 1;
+    int momentumFlag = 0;
     const char * demFile = "/home/natalie/src/windninja/api_testing/big_butte_small.tif";
     const char * initializationMethod = "domain_average";
-    const int nCPUs = 1;
+    const int diurnalFlag = 0;
+    const char * meshChoice = "coarse";
+    const char * vegetation = "grass";
+    const int nLayers = 20; //layers in the mesh
+    const int meshCount = 100000; //number of cells in the mesh (cfd runs only)
 
-    const double speed[2] = {5.5, 5.5};
     const char * speedUnits = "mps";
-    const double direction = 220;
-
     const double height = 5.0;
     const char * heightUnits = "m";
-    const int diurnalFlag = 0;
-    const char * vegetation = "grass";
-    const char * meshChoice = "coarse";
+
     const int googOutFlag = 1;
 
-    const char * comType = "cli";
-    const int nLayers = 20;
-    const int meshCount = 100000;
+    /* inputs that can vary among ninjas in an army */
+    const double speed[2] = {5.5, 5.5};
+    const double direction[2] = {220, 300};
 
     /* create the army */
     ninjaArmy = NinjaCreateArmy(numNinjas, momentumFlag, papszOptions);
@@ -480,7 +483,7 @@ int runWindNinja()
           printf("NinjaSetInputSpeed: err = %d\n", err);
         }
 
-        err = NinjaSetInputDirection(ninjaArmy, i, direction);
+        err = NinjaSetInputDirection(ninjaArmy, i, direction[i]);
         if(err != NINJA_SUCCESS)
         {
           printf("NinjaSetInputDirection: err = %d\n", err);
@@ -522,25 +525,26 @@ int runWindNinja()
             printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
         }
 
-        err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetNumVertLayers: err = %d\n", err);
-        }
-
         err = NinjaSetGoogOutFlag(ninjaArmy, i, googOutFlag);
         if(err != NINJA_SUCCESS)
         {
             printf("NinjaSetGoogOutFlag: err = %d\n", err);
         }
 
-        /* set meshCount if it's a ninjafoam run */
+        /* set meshCount if it's a cfd run, otherwise set nLayers */
         if(momentumFlag == 1)
         {
             err = NinjaSetMeshCount(ninjaArmy, i, meshCount);
             if(err != NINJA_SUCCESS)
             {
                 printf("NinjaSetMeshCount: err = %d\n", err);
+            }
+        }
+        else{
+            err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers);
+            if(err != NINJA_SUCCESS)
+            {
+                printf("NinjaSetNumVertLayers: err = %d\n", err);
             }
         }
     }
