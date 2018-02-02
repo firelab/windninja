@@ -107,7 +107,7 @@ class pointInitialization : public initialize
                                         std::vector<boost::posix_time::ptime> timeList,
                                         std::string timeZone, bool latest);
 
-        static void writeStationLocationFile(std::string demFile);
+        static void writeStationLocationFile(std::string stationPath,std::string demFile);
         static std::vector<boost::posix_time::ptime> getTimeList(int startYear, int startMonth,
                                                                 int startDay, int startHour,
                                                                 int startMinute, int endYear,
@@ -119,6 +119,8 @@ class pointInitialization : public initialize
         static void SetRawStationFilename(std::string filename);
         static void setStationBuffer(double buffer, std::string units);
         static void storeFileNames(vector<std::string> statLoc);
+        static std::string generatePointDirectory(std::string demFile,std::string outPath,
+                                                  std::vector<boost::posix_time::ptime> timeList,bool latest);
 
     private:
         void setInitializationGrids(WindNinjaInputs& input);
@@ -173,7 +175,7 @@ class pointInitialization : public initialize
 
 //        static std::string generateBasePlate(std::string);
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
-        static void fetchStationData(std::string URL, std::string timeZone, bool latest);
+        static void fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
         static double getStationBuffer();
 
         static std::string rawStationFilename;

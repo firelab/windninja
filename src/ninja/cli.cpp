@@ -1006,22 +1006,22 @@ int windNinjaCLI(int argc, char* argv[])
             std::vector<boost::posix_time::ptime> timeList;
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
-
                 option_dependency(vm,"station_buffer","station_buffer_units");
                 std::string stationPathName;
                 wxStation::SetStationFormat(wxStation::newFormat);
 
                 if (vm.count("fetch_station_path"))
                 {
-                    stationPathName=vm["fetch_station_path"].as<std::string>();
-                    pointInitialization::SetRawStationFilename(stationPathName);
+//                    stationPathName=vm["fetch_station_path"].as<std::string>();
+//                    pointInitialization::SetRawStationFilename(stationPathName);
+                    CPLDebug("STATION_FETCH","fetch_station_path has been disabled.");                    
                 }
-                else
-                {
-                    stationPathName="blank";
-                    pointInitialization::SetRawStationFilename(stationPathName);
-                }
-
+//                else
+//                {
+//                    stationPathName="blank";
+//                    pointInitialization::SetRawStationFilename(stationPathName);
+//                }
+                               
                 pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>());
 
@@ -1058,13 +1058,22 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                 }
+                
+                CPLDebug("STATION_FETCH","Generating Directory for Weather Stations");
+                stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
+                                                                            vm["output_path"].as<std::string>(),
+                                                                            timeList, vm["fetch_current_station_data"].as<bool>());
+//                stationPathName="blank";
+                pointInitialization::SetRawStationFilename(stationPathName);              
 
                 if (vm["fetch_type"].as<std::string>()=="bbox")
                 {
                     pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
-                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
+//                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());                    
+                    
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
@@ -1073,7 +1082,9 @@ int windNinjaCLI(int argc, char* argv[])
                     pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
-                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());                    
+//                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());                    
+                    
                 }
                 else
                 {

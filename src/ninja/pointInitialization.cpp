@@ -350,6 +350,58 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     influenceRadius = NULL;
 }
 
+std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
+                                                        std::vector<boost::posix_time::ptime> timeList,bool latest)
+{
+//    genPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s", t.c_str())));
+//    genPath = CPLStrdup(CPLGenerateTempFilename(dirName.c_str()));
+    std::string subDem;
+    std::string xDem;
+    std::string fullPath;
+    std::string sTime;
+    stringstream ss;
+   
+    xDem = demFile.substr(0,demFile.find(".",0));   
+    std::size_t found = xDem.find_last_of("/");
+    subDem=xDem.substr(found+1);   
+   
+    //Calcualte timestamp
+//    boost::posix_time::ptime time  = boost::posix_time::second_clock::local_time();
+//    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
+//    boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
+//    ss<<dNew;
+//    sTime = ss.str();
+    
+    //NEW WAY
+    stringstream timeStream,timeStream2;
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+    timeStream.imbue(locale(timeStream.getloc(),facet));               
+    std::string timeComponent;    
+    
+    if(latest==true) // if it is a "now" type sim, we name the directory with the current time
+    {
+        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+        timeStream<<writeTime;
+        timeComponent = timeStream.str();
+    }
+    if (latest==false) //If it is a time series we name the directory with both the start and stop time
+    {
+        timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
+        timeStream<<timeList[0];
+        timeStream2<<timeList.back();
+        timeComponent = timeStream.str()+"-"+timeStream2.str();
+    }
+    
+    fullPath = outPath+subDem+"_wxStations_"+timeComponent+"/";
+    CPLDebug("STATION_FETCH","Generating Directory: %s",fullPath.c_str());    
+    
+    VSIMkdir(fullPath.c_str(),0777);
+    
+    return fullPath;
+}
+
+
+
 vector<string> pointInitialization::openCSVList(string csvPath)
 {
     vector<string> csvList;
@@ -2078,7 +2130,6 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     bounds[1]=projyR;
 
     std::string URL;
-
     if (latest==false)
     {
         vector<std::string>timeUTC;
@@ -2096,7 +2147,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     }
     CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
 
-    fetchStationData(URL, timeZone, latest);
+    fetchStationData(URL, timeZone, latest,timeList);
 
     return true;
 }
@@ -2122,7 +2173,7 @@ bool pointInitialization::fetchStationByName(std::string stationList,
         CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
 
-    fetchStationData(URL, timeZone, latest);
+    fetchStationData(URL, timeZone, latest,timeList);
 
     return true;
 }
@@ -2131,7 +2182,7 @@ void pointInitialization::storeFileNames(vector<std::string> statLoc)
 {
     stationFiles=statLoc;
 }
-void pointInitialization::writeStationLocationFile(std::string demFile){
+void pointInitialization::writeStationLocationFile(string stationPath, std::string demFile){
     std::string cName;
     stringstream statLen;
     statLen<<stationFiles.size();
@@ -2142,8 +2193,8 @@ void pointInitialization::writeStationLocationFile(std::string demFile){
 //    cout<<baseName<<endl;
 //    cout<<baseName<<endl;
 //    cout<<rootFile<<endl;
-    cName=rootFile + "_" + "stations_" + statLen.str() + ".csv";
-    cout<<cName<<endl;
+    cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
+//    cout<<cName<<endl;
 //    exit(1);
     ofstream outFile;
     outFile.open(cName.c_str());    
@@ -2154,7 +2205,7 @@ void pointInitialization::writeStationLocationFile(std::string demFile){
 }
 
 void pointInitialization::fetchStationData(std::string URL,
-                                std::string timeZone, bool latest)
+                                std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList)
 {
 
 
@@ -2239,7 +2290,7 @@ void pointInitialization::fetchStationData(std::string URL,
     for (int ex=0;ex<fCount;ex++)
     {
 
-
+        //Fetch Some Metadata
         hFeature=OGR_L_GetFeature(hLayer,ex);
 
         idx=OGR_F_GetFieldIndex(hFeature,"mnet_id");
@@ -2248,29 +2299,42 @@ void pointInitialization::fetchStationData(std::string URL,
         idxID=OGR_F_GetFieldIndex(hFeature,"STID");
         writeID=(OGR_F_GetFieldAsString(hFeature,idxID));
 
-        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
-        std::ostringstream timestream;
-
-        boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%m-%d-%Y_%H%M_");
-
-        timestream.imbue(std::locale(std::locale::classic(), facet));
+        //generate file names
+        //        boost::posix_time::time_facet *facet2 = new boost::posix_time::time_facet("%Y%m%d%H%M");
+        //        timestream.imbue(std::locale(std::locale::classic(), facet));
+        //        testStream.imbue(locale(testStream.getloc(),facet));
+        stringstream timeStream,timeStream2; //Timestream2 is only needed for timeseries when we have a start and stop time
         std::string tName;
         stringstream idStream;
-        stringstream timeStream;
         stringstream ss;
-        ss<<ex;
-        idStream<<writeID;
-        timeStream<<writeTime;
-
-
-
+        boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+        timeStream.imbue(locale(timeStream.getloc(),facet));               
+        std::string timeComponent;
+        
+        ss<<ex; //Get the index for more specificity on the file name
+        idStream<<writeID; //Get the station ID
+        
+        if (latest==true)
+        {
+            boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+            timeStream<<writeTime;
+            timeComponent = timeStream.str();
+        }
+        if (latest==false) //If it is a time series we name the file with both the start and stop time
+        {
+            timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
+            timeStream<<timeList[0];
+            timeStream2<<timeList.back();
+            timeComponent = timeStream.str()+"-"+timeStream2.str();
+        }
+                
         if(csvName!="blank")
         {
-            tName = csvName+idStream.str() + "-" + timeStream.str() + "-" + ss.str() + ".csv";
+            tName = csvName+idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
         }
         else
         {
-            tName=idStream.str() + "-" + timeStream.str() + "-" + ss.str() + ".csv";
+            tName=idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
         }
         ofstream outFile;//writing to csv
         outFile.open(tName.c_str());

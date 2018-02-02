@@ -213,7 +213,9 @@ void stationFetchWidget::fetchStation()
     bool fetchNow;
     std::string blank="blank";
     std::string demUse=demButcher();
-//    cout<<demUse<<endl;
+    std::string stationPathName;
+    cout<<demFileName.toStdString()<<endl;
+    cout<<demUse<<endl;
     
     int terrainPart=geoLoc->currentIndex();
     int timePart=timeLoc->currentIndex();
@@ -247,7 +249,14 @@ void stationFetchWidget::fetchStation()
     bool result;
     
     
-    pointInitialization::SetRawStationFilename(demUse);
+//    pointInitialization::SetRawStationFilename(demUse);
+    //This is a little different than in the CLI, because there is on option for a custom output path
+    //Instead, the "raw File", demFileName is the dem file, like it would be in the LCI
+    //and then demUse, which the is just the path to the dem acts as the output path
+    //So the directory storing the weather csvs is always the same level as the DEM
+    stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
+    pointInitialization::SetRawStationFilename(stationPathName);              
+    
     
     // This means DEM and Current Data
     if (terrainPart==0 && timePart==0)
@@ -262,6 +271,7 @@ void stationFetchWidget::fetchStation()
 //        cout<<currentBox->isChecked()<<endl;   
         
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
+        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         cout<<"Return: "<<result<<endl;
     }
     if (terrainPart==0 && timePart==1)
@@ -300,6 +310,7 @@ void stationFetchWidget::fetchStation()
 
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);
+        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
 
         
         cout<<"Return: "<<result<<endl;
@@ -317,6 +328,7 @@ void stationFetchWidget::fetchStation()
         fetchNow=true;
         
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
+        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
         cout<<"Return: "<<result<<endl;       
         
 //        cout<<stid<<endl;        
@@ -356,6 +368,7 @@ void stationFetchWidget::fetchStation()
                                                   numSteps,tzString.toStdString());
         
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
+        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
         cout<<"Return: "<<result<<endl;       
         
 //        cout<<stid<<endl;        
