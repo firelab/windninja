@@ -413,8 +413,7 @@ int runWindNinja()
     const char * initializationMethod = "domain_average";
     const int nCPUs = 1;
 
-    //const double speed = 10.0;
-    const double speed[2] = {5.5, 7.0};
+    const double speed[2] = {5.5, 5.5};
     const char * speedUnits = "mps";
     const double direction = 220;
 
@@ -429,6 +428,7 @@ int runWindNinja()
     const int nLayers = 20;
     const int meshCount = 100000;
 
+    /* create the army */
     ninjaArmy = NinjaCreateArmy(numNinjas, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
@@ -441,6 +441,7 @@ int runWindNinja()
       printf("NinjaInit: err = %d\n", err);
     }
 
+    /* set up the runs */
     for(unsigned int i=0; i<numNinjas; i++)
     {
         err = NinjaSetCommunication(ninjaArmy, i, comType);
@@ -544,12 +545,14 @@ int runWindNinja()
         }
     }
 
+    /* start the runs */
     err = NinjaStartRuns(ninjaArmy, nCPUs);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
+    /* get the output wind speed and direction data */
     const double* outputSpeedGrid = NULL;
     const double* outputDirectionGrid = NULL;
     const char* outputGridProjection = NULL;
@@ -577,6 +580,7 @@ int runWindNinja()
     const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
     const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
 
+    /* clean up */
     err = NinjaDestroyArmy(ninjaArmy);
     if(err != NINJA_SUCCESS)
     {
