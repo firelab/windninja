@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(mackay) {
   int rc = 0;
   AsciiGrid<double> spd;
   AsciiGrid<double> dir;
-  std::string mack = "/home/kyle/src/windninja/data/mackay.tif";
+  std::string mack = FindDataPath("mackay.tif");
   spd.GDALReadGrid(mack);
   dir.GDALReadGrid(mack);
   spd.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);

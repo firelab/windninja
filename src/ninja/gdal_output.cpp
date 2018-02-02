@@ -135,6 +135,8 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
 
+  int bTransform = EQUAL(pszDriver, "LIBKML") && spd.prjString != "";
+
   int rc = 0;
 
   /* If the grids don't align, return early */
@@ -152,19 +154,17 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return rc;
   }
 
-  hSRS = OSRNewSpatialReference(spd.prjString.c_str());
-  h4326 = OSRNewSpatialReference(0);
-  rc = OSRImportFromEPSG(h4326, 4326);
-  if(rc!= OGRERR_NONE) {
-      //cleanup
-      GDALClose(hDS);
-      return 1;
-  }
-
-  hCT = OCTNewCoordinateTransformation(hSRS, h4326);
-
-  if (EQUAL(pszDriver, "LIBKML")) {
+  if (bTransform) {
+      hSRS = OSRNewSpatialReference(spd.prjString.c_str());
+      h4326 = OSRNewSpatialReference(0);
+      rc = OSRImportFromEPSG(h4326, 4326);
+      if(rc!= OGRERR_NONE) {
+          //cleanup
+          GDALClose(hDS);
+          return 1;
+      }
     hDstSRS = h4326;
+    hCT = OCTNewCoordinateTransformation(hSRS, h4326);
   }
   if (nFlags & NINJA_OUTPUT_ARROWS) {
     hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
@@ -188,19 +188,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
       return 1;
     }
     OGR_Fld_Destroy(hFieldDefn);
-  }
-
-  if (EQUAL(pszDriver, "LIBKML")) {
-    h4326 = OSRNewSpatialReference(0);
-    if (h4326 == 0) {
-      GDALClose(hDS);
-      return 1;
-    }
-    rc = OSRImportFromEPSG(h4326, 4326);
-    if (rc != OGRERR_NONE) {
-      GDALClose(hDS);
-      return 1;
-    }
   }
 
   double splits[5];
@@ -232,7 +219,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
         hGeom = OGR_G_CreateGeometry(wkbPoint);
         OGR_G_SetPoint_2D(hGeom, 0, x, y);
       }
-      if (EQUAL(pszDriver, "LIBKML")) {
+      if (bTransform) {
         OGR_G_Transform(hGeom, hCT);
       }
       OGR_F_SetGeometry(hFeat, hGeom);
