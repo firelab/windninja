@@ -262,17 +262,25 @@ bool ninjaArmy::startRuns(int numProcessors)
         return false;
 
     //check for duplicate runs before we start the simulations
-    //this is mostly for batch domain avg runs in the GUI
-    if(ninjas.size() > 1){
-        for(unsigned int i=0; i<ninjas.size()-1; i++){
-            for(unsigned int j=i+1; j<ninjas.size(); j++){
-                if(ninjas[i]->input == ninjas[j]->input &&
-                   ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
-                        throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+    //this is mostly for batch domain avg runs in the GUI and the API
+    try{
+        if(ninjas.size() > 1){
+            for(unsigned int i=0; i<ninjas.size()-1; i++){
+                for(unsigned int j=i+1; j<ninjas.size(); j++){
+                    if(ninjas[i]->input == ninjas[j]->input &&
+                       ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
+                            throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+                    }
                 }
             }
         }
+    }catch (exception& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
     }
+
 #ifdef NINJAFOAM
     //if it's a ninjafoam run and the user specified an existing case dir, set it here
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
