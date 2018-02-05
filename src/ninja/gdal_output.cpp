@@ -290,11 +290,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   spd.divide_gridData(splits, 5);
 
   char **papszKMLOptions = 0;
-  /* LIBKML COs and support images */
-  if (EQUAL(pszDriver, "LIBKML")) {
-    rc = writeLegend("temp.bmp", splits, spd.get_maxValue(), "mph");
-  }
-
   if (nFlags & NINJA_OUTPUT_ARROWS) {
     hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
                                     papszOptions);
@@ -362,5 +357,23 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OSRDestroySpatialReference(h4326);
   OCTDestroyCoordinateTransformation(hCT);
   GDALClose(hDS);
+  /* After we close the dataset, insert the support files */
+  if (EQUAL(pszDriver, "LIBKML") &&
+      EQUAL(CPLGetExtension(pszFilename), "kmz")) {
+    rc = writeLegend("legend.bmp", splits, spd.get_maxValue(), "mph");
+    if (rc != 0) {
+      return rc;
+    }
+    // Copy the bmp into the kmz.  Use GDALCreateCopy to make a PNG, smaller
+    // and better for the web.
+    GDALDatasetH hBMP = GDALOpen("legend.bmp", GA_ReadOnly);
+    GDALDriverH hPNGDrv = GDALGetDriverByName("PNG");
+    assert(hPNGDrv);
+    const char *pszLgd = CPLSPrintf("/vsizip/%s/legend.png", pszFilename);
+    GDALDatasetH hPNG = GDALCreateCopy(hPNGDrv, pszLgd, hBMP, FALSE, 0, 0, 0);
+    assert(hPNG);
+    GDALClose(hPNG);
+    VSIUnlink("legend.bmp");
+  }
   return 0;
 }
