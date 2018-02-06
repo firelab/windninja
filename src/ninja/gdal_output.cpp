@@ -242,6 +242,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
                     AsciiGrid<double> &spd, AsciiGrid<double> &dir,
                     char **papszOptions) {
   GDALDriverH hDrv = 0;
+  GDALDriverH hWorkDrv = 0;
   GDALDatasetH hDS = 0;
   OGRLayerH hLayer = 0;
   OGRFeatureH hFeat = 0;
@@ -253,6 +254,8 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OGRSpatialReferenceH hSRS = 0;
   OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
+
+  int bCreateCopy = FALSE;
 
   int bTransform = EQUAL(pszDriver, "LIBKML") && spd.prjString != "";
 
@@ -268,9 +271,29 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return 1;
   }
 
-  hDS = GDALCreate(hDrv, pszFilename, 0, 0, 0, GDT_Byte, 0);
+  const char *pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0);
+  if (pszMDI == 0) {
+  }
+
+  if (GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0) &&
+      CSLTestBoolean(GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0))) {
+    hWorkDrv = hDrv;
+  } else if (GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATECOPY, 0) &&
+             CSLTestBoolean(
+                 GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATECOPY, 0))) {
+    hWorkDrv = GDALGetDriverByName("MEM");
+    bCreateCopy = TRUE;
+  } else {
+    return 1;
+  }
+  hDS = GDALCreate(hWorkDrv, pszFilename, spd.get_nCols(), spd.get_nRows(), 3,
+                   GDT_Byte, 0);
   if (hDS == 0) {
     return rc;
+  }
+
+  if (!(nFlags&NINJA_OUTPUT_VECTOR)) {
+      return 0;
   }
 
   if (bTransform) {
@@ -288,6 +311,66 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   double splits[5];
   spd.divide_gridData(splits, 5);
+
+  if (nFlags & NINJA_OUTPUT_RASTER) {
+    char *pabyRed = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyRed);
+    char *pabyGreen = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyGreen);
+    char *pabyBlue = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyBlue);
+    double s;
+    for (int i = 0; i < spd.get_nRows(); i++) {
+      for (int j = 0; j < spd.get_nCols(); j++) {
+        s = spd.get_cellValue(i, j);
+        if (s <= splits[1]) {
+          pabyRed[i * j + i] = 0;
+          pabyGreen[i * j + i] = 0;
+          pabyBlue[i * j + i] = 255;
+        } else if (s <= splits[3]) {
+          pabyRed[i * j + i] = 0;
+          pabyGreen[i * j + i] = 255;
+          pabyBlue[i * j + i] = 0;
+        } else if (s <= splits[3]) {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 255;
+          pabyBlue[i * j + i] = 0;
+        } else if (s <= splits[4]) {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 127;
+          pabyBlue[i * j + i] = 0;
+        } else {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 0;
+          pabyBlue[i * j + i] = 0;
+        }
+      }
+    }
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyRed, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    hBand = GDALGetRasterBand(hDS, 2);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyGreen, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    hBand = GDALGetRasterBand(hDS, 3);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyBlue, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    if (bCreateCopy) {
+      GDALDatasetH hRDS =
+          GDALCreateCopy(hDrv, pszFilename, hDS, FALSE, 0, 0, 0);
+      assert(hRDS);
+      GDALClose(hRDS);
+    }
+  }
 
   char **papszKMLOptions = 0;
   if (nFlags & NINJA_OUTPUT_ARROWS) {

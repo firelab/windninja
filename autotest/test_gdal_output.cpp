@@ -128,6 +128,21 @@ BOOST_AUTO_TEST_CASE(mackay) {
   BOOST_REQUIRE(rc == 0);
 }
 
+BOOST_AUTO_TEST_CASE(raster) {
+  GDALAllRegister();
+  int rc = 0;
+  AsciiGrid<double> spd;
+  AsciiGrid<double> dir;
+  std::string mack = FindDataPath("mackay.tif");
+  spd.GDALReadGrid(mack);
+  dir.GDALReadGrid(mack);
+  spd.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
+  dir.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
+  rc = NinjaGDALOutput("PNG", "rgb.png",
+                       NINJA_OUTPUT_RASTER, spd, dir, 0);
+  BOOST_REQUIRE(rc == 0);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 #endif /* WIN32 */
