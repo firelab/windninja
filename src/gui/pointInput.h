@@ -104,6 +104,28 @@ class pointInput : public QWidget
     QTreeView *stationTreeView;
 
     QTableView *stationTableView;
+    
+    QTreeView *treeView;
+    QHBoxLayout *treeLayout;
+    QVBoxLayout *vTreeLayout;
+    
+    QStackedWidget *initPages;
+    QComboBox *initOpt;
+    QHBoxLayout *optLayout;
+    QWidget *oldForm;
+    QWidget *newForm;
+    
+    //Directory Checking Test
+    
+    QDir cwd;
+    QDirModel *sfModel;
+    QToolButton *refreshToolButton;
+    
+    
+    //endDirectoryChecking
+    QLineEdit *ska;
+    QLineEdit *jazz;
+    
 
     void updateTable();
     
@@ -113,6 +135,7 @@ class pointInput : public QWidget
 
   public slots:
     void updateTz(QString tz);
+    void checkForModelData();
     
     
   private slots:
@@ -122,6 +145,8 @@ class pointInput : public QWidget
     void setInputFile( QString file );
     void openMainWindow();
     void openStationFetchWidget();
+    
+    void toggleUI();
 
  signals:
     void writeToConsole( QString message );

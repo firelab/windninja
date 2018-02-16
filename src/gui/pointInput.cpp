@@ -39,11 +39,33 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     pointGroupBox = new QGroupBox( "Point Initialization", this );
     pointGroupBox->setCheckable( true );
     pointGroupBox->setChecked(false);
-
-    stationFileLineEdit = new QLineEdit( this );
+    
+    initOpt = new QComboBox( this );
+    initOpt->addItem("Old Format");
+    initOpt->addItem("New Format");
+    
+    initPages = new QStackedWidget(this);
+    oldForm = new QWidget();
+    newForm = new QWidget();
+    
+    
+    
+    stationFileLineEdit = new QLineEdit( newForm );
     stationFileLineEdit->setReadOnly( true );
+    stationFileLineEdit->setGeometry(QRect(10,0,141,20));
+//    stationFileLineEdit->setVisible(false);
+    
+//    ska = new QLineEdit( this );
+//    ska->setReadOnly( true );
+//    ska->setText( tr("SKA SKA SKA"));    
+//    ska->setVisible(false);
+    
+//    jazz = new QLineEdit( this );
+//    jazz->setReadOnly(false);
+//    jazz->setText(tr("Sunflower"));
+//    jazz->setVisible(true);
 
-    dateTimeEdit = new QDateTimeEdit( this );
+    dateTimeEdit = new QDateTimeEdit( newForm );
     dateTimeEdit->setDateTime( QDateTime::currentDateTime() );
     dateTimeEdit->setCalendarPopup( true );
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
@@ -53,6 +75,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     readStationFileButton->setText( tr( "Read Station File" ) );
     readStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
     readStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    readStationFileButton->setGeometry(QRect(10, 20, 151, 26));
 
     writeStationFileButton =  new QCheckBox( this );
     writeStationFileButton->setText( tr( "Write Station File" ) );
@@ -70,11 +93,50 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     doTest->setIcon(QIcon(":world.png"));
     doTest->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
-//    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+//    writeStationKmlButton->setToolButtonStyle( Q/t::ToolButtonTextBesideIcon );
     
     stationTreeView = new QTreeView( this );
-    stationTreeView->setModel( &pointData );
-
+    stationTreeView->setModel( &pointData ); //Ignore this shit please
+    
+//####################################################
+//This is where I am going to work on the tree stuff # 
+//####################################################    
+    
+    sfModel = new QDirModel(this);
+    sfModel->setReadOnly(false);
+    sfModel->setSorting(QDir::Time);
+//    sfModel->
+        
+    treeView = new QTreeView(this);
+    treeView->setVisible(false);
+    treeView->setModel(sfModel);
+    treeView->header()->setStretchLastSection(true);
+    treeView->setAnimated(true);
+    treeView->setColumnHidden(1, true);
+    treeView->setColumnHidden(2, true);
+    treeView->setAlternatingRowColors( true );
+    treeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    
+    refreshToolButton = new QToolButton(this);
+    refreshToolButton->setText(tr("Refresh Weather Stations"));
+    refreshToolButton->setIcon(QIcon(":arrow_rotate_clockwise.png"));
+    refreshToolButton->setToolTip(tr("Refresh the station listing."));
+    refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    refreshToolButton->setVisible(false);
+    
+    
+    //New Custom Layout
+//    treeLayout = new QHBoxLayout;
+//    treeLayout->addWidget(treeView);
+//    treeLayout->addWidget(refreshToolButton);
+    
+    vTreeLayout = new QVBoxLayout;
+    vTreeLayout->addWidget(treeView);
+    vTreeLayout->addWidget(refreshToolButton);
+    
+//####################################################
+//END SF CUSTOM                                      # 
+//####################################################    
     connect( readStationFileButton, SIGNAL( clicked() ), this,
          SLOT( readStationFile() ) );
     connect( writeStationFileButton, SIGNAL( clicked() ), this,
@@ -83,10 +145,19 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
          SLOT( writeStationKml() ) );
     connect( doTest ,SIGNAL( clicked () ), this, 
              SLOT(openStationFetchWidget()));
+    
+    optLayout = new QHBoxLayout;
+    optLayout->addWidget(initOpt);
 
     fileLayout = new QHBoxLayout;
     fileLayout->addWidget( stationFileLineEdit );
+//    fileLayout->addWidget(ska);    
     fileLayout->addWidget( readStationFileButton );
+//    initPages->addWidget(oldForm);
+//    fileLayout->addWidget(initPages);
+//    fileLayout->addWidget(treeView);
+//    fileLayout->addWidget(refreshToolButton);
+//    fileLayout->addWidget(jazz);
 
     buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget( writeStationFileButton );
@@ -95,15 +166,31 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout->addWidget(doTest);
     buttonLayout->addStretch();
 
+    
+    
     pointLayout = new QVBoxLayout;
     pointLayout->addWidget( stationTreeView );
     stationTreeView->setVisible( false );
+    pointLayout->addLayout(optLayout);
     pointLayout->addLayout( fileLayout );
-    pointLayout->addWidget( dateTimeEdit );
+    
+    pointLayout->addLayout(vTreeLayout);
+//    pointLayout->addLayout(treeLayout);
+//    pointLayout->addWidget( dateTimeEdit );
+    
     pointLayout->addStretch();
     pointLayout->addLayout( buttonLayout );
 
     pointGroupBox->setLayout( pointLayout );
+    
+    cwd = QFileInfo("/home/tanner/src/wind/fs_gui_files/kmso.tif").absolutePath();
+    
+//    stationTreeView->setRootIndex(model->index());
+    
+//    treeView->setModel(model);
+//    treeView->header()
+        
+    
     
     ninjafoamConflictLabel = new QLabel(tr("The point initialization option is not currently available for the momentum solver.\n"
         ), this);
@@ -112,10 +199,16 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     layout = new QVBoxLayout;
     layout->addWidget( pointGroupBox );
     layout->addWidget(ninjafoamConflictLabel);
-    //layout->addStretch();
+//    layout->addStretch();
 
+//    if (initOpt)
+    cout<<initOpt->currentIndex()<<endl;
+    
     setLayout( layout );
-
+    connect(initOpt,SIGNAL(currentIndexChanged(int)), this,SLOT(toggleUI()));
+    connect(refreshToolButton, SIGNAL(clicked()),
+        this, SLOT(checkForModelData()));
+    
     stationFileName = "";
 }
 
@@ -225,7 +318,31 @@ void pointInput::updateTz(QString tz)
     tzString = tz;    
 }
 
-
+void pointInput::toggleUI()
+{
+    cout<<initOpt->currentIndex()<<endl;
+    if (initOpt->currentIndex()==1)
+    {
+//        jazz->setVisible(false);
+        stationFileLineEdit->setVisible(false);
+        readStationFileButton->setVisible(false);
+//        readStationFileButton->setVisible(true);
+//        ska->setVisible(true);
+        treeView->setVisible(true);
+        refreshToolButton->setVisible(true);
+        setInputFile(demFileName);
+        checkForModelData();
+    }
+    if (initOpt->currentIndex()==0)
+    {
+        stationFileLineEdit->setVisible(true);
+//        ska->setVisible(false);
+        treeView->setVisible(false);
+        refreshToolButton->setVisible(false);
+        readStationFileButton->setVisible(true);        
+        
+    }
+}
 
 void pointInput::openStationFetchWidget()
 {
@@ -240,7 +357,20 @@ void pointInput::openStationFetchWidget()
 void pointInput::setInputFile( QString file )
 {
     demFileName = file;
+    cwd = QFileInfo(file).absolutePath();
 }
+void pointInput::checkForModelData()
+{
+
+    QDir wd(cwd);
+    
+    treeView->setRootIndex(sfModel->index(wd.absolutePath()));
+    treeView->resizeColumnToContents(0);
+    
+    
+
+}
+
 
 void pointInput::updateTable()
 {
