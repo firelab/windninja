@@ -120,7 +120,8 @@ class pointInput : public QWidget
     QDir cwd;
     QDirModel *sfModel;
     QToolButton *refreshToolButton;
-    
+    QStringList filters;
+    QString tXtest;
     
     //endDirectoryChecking
     QLineEdit *ska;

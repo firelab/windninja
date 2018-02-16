@@ -363,11 +363,14 @@ void pointInput::checkForModelData()
 {
 
     QDir wd(cwd);
-    
+    QStringList filters;
+    filters<<"*.csv";
+    sfModel->setNameFilters(filters);
+    sfModel->setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);    
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
     
-    
+
 
 }
 
