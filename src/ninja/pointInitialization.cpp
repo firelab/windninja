@@ -1806,6 +1806,22 @@ vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, v
     vector<std::string> totalCloudcat;
     std::string aa;
 
+//    cout<<low.size()<<endl;
+//    cout<<med.size()<<endl;
+//    cout<<high.size()<<endl;
+
+//    cout<<countlow<<endl;
+//    cout<<countmed<<endl;
+//    cout<<counthigh<<endl;
+
+    if (low!=med)
+    { /*This is some sort of Bug with the METAR/ASOS stations, the low clouds are always missing 40 data points, and it is only occuring today
+        (2/17), earlier times like in january do not have this problem.
+        */
+        CPLDebug("STATION_FETCH", "That Weird METAR BUG IS HAPPENING AGAIN!, quick fix now...");
+        low = med;
+    }
+
     for (int ti=0; ti<countlow; ti++)
     {
         int numa = atoi(low.at(ti).c_str());
@@ -2046,11 +2062,15 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     
     boost::gregorian::date dStart(startYear,startMonth,startDay);
     boost::posix_time::time_duration dStartTime(startHour,startMinute,0,0);
-    boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
+    boost::posix_time::ptime utcStart(dStart,dStartTime);
+    boost::local_time::local_date_time startLocal(utcStart,timeZonePtr);
+//    boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
 
     boost::gregorian::date dEnd(endYear,endMonth,endDay);
     boost::posix_time::time_duration dEndTime(endHour,endMinute,0,0);
-    boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,true);
+    boost::posix_time::ptime utcEnd(dEnd,dEndTime);
+    boost::local_time::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
+//    boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,true);//Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
 
     boost::posix_time::ptime startUtc=startLocal.utc_time();
     boost::posix_time::ptime endUtc=endLocal.utc_time();
