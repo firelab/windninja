@@ -303,11 +303,10 @@ void stationFetchWidget::fetchStation()
 
 //        cout<<sY<<sMo<<sD<<sH<<sMi<<endl;
 //        cout<<eY<<eMo<<eD<<eH<<eMi<<endl;
-        
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
-
+        cout<<timeList.size()<<endl;
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);
         pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        

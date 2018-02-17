@@ -1703,10 +1703,15 @@ int mainWindow::solve()
     else if(tree->wind->windTable->airTempUnits->currentIndex() == 1)
     tempUnits = temperatureUnits::C;
 
-    //point initialization
+    //point initialization and Station Fetch
     std::string pointFile = tree->point->stationFileName.toStdString();
     int pointFormat = tree->point->initOpt->currentIndex();
     std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
+    std::vector<int> xStartTime = tree->point->startSeries;
+    std::vector<int> xEndTime = tree->point->endSeries;
+    int numTimeSteps = tree->point->numSteps->value();
+    bool useTimeList = tree->point->enableTimeseries->isChecked();
+    
     //model init
     std::string weatherFile;
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
@@ -1870,10 +1875,47 @@ int mainWindow::solve()
         }
         if (pointFormat==1)
         {
+            std::vector<int> formatVec;
+            std::vector<boost::posix_time::ptime> timeList;
             cout<<"NEW FORMAT"<<endl;
             for (int i=0;i<pointFileList.size();i++)
             {
                 cout<<pointFileList[i]<<endl; //This works and then we seg fault -> which is good!
+                cout<<wxStation::GetHeaderVersion(pointFileList[i].c_str())<<endl;
+                formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
+            }
+            if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin()))
+            {
+                cout<<"TRUE"<<endl;
+                
+                if(useTimeList == true)
+                {
+                    cout<<"USING TIME LIST"<<endl;
+                    timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
+                                                                xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
+                                                                numTimeSteps,timeZone);
+                    pointInitialization::storeFileNames(pointFileList);
+                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
+                    nRuns = army->getSize();
+                    
+                }
+                if (useTimeList == false)
+                {
+                    boost::posix_time::ptime noTime;
+                    timeList.push_back(noTime);
+                }
+                
+                
+                
+                
+                
+                
+                
+                
+            }
+            else
+            {
+                cout<<"WARNING NOT ALL csvs are of the same type, cannot continue"<<endl;
             }
             
             

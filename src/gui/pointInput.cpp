@@ -518,17 +518,82 @@ void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more
         
     }
 }
+void pointInput::pairFetchTime(QDateTime xDate) //Obsolete
+{
+    QDateTime zDate = xDate;
+    cout<<"PAIR FETCH TIME"<<endl;
+    cout<<xDate.date().toString().toStdString()<<endl;
+}
+void pointInput::pairStartTime(QDateTime xDate)
+{
+//    cout<<"PAIR START TIME"<<endl;
+//    cout<<xDate.date().toString().toStdString()<<endl;
+    startTime->setDateTime(xDate);    
+}
+void pointInput::pairStopTime(QDateTime xDate)
+{
+//    cout<<"PAIR STOP TIME"<<endl;
+//    cout<<xDate.date().toString().toStdString()<<endl;
+    stopTime->setDateTime(xDate);
+}
+
+void pointInput::updateStartTime(QDateTime xDate)
+{
+    int year,month,day,hour,minute;
+    year = xDate.date().year();
+    month = xDate.date().month();
+    day = xDate.date().day();    
+    hour = xDate.time().hour();
+    minute = xDate.time().minute();
+    
+//    if (type==0)
+//    {
+      startSeries.push_back(year);
+      startSeries.push_back(month);
+      startSeries.push_back(day);
+      startSeries.push_back(hour);
+      startSeries.push_back(minute);
+//    }
+//    if (type ==1)
+//    {
+//        endSeries.push_back(year);
+//        endSeries.push_back(month);
+//        endSeries.push_back(day);
+//        endSeries.push_back(hour);
+//        endSeries.push_back(minute);
+//    }
+}
+void pointInput::updateStopTime(QDateTime xDate)
+{
+    int year,month,day,hour,minute;
+    year = xDate.date().year();
+    month = xDate.date().month();
+    day = xDate.date().day();    
+    hour = xDate.time().hour();
+    minute = xDate.time().minute();
+    
+    endSeries.push_back(year);
+    endSeries.push_back(month);
+    endSeries.push_back(day);
+    endSeries.push_back(hour);
+    endSeries.push_back(minute);
+}
 
 void pointInput::openStationFetchWidget()
 {
     xWidget = new stationFetchWidget();
+    QSignalMapper *signalMapper;
     connect(xWidget, SIGNAL(exitDEM()),this, SLOT(openMainWindow())); //Launches Widget Connector
     this->setEnabled(false);
     xWidget->setInputFile(demFileName);
     xWidget->updatetz(tzString);
     connect(xWidget, SIGNAL(exitDEM()),this, SLOT(checkForModelData())); //Launches Widget Connector    
 //    checkForModelData();
-
+//    cout<<xWidget->timeLoc->currentIndex()<<endl;
+    connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
+    connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime)));
+    connect(xWidget->endEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStopTime(const QDateTime)));
+    
 }
 
 void pointInput::setInputFile( QString file )

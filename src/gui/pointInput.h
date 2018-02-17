@@ -143,6 +143,9 @@ class pointInput : public QWidget
     QLabel *stopLabel;
     QLabel *stepLabel;
     
+    std::vector<int> startSeries;
+    std::vector<int> endSeries; //Global Storage for start and stop times
+    
     //End Timeseries stuff
     QLineEdit *ska;
     QLineEdit *jazz;
@@ -163,7 +166,7 @@ class pointInput : public QWidget
   private slots:
     void readStationFile();
     void readMultipleStaitonFiles(const QModelIndex &index);
-    void selChanged();
+    void selChanged(); //Test Function
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
@@ -171,6 +174,12 @@ class pointInput : public QWidget
     void openStationFetchWidget();
     int checkNumStations(string comparator, std::vector<std::string> stationVec);
     
+    void pairFetchTime(QDateTime xDate); //This is a test function that needs to be deleted!
+    void pairStartTime(QDateTime xDate);
+    void pairStopTime(QDateTime xDate);    
+    
+    void updateStartTime(QDateTime xDate);
+    void updateStopTime(QDateTime xDate);
     
     void toggleUI();
     void toggleTimeseries();
