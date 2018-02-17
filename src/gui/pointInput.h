@@ -59,7 +59,7 @@
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "stationFetchWidget.h"
-
+#include <set>
 
 #include <QGridLayout>
 #include <QVBoxLayout>
@@ -77,6 +77,7 @@ class pointInput : public QWidget
 
     QString demFileName;
     QString stationFileName;
+    std::vector<std::string> stationFileList;
 
     QLineEdit *stationFileLineEdit;
 
@@ -115,15 +116,34 @@ class pointInput : public QWidget
     QWidget *oldForm;
     QWidget *newForm;
     
-    //Directory Checking Test
+    //Station Fetch Directory Stuff
     
     QDir cwd;
     QDirModel *sfModel;
     QToolButton *refreshToolButton;
     QStringList filters;
     QString tXtest;
+    std::vector<std::string> vy; //clean this up
+    std::vector<std::string> vx; //For file names
+    
     
     //endDirectoryChecking
+    //Time series stuff
+    QDateTimeEdit *startTime;
+    QDateTimeEdit *stopTime;
+    QCheckBox *enableTimeseries;
+    QHBoxLayout *timeBoxLayout;
+    QSpinBox *numSteps;
+    
+    QVBoxLayout *startLayout;
+    QVBoxLayout *stopLayout;
+    QVBoxLayout *stepLayout;
+    
+    QLabel *startLabel;
+    QLabel *stopLabel;
+    QLabel *stepLabel;
+    
+    //End Timeseries stuff
     QLineEdit *ska;
     QLineEdit *jazz;
     
@@ -137,17 +157,23 @@ class pointInput : public QWidget
   public slots:
     void updateTz(QString tz);
     void checkForModelData();
+    static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
     
     
   private slots:
     void readStationFile();
+    void readMultipleStaitonFiles(const QModelIndex &index);
+    void selChanged();
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
     void openMainWindow();
     void openStationFetchWidget();
+    int checkNumStations(string comparator, std::vector<std::string> stationVec);
+    
     
     void toggleUI();
+    void toggleTimeseries();
 
  signals:
     void writeToConsole( QString message );

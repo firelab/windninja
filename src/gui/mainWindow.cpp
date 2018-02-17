@@ -1705,7 +1705,8 @@ int mainWindow::solve()
 
     //point initialization
     std::string pointFile = tree->point->stationFileName.toStdString();
-
+    int pointFormat = tree->point->initOpt->currentIndex();
+    std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
     //model init
     std::string weatherFile;
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
@@ -1853,15 +1854,30 @@ int mainWindow::solve()
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
-        pointInitialization::SetRawStationFilename(pointFile);
-        /* right now the only option is the old format */
-        wxStation::SetStationFormat(wxStation::oldFormat);
-
-        std::vector<boost::posix_time::ptime> timeList;
-        boost::posix_time::ptime noTime;
-        timeList.push_back(noTime);
-        army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
-        nRuns = army->getSize();
+        if (pointFormat==0)
+        {
+            cout<<"Using Old Format..."<<endl;
+            pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this, 
+            //Only the old format works, so downloaded data, with the date-time column don't yet work!
+            /* right now the only option is the old format */
+            wxStation::SetStationFormat(wxStation::oldFormat);
+            std::vector<boost::posix_time::ptime> timeList;
+            boost::posix_time::ptime noTime;
+            timeList.push_back(noTime);
+            
+            army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
+            nRuns = army->getSize();
+        }
+        if (pointFormat==1)
+        {
+            cout<<"NEW FORMAT"<<endl;
+            for (int i=0;i<pointFileList.size();i++)
+            {
+                cout<<pointFileList[i]<<endl; //This works and then we seg fault -> which is good!
+            }
+            
+            
+        }
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
