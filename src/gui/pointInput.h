@@ -176,7 +176,8 @@ class pointInput : public QWidget
     
     void pairFetchTime(QDateTime xDate); //This is a test function that needs to be deleted!
     void pairStartTime(QDateTime xDate);
-    void pairStopTime(QDateTime xDate);    
+    void pairStopTime(QDateTime xDate);
+    void pairTimeSeries(int curIndex);
     
     void updateStartTime(QDateTime xDate);
     void updateStopTime(QDateTime xDate);

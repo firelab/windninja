@@ -41,88 +41,75 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     pointGroupBox->setCheckable( true );
     pointGroupBox->setChecked(false);
 
-    initOpt = new QComboBox( this );
-    initOpt->addItem("Old Format");
-    initOpt->addItem("New Format");
+    initOpt = new QComboBox( this ); //Short for initialization Options, so we can switch the GUI between the old format and the new format
+    initOpt->addItem("Old Format"); //needs a new name
+    initOpt->addItem("New Format"); //needs a new name
 
     initPages = new QStackedWidget(this);
     oldForm = new QWidget();
     newForm = new QWidget();
-
-
 
     stationFileLineEdit = new QLineEdit( newForm );
     stationFileLineEdit->setReadOnly( true );
     stationFileLineEdit->setGeometry(QRect(10,0,141,20));
 //    stationFileLineEdit->setVisible(false);
 
-//    ska = new QLineEdit( this );
-//    ska->setReadOnly( true );
-//    ska->setText( tr("SKA SKA SKA"));
-//    ska->setVisible(false);
-
-//    jazz = new QLineEdit( this );
-//    jazz->setReadOnly(false);
-//    jazz->setText(tr("Sunflower"));
-//    jazz->setVisible(true);
-
     dateTimeEdit = new QDateTimeEdit( newForm );
     dateTimeEdit->setDateTime( QDateTime::currentDateTime() );
     dateTimeEdit->setCalendarPopup( true );
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
-    dateTimeEdit->setEnabled( false );
+    dateTimeEdit->setEnabled( false ); //This is for Old Format Diurnal Simulations
 
-    readStationFileButton =  new QToolButton( this );
+    readStationFileButton =  new QToolButton( this ); //Opens old Format Station
     readStationFileButton->setText( tr( "Read Station File" ) );
     readStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
     readStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
     readStationFileButton->setGeometry(QRect(10, 20, 151, 26));
 
-    writeStationFileButton =  new QCheckBox( this );
+    writeStationFileButton =  new QCheckBox( this ); //This writes an interpolated csv of the weather data (we might not want this)
     writeStationFileButton->setText( tr( "Write Station File" ) );
-//    writeStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
+    writeStationFileButton->setIcon( QIcon( ":weather_clouds.png" ) );
 //    writeStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
-    writeStationKmlButton =  new QCheckBox( this );
+    writeStationKmlButton =  new QCheckBox( this ); //This writes a KML of the weather stations (1 per run)
     writeStationKmlButton->setText( tr( "Write Station Kml" ) );
-    writeStationKmlButton->setIcon( QIcon( ":weather_clouds.png" ) );
+    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
+//    writeStationKmlButton->setToolButtonStyle( Q/t::ToolButtonTextBesideIcon );
+//    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
 //    writeStationKmlButton->setStyle(Qt::ToolButtonTextBesideIcon);
 //    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
-    doTest = new QToolButton( this );
+    doTest = new QToolButton( this ); //This opens the station fetch Widget (probably needs a new name)
     doTest->setText( tr( "Open Station Downloader " ));
     doTest->setIcon(QIcon(":world.png"));
     doTest->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
-//    writeStationKmlButton->setToolButtonStyle( Q/t::ToolButtonTextBesideIcon );
 
 //    stationTreeView = new QTreeView( this );
-//    stationTreeView->setModel( &pointData ); //Ignore this shit please
+//    stationTreeView->setModel( &pointData ); //This is some sort of deprecated tree thing that existed before
 
 //####################################################
-//This is where I am going to work on the tree stuff #
+// New Format Tree Stuff                             #
 //####################################################
 
-    sfModel = new QDirModel(this);
-    sfModel->setReadOnly(false);
-    sfModel->setSorting(QDir::Time);
-//    sfModel->
+    sfModel = new QDirModel(this); //Creates the directory model
+    sfModel->setReadOnly(false); //probably can be true, but i don't know
+    sfModel->setSorting(QDir::Time); //Sort by time created
 
-    treeView = new QTreeView(this);
-    treeView->setVisible(false);
+    treeView = new QTreeView(this); //Creates the box
+    treeView->setVisible(false); //hides it, allows it be seen when initOpt is set correctly
     treeView->setModel(sfModel);
     treeView->header()->setStretchLastSection(true);
     treeView->setAnimated(true);
     treeView->setColumnHidden(1, true);
     treeView->setColumnHidden(2, true);
     treeView->setAlternatingRowColors( true );
-    treeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
 //    treeView->setSelectionMode(QAbstractItemView::);    
 //    treeView->setSelectionModel(QItemSelectionModel::Toggle);
     
 
     
-    refreshToolButton = new QToolButton(this);
+    refreshToolButton = new QToolButton(this); //This refreshes the tree so that new files will populate
     refreshToolButton->setText(tr("Refresh Weather Stations"));
     refreshToolButton->setIcon(QIcon(":arrow_rotate_clockwise.png"));
     refreshToolButton->setToolTip(tr("Refresh the station listing."));
@@ -140,8 +127,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //####################################################
 //End Directory. Start Timeseries Box                #
 //####################################################
-    startTime = new QDateTimeEdit(QDate::currentDate());
-    stopTime = new QDateTimeEdit(QDate::currentDate());
+    startTime = new QDateTimeEdit(QDateTime::currentDateTime());
+    stopTime = new QDateTimeEdit(QDateTime::currentDateTime());
     
     startTime->setDateTime(QDateTime::currentDateTime().addDays(-1));
     startTime->setMaximumDateTime(QDateTime::currentDateTime().addSecs(-3600));
@@ -159,8 +146,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     startTime->setVisible(false);
     stopTime->setVisible(false);
     enableTimeseries->setVisible(false);
+
     startTime->setEnabled(false);
     stopTime->setEnabled(false);
+
     numSteps->setVisible(false);
     numSteps->setEnabled(false);
     
@@ -195,7 +184,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     timeBoxLayout->addLayout(stepLayout);
     
 //-------------------------------------------------
-// Layout Adder
+// Add some new layouts
 //-------------------------------------------------
     vTreeLayout = new QVBoxLayout;
     vTreeLayout->addWidget(treeView);
@@ -276,6 +265,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
         this, SLOT(checkForModelData()));
     connect(enableTimeseries,SIGNAL(clicked()),this,
             SLOT(toggleTimeseries()));
+    connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
+    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
+
 //    connect(treeView,SIGNAL(QTreeView::currentChanged(const QModelIndex&, const QModelIndex&);),
 //            this,SLOT(readMultipleStaitonFiles()));
     connect(treeView, SIGNAL(clicked(const QModelIndex &)),
@@ -515,8 +507,8 @@ void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more
         startTime->setEnabled(true);
         stopTime->setEnabled(true);
         numSteps->setEnabled(true);
-        
-    }
+        updateStartTime(startTime->dateTime());
+        updateStopTime(stopTime->dateTime());    }
 }
 void pointInput::pairFetchTime(QDateTime xDate) //Obsolete
 {
@@ -524,7 +516,8 @@ void pointInput::pairFetchTime(QDateTime xDate) //Obsolete
     cout<<"PAIR FETCH TIME"<<endl;
     cout<<xDate.date().toString().toStdString()<<endl;
 }
-void pointInput::pairStartTime(QDateTime xDate)
+void pointInput::pairStartTime(QDateTime xDate) //These functions take the start and stop time from the widget
+//and populate the timeseries objects in the gUI
 {
 //    cout<<"PAIR START TIME"<<endl;
 //    cout<<xDate.date().toString().toStdString()<<endl;
@@ -537,6 +530,18 @@ void pointInput::pairStopTime(QDateTime xDate)
     stopTime->setDateTime(xDate);
 }
 
+void pointInput::pairTimeSeries(int curIndex)
+{
+    if(curIndex==0)
+    {
+        enableTimeseries->setChecked(false);
+    }
+    if(curIndex==1)
+    {
+        enableTimeseries->setChecked(true);
+    }
+}
+
 void pointInput::updateStartTime(QDateTime xDate)
 {
     int year,month,day,hour,minute;
@@ -545,6 +550,8 @@ void pointInput::updateStartTime(QDateTime xDate)
     day = xDate.date().day();    
     hour = xDate.time().hour();
     minute = xDate.time().minute();
+
+    cout<<year<<" "<<month<<" "<<day<<" "<<hour<<" "<<minute<<endl;
     
 //    if (type==0)
 //    {
@@ -571,6 +578,9 @@ void pointInput::updateStopTime(QDateTime xDate)
     day = xDate.date().day();    
     hour = xDate.time().hour();
     minute = xDate.time().minute();
+
+    cout<<year<<" "<<month<<" "<<day<<" "<<hour<<" "<<minute<<endl;
+
     
     endSeries.push_back(year);
     endSeries.push_back(month);
@@ -593,6 +603,9 @@ void pointInput::openStationFetchWidget()
     connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
     connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime)));
     connect(xWidget->endEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStopTime(const QDateTime)));
+    connect(xWidget->timeLoc,SIGNAL(currentIndexChanged(int)),this,SLOT(pairTimeSeries(int))); //Connects What the user does in the widget
+            //to what the timeseries checkbox does
+
     
 }
 

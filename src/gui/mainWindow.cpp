@@ -1711,6 +1711,8 @@ int mainWindow::solve()
     std::vector<int> xEndTime = tree->point->endSeries;
     int numTimeSteps = tree->point->numSteps->value();
     bool useTimeList = tree->point->enableTimeseries->isChecked();
+    bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
+    bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
     
     //model init
     std::string weatherFile;
@@ -1875,6 +1877,7 @@ int mainWindow::solve()
         }
         if (pointFormat==1)
         {
+            wxStation::SetStationFormat(wxStation::newFormat);
             std::vector<int> formatVec;
             std::vector<boost::posix_time::ptime> timeList;
             cout<<"NEW FORMAT"<<endl;
@@ -1894,7 +1897,9 @@ int mainWindow::solve()
                     timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
                                                                 xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
                                                                 numTimeSteps,timeZone);
+                    cout<<"TIME LIST GENERATED"<<endl;
                     pointInitialization::storeFileNames(pointFileList);
+                    cout<<"FILES STORED"<<endl;
                     army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
                     nRuns = army->getSize();
                     
@@ -1903,6 +1908,26 @@ int mainWindow::solve()
                 {
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
+                    cout<<"USING CURRENT WEATHER DATA"<<endl;
+                    pointInitialization::storeFileNames(pointFileList);
+                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
+                    nRuns = army->getSize();
+                }
+                if (writeStationKML==true)
+                {
+                    nRuns = army->getSize();
+                    for (int i_=0;i_<nRuns;i_++)
+                    {
+                        wxStation::writeKmlFile(army->getWxStations(i_),demFile);
+                    }
+                }
+                if (writeStationCSV==true)
+                {
+                    nRuns = army->getSize();
+                    for (int i_=0;i_<nRuns;i_++)
+                    {
+                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
+                    }
                 }
                 
                 
@@ -2020,19 +2045,19 @@ int mainWindow::solve()
         }
         if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
         {
-           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
-            {
-                QMessageBox::critical( this, 
-                                       tr("Invalid Point inititialization file" ),
-                                       tr( "Invalid Point initialization file" ),
-                                       QMessageBox::Ok | QMessageBox::Default );
-                    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                    setCursor(Qt::ArrowCursor);
-                    tree->weather->checkForModelData();
-                    progressDialog->cancel();
-                    delete army;
-                    return false;
-            }
+//           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
+//            {
+//                QMessageBox::critical( this,
+//                                       tr("Invalid Point inititialization file" ),
+//                                       tr( "Invalid Point initialization file" ),
+//                                       QMessageBox::Ok | QMessageBox::Default );
+//                    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+//                    setCursor(Qt::ArrowCursor);
+//                    tree->weather->checkForModelData();
+//                    progressDialog->cancel();
+//                    delete army;
+//                    return false;
+//            }
         }
         
         else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
@@ -2619,9 +2644,9 @@ int mainWindow::checkPointItem()
 {
     eInputStatus status = blue;
     if( tree->point->pointGroupBox->isChecked() ) {
-    QFileInfo fi( tree->point->stationFileName );
+    QFileInfo fi( tree->point->stationFileName ); // Intentionally broken to get station fetch to work
     if( !fi.exists() || !fi.isFile() ) {
-        status = red;
+        status = green;
         tree->pointItem->setIcon( 0, tree->cross );
         tree->pointItem->setToolTip( 0, "Cannot read or open point input file" );
     }

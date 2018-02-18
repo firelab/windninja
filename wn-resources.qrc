@@ -34,7 +34,7 @@
         <file alias="email.png">images/icons/email.png</file>
         <file>images/icons/transmit_blue.png</file>
         <file alias="transmit.png">images/icons/transmit.png</file>
-        <file>images/icons/weather_clouds.png</file>
+        <file alias="weather_clouds.png">images/icons/weather_clouds.png</file>
         <file>images/icons/weather_snow.png</file>
         <file>images/icons/weather_rain.png</file>
         <file alias="wxLtng.png">images/icons/weather_lightning.png</file>

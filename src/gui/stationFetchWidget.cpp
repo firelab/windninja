@@ -271,7 +271,7 @@ void stationFetchWidget::fetchStation()
 //        cout<<currentBox->isChecked()<<endl;   
         
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
-        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
+//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         cout<<"Return: "<<result<<endl;
     }
     if (terrainPart==0 && timePart==1)
@@ -309,7 +309,7 @@ void stationFetchWidget::fetchStation()
         cout<<timeList.size()<<endl;
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);
-        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
+//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
 
         
         cout<<"Return: "<<result<<endl;
@@ -327,7 +327,7 @@ void stationFetchWidget::fetchStation()
         fetchNow=true;
         
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
-        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
+//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         cout<<"Return: "<<result<<endl;       
         
 //        cout<<stid<<endl;        
@@ -367,7 +367,7 @@ void stationFetchWidget::fetchStation()
                                                   numSteps,tzString.toStdString());
         
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
-        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());        
+//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         cout<<"Return: "<<result<<endl;       
         
 //        cout<<stid<<endl;        
