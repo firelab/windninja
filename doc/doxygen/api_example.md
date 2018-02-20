@@ -149,12 +149,6 @@ A number of functions must be called to prepare the army.
             printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
         }
 
-        err = NinjaSetGoogOutFlag(ninjaArmy, i, googOutFlag);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetGoogOutFlag: err = %d\n", err);
-        }
-
         err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers);
         if(err != NINJA_SUCCESS)
         {
