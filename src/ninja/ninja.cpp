@@ -74,6 +74,7 @@ ninja::ninja()
     shade=NULL;
     solar=NULL;
     outputDirectionArray=NULL;
+    outputSpeedArray=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -185,6 +186,7 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+        outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
@@ -3137,6 +3139,10 @@ void ninja::deleteDynamicMemory()
 	if(DIAG)
 	{	delete[] DIAG;
 		DIAG=NULL;
+	}
+	if(outputSpeedArray)
+	{	delete[] outputSpeedArray;
+		outputSpeedArray = NULL;
 	}
 	if(outputDirectionArray)
 	{	delete[] outputDirectionArray;
