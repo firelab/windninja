@@ -582,7 +582,7 @@ WARN_LOGFILE           =
 # with spaces.
 # We're only doing the public api for now.
 
-INPUT                  = ./src/ninja/windninja.cpp ./src/ninja/ninjaArmy.h ./doc/doxygen/api_example.md
+INPUT                  = ./src/ninja/windninja.cpp ./src/ninja/ninjaArmy.h ./doc/doxygen/api_example.md ./doc/doxygen/api_mainpage.md
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -1629,3 +1629,4 @@ GENERATE_LEGEND        = YES
 # the various graphs.
 
 DOT_CLEANUP            = YES
+
