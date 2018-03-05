@@ -15,4 +15,4 @@ https://firelab.github.io/windninja/faq/
 ### Documentation
 [WindNinja Tutorials](https://firelab.github.io/windninja/tutorial/)
 
-[API Tutorial](https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions)
+[API Tutorial](https://weather.firelab.org/windninja_api/md_doc_doxygen_api_example.html)
