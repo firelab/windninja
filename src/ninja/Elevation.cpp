@@ -119,7 +119,6 @@ void Elevation::readFromMemory(const double* dem, const int nXSize, const int nY
     GDALReadGrid(fileName, 1);
     grid_made = true;
     elevationUnits = meters;
-    this->write_Grid("test_dem.tif",2);
     GDALClose( hDS );
 }
 
