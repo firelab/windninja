@@ -335,6 +335,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
+    ( NinjaH * ninja, const int nIndex, const double * demValues,
+      const int nXSize, const int nYSize, const double * geoRef, const char * prj )
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setDEM
+            ( nIndex, demValues, nXSize, nYSize, geoRef, std::string( prj ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
     ( NinjaH * ninja, const int nIndex )
 {

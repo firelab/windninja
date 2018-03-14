@@ -3337,19 +3337,13 @@ void ninja::set_DEM(std::string dem_file_name)
     if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 dem_file_name + " does not exist or may be in use by another program.");
-//	dem.read_elevation(dem_file_name, units);
-//	input.surface.Roughness.set_headerData(dem);
-//	input.surface.Rough_h.set_headerData(input.dem);
-//	input.surface.Rough_d.set_headerData(input.dem);
-//	input.surface.Albedo.set_headerData(input.dem);
-//	input.surface.Bowen.set_headerData(input.dem);
-//	input.surface.Cg.set_headerData(input.dem);
-//	input.surface.Anthropogenic.set_headerData(input.dem);
-//
-//	input.surface.RoughnessUnits = lengthUnits::meters;
-//	input.surface.Rough_hUnits = lengthUnits::meters;
-//	input.surface.Rough_dUnits = lengthUnits::meters;
     input.dem.fileName = dem_file_name;
+}
+
+void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
+                    const double* geoRef, std::string prj)
+{
+    input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
 int ninja::get_inputsRunNumber() const

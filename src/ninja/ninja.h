@@ -181,6 +181,8 @@ public:
     void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
     void setArmySize(int n);
     void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
+    void set_DEM(const double* dem, const int nXSize, const int nYSize, const double* geoRef,
+                 std::string prj);
     void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false);	//input wind initialization method
     WindNinjaInputs::eInitializationMethod get_initializationMethod(); //returns the initializationMethod
 

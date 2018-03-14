@@ -105,6 +105,10 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
         ( NinjaH * ninja, const int nIndex, const char * fileName );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
+        ( NinjaH * ninja, const int nIndex, const double * demValues,
+          const int nXSize, const int nYSize, const double * geoRef, const char * prj );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
         ( NinjaH * ninja, const int nIndex );
 

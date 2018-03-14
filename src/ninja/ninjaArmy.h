@@ -363,26 +363,9 @@ public:
     */
     int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
     
-    /**
-    * \brief Set the DEM file for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param dem_filename path of the DEM file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
-    /**
-    * \brief Set the latitude/longitude position of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param lat_degrees position latitude in degrees
-    * \param lon_degrees position longitude in degrees
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setPosition( const int nIndex, const double lat_degrees,
-                     const double lon_degrees,
-                     char ** papszOptions=NULL );
-    int setPosition( const int nIndex, char ** papszOptions=NULL );
+    /*-----------------------------------------------------------------------------
+     *  Point Initialization Methods
+     *-----------------------------------------------------------------------------*/
     /**
     * \brief Set the input points filename for a ninja
     *
@@ -405,6 +388,7 @@ public:
 
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
+
     /*-----------------------------------------------------------------------------
      *  Simulation Parameter Methods
      *-----------------------------------------------------------------------------*/
@@ -450,6 +434,31 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the DEM file for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param dem_filename path of the DEM file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
+
+    int setDEM( const int nIndex, const double* demValues, const int nXSize, const int nYSize,
+                const double* geoRef, std::string prj, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the latitude/longitude position of a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param lat_degrees position latitude in degrees
+    * \param lon_degrees position longitude in degrees
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setPosition( const int nIndex, const double lat_degrees,
+                     const double lon_degrees,
+                     char ** papszOptions=NULL );
+    int setPosition( const int nIndex, char ** papszOptions=NULL );
+
     /**
     * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
     *

@@ -22,23 +22,6 @@
 #include <stdio.h>
 #include <string.h>
 
-//For some reason these directives are not working
-// and the code will not compile unless netCDF_lock
-// is explicitely created
-//#ifdef _OPENMP
-//
-//#ifndef NETCDF_LOCK_SET
-//#define NETCDF_LOCK_SET
-//
-//#include "omp.h"
-//omp_lock_t netCDF_lock;
-//
-//#endif  //NETCDF_LOCK_SET
-//#endif //_OPENMP
-
-//#include "omp.h"
-//omp_lock_t netCDF_lock;
-
 int errval = 0;
 NinjaH * ninja = NULL;
 
@@ -425,7 +408,7 @@ int runWindNinja()
     const double height = 5.0;
     const char * heightUnits = "m";
 
-    const int googOutFlag = 1;
+    //const int googOutFlag = 1;
 
     /* inputs that can vary among ninjas in an army */
     const double speed[2] = {5.5, 5.5};
@@ -525,11 +508,11 @@ int runWindNinja()
             printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
         }
 
-        err = NinjaSetGoogOutFlag(ninjaArmy, i, googOutFlag);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetGoogOutFlag: err = %d\n", err);
-        }
+//        err = NinjaSetGoogOutFlag(ninjaArmy, i, googOutFlag);
+//        if(err != NINJA_SUCCESS)
+//        {
+//            printf("NinjaSetGoogOutFlag: err = %d\n", err);
+//        }
 
         /* set meshCount if it's a cfd run, otherwise set nLayers */
         if(momentumFlag == 1)

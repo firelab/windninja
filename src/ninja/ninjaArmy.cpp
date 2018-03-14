@@ -1070,21 +1070,9 @@ int ninjaArmy::setWxModelFilename(const int nIndex, const std::string wx_filenam
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_wxModelFilename( wx_filename ) );
 }
 
-int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
-}
-
-int ninjaArmy::setPosition( const int nIndex, const double lat_degrees, const double lon_degrees,
-                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_position( lat_degrees, lon_degrees ) );
-}
-int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
-}
+/*-----------------------------------------------------------------------------
+ *  Point Initializaiton Methods
+ *-----------------------------------------------------------------------------*/
 int ninjaArmy::setInputPointsFilename( const int nIndex, const std::string filename, char ** papszOptions)
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputPointsFilename( filename ) );
@@ -1106,6 +1094,7 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->readInputFile() );
 }
+
 /*-----------------------------------------------------------------------------
  *  Simulation Parameter Methods
  *-----------------------------------------------------------------------------*/
@@ -1116,6 +1105,30 @@ int ninjaArmy::ninjaInitialize()
     retval = NinjaInitialize();
     
     return retval;    
+}
+
+int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
+}
+
+int ninjaArmy::setDEM( const int nIndex, const double* demValues, const int nXSize,
+                       const int nYSize, const double* geoRef, std::string prj, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( demValues, nXSize, nYSize,
+                                                                   geoRef, prj ) );
+}
+
+int ninjaArmy::setPosition( const int nIndex, const double lat_degrees, const double lon_degrees,
+                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_position( lat_degrees, lon_degrees ) );
+}
+
+int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
 }
 
 int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOptions )
