@@ -289,6 +289,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaInit
  * \note Only valid with OpenMP support
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
  * \param nCPUs Thread count.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
@@ -307,6 +308,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     }
 }
 
+/**
+ * \brief Set the communication handler for simulations.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param comType Type of communication. For now, comType is always "cli".
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaH * ninja, const int nIndex, const char * comType )
 {
@@ -321,6 +332,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     }
 }
 
+/**
+ * \brief Set the DEM to use for the simulations.
+ *
+ * \see NinjaSetInMemoryDem
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param fileName Path to a valid DEM file on disk.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     ( NinjaH * ninja, const int nIndex, const char * fileName)
 {
@@ -334,6 +357,34 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set an in-memory DEM to use for the simulations.
+ *
+ * \note NinjaSetOutputPath must be called if an in-memory DEM
+ *       is used.
+ *
+ * \see NinjaSetPosition
+ * \see NinjaSetDem
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param demValues An array of elevation values (must be in meters).
+ * \param nXSize The number of pixels in the x-direction.
+ * \param nYSize The number of pixels in the y-direction.
+ * \param geoRef The georeferencing transform.
+ *
+ *               geoRef[0]  top left x
+ *               geoRef[1]  w-e pixel resolution
+ *               geoRef[2]  rotational coefficient, zero for north up images
+ *               geoRef[3]  top left y
+ *               geoRef[4]  rotational coefficient, zero for north up images
+ *               geoRef[5]  n-s pixel resolution (negative value)
+ *
+ * \param prj The projection definition string.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
     ( NinjaH * ninja, const int nIndex, const double * demValues,
@@ -350,6 +401,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
     }
 }
 
+/**
+ * \brief Set additional information related to the DEM.
+ *
+ * \note Must be called after NinjaSetDem is called. This function should
+ *       not be called if NinjaSetInMemoryDem is called.
+ *
+ * \see NinjaSetDem
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
     ( NinjaH * ninja, const int nIndex )
 {
@@ -363,6 +428,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set the input wind speed for a domain-average simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param speed The input speed.
+ * \param units The input speed units ("mph", "mps", "kph", "kts").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
     ( NinjaH * ninja, const int nIndex, const double speed,
@@ -379,6 +455,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
     }
 }
 
+/**
+ * \brief Set the input wind direction for a domain-average simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param speed The input direction.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
     ( NinjaH * ninja, const int nIndex, const double direction )
 {
@@ -391,6 +477,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set the input wind height for a domain-average simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param speed The input wind height above the canopy.
+ * \param units The input wind height units ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height, const char * units )
 {
@@ -404,6 +502,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set the output wind height for a domain-average simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param speed The output wind height above the canopy.
+ * \param units The output wind height units ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height,
@@ -420,6 +529,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
     }
 }
 
+/**
+ * \brief Set the output wind speed units.
+ *
+ * \note This function currently only applies to outputs
+ *       written to disk. In-memory wind speed output units
+ *       are mps.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param units The output speed units ("mph", "mps", "kph", "kts").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
     ( NinjaH * ninja, const int nIndex, const char * units )
 {
@@ -434,6 +557,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
     }
 }
 
+/**
+ * \brief Set the diurnal flag for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag on = 1, off = 2.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -447,6 +580,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
     }
 }
 
+/**
+ * \brief Set a uniform air temperture for a domain-average simulation.
+ *
+ * \note This function only needs to be called if diurnal winds are on.
+ *
+ * \see NinjaSetDiurnalWinds
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param temp Air temperature.
+ * \param units Air temperature units ("K", "C", "R", "F").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
     ( NinjaH * ninja, const int nIndex, const double temp,
       const char * units )
