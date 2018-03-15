@@ -242,6 +242,9 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Output Methods
      *-----------------------------------------------------------------------------*/
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
+        ( NinjaH * ninja, const int nIndex, const char * path);
+
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
         ( NinjaH * ninja, const int nIndex );
 

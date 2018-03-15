@@ -738,6 +738,15 @@ WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
+    ( NinjaH * ninja, const int nIndex, const char * path)
+{
+    if( NULL != ninja )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setOutputPath( nIndex, std::string( path ) );
+    }
+}
+
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     ( NinjaH * ninja, const int nIndex )
 {

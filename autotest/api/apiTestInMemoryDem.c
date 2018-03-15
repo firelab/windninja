@@ -46,6 +46,7 @@ int main()
     const int nCPUs = 1;
     int momentumFlag = 0;
     const char * demFile = "/home/natalie/src/windninja/api_testing/big_butte_small.tif";
+    const char * outputPath = "/home/natalie/src/windninja/api_testing/";
     const char * initializationMethod = "domain_average";
     const int diurnalFlag = 0;
     const char * meshChoice = "coarse";
@@ -138,6 +139,13 @@ int main()
         if(err != NINJA_SUCCESS)
         {
           printf("NinjaSetInitializationMethod: err = %d\n", err);
+        }
+
+        //outputPath must be set if using an in-memory DEM
+        err = NinjaSetOutputPath(ninjaArmy, i, outputPath);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetOutputPath: err = %d\n", err);
         }
 
         err = NinjaSetInMemoryDem(ninjaArmy, i, demValues, nXSize, nYSize, adfGeoTransform, prj);
@@ -254,7 +262,7 @@ int main()
     const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
     const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
 
-    printf("outputspeed[0]", outputSpeedGrid[0]);
+    printf("outputspeed[0] = %f", outputSpeedGrid[0]);
 
     /* clean up */
     err = NinjaDestroyArmy(ninjaArmy);
