@@ -141,7 +141,7 @@ int main()
           printf("NinjaSetInitializationMethod: err = %d\n", err);
         }
 
-        //outputPath must be set if using an in-memory DEM
+        //outputPath must be set if writing output to disk and using an in-memory DEM
         err = NinjaSetOutputPath(ninjaArmy, i, outputPath);
         if(err != NINJA_SUCCESS)
         {
