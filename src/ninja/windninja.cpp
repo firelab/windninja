@@ -594,6 +594,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
     ( NinjaH * ninja, const int nIndex, const double temp,
       const char * units )
@@ -609,6 +610,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
     }
 }
 
+/**
+ * \brief Set a uniform cloud cover for a domain-average simulation.
+ *
+ * \note This function only needs to be called if diurnal winds are on.
+ *
+ * \see NinjaSetDiurnalWinds
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param cloud_cover Cloud cover.
+ * \param units Cloud cover units ("percent", "fraction").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
     ( NinjaH * ninja, const int nIndex, const double cloud_cover,
       const char * units )
@@ -623,6 +639,26 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set the date and time for a domain-average simulation.
+ *
+ * \note This function only needs to be called if diurnal winds are on.
+ *
+ * \see NinjaSetDiurnalWinds
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param yr Year.
+ * \param mo Month.
+ * \param day Day.
+ * \param hr Hour.
+ * \param min Minute.
+ * \param sec Second.
+ * \param timeZoneString Time zone string. Can be set to "auto-detect".
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDateTime
     ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
