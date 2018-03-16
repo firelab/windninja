@@ -195,7 +195,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
  *
  * \return NINJA_SUCCESS on succes, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
     ( NinjaH * ninja, const unsigned int nprocessors )
 {
@@ -258,7 +257,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     (NinjaH * ninja, const int nIndex, const char * initializationMethod )
 {
@@ -294,7 +292,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaInit
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     ( NinjaH * ninja, const int nIndex, const int nCPUs )
 {
@@ -317,7 +314,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaH * ninja, const int nIndex, const char * comType )
 {
@@ -343,7 +339,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     ( NinjaH * ninja, const int nIndex, const char * fileName)
 {
@@ -385,7 +380,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
     ( NinjaH * ninja, const int nIndex, const double * demValues,
       const int nXSize, const int nYSize, const double * geoRef, const char * prj )
@@ -414,7 +408,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
     ( NinjaH * ninja, const int nIndex )
 {
@@ -439,7 +432,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPosition
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
     ( NinjaH * ninja, const int nIndex, const double speed,
       const char * units )
@@ -464,7 +456,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
     ( NinjaH * ninja, const int nIndex, const double direction )
 {
@@ -488,7 +479,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputDirection
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height, const char * units )
 {
@@ -513,7 +503,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInputWindHeight
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
     ( NinjaH * ninja, const int nIndex, const double height,
       const char * units )
@@ -542,7 +531,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputWindHeight
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
     ( NinjaH * ninja, const int nIndex, const char * units )
 {
@@ -566,7 +554,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -594,7 +581,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
     ( NinjaH * ninja, const int nIndex, const double temp,
       const char * units )
@@ -624,7 +610,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
     ( NinjaH * ninja, const int nIndex, const double cloud_cover,
       const char * units )
@@ -659,7 +644,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniCloudCover
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDateTime
     ( NinjaH * ninja, const int nIndex, const int yr, const int mo,
       const int day, const int hr, const int min, const int sec,
@@ -676,6 +660,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDateTime
     }
 }
 
+/**
+ * \brief Set a weather station file name for a point simulation.
+ *
+ * \note Only valid if point initialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param station_filename Weather station file name.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxStationFilename
     ( NinjaH * ninja, const int nIndex, const char * station_filename )
 {
@@ -690,6 +687,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxStationFilename
     }
 }
 
+/**
+ * \brief Set a uniform vegeation cover to use for a simulation.
+ *
+ * \note Not valid if a Landscape (*.lcp) file is used.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param vegetation Vegetation option to use ("grass", "brush", "trees").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
     ( NinjaH * ninja, const int nIndex, const char * vegetation )
 {
@@ -707,6 +715,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
 WINDNINJADLL_EXPORT char ** NinjaGetWxStations
     ( NinjaH * ninja, const int nIndex );
 
+/**
+ * \brief Get the diurnal flag set for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return flag indicating whether or not the diurnal parameterization is on (1 = on, 0 = off).
+ */
 WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
     ( NinjaH * ninja, const int nIndex )
 {
@@ -720,6 +736,14 @@ WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
     }
 }
 
+/**
+ * \brief Get the initialization method for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return string indicating the initialization method.
+ */
 WINDNINJADLL_EXPORT const char * NinjaGetInitializationMethod
     ( NinjaH * ninja, const int nIndex )
 {
@@ -796,63 +820,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
     }
 }
 #endif //Stability
-
-/*-----------------------------------------------------------------------------
- *  Scalar Methods
- *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarTransportFlag
-    ( NinjaH * ninja, const int nIndex, const int flag )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setScalarTransportFlag( nIndex, flag );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceStrength
-    ( NinjaH * ninja, const int nIndex, const double source_ )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setScalarSourceStrength( nIndex, source_ );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarXcoord
-    ( NinjaH * ninja, const int nIndex, const double xcoord_ )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setScalarXcoord( nIndex, xcoord_ );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarYcoord
-    ( NinjaH * ninja, const int nIndex, const double ycoord_ )
-{
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->setScalarYcoord( nIndex, ycoord_ );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-#endif //SCALAR
 
 #ifdef NINJAFOAM
 /*-----------------------------------------------------------------------------

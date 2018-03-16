@@ -200,23 +200,6 @@ typedef int  NinjaErr;
         ( NinjaH * ninja, const int nIndex, const double stability_ );
 #endif //Stability
 
-    /*-----------------------------------------------------------------------------
-     *  Scalar Methods
-     *-----------------------------------------------------------------------------*/
-#ifdef SCALAR
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarTransportFlag
-        ( NinjaH * ninja, const int nIndex, const int flag );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceStrength
-        ( NinjaH * ninja, const int nIndex, const double source_ );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceXcoord
-        ( NinjaH * ninja, const int nIndex, const double xcoord_ );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetScalarSourceYcoord
-        ( NinjaH * ninja, const int nIndex, const double ycoord_ );
-#endif //SCALAR
-
 //#ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFoam Methods
