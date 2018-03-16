@@ -821,10 +821,23 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
 }
 #endif //Stability
 
-#ifdef NINJAFOAM
 /*-----------------------------------------------------------------------------
  *  NinjaFoam Methods
  *-----------------------------------------------------------------------------*/
+#ifdef NINJAFOAM
+/**
+ * \brief Set the mesh count for a simulation.
+ *
+ * \note Only for use with the momentum solver.
+ *
+ * \see NinjaCreateArmy
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param meshCount The number of cells to use in the mesh.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
     ( NinjaH * ninja, const int nIndex, const int meshCount )
 {
@@ -844,6 +857,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
 /*-----------------------------------------------------------------------------
  *  Mesh Methods
  *-----------------------------------------------------------------------------*/
+/**
+ * \brief Set the mesh resolution choice.
+ *
+ * \see NinjaSetMeshResolution
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param choice The mesh resolution choice ("fine", "medium", "coarse").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolutionChoice
     ( NinjaH * ninja, const int nIndex, const char * choice )
 {
@@ -858,6 +882,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolutionChoice
     }
 }
 
+/**
+ * \brief Set the mesh resolution.
+ *
+ * \see NinjaSetMeshResolutionChoice
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param choice The mesh resolution.
+ * \param units The mesh resolution units ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolution
     (NinjaH * ninja, const int nIndex, const double resolution, const char * units )
 {
@@ -872,6 +908,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshResolution
     }
 }
 
+/**
+ * \brief Set the number of vertical layers in the mesh.
+ *
+ * \note Only for use with the conservation of mass solver.
+ *
+ * \see NinjaCreateArmy
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param nLayers The number of layers to use (20 is typcial).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
     ( NinjaH * ninja, const int nIndex, const int nLayers )
 {
@@ -888,6 +937,20 @@ WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
 /*-----------------------------------------------------------------------------
  *  Output Methods
  *-----------------------------------------------------------------------------*/
+/**
+ * \brief Set the output path for a simulation.
+ *
+ * \note This must be set if an in-memory DEM is used and outputs are written
+ *       to disk. The path must exist, it will not be created at runtime.
+ *
+ * \see NinjaSetInMemoryDem
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param path The full path where outputs should be written.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
     ( NinjaH * ninja, const int nIndex, const char * path)
 {
@@ -897,6 +960,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
     }
 }
 
+/**
+ * \brief Get the output speed grid from a simulation.
+ *
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ * \see NinjaGetOutputGridyllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return An array of speed values in mps.
+ */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     ( NinjaH * ninja, const int nIndex )
 {
@@ -906,6 +982,19 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     }
 }
 
+/**
+ * \brief Get the output direction grid from a simulation.
+ *
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ * \see NinjaGetOutputGridyllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return An array of direction values.
+ */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
     ( NinjaH * ninja, const int nIndex )
 {
@@ -915,6 +1004,20 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
     }
 }
 
+/**
+ * \brief Get the output grid projection string from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ * \see NinjaGetOutputGridyllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The output grid projeciton string.
+ */
 WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
     ( NinjaH * ninja, const int nIndex )
 {
@@ -924,6 +1027,20 @@ WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
     }
 }
 
+/**
+ * \brief Get the output grid cell size from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridxllCorner
+ * \see NinjaGetOutputGridyllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The output grid cell size in m.
+ */
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
     ( NinjaH * ninja, const int nIndex )
 {
@@ -933,6 +1050,20 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
     }
 }
 
+/**
+ * \brief Get the x-coordinate of the lower left corner of the output grid from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridyllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The lower left x-coordinate (in m) of the output grid.
+ */
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
     ( NinjaH * ninja, const int nIndex )
 {
@@ -942,6 +1073,20 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
     }
 }
 
+/**
+ * \brief Get the y-coordinate of the lower left corner of the output grid from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The lower left y-coordinate (in m) of the output grid.
+ */
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
     ( NinjaH * ninja, const int nIndex )
 {
@@ -951,6 +1096,15 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
     }
 }
 
+/**
+ * \brief Set the output buffer clipping for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param percent The percent by which to clip the output.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     ( NinjaH * ninja, const int nIndex, const double percent )
 {
@@ -964,6 +1118,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     }
 }
 
+/**
+ * \brief Set the flag to write the weather model winds used for initialzation as
+ *        a Google Earth file.
+ *
+ * \note Only valid if wxModelInitialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not the weather model winds will be
+ *             written as a Google Earth file (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -977,6 +1146,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
     }
 }
 
+/**
+ * \brief Set the flag to write the weather model winds used for initialzation as
+ *        a shapefile.
+ *
+ * \note Only valid if wxModelInitialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not the weather model winds will be
+ *             written as a shapefile (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -991,6 +1175,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
 
 }
 
+/**
+ * \brief Set the flag to write the weather model winds used for initialzation as
+ *        a raster file.
+ *
+ * \note Only valid if wxModelInitialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not the weather model winds will be
+ *             written as a raster file (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -1005,6 +1204,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
 
 }
 
+/**
+ * \brief Set the flag to write Google Earth output for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not Google Earth output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -1019,6 +1228,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
 
 }
 
+/**
+ * \brief Set the resolution of the Google Earth output for a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the Google Earth output.
+ * \param units The units of the Google Earth output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
@@ -1061,6 +1282,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
     }
 }
 
+/**
+ * \brief Set the flag to write shapefile output for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not shapefile output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -1075,6 +1306,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
 
 }
 
+/**
+ * \brief Set the resolution of the shapefile output for a simulation.
+ *
+ * \note Only valid if NinjaSetShpOutFlag is set to 1.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the shapefile output.
+ * \param units The units of the shapefile output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
@@ -1090,6 +1333,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
     }
 }
 
+/**
+ * \brief Set the flag to write raster output for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not raster output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -1104,6 +1357,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
 
 }
 
+/**
+ * \brief Set the resolution of the raster output for a simulation.
+ *
+ * \note Only valid if NinjaSetAsciiOutFlag is set to 1.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the raster output.
+ * \param units The units of the raster output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
     ( NinjaH * ninja, const int nIndex, const double resolution,
       const char * units )
@@ -1119,6 +1384,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
     }
 }
 
+/**
+ * \brief Set the flag to write VTK output for a simulation.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not VTK output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
