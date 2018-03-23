@@ -642,13 +642,11 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
         else throw badForecastFile("Cannot determine projection from the forecast file information.");
 
-        OGRSpatialReference oSRS, oDemSRS, *poLatLong;
+        OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
         char* prj2 = (char*)projString.c_str();
         oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
-
-        oDemSRS.importFromEPSG(32612);
 
         //printf("%s\n", srcWKT);
 
