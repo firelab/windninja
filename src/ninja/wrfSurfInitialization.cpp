@@ -322,7 +322,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     if(bandNum < 0)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
 
-
     GDALDataset* poDS;
     //attempt to grab the projection from the dem?
     //check for member prjString first
@@ -412,8 +411,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     else {
         status = nc_get_att_float( ncid, NC_GLOBAL, "DY", &dy );
     }
-
-    //cout <<"dx, dy = "<<dx<<", "<<dy<<endl;
 
     /*
      * Get global attributes CEN_LAT, CEN_LON
@@ -591,7 +588,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                     "Bad forecast file" );
         }
 
-        //cout<<"varList[i] = " <<varList[i]<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "varList[i] = %s", varList[i].c_str());
 
         /*
          * Set up spatial reference stuff for setting projections
@@ -648,7 +645,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
 
-        //printf("%s\n", srcWKT);
+        CPLDebug("WX_MODEL_INITIALIZATION", "srcWKT= %s", srcWKT);
 
         OGRCoordinateTransformation *poCT;
         poLatLong = oSRS.CloneGeogCS();
@@ -657,13 +654,10 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
          * Transform domain center from lat/long to WRF space
          */
         double zCenter;
-        bool transformed;
         zCenter = 0;
         double xCenter, yCenter;
         xCenter = (double)cenLon;
         yCenter = (double)cenLat;
-        //double xCenterArray[2] = {-113, -112.3552}; //1st value is MOAD, 2nd is current domain center
-        //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
         delete poLatLong;
@@ -671,12 +665,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");
 
-        //if(poCT==NULL || !poCT->Transform(2, xCenterArray, yCenterArray))  //for testing
-            //printf("Transformation failed.\n");
-
-        //cout<<"transformed = "<<transformed<<endl;
-        //cout<<"xCenter = "<<xCenter<<endl;
-        //cout<<"yCenter = "<<yCenter<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "xCenter, yCenter= %f, %f", xCenter, yCenter);
 
         /*
          * Set the geostransform for the WRF file
@@ -694,11 +683,9 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                     (yCenter+(nrows*dy)),
                                     0, -(dy)};
 
-        //cout<<"ulcornerX = " <<(xCenter-(ncols*dx))<<endl;
-        //cout<<"ulcornerY = " <<(yCenter+(nrows*dy))<<endl;
-        //cout<<"ncols = " <<ncols<<endl;
-        //cout<<"nrows = " <<nrows<<endl;
-        //cout<<"dx = "<<dx<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "ulcornerX, ulcornerY= %f, %f", (xCenter-(ncols*dx)), (yCenter+(nrows*dy)));
+        CPLDebug("WX_MODEL_INITIALIZATION", "nXSize, nYsize= %d, %d", nXSize, nYSize);
+        CPLDebug("WX_MODEL_INITIALIZATION", "dx= %f", dx);
 
         srcDS->SetGeoTransform(adfGeoTransform);
 
@@ -723,7 +710,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         psWarpOptions->nBandCount = nBandCount;
 
-        //cout<<"nBandCount = " << nBandCount <<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
 
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
@@ -769,7 +756,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }*/
         //=======end testing=================================//
 
-        //cout<<"bandNum to write is: " <<bandNum<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "band number to write = %d", bandNum);
 
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
