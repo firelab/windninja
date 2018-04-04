@@ -38,6 +38,7 @@
 #define NINJA_OUTPUT_RASTER 1 << 1
 #define NINJA_OUTPUT_ARROWS 1 << 2
 #define NINJA_OUTPUT_STYLED 1 << 3
+#define NINJA_OUTPUT_PALLET 1 << 4
 
 /*
 ** NinjaGDALOutput writes wind ninja output to an arbitrary driver.
