@@ -241,17 +241,26 @@ static OGRGeometryH drawArrow(double x, double y, double s, double d,
 int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
                     AsciiGrid<double> &spd, AsciiGrid<double> &dir,
                     char **papszOptions) {
+  // Driver to create the output
   GDALDriverH hDrv = 0;
+  // If hDrv only supports CreateCopy, use a working driver.
   GDALDriverH hWorkDrv = 0;
+  // Output dataset
   GDALDatasetH hDS = 0;
+  // Output layer(s)
   OGRLayerH hLayer = 0;
+  // Features for the wind field
   OGRFeatureH hFeat = 0;
+  // Either points or vectors for the output vector layer
   OGRGeometryH hGeom = 0;
 
   OGRFieldDefnH hFieldDefn = 0;
 
-  OGRSpatialReferenceH hDstSRS = 0;
+  // Source SRS
   OGRSpatialReferenceH hSRS = 0;
+  // Destination SRS, if needed
+  OGRSpatialReferenceH hDstSRS = 0;
+  // WGS84 for LIBKML output
   OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
 
@@ -261,9 +270,19 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   int rc = 0;
 
+  const char *pszMDI = 0;
+
   /* If the grids don't align, return early */
   if (!dir.checkForCoincidentGrids(spd)) {
     return 1;
+  }
+
+  /*
+  ** TODO(kyle): handle AAIGrid(or other single band formats) early,
+  ** pszFilename is a stub?
+  */
+  if (pszDriver == "AAIGrid" && nFlags & NINJA_OUTPUT_RASTER &&
+      !(nFlags & NINJA_OUTPUT_VECTOR)) {
   }
 
   hDrv = GDALGetDriverByName(pszDriver);
@@ -271,7 +290,23 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return 1;
   }
 
-  const char *pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0);
+  pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_VECTOR, 0);
+  if (pszMDI == 0 && (nFlags & NINJA_OUTPUT_VECTOR)) {
+    return 1;
+  }
+  if ((nFlags & NINJA_OUTPUT_VECTOR) && !CSLTestBoolean(pszMDI)) {
+    return 1;
+  }
+
+  pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_RASTER, 0);
+  if (pszMDI == 0 && (nFlags & NINJA_OUTPUT_RASTER)) {
+    return 1;
+  }
+  if ((nFlags & NINJA_OUTPUT_RASTER) && !CSLTestBoolean(pszMDI)) {
+    return 1;
+  }
+
+  pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0);
   if (pszMDI == 0) {
   }
 
@@ -290,10 +325,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
                    GDT_Byte, 0);
   if (hDS == 0) {
     return rc;
-  }
-
-  if (!(nFlags&NINJA_OUTPUT_VECTOR)) {
-      return 0;
   }
 
   if (bTransform) {
@@ -372,68 +403,110 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     }
   }
 
-  char **papszKMLOptions = 0;
-  if (nFlags & NINJA_OUTPUT_ARROWS) {
-    hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
-                                    papszOptions);
-  } else {
-    hLayer =
-        GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbPoint, papszOptions);
-  }
-  if (hLayer == 0) {
-    GDALClose(hDS);
-    return 1;
-  }
-
-  const char *apszFieldDefn[] = {"spd", "dir", 0};
-
-  for (int i = 0; apszFieldDefn[i] != 0; i++) {
-    hFieldDefn = OGR_Fld_Create(apszFieldDefn[i], OFTReal);
-    rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
-    if (rc != OGRERR_NONE) {
+  if (nFlags & NINJA_OUTPUT_VECTOR) {
+    // Handle the KML special options
+    char **papszKMLOptions = 0;
+    /*
+    ** Set the following KML options
+    **
+    ** ADD_REGION=YES/NO : defaults to NO
+    ** REGION_XMIN (optional) : defines the west coordinate of the region.
+    ** REGION_YMIN (optional) : defines the south coordinate of the region.
+    ** REGION_XMAX (optional) : defines the east coordinate of the region.
+    ** REGION_YMAX (optional) : defines the north coordinate of the region.
+    ** REGION_MIN_LOD_PIXELS (optional) : minimum size in pixels of the region
+    *so
+    *that it is displayed. Defaults to 256.
+    ** REGION_MAX_LOD_PIXELS (optional) : maximum size in pixels of the region
+    *so
+    *that it is displayed. Defaults to -1 (infinite).
+    ** REGION_MIN_FADE_EXTENT (optional) : distance over which the geometry
+    *fades,
+    *from fully opaque to fully transparent. Defaults to 0.
+    ** REGION_MAX_FADE_EXTENT (optional) : distance over which the geometry
+    *fades,
+    *from fully transparent to fully opaque. Defaults to 0.
+    **
+    ** For the legend
+    **
+    ** SO_HREF (required) : URL of the image to display.
+    ** SO_NAME (optional)
+    ** SO_DESCRIPTION (optional)
+    ** SO_OVERLAY_X (optional)
+    ** SO_OVERLAY_Y (optional)
+    ** SO_OVERLAY_XUNITS (optional)
+    ** SO_OVERLAY_YUNITS (optional)
+    ** SO_SCREEN_X (optional). Defaults to 0.05
+    ** SO_SCREEN_Y (optional). Defaults to 0.05
+    ** SO_SCREEN_XUNITS (optional). Defaults to Fraction
+    ** SO_SCREEN_YUNITS (optional). Defaults to Fraction
+    ** SO_SIZE_X (optional)
+    ** SO_SIZE_Y (optional)
+    ** SO_SIZE_XUNITS (optional)
+    ** SO_SIZE_YUNITS (optional)
+    */
+    if (nFlags & NINJA_OUTPUT_ARROWS) {
+      hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
+                                      papszOptions);
+    } else {
+      hLayer =
+          GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbPoint, papszOptions);
+    }
+    if (hLayer == 0) {
       GDALClose(hDS);
       return 1;
     }
-    OGR_Fld_Destroy(hFieldDefn);
-  }
 
-  double x, y, s, d;
-  for (int i = 0; i < spd.get_nRows(); i++) {
-    for (int j = 0; j < spd.get_nCols(); j++) {
-      hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
-      s = spd.get_cellValue(i, j);
-      d = dir.get_cellValue(i, j);
-      OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
-      OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
-      if (s <= splits[1]) {
-        OGR_F_SetStyleString(hFeat, "PEN(c:#0000ff;w:10px);");
-      } else if (s <= splits[2]) {
-        OGR_F_SetStyleString(hFeat, "PEN(c:#00ff00;w:10px);");
-      } else if (s <= splits[3]) {
-        OGR_F_SetStyleString(hFeat, "PEN(c:#ffff00;w:10px);");
-      } else if (s <= splits[4]) {
-        OGR_F_SetStyleString(hFeat, "PEN(c:#ffa500;w:10px);");
-      } else {
-        OGR_F_SetStyleString(hFeat, "PEN(c:#ff0000;w:10px);");
-      }
-      spd.get_cellPosition(i, j, &x, &y);
-      if (nFlags & NINJA_OUTPUT_ARROWS) {
-        hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
-      } else {
-        hGeom = OGR_G_CreateGeometry(wkbPoint);
-        OGR_G_SetPoint_2D(hGeom, 0, x, y);
-      }
-      if (bTransform) {
-        OGR_G_Transform(hGeom, hCT);
-      }
-      OGR_F_SetGeometry(hFeat, hGeom);
-      if (OGR_L_CreateFeature(hLayer, hFeat) != OGRERR_NONE) {
-        OGR_G_DestroyGeometry(hGeom);
+    const char *apszFieldDefn[] = {"spd", "dir", 0};
+
+    for (int i = 0; apszFieldDefn[i] != 0; i++) {
+      hFieldDefn = OGR_Fld_Create(apszFieldDefn[i], OFTReal);
+      rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
+      if (rc != OGRERR_NONE) {
         GDALClose(hDS);
         return 1;
       }
-      OGR_G_DestroyGeometry(hGeom);
-      OGR_F_Destroy(hFeat);
+      OGR_Fld_Destroy(hFieldDefn);
+    }
+
+    double x, y, s, d;
+    for (int i = 0; i < spd.get_nRows(); i++) {
+      for (int j = 0; j < spd.get_nCols(); j++) {
+        hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
+        s = spd.get_cellValue(i, j);
+        d = dir.get_cellValue(i, j);
+        OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
+        OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
+        if (s <= splits[1]) {
+          OGR_F_SetStyleString(hFeat, "PEN(c:#0000ff;w:10px);");
+        } else if (s <= splits[2]) {
+          OGR_F_SetStyleString(hFeat, "PEN(c:#00ff00;w:10px);");
+        } else if (s <= splits[3]) {
+          OGR_F_SetStyleString(hFeat, "PEN(c:#ffff00;w:10px);");
+        } else if (s <= splits[4]) {
+          OGR_F_SetStyleString(hFeat, "PEN(c:#ffa500;w:10px);");
+        } else {
+          OGR_F_SetStyleString(hFeat, "PEN(c:#ff0000;w:10px);");
+        }
+        spd.get_cellPosition(i, j, &x, &y);
+        if (nFlags & NINJA_OUTPUT_ARROWS) {
+          hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
+        } else {
+          hGeom = OGR_G_CreateGeometry(wkbPoint);
+          OGR_G_SetPoint_2D(hGeom, 0, x, y);
+        }
+        if (bTransform) {
+          OGR_G_Transform(hGeom, hCT);
+        }
+        OGR_F_SetGeometry(hFeat, hGeom);
+        if (OGR_L_CreateFeature(hLayer, hFeat) != OGRERR_NONE) {
+          OGR_G_DestroyGeometry(hGeom);
+          GDALClose(hDS);
+          return 1;
+        }
+        OGR_G_DestroyGeometry(hGeom);
+        OGR_F_Destroy(hFeat);
+      }
     }
   }
   OSRDestroySpatialReference(hSRS);
