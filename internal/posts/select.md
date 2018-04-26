@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title:  "Select Publications & Products"
 color:  green
 width:   6
