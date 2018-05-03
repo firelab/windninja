@@ -38,19 +38,19 @@ int main()
 {
     NinjaH* ninjaArmy = NULL; 
     int numNinjas = 2;
-    const char * comType = "cli";
-    char ** papszOptions = NULL;
+    const char* comType = "cli";
+    char** papszOptions = NULL;
     NinjaErr err = 0; 
 
     /* inputs that apply to the whole army (must be the same for all ninjas) */
     const int nCPUs = 1;
     int momentumFlag = 0;
-    const char * demFile = "/home/natalie/src/windninja/api_testing/big_butte_small.tif";
-    const char * outputPath = "/home/natalie/src/windninja/api_testing/";
-    const char * initializationMethod = "domain_average";
+    const char* demFile = "/home/natalie/src/windninja/api_testing/big_butte_small.tif";
+    const char* outputPath = "/home/natalie/src/windninja/api_testing/";
+    const char* initializationMethod = "domain_average";
     const int diurnalFlag = 0;
-    const char * meshChoice = "coarse";
-    const char * vegetation = "grass";
+    const char* meshChoice = "coarse";
+    const char* vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
     const int meshCount = 100000; //number of cells in the mesh (cfd runs only)
 
