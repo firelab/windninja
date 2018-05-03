@@ -54,25 +54,48 @@ int main()
     const int nLayers = 20; //layers in the mesh
     const int meshCount = 100000; //number of cells in the mesh (cfd runs only)
 
-    const char * speedUnits = "mps";
+    const char* speedUnits = "mps";
     const double height = 5.0;
-    const char * heightUnits = "m";
+    const char* heightUnits = "m";
 
-    //use an in-memory DEM
+    const int googOutFlag = 1;
+
+    const double* outputSpeedGrid = NULL;
+    const double* outputDirectionGrid = NULL;
+    const char* outputGridProjection = NULL;
+    const int nIndex = 0;
+
+    /* inputs that can vary among ninjas in an army */
+    const double speed[2] = {5.5, 5.5};
+    const double direction[2] = {220, 300};
+
+    /* output grid data */
+    double cellSize;
+    double xllCorner;
+    double yllCorner;
+    int nCols;
+    int nRows;
+
+    /* for setting the in-memory DEM */
     GDALDatasetH  hDataset;
+    int nXSize;
+    int nYSize;
+    double adfGeoTransform[6];
+    const char* prj = NULL;
+    double adfCorner[2];
+    double* padfScanline;
+
+    double* demValues = NULL;
+
+    /*-------------set an in-memory DEM-------------*/
     GDALAllRegister();
     hDataset = GDALOpen( demFile, GA_ReadOnly );
-
-    int nXSize = GDALGetRasterXSize( hDataset );
-    int nYSize = GDALGetRasterYSize( hDataset );
-
-    double adfGeoTransform[6];
+    nXSize = GDALGetRasterXSize( hDataset );
+    nYSize = GDALGetRasterYSize( hDataset );
     GDALGetGeoTransform( hDataset, adfGeoTransform );
-
-    const char* prj = GDALGetProjectionRef( hDataset );
+    prj = GDALGetProjectionRef( hDataset );
 
     //find llcorner
-    double adfCorner[2];
     adfCorner[0] = adfGeoTransform[0];
     adfCorner[1] = adfGeoTransform[3] + ( nYSize * adfGeoTransform[5] );
 
@@ -82,9 +105,8 @@ int main()
     GDALRasterBandH hBand;
     hBand = GDALGetRasterBand( hDataset, 1 );
     
-    double *padfScanline;
     padfScanline = (double *) CPLMalloc(sizeof(double)*nXSize);
-    double* demValues = new double[nXSize * nYSize];
+    demValues = new double[nXSize * nYSize];
 
     for(int i = nYSize - 1; i >= 0; i--)
     {
@@ -101,13 +123,7 @@ int main()
     printf("demValues = %f, %f, %f\n", demValues[0], demValues[1], demValues[300]);
     printf("nXSize, nYSize = %d, %d\n", nXSize, nYSize);
 
-    const int googOutFlag = 1;
-
-    /* inputs that can vary among ninjas in an army */
-    const double speed[2] = {5.5, 5.5};
-    const double direction[2] = {220, 300};
-
-    /* create the army */
+    /*-------------create the army-------------*/
     ninjaArmy = NinjaCreateArmy(numNinjas, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
@@ -120,7 +136,7 @@ int main()
       printf("NinjaInit: err = %d\n", err);
     }
 
-    /* set up the runs */
+    /*-------------set up the runs-------------*/
     for(int i=0; i<numNinjas; i++)
     {
         err = NinjaSetCommunication(ninjaArmy, i, comType);
@@ -226,19 +242,14 @@ int main()
         }
     }
 
-    /* start the runs */
+    /*-------------start the runs-------------*/
     err = NinjaStartRuns(ninjaArmy, nCPUs);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-    /* get the output wind speed and direction data */
-    const double* outputSpeedGrid = NULL;
-    const double* outputDirectionGrid = NULL;
-    const char* outputGridProjection = NULL;
-    const int nIndex = 0;
-
+    /*-------------get the output wind speed and direction data-------------*/
     outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
     if( NULL == outputSpeedGrid )
     {
@@ -258,11 +269,11 @@ int main()
     }
 
     prj = NinjaGetOutputGridProjection(ninjaArmy, nIndex);
-    const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
-    const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
-    const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
-    const int nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
-    const int nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
+    cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
+    xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
+    yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
+    nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
+    nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
 
     printf("outputspeed[0] = %f\n", outputSpeedGrid[0]);
     printf("cellSize = %f\n", cellSize);
@@ -271,7 +282,7 @@ int main()
     printf("nCols = %d\n", nCols);
     printf("nRows = %d\n", nRows);
 
-    /* clean up */
+    /*-------------clean up-------------*/
     err = NinjaDestroyArmy(ninjaArmy);
     if(err != NINJA_SUCCESS)
     {
