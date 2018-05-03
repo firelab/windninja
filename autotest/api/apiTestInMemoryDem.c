@@ -38,7 +38,7 @@ int main()
 {
     NinjaH* ninjaArmy = NULL; 
     int numNinjas = 2;
-    const char* comType = "cli";
+    const char* comType = "quiet";
     char** papszOptions = NULL;
     NinjaErr err = 0; 
 

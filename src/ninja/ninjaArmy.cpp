@@ -927,6 +927,12 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
                 ( nIndex, ninjaComClass::ninjaCLICom );
             retval = NINJA_SUCCESS;
         }
+        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication
+                ( nIndex, ninjaComClass::ninjaQuietCom );
+            retval = NINJA_SUCCESS;
+        }
         else
         {
             retval = NINJA_E_INVALID;
