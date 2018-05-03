@@ -246,6 +246,12 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
         ( NinjaH * ninja, const int nIndex );
 
+    WINDNINJADLL_EXPORT const int NinjaGetOutputGridnCols
+        ( NinjaH * ninja, const int nIndex );
+
+    WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
+        ( NinjaH * ninja, const int nIndex );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaH * ninja, const int nIndex, const double percent );
 

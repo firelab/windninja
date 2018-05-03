@@ -1611,6 +1611,20 @@ const double ninjaArmy::getOutputGridyllCorner( const int nIndex, char ** papszO
         return ninjas[ nIndex ]->get_outputGridyllCorner( );
     }
 }
+const int ninjaArmy::getOutputGridnCols( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridnCols( );
+    }
+}
+const int ninjaArmy::getOutputGridnRows( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridnRows( );
+    }
+}
 int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {

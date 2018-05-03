@@ -911,6 +911,22 @@ public:
     * \return output grid yllCorner
     */
     const double getOutputGridyllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of columns in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of columns in the output grid
+    */
+    const int getOutputGridnCols( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of rows in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of rows in the output grid
+    */
+    const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja

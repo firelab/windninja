@@ -261,8 +261,15 @@ int main()
     const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
     const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
     const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
+    const int nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
+    const int nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
 
-    printf("outputspeed[0] = %f", outputSpeedGrid[0]);
+    printf("outputspeed[0] = %f\n", outputSpeedGrid[0]);
+    printf("cellSize = %f\n", cellSize);
+    printf("xllCorner = %f\n", xllCorner);
+    printf("yllCorner = %f\n", yllCorner);
+    printf("nCols = %d\n", nCols);
+    printf("nRows = %d\n", nRows);
 
     /* clean up */
     err = NinjaDestroyArmy(ninjaArmy);

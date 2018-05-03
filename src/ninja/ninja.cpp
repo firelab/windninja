@@ -4425,6 +4425,16 @@ double ninja::get_outputGridyllCorner()
     return input.dem.get_yllCorner();
 }
 
+int ninja::get_outputGridnCols()
+{
+    return input.dem.get_nCols();
+}
+
+int ninja::get_outputGridnRows()
+{
+    return input.dem.get_nRows();
+}
+
 void ninja::set_outputBufferClipping(double percent)
 {
     if(percent < 0.0 || percent >= 50.0)

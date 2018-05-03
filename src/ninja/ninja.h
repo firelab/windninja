@@ -303,6 +303,8 @@ public:
     double get_outputGridCellSize();
     double get_outputGridxllCorner();
     double get_outputGridyllCorner();
+    int get_outputGridnCols();
+    int get_outputGridnRows();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);

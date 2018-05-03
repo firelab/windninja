@@ -1097,6 +1097,52 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
 }
 
 /**
+ * \brief Get the number of columns in the output grid from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The number of columns in the output grid.
+ */
+WINDNINJADLL_EXPORT const int NinjaGetOutputGridnCols
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnCols( nIndex );
+    }
+}
+
+/**
+ * \brief Get the number of rows in the output grid from a simulation.
+ *
+ * \see NinjaGetOutputSpeedGrid
+ * \see NinjaGetOutputDirectionGrid
+ * \see NinjaGetOutputGridProjection
+ * \see NinjaGetOutputGridCellSize
+ * \see NinjaGetOutputGridxllCorner
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ *
+ * \return The number of rows in the output grid.
+ */
+WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
+    ( NinjaH * ninja, const int nIndex )
+{
+    if( NULL != ninja )
+    {
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnRows( nIndex );
+    }
+}
+
+/**
  * \brief Set the output buffer clipping for a simulation.
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
