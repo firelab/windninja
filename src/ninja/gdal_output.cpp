@@ -27,6 +27,124 @@
 
 #include "gdal_output.h"
 
+/*
+** TODO(kyle): handle color schemes
+*/
+
+static int writeLegend(const char *pszFilename, double splits[5], double max,
+                       const char *pszUnits) {
+  const int width = 180;
+  const int height = int(width / 0.75);
+  const int arrowLength = 40;
+  const int arrowHeadLength = 10;
+
+  int textHeight = 12;
+  int titleTextHeight = int(1.2 * textHeight);
+  int titleX, titleY;
+  int x1, x2, x3, x4;
+  double x;
+  int y1, y2, y3, y4;
+  double y;
+  int textX;
+  int textY;
+
+  BMP legend;
+  RGBApixel white, red, orange, yellow, green, blue;
+  RGBApixel colors[5];
+  legend.SetSize(width, height);
+  legend.SetBitDepth(8);
+  /* Initialize legend to black explicitly */
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+      legend(i, j)->Alpha = 0;
+      legend(i, j)->Blue = 0;
+      legend(i, j)->Green = 0;
+      legend(i, j)->Red = 0;
+    }
+  }
+  white.Red = 255;
+  white.Green = 255;
+  white.Blue = 255;
+  white.Alpha = 0;
+  // RGBApixel red, orange, yellow, green, blue;
+  red.Red = 255;
+  red.Green = 0;
+  red.Blue = 0;
+  red.Alpha = 0;
+
+  orange.Red = 255;
+  orange.Green = 127;
+  orange.Blue = 0;
+  orange.Alpha = 0;
+
+  yellow.Red = 255;
+  yellow.Green = 255;
+  yellow.Blue = 0;
+  yellow.Alpha = 0;
+
+  green.Red = 0;
+  green.Green = 255;
+  green.Blue = 0;
+  green.Alpha = 0;
+
+  blue.Red = 0;
+  blue.Green = 0;
+  blue.Blue = 255;
+  blue.Alpha = 0;
+
+  colors[0] = red;
+  colors[1] = orange;
+  colors[2] = yellow;
+  colors[3] = green;
+  colors[4] = blue;
+
+  if (splits[4] >= 100) {
+    textHeight = 10;
+  }
+  x = 0.05;
+  y = 0.30;
+
+  titleX = x * width;
+  titleY = (y / 3) * height;
+  PrintString(legend, CPLSPrintf("Wind Speed (%s)", pszUnits), titleX, titleY,
+              titleTextHeight, white);
+
+  const char *pszHiLow = 0;
+
+  for (int i = 0; i < 5; i++) {
+    x1 = int(width * x);
+    x2 = x1 + arrowLength;
+    y1 = int(height * y);
+    y2 = y1;
+
+    x3 = x2 - arrowHeadLength;
+    y3 = y2 + arrowHeadLength;
+
+    x4 = x2 - arrowHeadLength;
+    y4 = y2 - arrowHeadLength;
+
+    textX = x2 + 10;
+    textY = y2 - int(textHeight * 0.5);
+
+    DrawLine(legend, x1, y1, x2, y2, colors[i]);
+    DrawLine(legend, x2, y2, x3, y3, colors[i]);
+    DrawLine(legend, x2, y2, x4, y4, colors[i]);
+
+    if (i == 0) {
+      pszHiLow = CPLSPrintf("%.2f - %.2f", splits[4], max);
+    } else if (i == 4) {
+      pszHiLow = CPLSPrintf("%.2f - %.2f", 0, splits[1] - 0.01);
+    } else {
+      pszHiLow =
+          CPLSPrintf("%.2f - %.2f", splits[5 - i - 1], splits[5 - i] - 0.01);
+    }
+    PrintString(legend, pszHiLow, textX, textY, textHeight, white);
+    y += 0.15;
+  }
+  legend.WriteToFile(pszFilename);
+  return 0;
+}
+
 static OGRGeometryH drawArrow(double x, double y, double s, double d,
                               double scale, double edge) {
   (void)scale;
@@ -89,7 +207,8 @@ static OGRGeometryH drawArrow(double x, double y, double s, double d,
   yHeadRight += yCenter;
   xHeadLeft += xCenter;
   yHeadLeft += yCenter;
-  // Create a geometry that maps to an arrow.  Use multiline, although thos may
+  // Create a geometry that maps to an arrow.  Use multiline, although thos
+  // may
   // change.
   OGRGeometryH hLine = OGR_G_CreateGeometry(wkbLineString);
   OGRGeometryH hGeom = OGR_G_CreateGeometry(wkbMultiLineString);
@@ -123,6 +242,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
                     AsciiGrid<double> &spd, AsciiGrid<double> &dir,
                     char **papszOptions) {
   GDALDriverH hDrv = 0;
+  GDALDriverH hWorkDrv = 0;
   GDALDatasetH hDS = 0;
   OGRLayerH hLayer = 0;
   OGRFeatureH hFeat = 0;
@@ -134,6 +254,8 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OGRSpatialReferenceH hSRS = 0;
   OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
+
+  int bCreateCopy = FALSE;
 
   int bTransform = EQUAL(pszDriver, "LIBKML") && spd.prjString != "";
 
@@ -149,23 +271,108 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return 1;
   }
 
-  hDS = GDALCreate(hDrv, pszFilename, 0, 0, 0, GDT_Byte, 0);
+  const char *pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0);
+  if (pszMDI == 0) {
+  }
+
+  if (GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0) &&
+      CSLTestBoolean(GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATE, 0))) {
+    hWorkDrv = hDrv;
+  } else if (GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATECOPY, 0) &&
+             CSLTestBoolean(
+                 GDALGetMetadataItem(hDrv, GDAL_DCAP_CREATECOPY, 0))) {
+    hWorkDrv = GDALGetDriverByName("MEM");
+    bCreateCopy = TRUE;
+  } else {
+    return 1;
+  }
+  hDS = GDALCreate(hWorkDrv, pszFilename, spd.get_nCols(), spd.get_nRows(), 3,
+                   GDT_Byte, 0);
   if (hDS == 0) {
     return rc;
   }
 
+  if (!(nFlags&NINJA_OUTPUT_VECTOR)) {
+      return 0;
+  }
+
   if (bTransform) {
-      hSRS = OSRNewSpatialReference(spd.prjString.c_str());
-      h4326 = OSRNewSpatialReference(0);
-      rc = OSRImportFromEPSG(h4326, 4326);
-      if(rc!= OGRERR_NONE) {
-          //cleanup
-          GDALClose(hDS);
-          return 1;
-      }
+    hSRS = OSRNewSpatialReference(spd.prjString.c_str());
+    h4326 = OSRNewSpatialReference(0);
+    rc = OSRImportFromEPSG(h4326, 4326);
+    if (rc != OGRERR_NONE) {
+      // cleanup
+      GDALClose(hDS);
+      return 1;
+    }
     hDstSRS = h4326;
     hCT = OCTNewCoordinateTransformation(hSRS, h4326);
   }
+
+  double splits[5];
+  spd.divide_gridData(splits, 5);
+
+  if (nFlags & NINJA_OUTPUT_RASTER) {
+    char *pabyRed = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyRed);
+    char *pabyGreen = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyGreen);
+    char *pabyBlue = (char *)malloc(spd.get_nCols() * spd.get_nRows());
+    assert(pabyBlue);
+    double s;
+    for (int i = 0; i < spd.get_nRows(); i++) {
+      for (int j = 0; j < spd.get_nCols(); j++) {
+        s = spd.get_cellValue(i, j);
+        if (s <= splits[1]) {
+          pabyRed[i * j + i] = 0;
+          pabyGreen[i * j + i] = 0;
+          pabyBlue[i * j + i] = 255;
+        } else if (s <= splits[3]) {
+          pabyRed[i * j + i] = 0;
+          pabyGreen[i * j + i] = 255;
+          pabyBlue[i * j + i] = 0;
+        } else if (s <= splits[3]) {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 255;
+          pabyBlue[i * j + i] = 0;
+        } else if (s <= splits[4]) {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 127;
+          pabyBlue[i * j + i] = 0;
+        } else {
+          pabyRed[i * j + i] = 255;
+          pabyGreen[i * j + i] = 0;
+          pabyBlue[i * j + i] = 0;
+        }
+      }
+    }
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyRed, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    hBand = GDALGetRasterBand(hDS, 2);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyGreen, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    hBand = GDALGetRasterBand(hDS, 3);
+    assert(hBand);
+    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
+                      (void *)pabyBlue, spd.get_nCols(), spd.get_nRows(),
+                      GDT_Byte, 0, 0);
+    assert(rc == 0);
+    if (bCreateCopy) {
+      GDALDatasetH hRDS =
+          GDALCreateCopy(hDrv, pszFilename, hDS, FALSE, 0, 0, 0);
+      assert(hRDS);
+      GDALClose(hRDS);
+    }
+  }
+
+  char **papszKMLOptions = 0;
   if (nFlags & NINJA_OUTPUT_ARROWS) {
     hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
                                     papszOptions);
@@ -189,9 +396,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     }
     OGR_Fld_Destroy(hFieldDefn);
   }
-
-  double splits[5];
-  spd.divide_gridData(splits, 5);
 
   double x, y, s, d;
   for (int i = 0; i < spd.get_nRows(); i++) {
@@ -236,5 +440,23 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OSRDestroySpatialReference(h4326);
   OCTDestroyCoordinateTransformation(hCT);
   GDALClose(hDS);
+  /* After we close the dataset, insert the support files */
+  if (EQUAL(pszDriver, "LIBKML") &&
+      EQUAL(CPLGetExtension(pszFilename), "kmz")) {
+    rc = writeLegend("legend.bmp", splits, spd.get_maxValue(), "mph");
+    if (rc != 0) {
+      return rc;
+    }
+    // Copy the bmp into the kmz.  Use GDALCreateCopy to make a PNG, smaller
+    // and better for the web.
+    GDALDatasetH hBMP = GDALOpen("legend.bmp", GA_ReadOnly);
+    GDALDriverH hPNGDrv = GDALGetDriverByName("PNG");
+    assert(hPNGDrv);
+    const char *pszLgd = CPLSPrintf("/vsizip/%s/legend.png", pszFilename);
+    GDALDatasetH hPNG = GDALCreateCopy(hPNGDrv, pszLgd, hBMP, FALSE, 0, 0, 0);
+    assert(hPNG);
+    GDALClose(hPNG);
+    VSIUnlink("legend.bmp");
+  }
   return 0;
 }
