@@ -595,6 +595,8 @@ void mainWindow::createConnections()
       tree->weather, SLOT(setInputFile(QString)));
   connect(this, SIGNAL(inputFileChanged(QString)),
       tree->point, SLOT(setInputFile(QString)));
+  connect(this,SIGNAL(inputFileChanged(QString)),
+          tree->point, SLOT(checkForModelData()));
   /** Station Fetch **/
 //  connect(this, SIGNAL(inputFileChanged(QString)),
 //          tree->tw,SLOT(setInputFile(QString)));
@@ -1704,9 +1706,10 @@ int mainWindow::solve()
     tempUnits = temperatureUnits::C;
 
     //point initialization and Station Fetch
-    std::string pointFile = tree->point->stationFileName.toStdString();
-    int pointFormat = tree->point->initOpt->currentIndex();
+//    int pointFormat = tree->point->initOpt->currentIndex();
+    int pointFormat = tree->point->simType;
     std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
+    std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
     std::vector<int> xStartTime = tree->point->startSeries;
     std::vector<int> xEndTime = tree->point->endSeries;
     int numTimeSteps = tree->point->numSteps->value();
@@ -1864,7 +1867,7 @@ int mainWindow::solve()
         if (pointFormat==0)
         {
             cout<<"Using Old Format..."<<endl;
-            pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this, 
+            pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this,
             //Only the old format works, so downloaded data, with the date-time column don't yet work!
             /* right now the only option is the old format */
             wxStation::SetStationFormat(wxStation::oldFormat);
@@ -1875,7 +1878,7 @@ int mainWindow::solve()
             army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
             nRuns = army->getSize();
         }
-        if (pointFormat==1)
+        if (pointFormat==1 || pointFormat==2)
         {
             wxStation::SetStationFormat(wxStation::newFormat);
             std::vector<int> formatVec;
@@ -2644,17 +2647,51 @@ int mainWindow::checkPointItem()
 {
     eInputStatus status = blue;
     if( tree->point->pointGroupBox->isChecked() ) {
-    QFileInfo fi( tree->point->stationFileName ); // Intentionally broken to get station fetch to work
-    if( !fi.exists() || !fi.isFile() ) {
-        status = green;
-        tree->pointItem->setIcon( 0, tree->cross );
-        tree->pointItem->setToolTip( 0, "Cannot read or open point input file" );
-    }
-    else {
-        status = green;
-        tree->pointItem->setIcon( 0, tree->check );
-        tree->pointItem->setToolTip( 0, "Valid" );
-    }
+//    QFileInfo fi( tree->point->stationFileName ); // Intentionally broken to get station fetch to work
+//    if( !fi.exists() || !fi.isFile() ) {
+//        status = green;
+//        tree->pointItem->setIcon( 0, tree->cross );
+//        tree->pointItem->setToolTip( 0, "Cannot read or open point input file" );
+//    }
+        bool shortGo=tree->point->pointGo;
+        if (shortGo==false)
+        {
+            status = red;
+            tree->pointItem->setIcon(0,tree->cross);
+            tree->pointItem->setToolTip(0,"Mismatched data types selected");
+        }
+        if (shortGo==true)
+        {
+            status = green;
+            tree->pointItem->setIcon(0,tree->check);
+            tree->pointItem->setToolTip(0,"Good To Go!");
+        }
+        std::vector<std::string> pfL = tree->point->stationFileList;
+        for(int i=0;i<pfL.size();i++)
+        {
+            if(pfL[i].substr(pfL[i].size()-4,4)!=".csv")
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"File Extension Must be .csv!");
+            }
+        }
+        if (tree->point->simType==0 && pfL.size()>1)
+        {
+            status = red;
+            tree->pointItem->setIcon(0,tree->cross);
+            tree->pointItem->setToolTip(0,"Too many Stations Selected for Old Format!");
+
+        }
+
+
+
+
+//        else {
+//            status = green;
+//            tree->pointItem->setIcon( 0, tree->check );
+//            tree->pointItem->setToolTip( 0, "Valid" );
+//        }
     }
     else {
     status = blue;

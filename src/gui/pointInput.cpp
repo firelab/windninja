@@ -44,6 +44,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     initOpt = new QComboBox( this ); //Short for initialization Options, so we can switch the GUI between the old format and the new format
     initOpt->addItem("Old Format"); //needs a new name
     initOpt->addItem("New Format"); //needs a new name
+    initOpt->setCurrentIndex(1);
+    initOpt->setVisible(false);
+
+    pointGo=false;
 
     initPages = new QStackedWidget(this);
     oldForm = new QWidget();
@@ -52,19 +56,21 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     stationFileLineEdit = new QLineEdit( newForm );
     stationFileLineEdit->setReadOnly( true );
     stationFileLineEdit->setGeometry(QRect(10,0,141,20));
-//    stationFileLineEdit->setVisible(false);
+    stationFileLineEdit->setVisible(false);
 
     dateTimeEdit = new QDateTimeEdit( newForm );
     dateTimeEdit->setDateTime( QDateTime::currentDateTime() );
     dateTimeEdit->setCalendarPopup( true );
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     dateTimeEdit->setEnabled( false ); //This is for Old Format Diurnal Simulations
+    dateTimeEdit->setVisible(false);
 
     readStationFileButton =  new QToolButton( this ); //Opens old Format Station
     readStationFileButton->setText( tr( "Read Station File" ) );
     readStationFileButton->setIcon( QIcon( ":weather_cloudy.png" ) );
     readStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
     readStationFileButton->setGeometry(QRect(10, 20, 151, 26));
+    readStationFileButton->setVisible(false);
 
     writeStationFileButton =  new QCheckBox( this ); //This writes an interpolated csv of the weather data (we might not want this)
     writeStationFileButton->setText( tr( "Write Station File" ) );
@@ -96,7 +102,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     sfModel->setSorting(QDir::Time); //Sort by time created
 
     treeView = new QTreeView(this); //Creates the box
-    treeView->setVisible(false); //hides it, allows it be seen when initOpt is set correctly
+    treeView->setVisible(true); //hides it, allows it be seen when initOpt is set correctly
     treeView->setModel(sfModel);
     treeView->header()->setStretchLastSection(true);
     treeView->setAnimated(true);
@@ -106,16 +112,23 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
 //    treeView->setSelectionMode(QAbstractItemView::);    
 //    treeView->setSelectionModel(QItemSelectionModel::Toggle);
+
+    treeLabel = new QLabel(tr("Select Weather Stations"));
     
 
+    ClippyToolLayout = new QHBoxLayout;
     
     refreshToolButton = new QToolButton(this); //This refreshes the tree so that new files will populate
     refreshToolButton->setText(tr("Refresh Weather Stations"));
     refreshToolButton->setIcon(QIcon(":arrow_rotate_clockwise.png"));
     refreshToolButton->setToolTip(tr("Refresh the station listing."));
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    refreshToolButton->setVisible(false);
+    refreshToolButton->setVisible(true);
 
+    clippit = new QLabel(tr(""));
+
+    ClippyToolLayout->addWidget(refreshToolButton);
+    ClippyToolLayout->addWidget(clippit);
 
     //New Custom Layout
 //    treeLayout = new QHBoxLayout;
@@ -143,14 +156,14 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     numSteps = new QSpinBox;
     numSteps->setValue(24);
     
-    startTime->setVisible(false);
-    stopTime->setVisible(false);
-    enableTimeseries->setVisible(false);
+    startTime->setVisible(true);
+    stopTime->setVisible(true);
+    enableTimeseries->setVisible(true);
 
     startTime->setEnabled(false);
     stopTime->setEnabled(false);
 
-    numSteps->setVisible(false);
+    numSteps->setVisible(true);
     numSteps->setEnabled(false);
     
     timeBoxLayout = new QHBoxLayout;
@@ -161,9 +174,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     startLabel = new QLabel(tr("Start Time"));
     stopLabel = new QLabel(tr("Stop Time"));
     stepLabel = new QLabel(tr("Step"));
-    startLabel->setVisible(false);
-    stopLabel->setVisible(false);
-    stepLabel->setVisible(false);
+    startLabel->setVisible(true);
+    stopLabel->setVisible(true);
+    stepLabel->setVisible(true);
     
     startLayout->addWidget(startLabel);
     startLayout->addWidget(startTime);
@@ -187,8 +200,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 // Add some new layouts
 //-------------------------------------------------
     vTreeLayout = new QVBoxLayout;
+    vTreeLayout->addWidget(treeLabel);
     vTreeLayout->addWidget(treeView);
-    vTreeLayout->addWidget(refreshToolButton);
+//    vTreeLayout->addWidget(refreshToolButton);
+    vTreeLayout->addLayout(ClippyToolLayout);
     vTreeLayout->addLayout(timeBoxLayout);
 //####################################################
 //END SF CUSTOM                                      #
@@ -223,7 +238,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     pointLayout->addLayout(vTreeLayout);
 //    pointLayout->addLayout(treeLayout);
-//    pointLayout->addWidget( dateTimeEdit );
+    pointLayout->addWidget( dateTimeEdit );
 
     pointLayout->addStretch();
     pointLayout->addLayout( buttonLayout );
@@ -250,7 +265,6 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
 //    if (initOpt)
     cout<<initOpt->currentIndex()<<endl;
-
     setLayout( layout );
     connect( readStationFileButton, SIGNAL( clicked() ), this,
          SLOT( readStationFile() ) ); //For Old Format (for now)
@@ -267,11 +281,15 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
             SLOT(toggleTimeseries()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
+//    connect(
 
 //    connect(treeView,SIGNAL(QTreeView::currentChanged(const QModelIndex&, const QModelIndex&);),
 //            this,SLOT(readMultipleStaitonFiles()));
     connect(treeView, SIGNAL(clicked(const QModelIndex &)),
         this, SLOT(readMultipleStaitonFiles(const QModelIndex &))); //Connects click to which files should be conencted
+//    connect(treeView, SIGNAL(clicked(const QModelIndex &)),this,SLOT(readStationTime(const QModelIndex &)));
+
+
 //    connect(sfModel, SIGNAL(/*selectionChanged*/()),this,SLOT(selChanged()));
 //    connect(treeView, SIGNAL(QItemSelectionModel::selectionChanged(const QItemSelection &, const QItemSelection &)),
 //        this, SLOT(readMultipleStaitonFiles(const QModelIndex &)));
@@ -323,8 +341,10 @@ void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
 {
     QFileInfo fi(sfModel->fileInfo(index));
     std::vector<std::string> finalStations;
+    std::vector<int> finalTypes;
     std::string filename = fi.absoluteFilePath().toStdString();
     vx.push_back(filename);
+
 //    vy.push_back(filename);
 //    cout<<filename<<endl;
 //    std::vector<std::string> uniNames = std::unique(fileNameVec.begin(),fileNameVec.end());
@@ -349,13 +369,218 @@ void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
     }
     for (int i=0;i<finalStations.size();i++)
     {
-        cout<<finalStations[i]<<endl;        
+        cout<<finalStations[i]<<endl;
+        int stationFileType = directStationTraffic(finalStations[i].c_str()); // Get the station data type
+        cout<<"Type of Station File: "<<stationFileType<<endl;
+        cout<<"\n"<<endl;
+        finalTypes.push_back(stationFileType);
+    }
+
+    //Delete repeats, get unique data types
+    //We want there to be only 1 data type, so throw errors if there are more than one
+    std::set<int> setInt(finalTypes.begin(),finalTypes.end());
+    std::vector<int> vecInt(setInt.begin(),setInt.end());
+
+    cout<<"Number of Unique Data Types: "<<vecInt.size()<<endl;
+    for(int j=0;j<vecInt.size();j++)
+    {
+        cout<<"D-type: "<<vecInt[j]<<endl;
     }
     
     cout<<"\n"<<endl;
     stationFileList = finalStations;
+    stationFileTypes = vecInt;
+//    if (vecInt.size()==0)
+//    {
+//        simType=-1;
+//        displayInformation(-2);
+//    }
+    if (vecInt.size()>1)
+    {
+        simType = -1;
+        displayInformation(-1);
+    }
+    if (vecInt.size()==1)
+    {
+        simType = vecInt[0];
+        displayInformation(vecInt[0]);
+    }
+    else
+    {
+        simType = -1;
+        displayInformation(-1);
+    }
+
+
+
 
 }
+/**
+ * @brief Figures out what format belongs to what file based on the presence of date time
+ * data and header information
+ * Turns options on and off for the gui based on what the file formats are, such as
+ * enables timeseries when there is a timeseries
+ * prevents timeseries when there is no way it is a timeseries
+ *
+ * Possible options to be returned from directStationTraffic:
+ * a. 0  : OLD FORMAT <-1 Step
+ * b. 1  : NEW FORMAT, Time Series <- Multiple Steps
+ * c. 2  : NEW FORMAT, NO Time Series <- 1 Step
+ * d. -1 : Something bad happened, not sure what at this point
+ * @param xFileName <- the file name of the wxStation to be read from disk.
+ * @return see above
+ */
+int pointInput::directStationTraffic(const char* xFileName)
+{
+//    QFileInfo fi(sfModel->fileInfo(index));
+//    std::string xStringFileName = fi.absoluteFilePath().toStdString();
+//    const char* xFileName = xStringFileName.c_str();
+
+    //Get the header version from a wxStation function that does this for us
+    int stationHeader = wxStation::GetHeaderVersion(xFileName);
+    cout<<"STATION HEADER TYPE: "<<stationHeader<<endl;
+    int instant = 0;
+
+    if(stationHeader!=1)
+    {
+        //Determine whether it is a timeseries or not...
+        cout<<"READING A STATIONS TIMES"<<endl;
+        OGRDataSourceH hDS;
+        OGRLayer *poLayer;
+        OGRFeature *poFeature;
+        OGRFeatureDefn *poFeatureDefn;
+        OGRFieldDefn *poFieldDefn;
+        OGRLayerH hLayer;
+    //    std::string stop_datetime;
+    //    std::string start_datetime;
+    //    hDS = OGROpen( stationFileList[0].c_str(), FALSE, NULL );
+        hDS = OGROpen( xFileName, FALSE, NULL );
+
+        if(hDS == NULL)
+        {
+            return -1; //very bad!
+        }
+
+        poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+        hLayer=OGR_DS_GetLayer(hDS,0);
+        OGR_L_ResetReading(hLayer);
+        poLayer->ResetReading();
+
+        GIntBig iBig = 1;
+        GIntBig idx0 = poLayer->GetFeatureCount();
+        GIntBig idx1 = idx0-iBig;
+        GIntBig idx2;
+
+        idx2 = poLayer->GetFeatureCount();
+        cout<<"Number of Entries in Station: "<<idx2<<endl;
+        const char* emptyChair; //Muy Importante!
+
+        poFeature = poLayer->GetFeature(iBig);
+    //    startTime = poFeature->GetFieldAsString(15);
+        std::string start_datetime(poFeature->GetFieldAsString(15));
+    //    cout<<"STATION START TIME:"<<poFeature->GetFieldAsString(15)<<endl;
+        poFeature = poLayer->GetFeature(idx2);
+        std::string stop_datetime(poFeature->GetFieldAsString(15));
+    //    cout<<"STATION STOP TIME:"<<poFeature->GetFieldAsString(15)<<endl;
+        cout<<"STATION START TIME: "<<start_datetime<<endl;
+        cout<<"STATION END TIME: "<<stop_datetime<<endl;
+
+
+        if (start_datetime.empty()==true && stop_datetime.empty()==true)
+        {
+            //Means that there is not a time series
+            cout<<"No Time Series"<<endl;
+            instant = 1;
+        }
+    }
+
+    //Determine what file type we are dealing with...
+    if(stationHeader == 1)
+    {
+        //Old Format
+        //Prevent users from using time series with old format
+        enableTimeseries->setCheckable(false);
+        startTime->setEnabled(false);
+        stopTime->setEnabled(false);
+        numSteps->setEnabled(false);
+        return 0;
+    }
+    if (stationHeader == 2 && instant == 0)
+    {
+        //new Foramt w/ Time Series
+        //Turn on Several options for controlling time series in the GUI
+        enableTimeseries->setCheckable(true);
+        enableTimeseries->setChecked(true);
+        startTime->setEnabled(true);
+        stopTime->setEnabled(true);
+        numSteps->setEnabled(true);
+        updateStartTime(startTime->dateTime());
+        updateStopTime(stopTime->dateTime());
+        return 1;
+    }
+    if (stationHeader == 2 && instant == 1)
+    {
+        //new Format no Time Series
+        //Prevent users from using time series with 1 step
+        enableTimeseries->setCheckable(false);
+        startTime->setEnabled(false);
+        stopTime->setEnabled(false);
+        numSteps->setEnabled(false);
+        return 2;
+
+    }
+    if (stationHeader == 3)
+    {
+        //Invalid header type for GUI run...
+        return -1;
+    }
+    else
+    {
+        //Something wrong with the station...
+        return -1;
+    }
+
+
+}
+
+void pointInput::displayInformation(int dataType)
+{
+    cout<<dataType<<endl;
+    if(dataType == 0)
+    {
+        clippit->setText("Run Type: Old Format");
+        pointGo=true;
+    }
+    if(dataType == 1)
+    {
+        clippit->setText("Run Type: Time Series");
+        pointGo=true;
+    }
+    if(dataType == 2)
+    {
+        clippit->setText("Run Type: Single Step");
+        pointGo=true;
+    }
+    if (dataType == -1 && stationFileList.size()==0)
+    {
+        clippit->setText("No Stations Selected...");
+        pointGo=false;
+    }
+    if (dataType == -1 && stationFileList.size()==0) //Special Case
+    {
+        clippit->setText("No Stations Selected...");
+        pointGo=false;
+    }
+    else if(dataType == -1)
+    {
+        clippit->setText("MULTIPLE TYPES SELECTED, CANNOT PROCEED!");
+        pointGo=false;
+    }
+
+
+
+}
+
 void pointInput::setWxStationFormat(int format)
 {
        wxStationFormat = format;
@@ -459,6 +684,7 @@ void pointInput::toggleUI()
 //        jazz->setVisible(false);
         stationFileLineEdit->setVisible(false);
         readStationFileButton->setVisible(false);
+        dateTimeEdit->setVisible(false);
 //        readStationFileButton->setVisible(true);
 //        ska->setVisible(true);
         treeView->setVisible(true);
@@ -477,6 +703,7 @@ void pointInput::toggleUI()
     if (initOpt->currentIndex()==0)
     {
         stationFileLineEdit->setVisible(true);
+        dateTimeEdit->setVisible(true);
 //        ska->setVisible(false);
         treeView->setVisible(false);
         refreshToolButton->setVisible(false);
@@ -508,7 +735,8 @@ void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more
         stopTime->setEnabled(true);
         numSteps->setEnabled(true);
         updateStartTime(startTime->dateTime());
-        updateStopTime(stopTime->dateTime());    }
+        updateStopTime(stopTime->dateTime());
+    }
 }
 void pointInput::pairFetchTime(QDateTime xDate) //Obsolete
 {
@@ -535,10 +763,16 @@ void pointInput::pairTimeSeries(int curIndex)
     if(curIndex==0)
     {
         enableTimeseries->setChecked(false);
+        startTime->setEnabled(false);
+        stopTime->setEnabled(false);
+        numSteps->setEnabled(false);
     }
     if(curIndex==1)
     {
         enableTimeseries->setChecked(true);
+        startTime->setEnabled(true);
+        stopTime->setEnabled(true);
+        numSteps->setEnabled(true);
     }
 }
 

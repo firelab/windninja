@@ -51,7 +51,7 @@
            </item>
            <item>
             <property name="text">
-             <string>Fetch By Stid</string>
+             <string>Fetch By Station ID</string>
             </property>
            </item>
           </widget>
@@ -246,6 +246,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
       <widget class="QToolButton" name="fetchDataButton">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Fetches weather data based on above specified parameters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Fetch Weather Data</string>
        </property>
@@ -260,6 +263,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="fetchMetaButton">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Fetches general information about nearby weather stations.&lt;/p&gt;&lt;p&gt;Such as: Latitude, Longitude, Elevation and Status,&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Fetch Metadata</string>
        </property>

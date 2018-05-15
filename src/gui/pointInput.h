@@ -78,6 +78,9 @@ class pointInput : public QWidget
     QString demFileName;
     QString stationFileName;
     std::vector<std::string> stationFileList;
+    std::vector<int> stationFileTypes;
+    int simType;
+    bool pointGo;
 
     QLineEdit *stationFileLineEdit;
 
@@ -102,10 +105,12 @@ class pointInput : public QWidget
 
     pointInputDelegate *pointDelegate;
 
+    //TreeBox Stuff
     QTreeView *stationTreeView;
-
     QTableView *stationTableView;
     
+    QLabel *treeLabel;
+
     QTreeView *treeView;
     QHBoxLayout *treeLayout;
     QVBoxLayout *vTreeLayout;
@@ -120,7 +125,11 @@ class pointInput : public QWidget
     
     QDir cwd;
     QDirModel *sfModel;
+    //Handlers
+    QHBoxLayout *ClippyToolLayout;
     QToolButton *refreshToolButton;
+    QLabel *clippit; //displays vital information
+
     QStringList filters;
     QString tXtest;
     std::vector<std::string> vy; //clean this up
@@ -160,7 +169,9 @@ class pointInput : public QWidget
   public slots:
     void updateTz(QString tz);
     void checkForModelData();
+    int directStationTraffic(const char* xFileName);
     static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
+    void displayInformation(int dataType);
     
     
   private slots:
