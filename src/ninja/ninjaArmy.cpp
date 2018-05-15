@@ -146,14 +146,13 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
-    
     int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
     
-    if (stationFormat==1)
+    if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
     {
         stationList = pointInitialization::readWxStations(demFile,timeZone);
     }
-    else
+    else //New Format (station fetch or multiple time steps)
     {
         stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
     }
@@ -173,14 +172,20 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
     boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
     boost::local_time::local_date_time localStandard(standard, timeZonePtr);
     vector<boost::local_time::local_date_time> localTimeList;
-
-    for(unsigned int i = 0; i<timeList.size(); i++)
+    CPLDebug("STATION_FETCH","\n!!\nList of steps generated with Local and UTC times\n!!:\n");
+    for(unsigned int i = 0; i<timeList.size(); i++)//Take the UTC timelist and covert it to local time (again)
     {
         boost::posix_time::ptime aGlobal = timeList[i];
         boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
         localTimeList.push_back(aLocal);
+        //This is a bit convoluted and obfuscated but all it does
+        //is get the times to print correctly for debugging of timelist
+        //in case that is necessary
+        CPLDebug("STATION_FETCH","STEP NUM:%i",i);
+        CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
+        CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
+        CPLDebug("STATION_FETCH","----");
     }
-
     //handle old wxStation format
     if (timeList.size() == 1 && timeList[0] == noTime)
     {

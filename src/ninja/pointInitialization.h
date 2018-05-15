@@ -121,6 +121,9 @@ class pointInitialization : public initialize
         static void storeFileNames(vector<std::string> statLoc);
         static std::string generatePointDirectory(std::string demFile,std::string outPath,
                                                   std::vector<boost::posix_time::ptime> timeList,bool latest);
+        static bool validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
+        static int directTemporalInterpolation(int posIdx, int negIdx);
+        static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
 
     private:
         void setInitializationGrids(WindNinjaInputs& input);

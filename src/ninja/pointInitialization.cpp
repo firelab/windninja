@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  *
  * $Id$
  *
@@ -349,6 +349,76 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     delete[] influenceRadius;
     influenceRadius = NULL;
 }
+/*
+ * Check to see if the station data is within the range of user desired times
+ * If not, throw a tantrum...
+ */
+bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<boost::posix_time::ptime> timeList)
+{
+    vector<boost::posix_time::ptime> stationStarts;
+    vector<boost::posix_time::ptime> stationStops;
+    vector<std::string> stationNames; //Just for organization purposes, probably not necessary after initial debugging
+
+    cout<<wxStationData.size()<<endl;
+    for (int i=0; i<wxStationData.size();i++)
+    {
+        boost::posix_time::ptime SD_start;
+        boost::posix_time::ptime SD_stop;
+
+        SD_start = wxStationData[i][0].datetime;
+        SD_stop = wxStationData[i][wxStationData[i].size()-1].datetime;
+        stationStarts.push_back(SD_start);
+        stationStops.push_back(SD_stop);
+        stationNames.push_back(wxStationData[i][0].stationName);
+    }
+    boost::posix_time::ptime start_TL = timeList[0];
+    boost::posix_time::ptime end_TL = timeList[timeList.size()-1];
+
+    vector<bool> startChecks; //Check all weather stations against timelist, if at least one station has data, we can run a simulation, if no station are available, throw an exception
+    vector<bool> endChecks;
+
+    /*
+     * BAD cases:
+     * a: end time is less than the start time of the data set
+     * b: start time is greater than the end time of the data set
+     * Both of these will throw exceptions preventing further simulation
+     * At least one dataset should be valid to continue simulation (hopefully)
+     */
+
+    if (start_TL>end_TL)
+    {
+        cout<<"EXCEPTION CAUGHT: First time step is further in the future than the last, consider changing bounds!"<<endl;
+        return false;
+    }
+
+    for(int j=0; j<stationNames.size(); j++)
+    {
+        if(start_TL>stationStops[j])
+        {
+            CPLDebug("STATION_FETCH","Time list start time begins later than all data for %i : %s ",j,stationNames[j].c_str());
+            startChecks.push_back(false);
+        }
+        if(end_TL<stationStarts[j])
+        {
+            CPLDebug("STATION_FETCH","Time list ends before data starts for %i : %s ",j,stationNames[j].c_str());
+            endChecks.push_back(false);
+        }
+    }
+    CPLDebug("STATION_FETCH","FAILED STARTS: %lu",startChecks.size());
+    CPLDebug("STATION_FETCH","FAILED ENDS: %lu",endChecks.size());
+    CPLDebug("STATION_FETCH","NUM STATIONS: %lu",stationNames.size());
+
+    if (startChecks.size() >= stationNames.size() || endChecks.size() >= stationNames.size())
+    {
+        CPLDebug("STATION_FETCH","WARNING: NO DATA IS VALID WITHIN PROVIDED TIME RANGE!!");
+        return false;
+    }
+    else
+    {
+        CPLDebug("STATION_FETCH","TIME DATA AND USER BOUNDS ARE AGREEABLE!");
+        return true;
+    }
+}
 
 std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
                                                         std::vector<boost::posix_time::ptime> timeList,bool latest)
@@ -483,6 +553,19 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     vector<preInterpolate> diskData;
     vector<vector<preInterpolate> > wxVector;
 
+    /*
+     * Generate a vector of weather data stored in a struct called "preInterpolate"
+     * which is like the old wxStation class.
+     *
+     * Each step is a struct
+     * each vector of steps is a station
+     * the vector of vectors is all the data
+     *
+     * this gets turned into
+     * each wxStation object is a station, where all data is stored in object specific data arrays
+     * the vector of stations is all the data
+     */
+    //Reads in the data as a vector of vectors of structs
     for (int i=0;i<stationFiles.size();i++)
     {
         vector<preInterpolate> singleStationData;
@@ -497,15 +580,27 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     vector<vector<preInterpolate> > interpolatedDataSet;
     vector<wxStation> readyToGo;   
        
-    if (wxVector[0][0].datetime==noTime)
+    if (wxVector[0][0].datetime==noTime) //If its a "WindNinja NOW" style run, new format, 1 step
     {        
         CPLDebug("STATION_FETCH", "noTime");
-        readyToGo=interpolateNull(demFile,wxVector,timeZone);
+        readyToGo=interpolateNull(demFile,wxVector,timeZone); //Does a "Fake Interpolation", Converst the 1 step into a wxStation Object, ready to be used in simulation
     }
-    else
+    else //If its a time series
     {
+        //Sanity check, make sure user provided time range is usable with the data the user wants to use
+        //Not needed for CLI station-fetch runs, but necessary for everything else
+        //If it is a CLI station-fetch run, case should be ideal, as timelist and desired times
+        //are identical
+        bool stationsCool = validateTimeData(wxVector,timeList);
+        if (stationsCool==false)
+        {
+            //This is bad, kill it with fire!
+            //need informative and concise warning meassages.
+            throw std::runtime_error("User Provided start and stop times are both outside datasets time span!");
+        }
         //does all interpolation 
-        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList);
+        CPLDebug("STATION_FETCH","User Provided start & Stop times are good..");
+        interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList); //Creates a number of wxStation Objects
         readyToGo=makeWxStation(interpolatedDataSet,demFile);
     }
     for (int i=0;i<readyToGo.size();i++)
@@ -809,7 +904,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         iss.imbue(std::locale(std::locale::classic(),fig));
         iss>>abs_time;
         oStation.datetime=abs_time;
-
         oStations.push_back(oStation);
         OGRFeature::DestroyFeature( poFeature );
     }
@@ -847,6 +941,22 @@ vector<std::string> pointInitialization::fetchWxStationID()
     }
 
     return stationNames;
+}
+
+int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
+{
+    if (posIdx>=0 && negIdx>=0)//Interpolation Necessary
+    {
+        return 0;
+    }
+    if (posIdx>=0 && negIdx<0) //Use only positive step, no interpolation necessary
+    {
+        return 1;
+    }
+    if (posIdx<0 && negIdx>=0) //Use only negative step, no interpolation necessary
+    {
+        return 2;
+    }
 }
 
 
@@ -1001,17 +1111,18 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     vector<vector<preInterpolate> > Selectify;
 
     boost::posix_time::time_duration zero(0, 0, 0, 0);
-    boost::posix_time::time_duration max(48, 0, 0, 0);
+    boost::posix_time::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
     boost::posix_time::time_duration one(0, 1, 0, 0);
+    boost::posix_time::time_duration null(boost::posix_time::not_a_date_time);
 
     boost::posix_time::time_duration buffer;
     boost::posix_time::time_duration avgBuffer;
     vector<boost::posix_time::time_duration> avgBufferList;
     boost::posix_time::time_duration bufferSum;
 
-    int totalsize=vecStations.size();
-
+    int totalsize=vecStations.size(); //Total Number of Stations
     //Creates a vector of time buffers to be used to interpolate the raw data with the timeList
+    //1 Buffer is equal to the distance between two observations, RAWS stations are usually hourly, so these observations have a buffer of 1 hour...
     for (int j=0; j<totalsize; j++)
     {
         vector<boost::posix_time::time_duration> buffers;
@@ -1033,79 +1144,108 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         avgBuffer = bufferSum / buffers.size();
         avgBufferList.push_back(avgBuffer);
     }
+    /* This is the new interpolation and sorting function, its much better and doesn't leak memory
+     * Start with 1 station and 1 step
+     *
+     * Get time distance of all steps to the stations
+     *
+     * pick 1 in the future and 1 in the past if possible
+     *
+     * if not,
+     *
+     * get closest and call it good
+     *
+     * NEGATIVE == FUTURE!
+     * POSITIVE == PAST!
+     *
+     */
+    vector<vector<boost::posix_time::time_duration> > posMasterTime;
+    vector<vector<boost::posix_time::time_duration> > negMasterTime;
+    vector<vector<int> > posMasterIdx;
+    vector<vector<int> >negMasterIdx;
 
-    for (int k=0; k<totalsize; k++)
+    for (int k=0; k<totalsize; k++) //Do this for all the stations
     {
-        int timesize = 0;
-        vector<preInterpolate> subSelectify;
-        int qq;
-        qq = vecStations[k].size();
+        CPLDebug("STATION_FETCH","STATION ID: %i, %s",k,vecStations[k][0].stationName.c_str());
+        int numObserve=vecStations[k].size(); //Number of observations
+        int numSteps=timeList.size();
 
-        for (int j=0; j<timeList.size(); j++)
+        vector<boost::posix_time::time_duration> posStepTime; //Master lists of times and indecies for 1 station
+        vector<boost::posix_time::time_duration> negStepTime;
+        vector<int> posStepIdx;
+        vector<int> negStepIdx;
+
+        for (int j=0;j<numSteps;j++)//Do this for all time steps
         {
-            boost::posix_time::ptime comparator;
-            comparator = timeList[j];
-
             int counter=0;
-            for (int i=0; i<qq; i++)
+            boost::posix_time::ptime comparator = timeList[j]; //Get the Baseline
+            vector<boost::posix_time::time_duration> posTimeDeltas; //Positive List of time deltas
+            vector<int>posTimeIndecies;
+            vector<boost::posix_time::time_duration> negTimeDeltas; // Negative List of time deltas
+            vector<int>negTimeIndecies;
+            for (int i = 0; i<numObserve;i++)
             {
                 boost::posix_time::time_duration difference;
-                difference = comparator - vecStations[k][i].datetime;
-                if (difference <= zero)
+                difference = comparator - vecStations[k][i].datetime; //Calculate differences for each time step and obs
+                if (difference>zero) //If difference is greater than zero, put in one vect
                 {
-                    difference = difference.invert_sign();
+                    posTimeDeltas.push_back(difference);
+                    posTimeIndecies.push_back(i);
                 }
-                if (difference <= avgBufferList[k])
+                if(difference<zero) // if less than zero, put in other vect
                 {
-                    counter++;
-
-                    if (counter>2)
-                    {
-                        continue;
-                    }
-
-                    subSelectify.push_back(vecStations[k][i]);
-                    continue;
-                }
-                if (difference <= avgBufferList[k] + one && counter < 2)
-                {
-                    subSelectify.push_back(vecStations[k][i]);
-                    counter++;
-                    continue;
+                    negTimeDeltas.push_back(difference);
+                    negTimeIndecies.push_back(i);
                 }
             }
+            if (posTimeDeltas.size()>0) //If there are any positive ones, put them into master list
+            {
+                boost::posix_time::time_duration minPos=*std::min_element(posTimeDeltas.begin(),posTimeDeltas.end());
+                int posIdx=std::min_element(posTimeDeltas.begin(),posTimeDeltas.end())-posTimeDeltas.begin();
+                posStepTime.push_back(minPos);
+                posStepIdx.push_back(posTimeIndecies[posIdx]);
 
-            timesize++;
+            }
+            if(posTimeDeltas.size()==0) // If there aren't any, give it a not-a-date-time obj and set the idx to -1
+            {
+                posStepTime.push_back(null);
+                posStepIdx.push_back(-1);
+            }
+            if (negTimeDeltas.size()>0) //Same thing, for negative times
+            {
+                boost::posix_time::time_duration minNeg=*std::max_element(negTimeDeltas.begin(),negTimeDeltas.end());
+                int negIdx=std::max_element(negTimeDeltas.begin(),negTimeDeltas.end())-negTimeDeltas.begin();
+                negStepTime.push_back(minNeg);
+                negStepIdx.push_back(negTimeIndecies[negIdx]);
+            }
+            if(negTimeDeltas.size()==0) //if none, give it a -1 and not-a-date-time
+            {
+                negStepTime.push_back(null);
+                negStepIdx.push_back(-1);
+            }
         }
-
-        Selectify.push_back(subSelectify);
-    }
-
-    CPLDebug("STATION_FETCH", "Time data Interpolated...\nTemporally Interpolating wx Data...");
-
-    vector<vector<preInterpolate> > lowVec;
-    vector<vector<preInterpolate> > highVec;
-    for(int j=0; j<Selectify.size(); j++)
-    {
-        vector<preInterpolate> lowStations;
-        vector<preInterpolate> highstations;
-
-        for(int i=0; i<Selectify[j].size(); i+=2)
+        for (int i = 0; i<numSteps;i++)
         {
-              lowStations.push_back(Selectify[j][i]);
-        }
+//            CPLDebug("STATION_FETCH","Positive Time %i",posStepTime[i]);
+//            CPLDebug("STATION_FETCH","Negative Time %lu",negStepTime[i]);
+            CPLDebug("STATION_FETCH","Positive IDX %i",posStepIdx[i]);
+            CPLDebug("STATION_FETCH","Negative IDX %i \n",negStepIdx[i]);
 
-        for(int k=1; k<Selectify[j].size(); k+=2)
-        {
-            highstations.push_back(Selectify[j][k]);
         }
-
-        lowVec.push_back(lowStations);
-        highVec.push_back(highstations);
+        posMasterTime.push_back(posStepTime);
+        negMasterTime.push_back(negStepTime);
+        posMasterIdx.push_back(posStepIdx);
+        negMasterIdx.push_back(negStepIdx);
     }
-    //SETTING WX TIMELIST
+    CPLDebug("STATION_FETCH", "Weather times sorted...");
+    CPLDebug("STATION_FETCH","Sizing weather station Vector...");
+    /*
+     * Now for Interpolation...
+     * Take the data out the vecStations and put it into a new struct, for interpolation
+     * Metadata, ie lat lon etc, doesn't need interpolation
+     */
     vector<vector<preInterpolate> > interpolatedWxData;
-    for(int ey=0; ey<Selectify.size(); ey++)
+    for (int k=0; k<totalsize; k++) //Initialize interpolatedWxData with the right dimensions
     {
         vector<preInterpolate> subInter;
         for(int ex=0; ex<timeList.size(); ex++)
@@ -1116,8 +1256,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         }
         interpolatedWxData.push_back(subInter);
     }
-    //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
-    for(int k=0; k<Selectify.size(); k++)
+    CPLDebug("STATION_FETCH","Interpolating Weather Data...");
+    for (int k=0; k<totalsize; k++) //Set the Metadata for each station
     {
         double latitude;
         double longitude;
@@ -1150,141 +1290,415 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpolatedWxData[k][i].influenceRadiusUnits = lengthUnits::meters;
             interpolatedWxData[k][i].stationName = stationName;
         }
+
     }
-    //INTERPOLATING WIND SPEED
-    for(int k=0; k<Selectify.size(); k++)
+
+    for(int k=0; k<totalsize; k++)
     {
         for(int i=0; i<timeList.size(); i++)
         {
-            double low;
-            double high;
-            double inter;
-            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
-            boost::posix_time::ptime pInter = timeList[i];
-
-            low = unixTime(pLow);
-            high = unixTime(pHigh);
-            inter = unixTime(pInter);
-
-            double speed1;
-            double speed2;
-            double speedI;
-
-            speed1 = lowVec[k][i].speed;
-            speed2 = highVec[k][i].speed;
-
-            speedI = interpolator(inter,low, high, speed1, speed2);
-            if(speedI > 113.000)
+            //Tells us whether we need to interpolate or not for each step
+            int direction = directTemporalInterpolation(posMasterIdx[k][i],negMasterIdx[k][i]);
+            if(direction==0)
             {
-                speedI = speed1;
+                /*
+                 * Remember that Negative is future (high)
+                 * Positive is past (low)
+                 */
+//                cout<<interpolatedWxData[k][i].stationName<<endl;
+//                cout<<"NEG IDX: "<<negMasterIdx[k][i]<<endl;
+//                cout<<"NEG TIME: "<<vecStations[k][negMasterIdx[k][i]].datetime<<endl;
+//                cout<<"POS IDX: "<<posMasterIdx[k][i]<<endl;
+//                cout<<"POS TIME: "<<vecStations[k][posMasterIdx[k][i]].datetime<<endl;
+
+                //Get the Time of the past and future station and set the interpolate time to the timeList
+                boost::posix_time::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
+                boost::posix_time::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
+                boost::posix_time::ptime pInter = timeList[i];
+                //Convert time to time since epoch
+                double low = unixTime(pLow); //Times
+                double high = unixTime(pHigh);
+                double inter = unixTime(pInter);
+
+                //Get Low and High for each data Type
+                //Wind Speed
+//                cout<<"WIND SPEED"<<endl;
+                double speed_L = vecStations[k][posMasterIdx[k][i]].speed;
+                double speed_H = vecStations[k][negMasterIdx[k][i]].speed;
+
+                double speed_I = interpolator(inter,low,high,speed_L,speed_H);
+                if(speed_I > 113.000)
+                {
+                    speed_I = speed_L;
+
+                }
+                interpolatedWxData[k][i].speed = speed_I;
+                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
+
+                //Wind Direction
+                double dir_L = vecStations[k][posMasterIdx[k][i]].direction;
+                double dir_H = vecStations[k][negMasterIdx[k][i]].direction;
+
+                double dir_I = interpolateDirection(dir_L,dir_H);
+                interpolatedWxData[k][i].direction = dir_I;
+
+                //Temperature
+//                cout<<"TEMPERATURE"<<endl;
+                double temp_L = vecStations[k][posMasterIdx[k][i]].temperature;
+                double temp_H = vecStations[k][negMasterIdx[k][i]].temperature;
+
+                double temp_I  = interpolator(inter,low,high,temp_L,temp_H);
+                if(temp_I > 57.0)
+                {
+                    temp_I = temp_H;
+                    if(temp_I > 57.0)
+                    {
+                        temp_I = temp_L;
+                    }
+                    if(temp_I > 57.0)
+                    {
+                        temp_I = 25;
+                    }
+                }
+                interpolatedWxData[k][i].temperature = temp_I;
+                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
+
+                //Cloud Cover
+//                cout<<"CLOUD COVER"<<endl;
+                double cloud_L = vecStations[k][posMasterIdx[k][i]].cloudCover;
+                double cloud_H = vecStations[k][negMasterIdx[k][i]].cloudCover;
+
+                double cloud_I = interpolator(inter,low,high,cloud_L,cloud_H);
+
+                interpolatedWxData[k][i].cloudCover = cloud_I;
+                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
 
             }
-
-            interpolatedWxData[k][i].speed = speedI;
-            interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-        }
-    }
-    //INTERPOLATING WIND DIRECITON
-    for(int k=0; k<Selectify.size(); k++)
-    {
-        for(int i=0; i<timeList.size(); i++)
-        {
-            double lowDir;
-            double highDir;
-            double interDir;
-
-            lowDir = lowVec[k][i].direction;
-            highDir = highVec[k][i].direction;
-
-            interDir = interpolateDirection(lowDir,highDir);
-            interpolatedWxData[k][i].direction = interDir;
-        }
-    }
-
-    //INTERPOLATING TEMPERATURE
-    for(int k=0; k<Selectify.size(); k++)
-    {
-        for(int i=0; i<timeList.size(); i++)
-        {
-            double low;
-            double high;
-            double inter;
-
-            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
-            boost::posix_time::ptime pInter = timeList[i];
-
-            low = unixTime(pLow);
-            high = unixTime(pHigh);
-            inter = unixTime(pInter);
-
-            double lowTemp;
-            double highTemp;
-            double interTemp;
-
-            lowTemp = lowVec[k][i].temperature;
-            highTemp = highVec[k][i].temperature;
-            interTemp = interpolator(inter, low, high, lowTemp, highTemp);
-
-            if(interTemp > 57.0)
+            if (direction==1) //No interpolation, use closest positive step (past)
             {
-                interTemp = highTemp;
-                if(interTemp > 57.0)
-                {
-                    interTemp = lowTemp;
-                }
-                if(interTemp > 57.0)
-                {
-                    interTemp = 25;
-                }
+                //Speed
+                double speed_I = vecStations[k][posMasterIdx[k][i]].speed;
+                interpolatedWxData[k][i].speed = speed_I;
+                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
+
+                //Direction
+                double dir_I = vecStations[k][posMasterIdx[k][i]].direction;
+                interpolatedWxData[k][i].direction = dir_I;
+
+                //Temperature
+                double temp_I = vecStations[k][posMasterIdx[k][i]].temperature;
+                interpolatedWxData[k][i].temperature = temp_I;
+                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
+
+                //Cloud Cover
+                double cloud_I =vecStations[k][posMasterIdx[k][i]].cloudCover;
+                interpolatedWxData[k][i].cloudCover = cloud_I;
+                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
+
             }
-
-            interpolatedWxData[k][i].temperature = interTemp;
-            interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-        }
-    }
-
-    //INTERPOLATING CLOUD COVER
-    for(int k=0; k<Selectify.size(); k++)
-    {
-        for(int i=0; i<timeList.size(); i++)
-        {
-            double low;
-            double high;
-            double inter;
-
-            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
-            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
-            boost::posix_time::ptime pInter = timeList[i];
-
-            low = unixTime(pLow);
-            high = unixTime(pHigh);
-            inter = unixTime(pInter);
-
-            double lowCloud;
-            double highCloud;
-            double interCloud;
-
-            lowCloud = lowVec[k][i].cloudCover;
-            highCloud = highVec[k][i].cloudCover;
-
-            interCloud = interpolator(inter, low, high, lowCloud, highCloud);
-
-            if(interCloud > 1.0)
+            if (direction==2) //No interpolation, use closest negative step (future)
             {
-                interCloud = highCloud;
-                if(interCloud > 1.0)
-                {
-                    interCloud = lowCloud;
-                }
-            }
+                //Speed
+                double speed_I = vecStations[k][negMasterIdx[k][i]].speed;
+                interpolatedWxData[k][i].speed = speed_I;
+                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
 
-            interpolatedWxData[k][i].cloudCover = interCloud;
-            interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
+                //Direction
+                double dir_I = vecStations[k][negMasterIdx[k][i]].direction;
+                interpolatedWxData[k][i].direction = dir_I;
+
+                //Temperature
+                double temp_I = vecStations[k][negMasterIdx[k][i]].temperature;
+                interpolatedWxData[k][i].temperature = temp_I;
+                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
+
+                //Cloud Cover
+                double cloud_I =vecStations[k][negMasterIdx[k][i]].cloudCover;
+                interpolatedWxData[k][i].cloudCover = cloud_I;
+                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
+
+            }
         }
     }
     return interpolatedWxData;
+/*
+ * This is The old Interpolation Code (below), saving for now...
+ */
+//    for(int k=0; k<totalsize; k++)
+//    {
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            cout<<interpolatedWxData[k][i].speed<<endl;
+//            cout<<interpolatedWxData[k][i].direction<<endl;
+//            cout<<interpolatedWxData[k][i].temperature<<endl;
+//            cout<<interpolatedWxData[k][i].cloudCover<<endl;
+//            cout<<"\n"<<endl;
+//        }
+//    }
+
+//    for (int k=0; k<totalsize; k++)
+//    {
+//        int timesize = 0;
+//        vector<preInterpolate> subSelectify; //Selects a Subset of the data for interpolation (1 "Station")
+//        int qq;
+//        qq = vecStations[k].size();
+//        cout<<"vecot stations (qq): "<<qq<<endl;
+//        cout<<"TIMELIST SIZE: "<<timeList.size()<<endl;
+
+//        for (int j=0; j<timeList.size(); j++)
+//        {
+//            cout<<j<<endl;
+//            boost::posix_time::ptime comparator;
+//            comparator = timeList[j];
+
+//            int counter=0;
+//            for (int i=0; i<qq; i++)
+//            {
+//                boost::posix_time::time_duration difference;
+//                difference = comparator - vecStations[k][i].datetime;
+//                cout<<difference<<endl;
+//                if (difference <= zero)
+//                {
+//                    difference = difference.invert_sign();
+//                }
+//                if (difference <= avgBufferList[k])
+//                {
+//                    cout<<"CLOSEST STATIONS TIMES: "<<vecStations[k][i].datetime<<endl;
+//                    counter++;
+
+//                    if (counter>2)
+//                    {
+//                        continue;
+//                    }
+//                    subSelectify.push_back(vecStations[k][i]);
+//                    continue;
+//                }
+//                if (difference <= avgBufferList[k] + one && counter < 2)
+//                {
+//                    subSelectify.push_back(vecStations[k][i]);
+//                    counter++;
+//                    continue;
+//                }
+//            }
+
+//            timesize++;
+//        }
+
+//        Selectify.push_back(subSelectify);
+//    }
+
+//    cout<<"\nSELECTIFY SIZE:"<<Selectify.size()<<endl;
+//    cout<<"SUB-SELECT SIZE: "<<Selectify[0].size()<<endl;
+//    cout<<"SELECTED DATA:"<<endl;
+//    for(int e=0;e<Selectify[0].size();e++)
+//    {
+//        cout<<Selectify[0][e].speed<<" "<<Selectify[0][e].datetime<<endl;
+//    }
+
+//    vector<vector<preInterpolate> > lowVec;
+//    vector<vector<preInterpolate> > highVec;
+//    for(int j=0; j<Selectify.size(); j++)
+//    {
+//        vector<preInterpolate> lowStations;
+//        vector<preInterpolate> highstations;
+
+//        for(int i=0; i<Selectify[j].size(); i+=2)
+//        {
+//              lowStations.push_back(Selectify[j][i]);
+//        }
+
+//        for(int k=1; k<Selectify[j].size(); k+=2)
+//        {
+//            highstations.push_back(Selectify[j][k]);
+//        }
+
+//        lowVec.push_back(lowStations);
+//        highVec.push_back(highstations);
+//    }
+//    //SETTING WX TIMELIST
+////    vector<vector<preInterpolate> > interpolatedWxData;
+//    for(int ey=0; ey<Selectify.size(); ey++)
+//    {
+//        vector<preInterpolate> subInter;
+//        for(int ex=0; ex<timeList.size(); ex++)
+//        {
+//            preInterpolate timeStorage;
+//            timeStorage.datetime = timeList[ex];
+//            subInter.push_back(timeStorage);
+//        }
+//        interpolatedWxData.push_back(subInter);
+//    }
+//    //SETTING COORD SYS, DATUM, LAT, LON, HEIGH, HU, RADIUS OF INFLUENCE,NAME
+//    for(int k=0; k<Selectify.size(); k++)
+//    {
+//        double latitude;
+//        double longitude;
+//        double height;
+//        double radiusInfluence;
+//        std::string datum;
+//        std::string coord;
+//        std::string stationName;
+
+//        latitude = vecStations[k][0].lat;
+//        longitude = vecStations[k][0].lon;
+//        height = vecStations[k][0].height;
+//        radiusInfluence = vecStations[k][0].influenceRadius;
+//        datum = vecStations[k][0].datumType;
+//        coord = vecStations[k][0].coordType;
+//        const char* newdatum = "WGS84";
+//        stationName = vecStations[k][0].stationName;
+
+//        std::string demfile = demFileName;
+
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            interpolatedWxData[k][i].lat = latitude;
+//            interpolatedWxData[k][i].lon = longitude;
+//            interpolatedWxData[k][i].datumType = datum;
+//            interpolatedWxData[k][i].coordType = coord;
+//            interpolatedWxData[k][i].height = height;
+//            interpolatedWxData[k][i].heightUnits = lengthUnits::meters;
+//            interpolatedWxData[k][i].influenceRadius = radiusInfluence;
+//            interpolatedWxData[k][i].influenceRadiusUnits = lengthUnits::meters;
+//            interpolatedWxData[k][i].stationName = stationName;
+//        }
+//    }
+//    //INTERPOLATING WIND SPEED
+//    cout<<"WIND SPEED"<<endl;
+//    for(int k=0; k<Selectify.size(); k++)
+//    {
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            double low;
+//            double high;
+//            double inter;
+//            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+//            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+//            boost::posix_time::ptime pInter = timeList[i];
+
+//            low = unixTime(pLow);
+//            high = unixTime(pHigh);
+//            inter = unixTime(pInter);
+
+//            double speed1;
+//            double speed2;
+//            double speedI;
+
+//            speed1 = lowVec[k][i].speed;
+//            speed2 = highVec[k][i].speed;
+
+//            speedI = interpolator(inter,low, high, speed1, speed2);
+//            if(speedI > 113.000)
+//            {
+//                speedI = speed1;
+
+//            }
+
+//            interpolatedWxData[k][i].speed = speedI;
+//            interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
+//        }
+//    }
+//    //INTERPOLATING WIND DIRECITON
+//    for(int k=0; k<Selectify.size(); k++)
+//    {
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            double lowDir;
+//            double highDir;
+//            double interDir;
+
+//            lowDir = lowVec[k][i].direction;
+//            highDir = highVec[k][i].direction;
+
+//            interDir = interpolateDirection(lowDir,highDir);
+//            interpolatedWxData[k][i].direction = interDir;
+//        }
+//    }
+
+//    //INTERPOLATING TEMPERATURE
+//    cout<<"TEMPERATURE"<<endl;
+//    for(int k=0; k<Selectify.size(); k++)
+//    {
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            double low;
+//            double high;
+//            double inter;
+
+//            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+//            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+//            boost::posix_time::ptime pInter = timeList[i];
+
+//            low = unixTime(pLow);
+//            high = unixTime(pHigh);
+//            inter = unixTime(pInter);
+
+//            double lowTemp;
+//            double highTemp;
+//            double interTemp;
+
+//            lowTemp = lowVec[k][i].temperature;
+//            highTemp = highVec[k][i].temperature;
+//            interTemp = interpolator(inter, low, high, lowTemp, highTemp);
+
+//            if(interTemp > 57.0)
+//            {
+//                interTemp = highTemp;
+//                if(interTemp > 57.0)
+//                {
+//                    interTemp = lowTemp;
+//                }
+//                if(interTemp > 57.0)
+//                {
+//                    interTemp = 25;
+//                }
+//            }
+
+//            interpolatedWxData[k][i].temperature = interTemp;
+//            interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
+//        }
+//    }
+
+//    //INTERPOLATING CLOUD COVER
+//    cout<<"CLOUD COVER"<<endl;
+//    for(int k=0; k<Selectify.size(); k++)
+//    {
+//        for(int i=0; i<timeList.size(); i++)
+//        {
+//            double low;
+//            double high;
+//            double inter;
+
+//            boost::posix_time::ptime pLow = lowVec[k][i].datetime;
+//            boost::posix_time::ptime pHigh = highVec[k][i].datetime;
+//            boost::posix_time::ptime pInter = timeList[i];
+
+//            low = unixTime(pLow);
+//            high = unixTime(pHigh);
+//            inter = unixTime(pInter);
+
+//            double lowCloud;
+//            double highCloud;
+//            double interCloud;
+
+//            lowCloud = lowVec[k][i].cloudCover;
+//            highCloud = highVec[k][i].cloudCover;
+
+//            interCloud = interpolator(inter, low, high, lowCloud, highCloud);
+
+//            if(interCloud > 1.0)
+//            {
+//                interCloud = highCloud;
+//                if(interCloud > 1.0)
+//                {
+//                    interCloud = lowCloud;
+//                }
+//            }
+
+//            interpolatedWxData[k][i].cloudCover = interCloud;
+//            interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
+//        }
+//    }
 }
 
 double pointInitialization::unixTime(boost::posix_time::ptime time)
@@ -1304,11 +1718,20 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     double pointS = (iPoint - lowX);
     double result = lowY + pointS * slope;
 
-    if(result < 0.0000 || isnan(result))
+    if(isnan(result))
     {
+//        cout<<"CRITICAL ERROR!"<<endl;
         result = work;
     }
-
+//    if (result>10e10 || result<10e-10)
+//    {
+//        cout<<"CRITICAL ERROR!"<<endl;
+//        result=lowY;
+//    }
+//    cout<<"LOW:"<<lowY<<endl;
+//    cout<<"RESULT:"<<result<<endl;
+//    cout<<"HIGH:"<<highY<<endl;
+//    cout<<"\n"<<endl;
     return result;
 }
 
@@ -1326,6 +1749,11 @@ double pointInitialization::interpolateDirection(double lowDir, double highDir)
     if (degAverage < 0.0)
     {
         degAverage = degAverage + 360.0;
+    }
+    if (isnan(degAverage))
+    {
+        degAverage=0.0; //Sometimes the interpolation fails, temporary fix here!
+        CPLDebug("STATION_FETCH","Direction Interpolation Failed! Zeroing out bad point!");
     }
 
     return degAverage;
@@ -2052,30 +2480,98 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
                                     int endMonth, int endDay, int endHour, int endMinute,
                                     int nTimeSteps, std::string timeZone)
 {
-    boost::local_time::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    boost::local_time::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);
-    
-    endHour=endHour;
+    boost::local_time::tz_database tz_db; //Generate Time Zone Database
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") ); //Load in stored TimeZoneDatabase
+    boost::local_time::time_zone_ptr timeZonePtr;//Initialize time Zone
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);//Get Time Zone from Databse
+    endHour=endHour;//Not Really sure why this is necssary
     startHour=startHour;
     
-    boost::gregorian::date dStart(startYear,startMonth,startDay);
-    boost::posix_time::time_duration dStartTime(startHour,startMinute,0,0);
+//    cout<<timeZonePtr->has_dst()<<endl;
+//    CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
+
+    /*
+    Correct for daylight savings time...
+    */
+    boost::gregorian::date dStart(startYear,startMonth,startDay);//Generate Date Object from str for start time
+    boost::gregorian::date dEnd(endYear,endMonth,endDay); //Generate Date Obj from str for end time
+
+    boost::posix_time::time_duration dStartTime(startHour,startMinute,0,0); //Generate Time obj for start
+    boost::posix_time::time_duration dEndTime(endHour,endMinute,0,0); // Same for stop
+
+    boost::posix_time::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); //Get When DST Starts from TZ
+    boost::posix_time::ptime end_dst = timeZonePtr->dst_local_end_time(dEnd.year()); //Get When DST ends from TZ
+
+    /*
+     * Here we put the time and date objs into a time zone native obj for comparison
+     */
     boost::posix_time::ptime utcStart(dStart,dStartTime);
-    boost::local_time::local_date_time startLocal(utcStart,timeZonePtr);
-//    boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
-
-    boost::gregorian::date dEnd(endYear,endMonth,endDay);
-    boost::posix_time::time_duration dEndTime(endHour,endMinute,0,0);
     boost::posix_time::ptime utcEnd(dEnd,dEndTime);
-    boost::local_time::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
-//    boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,true);//Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
+    /*
+     * Initialize the start and end times as local objects with the current time on the computer
+     * This time doesn't really matter, but we need the objects initialized so that we can put the
+     * time zone aware time object into it. Boost won't let you initilize a blank local time object
+     */
+    boost::local_time::local_date_time startLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
+    boost::local_time::local_date_time endLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
 
+    /*
+     * Here we check to see if the user provided time is within daylight savings time
+     * If it is, we set the bool to true, if not, false.
+     * For places without daylight savings time, this sets the DST bool to false
+     * This also allows for simulations to be run in between time changes as the
+     * start and stop times are checked independently of eachother
+     */
+    //Check the start time
+    if (utcStart > start_dst && utcStart < end_dst)
+    {
+        CPLDebug("STATION_FETCH", "Start time is within DST!");
+        startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,true);
+    }
+    else
+    {
+        CPLDebug("STATION_FETCH", "Start time is outside DST!");
+        startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,false);
+
+    }
+    //check the end/stop times
+    if (utcEnd > start_dst && utcEnd < end_dst)
+    {
+        CPLDebug("STATION_FETCH", "Stop Time is within DST!");
+        endLocal = boost::local_time::local_date_time(dEnd,dEndTime,timeZonePtr,true);
+    }
+    else
+    {
+        CPLDebug("STATION_FETCH", "Stop Time is outside DST!");
+        endLocal = boost::local_time::local_date_time(dEnd,dEndTime,timeZonePtr,false);
+    }
+
+    /*
+    Now that we have figured out the local time, convert it to UTC time for all other time purposes
+    */
     boost::posix_time::ptime startUtc=startLocal.utc_time();
     boost::posix_time::ptime endUtc=endLocal.utc_time();
-    printf("\n");
 
+
+//This is all old stuff that I am leaving in until I am sure the above stuff works.
+//    boost::posix_time::ptime utcStart(dStart,dStartTime);
+//    boost::local_time::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
+//    boost::local_time::local_date_time startLocal(utcStart,timeZoneUtc);
+//    boost::local_time::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
+//    boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
+
+//    boost::local_time::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
+//    boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,timeZonePtr->has_dst());
+    /**Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
+    //Update (5/9/18)-> The fix that was implemented was doing this backwards, making it no good,
+    //new fix is to have boost check if daylight savings time exists (timeZonePtr->has_dst()), and then
+    tell that to the Local_date_time constructor, this hopefully will fix time offset issues...
+    **/
+//    boost::posix_time::ptime startUtc=startLocal.utc_time();
+//    boost::posix_time::ptime endUtc=endLocal.utc_time();
+//    printf("\n");
+
+    //Get Total Time duration of simulation and divide it into time steps
     boost::posix_time::time_duration diffTime=endUtc-startUtc;
     boost::posix_time::time_duration stepTime=diffTime/nTimeSteps;
 
@@ -2084,8 +2580,11 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     std::vector<boost::posix_time::ptime> timeList;
     std::vector<boost::posix_time::time_duration> timeStorage;
 
+    //Create Time Steps by multiplying steps by durations
+    //Sets first step to be start time
+    //Sets last step to be stop time
     timeOut.push_back(startUtc);
-    for (int i=1;i<nTimeSteps;i++)
+    for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
     {
         boost::posix_time::time_duration specTime;
         specTime=stepTime*i;

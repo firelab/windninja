@@ -95,6 +95,8 @@ class wxStation
     enum eStationFormat{ oldFormat, newFormat, invalidFormat };
 
     static bool check_station(wxStation station);
+    static bool fix_direction(wxStation station); //Fixes a failed direction check by zeroing out the direction
+    //This is likely temporary until I figure out what is going on.
 
     void set_stationName( std::string Name );
     inline std::string get_stationName() { return stationName; }

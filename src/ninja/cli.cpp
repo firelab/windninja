@@ -1153,6 +1153,8 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
+                    wxStation::SetStationFormat(wxStation::newFormat);
+                    CPLDebug("STATION_FETCH","Multiple Station Files Detected...");
                     option_dependency(vm, "wx_station_filename", "start_year");
                     option_dependency(vm, "wx_station_filename", "start_month");
                     option_dependency(vm, "wx_station_filename", "start_day");

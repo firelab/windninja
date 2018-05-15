@@ -510,6 +510,14 @@ void wxStation::set_currentTimeStep(boost::local_time::local_date_time step)
     currentTime = step;
 }
 
+bool wxStation::fix_direction(wxStation station)
+{
+//    float newDirection=0.0;
+//    station.
+    return true;
+}
+
+
 bool wxStation::check_station(wxStation station)
 {
     if(station.stationName.empty() || station.stationName == "")
@@ -546,7 +554,7 @@ bool wxStation::check_station(wxStation station)
             cout<<station.heightList[i]<<endl;
             return false;
         }
-        if(station.speedList[i] < 0.0 || isnan(station.speedList[i]))
+        if(station.speedList[i] < 0.0 || isnan(station.speedList[i]) || station.speedList[i]>105.0)
         {
             cout<<"failed speed Check on "<<i<<endl;
             cout<<station.speedList[i]<<endl;
@@ -568,6 +576,7 @@ bool wxStation::check_station(wxStation station)
         {
             cout<<"failed cloud check on "<<i<<endl;
             cout<<station.cloudCoverList[i]<<endl;
+//            station.cloudCoverList[i]=0.0;
             return false;
         }
     }
