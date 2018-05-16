@@ -91,6 +91,8 @@ protected:
         
 
 private:
+        QProgressDialog *stationFetchProgress;
+
 
         
 friend class pointInput;

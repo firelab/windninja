@@ -38,6 +38,13 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     fixTime();
     this->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     this->show();
+
+    stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
+    stationFetchProgress->setModal(true); //Needs some improvements...
+    stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
+    stationFetchProgress->setAutoClose(false);
+    stationFetchProgress->setRange(0,100);
+
 }
 
 /**
@@ -46,6 +53,7 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
  */
 stationFetchWidget::~stationFetchWidget()
 {
+    delete stationFetchProgress;
 //    delete progressBar;
 //    delete fetcher;
 //    delete latlngError;
@@ -53,6 +61,12 @@ stationFetchWidget::~stationFetchWidget()
 //    delete boundsError;
 //    delete gmInterface;
 }
+/**
+ * @brief stationFetchWidget::fixTime
+ * Sets the time correctly in the downloader widget
+ * Default is start time to be yesterday and
+ * end time to be now
+ */
 void stationFetchWidget::fixTime()
 {
     startEdit->setDateTime( QDateTime::currentDateTime().addDays(-1) );
@@ -77,88 +91,24 @@ void stationFetchWidget::connectInputs()
     connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
 }
 
-//    connect(btnDownloadDEM, SIGNAL(clicked()), this, SLOT(saveDEM()));
-//    connect(cbDEMSource, SIGNAL(currentIndexChanged(int)), this, SLOT(updateDEMSource(int)));
-//    connect(cbSelectionMethod, SIGNAL(currentIndexChanged(int)), this, SLOT(clearListeners()));
-//    connect(ckbShowExtent, SIGNAL(stateChanged(int)), this, SLOT(displayDEMBounds(int)));
-//    connect(twAdditionalData, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(showAdditionalData(QTreeWidgetItem*,int)));
-//    connect(wvGoogleMaps, SIGNAL(linkClicked(const QUrl)), this, SLOT(openGMLinks(const QUrl)));
-
-//    connect(leGoTo, SIGNAL(returnPressed()), this, SLOT(geocoder()));
-//    connect(tbGoTo, SIGNAL(clicked()), this, SLOT(geocoder()));
-
-//    connect(stwCoordinateInputs, SIGNAL(currentChanged(int)), this, SLOT(updateGUI()));
-//    connect(stwBoundCoordInputs, SIGNAL(currentChanged(int)), this, SLOT(updateGUI()));
-//    connect(wdgSelectionWidgets, SIGNAL(currentChanged(int)), this, SLOT(updateGUI()));
-
-//    connect(cbBufferUnits, SIGNAL(currentIndexChanged(int)), this, SLOT(updateBuffer()));
-//    connect(cbBufferUnits2, SIGNAL(currentIndexChanged(int)), this, SLOT(updateBuffer()));
-
-    
-//    connect(sbXCoord, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYCoord, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXDegrees, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYDegrees, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXMinutes, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYMinutes, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXDegrees2, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYDegrees2, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXMinutes2, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYMinutes2, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXSeconds, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYSeconds, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-
-//    connect(sbNorthDegrees1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthDegrees1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastDegrees1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestDegrees1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbNorthDegrees2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthDegrees2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastDegrees2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestDegrees2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbNorthDegrees3, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthDegrees3, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastDegrees3, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestDegrees3, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbNorthMinutes1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthMinutes1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastMinutes1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestMinutes1, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbNorthMinutes2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthMinutes2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastMinutes2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestMinutes2, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbNorthSeconds, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbSouthSeconds, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbEastSeconds, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-//    connect(sbWestSeconds, SIGNAL(editingFinished()), this, SLOT(plotBox()));
-
-//    connect(sbXBuffer, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbYBuffer, SIGNAL(editingFinished()), this, SLOT(plotSettings()));
-//    connect(sbXBuffer2, SIGNAL(editingFinished()), this, SLOT(plotUserPoint()));
-//    connect(sbYBuffer2, SIGNAL(editingFinished()), this, SLOT(plotUserPoint()));
-
-//    connect(btnChoosePoint, SIGNAL(clicked()), this, SLOT(choosePoint()));
-//    connect(btnChooseBox, SIGNAL(clicked()), this, SLOT(chooseBox()));
-//    connect(btnCloseButton, SIGNAL(clicked()), this, SLOT(closeDEM()));
-//}
-void stationFetchWidget::updatetz(QString tz)
+void stationFetchWidget::updatetz(QString tz) //Updates the Time Zone
 {
     tzString = tz;
 }
-void stationFetchWidget::setInputFile(QString file)
+void stationFetchWidget::setInputFile(QString file) //Gets the DEM
 {
     demFileName = file;    
 }
 
-void stationFetchWidget::watchTime()
+void stationFetchWidget::watchTime() //Makes sure that the start time never goes farther into the future and the end time
 {
 //    cout<<"end TIME CHANGED!"<<endl;
 //    endEdit->dateTime()
     startEdit->setMaximumDateTime(endEdit->dateTime().addSecs(-3600));    
     if (endEdit->dateTime()<startEdit->dateTime())
     {
-        cout<<"start is bigger than end! Fixing..."<<endl;
+        writeToConsole("Start Time is greater than End Time!, reverting...");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING!");
         startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
     }
 }
@@ -173,7 +123,7 @@ void stationFetchWidget::updateTimeFetch()
     
 }
 
-std::string stationFetchWidget::removeWhiteSpace(std::string str)
+std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up spaces in text
 {
     std::string tofind=" ";
     std::string toreplace="";
@@ -186,7 +136,7 @@ std::string stationFetchWidget::removeWhiteSpace(std::string str)
     
 }
 
-std::string stationFetchWidget::demButcher()
+std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the downloader
 {
     std::string demRaw = demFileName.toStdString();
     size_t lastDot=demRaw.find_last_of("/");
@@ -197,16 +147,22 @@ std::string stationFetchWidget::demButcher()
     std::string demBetter=demRaw.substr(0,lastDot)+"/";
     return demBetter;    
 }
-
+/**
+ * @brief stationFetchWidget::fetchStation
+ * Fetches data from the Mesowest API based on GUI request
+ */
 void stationFetchWidget::fetchStation()
 {
-    cout<<"Fetch Station Func"<<endl;
-    cout<<"---------------------------------------"<<endl;
-    cout<<demFileName.toStdString()<<endl;
-    cout<<tzString.toStdString()<<endl;
-    cout<<"geoLoc: "<<geoLoc->currentIndex()<<endl;
-    cout<<"TimeLoc: "<<timeLoc->currentIndex()<<endl;
-    cout<<"---------------------------------------"<<endl;
+    stationFetchProgress->setValue(0);
+    stationFetchProgress->setVisible(true);
+    stationFetchProgress->show();
+    CPLDebug("STATION_FETCH","Fetch Station GUI Function");
+    CPLDebug("STATION_FETCH","---------------------------------------");
+    CPLDebug("STATION_FETCH","DEM FILE NAME: %s",demFileName.toStdString().c_str());
+    CPLDebug("STATION_FETCH","TIME ZONE: %s",tzString.toStdString().c_str());
+    CPLDebug("STATION_FETCH","geoLoc: %i",geoLoc->currentIndex());
+    CPLDebug("STATION_FETCH","timeLoc: %i",timeLoc->currentIndex());
+    CPLDebug("STATION_FETCH","---------------------------------------");
     std::string stid;
     double buffer;
     std::string bufferUnits;
@@ -214,12 +170,11 @@ void stationFetchWidget::fetchStation()
     std::string blank="blank";
     std::string demUse=demButcher();
     std::string stationPathName;
-    cout<<demFileName.toStdString()<<endl;
-    cout<<demUse<<endl;
-    
+    CPLDebug("STATION_FETCH","USING DEM: %s",demUse.c_str());
+
     int terrainPart=geoLoc->currentIndex();
     int timePart=timeLoc->currentIndex();
-    
+//Debugging code
 //    if (geoLoc->currentIndex()==0)
 //    {
 //        cout<<"DEM VALUES"<<endl;
@@ -249,7 +204,7 @@ void stationFetchWidget::fetchStation()
     bool result;
     
     
-//    pointInitialization::SetRawStationFilename(demUse);
+    //pointInitialization::SetRawStationFilename(demUse);
     //This is a little different than in the CLI, because there is on option for a custom output path
     //Instead, the "raw File", demFileName is the dem file, like it would be in the LCI
     //and then demUse, which the is just the path to the dem acts as the output path
@@ -258,10 +213,10 @@ void stationFetchWidget::fetchStation()
     pointInitialization::SetRawStationFilename(stationPathName);              
     
     
-    // This means DEM and Current Data
+    // This means DEM and Current Data 1 step
     if (terrainPart==0 && timePart==0)
     {
-        cout<<"DEM and Current Data"<<endl;
+        CPLDebug("STATION_FETCH","Fetch Params: DEM and Current Data");
         buffer=bufferSpin->text().toDouble();
         bufferUnits=bufferSpin->text().toStdString();
         fetchNow=true;        
@@ -272,11 +227,12 @@ void stationFetchWidget::fetchStation()
         
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
-        cout<<"Return: "<<result<<endl;
+        CPLDebug("STATION_FETCH","Return: %i",result);
     }
+    //DEM and Time series
     if (terrainPart==0 && timePart==1)
     {
-        cout<<"DEM and Timeseries"<<endl;
+        CPLDebug("STATION_FETCH","Fetch Params: DEM and Time series");
         buffer=bufferSpin->text().toDouble();
         bufferUnits=bufferSpin->text().toStdString();
         fetchNow=false;
@@ -284,6 +240,7 @@ void stationFetchWidget::fetchStation()
         int sY,sMo,sD,sH,sMi;
         int eY,eMo,eD,eH,eMi;
         int numSteps=10; //make up a number for now.... It really doesn't matter at this point
+        //Just need to generate a timelist for fetching purposes
         
         std::string StartTime=startEdit->text().toStdString();
         std::string EndTime=endEdit->text().toStdString();
@@ -312,7 +269,7 @@ void stationFetchWidget::fetchStation()
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
 
         
-        cout<<"Return: "<<result<<endl;
+        CPLDebug("STATION_FETCH","Return: %i",result);
 //        cout<<bufferSpin->text().toDouble()<<endl;
 //        cout<<buffUnits->currentText().toStdString()<<endl;
 //        cout<<startEdit->text().toStdString()<<endl;
@@ -320,23 +277,23 @@ void stationFetchWidget::fetchStation()
         
         
     }
-    if (terrainPart==1 && timePart==0)
+    if (terrainPart==1 && timePart==0) //STation ID and 1 step
     {
-        cout<<"STID and Current DATA"<<endl;
+        CPLDebug("STATION_FETCH","STID and Current Data");
         stid=removeWhiteSpace(idLine->text().toStdString());
         fetchNow=true;
         
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
-        cout<<"Return: "<<result<<endl;       
-        
+        CPLDebug("STATION_FETCH","Return: %i",result);
+
 //        cout<<stid<<endl;        
 //        cout<<currentBox->isChecked()<<endl;        
         
     }
-    if (terrainPart==1 && timePart==1)
+    if (terrainPart==1 && timePart==1) //STATION ID and timeseries
     {
-        cout<<"STID and Time series"<<endl;
+        CPLDebug("STATION_FETCH","STID and Timeseries");
         stid=removeWhiteSpace(idLine->text().toStdString());
         fetchNow=false;
         int sY,sMo,sD,sH,sMi;
@@ -368,38 +325,24 @@ void stationFetchWidget::fetchStation()
         
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
-        cout<<"Return: "<<result<<endl;       
-        
+        CPLDebug("STATION_FETCH","Return: %i",result);
+
 //        cout<<stid<<endl;        
 //        cout<<startEdit->text().toStdString()<<endl;
 //        cout<<endEdit->text().toStdString()<<endl;
     }
 //    if (geoLoc->currentIndex())
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    stationFetchProgress->setValue(100);
+    stationFetchProgress->setLabelText("Download Succesful!");
+    stationFetchProgress->setCancelButtonText("OK!");
+    writeToConsole("Data Downlaoded Successfully");
 }
 
 void stationFetchWidget::getMetadata()
 {
     QString fileName;    
-    cout<<"LINKED METADATA FUNCTION: below is DEM"<<endl;
-    cout<<demFileName.toStdString()<<endl;
+    CPLDebug("STATION_FETCH","METADATA DOWNLOADER FOR STATIONS IN DEM: %s",demFileName.toStdString().c_str());
+
     fileName = QFileDialog::getSaveFileName(this, tr("Save Domain Metadata File"), ".csv", tr("Comma Separated " \
     "files (*.csv")); 
     if (QFileInfo(fileName).suffix().compare("csv", Qt::CaseInsensitive))
@@ -424,14 +367,10 @@ void stationFetchWidget::getMetadata()
     
 }
 
-
-
 void stationFetchWidget::closeDEM()
 {
     this->close();
 }
-
-
 
 void stationFetchWidget::closeEvent(QCloseEvent *event)
 {

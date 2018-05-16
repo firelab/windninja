@@ -1005,8 +1005,7 @@ void mainWindow::writeBlankStationFile()
     (this, tr("Save station file as..."), "stations.csv",
      tr("Text Files (*.csv)"));
     if(!fileName.isEmpty())
-//    wxStation::writeBlankStationFile( fileName.toStdString() );
-     cout<<"ive disabled this because it doesn't work right now"<<endl;
+    wxStation::writeBlankStationFile( fileName.toStdString() );
     else
     return;
 }
@@ -1866,7 +1865,7 @@ int mainWindow::solve()
     {
         if (pointFormat==0)
         {
-            cout<<"Using Old Format..."<<endl;
+            CPLDebug("STATION_FETCH","USING OLD FORMAT...");
             pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this,
             //Only the old format works, so downloaded data, with the date-time column don't yet work!
             /* right now the only option is the old format */
@@ -1883,26 +1882,26 @@ int mainWindow::solve()
             wxStation::SetStationFormat(wxStation::newFormat);
             std::vector<int> formatVec;
             std::vector<boost::posix_time::ptime> timeList;
-            cout<<"NEW FORMAT"<<endl;
+            CPLDebug("STATION_FETCH","NEW FORMAT...");
             for (int i=0;i<pointFileList.size();i++)
             {
-                cout<<pointFileList[i]<<endl; //This works and then we seg fault -> which is good!
-                cout<<wxStation::GetHeaderVersion(pointFileList[i].c_str())<<endl;
+//                cout<<pointFileList[i]<<endl; //This works and then /*we*/ seg fault -> which is good!
+//                cout<<wxStation::GetHeaderVersion(pointFileList[i].c_str())<<endl;
                 formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
             }
             if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin()))
             {
-                cout<<"TRUE"<<endl;
-                
+                CPLDebug("STATION_FETCH","HEADER VERSIONS ARE GOOD...");
+
                 if(useTimeList == true)
                 {
-                    cout<<"USING TIME LIST"<<endl;
+                    CPLDebug("STATION_FETCH","USING TIME LIST...");
                     timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
                                                                 xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
                                                                 numTimeSteps,timeZone);
-                    cout<<"TIME LIST GENERATED"<<endl;
+                    CPLDebug("STATION_FETCH","TIME LIST GENERATED...");
                     pointInitialization::storeFileNames(pointFileList);
-                    cout<<"FILES STORED"<<endl;
+                    CPLDebug("STATION_FETCH","FILES STORED...");
                     army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
                     nRuns = army->getSize();
                     
@@ -1911,13 +1910,14 @@ int mainWindow::solve()
                 {
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
-                    cout<<"USING CURRENT WEATHER DATA"<<endl;
+                    CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
                     pointInitialization::storeFileNames(pointFileList);
                     army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
                     nRuns = army->getSize();
                 }
                 if (writeStationKML==true)
                 {
+                    writeToConsole("Writing Weather Station .kml");
                     nRuns = army->getSize();
                     for (int i_=0;i_<nRuns;i_++)
                     {
@@ -1926,6 +1926,7 @@ int mainWindow::solve()
                 }
                 if (writeStationCSV==true)
                 {
+                    writeToConsole("Writing Weather Station .csv");
                     nRuns = army->getSize();
                     for (int i_=0;i_<nRuns;i_++)
                     {
@@ -1943,7 +1944,7 @@ int mainWindow::solve()
             }
             else
             {
-                cout<<"WARNING NOT ALL csvs are of the same type, cannot continue"<<endl;
+                CPLDebug("STATION_FETCH","WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
             }
             
             
@@ -2683,9 +2684,6 @@ int mainWindow::checkPointItem()
             tree->pointItem->setToolTip(0,"Too many Stations Selected for Old Format!");
 
         }
-
-
-
 
 //        else {
 //            status = green;

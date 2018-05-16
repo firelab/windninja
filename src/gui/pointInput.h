@@ -91,7 +91,7 @@ class pointInput : public QWidget
     QToolButton *readStationFileButton;
     QCheckBox *writeStationFileButton;
     QCheckBox *writeStationKmlButton;
-    QToolButton *doTest;
+    QToolButton *widgetButton;
 
     QGroupBox *pointGroupBox;
 
@@ -170,6 +170,7 @@ class pointInput : public QWidget
     void updateTz(QString tz);
     void checkForModelData();
     int directStationTraffic(const char* xFileName);
+    void readStationTime(std::string start_time, std::string stop_time, int xSteps);
     static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
     void displayInformation(int dataType);
     
