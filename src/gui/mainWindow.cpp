@@ -546,6 +546,12 @@ void mainWindow::createConnections()
   connect(tree->weather->weatherGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
 
+  //Connects making changes in pointInput to checkers
+  //Makes the validation happen instantaneously
+  connect(tree->point->treeView,
+          SIGNAL(clicked(const QModelIndex &)),
+          this,SLOT(checkAllItems()));
+
   //connect selection change in weather to checkers
   connect(tree->weather->treeView->selectionModel(),
       SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
@@ -600,6 +606,8 @@ void mainWindow::createConnections()
   /** Station Fetch **/
 //  connect(this, SIGNAL(inputFileChanged(QString)),
 //          tree->tw,SLOT(setInputFile(QString)));
+//Signal To Point Input what Diurnal Input is doing
+  connect(this, SIGNAL(mainDiurnalChanged(bool)),tree->point,SLOT(setDiurnalParam(bool)));
 
   //connect other writeToConsoles to the main writeToConsole
   connect( tree->point, SIGNAL( writeToConsole( QString ) ),
@@ -3254,10 +3262,21 @@ void mainWindow::enablePointDate(bool enable)
 #endif
           )
         {
-            tree->point->dateTimeEdit->setEnabled( true );
+            //Allows for on the fly changes in diurnal parameters as users select/deselect stations of
+            //various types
+            emit mainDiurnalChanged(true); //Sets to true so that stability options are also set
+            if(tree->point->simType!=1) //Only turn on datetimeEdit for single step runs
+            {
+                tree->point->dateTimeEdit->setEnabled( true );
+            }
+            else
+            {
+                tree->point->dateTimeEdit->setEnabled(false);
+            }
         }
         else
         {
+            emit mainDiurnalChanged(false); //Tells pointInput we don't want stability/Diurnal
             tree->point->dateTimeEdit->setEnabled( false );
         }
     }

@@ -66,7 +66,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     dateTimeEdit->setCalendarPopup( true );
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     dateTimeEdit->setEnabled( false ); //This is for Old Format Diurnal Simulations
-    dateTimeEdit->setVisible(false);
+    dateTimeEdit->setVisible(true);
+
+    diurnalLabel = new QLabel(this);
+    diurnalLabel->setText("Diurnal Parameters (Single Time Step Only)");
 
 //Old way of reading station files, no longer needed...
 //    readStationFileButton =  new QToolButton( this ); //Opens old Format Station
@@ -118,6 +121,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    treeView->setSelectionModel(QItemSelectionModel::Toggle);
 
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
+    treeLabel->setToolTip("Select Weather Stations from available files, three formats are supported, old format, time series and 1 step runs");
     
 
     ClippyToolLayout = new QHBoxLayout; //Layout for info and toolbox
@@ -208,6 +212,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    vTreeLayout->addWidget(refreshToolButton);
     vTreeLayout->addLayout(ClippyToolLayout);
     vTreeLayout->addLayout(timeBoxLayout);
+//    vTreeLayout->addWidget(dateTimeEdit);
 //####################################################
 //END SF CUSTOM                                      #
 //####################################################
@@ -231,7 +236,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout->addWidget(widgetButton);
     buttonLayout->addStretch();
 
-
+    diurnalTimeLayout = new QHBoxLayout;
+    diurnalTimeLayout->addWidget(diurnalLabel);
+    diurnalTimeLayout->addWidget(dateTimeEdit);
 
     pointLayout = new QVBoxLayout;
 //    pointLayout->addWidget( stationTreeView ); //very old stuff
@@ -240,8 +247,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    pointLayout->addLayout( fileLayout );
 
     pointLayout->addLayout(vTreeLayout);
-//    pointLayout->addLayout(treeLayout);
-    pointLayout->addWidget( dateTimeEdit );
+
+    pointLayout->addLayout(diurnalTimeLayout);
 
     pointLayout->addStretch();
     pointLayout->addLayout( buttonLayout );
@@ -338,9 +345,14 @@ int pointInput::checkNumStations(std::string comparator, std::vector<std::string
     }
     return cx;
 }
-//General Idea: Append all selections a user makes, get the unique ones, counter the number of clicks, if it is odd, keep the file, if even, don't keep it
-// This is because odd means it was selected at least once at then left alone
-// even means that it was selected and deselected
+
+/**
+ * @brief pointInput::readMultipleStaitonFiles
+ * //General Idea: Append all selections a user makes, get the unique ones, counter the number of clicks, if it is odd, keep the file, if even, don't keep it
+    // This is because odd means it was selected at least once at then left alone
+    // even means that it was selected and deselected
+ * @param index
+ */
 void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
 {
     QFileInfo fi(sfModel->fileInfo(index));
@@ -508,6 +520,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
+
         return 0;
     }
     if (stationHeader == 2 && instant == 0)
@@ -611,16 +624,28 @@ void pointInput::displayInformation(int dataType)
     {
         clippit->setText("Run Type: Old Format");
         pointGo=true;
+        if (isDiurnalChecked==true)
+        {
+            dateTimeEdit->setEnabled(true);
+        }
     }
     if(dataType == 1)
     {
         clippit->setText("Run Type: Time Series");
         pointGo=true;
+        if (dateTimeEdit->isEnabled())
+        {
+            dateTimeEdit->setEnabled(false);
+        }
     }
     if(dataType == 2)
     {
         clippit->setText("Run Type: Single Step");
         pointGo=true;
+        if (isDiurnalChecked==true)
+        {
+            dateTimeEdit->setEnabled(true);
+        }
     }
     if (dataType == -1 && stationFileList.size()==0)
     {
@@ -737,16 +762,29 @@ void pointInput::writeStationKml()
 ////    wxStation::writeKmlFile( pointData.stations,
 ////                    fileName.toStdString() );
 //        cout<<"disabled"<<endl;
+
+/** Opens the Main Window
+  *
+  */
 }
 void pointInput::openMainWindow()
 {
     this->setEnabled(true);
 }
 
+/** Allows mainwindow to update the timezone from the DEM or as provided by the user
+ * @brief pointInput::updateTz
+ * @param tz
+ */
+
 void pointInput::updateTz(QString tz)
 {
     tzString = tz;
 }
+/** Obsolete for now, might be used later
+ * Originally was intended to switch between the old format and the new format
+ * @brief pointInput::toggleUI
+ */
 
 void pointInput::toggleUI()
 {
@@ -792,8 +830,12 @@ void pointInput::toggleUI()
 
 //    }
 }
+/** If the data is part of timeseries, ie more than one step, we need to figure out the start and stop time
+ * // to do that, we need to enable them
+ * @brief pointInput::toggleTimeseries
+ */
 void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more than one step, we need to figure out the start and stop time
-                                    // to do that, we need to enable them
+
 {
     if (enableTimeseries->isChecked()==false)
     {
@@ -810,12 +852,20 @@ void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more
         updateStopTime(stopTime->dateTime());
     }
 }
+/** This is obsolete, I Think...
+ * @brief pointInput::pairFetchTime
+ * @param xDate
+ */
 void pointInput::pairFetchTime(QDateTime xDate) //Obsolete
 {
     QDateTime zDate = xDate;
     CPLDebug("STATION_FETCH","Pairing Fetched Time...");
     CPLDebug("STATION_FETCH","Paired Time: %s",xDate.date().toString().toStdString().c_str());
 }
+/** Pairs start and stop times to what the stationFetchWidget does.
+ * @brief pointInput::pairStartTime
+ * @param xDate
+ */
 void pointInput::pairStartTime(QDateTime xDate) //These functions take the start and stop time from the widget
 //and populate the timeseries objects in the gUI
 {
@@ -829,7 +879,11 @@ void pointInput::pairStopTime(QDateTime xDate)
 //    cout<<xDate.date().toString().toStdString()<<endl;
     stopTime->setDateTime(xDate);
 }
-
+/** Groups all the different timseries parts to be enabled/disabled at the same time based on
+ * user options
+ * @brief pointInput::pairTimeSeries
+ * @param curIndex
+ */
 void pointInput::pairTimeSeries(int curIndex)
 {
     if(curIndex==0)
@@ -847,7 +901,10 @@ void pointInput::pairTimeSeries(int curIndex)
         numSteps->setEnabled(true);
     }
 }
-
+/** Updates the timeseries start time based on user requests
+ * @brief pointInput::updateStartTime
+ * @param xDate
+ */
 void pointInput::updateStartTime(QDateTime xDate)
 {
     int year,month,day,hour,minute;
@@ -877,6 +934,10 @@ void pointInput::updateStartTime(QDateTime xDate)
 //        endSeries.push_back(minute);
 //    }
 }
+/** Updates the time for stopping the simulation based on user requests
+ * @brief pointInput::updateStopTime
+ * @param xDate
+ */
 void pointInput::updateStopTime(QDateTime xDate)
 {
     int year,month,day,hour,minute;
@@ -915,12 +976,26 @@ void pointInput::openStationFetchWidget()
     connect(xWidget->timeLoc,SIGNAL(currentIndexChanged(int)),this,SLOT(pairTimeSeries(int))); //Connects What the user does in the widget
             //to what the timeseries checkbox does   
 }
-
+/** Allows mainwindow to update pointInput with changes to the DEM
+ * @brief pointInput::setInputFile
+ * @param file
+ */
 void pointInput::setInputFile( QString file )
 {
     demFileName = file;
     cwd = QFileInfo(file).absolutePath();
 }
+/** Allows mainWindow to update pointInput with changes in diurnal/stability options
+ * @brief pointInput::setDiurnalParam
+ * @param diurnalCheck
+ */
+void pointInput::setDiurnalParam(bool diurnalCheck)
+{
+    isDiurnalChecked = diurnalCheck;//Note that this works for stability too
+    CPLDebug("STATION_FETCH","DIURNAL/STABILITY STATUS: %i",isDiurnalChecked);
+}
+
+
 /**
  * *@brief pointInput::checkForModelData
  * Applies filters to the tree

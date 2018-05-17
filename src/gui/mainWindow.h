@@ -141,6 +141,7 @@ class mainWindow : public QMainWindow
 
  signals:
   void inputFileChanged(QString newFile);
+  void mainDiurnalChanged(bool dC);
 
  public slots:
 #ifdef NINJAFOAM  

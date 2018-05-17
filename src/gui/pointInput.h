@@ -81,10 +81,13 @@ class pointInput : public QWidget
     std::vector<int> stationFileTypes;
     int simType;
     bool pointGo;
+    int isDiurnalChecked;
 
     QLineEdit *stationFileLineEdit;
 
+    QHBoxLayout *diurnalTimeLayout;
     QDateTimeEdit *dateTimeEdit;
+    QLabel *diurnalLabel;
 
     QToolButton *addStationButton;
     QToolButton *removeStationButton;
@@ -182,6 +185,7 @@ class pointInput : public QWidget
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
+    void setDiurnalParam(bool diurnalCheck);
     void openMainWindow();
     void openStationFetchWidget();
     int checkNumStations(string comparator, std::vector<std::string> stationVec);
