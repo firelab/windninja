@@ -123,8 +123,8 @@ BOOST_AUTO_TEST_CASE(mackay) {
       spd.set_cellValue(i, j, i * j);
     }
   }
-  rc =
-      NinjaGDALOutput("LIBKML", "mackay.kmz", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "mackay.kmz",
+                       NINJA_OUTPUT_ARROWS | NINJA_OUTPUT_VECTOR, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -141,6 +141,22 @@ BOOST_AUTO_TEST_CASE(raster) {
   rc = NinjaGDALOutput("PNG", "rgb.png",
                        NINJA_OUTPUT_RASTER, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
+}
+
+BOOST_AUTO_TEST_CASE(invalid_format) {
+  GDALAllRegister();
+  int rc = 0;
+  AsciiGrid<double> spd;
+  AsciiGrid<double> dir;
+  std::string mack = FindDataPath("mackay.tif");
+  spd.GDALReadGrid(mack);
+  dir.GDALReadGrid(mack);
+  rc = NinjaGDALOutput("AAIGrid", "out.asc",
+                       NINJA_OUTPUT_VECTOR, spd, dir, 0);
+  BOOST_REQUIRE(rc != 0);
+  rc = NinjaGDALOutput("ESRI Shapefile", "out.shp",
+                       NINJA_OUTPUT_RASTER, spd, dir, 0);
+  BOOST_REQUIRE(rc != 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

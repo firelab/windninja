@@ -149,9 +149,12 @@ add_test(test_gdal_output_kmz_color
 
 add_test(test_gdal_output_mackay
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/mackay)
+
 add_test(test_gdal_output_raster
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/raster)
 
+add_test(test_gdal_output_invalid_format
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/invalid_format)
 
 # ******************************************************************************
 # Slow test section

@@ -75,7 +75,7 @@
 /*-----------------------------------------------------------------------------
  *  REST API", string templates
  *-----------------------------------------------------------------------------*/
-#define LF_REQUEST_TEMPLATE "http://landfire.cr.usgs.gov/" \
+#define LF_REQUEST_TEMPLATE "https://landfire.cr.usgs.gov/" \
                             "requestValidationServiceClient/" \
                             "sampleRequestValidationServiceProxy/processAOI.jsp?" \
                             "TOP=%lf&BOTTOM=%lf&LEFT=%lf&RIGHT=%lf" \
@@ -93,17 +93,17 @@
                                   "</ns:initiateDownloadResponse>"
 
 
-#define LF_INIT_DOWNLOAD_TEMPLATE "http://landfire.cr.usgs.gov/axis2/services/" \
+#define LF_INIT_DOWNLOAD_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
                                   "DownloadService/initiateDownload?downloadID=%s"
 
-#define LF_GET_STATUS_TEMPLATE "http://landfire.cr.usgs.gov/axis2/services/" \
+#define LF_GET_STATUS_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
                                "DownloadService/getDownloadStatus?downloadID=%s"
                                
 #define LF_STATUS_RESPONSE_TEMPLATE "<ns:getDownloadStatusResponse xmlns:ns=\"http://edc/usgs/gov/xsd\">" \
                                     "<ns:return>%d,%[^'<']</ns:return>" \
                                     "</ns:getDownloadStatusResponse>"
 
-#define LF_DOWNLOAD_JOB_TEMPLATE "http://landfire.cr.usgs.gov/axis2/services/" \
+#define LF_DOWNLOAD_JOB_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
                                  "DownloadService/getData?downloadID=%s"
 
 #define LF_DEFAULT_SRS_TOKENS     "&prj=102039,&prj=0"
