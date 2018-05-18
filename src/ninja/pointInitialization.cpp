@@ -43,6 +43,9 @@ const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/sta
 std::string pointInitialization::rawStationFilename = "";
 double pointInitialization::stationBuffer;
 std::vector<std::string> pointInitialization::stationFiles;
+std::string pointInitialization::tzAbbrev;
+vector<boost::local_time::local_date_time> pointInitialization::start_and_stop_times;
+//Stores the start and stop time in local time from getTimeList so that we can name the files properly
 
 extern boost::local_time::tz_database globalTimeZoneDB;
 
@@ -419,7 +422,15 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
         return true;
     }
 }
-
+/**
+ * @brief pointInitialization::generatePointDirectory
+ * Creates a directory to store the downloaded weather stations
+ * @param demFile
+ * @param outPath
+ * @param timeList
+ * @param latest
+ * @return
+ */
 std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
                                                         std::vector<boost::posix_time::ptime> timeList,bool latest)
 {
@@ -457,9 +468,15 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
         timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
-        timeStream<<timeList[0];
-        timeStream2<<timeList.back();
-        timeComponent = timeStream.str()+"-"+timeStream2.str();
+//        timeStream<<timeList[0];
+//        timeStream2<<timeList.back();
+//        timeComponent = timeStream.str()+"-"+timeStream2.str();
+
+        timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
+        timeStream2<<start_and_stop_times[1].local_time();
+
+        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+
     }
     
     fullPath = outPath+subDem+"_wxStations_"+timeComponent+"/";
@@ -470,8 +487,12 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     return fullPath;
 }
 
-
-
+/**
+ * @brief pointInitialization::openCSVList
+ * for CLI runs, if the user provides a CSV pointing to a list of weather stations
+ * @param csvPath
+ * @return
+ */
 vector<string> pointInitialization::openCSVList(string csvPath)
 {
     vector<string> csvList;
@@ -496,7 +517,14 @@ vector<string> pointInitialization::openCSVList(string csvPath)
     
     return csvList;
 }
-
+/**
+ * @brief pointInitialization::readWxStations
+ * If it is determined that the station data is in the old format
+ * it gets passed through here and returned as a wxStation Object
+ * @param demFileName
+ * @param timeZone
+ * @return
+ */
 vector<wxStation> pointInitialization::readWxStations(string demFileName, string timeZone) //This is how we handle the old format now!
 {
     vector<wxStation> tWork;
@@ -545,7 +573,15 @@ vector<wxStation> pointInitialization::readWxStations(string demFileName, string
     
     return readyToGo;
 }
-
+/**
+ * @brief pointInitialization::interpolateFromDisk
+ * Determines whether the data has time in it, and needs to be interpolated
+ * or whether the data is 1 step and can be passed on
+ * @param demFile
+ * @param timeList
+ * @param timeZone
+ * @return
+ */
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
                                                       std::vector<boost::posix_time::ptime> timeList,
                                                       std::string timeZone)
@@ -617,7 +653,14 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     }
     return readyToGo;
 }
-
+/**
+ * @brief pointInitialization::readDiskLine
+ * Read in the wxStation data from Disk
+ * used to be in wxStation.cpp
+ * @param demFile
+ * @param stationLoc
+ * @return
+ */
 vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(std::string demFile,
                                                                                  std::string stationLoc)
 {
@@ -912,7 +955,12 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
     return oStations;
 }
-
+/**
+ * @brief pointInitialization::fetchWxStationID
+ * Opens the on disk station file to read the ID for each station.
+ * ie (KMSO)
+ * @return
+ */
 vector<std::string> pointInitialization::fetchWxStationID()
 {
     vector<std::string> stationNames;
@@ -942,7 +990,15 @@ vector<std::string> pointInitialization::fetchWxStationID()
 
     return stationNames;
 }
-
+/**
+ * @brief pointInitialization::directTemporalInterpolation
+ * Determines if interpolation is necessary for a given timestep
+ * it isn't necessary if the timestep borders the available data
+ * in which case, choose the closest single point
+ * @param posIdx
+ * @param negIdx
+ * @return
+ */
 int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
 {
     if (posIdx>=0 && negIdx>=0)//Interpolation Necessary
@@ -959,7 +1015,14 @@ int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
     }
 }
 
-
+/**
+ * @brief pointInitialization::makeWxStation
+ * Converts the nested vectors of station data into a wxStation Object, which stores
+ * data as vectors inside the object.
+ * @param data
+ * @param demFile
+ * @return
+ */
 vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolate> > data, std::string demFile)
 {
     CPLDebug("STATION_FETCH", "converting Interpolated struct to wxStation...");
@@ -1068,7 +1131,15 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
     return stationData;
 }
-
+/**
+ * @brief pointInitialization::interpolateNull
+ * If the run is not a timeseries, pass the data thorugh here, and assign it a dummy time
+ * with the specified time zone
+ * @param demFileName
+ * @param vecStations
+ * @param timeZone
+ * @return
+ */
 vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
                                                     vector<vector<preInterpolate> > vecStations,
                                                     std::string timeZone)
@@ -1700,7 +1771,12 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 //        }
 //    }
 }
-
+/**
+ * @brief pointInitialization::unixTime
+ * Converts a ptime object to the number of seconds since January 1st 1970
+ * @param time
+ * @return
+ */
 double pointInitialization::unixTime(boost::posix_time::ptime time)
 {
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
@@ -1710,7 +1786,17 @@ double pointInitialization::unixTime(boost::posix_time::ptime time)
 
     return stepDuration;
 }
-
+/**
+ * @brief pointInitialization::interpolator
+ * Linear Interpolation of station data to fit timeseries
+ * Uses seconds since epoch for time rather than doing clock arithmetic
+ * @param iPoint - The interpolation time (seconds since epoch)
+ * @param lowX - the time before iPoint (unixTime)
+ * @param highX - the time after iPoint (unixTime)
+ * @param lowY - data point for lowX
+ * @param highY - data point for highX
+ * @return data point for for timestep
+ */
 double pointInitialization::interpolator(double iPoint, double lowX, double highX, double lowY, double highY)
 {
     double work = 0.0;
@@ -1758,7 +1844,19 @@ double pointInitialization::interpolateDirection(double lowDir, double highDir)
 
     return degAverage;
 }
-
+/**
+ * @brief pointInitialization::BuildTime
+ * Combines individual time component strings into one string
+ * @param year_0
+ * @param month_0
+ * @param day_0
+ * @param clock_0
+ * @param year_1
+ * @param month_1
+ * @param day_1
+ * @param clock_1
+ * @return
+ */
 std::string pointInitialization::BuildTime(std::string year_0, std::string month_0,
                                       std::string day_0, std::string clock_0,
                                       std::string year_1, std::string month_1,
@@ -1772,6 +1870,12 @@ std::string pointInitialization::BuildTime(std::string year_0, std::string month
     return timeString;
 }
 
+/**
+ * @brief pointInitialization::UnifyTime
+ * Builds a unified timelist as a vector of strings for use in interpolation and fetching stations
+ * @param timeList
+ * @return
+ */
 vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
 {
     vector<std::string> buildTimes;
@@ -1814,7 +1918,15 @@ vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::pti
     return buildTimes;
 }
 
-//Gets MetaData for stations if turned on
+/**
+ * @brief pointInitialization::fetchMetaData
+ * Fetches the Metadata from the DEM, reporting, in a csv,
+ * the latitude, longitude, whether or not the station is active,
+ * the elevation and its Mesonet ID
+ * @param fileName
+ * @param demFile
+ * @param write
+ */
 void pointInitialization::fetchMetaData(std::string fileName, std::string demFile, bool write)
 {
     CPLDebug("STATION_FETCH", "Downloading Station MetaData...");
@@ -1925,7 +2037,20 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
     OGR_DS_Destroy(poDS);
     OGR_DS_Destroy(hDS);
 }
-
+/**
+ * @brief pointInitialization::BuildMultiUrl
+ * Constructs a multiple station API query for a timeseries
+ * @param station_ids
+ * @param yearx
+ * @param monthx
+ * @param dayx
+ * @param clockx
+ * @param yeary
+ * @param monthy
+ * @param dayy
+ * @param clocky
+ * @return
+ */
 std::string pointInitialization::BuildMultiUrl(std::string station_ids,
                                                std::string yearx,
                                                std::string monthx,
@@ -1949,7 +2074,12 @@ std::string pointInitialization::BuildMultiUrl(std::string station_ids,
 
     return url;
 }
-
+/**
+ * @brief pointInitialization::BuildMultiLatest
+ * Constructs a URL for a station name API query for 1 timestep
+ * @param station_ids
+ * @return
+ */
 std::string pointInitialization::BuildMultiLatest(std::string station_ids)
 {
     //builds a url for multiple known stations for the latest n hours
@@ -1965,7 +2095,23 @@ std::string pointInitialization::BuildMultiLatest(std::string station_ids)
 
     return url;
 }
-
+/**
+ * @brief pointInitialization::BuildBboxUrl
+ * Composes the latitude and time components of a timeseries DEM based URL
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @param yearx
+ * @param monthx
+ * @param dayx
+ * @param clockx
+ * @param yeary
+ * @param monthy
+ * @param dayy
+ * @param clocky
+ * @return
+ */
 std::string pointInitialization::BuildBboxUrl(std::string lat1,
                                               std::string lon1,
                                               std::string lat2,
@@ -1992,6 +2138,15 @@ std::string pointInitialization::BuildBboxUrl(std::string lat1,
 
     return url;
 }
+/**
+ * @brief pointInitialization::BuildBboxLatest
+ * Composes the latitude and metadata parts of a bbox latest (1 time step)
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @return
+ */
 
 std::string pointInitialization::BuildBboxLatest(std::string lat1,
                                                  std::string lon1,
@@ -2013,6 +2168,23 @@ std::string pointInitialization::BuildBboxLatest(std::string lat1,
 
     return url;
 }
+/**
+ * @brief pointInitialization::BuildUnifiedBbox
+ * Constructs a URL for a DEM based timeseries API request
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @param yearx
+ * @param monthx
+ * @param dayx
+ * @param clockx
+ * @param yeary
+ * @param monthy
+ * @param dayy
+ * @param clocky
+ * @return
+ */
 
 std::string pointInitialization::BuildUnifiedBbox(double lat1, double lon1, double lat2,
                                                   double lon2, std::string yearx, std::string monthx,
@@ -2031,7 +2203,15 @@ std::string pointInitialization::BuildUnifiedBbox(double lat1, double lon1, doub
 
     return URL;
 }
-
+/**
+ * @brief pointInitialization::BuildUnifiedLTBbox
+ * Constructs a url for a 1 timestep bounding box API request
+ * @param lat1
+ * @param lon1
+ * @param lat2
+ * @param lon2
+ * @return
+ */
 std::string pointInitialization::BuildUnifiedLTBbox(double lat1, double lon1, double lat2, double lon2)
 {
     std::string URLat = CPLSPrintf("%.6f", lat2);
@@ -2043,6 +2223,12 @@ std::string pointInitialization::BuildUnifiedLTBbox(double lat1, double lon1, do
 
     return URL;
 }
+/**
+ * @brief pointInitialization::setStationBuffer
+ * Sets the distance outside the dem that station data can be fetched
+ * @param buffer
+ * @param units
+ */
 
 void pointInitialization::setStationBuffer(double buffer, std::string units)
 {
@@ -2065,7 +2251,12 @@ void pointInitialization::setStationBuffer(double buffer, std::string units)
 
     stationBuffer = buffer;
 }
-
+/**
+ * @brief pointInitialization::getStationBuffer
+ * Returns the user set spatial buffer, the maxiumum distance that stations can be fetched
+ * outside a dem
+ * @return
+ */
 double pointInitialization::getStationBuffer()
 {
         return stationBuffer;
@@ -2219,7 +2410,20 @@ vector<std::string> pointInitialization::InterpretCloudData(const double *dbClou
 
     return lowclouddat;
 }
-
+/**
+ * @brief pointInitialization::CompareClouds
+ * Compares the 3 levels of clouds (low, high, medium) to eachother
+ * to determine the total cloud cover reported by a ASOS/Airport Station
+ * Sometimes the reported weather data from airport stations is missing a significant
+ * portion of data, in which case we set the low clouds to equal the medium clouds.
+ * @param low
+ * @param med
+ * @param high
+ * @param countlow
+ * @param countmed
+ * @param counthigh
+ * @return
+ */
 vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, vector<std::string>med,
                                                        vector<std::string>high, int countlow, int countmed,
                                                        int counthigh)
@@ -2301,7 +2505,19 @@ vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, v
 
     return totalCloudcat;
 }
-
+/**
+ * @brief pointInitialization::UnifyClouds
+ * ASOS stations provide clouds in the form of octas. This helps clean up these octas
+ * into percentages.
+ * @param dvCloud
+ * @param dwCloud
+ * @param dxCloud
+ * @param count1
+ * @param count2
+ * @param count3
+ * @param backupcount
+ * @return
+ */
 vector<std::string> pointInitialization::UnifyClouds(const double *dvCloud, const double *dwCloud,
                                         const double *dxCloud, int count1, int count2, int count3, int backupcount)
 {
@@ -2369,7 +2585,21 @@ vector<std::string> pointInitialization::UnifyClouds(const double *dvCloud, cons
 
     return sCloudData;
 }
-
+/**
+ * @brief pointInitialization::Irradiate
+ * Converts solar radiation data to cloud cover based on time, and user location
+ *  using solar.getSolarIntensity
+ * from solar.cpp
+ * Solar Radiation comes from RAWS stations
+ * @param solrad
+ * @param smallcount
+ * @param largecount
+ * @param timeZone
+ * @param lat
+ * @param lon
+ * @param times
+ * @return
+ */
 vector<double> pointInitialization::Irradiate(const double* solrad, int smallcount, int largecount,
                                             std::string timeZone, double lat, double lon, char** times)
 {
@@ -2429,7 +2659,15 @@ vector<double> pointInitialization::Irradiate(const double* solrad, int smallcou
 
     return outCloud;
 }
-
+/**
+ * @brief pointInitialization::fixWindDir
+ * downloaded wind direction data from the API is stored as a nonuniform C array of const doubles,
+ * this converts it a string that looks better and functions properly
+ * @param winddir
+ * @param filler
+ * @param count
+ * @return
+ */
 vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::string filler, int count)
 {
     std::string sa;
@@ -2458,8 +2696,8 @@ vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::
     return direction;
 }
 
-/**@brief Builds the time list for a pointInitialization run.
- *
+/**
+ * @brief Builds the time list for a pointInitialization run.
  * @param startYear Start year for the simulation.
  * @param startMonth Start month for the simulation.
  * @param startDay Start day for the simulation.
@@ -2527,11 +2765,13 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     {
         CPLDebug("STATION_FETCH", "Start time is within DST!");
         startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,true);
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev()); //Stores the tz Abbreviation so that we can name the files coorectly in the time series
     }
     else
     {
         CPLDebug("STATION_FETCH", "Start time is outside DST!");
         startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,false);
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev()); //Stores the tz Abbreviation sot
 
     }
     //check the end/stop times
@@ -2545,6 +2785,8 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         CPLDebug("STATION_FETCH", "Stop Time is outside DST!");
         endLocal = boost::local_time::local_date_time(dEnd,dEndTime,timeZonePtr,false);
     }
+    //Sets these for use in the fetch-station functions
+    setLocalStartAndStopTimes(startLocal,endLocal);
 
     /*
     Now that we have figured out the local time, convert it to UTC time for all other time purposes
@@ -2596,8 +2838,8 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     return timeList;
 }
 
-/**@brief Fetches station data from bounding box.
- *
+/**
+ * @brief Fetches station data from bounding box.
  * @param demFile Filename/path to the DEM on disk.
  * @param timeList Vector of datetimes in UTC for the simulation.
  */
@@ -2670,6 +2912,16 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
 
     return true;
 }
+/**
+ * @brief pointInitialization::fetchStationByName
+ * Constructs A URL to query the mesonet API with station names
+ * works for both 1 step and time series
+ * @param stationList
+ * @param timeList
+ * @param timeZone
+ * @param latest
+ * @return
+ */
 
 bool pointInitialization::fetchStationByName(std::string stationList,
                                              std::vector<boost::posix_time::ptime> timeList,
@@ -2696,10 +2948,39 @@ bool pointInitialization::fetchStationByName(std::string stationList,
 
     return true;
 }
-
+/**
+ * @brief pointInitialization::storeFileNames
+ * Stores the genrated file names for uses elsewhere in the code
+ * These file names are then called when the station data is interpolated
+ * after it is written to disk.
+ * @param statLoc
+ */
 void pointInitialization::storeFileNames(vector<std::string> statLoc)
 {
     stationFiles=statLoc;
+}
+/**
+ * @brief pointInitialization::storeTZAbbrev
+ * Stores the time zone as an abbreviation for naming the files
+ * @param tzAbbr
+ */
+void pointInitialization::storeTZAbbrev(string tzAbbr)
+{
+    tzAbbrev = tzAbbr;
+}
+/**
+ * @brief pointInitialization::setLocalStartAndStopTimes
+ * Sets the start and stop times the static vector
+ * indecies are as follows:
+ * 0 is start
+ * 1 is stop
+ * @param start
+ * @param stop
+ */
+void pointInitialization::setLocalStartAndStopTimes(boost::local_time::local_date_time start, boost::local_time::local_date_time stop)
+{
+    start_and_stop_times.push_back(start);
+    start_and_stop_times.push_back(stop);
 }
 void pointInitialization::writeStationLocationFile(string stationPath, std::string demFile){
     std::string cName;
@@ -2722,7 +3003,16 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
         outFile<<stationFiles[i]<<endl;
     }
 }
-
+/**
+ * @brief pointInitialization::fetchStationData
+ * Fetches the data from the specified URL and user
+ * specified parameters
+ * Saves data to disk
+ * @param URL
+ * @param timeZone
+ * @param latest
+ * @param timeList
+ */
 void pointInitialization::fetchStationData(std::string URL,
                                 std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList)
 {
@@ -2741,6 +3031,7 @@ void pointInitialization::fetchStationData(std::string URL,
 
     hLayer=OGR_DS_GetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
+
 
     int idx=0;
     int idx1=0;
@@ -2832,7 +3123,7 @@ void pointInitialization::fetchStationData(std::string URL,
         
         ss<<ex; //Get the index for more specificity on the file name
         idStream<<writeID; //Get the station ID
-        
+
         if (latest==true)
         {
             boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
@@ -2841,12 +3132,17 @@ void pointInitialization::fetchStationData(std::string URL,
         }
         if (latest==false) //If it is a time series we name the file with both the start and stop time
         {
-            timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
-            timeStream<<timeList[0];
-            timeStream2<<timeList.back();
-            timeComponent = timeStream.str()+"-"+timeStream2.str();
+
+            timeStream2.imbue(locale(timeStream2.getloc(),facet));
+
+//            timeStream<<timeList[0]; //Old Way with cryptic UTC times
+//            timeStream2<<timeList.back();
+            timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
+            timeStream2<<start_and_stop_times[1].local_time();
+
+            timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+
         }
-                
         if(csvName!="blank")
         {
             tName = csvName+idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";

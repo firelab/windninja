@@ -723,6 +723,11 @@ void wxStation::writeBlankStationFile(std::string outFileName)
 }
 
 /** Write a csv file representing interpolated wxStation data
+ * Note that I changed this to write the files as "OLD FORMAT"
+ * so that they can be run again individually, I'm not sure what
+ * we really want to do with this feature...
+ * If we want to change it back,
+ * change apszValidHeader1 to apszValidHeader2
  * @param StationVect std::vector of wxStation objects
  * @param outFileName output file name as std::string
  */
@@ -763,11 +768,11 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
     if (fout == NULL) {
         return;
     }
-    int n = CSLCount((char **)apszValidHeader2);
+    int n = CSLCount((char **)apszValidHeader1);
     for (int i = 0; i < n - 1; i++) {
-        fprintf(fout, "\"%s\",", apszValidHeader2[i]);
+        fprintf(fout, "\"%s\",", apszValidHeader1[i]);
     }
-    fprintf(fout, "\"%s\"\n", apszValidHeader2[n - 1]);
+    fprintf(fout, "\"%s\"\n", apszValidHeader1[n - 1]);
 
     for( unsigned int i = 0;i < StationVect.size();i++ ) {
         fprintf( fout, "\"%s\",", StationVect[i].get_stationName().c_str() );
@@ -788,7 +793,7 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
         else
             fprintf( fout, "%.2lf,", StationVect[i].get_influenceRadius() );
         fprintf( fout, "\"meters\"," );
-        fprintf( fout, "\"%s\",", timestream.str().c_str() );
+//        fprintf( fout, "\"%s\",", "");
 
         fprintf( fout, "\n" );
     }

@@ -209,10 +209,15 @@ void stationFetchWidget::fetchStation()
     //Instead, the "raw File", demFileName is the dem file, like it would be in the LCI
     //and then demUse, which the is just the path to the dem acts as the output path
     //So the directory storing the weather csvs is always the same level as the DEM
-    stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
-    pointInitialization::SetRawStationFilename(stationPathName);              
-    
-    
+    //The Path name has a time zone in it
+    // This is because the station file names have time in them and to specify to the user
+    // where they downloaded the times at
+    // This is only necessary for timeseries however, because the other options, such as 1 step/current data
+    //are time  naive and require the user to specify a time for what is current.
+    //These two lines of code are the old way for which files were generated, leaving them in for debugging for now...
+//    stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
+//    pointInitialization::SetRawStationFilename(stationPathName);
+       
     // This means DEM and Current Data 1 step
     if (terrainPart==0 && timePart==0)
     {
@@ -223,7 +228,10 @@ void stationFetchWidget::fetchStation()
         
 //        cout<<bufferSpin->text().toDouble()<<endl;
 //        cout<<buffUnits->currentText().toStdString()<<endl;
-//        cout<<currentBox->isChecked()<<endl;   
+//        cout<<currentBox->isChecked()<<endl;
+        //Generates the directory to store the file names, because current data is on, don't specify time zone
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
+        pointInitialization::SetRawStationFilename(stationPathName);
         
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
@@ -263,7 +271,12 @@ void stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
-        cout<<timeList.size()<<endl;
+//        cout<<timeList.size()<<endl;
+        //Generate Station directory, because timeseries is on, specify what time zone the stations will be
+        //downloaded in, based on DEM time zone settings, or user specified.
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);        pointInitialization::SetRawStationFilename(stationPathName);
+        pointInitialization::SetRawStationFilename(stationPathName);
+
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
@@ -282,6 +295,9 @@ void stationFetchWidget::fetchStation()
         CPLDebug("STATION_FETCH","STID and Current Data");
         stid=removeWhiteSpace(idLine->text().toStdString());
         fetchNow=true;
+        //Fetch now is on, don't specify time zone in station path
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
+        pointInitialization::SetRawStationFilename(stationPathName);
         
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
@@ -322,6 +338,9 @@ void stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
+        //timeseries, so specify time zone in path name.
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
+        pointInitialization::SetRawStationFilename(stationPathName);
         
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());

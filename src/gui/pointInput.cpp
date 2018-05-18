@@ -469,6 +469,7 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         if(hDS == NULL)
         {
+            writeToConsole("Cannot open station file!");
             return -1; //very bad!
         }
 
@@ -488,6 +489,11 @@ int pointInput::directStationTraffic(const char* xFileName)
         const char* emptyChair; //Muy Importante!
 
         poFeature = poLayer->GetFeature(iBig);
+        if (poFeature==NULL)
+        {
+            writeToConsole("No Stations Found in file!");
+            return -1; //If there are no stations in the csv!
+        }
     //    startTime = poFeature->GetFieldAsString(15);
         std::string start_datetime(poFeature->GetFieldAsString(15));
         poFeature = poLayer->GetFeature(idx2);
