@@ -67,9 +67,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     dateTimeEdit->setEnabled( false ); //This is for Old Format Diurnal Simulations
     dateTimeEdit->setVisible(true);
+    dateTimeEdit->setToolTip("Set date and time for single time step diurnal/stability simulations");
 
     diurnalLabel = new QLabel(this);
-    diurnalLabel->setText("Diurnal Parameters (Single Time Step Only)");
+    diurnalLabel->setText("Thermal Parameters (Single Time Step Only)");
 
 //Old way of reading station files, no longer needed...
 //    readStationFileButton =  new QToolButton( this ); //Opens old Format Station
@@ -82,20 +83,23 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     writeStationFileButton =  new QCheckBox( this ); //This writes an interpolated csv of the weather data (we might not want this)
     writeStationFileButton->setText( tr( "Write Station File" ) );
     writeStationFileButton->setIcon( QIcon( ":weather_clouds.png" ) );
+    writeStationFileButton->setToolTip("Time Series: Writes an Interpolated CSV for each time step\nSingle Step: Writes a CSV of inputted weather data.");
 //    writeStationFileButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
     writeStationKmlButton =  new QCheckBox( this ); //This writes a KML of the weather stations (1 per run)
     writeStationKmlButton->setText( tr( "Write Station Kml" ) );
     writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
+    writeStationKmlButton->setToolTip("Time Series: Writes a KML for each time step showing interpolated weather data.\nSingle Step: Writes a KML of inputted weather data.");
 //    writeStationKmlButton->setToolButtonStyle( Q/t::ToolButtonTextBesideIcon );
 //    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
 //    writeStationKmlButton->setStyle(Qt::ToolButtonTextBesideIcon);
 //    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
     widgetButton = new QToolButton( this ); //This opens the station fetch downloader Widget (formerley doTest)
-    widgetButton->setText( tr( "Open Station Downloader " ));
+    widgetButton->setText( tr( "Download Weather Stations" ));
     widgetButton->setIcon(QIcon(":world.png"));
     widgetButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    widgetButton->setToolTip("Download Weather Data from the Mesowest API");
 
 //    stationTreeView = new QTreeView( this );
 //    stationTreeView->setModel( &pointData ); //This is some sort of deprecated tree thing that existed before
@@ -105,8 +109,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //####################################################
 
     sfModel = new QDirModel(this); //Creates the directory model
-    sfModel->setReadOnly(false); //probably can be true, but i don't know
-    sfModel->setSorting(QDir::Time); //Sort by time created
+    sfModel->setReadOnly(true); //probably can be true, but i don't know
+    sfModel->setSorting(QDir::Time); //Sort by time created   
 
     treeView = new QTreeView(this); //Creates the box where the sfModel goes
     treeView->setVisible(true); //deprecated
@@ -129,7 +133,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     refreshToolButton = new QToolButton(this); //This refreshes the tree so that new files will populate
     refreshToolButton->setText(tr("Refresh Weather Stations"));
     refreshToolButton->setIcon(QIcon(":arrow_rotate_clockwise.png"));
-    refreshToolButton->setToolTip(tr("Refresh the station listing."));
+    refreshToolButton->setToolTip(tr("Refresh Stations stored on disk in the DEM directory."));
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     refreshToolButton->setVisible(true);
 
@@ -158,6 +162,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     
     enableTimeseries = new QCheckBox(this); //Initializes the timeseries checkbox
     enableTimeseries->setText(tr("Enable Timeseries"));
+
+    labelTimeseries = new QLabel(this);
+    labelTimeseries->setText("Time Series\nOptions");
     
     numSteps = new QSpinBox; //Number of timesteps box
     numSteps->setValue(24);
@@ -165,7 +172,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     
     startTime->setVisible(true); //Some visibility settings that probably aren't necessary anymore...
     stopTime->setVisible(true);
-    enableTimeseries->setVisible(true);
+    enableTimeseries->setVisible(false); //Try Hiding the button without much Work
 
     startTime->setEnabled(false); //Disables timeseries options unless the user checks it or the system detects that the user is doing a timeseries
     stopTime->setEnabled(false);
@@ -199,6 +206,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    timeBoxLayout->addWidget(stopTime);
 //    timeBoxLayout->addWidget(numSteps);
     timeBoxLayout->addWidget(enableTimeseries); //Adds all the parts together
+    timeBoxLayout->addWidget(labelTimeseries);
     timeBoxLayout->addLayout(startLayout);
     timeBoxLayout->addLayout(stopLayout);
     timeBoxLayout->addLayout(stepLayout);
@@ -207,7 +215,13 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 // Add some new layouts
 //-------------------------------------------------
     vTreeLayout = new QVBoxLayout; //Adds everything to a vertical layout
-    vTreeLayout->addWidget(treeLabel);
+
+    hDownloaderLayout = new QHBoxLayout; //Holds the label for the tree & download button
+    hDownloaderLayout->addWidget(treeLabel); //Adds label
+    hDownloaderLayout->addWidget(widgetButton); //adds Download Button to top of page
+
+    vTreeLayout->addLayout(hDownloaderLayout); //adds hDownloaderLayout sublayout to the overal system
+//    vTreeLayout->addWidget(treeLabel);
     vTreeLayout->addWidget(treeView);
 //    vTreeLayout->addWidget(refreshToolButton);
     vTreeLayout->addLayout(ClippyToolLayout);
@@ -233,7 +247,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout->addWidget( writeStationFileButton );
 //    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
     buttonLayout->addWidget( writeStationKmlButton );
-    buttonLayout->addWidget(widgetButton);
+//    buttonLayout->addWidget(widgetButton); //Old Download Button Location, keep for now ->Moved to hDownloaderLayout
     buttonLayout->addStretch();
 
     diurnalTimeLayout = new QHBoxLayout;
@@ -486,6 +500,8 @@ int pointInput::directStationTraffic(const char* xFileName)
         idx2 = poLayer->GetFeatureCount();
 
         CPLDebug("STATION_FETCH","Number of Time Entries: %llu",idx2);
+        QString qFileName = QFileInfo(xFileName).fileName();
+        writeToConsole(QString(qFileName+" has: "+QString::number(idx2)+" time entries"));
         const char* emptyChair; //Muy Importante!
 
         poFeature = poLayer->GetFeature(iBig);
@@ -501,6 +517,12 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         CPLDebug("STATION_FETCH","STATION START TIME: %s",start_datetime.c_str());
         CPLDebug("STATION_FETCH","STATION END TIME: %s",stop_datetime.c_str());
+
+//        writeToConsole(QString(qFileName+"\nfirst time: "+start_datetime.c_str()));
+//        writeToConsole(QString(qFileName+"\nlaste Time: "+stop_datetime.c_str()));
+        writeToConsole("Start Time: "+QString(start_datetime.c_str()));
+        writeToConsole("Stop Time: "+QString(stop_datetime.c_str()));
+
 
         if (start_datetime.empty()==true && stop_datetime.empty()==true)
         {
@@ -634,6 +656,10 @@ void pointInput::displayInformation(int dataType)
         {
             dateTimeEdit->setEnabled(true);
         }
+        if (stationFileList.size()>1)
+        {
+            clippit->setText("Too many stations selected for data type");
+        }
     }
     if(dataType == 1)
     {
@@ -653,21 +679,26 @@ void pointInput::displayInformation(int dataType)
             dateTimeEdit->setEnabled(true);
         }
     }
-    if (dataType == -1 && stationFileList.size()==0)
-    {
-        clippit->setText("No Stations Selected...");
-        pointGo=false;
-    }
     if (dataType == -1 && stationFileList.size()==0) //Special Case
     {
         clippit->setText("No Stations Selected...");
         pointGo=false;
     }
-    else if(dataType == -1)
+    if (dataType == -1 && stationFileList.size()==1) //Case of 1 file that is crap
+    {
+        clippit->setText("No Valid Data detected in file...");
+        pointGo=false;
+    }
+    if (dataType==-1 && stationFileList.size()>=2)
     {
         clippit->setText("MULTIPLE TYPES SELECTED, CANNOT PROCEED!");
         pointGo=false;
     }
+//    else if(dataType == -1)
+//    {
+//        clippit->setText("MULTIPLE TYPES SELECTED, CANNOT PROCEED!");
+//        pointGo=false;
+//    }
 }
 
 /**
@@ -692,7 +723,11 @@ void pointInput::selChanged()
  */
 void pointInput::writeStationFile()
 {
-    writeToConsole("Interpolated CSV will be written.");
+//    writeToConsole("Interpolated CSV will be written.");
+//    if (writeStationFileButton->isChecked())
+//    {
+//        writeToConsole("Interpolated Weather CSV will be written");
+//    }
 //    if( pointData.stations.empty() ) {
 //    writeToConsole( "There are no stations to write" );
 //    return;
@@ -734,7 +769,11 @@ void pointInput::writeStationFile()
  */
 void pointInput::writeStationKml()
 {
-    writeToConsole("KML files will be written!");
+//    writeToConsole("KML files will be written!");
+//    if (writeStationKmlButton->isChecked())
+//    {
+//         writeToConsole("KML files will be written!");
+//    }
 //    if( pointData.stations.empty() ) {
 //    writeToConsole( "There are no stations to write" );
 //    return;
@@ -976,7 +1015,7 @@ void pointInput::openStationFetchWidget()
     connect(xWidget, SIGNAL(exitDEM()),this, SLOT(checkForModelData())); //Launches Widget Connector    
 //    checkForModelData();
 //    cout<<xWidget->timeLoc->currentIndex()<<endl;
-    connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
+//    connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
     connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime)));
     connect(xWidget->endEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStopTime(const QDateTime)));
     connect(xWidget->timeLoc,SIGNAL(currentIndexChanged(int)),this,SLOT(pairTimeSeries(int))); //Connects What the user does in the widget

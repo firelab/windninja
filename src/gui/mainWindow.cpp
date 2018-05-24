@@ -2665,9 +2665,30 @@ int mainWindow::checkPointItem()
         bool shortGo=tree->point->pointGo;
         if (shortGo==false)
         {
-            status = red;
-            tree->pointItem->setIcon(0,tree->cross);
-            tree->pointItem->setToolTip(0,"Mismatched data types selected");
+            if (tree->point->stationFileList.size()<1)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"No Stations Selected");
+            }
+            if (tree->point->stationFileList.size()==1)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"No Valid Data detected...");
+            }
+            if (tree->point->stationFileList.size()>=2)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"Mismatched Data Type selected");
+            }
+//            if else
+//            {
+//                status = red;
+//                tree->pointItem->setIcon(0,tree->cross);
+//                tree->pointItem->setToolTip(0,"Selected options are invald");
+//            }
         }
         if (shortGo==true)
         {

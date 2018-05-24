@@ -39,6 +39,8 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     this->setWindowFlags(Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     this->show();
 
+    currentBox->setVisible(false);
+
     stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
     stationFetchProgress->setModal(true); //Needs some improvements...
     stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
@@ -89,6 +91,7 @@ void stationFetchWidget::connectInputs()
     connect(fetchMetaButton, SIGNAL(clicked()),this, SLOT(getMetadata()));
     connect(fetchDataButton, SIGNAL(clicked()),this, SLOT(fetchStation()));
     connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
+    connect(closeButton,SIGNAL(clicked()),this,SLOT(close())); //closes stationFetchWidget
 }
 
 void stationFetchWidget::updatetz(QString tz) //Updates the Time Zone
@@ -232,8 +235,8 @@ void stationFetchWidget::fetchStation()
         //Generates the directory to store the file names, because current data is on, don't specify time zone
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
         pointInitialization::SetRawStationFilename(stationPathName);
-        
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
+
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
     }
@@ -274,11 +277,12 @@ void stationFetchWidget::fetchStation()
 //        cout<<timeList.size()<<endl;
         //Generate Station directory, because timeseries is on, specify what time zone the stations will be
         //downloaded in, based on DEM time zone settings, or user specified.
-        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);        pointInitialization::SetRawStationFilename(stationPathName);
-        pointInitialization::SetRawStationFilename(stationPathName);
 
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);
+        pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);
+
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
 
         
@@ -295,11 +299,12 @@ void stationFetchWidget::fetchStation()
         CPLDebug("STATION_FETCH","STID and Current Data");
         stid=removeWhiteSpace(idLine->text().toStdString());
         fetchNow=true;
-        //Fetch now is on, don't specify time zone in station path
+        //Fetch now is on, don't specify time zone in station path       
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
         pointInitialization::SetRawStationFilename(stationPathName);
-        
+
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
+
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
 
@@ -338,11 +343,13 @@ void stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
-        //timeseries, so specify time zone in path name.
+
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
         pointInitialization::SetRawStationFilename(stationPathName);
-        
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
+
+        //timeseries, so specify time zone in path name.
+        
 //        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
 
@@ -350,11 +357,21 @@ void stationFetchWidget::fetchStation()
 //        cout<<startEdit->text().toStdString()<<endl;
 //        cout<<endEdit->text().toStdString()<<endl;
     }
-//    if (geoLoc->currentIndex())
-    stationFetchProgress->setValue(100);
-    stationFetchProgress->setLabelText("Download Succesful!");
-    stationFetchProgress->setCancelButtonText("OK!");
-    writeToConsole("Data Downlaoded Successfully");
+    if(result==false) //If there are no stations, tell the user
+    {
+        pointInitialization::removeBadDirectory(stationPathName);
+        writeToConsole("Could not read station File: Possibly no stations exist for request");
+        stationFetchProgress->setValue(100);
+        stationFetchProgress->setLabelText("No Station Data Found!");
+        stationFetchProgress->setCancelButtonText("OK!");
+    }
+    else
+    {
+        stationFetchProgress->setValue(100);
+        stationFetchProgress->setLabelText("Download Succesful!");
+        stationFetchProgress->setCancelButtonText("OK!");
+        writeToConsole("Data Downlaoded Successfully");
+    }
 }
 
 void stationFetchWidget::getMetadata()
@@ -362,8 +379,15 @@ void stationFetchWidget::getMetadata()
     QString fileName;    
     CPLDebug("STATION_FETCH","METADATA DOWNLOADER FOR STATIONS IN DEM: %s",demFileName.toStdString().c_str());
 
-    fileName = QFileDialog::getSaveFileName(this, tr("Save Domain Metadata File"), ".csv", tr("Comma Separated " \
-    "files (*.csv")); 
+    //the third param: QFileInfo sets the metadata
+    //save widget to the current directory and then
+    //appends .csv to the name to tell the user to save the metadata with
+    //that extension. This may have some bugs, needs testing 5/24/2018
+    fileName = QFileDialog::getSaveFileName(this,
+                                            tr("Save Domain Metadata File"),
+                                            QFileInfo(demFileName).absoluteDir().absolutePath()+"/.csv",
+                                            tr("Comma Separated files (*.csv"));
+
     if (QFileInfo(fileName).suffix().compare("csv", Qt::CaseInsensitive))
     {
         fileName += ".csv";

@@ -660,7 +660,20 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     ** return NULL, so there is no explicit count check needed.
     */
     const char *oldSpeedHeadStr="Speed_Units(mph,kph,mps)";
-    int n = CSLCount((char **)apszValidHeader1);
+    int n = CSLCount((char **)apszValidHeader1); //Number of fields in old header
+    int n2 = CSLCount((char **)apszValidHeader2); //Number of fields in new header
+    int xt = OGR_FD_GetFieldCount(hDefn); //Number of fields in File of Interest
+
+    //Check the number of fields in the file
+    //if the number of fields isn't even equal, kill it before we check
+    if (xt!=n) //If it doesn't equal the old header...
+    { //Check the new header...
+        if(xt!=n2) //if it doesn't equal the new header size....
+        { //kill it
+            return -1;
+        }
+    }
+
     /* We'll use our index later to check for more fields */
     int i = 0;
     assert(rc == 0);
@@ -682,7 +695,6 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
         OGR_DS_Destroy(hDS);
         return -1;
     }
-
     /*
     ** Now we have a valid header for version 1.  If there are more fields, we
     ** check them.  If not, we are done.

@@ -117,6 +117,7 @@ class pointInput : public QWidget
     QTreeView *treeView;
     QHBoxLayout *treeLayout;
     QVBoxLayout *vTreeLayout;
+    QHBoxLayout *hDownloaderLayout; //Put the downloader up near the top of the page
     
     QStackedWidget *initPages;
     QComboBox *initOpt;
@@ -144,6 +145,7 @@ class pointInput : public QWidget
     QDateTimeEdit *startTime;
     QDateTimeEdit *stopTime;
     QCheckBox *enableTimeseries;
+    QLabel *labelTimeseries;
     QHBoxLayout *timeBoxLayout;
     QSpinBox *numSteps;
     

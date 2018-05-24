@@ -485,6 +485,18 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     VSIMkdir(fullPath.c_str(),0777);
     
     return fullPath;
+}/**
+ * @brief pointInitialization::removeBadDirectory
+ * FOR CLI runs, remove the directory because the downloader failed to download the stations
+ * probably because there are not stations available for the user specified reqs
+ * @param badStationPath
+ * @return
+ */
+bool pointInitialization::removeBadDirectory(string badStationPath)
+{
+    CPLDebug("STATION_FETCH","Cleaning up bad directory...");
+    VSIRmdir(badStationPath.c_str());
+    return true;
 }
 
 /**
@@ -2908,9 +2920,9 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     }
     CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
 
-    fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
 
-    return true;
+    return fetchGood;
 }
 /**
  * @brief pointInitialization::fetchStationByName
@@ -2944,9 +2956,9 @@ bool pointInitialization::fetchStationByName(std::string stationList,
         CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
 
-    fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
 
-    return true;
+    return fetchGood;
 }
 /**
  * @brief pointInitialization::storeFileNames
@@ -3013,7 +3025,7 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
  * @param latest
  * @param timeList
  */
-void pointInitialization::fetchStationData(std::string URL,
+bool pointInitialization::fetchStationData(std::string URL,
                                 std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList)
 {
 
@@ -3026,6 +3038,8 @@ void pointInitialization::fetchStationData(std::string URL,
     if (hDS==NULL)
     {
         CPLDebug("STATION_FETCH", "URL: %s", URL.c_str());
+        cout<<"OGROpen could not read the station file.\nPossibly no stations exist for the given parameters."<<endl;
+        return false;
         throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
     }
 
@@ -3299,4 +3313,5 @@ void pointInitialization::fetchStationData(std::string URL,
     CPLDebug("STATION_FETCH", "Data downloaded and saved....");
     OGR_DS_Destroy(hDS);
     CPLDebug("STATION_FETCH", "fetchStationData finished.");
+    return true;
 }

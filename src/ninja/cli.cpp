@@ -344,8 +344,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("station_buffer",po::value<double>()->default_value(0.00))
                 ("station_buffer_units",po::value<std::string>()->default_value("km"))
                 ("fetch_station_name",po::value<std::string>(),"list of stations to initialize with")
-
-
 //STATION_FETCH
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
                 ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
@@ -1001,6 +999,7 @@ int windNinjaCLI(int argc, char* argv[])
         //---------------------------------------------------------------------
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
+            //Check to be sure that the user specifies right info
             conflicting_options(vm, "fetch_station", "wx_station_filename");
             option_dependency(vm, "fetch_metadata","metadata_filename");
 
@@ -1011,7 +1010,7 @@ int windNinjaCLI(int argc, char* argv[])
                 std::string stationPathName;
                 wxStation::SetStationFormat(wxStation::newFormat);
 
-                if (vm.count("fetch_station_path"))
+                if (vm.count("fetch_station_path")) //Inform that old options no longer are used
                 {
 //                    stationPathName=vm["fetch_station_path"].as<std::string>();
 //                    pointInitialization::SetRawStationFilename(stationPathName);
@@ -1024,9 +1023,9 @@ int windNinjaCLI(int argc, char* argv[])
 //                }
                                
                 pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
-                        vm["station_buffer_units"].as<std::string>());
+                        vm["station_buffer_units"].as<std::string>()); //Sets buffer
 
-                if (vm["fetch_current_station_data"].as<bool>()==false)
+                if (vm["fetch_current_station_data"].as<bool>()==false) //If they want a time series
                 {
 //                    option_dependency(vm, "fetch_station", "fetch_station_path");
                     option_dependency(vm, "fetch_station", "start_year");
@@ -1054,41 +1053,53 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
                 }
-                else if (vm["fetch_current_station_data"].as<bool>()==true)
+                else if (vm["fetch_current_station_data"].as<bool>()==true) //Set for "1 step"
                 {
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                 }
-                
+                //Generate a directory to store downloaded station data...
                 CPLDebug("STATION_FETCH","Generating Directory for Weather Stations");
                 stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
                                                                             vm["output_path"].as<std::string>(),
                                                                             timeList, vm["fetch_current_station_data"].as<bool>());
 //                stationPathName="blank";
-                pointInitialization::SetRawStationFilename(stationPathName);              
-
-                if (vm["fetch_type"].as<std::string>()=="bbox")
+                pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
+                //so that the fetchStationData function knows where to save the data
+                if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box
                 {
-                    pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
+                    bool fetchSuccess = pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
-//                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());                    
+                    if(fetchSuccess==false) //If we fail to download any data
+                    {
+                        pointInitialization::removeBadDirectory(stationPathName); //Delete the above generated directory
+                        throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
+                    }
+
+                    //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());
                     
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
 
-                    pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
+                    bool fetchSuccess = pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
+                    if(fetchSuccess==false) //Fail to download data
+                    {
+                        pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
+                        throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
+                    }
 //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());                    
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());
                     
                 }
-                else
+                else //If something else bad happens
                 {
+                    pointInitialization::removeBadDirectory(stationPathName); //Get rid of generated dir
                     throw std::runtime_error("Station fetch type was not set properly. Options are 'bbox' and 'stid'.");
                 }
 
@@ -1099,13 +1110,13 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["elevation_file"].as<std::string>(),
                                         vm["match_points"].as<bool>());
 
-                if(vm["fetch_metadata"].as<bool>() == true)
+                if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
                     pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),
                             vm["elevation_file"].as<std::string>(),true);
                 }
             }
-            else if (vm["fetch_station"].as<bool>() == false)
+            else if (vm["fetch_station"].as<bool>() == false) //If we aren't fetching, look for on disk files
             {
                 pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
@@ -1412,13 +1423,13 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
                 option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename");
 
-                if(vm["write_wx_station_csv"].as<bool>()==true)
+                if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
                     wxStation::writeStationFile(windsim.getWxStations( i_ ),
                                                 vm["wx_station_csv_filename"].as<std::string>());
                 }
-                if(vm["write_wx_station_kml"].as<bool>() == true)
+                if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i);
                     wxStation::writeKmlFile(windsim.getWxStations( i_ ),

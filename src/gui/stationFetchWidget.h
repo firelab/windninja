@@ -59,7 +59,8 @@ class stationFetchWidget : public QWidget, private Ui::stationFetchWidget
     Q_OBJECT
 
 public:
-    QString demFileName;    
+    QString demFileName;
+    QDir demFileDir;
     stationFetchWidget(QWidget *parent = 0);
     ~stationFetchWidget();
     QDir settingsDir;

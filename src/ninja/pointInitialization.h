@@ -124,6 +124,7 @@ class pointInitialization : public initialize
                                               boost::local_time::local_date_time stop);
         static std::string generatePointDirectory(std::string demFile,std::string outPath,
                                                   std::vector<boost::posix_time::ptime> timeList,bool latest);
+        static bool removeBadDirectory(std::string badStationPath);
         static bool validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
         static int directTemporalInterpolation(int posIdx, int negIdx);
         static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
@@ -181,7 +182,7 @@ class pointInitialization : public initialize
 
 //        static std::string generateBasePlate(std::string);
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
-        static void fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
+        static bool fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
         static double getStationBuffer();
 
         static std::string rawStationFilename;
