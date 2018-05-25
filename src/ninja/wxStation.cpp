@@ -740,6 +740,10 @@ void wxStation::writeBlankStationFile(std::string outFileName)
  * we really want to do with this feature...
  * If we want to change it back,
  * change apszValidHeader1 to apszValidHeader2
+ *
+ * I'm leaving this function in, in case we decide to change it
+ * but it has been replaced by pointInitialization::writeStationOutFile
+ *
  * @param StationVect std::vector of wxStation objects
  * @param outFileName output file name as std::string
  */
@@ -923,5 +927,10 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     fprintf( fout, "</kml>\n" );
 
     fclose( fout );
+}
+
+void wxStation::writeKMZFile(std::vector<wxStation> stations)
+{
+
 }
 

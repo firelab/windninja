@@ -498,6 +498,81 @@ bool pointInitialization::removeBadDirectory(string badStationPath)
     VSIRmdir(badStationPath.c_str());
     return true;
 }
+/**
+ * @brief pointInitialization::writeStationOutFile
+ * Writes an interpolated CSV of the weather data to disk
+ * Replaces functions found in wxStation.cpp
+ * @param stationVect
+ * @param basePathName
+ * @param demFileName
+ */
+void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect,
+                                              string basePathName, string demFileName, bool latest)
+{
+//    cout<<"WRITE STATION CSV"<<endl;
+    std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps,kts)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
+    std::string subDem;
+    std::string xDem;
+    std::string fullPath;
+
+
+    xDem = demFileName.substr(0,demFileName.find(".",0));
+    std::size_t found = xDem.find_last_of("/");
+    subDem=xDem.substr(found+1); //gets just a piece of the DEM
+
+    stringstream timeStream,timeStream2;
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+    timeStream.imbue(locale(timeStream.getloc(),facet));
+    std::string timeComponent;
+
+    if(latest==true) // if it is a "now" type sim, we name the directory with the current time
+    {
+        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+        timeStream<<writeTime;
+        timeComponent = timeStream.str();
+    }
+    if (latest==false) //If it is a time series we name the directory with both the start and stop time
+    {
+        timeStream2.imbue(locale(timeStream2.getloc(),facet));
+//        timeStream<<timeList[0];
+//        timeStream2<<timeList.back();
+//        timeComponent = timeStream.str()+"-"+timeStream2.str();
+
+        timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
+        timeStream2<<start_and_stop_times[1].local_time();
+
+        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+
+    }
+    fullPath = basePathName+subDem+"_interpolate_"+timeComponent+"-";
+
+
+
+    for (int j=0;j<stationVect.size();j++)
+    {
+        ofstream outFile;
+        wxStation curVec = stationVect[j];
+        std::ostringstream xs;
+        xs<<j;
+//        std::string testPath=basePathName+subDem+"-"+curVec.stationName+xs.str()+".csv";
+        std::string writePath=fullPath+curVec.stationName+".csv";
+        outFile.open(writePath.c_str());
+        outFile<<header<<endl;
+
+        for(int udx=0;udx<curVec.heightList.size();udx++)
+        {
+            boost::posix_time::ptime abs_time;
+            abs_time = curVec.datetimeList[udx];
+            std::string strTime = boost::posix_time::to_iso_extended_string(abs_time)+"Z";
+            outFile<<curVec.stationName<<","<<"GEOGCS"<<","<<"WGS84"<<","<<curVec.lat<<","<<curVec.lon<<",";
+            outFile<<curVec.heightList[udx]<<",meters,"<<curVec.speedList[udx]<<","<<"mps"<<","<<curVec.directionList[udx];
+            outFile<<","<<curVec.temperatureList[udx]<<",K,"<<curVec.cloudCoverList[udx]<<","<<curVec.influenceRadiusList[udx];
+            outFile<<",meters,"<<strTime<<endl;
+        }
+        outFile.close();
+    }
+}
+
 
 /**
  * @brief pointInitialization::openCSVList

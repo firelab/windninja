@@ -125,6 +125,10 @@ class pointInitialization : public initialize
         static std::string generatePointDirectory(std::string demFile,std::string outPath,
                                                   std::vector<boost::posix_time::ptime> timeList,bool latest);
         static bool removeBadDirectory(std::string badStationPath);
+        static void writeStationOutFile(std::vector<wxStation> stationVect,
+                                        std::string basePathName,
+                                        std::string demFileName,
+                                        bool latest);
         static bool validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
         static int directTemporalInterpolation(int posIdx, int negIdx);
         static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
@@ -195,5 +199,8 @@ class pointInitialization : public initialize
         static std::vector<std::string> stationFiles;
         static std::string tzAbbrev; //Time Zone Abbreviation
         static vector<boost::local_time::local_date_time> start_and_stop_times;
+
+        friend class wxStation;
+
 };
 #endif /* POINT_INITIALIZATION_H */

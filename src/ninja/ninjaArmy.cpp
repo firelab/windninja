@@ -164,6 +164,8 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
         ninjas[i] = new ninja();
     }
 
+//    wxStation::writeStationCSV(stationList,"/home/tanner/src/wind/build-qt/src/cli/out/",demFile); //Make sure to add the real path later
+
     boost::local_time::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     boost::local_time::time_zone_ptr timeZonePtr;

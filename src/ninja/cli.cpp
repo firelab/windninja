@@ -1060,9 +1060,16 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 //Generate a directory to store downloaded station data...
                 CPLDebug("STATION_FETCH","Generating Directory for Weather Stations");
-                stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
-                                                                            vm["output_path"].as<std::string>(),
-                                                                            timeList, vm["fetch_current_station_data"].as<bool>());
+                if(vm.count("output_path")){
+                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
+                                                                                vm["output_path"].as<std::string>(),
+                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                }
+                else{ //if the user doesn't specify an output path
+                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
+                                                                                "",
+                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                }
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
                 //so that the fetchStationData function knows where to save the data
@@ -1421,13 +1428,27 @@ int windNinjaCLI(int argc, char* argv[])
 
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
                 option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
-                option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename");
+//                option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename"); //No Longer need to require a filename
 
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
-                    wxStation::writeStationFile(windsim.getWxStations( i_ ),
-                                                vm["wx_station_csv_filename"].as<std::string>());
+//                    wxStation::writeStationFile(windsim.getWxStations( i_ ),
+//                                                vm["wx_station_csv_filename"].as<std::string>());
+                    if(vm.count("output_path")){
+                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
+                                                   vm["output_path"].as<std::string>(),
+                                                   vm["elevation_file"].as<std::string>(),
+                                                   true);
+                    }
+                    else{
+                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
+                                                   "",
+                                                   vm["elevation_file"].as<std::string>(),
+                                                   true);
+                    }
+
+
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {

@@ -1936,10 +1936,12 @@ int mainWindow::solve()
                 {
                     writeToConsole("Writing Weather Station .csv");
                     nRuns = army->getSize();
-                    for (int i_=0;i_<nRuns;i_++)
-                    {
-                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
-                    }
+//                    for (int i_=0;i_<nRuns;i_++)
+//                    {
+//                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
+//                    }
+                    pointInitialization::writeStationOutFile(army->getWxStations(0),demFile,"",true);
+
                 }
                 
                 
