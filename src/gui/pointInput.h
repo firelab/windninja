@@ -64,6 +64,8 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 
+#include <QMouseEvent>
+
 #include <QDebug>
 
 class pointInput : public QWidget
@@ -95,6 +97,7 @@ class pointInput : public QWidget
     QCheckBox *writeStationFileButton;
     QCheckBox *writeStationKmlButton;
     QToolButton *widgetButton;
+    QToolButton *diurnalButton;
 
     QGroupBox *pointGroupBox;
 
@@ -134,6 +137,28 @@ class pointInput : public QWidget
     QToolButton *refreshToolButton;
     QLabel *clippit; //displays vital information
 
+    QFrame *timeLine; //Creates a fancy line to seprate things out
+    QFrame *timeLine2; //Creates another fancy line...
+
+    QFrame *xvLine1; //Creates some vertical Lines to organize the file info area
+    QFrame *xvLine2;
+    QFrame *xvLine3;
+
+    //File Info Area
+    QHBoxLayout *selectedFileLayout;
+    QVBoxLayout *fileStartLayout;
+    QVBoxLayout *fileEndLayout;
+    QVBoxLayout *fileStepLayout;
+
+    QLabel *fileStart;
+    QLabel *fileEnd;
+    QLabel *fileSteps;
+
+    QLabel *fileStartVal;
+    QLabel *fileEndVal;
+    QLabel *fileStepsVal;
+
+
     QStringList filters;
     QString tXtest;
     std::vector<std::string> vy; //clean this up
@@ -169,7 +194,6 @@ class pointInput : public QWidget
     
     stationFetchWidget *xWidget;
     QString tzString;
-    
 
   public slots:
     void updateTz(QString tz);
@@ -178,7 +202,6 @@ class pointInput : public QWidget
     void readStationTime(std::string start_time, std::string stop_time, int xSteps);
     static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
     void displayInformation(int dataType);
-    
     
   private slots:
     void readStationFile();
@@ -204,6 +227,7 @@ class pointInput : public QWidget
     void toggleTimeseries();
 
  signals:
+    void rightClicked();
     void writeToConsole( QString message );
     void stationFileChanged();
     

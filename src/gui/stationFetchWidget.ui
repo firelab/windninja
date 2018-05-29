@@ -46,12 +46,12 @@
           <widget class="QComboBox" name="geoLoc">
            <item>
             <property name="text">
-             <string>Fetch From DEM</string>
+             <string>Download From DEM</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Fetch By Station ID</string>
+             <string>Download By Station ID</string>
             </property>
            </item>
           </widget>
@@ -150,12 +150,12 @@
           <widget class="QComboBox" name="timeLoc">
            <item>
             <property name="text">
-             <string>Fetch Current Weather Data</string>
+             <string>Download Current Weather Data</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Fetch Between Two Dates</string>
+             <string>Download Between Two Dates</string>
             </property>
            </item>
           </widget>
@@ -272,7 +272,7 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Fetches weather data based on above specified parameters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>Fetch Weather Data</string>
+        <string>Download Weather Data</string>
        </property>
        <property name="icon">
         <iconset resource="../../wn-resources.qrc">
@@ -289,7 +289,7 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Fetches general information about nearby weather stations.&lt;/p&gt;&lt;p&gt;Such as: Latitude, Longitude, Elevation and Status,&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>Fetch Metadata</string>
+        <string>Download Metadata</string>
        </property>
        <property name="icon">
         <iconset resource="../../wn-resources.qrc">

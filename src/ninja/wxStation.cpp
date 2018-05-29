@@ -30,6 +30,8 @@
 
 wxStation::eStationFormat wxStation::stationFormat = invalidFormat;  
 
+vector<std::string> wxStation::stationKmlNames;
+
 wxStation::wxStation()
 : currentTime(boost::local_time::not_a_date_time)
 {
@@ -927,10 +929,43 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     fprintf( fout, "</kml>\n" );
 
     fclose( fout );
+    stationKmlNames.push_back(outFileNameStamp);
 }
 
-void wxStation::writeKMZFile(std::vector<wxStation> stations)
-{
+void wxStation::writeKMZFile(std::vector<wxStation> stations, string basePath, string demFileName)
+{//This function doesn't actually work yet, or possibly ever
+    std::string subDem;
+    std::string xDem;
+    std::string fullPath;
+
+    xDem = demFileName.substr(0,demFileName.find(".",0));
+    std::size_t found = xDem.find_last_of("/");
+    subDem=xDem.substr(found+1); //gets just a piece of the DEM
+    stringstream timeStream;
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+    timeStream.imbue(locale(timeStream.getloc(),facet));
+    std::string timeComponent;
+
+    boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+    timeStream<<writeTime;
+    timeComponent = timeStream.str();
+
+    std::string outFileSubName=subDem;
+    fullPath = basePath+subDem+"_stations_"+timeComponent+".kmz";
+
+    cout<<outFileSubName<<endl;
+    cout<<fullPath<<endl;
+
+//    for (int i=0;i<stations[0].temperatureList.size();i++)
+//    {
+//        cout<<stationKmlNames[i]<<endl;
+//    }
+
+
+//    writeKmlFile(stations,"test-1");
+
+
+
 
 }
 

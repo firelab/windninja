@@ -66,11 +66,12 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     dateTimeEdit->setCalendarPopup( true );
     dateTimeEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     dateTimeEdit->setEnabled( false ); //This is for Old Format Diurnal Simulations
-    dateTimeEdit->setVisible(true);
+    dateTimeEdit->setVisible(false);
     dateTimeEdit->setToolTip("Set date and time for single time step diurnal/stability simulations");
 
     diurnalLabel = new QLabel(this);
-    diurnalLabel->setText("Thermal Parameters (Single Time Step Only)");
+    diurnalLabel->setText("Thermal Parameters: ");
+    diurnalLabel->setVisible(false);
 
 //Old way of reading station files, no longer needed...
 //    readStationFileButton =  new QToolButton( this ); //Opens old Format Station
@@ -101,6 +102,13 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     widgetButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     widgetButton->setToolTip("Download Weather Data from the Mesowest API");
 
+    diurnalButton = new QToolButton(this);
+    diurnalButton->setText("Set Diurnal Parameters");
+    diurnalButton->setIcon(QIcon(":weather_sun.png"));
+    diurnalButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    diurnalButton->setToolTip("Set Date and Time for single steps simulations if Diurnal/Stability input is on");
+    diurnalButton->setVisible(false);
+
 //    stationTreeView = new QTreeView( this );
 //    stationTreeView->setModel( &pointData ); //This is some sort of deprecated tree thing that existed before
 
@@ -110,7 +118,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     sfModel = new QDirModel(this); //Creates the directory model
     sfModel->setReadOnly(true); //probably can be true, but i don't know
-    sfModel->setSorting(QDir::Time); //Sort by time created   
+    sfModel->setSorting(QDir::Time); //Sort by time created
 
     treeView = new QTreeView(this); //Creates the box where the sfModel goes
     treeView->setVisible(true); //deprecated
@@ -121,8 +129,6 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setColumnHidden(2, true);
     treeView->setAlternatingRowColors( true );
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
-//    treeView->setSelectionMode(QAbstractItemView::);    
-//    treeView->setSelectionModel(QItemSelectionModel::Toggle);
 
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
     treeLabel->setToolTip("Select Weather Stations from available files, three formats are supported, old format, time series and 1 step runs");
@@ -139,8 +145,65 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     clippit = new QLabel(tr("")); //This gets updated with important information about the simulation as station files are chosen
 
+    timeLine = new QFrame(this); //Adds a horizontal line
+    timeLine->setFrameShape(QFrame::HLine);
+    timeLine->setFrameShadow(QFrame::Sunken);
+
+    timeLine2 = new QFrame(this); //Adds a horizontal line
+    timeLine2->setFrameShape(QFrame::HLine);
+    timeLine2->setFrameShadow(QFrame::Sunken);
+
+    xvLine1 = new QFrame(this);
+    xvLine1->setFrameShape(QFrame::VLine);
+    xvLine1->setFrameShadow(QFrame::Sunken);
+
+    xvLine2 = new QFrame(this);
+    xvLine2->setFrameShape(QFrame::VLine);
+    xvLine2->setFrameShadow(QFrame::Sunken);
+
+
     ClippyToolLayout->addWidget(refreshToolButton);
     ClippyToolLayout->addWidget(clippit);
+
+    //File Info Area;
+    /*
+     * dispaly information to the user about the file they select
+     * start, stop and number of times steps
+     */
+    selectedFileLayout = new QHBoxLayout;
+    fileStartLayout = new QVBoxLayout;
+    fileEndLayout = new QVBoxLayout;
+    fileStepLayout = new QVBoxLayout;
+
+    fileStart = new QLabel;
+    fileStartVal = new QLabel;
+    fileStart->setText("File Start Time: ");
+    fileStartVal->setText("");
+
+    fileEnd = new QLabel;
+    fileEndVal = new QLabel;
+    fileEnd->setText("File End Time: ");
+    fileEndVal->setText("");
+
+    fileSteps = new QLabel;
+    fileStepsVal = new QLabel;
+    fileSteps->setText("Number of Time Steps: ");
+    fileStepsVal->setText("");
+
+    fileStartLayout->addWidget(fileStart);
+    fileStartLayout->addWidget(fileStartVal);
+
+    fileEndLayout->addWidget(fileEnd);
+    fileEndLayout->addWidget(fileEndVal);
+
+    fileStepLayout->addWidget(fileSteps);
+    fileStepLayout->addWidget(fileStepsVal);
+
+    selectedFileLayout->addLayout(fileStartLayout);
+    selectedFileLayout->addWidget(xvLine1);
+    selectedFileLayout->addLayout(fileEndLayout);
+    selectedFileLayout->addWidget(xvLine2);
+    selectedFileLayout->addLayout(fileStepLayout);
 
     //New Custom Layout //Deprecated...
 //    treeLayout = new QHBoxLayout;
@@ -225,6 +288,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     vTreeLayout->addWidget(treeView);
 //    vTreeLayout->addWidget(refreshToolButton);
     vTreeLayout->addLayout(ClippyToolLayout);
+    vTreeLayout->addWidget(timeLine);
+    vTreeLayout->addLayout(selectedFileLayout);
+    vTreeLayout->addWidget(timeLine2);
     vTreeLayout->addLayout(timeBoxLayout);
 //    vTreeLayout->addWidget(dateTimeEdit);
 //####################################################
@@ -247,12 +313,14 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout->addWidget( writeStationFileButton );
 //    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
     buttonLayout->addWidget( writeStationKmlButton );
+    buttonLayout->addWidget(diurnalButton);
 //    buttonLayout->addWidget(widgetButton); //Old Download Button Location, keep for now ->Moved to hDownloaderLayout
     buttonLayout->addStretch();
 
     diurnalTimeLayout = new QHBoxLayout;
     diurnalTimeLayout->addWidget(diurnalLabel);
-    diurnalTimeLayout->addWidget(dateTimeEdit);
+    diurnalTimeLayout->addWidget(dateTimeEdit,1);
+//    diurnalTimeLayout->addStretch(-1);
 
     pointLayout = new QVBoxLayout;
 //    pointLayout->addWidget( stationTreeView ); //very old stuff
@@ -310,9 +378,6 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //            this,SLOT(readMultipleStaitonFiles()));
     connect(treeView, SIGNAL(clicked(const QModelIndex &)),
         this, SLOT(readMultipleStaitonFiles(const QModelIndex &))); //Connects click to which files should be conencted
-//    connect(treeView, SIGNAL(clicked(const QModelIndex &)),this,SLOT(readStationTime(const QModelIndex &)));
-
-
 //    connect(sfModel, SIGNAL(/*selectionChanged*/()),this,SLOT(selChanged()));
 //    connect(treeView, SIGNAL(QItemSelectionModel::selectionChanged(const QItemSelection &, const QItemSelection &)),
 //        this, SLOT(readMultipleStaitonFiles(const QModelIndex &)));
@@ -369,6 +434,7 @@ int pointInput::checkNumStations(std::string comparator, std::vector<std::string
  */
 void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
 {
+
     QFileInfo fi(sfModel->fileInfo(index));
     std::vector<std::string> finalStations;
     std::vector<int> finalTypes;
@@ -465,6 +531,8 @@ int pointInput::directStationTraffic(const char* xFileName)
     int stationHeader = wxStation::GetHeaderVersion(xFileName);
     CPLDebug("STATION_FETCH","HEADER TYPE: %i",stationHeader);
     int instant = 0;
+    std::string idx3;
+    stringstream ssidx;
 
     if(stationHeader!=1) //Station header is different than what we return
     {
@@ -535,7 +603,9 @@ int pointInput::directStationTraffic(const char* xFileName)
             CPLDebug("STATION_FETCH","File can be used for Times Series");
             CPLDebug("STATION_FETCH","Suggesting Potentially Reasonable Time Series Parameters...");
 
-            readStationTime(start_datetime,stop_datetime,idx2);
+            readStationTime(start_datetime,stop_datetime,idx2); //Turns the Start and Stop times into local timess......
+            ssidx<<idx2;
+            idx3=ssidx.str();
         }
     }
 
@@ -548,6 +618,24 @@ int pointInput::directStationTraffic(const char* xFileName)
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
+
+        fileStartVal->setText("N/A"); //Update the file Info Area with
+        fileEndVal->setText("N/A"); //information
+        fileStepsVal->setText("1"); //In this case, single step->display N/A's
+
+        //Try flipping the UI
+        labelTimeseries->setText("Single Step Options");
+
+        startLabel->setVisible(false);
+        stopLabel->setVisible(false);
+        stepLabel->setVisible(false);
+
+        startTime->setVisible(false);
+        stopTime->setVisible(false);
+        numSteps->setVisible(false);
+
+        dateTimeEdit->setVisible(true);
+        diurnalLabel->setVisible(true);
 
         return 0;
     }
@@ -562,6 +650,26 @@ int pointInput::directStationTraffic(const char* xFileName)
         numSteps->setEnabled(true);
         updateStartTime(startTime->dateTime());
         updateStopTime(stopTime->dateTime());
+
+        //Display Some Time and Step info to the user
+        fileStartVal->setText(startTime->dateTime().toString());
+        fileEndVal->setText(stopTime->dateTime().toString());
+        fileStepsVal->setText(QString(idx3.c_str()));
+
+
+        //try flipping the UI
+        labelTimeseries->setText("Time Series\nOptions");
+
+        startLabel->setVisible(true);
+        stopLabel->setVisible(true);
+        stepLabel->setVisible(true);
+
+        startTime->setVisible(true);
+        stopTime->setVisible(true);
+        numSteps->setVisible(true);
+
+        dateTimeEdit->setVisible(false);
+        diurnalLabel->setVisible(false);
         return 1;
     }
     if (stationHeader == 2 && instant == 1)
@@ -572,17 +680,41 @@ int pointInput::directStationTraffic(const char* xFileName)
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
+
+        fileStartVal->setText("N/A"); //Display N/A to the user
+        fileEndVal->setText("N/A");
+        fileStepsVal->setText("1");
+
+        //Try flipping the UI
+        labelTimeseries->setText("Single Step Options");
+
+        startLabel->setVisible(false);
+        stopLabel->setVisible(false);
+        stepLabel->setVisible(false);
+
+        startTime->setVisible(false);
+        stopTime->setVisible(false);
+        numSteps->setVisible(false);
+
+        dateTimeEdit->setVisible(true);
+        diurnalLabel->setVisible(true);
         return 2;
 
     }
     if (stationHeader == 3)
     {
         //Invalid header type for GUI run...
+        fileStartVal->setText("N/A"); //Update the file info area to be N/A
+        fileEndVal->setText("N/A");
+        fileStepsVal->setText("N/A");
         return -1;
     }
     else
     {
         //Something wrong with the station...
+        fileStartVal->setText("N/A"); //If something is bad, don't say anything about
+        fileEndVal->setText("N/A"); //the stuff inside
+        fileStepsVal->setText("N/A");
         return -1;
     }
 
@@ -687,11 +819,23 @@ void pointInput::displayInformation(int dataType)
     if (dataType == -1 && stationFileList.size()==1) //Case of 1 file that is crap
     {
         clippit->setText("No Valid Data detected in file...");
+
+        //Set the file Info area to display nada
+        fileStartVal->setText("N/A");
+        fileEndVal->setText("N/A");
+        fileStepsVal->setText("N/A");
+
         pointGo=false;
     }
     if (dataType==-1 && stationFileList.size()>=2)
     {
         clippit->setText("MULTIPLE TYPES SELECTED, CANNOT PROCEED!");
+
+        //Set the file Info area to display nada
+        fileStartVal->setText("N/A");
+        fileEndVal->setText("N/A");
+        fileStepsVal->setText("N/A");
+
         pointGo=false;
     }
 //    else if(dataType == -1)

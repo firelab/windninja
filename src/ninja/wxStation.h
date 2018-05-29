@@ -154,7 +154,8 @@ class wxStation
 
     static void writeKmlFile( std::vector<wxStation> stations,
                   std::string outFileName );
-    static void writeKMZFile(std::vector<wxStation> stations);
+    static void writeKMZFile(std::vector<wxStation> stations,std::string basePath, std::string demFileName);
+    static vector<std::string> stationKmlNames;
 
     static void writeStationFile( std::vector<wxStation> StationVect,
                   const std::string outFileName );
