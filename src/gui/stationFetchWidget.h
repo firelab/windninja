@@ -78,11 +78,15 @@ protected:
         void closeDEM();
         void getMetadata();
         void setInputFile( QString file );
-        void fetchStation();
+        int fetchStation();
         std::string demButcher();
         void updateGeoFetch();
         void updateTimeFetch();
         void watchTime();
+
+        //Progress Bar Slots
+        void updateFetchProgress();
+        void executeFetchStation(); //Wrapper for fetch station, necessary for progress bar
         
 
     signals:
@@ -92,7 +96,9 @@ protected:
         
 
 private:
+        //Progress Bar Stuff
         QProgressDialog *stationFetchProgress;
+        QFutureWatcher<int> stationFutureWatcher;
 
 
         

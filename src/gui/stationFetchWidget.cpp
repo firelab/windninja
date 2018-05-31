@@ -42,10 +42,9 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     currentBox->setVisible(false);
 
     stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
-    stationFetchProgress->setModal(true); //Needs some improvements...
+    stationFetchProgress->setWindowModality(Qt::ApplicationModal);
     stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
     stationFetchProgress->setAutoClose(false);
-    stationFetchProgress->setRange(0,100);
 
 }
 
@@ -89,7 +88,9 @@ void stationFetchWidget::fixTime()
 void stationFetchWidget::connectInputs()
 {
     connect(fetchMetaButton, SIGNAL(clicked()),this, SLOT(getMetadata()));
-    connect(fetchDataButton, SIGNAL(clicked()),this, SLOT(fetchStation()));
+//    connect(fetchDataButton, SIGNAL(clicked()),this, SLOT(fetchStation()));
+    connect(fetchDataButton,SIGNAL(clicked()),this,SLOT(executeFetchStation()));
+
     connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
     connect(closeButton,SIGNAL(clicked()),this,SLOT(close())); //closes stationFetchWidget
 }
@@ -125,6 +126,75 @@ void stationFetchWidget::updateTimeFetch()
 {
     
 }
+/**
+ * @brief stationFetchWidget::updateFetchProgress
+ * Updates the Progress Bar and tells the GUI
+ * when station fetch is done downloading, or if the user
+ * cancels the request
+ *
+ * Kills the request once it is downloaded
+ *
+ */
+void stationFetchWidget::updateFetchProgress()
+{
+    if (stationFetchProgress->wasCanceled()) //If the user hits the cancel button
+    {
+        stationFetchProgress->setLabelText("Canceling!");
+        stationFetchProgress->setCancelButton(0);
+        stationFutureWatcher.waitForFinished();
+        stationFetchProgress->cancel();
+    }
+    else
+    {
+        stationFutureWatcher.waitForFinished();
+        int result = stationFutureWatcher.result(); //Get the result, 1 good, -1 bad
+        if (result==-1)
+        {
+            stationFetchProgress->setLabelText("An Error Occured, Possibly no Data Exists for request");
+            stationFetchProgress->setRange(0,1);
+            stationFetchProgress->setValue(0);
+            stationFetchProgress->setCancelButtonText("Close");
+        }
+        else
+        {
+            stationFetchProgress->setRange(0,100);
+            stationFetchProgress->setValue(1);
+            stationFetchProgress->setValue(100);
+            stationFetchProgress->setLabelText("Data Downloaded Sucessfully!");
+            stationFetchProgress->setCancelButtonText("Close");
+
+            stationFutureWatcher.cancel(); //Kill the watcher so that it doesn't stick around
+
+
+        }
+    }
+
+}
+
+/**
+ * @brief stationFetchWidget::executeFetchStation
+ * Executes fetchStation using Qt stuff
+ * based on widgetDownloadDEM
+ *
+ * so that we can see a progress bar
+ * and prevent program hanging
+ *
+ */
+void stationFetchWidget::executeFetchStation()
+{
+    stationFetchProgress->setLabelText("Downloading Station Data!");
+    stationFetchProgress->setRange(0,0); //make it bounce back and forth
+    stationFetchProgress->setCancelButtonText("Cancel");
+    stationFetchProgress->reset(); //Set the progress bar back to its basic state
+
+    connect(&stationFutureWatcher,SIGNAL(finished()),this,SLOT(updateFetchProgress()));
+    connect(stationFetchProgress,SIGNAL(canceled()),this,SLOT(updateFetchProgress()));
+
+    stationFutureWatcher.setFuture(QtConcurrent::run(this,&stationFetchWidget::fetchStation)); //Run the
+    //actual fetching
+
+    stationFetchProgress->exec(); //Execute the progress bar to do its thing
+}
 
 std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up spaces in text
 {
@@ -154,11 +224,18 @@ std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the d
  * @brief stationFetchWidget::fetchStation
  * Fetches data from the Mesowest API based on GUI request
  */
-void stationFetchWidget::fetchStation()
+int stationFetchWidget::fetchStation()
 {
-    stationFetchProgress->setValue(0);
-    stationFetchProgress->setVisible(true);
-    stationFetchProgress->show();
+//    stationFetchProgress->reset();
+//    stationFetchProgress->setRange(0,100);
+//    stationFetchProgress->show();
+//    stationFetchProgress->setValue(0);
+//    stationFetchProgress->setVisible(true);
+//    stationFetchProgress->setLabelText("Downloading Station Data...");
+//    stationFetchProgress->setCancelButtonText("Cancel");
+//    stationFetchProgress->exec();
+    setCursor(Qt::WaitCursor); //makes the cursor spinny, so the user knows something is happening
+    writeToConsole("Downloading Station Data...");
     CPLDebug("STATION_FETCH","Fetch Station GUI Function");
     CPLDebug("STATION_FETCH","---------------------------------------");
     CPLDebug("STATION_FETCH","DEM FILE NAME: %s",demFileName.toStdString().c_str());
@@ -226,13 +303,15 @@ void stationFetchWidget::fetchStation()
     {
         CPLDebug("STATION_FETCH","Fetch Params: DEM and Current Data");
         buffer=bufferSpin->text().toDouble();
-        bufferUnits=bufferSpin->text().toStdString();
+        bufferUnits=buffUnits->currentText().toStdString();
         fetchNow=true;        
         
 //        cout<<bufferSpin->text().toDouble()<<endl;
-//        cout<<buffUnits->currentText().toStdString()<<endl;
+        cout<<buffUnits->currentText().toStdString()<<endl;
 //        cout<<currentBox->isChecked()<<endl;
-        //Generates the directory to store the file names, because current data is on, don't specify time zone
+        //Set the Station Buffer
+        pointInitialization::setStationBuffer(buffer,bufferUnits);
+        //Generates the directory to store the file names, because current data is on, don't specify time zone        
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
@@ -245,7 +324,7 @@ void stationFetchWidget::fetchStation()
     {
         CPLDebug("STATION_FETCH","Fetch Params: DEM and Time series");
         buffer=bufferSpin->text().toDouble();
-        bufferUnits=bufferSpin->text().toStdString();
+        bufferUnits=buffUnits->currentText().toStdString();
         fetchNow=false;
         
         int sY,sMo,sD,sH,sMi;
@@ -274,7 +353,10 @@ void stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
-//        cout<<timeList.size()<<endl;
+//       cout<<timeList[0]<<endl;
+        //Set station Buffer
+        pointInitialization::setStationBuffer(buffer,bufferUnits);
+
         //Generate Station directory, because timeseries is on, specify what time zone the stations will be
         //downloaded in, based on DEM time zone settings, or user specified.
 
@@ -361,16 +443,27 @@ void stationFetchWidget::fetchStation()
     {
         pointInitialization::removeBadDirectory(stationPathName);
         writeToConsole("Could not read station File: Possibly no stations exist for request");
-        stationFetchProgress->setValue(100);
-        stationFetchProgress->setLabelText("No Station Data Found!");
-        stationFetchProgress->setCancelButtonText("OK!");
+//        stationFetchProgress->setValue(100);
+//        stationFetchProgress->setLabelText("No Station Data Found!");
+//        stationFetchProgress->setCancelButtonText("OK!");
+//        pointInitialization::SetRawStationFilename("");
+//        pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
+        setCursor(Qt::ArrowCursor);
+        return -1;
     }
     else
     {
-        stationFetchProgress->setValue(100);
-        stationFetchProgress->setLabelText("Download Succesful!");
-        stationFetchProgress->setCancelButtonText("OK!");
-        writeToConsole("Data Downlaoded Successfully");
+//        stationFetchProgress->setValue(100);
+//        stationFetchProgress->setLabelText("Download Succesful!");
+//        stationFetchProgress->setCancelButtonText("OK!");
+//        writeToConsole("Data Downlaoded Successfully");
+//        pointInitialization::SetRawStationFilename("");
+        if(fetchNow==false)
+        {
+            pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
+        }
+        setCursor(Qt::ArrowCursor);
+        return 1;
     }
 }
 

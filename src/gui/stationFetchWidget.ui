@@ -81,6 +81,9 @@
                <height>26</height>
               </rect>
              </property>
+             <property name="maximum">
+              <number>999999999</number>
+             </property>
             </widget>
             <widget class="QComboBox" name="buffUnits">
              <property name="geometry">

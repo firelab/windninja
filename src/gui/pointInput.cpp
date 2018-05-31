@@ -102,12 +102,19 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     widgetButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     widgetButton->setToolTip("Download Weather Data from the Mesowest API");
 
-    diurnalButton = new QToolButton(this);
-    diurnalButton->setText("Set Diurnal Parameters");
-    diurnalButton->setIcon(QIcon(":weather_sun.png"));
-    diurnalButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    diurnalButton->setToolTip("Set Date and Time for single steps simulations if Diurnal/Stability input is on");
-    diurnalButton->setVisible(false);
+    //Progress Bar Stuff -> Delete Later
+
+    execProg = new QToolButton(this);
+    execProg->setText("Execute Progress");
+    execProg->setIcon(QIcon(":weather_sun.png"));
+    execProg->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    execProg->setToolTip("This is a test...");
+    execProg->setVisible(false);
+
+    xProg = new QProgressDialog(this);
+    xProg->setWindowModality(Qt::ApplicationModal);
+    xProg->setAutoReset(false);
+    xProg->setAutoClose(false);
 
 //    stationTreeView = new QTreeView( this );
 //    stationTreeView->setModel( &pointData ); //This is some sort of deprecated tree thing that existed before
@@ -129,6 +136,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setColumnHidden(2, true);
     treeView->setAlternatingRowColors( true );
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
+//    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
 
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
     treeLabel->setToolTip("Select Weather Stations from available files, three formats are supported, old format, time series and 1 step runs");
@@ -144,6 +153,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     refreshToolButton->setVisible(true);
 
     clippit = new QLabel(tr("")); //This gets updated with important information about the simulation as station files are chosen
+    clippit->setVisible(false);
 
     timeLine = new QFrame(this); //Adds a horizontal line
     timeLine->setFrameShape(QFrame::HLine);
@@ -161,9 +171,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     xvLine2->setFrameShape(QFrame::VLine);
     xvLine2->setFrameShadow(QFrame::Sunken);
 
-
+    ClippyToolLayout->addStretch(); //Moves it over to the other side
     ClippyToolLayout->addWidget(refreshToolButton);
-    ClippyToolLayout->addWidget(clippit);
+//    ClippyToolLayout->addWidget(clippit);
 
     //File Info Area;
     /*
@@ -199,6 +209,18 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     fileStepLayout->addWidget(fileSteps);
     fileStepLayout->addWidget(fileStepsVal);
 
+    fileStart->setVisible(false);
+    fileEnd->setVisible(false);
+    fileSteps->setVisible(false);
+
+    fileStartVal->setVisible(false);
+    fileEndVal->setVisible(false);
+    fileStepsVal->setVisible(false);
+
+    xvLine1->setVisible(false);
+    xvLine2->setVisible(false);
+    timeLine2->setVisible(false);
+
     selectedFileLayout->addLayout(fileStartLayout);
     selectedFileLayout->addWidget(xvLine1);
     selectedFileLayout->addLayout(fileEndLayout);
@@ -228,10 +250,12 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     labelTimeseries = new QLabel(this);
     labelTimeseries->setText("Time Series\nOptions");
+    labelTimeseries->setVisible(false); //This function is probably going to go away, make invisible for now
     
     numSteps = new QSpinBox; //Number of timesteps box
     numSteps->setValue(24);
     numSteps->setMinimum(1);
+    numSteps->setMaximum(99999);//Hopefully big enough
     
     startTime->setVisible(true); //Some visibility settings that probably aren't necessary anymore...
     stopTime->setVisible(true);
@@ -250,7 +274,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     
     startLabel = new QLabel(tr("Start Time"));
     stopLabel = new QLabel(tr("Stop Time"));
-    stepLabel = new QLabel(tr("Step"));
+    stepLabel = new QLabel(tr("Number of Time Steps"));
     startLabel->setVisible(true);
     stopLabel->setVisible(true);
     stepLabel->setVisible(true);
@@ -289,8 +313,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    vTreeLayout->addWidget(refreshToolButton);
     vTreeLayout->addLayout(ClippyToolLayout);
     vTreeLayout->addWidget(timeLine);
-    vTreeLayout->addLayout(selectedFileLayout);
-    vTreeLayout->addWidget(timeLine2);
+//    vTreeLayout->addLayout(selectedFileLayout);
+//    vTreeLayout->addWidget(timeLine2);
     vTreeLayout->addLayout(timeBoxLayout);
 //    vTreeLayout->addWidget(dateTimeEdit);
 //####################################################
@@ -313,7 +337,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout->addWidget( writeStationFileButton );
 //    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
     buttonLayout->addWidget( writeStationKmlButton );
-    buttonLayout->addWidget(diurnalButton);
+    buttonLayout->addWidget(execProg);
 //    buttonLayout->addWidget(widgetButton); //Old Download Button Location, keep for now ->Moved to hDownloaderLayout
     buttonLayout->addStretch();
 
@@ -381,6 +405,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    connect(sfModel, SIGNAL(/*selectionChanged*/()),this,SLOT(selChanged()));
 //    connect(treeView, SIGNAL(QItemSelectionModel::selectionChanged(const QItemSelection &, const QItemSelection &)),
 //        this, SLOT(readMultipleStaitonFiles(const QModelIndex &)));
+
+    connect(execProg,SIGNAL(clicked(bool)),this,SLOT(testProg()));
 
 
 
@@ -659,6 +685,7 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         //try flipping the UI
         labelTimeseries->setText("Time Series\nOptions");
+
 
         startLabel->setVisible(true);
         stopLabel->setVisible(true);
@@ -1199,6 +1226,62 @@ void pointInput::checkForModelData()
     sfModel->setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
+}
+void pointInput::testProg()
+{
+    writeToConsole("TESTING PROGRESS BAR");
+
+    xProg->setLabelText("Initial Message!");
+    xProg->setRange(0,0);
+    xProg->setCancelButtonText("Cancel");
+    xProg->reset();
+    bool test = xProg->wasCanceled();
+
+//    connect(&xFut, SIGNAL(finished()),this,SLOT(update)
+    connect(&xFut,SIGNAL(finished()),this,SLOT(updateProg()));
+    connect(xProg,SIGNAL(canceled()),this,SLOT(updateProg()));
+
+    xFut.setFuture(QtConcurrent::run(this, &pointInput::progExec));
+
+    xProg->exec();
+//    xFut.setF
+
+
+}
+
+int pointInput::progExec()
+{
+    usleep(500000);
+//    xProg->setLabelText("RUNNING EXEC!");
+    return 1;
+}
+
+void pointInput::updateProg()
+{
+    if(xProg->wasCanceled())
+    {
+        xProg->setLabelText("Canceling!");
+        xProg->setCancelButton(0);
+        xFut.waitForFinished();
+        xProg->cancel();
+    }
+    else
+    {
+        xFut.waitForFinished();
+        int result = xFut.result();
+        if(result==1)
+        {
+            xProg->setRange(0,100);
+            xProg->setValue(1);
+            xProg->setValue(100);
+            xProg->setLabelText("Download SucessFul!");
+            xProg->setCancelButtonText("Close");
+
+//            xProg->close();
+        }
+
+    }
+
 }
 
 

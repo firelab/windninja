@@ -319,8 +319,9 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 	if(input.matchWxStations == true)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
-		input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
-	}
+//		input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
+        //Commented For station-fetch
+    }
 }
 
 int matchingIterCount = 0;

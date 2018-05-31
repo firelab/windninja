@@ -1284,7 +1284,7 @@ void mainWindow::checkMeshCombo()
       tree->surface->meshResDoubleSpinBox->setValue(res);
       meshCellSize = res;
       writeToConsole("Mesh Resolution set to " +
-             QString::number(res));
+             QString::number(res)); //Note that this is very annoying for pointInitilaization/Station-fetch
     }
     }
 }

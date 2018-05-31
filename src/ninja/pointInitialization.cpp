@@ -475,6 +475,9 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
+//        cout<<start_and_stop_times[0].local_time()<<endl;
+//        cout<<start_and_stop_times[1].local_time()<<endl;
+
         timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
 
     }
@@ -2336,6 +2339,7 @@ void pointInitialization::setStationBuffer(double buffer, std::string units)
         lengthUnits::toBaseUnits(buffer, lengthUnits::meters);
     }
 
+    CPLDebug("STATION_FETCH","Download Buffer Set to %f",buffer);
     stationBuffer = buffer;
 }
 /**

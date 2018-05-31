@@ -97,7 +97,7 @@ class pointInput : public QWidget
     QCheckBox *writeStationFileButton;
     QCheckBox *writeStationKmlButton;
     QToolButton *widgetButton;
-    QToolButton *diurnalButton;
+    QToolButton *execProg;
 
     QGroupBox *pointGroupBox;
 
@@ -195,6 +195,10 @@ class pointInput : public QWidget
     stationFetchWidget *xWidget;
     QString tzString;
 
+    //ProgressBarTest Delete LAter
+    QProgressDialog *xProg;
+    QFutureWatcher<int> xFut;
+
   public slots:
     void updateTz(QString tz);
     void checkForModelData();
@@ -202,6 +206,9 @@ class pointInput : public QWidget
     void readStationTime(std::string start_time, std::string stop_time, int xSteps);
     static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
     void displayInformation(int dataType);
+    void testProg();
+    void updateProg();
+    int progExec();
     
   private slots:
     void readStationFile();
@@ -227,7 +234,6 @@ class pointInput : public QWidget
     void toggleTimeseries();
 
  signals:
-    void rightClicked();
     void writeToConsole( QString message );
     void stationFileChanged();
     

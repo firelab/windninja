@@ -133,6 +133,8 @@ class pointInitialization : public initialize
         static int directTemporalInterpolation(int posIdx, int negIdx);
         static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
 
+        static std::string rawStationFilename; //Need to be public, so that they can be accessed by the GUI
+        static vector<boost::local_time::local_date_time> start_and_stop_times;
     private:
         void setInitializationGrids(WindNinjaInputs& input);
 
@@ -189,7 +191,6 @@ class pointInitialization : public initialize
         static bool fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
         static double getStationBuffer();
 
-        static std::string rawStationFilename;
         static const std::string dtoken;
         static const std::string dvar;
         static const std::string ndvar;
@@ -198,7 +199,6 @@ class pointInitialization : public initialize
         double dfInvDistWeight;
         static std::vector<std::string> stationFiles;
         static std::string tzAbbrev; //Time Zone Abbreviation
-        static vector<boost::local_time::local_date_time> start_and_stop_times;
 
         friend class wxStation;
 
