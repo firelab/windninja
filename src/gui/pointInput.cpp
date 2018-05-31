@@ -97,8 +97,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    writeStationKmlButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
 
     widgetButton = new QToolButton( this ); //This opens the station fetch downloader Widget (formerley doTest)
-    widgetButton->setText( tr( "Download Weather Stations" ));
-    widgetButton->setIcon(QIcon(":world.png"));
+    widgetButton->setText( tr( "Download data" ));
+    widgetButton->setIcon(QIcon(":server_go.png"));
     widgetButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     widgetButton->setToolTip("Download Weather Data from the Mesowest API");
 
@@ -217,9 +217,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     fileEndVal->setVisible(false);
     fileStepsVal->setVisible(false);
 
-    xvLine1->setVisible(false);
+    xvLine1->setVisible(true); //Used to separate Buttons from other stuff
+    timeLine2->setVisible(true);
+
     xvLine2->setVisible(false);
-    timeLine2->setVisible(false);
 
     selectedFileLayout->addLayout(fileStartLayout);
     selectedFileLayout->addWidget(xvLine1);
@@ -244,6 +245,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     
     startTime->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     stopTime->setDisplayFormat( "MM/dd/yyyy HH:mm" );
+
+    startTime->setToolTip("Enter the simulation start time");
+    stopTime->setToolTip("Enter the simulation stop time");
     
     enableTimeseries = new QCheckBox(this); //Initializes the timeseries checkbox
     enableTimeseries->setText(tr("Enable Timeseries"));
@@ -256,6 +260,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     numSteps->setValue(24);
     numSteps->setMinimum(1);
     numSteps->setMaximum(99999);//Hopefully big enough
+    numSteps->setToolTip("Enter the number of time steps");
     
     startTime->setVisible(true); //Some visibility settings that probably aren't necessary anymore...
     stopTime->setVisible(true);
@@ -335,6 +340,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget( writeStationFileButton );
+    buttonLayout->addWidget(xvLine1);
 //    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
     buttonLayout->addWidget( writeStationKmlButton );
     buttonLayout->addWidget(execProg);
@@ -357,6 +363,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     pointLayout->addLayout(diurnalTimeLayout);
 
     pointLayout->addStretch();
+    pointLayout->addWidget(timeLine2);
     pointLayout->addLayout( buttonLayout );
 
     pointGroupBox->setLayout( pointLayout );
