@@ -1593,7 +1593,6 @@ int mainWindow::solve()
 #ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
 #endif
-    cout<<"SOLVE"<<endl;
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
 

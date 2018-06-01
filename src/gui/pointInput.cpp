@@ -1227,6 +1227,9 @@ void pointInput::checkForModelData()
     sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
+    stationFileList.clear();
+    treeView->clearSelection();
+
 }
 void pointInput::testProg()
 {
