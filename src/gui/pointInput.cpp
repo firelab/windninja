@@ -105,7 +105,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     //Progress Bar Stuff -> Delete Later
 
     execProg = new QToolButton(this);
-    execProg->setText("Execute Progress");
+    execProg->setText("Test Button");
     execProg->setIcon(QIcon(":weather_sun.png"));
     execProg->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     execProg->setToolTip("This is a test...");
@@ -142,7 +142,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
     treeLabel->setToolTip("Select Weather Stations from available files, three formats are supported, old format, time series and 1 step runs");
     
-
+//####################################################
+//  Tool buttons and other things                    #
+//####################################################
     ClippyToolLayout = new QHBoxLayout; //Layout for info and toolbox
     
     refreshToolButton = new QToolButton(this); //This refreshes the tree so that new files will populate
@@ -179,6 +181,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     /*
      * dispaly information to the user about the file they select
      * start, stop and number of times steps
+     * Currently Deprecated
      */
     selectedFileLayout = new QHBoxLayout;
     fileStartLayout = new QVBoxLayout;
@@ -248,6 +251,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     startTime->setToolTip("Enter the simulation start time");
     stopTime->setToolTip("Enter the simulation stop time");
+
+    startTime->setCalendarPopup(true);
+    stopTime->setCalendarPopup(true);
     
     enableTimeseries = new QCheckBox(this); //Initializes the timeseries checkbox
     enableTimeseries->setText(tr("Enable Timeseries"));
@@ -404,16 +410,17 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
             SLOT(toggleTimeseries()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
+//    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
 
 //    connect(treeView,SIGNAL(QTreeView::currentChanged(const QModelIndex&, const QModelIndex&);),
 //            this,SLOT(readMultipleStaitonFiles()));
     connect(treeView, SIGNAL(clicked(const QModelIndex &)),
-        this, SLOT(readMultipleStaitonFiles(const QModelIndex &))); //Connects click to which files should be conencted
+        this, SLOT(readMultipleStationFiles(const QModelIndex &))); //Connects click to which files should be conencted
 //    connect(sfModel, SIGNAL(/*selectionChanged*/()),this,SLOT(selChanged()));
 //    connect(treeView, SIGNAL(QItemSelectionModel::selectionChanged(const QItemSelection &, const QItemSelection &)),
 //        this, SLOT(readMultipleStaitonFiles(const QModelIndex &)));
 
-    connect(execProg,SIGNAL(clicked(bool)),this,SLOT(testProg()));
+    connect(execProg,SIGNAL(clicked(bool)),this,SLOT(progExec()));
 
 
 
@@ -459,20 +466,20 @@ int pointInput::checkNumStations(std::string comparator, std::vector<std::string
 }
 
 /**
- * @brief pointInput::readMultipleStaitonFiles
+ * @brief pointInput::readMultipleStationFiles
  * //General Idea: Append all selections a user makes, get the unique ones, counter the number of clicks, if it is odd, keep the file, if even, don't keep it
     // This is because odd means it was selected at least once at then left alone
     // even means that it was selected and deselected
  * @param index
  */
-void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
+void pointInput::readMultipleStationFiles(const QModelIndex &index)
 {
 
-    QFileInfo fi(sfModel->fileInfo(index));
+    QFileInfo fi(sfModel->fileInfo(index)); //Read the file from the index
     std::vector<std::string> finalStations;
     std::vector<int> finalTypes;
-    std::string filename = fi.absoluteFilePath().toStdString();
-    vx.push_back(filename);
+    std::string filename = fi.absoluteFilePath().toStdString(); //get its path
+    vx.push_back(filename); //append filename to list
 
 //    vy.push_back(filename);
 //    cout<<filename<<endl;
@@ -480,7 +487,7 @@ void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
 //    std::sort(vx.begin(),vx.end());
 //    vx.erase(std::unique(vx.begin(),vx.end()),vx.end());
 //    std::vector<std::string>::iterator it = std::unique(fileNameVec.begin(),fileNameVec.end());
-    std::set<std::string> unique(vx.begin(),vx.end());
+    std::set<std::string> unique(vx.begin(),vx.end()); // get only the unique ones, remove duplicate selections
 
     std::vector<std::string> uniVec(unique.begin(),unique.end());
     std::vector<int> totNum;
@@ -489,7 +496,7 @@ void pointInput::readMultipleStaitonFiles(const QModelIndex &index)
 //        cout<<uniVec[i]<<endl;
         int single_num = checkNumStations(uniVec[i],vx);
         totNum.push_back(single_num);
-        if (totNum[i]%2!=0)
+        if (totNum[i]%2!=0) //If the number is not divisble by two, it has been selected
         {
 //          cout<<uniVec[i]<<" "<<totNum[i]<<endl;
           finalStations.push_back(uniVec[i]);
@@ -621,8 +628,8 @@ int pointInput::directStationTraffic(const char* xFileName)
 
 //        writeToConsole(QString(qFileName+"\nfirst time: "+start_datetime.c_str()));
 //        writeToConsole(QString(qFileName+"\nlaste Time: "+stop_datetime.c_str()));
-        writeToConsole("Start Time: "+QString(start_datetime.c_str()));
-        writeToConsole("Stop Time: "+QString(stop_datetime.c_str()));
+//        writeToConsole("Start Time (UTC): "+QString(start_datetime.c_str()));
+//        writeToConsole("Stop Time (UTC): "+QString(stop_datetime.c_str()));
 
 
         if (start_datetime.empty()==true && stop_datetime.empty()==true)
@@ -652,10 +659,6 @@ int pointInput::directStationTraffic(const char* xFileName)
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
 
-        fileStartVal->setText("N/A"); //Update the file Info Area with
-        fileEndVal->setText("N/A"); //information
-        fileStepsVal->setText("1"); //In this case, single step->display N/A's
-
         //Try flipping the UI
         labelTimeseries->setText("Single Step Options");
 
@@ -684,15 +687,8 @@ int pointInput::directStationTraffic(const char* xFileName)
         updateStartTime(startTime->dateTime());
         updateStopTime(stopTime->dateTime());
 
-        //Display Some Time and Step info to the user
-        fileStartVal->setText(startTime->dateTime().toString());
-        fileEndVal->setText(stopTime->dateTime().toString());
-        fileStepsVal->setText(QString(idx3.c_str()));
-
-
         //try flipping the UI
         labelTimeseries->setText("Time Series\nOptions");
-
 
         startLabel->setVisible(true);
         stopLabel->setVisible(true);
@@ -715,10 +711,6 @@ int pointInput::directStationTraffic(const char* xFileName)
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
 
-        fileStartVal->setText("N/A"); //Display N/A to the user
-        fileEndVal->setText("N/A");
-        fileStepsVal->setText("1");
-
         //Try flipping the UI
         labelTimeseries->setText("Single Step Options");
 
@@ -738,17 +730,11 @@ int pointInput::directStationTraffic(const char* xFileName)
     if (stationHeader == 3)
     {
         //Invalid header type for GUI run...
-        fileStartVal->setText("N/A"); //Update the file info area to be N/A
-        fileEndVal->setText("N/A");
-        fileStepsVal->setText("N/A");
         return -1;
     }
     else
     {
         //Something wrong with the station...
-        fileStartVal->setText("N/A"); //If something is bad, don't say anything about
-        fileEndVal->setText("N/A"); //the stuff inside
-        fileStepsVal->setText("N/A");
         return -1;
     }
 
@@ -780,6 +766,8 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
 //    cout<<"TIME ZONE: "<<pointInput::tzString.toStdString()<<endl;
 //    cout<<"UTC DISK TIME: "<<qat.toString().toStdString()<<endl;
 //    cout<<"LOCAL TIME: "<<lxTime.toString().toStdString()<<endl;
+    writeToConsole("Start Time (local): "+loc_start_time.toString()); //Tell console what the
+    writeToConsole("Stop Time (local): "+loc_end_time.toString()); //Local time is
 
     startTime->setDateTime(loc_start_time);
     stopTime->setDateTime(loc_end_time); //Updates date time based on disk information
@@ -854,21 +842,11 @@ void pointInput::displayInformation(int dataType)
     {
         clippit->setText("No Valid Data detected in file...");
 
-        //Set the file Info area to display nada
-        fileStartVal->setText("N/A");
-        fileEndVal->setText("N/A");
-        fileStepsVal->setText("N/A");
-
         pointGo=false;
     }
     if (dataType==-1 && stationFileList.size()>=2)
     {
         clippit->setText("MULTIPLE TYPES SELECTED, CANNOT PROCEED!");
-
-        //Set the file Info area to display nada
-        fileStartVal->setText("N/A");
-        fileEndVal->setText("N/A");
-        fileStepsVal->setText("N/A");
 
         pointGo=false;
     }
@@ -1124,6 +1102,20 @@ void pointInput::pairTimeSeries(int curIndex)
         numSteps->setEnabled(true);
     }
 }
+/**
+ * @brief pointInput::watchStopTime
+ * corrects user selecting stop time behind start time!
+ */
+void pointInput::watchStopTime() //Stop time cannot be farther in the future than the stop time
+{
+    if(stopTime->dateTime()<startTime->dateTime())
+    {
+        writeToConsole("Start Time is greater than Stop Time!");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING!");
+        startTime->setDateTime(stopTime->dateTime().addSecs(-3600));
+    }
+}
+
 /** Updates the timeseries start time based on user requests
  * @brief pointInput::updateStartTime
  * @param xDate
@@ -1229,8 +1221,10 @@ void pointInput::checkForModelData()
     QDir wd(cwd);
     QStringList filters;
     filters<<"*.csv";
+    filters<<"*_wxStations_*"; //Add downloadable directories to filters
+
     sfModel->setNameFilters(filters);
-    sfModel->setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
+    sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
 }
@@ -1258,9 +1252,30 @@ void pointInput::testProg()
 
 int pointInput::progExec()
 {
-    usleep(500000);
+    cout<<"PROG EXEC"<<endl;
+    QDir wd(cwd);
+    QStringList filters;
+    QStringList test;
+    QFileInfoList fList;
+    filters<<"*.csv";
+    test = wd.entryList(filters,QDir::Files);
+    fList = wd.entryInfoList(filters,QDir::Files);
+
+    cout<<fList.size()<<endl;
+
+    for(int i=0;i<fList.size();i++)
+    {
+//        cout<<test[i].toStdString()<<endl;
+//        cout<<wxStation::GetHeaderVersion(test[i].toStdString().c_str())<<endl;
+        cout<<fList[i].absoluteFilePath().toStdString()<<endl;
+        cout<<wxStation::GetHeaderVersion(fList[i].absoluteFilePath().toStdString().c_str())<<endl;
+    }
+
+
+
+//    usleep(500000);
 //    xProg->setLabelText("RUNNING EXEC!");
-    return 1;
+//    return 1;
 }
 
 void pointInput::updateProg()

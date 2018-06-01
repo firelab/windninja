@@ -144,7 +144,7 @@ class pointInput : public QWidget
     QFrame *xvLine2;
     QFrame *xvLine3;
 
-    //File Info Area
+    //File Info Area (No Longer Visible)
     QHBoxLayout *selectedFileLayout;
     QVBoxLayout *fileStartLayout;
     QVBoxLayout *fileEndLayout;
@@ -212,7 +212,7 @@ class pointInput : public QWidget
     
   private slots:
     void readStationFile();
-    void readMultipleStaitonFiles(const QModelIndex &index);
+    void readMultipleStationFiles(const QModelIndex &index);
     void selChanged(); //Test Function
     void writeStationFile();
     void writeStationKml();
@@ -229,6 +229,7 @@ class pointInput : public QWidget
     
     void updateStartTime(QDateTime xDate);
     void updateStopTime(QDateTime xDate);
+    void watchStopTime();
     
     void toggleUI();
     void toggleTimeseries();

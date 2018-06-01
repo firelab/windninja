@@ -551,6 +551,9 @@ void mainWindow::createConnections()
   connect(tree->point->treeView,
           SIGNAL(clicked(const QModelIndex &)),
           this,SLOT(checkAllItems()));
+  //When the user changes the date time, check to make sure it is sane
+  connect(tree->point->startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
+  connect(tree->point->stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
 
   //connect selection change in weather to checkers
   connect(tree->weather->treeView->selectionModel(),
@@ -602,7 +605,7 @@ void mainWindow::createConnections()
   connect(this, SIGNAL(inputFileChanged(QString)),
       tree->point, SLOT(setInputFile(QString)));
   connect(this,SIGNAL(inputFileChanged(QString)),
-          tree->point, SLOT(checkForModelData()));
+          tree->point, SLOT(checkForModelData())); //Update csv list when file changes in point
   /** Station Fetch **/
 //  connect(this, SIGNAL(inputFileChanged(QString)),
 //          tree->tw,SLOT(setInputFile(QString)));
@@ -1590,7 +1593,7 @@ int mainWindow::solve()
 #ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
 #endif
-    
+    cout<<"SOLVE"<<endl;
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
 
@@ -1647,7 +1650,6 @@ int mainWindow::solve()
 #endif
 
     //location
-
     int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
     if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
                          tree->weather->weatherGroupBox->isChecked()
@@ -1712,18 +1714,6 @@ int mainWindow::solve()
     else if(tree->wind->windTable->airTempUnits->currentIndex() == 1)
     tempUnits = temperatureUnits::C;
 
-    //point initialization and Station Fetch
-//    int pointFormat = tree->point->initOpt->currentIndex();
-    int pointFormat = tree->point->simType;
-    std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
-    std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
-    std::vector<int> xStartTime = tree->point->startSeries;
-    std::vector<int> xEndTime = tree->point->endSeries;
-    int numTimeSteps = tree->point->numSteps->value();
-    bool useTimeList = tree->point->enableTimeseries->isChecked();
-    bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
-    bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
-    
     //model init
     std::string weatherFile;
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
@@ -1867,10 +1857,19 @@ int mainWindow::solve()
 #else
     army = new ninjaArmy(1); // native ninja solver
 #endif
-
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
+        int pointFormat = tree->point->simType;
+        std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
+        std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
+        std::vector<int> xStartTime = tree->point->startSeries;
+        std::vector<int> xEndTime = tree->point->endSeries;
+        int numTimeSteps = tree->point->numSteps->value();
+        bool useTimeList = tree->point->enableTimeseries->isChecked();
+        bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
+        bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
+
         if (pointFormat==0)
         {
             CPLDebug("STATION_FETCH","USING OLD FORMAT...");
@@ -2692,11 +2691,24 @@ int mainWindow::checkPointItem()
 //                tree->pointItem->setToolTip(0,"Selected options are invald");
 //            }
         }
+
         if (shortGo==true)
         {
-            status = green;
-            tree->pointItem->setIcon(0,tree->check);
-            tree->pointItem->setToolTip(0,"Good To Go!");
+            //Check to make sure times are reasonable
+            QDateTime pStartTime = tree->point->startTime->dateTime();
+            QDateTime pStopTime = tree->point->stopTime->dateTime();
+            if(pStartTime>pStopTime)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"Start Time is Greater than Stop Time!");
+            }
+            else
+            {
+                status = green;
+                tree->pointItem->setIcon(0,tree->check);
+                tree->pointItem->setToolTip(0,"Good To Go!");
+            }
         }
         std::vector<std::string> pfL = tree->point->stationFileList;
         for(int i=0;i<pfL.size();i++)
