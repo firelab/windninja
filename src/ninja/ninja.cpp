@@ -319,8 +319,8 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 	if(input.matchWxStations == true)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
-//		input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
-        //Commented For station-fetch
+        input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
+        //If this is commented, it messes with the progress-bar
     }
 }
 
@@ -340,9 +340,9 @@ do
 
 		if(input.matchWxStations == true)
 		{
-                    matchingIterCount++;
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
-		}
+            matchingIterCount++;
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
+        }
 
 #ifdef _OPENMP
                 startInit = omp_get_wtime();
@@ -559,14 +559,25 @@ if(input.frictionVelocityFlag == 1){
 			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
 	#endif
 
-
      input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
+
+     //If its a pointInitialization Run, explicitly set run completion to 100 when they finish
+     //for some reason this doesn't happen automatically
+     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+     {
+         if(input.matchWxStations == true)
+         {
+             int time_percent_complete=100;
+             input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+         }
+     }
+
 
 	 deleteDynamicMemory();
 	 if(!input.keepOutGridsInMemory)
 	 {
 	     AngleGrid.deallocate();
-	     VelocityGrid.deallocate();
+         VelocityGrid.deallocate();
 	     CloudGrid.deallocate();
 	     #ifdef FRICTION_VELOCITY
 	     if(input.frictionVelocityFlag == 1){
@@ -751,7 +762,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
                 time_percent_complete = 99.0;
             residual_percent_complete_old=residual_percent_complete;
             //fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
-            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
+            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5)); //Tell the GUI what the percentage to complete for the ninja is
         }
 
         if (resid <= tol)	//check residual against tolerance
@@ -794,7 +805,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     {
         throw std::runtime_error("Solution did not converge.\nMAXITS reached.");
     }else{
-        time_percent_complete = 100.0;
+        time_percent_complete = 100; //When the solver finishes, set it to 100
         input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
         return true;
     }
@@ -2648,7 +2659,9 @@ bool ninja::matched(int iter)
 		    time_percent_complete = 100.0;
 		else if(time_percent_complete >= 99.0 )
 		    time_percent_complete = 99.0;
-		input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+        input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+//        input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete)); //STATION FETCH COMM
+
 
 		return ret;
 	}

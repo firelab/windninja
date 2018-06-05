@@ -49,6 +49,7 @@ mainWindow::mainWindow(QWidget *parent)
 
     runProgress = 0;
     totalProgress = 0;
+    mainWindow::progressLog;
 
     noGoogleCellSize = 30.0;
 
@@ -2027,8 +2028,14 @@ int mainWindow::solve()
 
     progressDialog->setValue( 0 );
     //set progress dialog and initial value
-    progressDialog->setRange(0, nRuns * 100);
-    runProgress = new int[nRuns];
+    progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
+    runProgress = new int[nRuns]; //I don't think this is needed anymore
+
+//    for (int ix=0;ix<nRuns;ix++) //delete this, moved to other place
+//    {
+//        progressLog.push_back(0);
+//    }
+
 
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
@@ -2228,7 +2235,8 @@ int mainWindow::solve()
 
     for( unsigned int i = 0; i < army->getSize(); i++ )
     {
-        runProgress[i] = 0;
+//        runProgress[i] = 0;
+        progressLog.push_back(0); //Initialize the progressLog, which stores the progress of each ninja with a zero for each ninja in the army
     }
 
     totalProgress = 0;
@@ -2329,10 +2337,12 @@ int mainWindow::solve()
     //updateTimer();
 
     elapsedRunTime = runTime->elapsed() / 1000.0;
-
+    int maxProg = nRuns*100;
+    progressDialog->setValue(maxProg);
     progressDialog->setLabelText("Simulations finished");
-    progressDialog->setValue(progressDialog->maximum());
     progressDialog->setCancelButtonText("Close");
+    progressLog.clear(); //Clear the progress bar so that we can do another run later without
+    //killing the program
 
     //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
@@ -2354,14 +2364,30 @@ void mainWindow::updateProgress(const QString message)
 
 void mainWindow::updateProgress(int run, int progress)
 {
-  runProgress[run] = progress;
-  totalProgress = 0;
+  totalProgress = 0; //Initialize the progress bar each time
+//  runProgress[run]=progress;
 
-  for(int i = 0;i < nRuns;i++){
-    totalProgress += runProgress[i];
+  if(progressLog[run]>progress)
+  {
+/*
+ * If the stored progress is bigger than what we are seeing in the currently emitted progress
+ * ignore it
+ * this happens for pointInitialization, when the match points is iterating
+ * sometimes its next solution is worse and then it would make the progress bar go backwards
+ * by ignoring it, the progress bar just stays where it is....
+ */
+      progressLog[run]=progressLog[run];
   }
+  else //Otherwise, store the progress in the progressLog
+  {
+      progressLog[run]=progress;
+  }
+  for(int i = 0;i < nRuns;i++) //Iterate over the number of runs and sum up the progress from the Log
+  {
+          totalProgress+=progressLog[i];
 
-  progressDialog->setValue(totalProgress);
+  }
+  progressDialog->setValue(totalProgress); //Set the progress to what we have summed
 }
 
 int mainWindow::countRuns()

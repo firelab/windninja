@@ -165,7 +165,6 @@ void stationFetchWidget::updateFetchProgress()
 
             stationFutureWatcher.cancel(); //Kill the watcher so that it doesn't stick around
 
-
         }
     }
 
@@ -194,6 +193,8 @@ void stationFetchWidget::executeFetchStation()
     //actual fetching
 
     stationFetchProgress->exec(); //Execute the progress bar to do its thing
+    stationFutureWatcher.cancel();
+
 }
 
 std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up spaces in text

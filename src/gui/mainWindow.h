@@ -88,6 +88,7 @@ class mainWindow : public QMainWindow
 
   int *runProgress;
   int totalProgress;
+  std::vector<int> progressLog;
 
   bool okToContinueCheck;
 
