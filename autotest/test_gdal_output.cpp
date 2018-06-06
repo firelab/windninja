@@ -79,7 +79,8 @@ BOOST_AUTO_TEST_CASE(kml) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("LIBKML", "test.kml", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "test.kml",
+                       NINJA_OUTPUT_VECTOR | NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -88,7 +89,8 @@ BOOST_AUTO_TEST_CASE(kmz) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("LIBKML", "test.kmz", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "test.kmz",
+                       NINJA_OUTPUT_VECTOR | NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -103,8 +105,8 @@ BOOST_AUTO_TEST_CASE(kmz_color) {
       spd.set_cellValue(i, j, i * j);
     }
   }
-  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd,
-                       dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz",
+                       NINJA_OUTPUT_VECTOR | NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 

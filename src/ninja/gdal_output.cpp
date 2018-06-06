@@ -327,7 +327,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   hSRS = OSRNewSpatialReference(spd.prjString.c_str());
   if (bTransform) {
-    hDstSRS = OSRNewSpatialReference(nullptr);
+    hDstSRS = OSRNewSpatialReference(0);
     rc = OSRImportFromEPSG(hDstSRS, 4326);
     if (rc != OGRERR_NONE) {
       // cleanup
@@ -404,7 +404,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   if (nFlags & NINJA_OUTPUT_VECTOR) {
     // Handle the KML special options
-    char **papszKMLOptions = nullptr;
+    char **papszKMLOptions = 0;
     if (EQUAL(pszDriver, "LIBKML")) {
       // Don't create a root doc.kml, this aligns with our old format
       CPLSetConfigOption("LIBKML_USE_DOC.KML", "NO");
