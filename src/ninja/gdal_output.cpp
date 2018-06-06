@@ -260,8 +260,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OGRSpatialReferenceH hSRS = 0;
   // Destination SRS, if needed
   OGRSpatialReferenceH hDstSRS = 0;
-  // WGS84 for LIBKML output
-  OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
 
   int bCreateCopy = FALSE;
@@ -327,17 +325,18 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return rc;
   }
 
+  hSRS = OSRNewSpatialReference(spd.prjString.c_str());
   if (bTransform) {
-    hSRS = OSRNewSpatialReference(spd.prjString.c_str());
-    h4326 = OSRNewSpatialReference(0);
-    rc = OSRImportFromEPSG(h4326, 4326);
+    hDstSRS = OSRNewSpatialReference(nullptr);
+    rc = OSRImportFromEPSG(hDstSRS, 4326);
     if (rc != OGRERR_NONE) {
       // cleanup
       GDALClose(hDS);
       return 1;
     }
-    hDstSRS = h4326;
-    hCT = OCTNewCoordinateTransformation(hSRS, h4326);
+    hCT = OCTNewCoordinateTransformation(hSRS, hDstSRS);
+  } else {
+    hDstSRS = OSRClone(hSRS);
   }
 
   double splits[5];
@@ -504,7 +503,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     }
   }
   OSRDestroySpatialReference(hSRS);
-  OSRDestroySpatialReference(h4326);
+  OSRDestroySpatialReference(hDstSRS);
   OCTDestroyCoordinateTransformation(hCT);
   GDALClose(hDS);
   /* After we close the dataset, insert the support files */
