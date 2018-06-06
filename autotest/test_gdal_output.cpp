@@ -39,7 +39,8 @@ BOOST_AUTO_TEST_CASE(shapefile) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("ESRI Shapefile", "test.shp", 0, spd, dir, 0);
+  rc = NinjaGDALOutput("ESRI Shapefile", "test.shp", NINJA_OUTPUT_VECTOR, spd,
+                       dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -53,8 +54,8 @@ BOOST_AUTO_TEST_CASE(write_arrow) {
       dir.set_cellValue(i, j, i * j % 360);
     }
   }
-  rc = NinjaGDALOutput("ESRI Shapefile", "arrow.shp", NINJA_OUTPUT_ARROWS, spd,
-                       dir, 0);
+  rc = NinjaGDALOutput("ESRI Shapefile", "arrow.shp",
+                       NINJA_OUTPUT_VECTOR | NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -68,8 +69,8 @@ BOOST_AUTO_TEST_CASE(arrow_west) {
       dir.set_cellValue(i, j, 270);
     }
   }
-  rc = NinjaGDALOutput("ESRI Shapefile", "west.shp", NINJA_OUTPUT_ARROWS, spd,
-                       dir, 0);
+  rc = NinjaGDALOutput("ESRI Shapefile", "west.shp",
+                       NINJA_OUTPUT_VECTOR | NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -78,7 +79,7 @@ BOOST_AUTO_TEST_CASE(kml) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("LIBKML", "test.kml", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "test.kml", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -87,7 +88,7 @@ BOOST_AUTO_TEST_CASE(kmz) {
   int rc = 0;
   AsciiGrid<double> spd(10, 10, 0, 0, 10, -9999);
   AsciiGrid<double> dir(spd);
-  rc = NinjaGDALOutput("LIBKML", "test.kmz", NINJA_OUTPUT_ARROWS, spd, dir, 0);
+  rc = NinjaGDALOutput("LIBKML", "test.kmz", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -102,7 +103,7 @@ BOOST_AUTO_TEST_CASE(kmz_color) {
       spd.set_cellValue(i, j, i * j);
     }
   }
-  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_ARROWS, spd,
+  rc = NinjaGDALOutput("LIBKML", "kmz_colors.kmz", NINJA_OUTPUT_VECTOR| NINJA_OUTPUT_ARROWS, spd,
                        dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
@@ -138,8 +139,7 @@ BOOST_AUTO_TEST_CASE(raster) {
   dir.GDALReadGrid(mack);
   spd.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
   dir.resample_Grid_in_place(1000.0, AsciiGrid<double>::order0);
-  rc = NinjaGDALOutput("PNG", "rgb.png",
-                       NINJA_OUTPUT_RASTER, spd, dir, 0);
+  rc = NinjaGDALOutput("PNG", "rgb.png", NINJA_OUTPUT_RASTER, spd, dir, 0);
   BOOST_REQUIRE(rc == 0);
 }
 
@@ -151,11 +151,10 @@ BOOST_AUTO_TEST_CASE(invalid_format) {
   std::string mack = FindDataPath("mackay.tif");
   spd.GDALReadGrid(mack);
   dir.GDALReadGrid(mack);
-  rc = NinjaGDALOutput("AAIGrid", "out.asc",
-                       NINJA_OUTPUT_VECTOR, spd, dir, 0);
+  rc = NinjaGDALOutput("AAIGrid", "out.asc", NINJA_OUTPUT_VECTOR, spd, dir, 0);
   BOOST_REQUIRE(rc != 0);
-  rc = NinjaGDALOutput("ESRI Shapefile", "out.shp",
-                       NINJA_OUTPUT_RASTER, spd, dir, 0);
+  rc = NinjaGDALOutput("ESRI Shapefile", "out.shp", NINJA_OUTPUT_RASTER, spd,
+                       dir, 0);
   BOOST_REQUIRE(rc != 0);
 }
 
