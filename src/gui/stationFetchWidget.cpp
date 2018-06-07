@@ -143,6 +143,7 @@ void stationFetchWidget::updateFetchProgress()
         stationFetchProgress->setCancelButton(0);
         stationFutureWatcher.waitForFinished();
         stationFetchProgress->cancel();
+        setCursor(Qt::ArrowCursor);
     }
     else
     {
@@ -154,6 +155,7 @@ void stationFetchWidget::updateFetchProgress()
             stationFetchProgress->setRange(0,1);
             stationFetchProgress->setValue(0);
             stationFetchProgress->setCancelButtonText("Close");
+            setCursor(Qt::ArrowCursor);
         }
         else
         {
@@ -162,8 +164,9 @@ void stationFetchWidget::updateFetchProgress()
             stationFetchProgress->setValue(100);
             stationFetchProgress->setLabelText("Data Downloaded Sucessfully!");
             stationFetchProgress->setCancelButtonText("Close");
+            setCursor(Qt::ArrowCursor); //set the cursor back to normal
 
-            stationFutureWatcher.cancel(); //Kill the watcher so that it doesn't stick around
+//            stationFutureWatcher.cancel(); //Commented because its probably not necessary
 
         }
     }
@@ -189,11 +192,19 @@ void stationFetchWidget::executeFetchStation()
     connect(&stationFutureWatcher,SIGNAL(finished()),this,SLOT(updateFetchProgress()));
     connect(stationFetchProgress,SIGNAL(canceled()),this,SLOT(updateFetchProgress()));
 
+     /* Note on Concurrent Processing:
+     * You can't update the GUI from a spawned process on another thread
+     * If you do:
+     * It will segfault or throw X11 errors at you and freeze
+     * This was encountered when updating the cursor was set inside fetchStation.
+     * Always update the UI from outside the spawned thread...
+     */
+
     stationFutureWatcher.setFuture(QtConcurrent::run(this,&stationFetchWidget::fetchStation)); //Run the
     //actual fetching
-
+    setCursor(Qt::WaitCursor);//Make the cursor spinny
     stationFetchProgress->exec(); //Execute the progress bar to do its thing
-    stationFutureWatcher.cancel();
+//    stationFutureWatcher.cancel(); //commented for now, probably can be deleted...
 
 }
 
@@ -235,7 +246,6 @@ int stationFetchWidget::fetchStation()
 //    stationFetchProgress->setLabelText("Downloading Station Data...");
 //    stationFetchProgress->setCancelButtonText("Cancel");
 //    stationFetchProgress->exec();
-    setCursor(Qt::WaitCursor); //makes the cursor spinny, so the user knows something is happening
     writeToConsole("Downloading Station Data...");
     CPLDebug("STATION_FETCH","Fetch Station GUI Function");
     CPLDebug("STATION_FETCH","---------------------------------------");
@@ -449,7 +459,6 @@ int stationFetchWidget::fetchStation()
 //        stationFetchProgress->setCancelButtonText("OK!");
 //        pointInitialization::SetRawStationFilename("");
 //        pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
-        setCursor(Qt::ArrowCursor);
         return -1;
     }
     else
@@ -463,7 +472,6 @@ int stationFetchWidget::fetchStation()
         {
             pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
         }
-        setCursor(Qt::ArrowCursor);
         return 1;
     }
 }
