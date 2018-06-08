@@ -250,250 +250,183 @@ ninja &ninja::operator=(const ninja &rhs)
  */
 bool ninja::simulate_wind()
 {
-	checkCancel();
+    checkCancel();
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
-	
-	readInputFile();
-	set_position();
-	set_uniVegetation();
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
-	checkInputs();
+    readInputFile();
+    set_position();
+    set_uniVegetation();
 
-	if(!input.ninjaTime.is_not_a_date_time())
-	{
-	    std::ostringstream out;
-	    out << "Simulation time is " << input.ninjaTime;
-	    input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
-	}
+    checkInputs();
 
-	#ifdef _OPENMP
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
-	#endif
-
-	#ifdef _OPENMP
-		startTotal = omp_get_wtime();
-	#endif
-
-	 //taucs_double *SK;
-
-/*  ----------------------------------------*/
-/*  USER INPUTS                             */
-/*  ----------------------------------------*/
-     int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-     double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-     int print_iters = 10;          //Iterations to print out
-    /*
-    ** Set matching its from config options, default to 150.
-    ** See constructor to set default.
-    */
-    int max_matching_iters = nMaxMatchingIters;		//maximum number of outer iterations to do (for matching observations)
-
-/*  ----------------------------------------*/
-/*  MESH GENERATION                         */
-/*  ----------------------------------------*/
-
-	#ifdef _OPENMP
-		startMesh = omp_get_wtime();
-	#endif
-
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-	//generate mesh
-	mesh.buildStandardMesh(input);
-	
-	u0.allocate(&mesh);		//u is positive toward East
-	v0.allocate(&mesh);		//v is positive toward North
-	w0.allocate(&mesh);		//w is positive up
-
-	#ifdef _OPENMP
-		endMesh = omp_get_wtime();
-	#endif
-
-/*  ----------------------------------------*/
-/*  START OUTER INTERATIVE LOOP FOR         */
-/*	MATCHING INPUT POINTS					*/
-/*  ----------------------------------------*/
-
-if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-{
-	if(input.matchWxStations == true)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
-        input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
-        //If this is commented, it messes with the progress-bar
-    }
-}
-
-int matchingIterCount = 0;
-bool matchFlag = false;
-if(input.matchWxStations == true)
-{
-    num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
-    num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
-    num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
-}
-do
-{
-/*  ----------------------------------------*/
-/*  VELOCITY INITIALIZATION                 */
-/*  ----------------------------------------*/
-
-		if(input.matchWxStations == true)
-		{
-            matchingIterCount++;
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
-        }
-
-#ifdef _OPENMP
-                startInit = omp_get_wtime();
-#endif
-
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
-
-		//initialize
-                init.reset(initializationFactory::makeInitialization(input));
-                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
-#ifdef _OPENMP
-                endInit = omp_get_wtime();
-#endif
-
-		checkCancel();
-
-/*  ----------------------------------------*/
-/*  CHECK FOR "NULL" RUN                    */
-/*  ----------------------------------------*/
-		if(checkForNullRun())	//if it's a run with all zero velocity...
-			break;
-
-/*  ----------------------------------------*/
-/*  BUILD "A" ARRAY OF AX=B                 */
-/*  ----------------------------------------*/
-		#ifdef _OPENMP
-			startBuildEq = omp_get_wtime();
-		#endif
-
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
-
-		//build A arrray
-		discretize();
-
-        checkCancel();
-
-/*  ----------------------------------------*/
-/*  SET BOUNDARY CONDITIONS                 */
-/*  ----------------------------------------*/
-
-		//set boundary conditions
-		setBoundaryConditions();
-
-		//#define WRITE_A_B
-		#ifdef WRITE_A_B	//used for debugging...
-			 write_A_and_b(1000, SK, col_ind, row_ptr, RHS);
-		#endif
-
-		#ifdef _OPENMP
-			endBuildEq = omp_get_wtime();
-		#endif
-
-		 checkCancel();
-
-/*  ----------------------------------------*/
-/*  CALL SOLVER                             */
-/*  ----------------------------------------*/
-
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving...");
-		#ifdef _OPENMP
-			startSolve = omp_get_wtime();
-		#endif
-
-		//solver
-
-		//if the CG solver diverges, try the minres solver
-		if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-		    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-			throw std::runtime_error("Solver returned false.");
-
-		#ifdef _OPENMP
-			endSolve = omp_get_wtime();
-		#endif
-
-		checkCancel();
-
-		 if(SK)
-		 {
-			delete[] SK;
-			SK=NULL;
-		 }
-
-		 if(col_ind)
-		 {
-			delete[] col_ind;
-			col_ind=NULL;
-		 }
-		 if(row_ptr)
-		 {
-			delete[] row_ptr;
-			row_ptr=NULL;
-		 }
-		 if(RHS)
-		 {
-			delete[] RHS;
-			RHS=NULL;
-		 }
-
-/*  ----------------------------------------*/
-/*  COMPUTE UVW WIND FIELD                   */
-/*  ----------------------------------------*/
-
-		 //compute uvw field from phi field
-		 computeUVWField();
-
-		 checkCancel();
-
-		 matchFlag = matched(matchingIterCount);
-
- }while(matchingIterCount<max_matching_iters && !matchFlag);	//end outer iterations is over max_matching_iters or wind field matches wx stations
-
-if(input.matchWxStations == true && !isNullRun)
-{
-	double smallestInfluenceRadius = getSmallestRadiusOfInfluence();
-
-	if(matchFlag == false)
+    if(!input.ninjaTime.is_not_a_date_time())
     {
-        const char* error;
-        error = CPLSPrintf("Solution did not converge to match weather stations.\n" \
-                "Sometimes this is caused by a very low radius of influence when compared to the mesh resolution.\n" \
-                "Your horizontal mesh resolution is %lf meters and the smallest radius of influence is %.2E meters,\n" \
-                "which means that the radius of influence is %.2E cells in distance.\n" \
-                "It is usually a good idea to have at least 10 cells of distance (%.2E meters in this case).\n" \
-                "If convergence is still not reached, try increasing the radius of influence even more.\n", \
-                mesh.meshResolution, smallestInfluenceRadius, smallestInfluenceRadius/mesh.meshResolution, 10.0*mesh.meshResolution);
+        std::ostringstream out;
+        out << "Simulation time is " << input.ninjaTime;
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
+    }
 
-        input.Com->ninjaCom(ninjaComClass::ninjaWarning, error);
-        throw(std::runtime_error(error));
-	}
-}
+#ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.",
+                        input.inputsRunNumber, input.numberCPUs);
+    startTotal = omp_get_wtime();
+#endif
 
-/*  ----------------------------------------*/
-/*  COMPUTE FRICTION VELOCITY               */
-/*  ----------------------------------------*/
+    //taucs_double *SK;
+
+    /*----------------------------------------*/
+    /*  USER INPUTS                           */
+    /*----------------------------------------*/
+    int MAXITS = 100000;     //MAXITS is the maximum number of iterations in the solver
+    double stop_tol = 1E-1;  //stopping criteria for iterations (2-norm of residual)
+    int print_iters = 10;    //Iterations to print out
+
+    /*----------------------------------------*/
+    /*  MESH GENERATION                       */
+    /*----------------------------------------*/
+
+#ifdef _OPENMP
+    startMesh = omp_get_wtime();
+#endif
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
+    //generate mesh
+    mesh.buildStandardMesh(input);
+	
+    u0.allocate(&mesh);		//u is positive toward East
+    v0.allocate(&mesh);		//v is positive toward North
+    w0.allocate(&mesh);		//w is positive up
+
+#ifdef _OPENMP
+    endMesh = omp_get_wtime();
+#endif
+
+    /*----------------------------------------*/
+    /*  VELOCITY INITIALIZATION               */
+    /*----------------------------------------*/
+
+#ifdef _OPENMP
+    startInit = omp_get_wtime();
+#endif
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
+
+    //initialize
+    init.reset(initializationFactory::makeInitialization(input));
+    init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+
+#ifdef _OPENMP
+    endInit = omp_get_wtime();
+#endif
+
+    checkCancel();
+
+    /*----------------------------------------*/
+    /*  BUILD "A" ARRAY OF AX=B               */
+    /*----------------------------------------*/
+#ifdef _OPENMP
+    startBuildEq = omp_get_wtime();
+#endif
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
+
+    //build A arrray
+    discretize();
+
+    checkCancel();
+
+    /*----------------------------------------*/
+    /*  SET BOUNDARY CONDITIONS               */
+    /*----------------------------------------*/
+
+    //set boundary conditions
+    setBoundaryConditions();
+
+//#define WRITE_A_B
+#ifdef WRITE_A_B	
+    //used for debugging...
+    write_A_and_b(1000, SK, col_ind, row_ptr, RHS);
+#endif
+
+#ifdef _OPENMP
+    endBuildEq = omp_get_wtime();
+#endif
+
+ checkCancel();
+
+    /*----------------------------------------*/
+    /*  CALL SOLVER                           */
+    /*----------------------------------------*/
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving...");
+#ifdef _OPENMP
+    startSolve = omp_get_wtime();
+#endif
+
+    //solver
+    //if the CG solver diverges, try the minres solver
+    if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+        throw std::runtime_error("Solver returned false.");
+
+#ifdef _OPENMP
+    endSolve = omp_get_wtime();
+#endif
+
+    checkCancel();
+
+    if(SK)
+    {
+        delete[] SK;
+        SK=NULL;
+    }
+
+    if(col_ind)
+    {
+        delete[] col_ind;
+        col_ind=NULL;
+    }
+    if(row_ptr)
+    {
+        delete[] row_ptr;
+        row_ptr=NULL;
+    }
+    if(RHS)
+    {
+        delete[] RHS;
+        RHS=NULL;
+    }
+
+    /*----------------------------------------*/
+    /*  COMPUTE UVW WIND FIELD                */
+    /*----------------------------------------*/
+
+    //compute uvw field from phi field
+    computeUVWField();
+
+    checkCancel();
+
+    /*----------------------------------------*/
+    /*  COMPUTE FRICTION VELOCITY             */
+    /*----------------------------------------*/
 #ifdef FRICTION_VELOCITY
-if(input.frictionVelocityFlag == 1){
+    if(input.frictionVelocityFlag == 1){
 #ifdef _OPENMP
-    startComputeFrictionVelocity = omp_get_wtime();
+        startComputeFrictionVelocity = omp_get_wtime();
 #endif
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Computing friction velocities...");
-    computeFrictionVelocity();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Computing friction velocities...");
+        computeFrictionVelocity();
 #ifdef _OPENMP
-    endComputeFrictionVelocity = omp_get_wtime();
+        endComputeFrictionVelocity = omp_get_wtime();
 #endif
-}
+    }
 #endif
 
+    /*----------------------------------------*/
+    /*  COMPUTE DUST EMISSIONS                */
+    /*----------------------------------------*/
 #ifdef EMISSIONS
-/*  ----------------------------------------*/
-/*  COMPUTE DUST EMISSIONS                  */
-/*  ----------------------------------------*/
 
     if(input.dustFlag == 1){
 #ifdef _OPENMP
@@ -505,91 +438,81 @@ if(input.frictionVelocityFlag == 1){
         endDustEmissions = omp_get_wtime();
 #endif
     }
-
 #endif //EMISSIONS
 
-/*  ----------------------------------------*/
-/*  PREPARE OUTPUT                          */
-/*  ----------------------------------------*/
+    /*----------------------------------------*/
+    /*  PREPARE OUTPUT                        */
+    /*----------------------------------------*/
 
-		 #ifdef _OPENMP
-			startWriteOut = omp_get_wtime();
-		 #endif
+#ifdef _OPENMP
+    startWriteOut = omp_get_wtime();
+#endif
 
-		 //prepare output arrays
-		 prepareOutput();
+    //prepare output arrays
+    prepareOutput();
 
-		 checkCancel();
+    checkCancel();
 
-/*  ----------------------------------------*/
-/*  WRITE OUTPUT FILES                      */
-/*  ----------------------------------------*/
+    /*----------------------------------------*/
+    /*  WRITE OUTPUT FILES                    */
+    /*----------------------------------------*/
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
-	//write output files
-	writeOutputFiles();
+    //write output files
+    writeOutputFiles();
 
-	#ifdef _OPENMP
-		endWriteOut = omp_get_wtime();
-		endTotal = omp_get_wtime();
-	#endif
+#ifdef _OPENMP
+    endWriteOut = omp_get_wtime();
+    endTotal = omp_get_wtime();
+#endif
 
-/*  ----------------------------------------*/
-/*  WRAP UP...                              */
-/*  ----------------------------------------*/
+    /*----------------------------------------*/
+    /*  WRAP UP...                            */
+    /*----------------------------------------*/
 
-	//write timers
-	#ifdef _OPENMP
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Friction velocity calculation time was %lf seconds.",endComputeFrictionVelocity-startComputeFrictionVelocity);
-			}
-			#endif
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",endDustEmissions-startDustEmissions);
-			}
-			#endif
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-	#endif
+//write timers
+#ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
+#ifdef FRICTION_VELOCITY
+    if(input.frictionVelocityFlag == 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Friction velocity calculation time was %lf seconds.",
+                            endComputeFrictionVelocity-startComputeFrictionVelocity);
+    }
+#endif
+#ifdef EMISSIONS
+    if(input.dustFlag == 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",
+                            endDustEmissions-startDustEmissions);
+    }
+#endif
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
+#endif
 
-     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
 
-     //If its a pointInitialization Run, explicitly set run completion to 100 when they finish
-     //for some reason this doesn't happen automatically
-     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-     {
-         if(input.matchWxStations == true)
-         {
-             int time_percent_complete=100;
-             input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
-         }
-     }
-
-
-	 deleteDynamicMemory();
-	 if(!input.keepOutGridsInMemory)
-	 {
-	     AngleGrid.deallocate();
-         VelocityGrid.deallocate();
-	     CloudGrid.deallocate();
-	     #ifdef FRICTION_VELOCITY
-	     if(input.frictionVelocityFlag == 1){
+    deleteDynamicMemory();
+    if(!input.keepOutGridsInMemory)
+    {
+        AngleGrid.deallocate();
+        VelocityGrid.deallocate();
+        CloudGrid.deallocate();
+#ifdef FRICTION_VELOCITY
+        if(input.frictionVelocityFlag == 1){
             UstarGrid.deallocate();
-	     }
-	     #endif
-	     #ifdef EMISSIONS
-	     if(input.dustFlag == 1){
+        }
+#endif
+#ifdef EMISSIONS
+        if(input.dustFlag == 1){
             DustGrid.deallocate();
-	     }
-         #endif
-	 }
+        }
+#endif
+    }
+
      return true;
 }
 
@@ -2409,263 +2332,6 @@ void ninja::prepareOutput()
 
         }
     }
-}
-
-/**Compares the current simulated wind field to the measured wind at points.
- * This function is used during the outer ninja iterations to determine if the solved wind field matches the input wx stations.
- * @param iter Interation number
- * @return Returns true if the wind field is within matchTol of the wx stations.  If not, it adjusts stationsScratch for another outer loop simulation.
- */
-bool ninja::matched(int iter)
-{
-	if(input.matchWxStations == true)
-	{
-
-		element elem(&mesh);
-		double x, y, z;
-		double u_loc, v_loc, w_loc;
-        double try_output_u, try_output_v, try_output_w;
-		int cell_i, cell_j, cell_k;
-		double spd, dir;
-		double true_u, true_v, true_w;
-        double try_input_u, try_input_v, try_input_w;
-        double old_input_u, old_input_v, old_input_w;
-        double old_output_u, old_output_v, old_output_w;
-		double new_input_u, new_input_v, new_input_w;
-		double maxCurrentOuterDiff = -1.0;
-		double percent_complete, time_percent_complete;
-		double tempCompleteIn, tempCompleteOut;
-		bool ret = true;
-        bool u_keep_old, v_keep_old, w_keep_old;
-        double delta = 0.1;
-
-
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Stations matching check:");
-		//input.Com->ninjaCom(ninjaComClass::ninjaNone, "Station #\tmeas_u\tcomp_u\tmeas_v\tcomp_v\tmeas_w\tcomp_w");
-
-		for(unsigned int i=0; i<input.stations.size(); i++)
-		{
-			//Get (x,y,z) value of station
-			x = input.stations[i].get_xord();
-			y = input.stations[i].get_yord();
-            //Check if station is in mesh, if not, can't do matching so skip
-            if(!mesh.inMeshXY(x, y))
-                continue;
-            z = input.stations[i].get_height() + input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) + input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
-
-			//Get cell number and "parent cell" coordinates of station location
-			elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-
-            //Get velocity at the station location
-            try_output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-            try_output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-            try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-
-			//Convert true station values to u, v for comparison below
-            wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
-			true_w = input.stations[i].get_w_speed();
-
-			//Check if we're within the tolerance
-            if( abs(true_u-try_output_u) > matchTol)
-			{
-				ret = false;
-			}
-            if( abs(true_v-try_output_v) > matchTol)
-			{
-				ret = false;
-			}
-			//At this point, we don't match vertical velocity...
-            //if( abs(input.stations[i].get_w_speed()-try_output_w) > matchTol)
-			//{
-			//	ret = false;
-			//}
-
-			//Store starting difference
-			if(iter == 1)
-			{
-                if( abs(true_u-try_output_u) > maxStartingOuterDiff)
-                    maxStartingOuterDiff = abs(true_u-try_output_u);
-                if( abs(true_v-try_output_v) > maxStartingOuterDiff)
-                    maxStartingOuterDiff = abs(true_v-try_output_v);
-			    maxCurrentOuterDiff = maxStartingOuterDiff;
-			}else{
-                if(abs(true_u-try_output_u) > maxCurrentOuterDiff)
-                    maxCurrentOuterDiff = abs(true_u-try_output_u);
-                if(abs(true_v-try_output_v) > maxCurrentOuterDiff)
-                    maxCurrentOuterDiff = abs(true_v-try_output_v);
-			}
-
-            //index for storing data back in wxstation object
-            int dataIndex=input.inputsRunNumber;
-
-            wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &try_input_u, &try_input_v);
-            try_input_w = input.stationsScratch[i].get_w_speed();
-            wind_sd_to_uv(input.stationsOldInput[i].get_speed(), input.stationsOldInput[i].get_direction(), &old_input_u, &old_input_v);
-            old_input_w = input.stationsOldInput[i].get_w_speed();
-            wind_sd_to_uv(input.stationsOldOutput[i].get_speed(), input.stationsOldOutput[i].get_direction(), &old_output_u, &old_output_v);
-            old_output_w = input.stationsOldOutput[i].get_w_speed();
-
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "%i\t%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_u - try_output_u, true_v - try_output_v, true_w - try_output_w);
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_u = %lf\tu_solve = %lf\tu_true = %lf", try_input_u, try_output_u, true_u);
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_v = %lf\tv_solve = %lf\tv_true = %lf", try_input_v, try_output_v, true_v);
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_w = %lf\tw_solve = %lf\tw_true = %lf", try_input_w, try_output_w, true_w);
-
-			//Compute new values using formula (from Lopes (2003)):
-			//
-			//            x2 = x1 + outer_relax(yr - y1)
-			//
-			//        where
-			//
-			//            x2 = new input value at the present iteration
-			//            x1 = input value at the previous iteration
-			//            yr = reference value, i.e., reading at the wx station
-			//            y1 = computed value at the wx station, in the previous iteration
-            //			  outer_relax = relaxation value (Lopes found 0.8 to be good compromise between fast convergence and to prevent divergence)
-
-			//u component
-            //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
-			//v component
-            //new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v);
-			//w component
-            //new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w);
-
-            //Compute new values using formula (use ideas from Walter Murray 2010, page 6, http://web.stanford.edu/class/cme304/docs/newton-type-methods.pdf):
-            //Changed the old method above to include limiting of over shooting and making the solutions worse, in this case we just scrap that step and try a half step.
-            //    this recurses (the half steps) until it's better than the last good step OR 3 half step recursions have been attempted.  In the latter case, we stop
-            //    and just take the step, because there was a problem where we got into a never ending recursion problem.
-
-
-            //Did our last correction attempt improve things for u?
-
-            if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<1)
-            {
-                //If worse, then scrap the last try and, only step halfway
-                num_outer_iter_tries_u[i]++;
-                new_input_u = old_input_u + input.outer_relax*(true_u - old_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
-                u_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last u step was worse, try half that step.");
-            }else
-            {
-                num_outer_iter_tries_u[i] = 0;
-                new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u)/((double)pow(2.0, num_outer_iter_tries_u[i]));
-                u_keep_old = false;
-            }
-
-            //Did our last correction attempt improve things for v?
-            if(fabs(try_output_v-true_v) > fabs(old_output_v-true_v) && iter>1 && num_outer_iter_tries_v[i]<1)
-            {
-                //Then scrap the last try and, only step halfway
-                num_outer_iter_tries_v[i]++;
-                new_input_v = old_input_v + input.outer_relax*(true_v - old_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
-                v_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last v step was worse, try half that step.");
-            }else
-            {
-                num_outer_iter_tries_v[i] = 0;
-                new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v)/((double)pow(2.0, num_outer_iter_tries_v[i]));
-                v_keep_old = false;
-            }
-
-            //Did our last correction attempt improve things for w?
-            if(fabs(try_output_w-true_w) > fabs(old_output_w-true_w) && iter>1 && num_outer_iter_tries_w[i]<1)
-            {
-                //Then scrap the last try and, only step halfway
-                num_outer_iter_tries_w[i]++;
-                new_input_w = old_input_w + input.outer_relax*(true_w - old_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
-                w_keep_old = true;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Last w step was worse, try half that step.");
-            }else
-            {
-                num_outer_iter_tries_w[i] = 0;
-                new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w)/((double)pow(2.0, num_outer_iter_tries_w[i]));
-                w_keep_old = false;
-            }
-
-
-            if(u_keep_old==true && v_keep_old==true)
-            {
-                wind_uv_to_sd(old_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].update_direction(dir,dataIndex);
-
-                wind_uv_to_sd(old_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].update_direction(dir,dataIndex);
-
-            }else if(u_keep_old==true && v_keep_old==false)
-            {
-                wind_uv_to_sd(old_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].update_direction(dir,dataIndex);
-
-                wind_uv_to_sd(old_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].update_direction(dir,dataIndex);
-
-            }else if(u_keep_old==false && v_keep_old==true)
-            {
-                wind_uv_to_sd(try_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].update_direction(dir,dataIndex);
-
-                wind_uv_to_sd(try_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].update_direction(dir,dataIndex);
-
-            }else
-            {
-                wind_uv_to_sd(try_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldInput[i].update_direction(dir,dataIndex);
-
-                wind_uv_to_sd(try_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
-                input.stationsOldOutput[i].update_direction(dir,dataIndex);
-            }
-
-
-            //input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
-
-            //u component
-            //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
-            //v component
-            //new_input_v = try_input_v + input.outer_relax*(true_v - try_output_v);
-            //w component
-            //new_input_w = try_input_w + input.outer_relax*(true_w - try_output_w);
-
-			//Set stationsScratch to new velocities and direction that are closer (hopefully!)
-			wind_uv_to_sd(new_input_u, new_input_v, &spd, &dir);
-            input.stationsScratch[i].update_speed(spd,velocityUnits::metersPerSecond,dataIndex);
-            input.stationsScratch[i].update_direction(dir,dataIndex);
-
-//			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
-        }
-
-		//compute percent complete
-		percent_complete=100.0-100.0*((maxCurrentOuterDiff-matchTol)/(maxStartingOuterDiff-matchTol));
-		//if(residual_percent_complete<residual_percent_complete_old)
-		//    residual_percent_complete=residual_percent_complete_old;
-		if(percent_complete<0.0)
-		    percent_complete=0.0;
-		else if(percent_complete>100.0)
-		    percent_complete=100.0;
-
-		//compute percent complete (map so convergence is more linear on progress bar)
-		tempCompleteIn = 1 - percent_complete/100.0;
-		tempCompleteOut = (std::pow(2.0, 0.46371))*std::pow((tempCompleteIn/(1+std::pow(tempCompleteIn, 2.0))),0.46371);
-		time_percent_complete = -100.0*(tempCompleteOut-1.0);
-
-		if(time_percent_complete >= 100.0)
-		    time_percent_complete = 100.0;
-		else if(time_percent_complete >= 99.0 )
-		    time_percent_complete = 99.0;
-        input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
-//        input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete)); //STATION FETCH COMM
-
-
-		return ret;
-	}
-	return true;
 }
 
 /**
