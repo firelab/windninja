@@ -1398,28 +1398,35 @@ void ninja::discretize()
     //         dx      dy      dz
 
 
-	//Set array values to zero----------------------------
-	if(PHI == NULL)
-		PHI=new double[mesh.NUMNP];
+    //Set array values to zero----------------------------
+    if(PHI == NULL)
+        PHI=new double[mesh.NUMNP];
 
-     int interrows=input.dem.get_nRows()-2;
-     int intercols=input.dem.get_nCols()-2;
-     int interlayers=mesh.nlayers-2;
-	 int i, ii, j, jj, k, kk, l;
-                         //NZND is the # of nonzero elements in the SK stiffness array that are stored
-     int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+(intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+(intercols*interrows*interlayers)*27;
+    int interrows=input.dem.get_nRows()-2;
+    int intercols=input.dem.get_nCols()-2;
+    int interlayers=mesh.nlayers-2;
+    int i, ii, j, jj, k, kk, l;
+    //NZND is the # of nonzero elements in the SK stiffness array that are stored
+    int NZND = (8*8)+
+               (intercols*4+interrows*4+interlayers*4)*12+
+               (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
+               (intercols*interrows*interlayers)*27;
 
-     NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	//this is because we will only store the upper half of the SK matrix since it's symmetric
+    NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP; //only store the upper half of the SK matrix since it's symmetric
 
-	 SK = new double[NZND];	//This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
-	 //SK = new taucs_double[NZND];
+    SK = new double[NZND]; //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
 
-	 col_ind=new int[NZND];      //This holds the global column number of the corresponding element in the CRS storage
-	 row_ptr=new int[mesh.NUMNP+1];     //This holds the element number in the SK array (CRS) of the first non-zero entry for the global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how many non-zero elements are in the last node)
-	 RHS=new double[mesh.NUMNP];       //This is the final right hand side (RHS) matrix
+    col_ind=new int[NZND]; //holds the global column number of the corresponding element in the CRS storage
 
-     int type;                     //This is the type of node (corner, edge, side, internal)
-     int temp,temp1;
+    //holds the element number in SK array (CRS) of first non-zero entry for the global row
+    //(the "+1" is so we can use the last entry to quit loops; ie. so we know how many non-zero elements
+    //are in the last node)
+    row_ptr=new int[mesh.NUMNP+1]; 
+
+    RHS=new double[mesh.NUMNP]; //This is the final right hand side (RHS) matrix
+
+    int type; //This is the type of node (corner, edge, side, internal)
+    int temp, temp1;
 
      #pragma omp parallel for default(shared) private(i)
 	 for(i=0;i<mesh.NUMNP;i++)
@@ -1818,36 +1825,38 @@ void ninja::discretize()
 
 			 //Place completed element matrix in global SK and Q matrices
 
-			 for(j=0;j<mesh.NNPE;j++)                          //Start loop over nodes in the element (also, it is the row # in S[])
-			 {
-				 elem.NPK=mesh.get_global_node(j, i);            //elem.NPK is the global row number of the element stiffness matrix
+                        for(j=0;j<mesh.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+                        {
+			    elem.NPK=mesh.get_global_node(j, i); //global row number of element stiffness matrix
 
 #pragma omp atomic
-				 RHS[elem.NPK] += elem.QE[j];
+			    RHS[elem.NPK] += elem.QE[j];
 
-				 for(k=0;k<mesh.NNPE;k++)           //k is the local column number in S[]
-				 {
-					 elem.KNP=mesh.get_global_node(k, i);
+			    for(k=0;k<mesh.NNPE;k++) //k is the local column number in S[]
+			    {
+			        elem.KNP=mesh.get_global_node(k, i);
 
-					 if(elem.KNP >= elem.NPK)	//do only if we're on the upper triangular region of SK[]
-					 {
-						 pos=-1;                  //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-						 l=0;                     //l increments through col_ind[] starting from where row_ptr[] says until we find the column number we're looking for
-						 do
-						 {
-							 if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP)   //Check if we're at the correct position
-								 pos=row_ptr[elem.NPK]+l;           //If so, save that position in pos
+				if(elem.KNP >= elem.NPK) //only if we're on the upper triangular region of SK[]
+				{
+				    pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                                    //l increments through col_ind[] starting from where row_ptr[] says
+                                    //until we find the column number we're looking for
+				    l=0;    
+				    do
+				    {
+				        if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
+					    pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
 							 l++;
-						 }while(pos<0);
+				    }while(pos<0);
 
 #pragma omp atomic
-						 SK[pos] += elem.S[j*mesh.NNPE+k];     //Here is the final global stiffness matrix in symmetric storage
-					 }
-				 }
-
-			 }                             //End loop over nodes in the element
-		 }                                  //End loop over elements
-	 }		//End parallel region
+				    SK[pos] += elem.S[j*mesh.NNPE+k]; //final global stiffness matrix in symmetric storage
+				}
+			    }
+			} //End loop over nodes in the element
+		    } //End loop over elements
+	        } //End parallel region
 
      #ifdef STABILITY
      stb.alphaField.deallocate();
