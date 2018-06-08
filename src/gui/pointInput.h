@@ -90,6 +90,7 @@ class pointInput : public QWidget
     QHBoxLayout *diurnalTimeLayout;
     QDateTimeEdit *dateTimeEdit;
     QLabel *diurnalLabel;
+    QLabel *oneStepTimeLabel;
 
     QToolButton *addStationButton;
     QToolButton *removeStationButton;
@@ -144,7 +145,7 @@ class pointInput : public QWidget
     QFrame *xvLine2;
     QFrame *xvLine3;
 
-    //File Info Area (No Longer Visible)
+    //File Info Area (No Longer Visible) //Needs to Be Cleaned Up!
     QHBoxLayout *selectedFileLayout;
     QVBoxLayout *fileStartLayout;
     QVBoxLayout *fileEndLayout;
@@ -184,6 +185,8 @@ class pointInput : public QWidget
     
     std::vector<int> startSeries;
     std::vector<int> endSeries; //Global Storage for start and stop times
+
+    std::vector<int> diurnalTimeVec;
     
     //End Timeseries stuff
     QLineEdit *ska;
@@ -209,6 +212,7 @@ class pointInput : public QWidget
     void testProg();
     void updateProg();
     int progExec();
+    QDateTime readNinjaNowName(const char* fileName);
     
   private slots:
     void readStationFile();
@@ -227,9 +231,11 @@ class pointInput : public QWidget
     void pairStopTime(QDateTime xDate);
     void pairTimeSeries(int curIndex);
     
+    void updateSingleTime(QDateTime xDate);
     void updateStartTime(QDateTime xDate);
     void updateStopTime(QDateTime xDate);
     void watchStopTime();
+    void watchStartTime();
     
     void toggleUI();
     void toggleTimeseries();

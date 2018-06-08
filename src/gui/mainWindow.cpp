@@ -1870,6 +1870,31 @@ int mainWindow::solve()
         bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
         bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
 
+        /*
+         * Note that pointFormat is not the same as stationFormat!
+         *
+         * point Format is based on pointInput::directStationTraffic
+         * 0 == old format
+         * 1 == new format with time series
+         * 2 == new format no time series
+         *
+         * this is only used in the GUI
+         *
+         * stationFormat is based on wxStation::GetHeaderVersion
+         * 1 == old format
+         * 2 == new format, both timeseries and timeseries
+         * 3 == csv list that points to list of new format files with time series
+         *      NOT used in GUI
+         * 4 == csv list that points to list of new format files with no time series
+         *      NOT USED IN GUI
+         * based on header only, not actual data!
+         * this is used inside the actual simulation
+         *
+         * A modified version of directstationtraffic has been adapted for CLI use
+         * in wxStation::getFirstStationLine
+         *
+         */
+
         if (pointFormat==0)
         {
             CPLDebug("STATION_FETCH","USING OLD FORMAT...");
@@ -1878,13 +1903,22 @@ int mainWindow::solve()
             /* right now the only option is the old format */
             wxStation::SetStationFormat(wxStation::oldFormat);
             std::vector<boost::posix_time::ptime> timeList;
-            boost::posix_time::ptime noTime;
-            timeList.push_back(noTime);
+            if(useDiurnal==true || useStability==true) //means that the user is specifying time
+            { //Get that time and assign it to the simulation
+                std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
+                boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
+                timeList.push_back(singleTime);
+            }
+            else//The user is not giving us time, do what we normally do
+            {
+                boost::posix_time::ptime noTime;
+                timeList.push_back(noTime);
+            }
             
             army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
             nRuns = army->getSize();
         }
-        if (pointFormat==1 || pointFormat==2)
+        if (pointFormat==1 || pointFormat==2) //New Format
         {
             wxStation::SetStationFormat(wxStation::newFormat);
             std::vector<int> formatVec;
@@ -1896,11 +1930,11 @@ int mainWindow::solve()
 //                cout<<wxStation::GetHeaderVersion(pointFileList[i].c_str())<<endl;
                 formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
             }
-            if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin()))
+            if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin())) //Make sure all the header versions are equal, in case one of them gets past all the gui checkss
             {
                 CPLDebug("STATION_FETCH","HEADER VERSIONS ARE GOOD...");
 
-                if(useTimeList == true)
+                if(useTimeList == true) //New format with TimeList!
                 {
                     CPLDebug("STATION_FETCH","USING TIME LIST...");
                     timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
@@ -1913,43 +1947,20 @@ int mainWindow::solve()
                     nRuns = army->getSize();
                     
                 }
-                if (useTimeList == false)
+                if (useTimeList == false)//Current Data/Single Step
                 {
+                    //Get time from file attributes, if its diurnal this matters
+                    //if not, then it really doesn't matter and who cares
                     boost::posix_time::ptime noTime;
-                    timeList.push_back(noTime);
+//                    timeList.push_back(noTime);
                     CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
+                    std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
+                    boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
+                    timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
                     army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
                     nRuns = army->getSize();
-                }
-                if (writeStationKML==true)
-                {
-                    writeToConsole("Writing Weather Station .kml");
-                    nRuns = army->getSize();
-                    for (int i_=0;i_<nRuns;i_++)
-                    {
-                        wxStation::writeKmlFile(army->getWxStations(i_),demFile);
-                    }
-                }
-                if (writeStationCSV==true)
-                {
-                    writeToConsole("Writing Weather Station .csv");
-                    nRuns = army->getSize();
-//                    for (int i_=0;i_<nRuns;i_++)
-//                    {
-//                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
-//                    }
-                    pointInitialization::writeStationOutFile(army->getWxStations(0),demFile,"",true);
-
-                }
-                
-                
-                
-                
-                
-                
-                
-                
+                }               
             }
             else
             {
@@ -1957,6 +1968,41 @@ int mainWindow::solve()
             }
             
             
+        }
+        if (writeStationKML==true) //Write KMLS for each time step
+        {
+            writeToConsole("Writing Weather Station .kml");
+            nRuns = army->getSize();
+            for (int i_=0;i_<nRuns;i_++)
+            {
+                wxStation::writeKmlFile(army->getWxStations(i_),demFile,QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/");
+            }
+        }
+//                if (writeStationCSV==true)
+        const char *csvOpt = CPLGetConfigOption("WRITE_CSV","FALSE");
+        if(csvOpt!="FALSE") //The only way to write an interpolated CSV is to set a config option
+        {
+            writeToConsole("Writing Weather Station .csv");
+            nRuns = army->getSize();
+//                    for (int i_=0;i_<nRuns;i_++)
+//                    {
+//                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
+//                    }
+            QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
+            QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
+            std::string csvPath = demPath.toStdString()+demBase.toStdString();
+            pointInitialization::writeStationOutFile(army->getWxStations(0),csvPath,"",true);
+
+        }
+        const char *metaOpt = CPLGetConfigOption("FETCH_METADATA","FALSE");
+        if(metaOpt!="FALSE") //set a config option to get the metadata from the DEM
+        { //There is also a button for this, that is hidden
+            writeToConsole("Fetching station metadata for DEM...");
+            QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
+            QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
+            std::string metaPath = demPath.toStdString()+demBase.toStdString()+"-metadata.csv";
+            CPLDebug("STATION_FETCH","Saving Metadata to: %s",metaPath.c_str());
+            pointInitialization::fetchMetaData(metaPath,demFile,true);
         }
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
@@ -2062,7 +2108,7 @@ int mainWindow::solve()
         {
             army->setUniVegetation( i, vegetation );
         }
-        if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
+        if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
         {
 //           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
 //            {
@@ -2122,12 +2168,12 @@ int mainWindow::solve()
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag )
             {
-                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
-                        tree->point->dateTimeEdit->date().month(),
-                        tree->point->dateTimeEdit->date().day(),
-                        tree->point->dateTimeEdit->time().hour(),
-                        tree->point->dateTimeEdit->time().minute(),
-                        0, timeZone );
+//                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(), //moved to makestationArmy
+//                        tree->point->dateTimeEdit->date().month(),
+//                        tree->point->dateTimeEdit->date().day(),
+//                        tree->point->dateTimeEdit->time().hour(),
+//                        tree->point->dateTimeEdit->time().minute(),
+//                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
@@ -2160,14 +2206,14 @@ int mainWindow::solve()
                                    coverUnits::percent );
             army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag )
+            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
             {
-                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
-                        tree->point->dateTimeEdit->date().month(),
-                        tree->point->dateTimeEdit->date().day(),
-                        tree->point->dateTimeEdit->time().hour(),
-                        tree->point->dateTimeEdit->time().minute(),
-                        0, timeZone );
+//                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
+//                        tree->point->dateTimeEdit->date().month(),
+//                        tree->point->dateTimeEdit->date().day(),
+//                        tree->point->dateTimeEdit->time().hour(),
+//                        tree->point->dateTimeEdit->time().minute(),
+//                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
         }
@@ -3325,7 +3371,7 @@ void mainWindow::enablePointDate(bool enable)
             //Allows for on the fly changes in diurnal parameters as users select/deselect stations of
             //various types
             emit mainDiurnalChanged(true); //Sets to true so that stability options are also set
-            if(tree->point->simType!=1) //Only turn on datetimeEdit for single step runs
+            if(tree->point->simType==0) //Only turn on datetimeEdit for single step runs old format
             {
                 tree->point->dateTimeEdit->setEnabled( true );
             }

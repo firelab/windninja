@@ -107,13 +107,18 @@ class pointInitialization : public initialize
                                         std::vector<boost::posix_time::ptime> timeList,
                                         std::string timeZone, bool latest);
 
-        static void writeStationLocationFile(std::string stationPath,std::string demFile);
+        static void writeStationLocationFile(std::string stationPath,std::string demFile,bool current_data);
         static std::vector<boost::posix_time::ptime> getTimeList(int startYear, int startMonth,
                                                                 int startDay, int startHour,
                                                                 int startMinute, int endYear,
                                                                 int endMonth, int endDay,
                                                                 int endHour, int endMinute,
                                                                 int nTimeSteps, std::string timeZone);
+        static boost::posix_time::ptime generateSingleTimeObject(int year,
+                                                                 int month,
+                                                                 int day,
+                                                                 int hour,
+                                                                 int minute, std::string timeZone);
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
         static void SetRawStationFilename(std::string filename);

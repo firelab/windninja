@@ -2928,6 +2928,54 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
 
     return timeList;
 }
+/**
+ * @brief pointInitialization::generateSingleTimeObject
+ * Builds a single ptime object used in the gui and other places
+ * for a single step run!
+ *
+ * @param year
+ * @param month
+ * @param day
+ * @param hour
+ * @param minute
+ * @param timeZone
+ * @return
+ */
+boost::posix_time::ptime pointInitialization::generateSingleTimeObject(int year, int month, int day,
+                                                                       int hour, int minute,
+                                                                       string timeZone)
+{
+    boost::posix_time::ptime noTime;
+    boost::local_time::tz_database tz_db; //Generate Time Zone Database
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") ); //Load in stored TimeZoneDatabase
+    boost::local_time::time_zone_ptr timeZonePtr;//Initialize time Zone
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);//Get Time Zone from Databse
+
+    boost::gregorian::date xDate(year,month,day);
+    boost::posix_time::time_duration xTime(hour,minute,0,0);
+
+    boost::posix_time::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
+    boost::posix_time::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
+
+    boost::posix_time::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
+
+    boost::local_time::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
+    //like in get time list, check to see where we are WRT daylight savings time!
+    if(xUTC>start_dst && xUTC<end_dst)
+    {
+        CPLDebug("STATION_FETCH", "Time is within DST!");
+        xLocal = boost::local_time::local_date_time(xDate,xTime,timeZonePtr,true);
+    }
+    else
+    {
+        CPLDebug("STATION_FETCH", "Time is outside DST!");
+        xLocal = boost::local_time::local_date_time(xDate,xTime,timeZonePtr,false);
+    }
+
+    boost::posix_time::ptime xxUTC=xLocal.utc_time(); //now that we know where we are, go back to utc as a corrected time object
+
+    return xxUTC;
+}
 
 /**
  * @brief Fetches station data from bounding box.
@@ -3073,7 +3121,7 @@ void pointInitialization::setLocalStartAndStopTimes(boost::local_time::local_dat
     start_and_stop_times.push_back(start);
     start_and_stop_times.push_back(stop);
 }
-void pointInitialization::writeStationLocationFile(string stationPath, std::string demFile){
+void pointInitialization::writeStationLocationFile(string stationPath, std::string demFile, bool current_data){
     std::string cName;
     stringstream statLen;
     statLen<<stationFiles.size();
@@ -3084,12 +3132,21 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
 //    cout<<baseName<<endl;
 //    cout<<baseName<<endl;
 //    cout<<rootFile<<endl;
+
     cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
 //    cout<<cName<<endl;
 //    exit(1);
     ofstream outFile;
-    outFile.open(cName.c_str());    
-    outFile<<"Station_File_List,"<<endl;
+    outFile.open(cName.c_str());
+    if(current_data==true)
+    {
+        outFile<<"Recent_Station_File_List,"<<endl;
+    }
+    if(current_data==false)
+    {
+        outFile<<"Station_File_List,"<<endl;
+    }
+//    outFile<<"Station_File_List,"<<endl;
     for(int i=0;i<stationFiles.size();i++){
         outFile<<stationFiles[i]<<endl;
     }

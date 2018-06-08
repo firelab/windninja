@@ -40,6 +40,7 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     this->show();
 
     currentBox->setVisible(false);
+    fetchMetaButton->setVisible(false); //Hide the metadata button from the gui
 
     stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
     stationFetchProgress->setWindowModality(Qt::ApplicationModal);
@@ -55,12 +56,6 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
 stationFetchWidget::~stationFetchWidget()
 {
     delete stationFetchProgress;
-//    delete progressBar;
-//    delete fetcher;
-//    delete latlngError;
-//    delete bufferError;
-//    delete boundsError;
-//    delete gmInterface;
 }
 /**
  * @brief stationFetchWidget::fixTime
@@ -91,7 +86,11 @@ void stationFetchWidget::connectInputs()
 //    connect(fetchDataButton, SIGNAL(clicked()),this, SLOT(fetchStation()));
     connect(fetchDataButton,SIGNAL(clicked()),this,SLOT(executeFetchStation()));
 
-    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
+//    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
+
+    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
+    connect(startEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime()));
+
     connect(closeButton,SIGNAL(clicked()),this,SLOT(close())); //closes stationFetchWidget
 }
 
@@ -103,16 +102,48 @@ void stationFetchWidget::setInputFile(QString file) //Gets the DEM
 {
     demFileName = file;    
 }
-
+//deprecated in favor of two functions
 void stationFetchWidget::watchTime() //Makes sure that the start time never goes farther into the future and the end time
 {
 //    cout<<"end TIME CHANGED!"<<endl;
 //    endEdit->dateTime()
-    startEdit->setMaximumDateTime(endEdit->dateTime().addSecs(-3600));    
+//    startEdit->setMaximumDateTime(endEdit->dateTime().addSecs(-3600));
+//    if (endEdit->dateTime()<startEdit->dateTime())
+//    {
+//        writeToConsole("Start Time is greater than End Time!, reverting...");
+//        CPLDebug("STATION_FETCH","START TIME > END TIME: FIXING!");
+//        startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
+//    }
+}
+/**
+ * @brief stationFetchWidget::watchStartTime
+ * Watches the start time that the user puts in, if
+ * its bigger than the end time, correct the end time by adding 1 hour
+ * to the start time
+ */
+void stationFetchWidget::watchStartTime()
+{
     if (endEdit->dateTime()<startEdit->dateTime())
     {
         writeToConsole("Start Time is greater than End Time!, reverting...");
-        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING!");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING END TIME");
+//        startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
+        endEdit->setDateTime(startEdit->dateTime().addSecs(3600));
+    }
+
+}
+/**
+ * @brief stationFetchWidget::watchStopTime
+ * watch the end time the user puts in, if it is smaller
+ * than the start time
+ * correct the start time by subtracting 1 hour from the end time
+ */
+void stationFetchWidget::watchStopTime()
+{
+    if (endEdit->dateTime()<startEdit->dateTime())
+    {
+        writeToConsole("Start Time is greater than End Time!, reverting...");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING START TIME");
         startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
     }
 }
@@ -521,7 +552,7 @@ void stationFetchWidget::closeEvent(QCloseEvent *event)
 {
     event->ignore();
 //    this->writeSettings();
-    exitDEM();
+    exitWidget();
     event->accept();
 }
 

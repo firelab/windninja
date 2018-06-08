@@ -153,7 +153,7 @@
           <widget class="QComboBox" name="timeLoc">
            <item>
             <property name="text">
-             <string>Download Current Weather Data</string>
+             <string>Download Most Recent Data</string>
             </property>
            </item>
            <item>
@@ -197,11 +197,14 @@
                <x>15</x>
                <y>30</y>
                <width>211</width>
-               <height>20</height>
+               <height>61</height>
               </rect>
              </property>
              <property name="text">
-              <string>Fetch Current Weather Data</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download the most recent weather data for a single time step simulation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
              </property>
             </widget>
            </widget>

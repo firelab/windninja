@@ -153,7 +153,7 @@ class wxStation
     static void stationViewer(wxStation station);
 
     static void writeKmlFile( std::vector<wxStation> stations,
-                  std::string outFileName );
+                  std::string demFileName,std::string basePath );
     static void writeKMZFile(std::vector<wxStation> stations,std::string basePath, std::string demFileName);
     static vector<std::string> stationKmlNames;
 
@@ -163,6 +163,7 @@ class wxStation
     static void writeBlankStationFile( std::string outFileName );
 
     static int GetHeaderVersion(const char *pszFilename);
+    static int GetFirstStationLine(const char *xFilename);
     static void SetStationFormat(eStationFormat format);
     static wxStation::eStationFormat GetStationFormat();
 

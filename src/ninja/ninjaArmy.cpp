@@ -189,12 +189,27 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
         CPLDebug("STATION_FETCH","----");
     }
     //handle old wxStation format
-    if (timeList.size() == 1 && timeList[0] == noTime)
+//    if (timeList.size() == 1 && timeList[0] == noTime)
+    if(timeList.size()==1)
     {
-        timeList.assign(1, standard);
-        localTimeList.assign(1, localStandard);
+        CPLDebug("STATION_FETCH","Single Step Run Detected!");
+        if (timeList[0]!=noTime)
+        {
+            CPLDebug("STATION_FETCH","Date Time info available for 1 step!");
+            timeList.assign(1, timeList[0]);
+            localTimeList.assign(1, boost::local_time::local_date_time(timeList[0],timeZonePtr));
+        }
+        if (timeList[0]==noTime)
+        {
+            CPLDebug("STATION_FETCH","No date time data available, assigning simulation time to now!");
+            timeList.assign(1, standard);
+            localTimeList.assign(1, localStandard);
+        }
+        for(int ix = 0; ix<timeList.size();ix++)
+        {
+            cout<<localTimeList[ix]<<endl;
+        }
     }
-
     for(unsigned int k=0; k<stationList.size(); k++)
     {
         for (unsigned int i=0; i<timeList.size(); i++)

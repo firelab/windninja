@@ -1085,7 +1085,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
 
                     //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
                     
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
@@ -1101,7 +1101,7 @@ int windNinjaCLI(int argc, char* argv[])
                         throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
                     }
 //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>());
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
                     
                 }
                 else //If something else bad happens
@@ -1128,38 +1128,80 @@ int windNinjaCLI(int argc, char* argv[])
                 pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
                 int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());
+                /*There are 4 types of files that can be fed into the CLI
+                 * 1 == old format, pre station fetch, no date time column
+                 * 2 == new Format, with a date time column, (may or may not be populated with time data)
+                 *      If this is provided, only one station file, and thus one weather station
+                 *      can be used for a run
+                 * 3 == new Format time series station list
+                 *      this is a csv that points to a bunch of new format stations
+                 *      with populated time data columns
+                 * 4 == new Format current data station list
+                 *      this is a csv that points to a bunch of new format station files
+                 *      with no time data in the datetime column, indicating current data.
+                 *
+                 */
                 if (stationFormat==2) //new format
                 {
+                    /*
+                     * There are two types of new format
+                     * timeseries
+                     * and
+                     * current data
+                     *
+                     * to determine which is which, quickly open the file
+                     * in question and read its first line
+                     * 2 == time series
+                     * 1 == current data
+                     *
+                     * This is only necessary if the user provides one file to the CLI
+                     */
                     wxStation::SetStationFormat(wxStation::newFormat);
-                    option_dependency(vm, "wx_station_filename", "start_year");
-                    option_dependency(vm, "wx_station_filename", "start_month");
-                    option_dependency(vm, "wx_station_filename", "start_day");
-                    option_dependency(vm, "wx_station_filename", "start_hour");
-                    option_dependency(vm, "wx_station_filename", "start_minute");
-                    option_dependency(vm, "wx_station_filename", "end_year");
-                    option_dependency(vm, "wx_station_filename", "end_month");
-                    option_dependency(vm, "wx_station_filename", "end_day");
-                    option_dependency(vm, "wx_station_filename", "end_hour");
-                    option_dependency(vm, "wx_station_filename", "end_minute");
-                    option_dependency(vm, "wx_station_filename", "number_time_steps");
+                    int fileSubFormat = wxStation::GetFirstStationLine(stationFile.c_str());
+                    if(fileSubFormat==2) //Time series detected!
+                    {
+                        CPLDebug("STATION_FETCH","One File Provided...\nMultiple steps detected in file with type: newFormat");
+                        option_dependency(vm, "wx_station_filename", "start_year");
+                        option_dependency(vm, "wx_station_filename", "start_month");
+                        option_dependency(vm, "wx_station_filename", "start_day");
+                        option_dependency(vm, "wx_station_filename", "start_hour");
+                        option_dependency(vm, "wx_station_filename", "start_minute");
+                        option_dependency(vm, "wx_station_filename", "end_year");
+                        option_dependency(vm, "wx_station_filename", "end_month");
+                        option_dependency(vm, "wx_station_filename", "end_day");
+                        option_dependency(vm, "wx_station_filename", "end_hour");
+                        option_dependency(vm, "wx_station_filename", "end_minute");
+                        option_dependency(vm, "wx_station_filename", "number_time_steps");
 
-                    timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
-                                                         vm["start_month"].as<int>(),
-                                                         vm["start_day"].as<int>(),
-                                                         vm["start_hour"].as<int>(),
-                                                         vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
-                                                         vm["number_time_steps"].as<int>(),
-                                                         osTimeZone );
-                    std::vector<std::string> sFiles;
-                    sFiles.push_back(vm["wx_station_filename"].as<std::string>());
-                    pointInitialization::storeFileNames(sFiles);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                        timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                             vm["start_month"].as<int>(),
+                                                             vm["start_day"].as<int>(),
+                                                             vm["start_hour"].as<int>(),
+                                                             vm["start_minute"].as<int>(),
+                                                             vm["end_year"].as<int>(),
+                                                             vm["end_month"].as<int>(),
+                                                             vm["end_day"].as<int>(),
+                                                             vm["end_hour"].as<int>(),
+                                                             vm["end_minute"].as<int>(),
+                                                             vm["number_time_steps"].as<int>(),
+                                                             osTimeZone );
+                        std::vector<std::string> sFiles;
+                        sFiles.push_back(vm["wx_station_filename"].as<std::string>());
+                        pointInitialization::storeFileNames(sFiles);
+                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                    }
+                    if(fileSubFormat==1) //not a time series
+                    {
+                        CPLDebug("STATION_FETCH","One File Provided...\nOne step in file with type: newFormat");
+                        boost::posix_time::ptime noTime;
+                        timeList.push_back(noTime);
+                        std::vector<std::string> sFiles;
+                        sFiles.push_back(vm["wx_station_filename"].as<std::string>());
+                        pointInitialization::storeFileNames(sFiles);
+                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                    }
                 }
                 else if (stationFormat==1) //old format
                 {
@@ -1172,7 +1214,7 @@ int windNinjaCLI(int argc, char* argv[])
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
                     wxStation::SetStationFormat(wxStation::newFormat);
-                    CPLDebug("STATION_FETCH","Multiple Station Files Detected...");
+                    CPLDebug("STATION_FETCH","Multiple Timeseries Station Files Detected...");
                     option_dependency(vm, "wx_station_filename", "start_year");
                     option_dependency(vm, "wx_station_filename", "start_month");
                     option_dependency(vm, "wx_station_filename", "start_day");
@@ -1198,6 +1240,20 @@ int windNinjaCLI(int argc, char* argv[])
                                                          osTimeZone );
                     std::vector<std::string> sFiles;
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
+                    pointInitialization::storeFileNames(sFiles);
+                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                }
+                else if (stationFormat==4) // New Format where there are multiple one step recent station files
+                {
+                    wxStation::SetStationFormat(wxStation::newFormat);
+                    CPLDebug("STATION_FETCH","Multiple Single Step Station Files Detected...");
+
+                    boost::posix_time::ptime noTime;
+                    timeList.push_back(noTime);
+
+                    std::vector<std::string> sFiles;
+                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
@@ -1427,7 +1483,7 @@ int windNinjaCLI(int argc, char* argv[])
 //STATION_FETCH
 
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
+//                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
 //                option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename"); //No Longer need to require a filename
 
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
@@ -1453,8 +1509,19 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i);
-                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-                    vm["wx_station_kml_filename"].as<std::string>());
+//                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+//                    vm["wx_station_kml_filename"].as<std::string>());
+                    if(vm.count("output_path")){
+                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                                                vm["elevation_file"].as<std::string>(),
+                                                vm["output_path"].as<std::string>());
+                    }
+                    else
+                    {
+                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                                                vm["elevation_file"].as<std::string>(),
+                                                    "");
+                    }
                 }
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),

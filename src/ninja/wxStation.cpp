@@ -619,12 +619,16 @@ wxStation::eStationFormat wxStation::GetStationFormat()
  * version)
  * 2 -> format after implemententing the station fetch functionality.
  *
+ * 3 -> csv that stores the actual timeseries files (all format 2)
+ *
+ * 4 -> csv that stores the actual current data files (all format 2)
+ *
  * If the header is not valid, return -1;
  *
  * \param pszFilename the path of the file to test
  *
  * \return -1 if the file is invalid in anyway, or the version of the file(1 or
- * 2).
+ * 2,3,4).
  */
 int wxStation::GetHeaderVersion(const char *pszFilename)
 {
@@ -653,7 +657,12 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     OGRFieldDefnH hFldDefo = NULL;
     hFldDefo = OGR_FD_GetFieldDefn(hDefn, 0);
     if(EQUAL(OGR_Fld_GetNameRef(hFldDefo),"Station_File_List")){
-        return 3;
+        return 3; //List of station files with time data
+    }
+    OGRFieldDefnH hFldDefp = NULL;
+    hFldDefp = OGR_FD_GetFieldDefn(hDefn, 0);
+    if(EQUAL(OGR_Fld_GetNameRef(hFldDefp),"Recent_Station_File_List")){
+        return 4; //list of station files with no time data, but datetimecolumn
     }
     
     /*
@@ -713,6 +722,46 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     }
     OGR_DS_Destroy(hDS);
     return rc;
+}
+
+int wxStation::GetFirstStationLine(const char *xFilename)
+{
+    OGRDataSourceH hDS;
+    OGRLayer *poLayer;
+    OGRFeature *poFeature;
+    OGRLayerH hLayer;
+    GIntBig iBig = 1;
+
+    hDS = OGROpen( xFilename, FALSE, NULL );
+    if(hDS == NULL)
+    {
+        return -1; //very bad!
+    }
+    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
+    hLayer=OGR_DS_GetLayer(hDS,0);
+    OGR_L_ResetReading(hLayer);
+    poLayer->ResetReading();
+    poFeature = poLayer->GetFeature(iBig);
+    if (poFeature==NULL)
+    {
+        return -1; //If there are no stations in the csv!
+    }
+    std::string start_datetime(poFeature->GetFieldAsString(15));
+
+    if(start_datetime.empty()==true)
+    {
+        return 1;
+    }
+    if(start_datetime.empty()==false)
+    {
+        return 2;
+    }
+
+
+
+
+
+
 }
 
 /**Write a csv file with no data, just a header
@@ -825,7 +874,7 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
  * @return void
  */
 void wxStation::writeKmlFile( std::vector<wxStation> stations,
-        const std::string outFileName )
+                              std::string demFileName,std::string basePath)
 {
     std::string outFileNameStamp;
     std::string outFileNameMod;
@@ -839,16 +888,9 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
     timestream<<stamp;
 
-    if (outFileName.substr(outFileName.size()-4,4)==".kml")
-    {
-        outFileNameMod=outFileName.substr(0,outFileName.size()-4);
-    }
-    else
-    {
-        outFileNameMod=outFileName;
-    }
+    const char *demChar = CPLGetBasename(demFileName.c_str());
 
-    outFileNameStamp=outFileNameMod+"-"+timestream.str()+".kml";
+    outFileNameStamp=basePath+demChar+"-stations-"+timestream.str()+".kml";
 
     if( stations.size() == 0 )
         return;
@@ -862,6 +904,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     }
 
     double heightTemp, speedTemp, directionTemp, ccTemp, temperatureTemp, radOfInflTemp;
+
 
     fprintf( fout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
     fprintf( fout, "<kml>\n" );
@@ -877,6 +920,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
         ccTemp = stations[i].get_cloudCover();
         temperatureTemp = stations[i].get_temperature();
         radOfInflTemp = stations[i].get_influenceRadius();
+        boost::local_time::local_date_time localTimeTemp = stations[i].get_currentTimeStep();
 
         lengthUnits::fromBaseUnits(heightTemp, stations[i].heightUnits);
         //lengthUnits::fromBaseUnits(heightTemp, lengthUnits::feet);
@@ -910,6 +954,8 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
                 ccTemp, coverUnits::getString(stations[i].cloudCoverUnits).c_str() );
         fprintf( fout, "          Temperature: %.1lf %s\n",
                 temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
+        fprintf( fout, "          Local Time:  %s\n",
+                localTimeTemp.to_string().c_str() );
 
         if(stations[i].get_influenceRadius() > 0.0)
         {

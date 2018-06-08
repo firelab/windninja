@@ -70,8 +70,12 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     dateTimeEdit->setToolTip("Set date and time for single time step diurnal/stability simulations");
 
     diurnalLabel = new QLabel(this);
-    diurnalLabel->setText("Thermal Parameters: ");
+    diurnalLabel->setText("Set Simulation Time: ");
     diurnalLabel->setVisible(false);
+
+    oneStepTimeLabel = new QLabel(this); //Label for 1 step datetime runs
+    oneStepTimeLabel->setText("Simulation time set to:");
+    oneStepTimeLabel->setVisible(false);
 
 //Old way of reading station files, no longer needed...
 //    readStationFileButton =  new QToolButton( this ); //Opens old Format Station
@@ -220,7 +224,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     fileEndVal->setVisible(false);
     fileStepsVal->setVisible(false);
 
-    xvLine1->setVisible(true); //Used to separate Buttons from other stuff
+    xvLine1->setVisible(false);
     timeLine2->setVisible(true);
 
     xvLine2->setVisible(false);
@@ -347,7 +351,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget( writeStationFileButton );
     buttonLayout->addWidget(xvLine1);
-//    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
+    writeStationFileButton->setVisible( false ); //This was disabled in the original PI
     buttonLayout->addWidget( writeStationKmlButton );
     buttonLayout->addWidget(execProg);
 //    buttonLayout->addWidget(widgetButton); //Old Download Button Location, keep for now ->Moved to hDownloaderLayout
@@ -356,6 +360,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     diurnalTimeLayout = new QHBoxLayout;
     diurnalTimeLayout->addWidget(diurnalLabel);
     diurnalTimeLayout->addWidget(dateTimeEdit,1);
+    diurnalTimeLayout->addWidget(oneStepTimeLabel);
 //    diurnalTimeLayout->addStretch(-1);
 
     pointLayout = new QVBoxLayout;
@@ -410,7 +415,9 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
             SLOT(toggleTimeseries()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
-//    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
+
+    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
+    connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime()));
 
 //    connect(treeView,SIGNAL(QTreeView::currentChanged(const QModelIndex&, const QModelIndex&);),
 //            this,SLOT(readMultipleStaitonFiles()));
@@ -479,8 +486,7 @@ void pointInput::readMultipleStationFiles(const QModelIndex &index)
     std::vector<std::string> finalStations;
     std::vector<int> finalTypes;
     std::string filename = fi.absoluteFilePath().toStdString(); //get its path
-    vx.push_back(filename); //append filename to list
-
+    vx.push_back(filename); //append filename to list           
 //    vy.push_back(filename);
 //    cout<<filename<<endl;
 //    std::vector<std::string> uniNames = std::unique(fileNameVec.begin(),fileNameVec.end());
@@ -672,6 +678,15 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         dateTimeEdit->setVisible(true);
         diurnalLabel->setVisible(true);
+        oneStepTimeLabel->setVisible(false);
+
+        //Update Diurnal Time
+        if (isDiurnalChecked==true)
+        {
+            dateTimeEdit->setEnabled(true); //enable the diurnal Box
+            updateSingleTime(dateTimeEdit->dateTime()); //set the time from the diurnal box
+        }
+
 
         return 0;
     }
@@ -700,6 +715,7 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         dateTimeEdit->setVisible(false);
         diurnalLabel->setVisible(false);
+        oneStepTimeLabel->setVisible(false);
         return 1;
     }
     if (stationHeader == 2 && instant == 1)
@@ -722,12 +738,40 @@ int pointInput::directStationTraffic(const char* xFileName)
         stopTime->setVisible(false);
         numSteps->setVisible(false);
 
-        dateTimeEdit->setVisible(true);
-        diurnalLabel->setVisible(true);
+        dateTimeEdit->setVisible(false);
+        diurnalLabel->setVisible(false);
+        dateTimeEdit->setEnabled(false);
+
+        const char *optChangeTime = CPLGetConfigOption("CHANGE_DATE_TIME","FALSE");
+        if(optChangeTime!="FALSE")
+        {
+            QString time_format = "yyyy-MM-ddTHH:mm:ss";
+            QString optXTime = QString::fromAscii(optChangeTime);
+            QDateTime opt_time_obj = QDateTime::fromString(optXTime,time_format);
+            updateSingleTime(opt_time_obj);
+            QString oneStepText = "Simulation time set to: "+optXTime;
+            oneStepTimeLabel->setText(oneStepText);
+            oneStepTimeLabel->setVisible(true); // to this label in the GUI
+        }
+        else
+        {
+            //Reads the sim time from the file the user provides;
+            QDateTime singleRunTime = readNinjaNowName(xFileName); //Read in the date time
+            updateSingleTime(singleRunTime); //update it globally
+            QString runTimeText = singleRunTime.toString(); //Print it out for the user
+            QString oneStepText = "Simulation time set to: "+runTimeText;
+            oneStepTimeLabel->setText(oneStepText);
+            oneStepTimeLabel->setVisible(true); // to this label in the GUI
+        }
         return 2;
 
     }
     if (stationHeader == 3)
+    {
+        //Invalid header type for GUI run...
+        return -1;
+    }
+    if (stationHeader == 4)
     {
         //Invalid header type for GUI run...
         return -1;
@@ -828,10 +872,10 @@ void pointInput::displayInformation(int dataType)
     {
         clippit->setText("Run Type: Single Step");
         pointGo=true;
-        if (isDiurnalChecked==true)
-        {
-            dateTimeEdit->setEnabled(true);
-        }
+//        if (isDiurnalChecked==true)
+//        {
+//            dateTimeEdit->setEnabled(true);
+//        }
     }
     if (dataType == -1 && stationFileList.size()==0) //Special Case
     {
@@ -856,6 +900,28 @@ void pointInput::displayInformation(int dataType)
 //        pointGo=false;
 //    }
 }
+/**
+ * @brief pointInput::readNinjaNowName
+ * @param fileName
+ * This is for current step new format runs
+ * we need time if the user turnsl on diurnal/stability input
+ * Read the Time from the date created attribute attached to the file
+ *
+ * @return
+ */
+QDateTime pointInput::readNinjaNowName(const char *fileName)
+{
+    CPLDebug("STATION_FETCH","Reading 1 step Station start Time");
+//    QString qxName = QFileInfo(fileName).lastModified();
+//    QString qxDEM = QFileInfo(demFileName).baseName();
+
+//    cout<<qxName.toStdString()<<endl;
+//    cout<<qxDEM.toStdString()<<endl;
+
+    QDateTime qxDate = QFileInfo(fileName).created();
+    return qxDate;
+}
+
 
 /**
  * @brief pointInput::setWxStationFormat
@@ -1111,11 +1177,24 @@ void pointInput::watchStopTime() //Stop time cannot be farther in the future tha
     if(stopTime->dateTime()<startTime->dateTime())
     {
         writeToConsole("Start Time is greater than Stop Time!");
-        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING!");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING START TIME!");
         startTime->setDateTime(stopTime->dateTime().addSecs(-3600));
     }
 }
-
+/**
+ * @brief pointInput::watchStartTime
+ * corrects the stop time if the user picks a start time farther in the future than the stop
+ * time
+ */
+void pointInput::watchStartTime() //Stop time cannot be farther in the future than the stop time
+{
+    if(stopTime->dateTime()<startTime->dateTime())
+    {
+        writeToConsole("Start Time is greater than Stop Time!");
+        CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING STOP TIME!");
+        stopTime->setDateTime(startTime->dateTime().addSecs(3600));
+    }
+}
 /** Updates the timeseries start time based on user requests
  * @brief pointInput::updateStartTime
  * @param xDate
@@ -1171,6 +1250,33 @@ void pointInput::updateStopTime(QDateTime xDate)
     endSeries.push_back(minute);
 }
 /**
+ * @brief pointInput::updateSingleTime
+ * @param xDate
+ *
+ * For single step runs, set the simulation time based on the read station file time,
+ * see also:
+ * readNinjaNowName()
+ *
+ */
+void pointInput::updateSingleTime(QDateTime xDate)
+{
+    int year,month,day,hour,minute;
+    year = xDate.date().year();
+    month = xDate.date().month();
+    day = xDate.date().day();
+    hour = xDate.time().hour();
+    minute = xDate.time().minute();
+
+    CPLDebug("STATION_FETCH","UPDATED SINGLE STEP TIME: %i %i %i %i %i",year,month,day,hour,minute);
+
+    diurnalTimeVec.push_back(year);
+    diurnalTimeVec.push_back(month);
+    diurnalTimeVec.push_back(day);
+    diurnalTimeVec.push_back(hour);
+    diurnalTimeVec.push_back(minute);
+
+}
+/**
  * @brief pointInput::openStationFetchWidget
  * Opens the downloader widget to download station files
  */
@@ -1178,15 +1284,16 @@ void pointInput::openStationFetchWidget()
 {
     xWidget = new stationFetchWidget();
     QSignalMapper *signalMapper;
-    connect(xWidget, SIGNAL(exitDEM()),this, SLOT(openMainWindow())); //Launches Widget Connector
-    this->setEnabled(false);
-    xWidget->setInputFile(demFileName);
-    xWidget->updatetz(tzString);
-    connect(xWidget, SIGNAL(exitDEM()),this, SLOT(checkForModelData())); //Launches Widget Connector    
+    connect(xWidget, SIGNAL(exitWidget()),this, SLOT(openMainWindow())); //Launches Widget Connector
+    connect(xWidget, SIGNAL(destroyed()),this,SLOT(openMainWindow())); //Some sort of deconstructor thing
+    this->setEnabled(false); //disable the main window
+    xWidget->setInputFile(demFileName); //give the widget the dem file
+    xWidget->updatetz(tzString); //give the widget the time zone as a string
+    connect(xWidget, SIGNAL(exitWidget()),this, SLOT(checkForModelData())); //Launches Widget Connector
 //    checkForModelData();
 //    cout<<xWidget->timeLoc->currentIndex()<<endl;
 //    connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
-    connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime)));
+    connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime))); //connect the various time boxes to eachother
     connect(xWidget->endEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStopTime(const QDateTime)));
     connect(xWidget->timeLoc,SIGNAL(currentIndexChanged(int)),this,SLOT(pairTimeSeries(int))); //Connects What the user does in the widget
             //to what the timeseries checkbox does   

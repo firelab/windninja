@@ -83,6 +83,8 @@ protected:
         void updateGeoFetch();
         void updateTimeFetch();
         void watchTime();
+        void watchStartTime();
+        void watchStopTime();
 
         //Progress Bar Slots
         void updateFetchProgress();
@@ -92,7 +94,7 @@ protected:
     signals:
         void writeToConsole(QString message);
 //        void stationFileChanged();
-        void exitDEM();
+        void exitWidget();
         
 
 private:
