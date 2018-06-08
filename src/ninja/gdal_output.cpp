@@ -260,8 +260,6 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   OGRSpatialReferenceH hSRS = 0;
   // Destination SRS, if needed
   OGRSpatialReferenceH hDstSRS = 0;
-  // WGS84 for LIBKML output
-  OGRSpatialReferenceH h4326 = 0;
   OGRCoordinateTransformationH hCT = 0;
 
   int bCreateCopy = FALSE;
@@ -327,17 +325,18 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return rc;
   }
 
+  hSRS = OSRNewSpatialReference(spd.prjString.c_str());
   if (bTransform) {
-    hSRS = OSRNewSpatialReference(spd.prjString.c_str());
-    h4326 = OSRNewSpatialReference(0);
-    rc = OSRImportFromEPSG(h4326, 4326);
+    hDstSRS = OSRNewSpatialReference(0);
+    rc = OSRImportFromEPSG(hDstSRS, 4326);
     if (rc != OGRERR_NONE) {
       // cleanup
       GDALClose(hDS);
       return 1;
     }
-    hDstSRS = h4326;
-    hCT = OCTNewCoordinateTransformation(hSRS, h4326);
+    hCT = OCTNewCoordinateTransformation(hSRS, hDstSRS);
+  } else {
+    hDstSRS = OSRClone(hSRS);
   }
 
   double splits[5];
@@ -406,56 +405,48 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
   if (nFlags & NINJA_OUTPUT_VECTOR) {
     // Handle the KML special options
     char **papszKMLOptions = 0;
-    /*
-    ** Set the following KML options
-    **
-    ** ADD_REGION=YES/NO : defaults to NO
-    ** REGION_XMIN (optional) : defines the west coordinate of the region.
-    ** REGION_YMIN (optional) : defines the south coordinate of the region.
-    ** REGION_XMAX (optional) : defines the east coordinate of the region.
-    ** REGION_YMAX (optional) : defines the north coordinate of the region.
-    ** REGION_MIN_LOD_PIXELS (optional) : minimum size in pixels of the region
-    *so
-    *that it is displayed. Defaults to 256.
-    ** REGION_MAX_LOD_PIXELS (optional) : maximum size in pixels of the region
-    *so
-    *that it is displayed. Defaults to -1 (infinite).
-    ** REGION_MIN_FADE_EXTENT (optional) : distance over which the geometry
-    *fades,
-    *from fully opaque to fully transparent. Defaults to 0.
-    ** REGION_MAX_FADE_EXTENT (optional) : distance over which the geometry
-    *fades,
-    *from fully transparent to fully opaque. Defaults to 0.
-    **
-    ** For the legend
-    **
-    ** SO_HREF (required) : URL of the image to display.
-    ** SO_NAME (optional)
-    ** SO_DESCRIPTION (optional)
-    ** SO_OVERLAY_X (optional)
-    ** SO_OVERLAY_Y (optional)
-    ** SO_OVERLAY_XUNITS (optional)
-    ** SO_OVERLAY_YUNITS (optional)
-    ** SO_SCREEN_X (optional). Defaults to 0.05
-    ** SO_SCREEN_Y (optional). Defaults to 0.05
-    ** SO_SCREEN_XUNITS (optional). Defaults to Fraction
-    ** SO_SCREEN_YUNITS (optional). Defaults to Fraction
-    ** SO_SIZE_X (optional)
-    ** SO_SIZE_Y (optional)
-    ** SO_SIZE_XUNITS (optional)
-    ** SO_SIZE_YUNITS (optional)
-    */
+    if (EQUAL(pszDriver, "LIBKML")) {
+      // Don't create a root doc.kml, this aligns with our old format
+      CPLSetConfigOption("LIBKML_USE_DOC.KML", "NO");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "ADD_REGION", "YES");
+      papszKMLOptions =
+          CSLAddNameValue(papszKMLOptions, "SO_HREF", "legend.png");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_NAME", "Legend");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_X", "0");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_Y", "1");
+      papszKMLOptions =
+          CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_XUNITS", "fraction");
+      papszKMLOptions =
+          CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_YUNITS", "fraction");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_X", "0");
+      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_Y", "1");
+      papszKMLOptions =
+          CSLAddNameValue(papszKMLOptions, "SO_SCREEN_XUNITS", "fraction");
+      papszKMLOptions =
+          CSLAddNameValue(papszKMLOptions, "SO_SCREEN_YUNITS", "fraction");
+      papszOptions = CSLMerge(papszKMLOptions, papszOptions);
+    }
+
+    const char *pszLayerName = "Wind Speed";
     if (nFlags & NINJA_OUTPUT_ARROWS) {
-      hLayer = GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbLineString,
+      hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbLineString,
                                       papszOptions);
     } else {
-      hLayer =
-          GDALDatasetCreateLayer(hDS, "wind", hDstSRS, wkbPoint, papszOptions);
+      hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbPoint,
+                                      papszOptions);
     }
     if (hLayer == 0) {
       GDALClose(hDS);
       return 1;
     }
+
+    hFieldDefn = OGR_Fld_Create("name", OFTString);
+    rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
+    if (rc != OGRERR_NONE) {
+      GDALClose(hDS);
+      return 1;
+    }
+    OGR_Fld_Destroy(hFieldDefn);
 
     const char *apszFieldDefn[] = {"spd", "dir", 0};
 
@@ -475,6 +466,8 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
         hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
         s = spd.get_cellValue(i, j);
         d = dir.get_cellValue(i, j);
+        OGR_F_SetFieldString(hFeat, OGR_F_GetFieldIndex(hFeat, "name"),
+                             CPLSPrintf("cell %d, %d", i, j));
         OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
         OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
         if (s <= splits[1]) {
@@ -510,7 +503,7 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     }
   }
   OSRDestroySpatialReference(hSRS);
-  OSRDestroySpatialReference(h4326);
+  OSRDestroySpatialReference(hDstSRS);
   OCTDestroyCoordinateTransformation(hCT);
   GDALClose(hDS);
   /* After we close the dataset, insert the support files */
