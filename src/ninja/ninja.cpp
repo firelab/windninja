@@ -1690,11 +1690,11 @@ void ninja::discretize()
 
 		 #ifdef STABILITY
 		 int ii, jj, kk;
-         double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
+                 double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
 		 #endif
 
 #pragma omp for
-		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
+		 for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
 		 {
 			 /*-----------------------------------------------------*/
 			 /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
@@ -1704,126 +1704,108 @@ void ninja::discretize()
 			 /*      Ground       =>  normal flux = 0               */
 			 /*-----------------------------------------------------*/
 
-
-
 			 //elem.computeElementStiffnessMatrix(i, u0, v0, w0, alpha);
-
-
-
-
-
-
 
 			 //Given the above parameters, function computes the element stiffness matrix
 
 			 if(elem.SFV == NULL)
-				 elem.initializeQuadPtArrays();
+			     elem.initializeQuadPtArrays();
 
 			 for(j=0;j<mesh.NNPE;j++)
 			 {
-				 elem.QE[j]=0.0;
-				 for(int k=0;k<mesh.NNPE;k++)
-					 elem.S[j*mesh.NNPE+k]=0.0;
+                             elem.QE[j]=0.0;
+                             for(int k=0;k<mesh.NNPE;k++)
+                                 elem.S[j*mesh.NNPE+k]=0.0;
 
 			 }
 			 //Begin quadrature for current element
 
 			 elem.node0=mesh.get_node0(i);  //get the global nodal number of local node 0 of element i
 
-
-			 for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
+			 for(j=0;j<elem.NUMQPTV;j++)  //Start loop over quadrature points in the element
 			 {
+                             elem.computeJacobianQuadraturePoint(j, i);
 
-				 elem.computeJacobianQuadraturePoint(j, i);
-
-				 //Calculate the coefficient H here and the alpha-squared term in front of the second partial of z in governing equation (we are still on element i, quadrature point j)
-				 //
-				 //           d u0   d v0   d w0
-				 //     H = ( ---- + ---- + ---- )
-				 //           d x    d y    d z
-				 //
-				 //                and
-                 //
-                 //                     1                          1
-                 //     Rx = Ry =  ------------          Rz = ------------
-                 //                 2*alphaH^2                 2*alphaV^2
-
-
-				 elem.HVJ=0.0;
-
-				 double alphaV = 1;
-
-				 #ifdef STABILITY
-				 alphaV = 0;
-				 #endif
-
-				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
-				 {
-					 elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
-
-					 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
-
-					 #ifdef STABILITY
-					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-					 //cout<<"alphaV = "<<alphaV<<endl;
-                                         #endif
-				 }                             //End loop over nodes in the element
-				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
-
-				 //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
-
-				 elem.RX = 1.0/(2.0*alphaH*alphaH);
-				 elem.RY = 1.0/(2.0*alphaH*alphaH);
-				 elem.RZ = 1.0/(2.0*alphaV*alphaV);
-				 elem.DV=elem.DETJ;                      //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-
-				 if(elem.NUMQPTV==27)
-				 {
-					 if(j<=7)
-					 {
-						 elem.WT=elem.WT1;
-					 }else if(j<=19)
-					 {
-						 elem.WT=elem.WT2;
-					 }else if(j<=25)
-					 {
-						 elem.WT=elem.WT3;
-					 }else
-					 {
-						 elem.WT=elem.WT4;
-					 }
-				 }
-
-				 //Create element stiffness matrix---------------------------------------------
-				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
-				 {
-					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
-					 for(l=0;l<mesh.NNPE;l++)
-					 {
-                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-					 }
-				 }                            //End loop over nodes in the element
-			 }                                  //End loop over quadrature points in the element
+                             //Calculate the coefficient H here and the alpha-squared term in front of 
+                             //the second partial of z in governing equation (we are still on element i,
+                             //quadrature point j)
+                             //
+                             //           d u0   d v0   d w0
+                             //     H = ( ---- + ---- + ---- )
+                             //           d x    d y    d z
+                             //
+                             //                and
+                             //
+                             //                     1                          1
+                             //     Rx = Ry =  ------------          Rz = ------------
+                             //                 2*alphaH^2                 2*alphaV^2
 
 
+                             elem.HVJ=0.0;
 
+                             double alphaV = 1;
 
+                             #ifdef STABILITY
+                             alphaV = 0;
+                             #endif
 
+                             for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                             {
+                                 elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
 
+                                 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+
+                                          (elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
 
+                                 #ifdef STABILITY
+                                 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+                                 #endif
+                             } //End loop over nodes in the element
+			     //elem.HVJ=2*elem.HVJ; //This is the H for quad point j (the 2* comes from governing equation)
 
+                             //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
 
+                             elem.RX = 1.0/(2.0*alphaH*alphaH);
+                             elem.RY = 1.0/(2.0*alphaH*alphaH);
+                             elem.RZ = 1.0/(2.0*alphaV*alphaV);
+                             elem.DV=elem.DETJ; //DV for volume integration; could be eliminated and just use DETJ everywhere
 
+                             if(elem.NUMQPTV==27)
+                             {
+                                 if(j<=7)
+                                 {
+                                     elem.WT=elem.WT1;
+                                 }else if(j<=19)
+                                 {
+                                     elem.WT=elem.WT2;
+                                 }else if(j<=25)
+                                 {
+                                     elem.WT=elem.WT3;
+                                 }else
+                                 {
+                                     elem.WT=elem.WT4;
+                                 }
+                             }
+                             //--------------------------------------------------------------------
+                             // Create element stiffness matrix
+			     //--------------------------------------------------------------------
+                             for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
+                             {
+                                 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
+                                            elem.HVJ*elem.DV;
+                                 for(l=0;l<mesh.NNPE;l++)
+                                 {
+                                     elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+
+                                                           elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] +
+                                                           elem.DNDY[k]*elem.RY*elem.DNDY[l] +
+                                                           elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                                 }
+                             } //End loop over nodes in the element
 
+			 } //End loop over quadrature points in the element
 
-
-
-
-
-
-
-
-			 //Place completed element matrix in global SK and Q matrices
+			 //--------------------------------------------------------------------
+			 // Place completed element matrix in global SK and Q matrices         
+			 //--------------------------------------------------------------------
 
                         for(j=0;j<mesh.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
                         {
@@ -1847,7 +1829,7 @@ void ninja::discretize()
 				    {
 				        if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
 					    pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
-							 l++;
+				        l++;
 				    }while(pos<0);
 
 #pragma omp atomic
@@ -1868,68 +1850,72 @@ void ninja::discretize()
  */
 void ninja::setBoundaryConditions()
 {
-     //Specify known values of PHI
-     //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
-     //Then the corresponding row in RHS[] is replaced with the value of the known PHI.
-     //The other nodes that are "connected" to the known node need to have their equations adjusted accordingly.
-     //This is done by moving the term with the known value to the RHS.
+    //Specify known values of PHI
+    //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
+    //Then the corresponding row in RHS[] is replaced with the value of the known PHI.
+    //The other nodes that are "connected" to the known node need to have their equations adjusted accordingly.
+    //This is done by moving the term with the known value to the RHS.
 
-	 int NPK, KNP;
-	 int i, j, k, l;
+    int NPK, KNP;
+    int i, j, k, l;
 
+    bool *isBoundaryNode;
+    isBoundaryNode=new bool[mesh.NUMNP];       //flag to specify if it's a boundary node
 
-	  bool *isBoundaryNode;
-	  isBoundaryNode=new bool[mesh.NUMNP];       //flag to specify if it's a boundary node
-
-	  #pragma omp parallel default(shared) private(i,j,k,l,NPK,KNP)
-	  {
-	  #pragma omp for
-	  for(k=0;k<mesh.nlayers;k++)
-      {
-           for(i=0;i<input.dem.get_nRows();i++)
-           {
-                for(j=0;j<input.dem.get_nCols();j++)          //loop over nodes using i,j,k notation
+    #pragma omp parallel default(shared) private(i,j,k,l,NPK,KNP)
+    {
+        #pragma omp for
+        for(k=0;k<mesh.nlayers;k++)
+        {
+            for(i=0;i<input.dem.get_nRows();i++)
+            {
+                for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
                 {
-					if(j==0||j==(input.dem.get_nCols()-1)||i==0||i==(input.dem.get_nRows()-1)||k==(mesh.nlayers-1))  //Check the node to see if it is a boundary node
-						isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=true;
-					else
-						isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=false;
-				}
-		   }
-	  }
-	  #pragma omp for
-      for(k=0;k<mesh.nlayers;k++)
-      {
-           for(i=0;i<input.dem.get_nRows();i++)
-           {
-                for(j=0;j<input.dem.get_nCols();j++)          //loop over nodes using i,j,k notation
-                {
-                     NPK=k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;            //NPK is the global row number (also the node # we're on)
-                     for(l=row_ptr[NPK];l<row_ptr[NPK+1];l++)     //loop through all non-zero elements for row NPK
-                     {
-                          KNP=col_ind[l];       //KNP is the global column number we're on
-						  if(isBoundaryNode[KNP]==true)
-							  SK[l]=0.;              //Set the value on the known PHI's column to zero
-						  if(isBoundaryNode[NPK]==true)
-						  {
-							  if(KNP==NPK)        //Check if we're at the diagonal
-								SK[l]=1.;         //If so, set the value to 1
-							  else
-								SK[l]=0.;              //Set the value on the known PHI's row to zero
-						  }
-                     }
-                     if(isBoundaryNode[NPK]==true)
-						RHS[NPK]=0.;    //Phi is zero on "flow through boundaries"
+                    //Check the node to see if it is a boundary node
+		    if(j==0||j==(input.dem.get_nCols()-1)||i==0||i==(input.dem.get_nRows()-1)||k==(mesh.nlayers-1))  
+                        isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=true;
+                    else
+                        isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=false;
                 }
            }
-      }
-	  }	//end parallel region
-	  if(isBoundaryNode)
-	  {
-		delete[] isBoundaryNode;
-		isBoundaryNode=NULL;
-	  }
+        }
+        #pragma omp for
+        for(k=0;k<mesh.nlayers;k++)
+        {
+            for(i=0;i<input.dem.get_nRows();i++)
+            {
+                for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                {
+                    //NPK is the global row number (also the node # we're on)
+                    NPK=k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
 
+                    for(l=row_ptr[NPK];l<row_ptr[NPK+1];l++) //loop through all non-zero elements for row NPK
+                    {
+                        KNP=col_ind[l]; //KNP is the global column number we're on
+
+                        if(isBoundaryNode[KNP]==true)
+                            SK[l]=0.; //Set the value on the known PHI's column to zero
+                        if(isBoundaryNode[NPK]==true)
+                        {
+                            if(KNP==NPK) //Check if we're at the diagonal
+                                SK[l]=1.; //If so, set the value to 1
+                            else
+                                SK[l]=0.; //Set the value on the known PHI's row to zero
+                        }
+                    }
+
+                    if(isBoundaryNode[NPK]==true)
+                        RHS[NPK]=0.; //Phi is zero on "flow through boundaries"
+                }
+            }
+        }
+    }//end parallel region
+
+    if(isBoundaryNode)
+    {
+        delete[] isBoundaryNode;
+        isBoundaryNode=NULL;
+    }
 }
 
 /**
