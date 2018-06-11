@@ -104,7 +104,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     widgetButton->setText( tr( "Download data" ));
     widgetButton->setIcon(QIcon(":server_go.png"));
     widgetButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    widgetButton->setToolTip("Download Weather Data from the Mesowest API");
+    widgetButton->setToolTip("Download weather station data from the Mesonet API.");
 
     //Progress Bar Stuff -> Delete Later
 
@@ -140,11 +140,15 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setColumnHidden(2, true);
     treeView->setAlternatingRowColors( true );
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
-//    treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    treeView->setSelectionBehavior(QAbstractItemView::SelectRows); //Select entire row when we do select something
 
 
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
-    treeLabel->setToolTip("Select Weather Stations from available files, three formats are supported, old format, time series and 1 step runs");
+    treeLabel->setToolTip("Select Weather Stations from available files.\n"
+                          "Click a file to add it to the list of included stations\n"
+                          "Click it again to remove it from the included stations.\n"
+                          "Available formats are time series, one step runs with time data,\n"
+                          "and one step runs without time data (old format)");
     
 //####################################################
 //  Tool buttons and other things                    #
@@ -340,13 +344,11 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
 //    fileLayout = new QHBoxLayout; //Old stuff for original point Initilization, leave for now
 //    fileLayout->addWidget( stationFileLineEdit );
-//    fileLayout->addWidget(ska);
 //    fileLayout->addWidget( readStationFileButton );
 //    initPages->addWidget(oldForm);
 //    fileLayout->addWidget(initPages);
 //    fileLayout->addWidget(treeView);
 //    fileLayout->addWidget(refreshToolButton);
-//    fileLayout->addWidget(jazz);
 
     buttonLayout = new QHBoxLayout;
     buttonLayout->addWidget( writeStationFileButton );
@@ -386,8 +388,6 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    treeView->setModel(model);
 //    treeView->header()
 
-
-
     ninjafoamConflictLabel = new QLabel(tr("The point initialization option is not currently available for the momentum solver.\n"),
                                         this);
     ninjafoamConflictLabel->setHidden(true);
@@ -398,41 +398,30 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    layout->addStretch();
 
 //    if (initOpt) //No Longer needed...
-//    cout<<initOpt->currentIndex()<<endl;
     setLayout( layout );
-//    connect( readStationFileButton, SIGNAL( clicked() ), this,
-//         SLOT( readStationFile() ) ); //For Old Format (for now)
+
+//####################################################
+// Connect Signls to Slots                           #
+//####################################################
     connect( writeStationFileButton, SIGNAL( clicked() ), this,
          SLOT( writeStationFile() ) ); //Writes a CSV Connector
     connect( writeStationKmlButton, SIGNAL( clicked() ), this,
          SLOT( writeStationKml() ) ); //Writes a KML connector
     connect( widgetButton ,SIGNAL( clicked () ), this,
              SLOT(openStationFetchWidget())); //Opens the Downloader Connector
-//    connect(initOpt,SIGNAL(currentIndexChanged(int)), this,SLOT(toggleUI())); //Changes to New Format and back Connector (DEPRECATED...)
     connect(refreshToolButton, SIGNAL(clicked()), //Refreshes new Format
         this, SLOT(checkForModelData()));
     connect(enableTimeseries,SIGNAL(clicked()),this,
             SLOT(toggleTimeseries()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
-
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime()));
-
-//    connect(treeView,SIGNAL(QTreeView::currentChanged(const QModelIndex&, const QModelIndex&);),
-//            this,SLOT(readMultipleStaitonFiles()));
-    connect(treeView, SIGNAL(clicked(const QModelIndex &)),
-        this, SLOT(readMultipleStationFiles(const QModelIndex &))); //Connects click to which files should be conencted
-//    connect(sfModel, SIGNAL(/*selectionChanged*/()),this,SLOT(selChanged()));
-//    connect(treeView, SIGNAL(QItemSelectionModel::selectionChanged(const QItemSelection &, const QItemSelection &)),
-//        this, SLOT(readMultipleStaitonFiles(const QModelIndex &)));
-
+    connect(treeView->selectionModel(),
+            SIGNAL(selectionChanged(const QItemSelection &,const QItemSelection &)),
+            this, SLOT(readStationFiles(const QItemSelection &,const QItemSelection &)));
     connect(execProg,SIGNAL(clicked(bool)),this,SLOT(progExec()));
-
-
-
     stationFileName = ""; //Sets a default
-    
 }
 
 pointInput::~pointInput()
@@ -440,8 +429,8 @@ pointInput::~pointInput()
 
 }
 
-void pointInput::readStationFile() //This is the old way of loeading station files
-{
+//void pointInput::readStationFile() //This is the old way of loeading station files //delete this
+//{
     //    QString fileName;
     //    fileName = QFileDialog::getOpenFileName(this, tr("Open station file"),
     //                                             QFileInfo(stationFileName).path(),
@@ -455,10 +444,94 @@ void pointInput::readStationFile() //This is the old way of loeading station fil
     //    stationFileLineEdit->setText(QFileInfo(fileName).fileName());
     //    cout<<stationFileName.toStdString()<<endl;
     //    emit stationFileChanged();
+//}
+/**
+ * @brief pointInput::readStationFiles
+ * Reads the files on disk that the user selects
+ *
+ * x is the previously selected data
+ * y is the new selected data
+ *
+ * These two are not used explicitly but are necessary to link up the
+ * model with this function, as they trigger the checking to occur
+ *
+ * How this function works:
+ * 1. get a list of the stations the user selects from the UI
+ * 2. get what file type it is from directStationTraffic
+ *      a. this will also update the user on what the station type is
+ * 3. if all selected files are the same type, set the simulation type and tell mainwindow that they are good
+ *    if they are not all the same type, warn the user and mainwindow and wait for the user to change something
+ *
+ * @param x
+ * @param y
+ */
+void pointInput::readStationFiles(const QItemSelection &x ,const QItemSelection &y)
+{
+    QModelIndexList idx = x.indexes(); //Don't need these, probably delete later
+    QModelIndexList idy = y.indexes();
+    QModelIndexList idx0 = treeView->selectionModel()->selectedRows(); //Get the number of files selected
+
+    std::vector<std::string> selectedStations; //The good stations
+    std::vector<int> finalTypes; //What type they are
+    CPLDebug("STATION_FETCH","========================================");
+    CPLDebug("STATION_FETCH","NUMBER OF SELECTED STATIONS: %i",idx0.count());
+
+    for(int i=0;i<idx0.count();i++)
+    {
+        if(sfModel->fileInfo(idx0[i]).isDir()==true) //If its a directory, make it so that it can't be selected
+        {
+            CPLDebug("STATION_FETCH","IGNORING SELECTED DIRECTORY!");
+            treeView->selectionModel()->select(idx0[i],QItemSelectionModel::Deselect | QItemSelectionModel::Rows);//Deselct entire row by calling ::Rows otherwise it looks messy
+        }
+        else //if its not a directory, add it to the list of available files
+        {
+            selectedStations.push_back(sfModel->fileInfo(idx0[i]).absoluteFilePath().toStdString());
+        }
+    }
+
+    for (int i=0;i<selectedStations.size();i++)
+    {
+        CPLDebug("STATION_FETCH","----------------------------------------");
+        CPLDebug("STATION_FETCH","STATION NAME: %s",selectedStations[i].c_str());
+        int stationFileType = directStationTraffic(selectedStations[i].c_str()); // Get the station data type
+        CPLDebug("STATION_FETCH","Type of Station File: %i \n",stationFileType);
+        finalTypes.push_back(stationFileType);
+    }
+    std::set<int> setInt(finalTypes.begin(),finalTypes.end()); //This is a sanity check to see if the stations that we are reading are all the same type
+    std::vector<int> vecInt(setInt.begin(),setInt.end());
+
+    CPLDebug("STATION_FETCH","Unique Data Types (bad if >1) %lu",vecInt.size());
+    for(int j=0;j<vecInt.size();j++)
+    {
+        CPLDebug("STATION_FETCH","Selected Data Type: %i",vecInt[j]);
+    }
+    CPLDebug("STATION_FETCH","\n");
+    stationFileList = selectedStations;
+    stationFileTypes = vecInt;
+
+    if (vecInt.size()>1)
+    {
+        simType = -1;
+        displayInformation(-1);
+    }
+    if (vecInt.size()==1)
+    {
+        simType = vecInt[0];
+        displayInformation(vecInt[0]);
+    }
+    else
+    {
+        simType = -1;
+        displayInformation(-1);
+    }
 }
+
+
+
 //This is all pretty good, needs to be cleaned up
 //Checks how many stations there are selected
 //Important for readMultipleStations
+//Deprecated and needs to be deleted!
 int pointInput::checkNumStations(std::string comparator, std::vector<std::string> stationVec)
 {
     int cx = 0;
@@ -477,6 +550,7 @@ int pointInput::checkNumStations(std::string comparator, std::vector<std::string
  * //General Idea: Append all selections a user makes, get the unique ones, counter the number of clicks, if it is odd, keep the file, if even, don't keep it
     // This is because odd means it was selected at least once at then left alone
     // even means that it was selected and deselected
+    //This is now Deprecated and needs to be deleted at some point
  * @param index
  */
 void pointInput::readMultipleStationFiles(const QModelIndex &index)
@@ -668,7 +742,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         //Try flipping the UI
         labelTimeseries->setText("Single Step Options");
 
-        startLabel->setVisible(false);
+        startLabel->setVisible(false); //Hide all the timesries stuff
         stopLabel->setVisible(false);
         stepLabel->setVisible(false);
 
@@ -676,9 +750,9 @@ int pointInput::directStationTraffic(const char* xFileName)
         stopTime->setVisible(false);
         numSteps->setVisible(false);
 
-        dateTimeEdit->setVisible(true);
+        dateTimeEdit->setVisible(true); //show the date time box to set the sim time
         diurnalLabel->setVisible(true);
-        oneStepTimeLabel->setVisible(false);
+        oneStepTimeLabel->setVisible(false); // hide the 1 step time box thing for instant==1
 
         //Update Diurnal Time
         if (isDiurnalChecked==true)
@@ -713,7 +787,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         stopTime->setVisible(true);
         numSteps->setVisible(true);
 
-        dateTimeEdit->setVisible(false);
+        dateTimeEdit->setVisible(false); //hide the single step stuff
         diurnalLabel->setVisible(false);
         oneStepTimeLabel->setVisible(false);
         return 1;
@@ -742,7 +816,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         diurnalLabel->setVisible(false);
         dateTimeEdit->setEnabled(false);
 
-        const char *optChangeTime = CPLGetConfigOption("CHANGE_DATE_TIME","FALSE");
+        const char *optChangeTime = CPLGetConfigOption("CHANGE_DATE_TIME","FALSE"); //Allow the user the change the datetime via  config option
         if(optChangeTime!="FALSE")
         {
             QString time_format = "yyyy-MM-ddTHH:mm:ss";
@@ -934,7 +1008,7 @@ void pointInput::setWxStationFormat(int format)
        wxStationFormat = format;
 }
 
-void pointInput::selChanged()
+void pointInput::selChanged(const QItemSelection &x, const QItemSelection &y) //Generic test function, delete once everything is good
 {
     CPLDebug("STATION_FETCH","TEST");
 }
@@ -1292,7 +1366,6 @@ void pointInput::openStationFetchWidget()
     connect(xWidget, SIGNAL(exitWidget()),this, SLOT(checkForModelData())); //Launches Widget Connector
 //    checkForModelData();
 //    cout<<xWidget->timeLoc->currentIndex()<<endl;
-//    connect(xWidget->currentBox,SIGNAL(clicked()),this,SLOT(selChanged())); //This proves that the widget can talk to the pointInput class
     connect(xWidget->startEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStartTime(const QDateTime))); //connect the various time boxes to eachother
     connect(xWidget->endEdit,SIGNAL(dateTimeChanged(const QDateTime)),this,SLOT(pairStopTime(const QDateTime)));
     connect(xWidget->timeLoc,SIGNAL(currentIndexChanged(int)),this,SLOT(pairTimeSeries(int))); //Connects What the user does in the widget
@@ -1327,15 +1400,16 @@ void pointInput::checkForModelData()
 
     QDir wd(cwd);
     QStringList filters;
-    filters<<"*.csv";
+    filters<<"*.csv"; //Only show CSV
     filters<<"*_wxStations_*"; //Add downloadable directories to filters
 
     sfModel->setNameFilters(filters);
     sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
-    stationFileList.clear();
-    treeView->clearSelection();
+    stationFileList.clear(); //Clear the list
+    treeView->selectionModel()->clear(); //Clear the models selections
+    pointGo = false; //Set the pointInput bool to false just to be extra explicit
 
 }
 void pointInput::testProg()

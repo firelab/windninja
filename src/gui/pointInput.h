@@ -188,10 +188,7 @@ class pointInput : public QWidget
 
     std::vector<int> diurnalTimeVec;
     
-    //End Timeseries stuff
-    QLineEdit *ska;
-    QLineEdit *jazz;
-    
+    //End Timeseries stuff    
 
     void updateTable();
     
@@ -215,9 +212,9 @@ class pointInput : public QWidget
     QDateTime readNinjaNowName(const char* fileName);
     
   private slots:
-    void readStationFile();
+    void readStationFiles(const QItemSelection &x ,const QItemSelection &y);
     void readMultipleStationFiles(const QModelIndex &index);
-    void selChanged(); //Test Function
+    void selChanged(const QItemSelection &x ,const QItemSelection &y); //Test Function
     void writeStationFile();
     void writeStationKml();
     void setInputFile( QString file );
