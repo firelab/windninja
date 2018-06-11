@@ -1916,6 +1916,34 @@ void ninja::setBoundaryConditions()
         delete[] isBoundaryNode;
         isBoundaryNode=NULL;
     }
+
+    if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+    {
+        element elem(&mesh);
+        double x, y, z;
+        int cell_i, cell_j, cell_k;
+        double u_loc, v_loc, w_loc;
+
+        //loop over stations and set the BC for every station within the mesh
+        //if a station is outside the mesh, we can't do anything
+        for(unsigned int i=0; i<input.stations.size(); i++)
+        {
+            //get (x,y,z) value of station
+            x = input.stations[i].get_xord();
+            y = input.stations[i].get_yord();
+            //if station is in mesh, set the boundary condition 
+            if(mesh.inMeshXY(x, y))
+            {
+                //do the work
+                z = input.stations[i].get_height() + 
+                    input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) +
+                    input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
+
+                //Get cell number and "parent cell" coordinates of station location
+                elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            }
+        }
+    }
 }
 
 /**
