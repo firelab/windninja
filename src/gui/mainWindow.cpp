@@ -1866,7 +1866,7 @@ int mainWindow::solve()
         std::vector<int> xStartTime = tree->point->startSeries;
         std::vector<int> xEndTime = tree->point->endSeries;
         int numTimeSteps = tree->point->numSteps->value();
-        bool useTimeList = tree->point->enableTimeseries->isChecked();
+        bool useTimeList = tree->point->enableTimeseries;
         bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
         bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
 
@@ -1915,7 +1915,7 @@ int mainWindow::solve()
                 timeList.push_back(noTime);
             }
             
-            army->makeStationArmy(timeList,timeZone, pointFile, demFile, true);
+            army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
             nRuns = army->getSize();
         }
         if (pointFormat==1 || pointFormat==2) //New Format
@@ -1936,14 +1936,28 @@ int mainWindow::solve()
 
                 if(useTimeList == true) //New format with TimeList!
                 {
-                    CPLDebug("STATION_FETCH","USING TIME LIST...");
-                    timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
-                                                                xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
-                                                                numTimeSteps,timeZone);
+                    CPLDebug("STATION_FETCH","Time List Option Selected...");
+                    if(numTimeSteps==1)
+                    {
+                        CPLDebug("STATION_FETCH","USER WANTS 1 STEP, USING START TIME...");
+//                        for(int ix=0;ix<xStartTime.size();ix++)
+//                        {
+//                            cout<<xStartTime[ix]<<endl;
+//                        }
+                        boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],timeZone);
+                        timeList.push_back(singleTime);
+                    }
+                    else
+                    {
+                        CPLDebug("STATION_FETCH","USING TIME LIST...");
+                        timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
+                                                                    xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
+                                                                    numTimeSteps,timeZone);
+                    }
                     CPLDebug("STATION_FETCH","TIME LIST GENERATED...");
-                    pointInitialization::storeFileNames(pointFileList);
+                    pointInitialization::storeFileNames(pointFileList); //Files get stored
                     CPLDebug("STATION_FETCH","FILES STORED...");
-                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
+                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
                     nRuns = army->getSize();
                     
                 }
@@ -1958,7 +1972,7 @@ int mainWindow::solve()
                     boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
                     timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
-                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true);
+                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
                     nRuns = army->getSize();
                 }               
             }

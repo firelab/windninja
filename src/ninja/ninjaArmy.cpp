@@ -141,7 +141,7 @@ int ninjaArmy::getSize()
  */
 void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
-                             string demFile, bool matchPoints)
+                             string demFile, bool matchPoints, bool override)
 {
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
@@ -205,10 +205,6 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
             timeList.assign(1, standard);
             localTimeList.assign(1, localStandard);
         }
-        for(int ix = 0; ix<timeList.size();ix++)
-        {
-            cout<<localTimeList[ix]<<endl;
-        }
     }
     for(unsigned int k=0; k<stationList.size(); k++)
     {
@@ -230,6 +226,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
         }
         ninjas[i]->set_wxStations(stationList);
         ninjas[i]->set_wxStationFilename(stationFileName);
+        //Setting the filename also implicitly sets the stations, set above
+        //in set_wxStations. Also it gets the units from the first station
+        //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
    }
 }

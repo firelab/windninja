@@ -49,6 +49,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    initOpt->setVisible(false);
 
     pointGo=false; //Very Imptortant!
+    enableTimeseries=false; //bool for mainwindow
 
 //    initPages = new QStackedWidget(this); //For use in the deprecated switcher
 //    oldForm = new QWidget(); //Something that was used in the deprecated switching stuff
@@ -141,7 +142,6 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setAlternatingRowColors( true );
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows); //Select entire row when we do select something
-
 
     treeLabel = new QLabel(tr("Select Weather Stations")); //Label for Tree and sfModel
     treeLabel->setToolTip("Select Weather Stations from available files.\n"
@@ -263,12 +263,12 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     startTime->setCalendarPopup(true);
     stopTime->setCalendarPopup(true);
     
-    enableTimeseries = new QCheckBox(this); //Initializes the timeseries checkbox
-    enableTimeseries->setText(tr("Enable Timeseries"));
+//    enableTimeseries = new QCheckBox(this); //Initializes the timeseries checkbox
+//    enableTimeseries->setText(tr("Enable Timeseries"));//delete soon
 
-    labelTimeseries = new QLabel(this);
-    labelTimeseries->setText("Time Series\nOptions");
-    labelTimeseries->setVisible(false); //This function is probably going to go away, make invisible for now
+//    labelTimeseries = new QLabel(this);
+//    labelTimeseries->setText("Time Series\nOptions");
+//    labelTimeseries->setVisible(false); //This function is probably going to go away, make invisible for now
     
     numSteps = new QSpinBox; //Number of timesteps box
     numSteps->setValue(24);
@@ -278,7 +278,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     
     startTime->setVisible(true); //Some visibility settings that probably aren't necessary anymore...
     stopTime->setVisible(true);
-    enableTimeseries->setVisible(false); //Try Hiding the button without much Work
+//    enableTimeseries->setVisible(false); //Try Hiding the button without much Work
 
     startTime->setEnabled(false); //Disables timeseries options unless the user checks it or the system detects that the user is doing a timeseries
     stopTime->setEnabled(false);
@@ -311,8 +311,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 //    timeBoxLayout->addWidget(startTime);
 //    timeBoxLayout->addWidget(stopTime);
 //    timeBoxLayout->addWidget(numSteps);
-    timeBoxLayout->addWidget(enableTimeseries); //Adds all the parts together
-    timeBoxLayout->addWidget(labelTimeseries);
+//    timeBoxLayout->addWidget(enableTimeseries); //Adds all the parts together
+//    timeBoxLayout->addWidget(labelTimeseries);
     timeBoxLayout->addLayout(startLayout);
     timeBoxLayout->addLayout(stopLayout);
     timeBoxLayout->addLayout(stepLayout);
@@ -411,8 +411,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
              SLOT(openStationFetchWidget())); //Opens the Downloader Connector
     connect(refreshToolButton, SIGNAL(clicked()), //Refreshes new Format
         this, SLOT(checkForModelData()));
-    connect(enableTimeseries,SIGNAL(clicked()),this,
-            SLOT(toggleTimeseries()));
+//    connect(enableTimeseries,SIGNAL(clicked()),this, //delete soon
+//            SLOT(toggleTimeseries()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
@@ -420,6 +420,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     connect(treeView->selectionModel(),
             SIGNAL(selectionChanged(const QItemSelection &,const QItemSelection &)),
             this, SLOT(readStationFiles(const QItemSelection &,const QItemSelection &)));
+    connect(numSteps,SIGNAL(valueChanged(int)),this,SLOT(setOneStepTimeseries()));
     connect(execProg,SIGNAL(clicked(bool)),this,SLOT(progExec()));
     stationFileName = ""; //Sets a default
 }
@@ -734,13 +735,14 @@ int pointInput::directStationTraffic(const char* xFileName)
     {
         //Old Format
         //Prevent users from using time series with old format
-        enableTimeseries->setCheckable(false);
+//        enableTimeseries->setCheckable(false);
+        enableTimeseries=false;
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
 
         //Try flipping the UI
-        labelTimeseries->setText("Single Step Options");
+//        labelTimeseries->setText("Single Step Options");
 
         startLabel->setVisible(false); //Hide all the timesries stuff
         stopLabel->setVisible(false);
@@ -768,8 +770,9 @@ int pointInput::directStationTraffic(const char* xFileName)
     {
         //new Foramt w/ Time Series
         //Turn on Several options for controlling time series in the GUI
-        enableTimeseries->setCheckable(true);
-        enableTimeseries->setChecked(true);
+//        enableTimeseries->setCheckable(true);
+//        enableTimeseries->setChecked(true);
+        enableTimeseries=true;
         startTime->setEnabled(true);
         stopTime->setEnabled(true);
         numSteps->setEnabled(true);
@@ -777,7 +780,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         updateStopTime(stopTime->dateTime());
 
         //try flipping the UI
-        labelTimeseries->setText("Time Series\nOptions");
+//        labelTimeseries->setText("Time Series\nOptions");
 
         startLabel->setVisible(true);
         stopLabel->setVisible(true);
@@ -796,13 +799,14 @@ int pointInput::directStationTraffic(const char* xFileName)
     {
         //new Format no Time Series
         //Prevent users from using time series with 1 step
-        enableTimeseries->setCheckable(false);
+//        enableTimeseries->setCheckable(false);
+        enableTimeseries=false;
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
 
         //Try flipping the UI
-        labelTimeseries->setText("Single Step Options");
+//        labelTimeseries->setText("Single Step Options");
 
         startLabel->setVisible(false);
         stopLabel->setVisible(false);
@@ -887,28 +891,43 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
     writeToConsole("Start Time (local): "+loc_start_time.toString()); //Tell console what the
     writeToConsole("Stop Time (local): "+loc_end_time.toString()); //Local time is
 
+//    int u_start = loc_start_time.toTime_t(); //Get time in unix time
+//    int u_stop = loc_end_time.toTime_t(); //get the time in unix time
+
+//    int u_diff = (u_stop - u_start)/(3600); //calculate the number of hours between the start and stop times
+
+//    if(u_diff<=2) //if its less than 2 hours, make it 2
+//    {
+//        u_diff = 2;
+//    }
+
+    //u_diff is the number of time steps to suggest to the user
+//    numSteps->setValue(u_diff);
+
     startTime->setDateTime(loc_start_time);
     stopTime->setDateTime(loc_end_time); //Updates date time based on disk information
 
+    updateTimeSteps();
+
     //This suggests some potential options for number of timesteps to the user based on the number
-    //of data points in a file.
-    if(xSteps>101)//If there are an excessively large numer of times for weather data, don't suggest a lot of runs...
-    {
-        numSteps->setValue(24);
-    }
-    else
-    {
-        int step_update = xSteps/2;
-        if (step_update<2) //don't suggest 1 timestep runs
-        {
-            step_update = 2;
-            numSteps->setValue(step_update);
-        }
-        else
-        {
-            numSteps->setValue(step_update);
-        }
-    }
+    //of data points in a file. //This is the old way see u_diff above for new way, this will probably be deleted....
+//    if(xSteps>101)//If there are an excessively large numer of times for weather data, don't suggest a lot of runs...
+//    {
+//        numSteps->setValue(24);
+//    }
+//    else
+//    {
+//        int step_update = xSteps/2;
+//        if (step_update<2) //don't suggest 1 timestep runs
+//        {
+//            step_update = 2;
+//            numSteps->setValue(step_update);
+//        }
+//        else
+//        {
+//            numSteps->setValue(step_update);
+//        }
+//    }
 
 }
 /**
@@ -994,6 +1013,23 @@ QDateTime pointInput::readNinjaNowName(const char *fileName)
 
     QDateTime qxDate = QFileInfo(fileName).created();
     return qxDate;
+}
+/**
+ * @brief pointInput::setOneStepTimeseries
+ * If one step is set, diable stop time
+ * and only use start time
+ */
+void pointInput::setOneStepTimeseries()
+{
+    CPLDebug("STATION_FETCH","One Step Set for Timeseries, greying out stop time!");
+    if(numSteps->value()==1)
+    {
+        stopTime->setEnabled(false);
+    }
+    else
+    {
+        stopTime->setEnabled(true);
+    }
 }
 
 
@@ -1178,20 +1214,20 @@ void pointInput::toggleUI()
 void pointInput::toggleTimeseries() //If the data is part of timeseries, ie more than one step, we need to figure out the start and stop time
 
 {
-    if (enableTimeseries->isChecked()==false)
-    {
-        stopTime->setEnabled(false);
-        startTime->setEnabled(false);
-        numSteps->setEnabled(false);
-    }
-    if (enableTimeseries->isChecked()==true)
-    {
-        startTime->setEnabled(true);
-        stopTime->setEnabled(true);
-        numSteps->setEnabled(true);
-        updateStartTime(startTime->dateTime());
-        updateStopTime(stopTime->dateTime());
-    }
+//    if (enableTimeseries->isChecked()==false)
+//    {
+//        stopTime->setEnabled(false);
+//        startTime->setEnabled(false);
+//        numSteps->setEnabled(false);
+//    }
+//    if (enableTimeseries->isChecked()==true)
+//    {
+//        startTime->setEnabled(true);
+//        stopTime->setEnabled(true);
+//        numSteps->setEnabled(true);
+//        updateStartTime(startTime->dateTime());
+//        updateStopTime(stopTime->dateTime());
+//    }
 }
 /** This is obsolete, I Think...
  * @brief pointInput::pairFetchTime
@@ -1229,14 +1265,16 @@ void pointInput::pairTimeSeries(int curIndex)
 {
     if(curIndex==0)
     {
-        enableTimeseries->setChecked(false);
+//        enableTimeseries->setChecked(false);
+        enableTimeseries=true;
         startTime->setEnabled(false);
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
     }
     if(curIndex==1)
     {
-        enableTimeseries->setChecked(true);
+//        enableTimeseries->setChecked(true);
+        enableTimeseries=true;
         startTime->setEnabled(true);
         stopTime->setEnabled(true);
         numSteps->setEnabled(true);
@@ -1275,12 +1313,15 @@ void pointInput::watchStartTime() //Stop time cannot be farther in the future th
  */
 void pointInput::updateStartTime(QDateTime xDate)
 {
+    startSeries.clear(); //delete whatever is stored in the vector
     int year,month,day,hour,minute;
     year = xDate.date().year();
     month = xDate.date().month();
     day = xDate.date().day();    
     hour = xDate.time().hour();
     minute = xDate.time().minute();
+
+    updateTimeSteps(); //when we change the time, update the math on the time steps
 
 //    cout<<year<<" "<<month<<" "<<day<<" "<<hour<<" "<<minute<<endl;
     CPLDebug("STATION_FETCH","UPDATED START TIME: %i %i %i %i %i",year,month,day,hour,minute);
@@ -1308,12 +1349,15 @@ void pointInput::updateStartTime(QDateTime xDate)
  */
 void pointInput::updateStopTime(QDateTime xDate)
 {
+    endSeries.clear(); //delete whatever is stored in the vector
     int year,month,day,hour,minute;
     year = xDate.date().year();
     month = xDate.date().month();
     day = xDate.date().day();    
     hour = xDate.time().hour();
     minute = xDate.time().minute();
+
+    updateTimeSteps(); //when we change the time, update the math on the time steps
 
     CPLDebug("STATION_FETCH","UPDATED STOP TIME: %i %i %i %i %i",year,month,day,hour,minute);
     
@@ -1349,6 +1393,35 @@ void pointInput::updateSingleTime(QDateTime xDate)
     diurnalTimeVec.push_back(hour);
     diurnalTimeVec.push_back(minute);
 
+}
+/**
+ * @brief pointInput::updateTimeSteps
+ * Suggest a number of time steps based on the
+ * start and stop time
+ *
+ * this function sets the number of time steps to the number of
+ * hours between the start and stop time
+ *
+ * if its less than 2 hours,
+ * suggest two steps
+ *
+ * the user can then change this if they really want
+ *
+ */
+void pointInput::updateTimeSteps()
+{
+    CPLDebug("STATION_FETCH","Updating Suggested Time steps....");
+    int u_start = startTime->dateTime().toTime_t();
+    int u_stop = stopTime->dateTime().toTime_t();
+
+    int u_diff = (u_stop - u_start)/(3600); //calculate the number of hours between the start and stop times
+
+    if(u_diff<=2) //if its less than 2 hours, make it 2
+    {
+        u_diff = 2;
+    }
+
+    numSteps->setValue(u_diff);
 }
 /**
  * @brief pointInput::openStationFetchWidget

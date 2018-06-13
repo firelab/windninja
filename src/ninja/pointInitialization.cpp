@@ -1266,45 +1266,50 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 {
     CPLDebug("STATION_FETCH", "Interpolating time data");
 
-    boost::posix_time::ptime tempq;
-    boost::posix_time::ptime init;
+//    boost::posix_time::ptime tempq;
+//    boost::posix_time::ptime init;
 
-    vector<vector<preInterpolate> > Selectify;
+//    vector<vector<preInterpolate> > Selectify;
 
     boost::posix_time::time_duration zero(0, 0, 0, 0);
-    boost::posix_time::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
-    boost::posix_time::time_duration one(0, 1, 0, 0);
+//    boost::posix_time::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
+//    boost::posix_time::time_duration one(0, 1, 0, 0);
     boost::posix_time::time_duration null(boost::posix_time::not_a_date_time);
 
-    boost::posix_time::time_duration buffer;
-    boost::posix_time::time_duration avgBuffer;
-    vector<boost::posix_time::time_duration> avgBufferList;
-    boost::posix_time::time_duration bufferSum;
-
     int totalsize=vecStations.size(); //Total Number of Stations
+
+    //None of this commented stuff is likley needed anymore, was causing issues with small numbers of runs
+    //Clean this up later "Delete This"
+    //    boost::posix_time::time_duration buffer;
+    //    boost::posix_time::time_duration avgBuffer;
+    //    vector<boost::posix_time::time_duration> avgBufferList;
+    //    boost::posix_time::time_duration bufferSum;
     //Creates a vector of time buffers to be used to interpolate the raw data with the timeList
     //1 Buffer is equal to the distance between two observations, RAWS stations are usually hourly, so these observations have a buffer of 1 hour...
-    for (int j=0; j<totalsize; j++)
-    {
-        vector<boost::posix_time::time_duration> buffers;
-        for (int i=0; i<vecStations[j].size()-1; i++)
-        {
-            buffer = vecStations[j][i].datetime - vecStations[j][i+1].datetime;
-            if (buffer <= zero)
-            {
-                buffer = buffer.invert_sign();
-            }
-            if (buffer >= max)
-            {
-                buffer = buffers[0];
-            }
-            buffers.push_back(buffer);
-        }
+//    for (int j=0; j<totalsize; j++)
+//    {
+//        vector<boost::posix_time::time_duration> buffers;
+//        for (int i=0; i<vecStations[j].size()-1; i++)
+//        {
+//            buffer = vecStations[j][i].datetime - vecStations[j][i+1].datetime;
+//            if (buffer <= zero)
+//            {
+//                buffer = buffer.invert_sign();
+//            }
+//            if (buffer >= max)
+//            {
+//                buffer = buffers[0];
+//            }
+//            buffers.push_back(buffer);
+//        }
 
-        bufferSum = std::accumulate(buffers.begin(), buffers.end(), zero);
-        avgBuffer = bufferSum / buffers.size();
-        avgBufferList.push_back(avgBuffer);
-    }
+//        bufferSum = std::accumulate(buffers.begin(), buffers.end(), zero);
+//        avgBuffer = bufferSum / buffers.size();
+//        avgBufferList.push_back(avgBuffer);
+//    }
+    //End Delete This
+
+
     /* This is the new interpolation and sorting function, its much better and doesn't leak memory
      * Start with 1 station and 1 step
      *
@@ -2816,7 +2821,6 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     endHour=endHour;//Not Really sure why this is necssary
     startHour=startHour;
     
-//    cout<<timeZonePtr->has_dst()<<endl;
 //    CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
 
     /*
@@ -2953,7 +2957,6 @@ boost::posix_time::ptime pointInitialization::generateSingleTimeObject(int year,
 
     boost::gregorian::date xDate(year,month,day);
     boost::posix_time::time_duration xTime(hour,minute,0,0);
-
     boost::posix_time::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
     boost::posix_time::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
 

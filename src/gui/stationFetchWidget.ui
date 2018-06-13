@@ -278,11 +278,11 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Fetches weather data based on above specified parameters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string>Download Weather Data</string>
+        <string>Download Data</string>
        </property>
        <property name="icon">
         <iconset resource="../../wn-resources.qrc">
-         <normaloff>:/transmit.png</normaloff>:/transmit.png</iconset>
+         <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
        </property>
        <property name="toolButtonStyle">
         <enum>Qt::ToolButtonTextBesideIcon</enum>
@@ -297,15 +297,11 @@
        <property name="text">
         <string>Download Metadata</string>
        </property>
-       <property name="icon">
-        <iconset resource="../../wn-resources.qrc">
-         <normaloff>:/images/icons/transmit_blue.png</normaloff>:/images/icons/transmit_blue.png</iconset>
-       </property>
        <property name="checkable">
         <bool>false</bool>
        </property>
        <property name="toolButtonStyle">
-        <enum>Qt::ToolButtonTextBesideIcon</enum>
+        <enum>Qt::ToolButtonTextOnly</enum>
        </property>
       </widget>
      </item>

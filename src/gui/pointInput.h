@@ -84,6 +84,7 @@ class pointInput : public QWidget
     int simType;
     bool pointGo;
     int isDiurnalChecked;
+    bool enableTimeseries;
 
     QLineEdit *stationFileLineEdit;
 
@@ -170,8 +171,8 @@ class pointInput : public QWidget
     //Time series stuff
     QDateTimeEdit *startTime;
     QDateTimeEdit *stopTime;
-    QCheckBox *enableTimeseries;
-    QLabel *labelTimeseries;
+//    QCheckBox *enableTimeseries;
+//    QLabel *labelTimeseries;
     QHBoxLayout *timeBoxLayout;
     QSpinBox *numSteps;
     
@@ -210,6 +211,7 @@ class pointInput : public QWidget
     void updateProg();
     int progExec();
     QDateTime readNinjaNowName(const char* fileName);
+    void setOneStepTimeseries();
     
   private slots:
     void readStationFiles(const QItemSelection &x ,const QItemSelection &y);
@@ -227,6 +229,7 @@ class pointInput : public QWidget
     void pairStartTime(QDateTime xDate);
     void pairStopTime(QDateTime xDate);
     void pairTimeSeries(int curIndex);
+    void updateTimeSteps();
     
     void updateSingleTime(QDateTime xDate);
     void updateStartTime(QDateTime xDate);

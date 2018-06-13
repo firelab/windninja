@@ -76,6 +76,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     //treeView->setColumnHidden(3, true);
     //treeView->setDragDropMode( QAbstractItemView::DragOnly );
     treeView->setAlternatingRowColors( true );
+    treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 
     statusLabel = new QLabel(this);
@@ -395,6 +396,11 @@ void weatherModel::setInputFile(QString newFile)
  */
 void weatherModel::displayForecastTime( const QModelIndex &index )
 {
+    if(model->fileInfo(index).isDir()==true)
+    {
+        treeView->selectionModel()->select(index,QItemSelectionModel::Deselect|QItemSelectionModel::Rows);
+    }
+
     QFileInfo fi( model->fileInfo( index ) );
 
     if( !fi.exists() ) {

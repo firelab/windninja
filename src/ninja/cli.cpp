@@ -1115,7 +1115,7 @@ int windNinjaCLI(int argc, char* argv[])
                                         osTimeZone,
                                         stationPathName,
                                         vm["elevation_file"].as<std::string>(),
-                                        vm["match_points"].as<bool>());
+                                        vm["match_points"].as<bool>(),false);
 
                 if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
@@ -1189,7 +1189,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
                     }
                     if(fileSubFormat==1) //not a time series
                     {
@@ -1200,7 +1200,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
                     }
                 }
                 else if (stationFormat==1) //old format
@@ -1209,7 +1209,7 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
@@ -1242,7 +1242,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==4) // New Format where there are multiple one step recent station files
                 {
@@ -1256,7 +1256,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>());
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
                 }
                 else
                 {
