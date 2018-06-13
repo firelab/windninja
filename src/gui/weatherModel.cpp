@@ -92,7 +92,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
         this, SLOT(getData()));
     connect(refreshToolButton, SIGNAL(clicked()),
         this, SLOT(checkForModelData()));
-    connect(treeView, SIGNAL(clicked(const QModelIndex &)),
+    connect(treeView, SIGNAL(pressed(const QModelIndex &)),
         this, SLOT(displayForecastTime(const QModelIndex &)));
 
     //clear the selection on uncheck of group box
