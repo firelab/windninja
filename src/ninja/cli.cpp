@@ -1006,6 +1006,14 @@ int windNinjaCLI(int argc, char* argv[])
             std::vector<boost::posix_time::ptime> timeList;
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
+                const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
+                if(api_key_conf_opt!="FALSE")
+                {
+                    std::ostringstream api_stream;
+                    api_stream<<api_key_conf_opt;
+                    pointInitialization::setCustomAPIKey(api_stream.str());
+                }
+
                 option_dependency(vm,"station_buffer","station_buffer_units");
                 std::string stationPathName;
                 wxStation::SetStationFormat(wxStation::newFormat);
@@ -1052,6 +1060,12 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["end_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
+
+                    int duration_check = pointInitialization::checkFetchTimeDuration(timeList);
+                    if(duration_check==-2)
+                    {
+                        throw std::runtime_error("ERROR: Selected Time Range exceeds 1 year! Please select a custom API key to remove limits");
+                    }
                 }
                 else if (vm["fetch_current_station_data"].as<bool>()==true) //Set for "1 step"
                 {

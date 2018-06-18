@@ -18,7 +18,7 @@
  * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
  * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUTWARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
@@ -30,8 +30,8 @@
 
 #include "pointInitialization.h"
 
-const std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4";
-
+std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4";
+const std::string pointInitialization::backup_token = "33e3c8ee12dc499c86de1f2076a9e9d4";
 const std::string pointInitialization::dvar = "wind_speed,wind_direction,air_temp,"
                                              "solar_radiation,cloud_layer_1_code";
 
@@ -46,7 +46,8 @@ std::vector<std::string> pointInitialization::stationFiles;
 std::string pointInitialization::tzAbbrev;
 vector<boost::local_time::local_date_time> pointInitialization::start_and_stop_times;
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
-
+bool pointInitialization::enforce_limits = true;
+//Set to whether or not we enforce the limits of 1 year and buffer range
 extern boost::local_time::tz_database globalTimeZoneDB;
 
 pointInitialization::pointInitialization() : initialize()
@@ -455,7 +456,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     
     //NEW WAY
     stringstream timeStream,timeStream2;
-    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d-%H%M");
     timeStream.imbue(locale(timeStream.getloc(),facet));               
     std::string timeComponent;    
     
@@ -482,7 +483,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 
     }
     
-    fullPath = outPath+subDem+"_wxStations_"+timeComponent+"/";
+    fullPath = outPath+"WXSTATIONS-"+timeComponent+"-"+subDem+"/";
     CPLDebug("STATION_FETCH","Generating Directory: %s",fullPath.c_str());    
     
     VSIMkdir(fullPath.c_str(),0777);
@@ -2979,6 +2980,75 @@ boost::posix_time::ptime pointInitialization::generateSingleTimeObject(int year,
 
     return xxUTC;
 }
+/**
+ * @brief pointInitialization::checkFetchTimeDuration
+ *
+ * Checks the requested download times to see if they are within the accepted limit
+ *
+ *
+ *
+ * @param timeList
+ * @return
+ */
+int pointInitialization::checkFetchTimeDuration(std::vector<boost::posix_time::ptime> timeList)
+{
+    if(enforce_limits==true)
+    {
+        boost::posix_time::time_duration diffTime = timeList.back() - timeList.front();
+
+        int tSec = diffTime.total_seconds();
+        int max_download_time = 31556926; //One year in seconds
+
+        if(tSec>=max_download_time)//Sanity Check on requested Time Download
+        {
+    //        throw std::runtime_error("Cannot download more than 1 year worth of data at one time!");
+            return -2;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+/**
+ * @brief pointInitialization::setCustomAPIKey
+ * sets a user specified token to be used in the fetching
+ * of station data. See:
+ * https://synopticlabs.org/api/mesonet/
+ * for information on how to get a key
+ * this also removes limits place on the buffer size
+ * and number of hours downloadable.
+ *
+ * @param api_token
+ */
+void pointInitialization::setCustomAPIKey(string api_token)
+{
+    if(api_token=="FALSE")
+    {
+        return;
+    }
+    else
+    {
+        CPLDebug("STATION_FETCH","USING API KEY: %s",api_token.c_str());
+        if(api_token==backup_token) //means that it is the same as the one that is hard coded in for some reason....
+        {
+            CPLDebug("STATION_FETCH","PROVIDED TOKEN IS THE SAME AS HARD CODED, IGNORING...");
+            enforce_limits=true;
+            return;
+        }
+        if(api_token!=backup_token) //Means they are providing a unique key for us to use
+        {
+            CPLDebug("STATION_FETCH","AMMENDING TOKEN, REMOVING LIMITS");
+            dtoken=api_token;
+            enforce_limits=false; //Turn off limits for their key and let them suffer the consequences
+        }
+
+    }
+}
 
 /**
  * @brief Fetches station data from bounding box.
@@ -3010,6 +3080,18 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
 
     double buffer;
     buffer=getStationBuffer();
+
+    if(enforce_limits==true) //Generally this is true, unless they provide their own key...
+    {
+        if(buffer>170000.0)//The Buffer is too big! (170000.0m is ~105 Miles, so its a little bigger)
+        {//Sanity Check on Buffer Input
+            //Greater than 100 miles
+            throw std::runtime_error("Selected Buffer around DEM is too big! Greater than 100 miles. Use a custom API token to enable larger buffers.");
+            return false;
+        }
+    }
+
+
     CPLDebug("STATION_FETCH", "Adding %fm to DEM for station fetching.", buffer);
 
     double projxL=bounds[2];

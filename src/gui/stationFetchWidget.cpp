@@ -180,9 +180,18 @@ void stationFetchWidget::updateFetchProgress()
     {
         stationFutureWatcher.waitForFinished();
         int result = stationFutureWatcher.result(); //Get the result, 1 good, -1 bad
+
         if (result==-1)
         {
             stationFetchProgress->setLabelText("An Error Occured, Possibly no Data Exists for request");
+            stationFetchProgress->setRange(0,1);
+            stationFetchProgress->setValue(0);
+            stationFetchProgress->setCancelButtonText("Close");
+            setCursor(Qt::ArrowCursor);
+        }
+        else if (result==-2)
+        {
+            stationFetchProgress->setLabelText("ERROR: Selected Time Range is greater than 1 year! Input custom API KEY to remove limits");
             stationFetchProgress->setRange(0,1);
             stationFetchProgress->setValue(0);
             stationFetchProgress->setCancelButtonText("Close");
@@ -296,6 +305,17 @@ int stationFetchWidget::fetchStation()
 
     int terrainPart=geoLoc->currentIndex();
     int timePart=timeLoc->currentIndex();
+
+    //Custom API_KEY STUFF
+    const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
+    if(api_key_conf_opt!="FALSE")
+    {
+        std::ostringstream api_stream;
+        api_stream<<api_key_conf_opt;
+        pointInitialization::setCustomAPIKey(api_stream.str());
+    }
+    //End Custom API_KEY STUFF
+
 //Debugging code
 //    if (geoLoc->currentIndex()==0)
 //    {
@@ -395,6 +415,12 @@ int stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
+        int duration_check = pointInitialization::checkFetchTimeDuration(timeList); //Check the timelist duration
+        if(duration_check==-2) //Means that they select too much and we have to quit
+        {
+            return duration_check;
+        }
+
 //       cout<<timeList[0]<<endl;
         //Set station Buffer
         pointInitialization::setStationBuffer(buffer,bufferUnits);
@@ -467,6 +493,11 @@ int stationFetchWidget::fetchStation()
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
+        int duration_check = pointInitialization::checkFetchTimeDuration(timeList); //Check the timelist duration
+        if(duration_check==-2) //Means that they select too much and we have to quit
+        {
+            return duration_check;
+        }
 
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
         pointInitialization::SetRawStationFilename(stationPathName);

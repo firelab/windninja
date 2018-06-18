@@ -119,6 +119,8 @@ class pointInitialization : public initialize
                                                                  int day,
                                                                  int hour,
                                                                  int minute, std::string timeZone);
+        static int checkFetchTimeDuration(std::vector<boost::posix_time::ptime> timeList);
+        static void setCustomAPIKey(std::string api_token);
 
         static void fetchMetaData(std::string fileName, std::string demFile, bool write);
         static void SetRawStationFilename(std::string filename);
@@ -140,6 +142,8 @@ class pointInitialization : public initialize
 
         static std::string rawStationFilename; //Need to be public, so that they can be accessed by the GUI
         static vector<boost::local_time::local_date_time> start_and_stop_times;
+        static bool enforce_limits;
+
     private:
         void setInitializationGrids(WindNinjaInputs& input);
 
@@ -196,7 +200,8 @@ class pointInitialization : public initialize
         static bool fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
         static double getStationBuffer();
 
-        static const std::string dtoken;
+        static std::string dtoken;
+        static const std::string backup_token;
         static const std::string dvar;
         static const std::string ndvar;
         static const std::string baseUrl;

@@ -95,7 +95,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     writeStationKmlButton =  new QCheckBox( this ); //This writes a KML of the weather stations (1 per run)
     writeStationKmlButton->setText( tr( "Write Station Kml" ) );
     writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
-    writeStationKmlButton->setToolTip("Time Series: Writes a KML for each time step showing interpolated weather data.\nSingle Step: Writes a KML of inputted weather data.");
+    writeStationKmlButton->setToolTip("Time Series: Writes a KML for each time step with time interpolated station data.\nSingle Step: Writes a KML of weather station data.");
 //    writeStationKmlButton->setToolButtonStyle( Q/t::ToolButtonTextBesideIcon );
 //    writeStationKmlButton->setIcon( QIcon( ":weather_cloudy.png" ) );
 //    writeStationKmlButton->setStyle(Qt::ToolButtonTextBesideIcon);
@@ -1021,14 +1021,17 @@ QDateTime pointInput::readNinjaNowName(const char *fileName)
  */
 void pointInput::setOneStepTimeseries()
 {
-    CPLDebug("STATION_FETCH","One Step Set for Timeseries, greying out stop time!");
+
     if(numSteps->value()==1)
     {
+        CPLDebug("STATION_FETCH","One Step Set for Timeseries, greying out stop time!");
         stopTime->setEnabled(false);
+        stopTime->setToolTip("Stop time is disabled for 1 time step simulations");
     }
     else
     {
         stopTime->setEnabled(true);
+        stopTime->setToolTip("Enter the simulation stop time");
     }
 }
 
@@ -1474,7 +1477,7 @@ void pointInput::checkForModelData()
     QDir wd(cwd);
     QStringList filters;
     filters<<"*.csv"; //Only show CSV
-    filters<<"*_wxStations_*"; //Add downloadable directories to filters
+    filters<<"WXSTATIONS-*"; //Add downloadable directories to filters
 
     sfModel->setNameFilters(filters);
     sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
