@@ -49,7 +49,6 @@
 
 #include "pointInitialization.h"
 
-
 #ifndef PI
 #define PI 3.14159
 #endif
@@ -70,7 +69,6 @@ public:
     void fixTime();
     std::string removeWhiteSpace(std::string str);
     
-    
 protected:
     void closeEvent(QCloseEvent *event);
    
@@ -80,9 +78,6 @@ protected:
         void setInputFile( QString file );
         int fetchStation();
         std::string demButcher();
-        void updateGeoFetch();
-        void updateTimeFetch();
-        void watchTime();
         void watchStartTime();
         void watchStopTime();
 
@@ -90,19 +85,14 @@ protected:
         void updateFetchProgress();
         void executeFetchStation(); //Wrapper for fetch station, necessary for progress bar
         
-
     signals:
         void writeToConsole(QString message);
-//        void stationFileChanged();
         void exitWidget();
         
-
 private:
         //Progress Bar Stuff
         QProgressDialog *stationFetchProgress;
         QFutureWatcher<int> stationFutureWatcher;
-
-
         
 friend class pointInput;
 };

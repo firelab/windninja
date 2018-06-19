@@ -1928,8 +1928,6 @@ int mainWindow::solve()
             CPLDebug("STATION_FETCH","NEW FORMAT...");
             for (int i=0;i<pointFileList.size();i++)
             {
-//                cout<<pointFileList[i]<<endl; //This works and then /*we*/ seg fault -> which is good!
-//                cout<<wxStation::GetHeaderVersion(pointFileList[i].c_str())<<endl;
                 formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
             }
             if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin())) //Make sure all the header versions are equal, in case one of them gets past all the gui checkss

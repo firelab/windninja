@@ -86,48 +86,29 @@ class pointInput : public QWidget
     int isDiurnalChecked;
     bool enableTimeseries;
 
-    QLineEdit *stationFileLineEdit;
-
     QHBoxLayout *diurnalTimeLayout;
     QDateTimeEdit *dateTimeEdit;
     QLabel *diurnalLabel;
     QLabel *oneStepTimeLabel;
 
-    QToolButton *addStationButton;
-    QToolButton *removeStationButton;
-    QToolButton *readStationFileButton;
     QCheckBox *writeStationFileButton;
     QCheckBox *writeStationKmlButton;
     QToolButton *widgetButton;
-    QToolButton *execProg;
 
     QGroupBox *pointGroupBox;
 
-    QHBoxLayout *fileLayout;
     QHBoxLayout *buttonLayout;
     QVBoxLayout *pointLayout;
     QVBoxLayout *layout;
     QLabel *ninjafoamConflictLabel;
 
-    pointDataModel pointData;
-
-    pointInputDelegate *pointDelegate;
-
     //TreeBox Stuff
-    QTreeView *stationTreeView;
-    QTableView *stationTableView;
     
     QLabel *treeLabel;
 
     QTreeView *treeView;
-    QHBoxLayout *treeLayout;
     QVBoxLayout *vTreeLayout;
     QHBoxLayout *hDownloaderLayout; //Put the downloader up near the top of the page
-    
-    QStackedWidget *initPages;
-    QComboBox *initOpt;
-    QHBoxLayout *optLayout;
-    QWidget *oldForm;
     QWidget *newForm;
     
     //Station Fetch Directory Stuff
@@ -142,37 +123,12 @@ class pointInput : public QWidget
     QFrame *timeLine; //Creates a fancy line to seprate things out
     QFrame *timeLine2; //Creates another fancy line...
 
-    QFrame *xvLine1; //Creates some vertical Lines to organize the file info area
-    QFrame *xvLine2;
-    QFrame *xvLine3;
-
-    //File Info Area (No Longer Visible) //Needs to Be Cleaned Up!
-    QHBoxLayout *selectedFileLayout;
-    QVBoxLayout *fileStartLayout;
-    QVBoxLayout *fileEndLayout;
-    QVBoxLayout *fileStepLayout;
-
-    QLabel *fileStart;
-    QLabel *fileEnd;
-    QLabel *fileSteps;
-
-    QLabel *fileStartVal;
-    QLabel *fileEndVal;
-    QLabel *fileStepsVal;
-
-
-    QStringList filters;
-    QString tXtest;
-    std::vector<std::string> vy; //clean this up
     std::vector<std::string> vx; //For file names
-    
     
     //endDirectoryChecking
     //Time series stuff
     QDateTimeEdit *startTime;
     QDateTimeEdit *stopTime;
-//    QCheckBox *enableTimeseries;
-//    QLabel *labelTimeseries;
     QHBoxLayout *timeBoxLayout;
     QSpinBox *numSteps;
     
@@ -190,15 +146,9 @@ class pointInput : public QWidget
     std::vector<int> diurnalTimeVec;
     
     //End Timeseries stuff    
-
-    void updateTable();
     
     stationFetchWidget *xWidget;
     QString tzString;
-
-    //ProgressBarTest Delete LAter
-    QProgressDialog *xProg;
-    QFutureWatcher<int> xFut;
 
   public slots:
     void updateTz(QString tz);
@@ -207,25 +157,17 @@ class pointInput : public QWidget
     void readStationTime(std::string start_time, std::string stop_time, int xSteps);
     static void setWxStationFormat(int format); //I don't Think I need this anymore (delete later)
     void displayInformation(int dataType);
-    void testProg();
-    void updateProg();
-    int progExec();
     QDateTime readNinjaNowName(const char* fileName);
     void setOneStepTimeseries();
     
   private slots:
     void readStationFiles(const QItemSelection &x ,const QItemSelection &y);
-    void readMultipleStationFiles(const QModelIndex &index);
     void selChanged(const QItemSelection &x ,const QItemSelection &y); //Test Function
-    void writeStationFile();
-    void writeStationKml();
     void setInputFile( QString file );
     void setDiurnalParam(bool diurnalCheck);
     void openMainWindow();
     void openStationFetchWidget();
-    int checkNumStations(string comparator, std::vector<std::string> stationVec);
     
-    void pairFetchTime(QDateTime xDate); //This is a test function that needs to be deleted!
     void pairStartTime(QDateTime xDate);
     void pairStopTime(QDateTime xDate);
     void pairTimeSeries(int curIndex);
@@ -237,9 +179,6 @@ class pointInput : public QWidget
     void watchStopTime();
     void watchStartTime();
     
-    void toggleUI();
-    void toggleTimeseries();
-
  signals:
     void writeToConsole( QString message );
     void stationFileChanged();

@@ -46,7 +46,6 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     stationFetchProgress->setWindowModality(Qt::ApplicationModal);
     stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
     stationFetchProgress->setAutoClose(false);
-
 }
 
 /**
@@ -73,7 +72,6 @@ void stationFetchWidget::fixTime()
     
     startEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
     endEdit->setDisplayFormat( "MM/dd/yyyy HH:mm" );
-    
 }
 
 /**
@@ -82,15 +80,10 @@ void stationFetchWidget::fixTime()
  */
 void stationFetchWidget::connectInputs()
 {
-    connect(fetchMetaButton, SIGNAL(clicked()),this, SLOT(getMetadata()));
-//    connect(fetchDataButton, SIGNAL(clicked()),this, SLOT(fetchStation()));
-    connect(fetchDataButton,SIGNAL(clicked()),this,SLOT(executeFetchStation()));
-
-//    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchTime()));
-
-    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
-    connect(startEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime()));
-
+    connect(fetchMetaButton, SIGNAL(clicked()),this, SLOT(getMetadata())); //Gets the metadata, indirectly used in mainwindow via config option
+    connect(fetchDataButton,SIGNAL(clicked()),this,SLOT(executeFetchStation())); //Fetches the data and
+    connect(endEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime())); //Watches the time to make sure we don't go over
+    connect(startEdit,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime())); //Watches the time to make sure we don't go under
     connect(closeButton,SIGNAL(clicked()),this,SLOT(close())); //closes stationFetchWidget
 }
 
@@ -102,19 +95,7 @@ void stationFetchWidget::setInputFile(QString file) //Gets the DEM
 {
     demFileName = file;    
 }
-//deprecated in favor of two functions
-void stationFetchWidget::watchTime() //Makes sure that the start time never goes farther into the future and the end time
-{
-//    cout<<"end TIME CHANGED!"<<endl;
-//    endEdit->dateTime()
-//    startEdit->setMaximumDateTime(endEdit->dateTime().addSecs(-3600));
-//    if (endEdit->dateTime()<startEdit->dateTime())
-//    {
-//        writeToConsole("Start Time is greater than End Time!, reverting...");
-//        CPLDebug("STATION_FETCH","START TIME > END TIME: FIXING!");
-//        startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
-//    }
-}
+
 /**
  * @brief stationFetchWidget::watchStartTime
  * Watches the start time that the user puts in, if
@@ -130,7 +111,6 @@ void stationFetchWidget::watchStartTime()
 //        startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
         endEdit->setDateTime(startEdit->dateTime().addSecs(3600));
     }
-
 }
 /**
  * @brief stationFetchWidget::watchStopTime
@@ -148,15 +128,6 @@ void stationFetchWidget::watchStopTime()
     }
 }
 
-void stationFetchWidget::updateGeoFetch()
-{
-    
-}
-
-void stationFetchWidget::updateTimeFetch()
-{
-    
-}
 /**
  * @brief stationFetchWidget::updateFetchProgress
  * Updates the Progress Bar and tells the GUI
@@ -205,12 +176,8 @@ void stationFetchWidget::updateFetchProgress()
             stationFetchProgress->setLabelText("Data Downloaded Sucessfully!");
             stationFetchProgress->setCancelButtonText("Close");
             setCursor(Qt::ArrowCursor); //set the cursor back to normal
-
-//            stationFutureWatcher.cancel(); //Commented because its probably not necessary
-
         }
     }
-
 }
 
 /**
@@ -258,7 +225,6 @@ std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up sp
             str.replace(position ,1, toreplace);
     }
     return(str);
-    
 }
 
 std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the downloader
@@ -278,14 +244,6 @@ std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the d
  */
 int stationFetchWidget::fetchStation()
 {
-//    stationFetchProgress->reset();
-//    stationFetchProgress->setRange(0,100);
-//    stationFetchProgress->show();
-//    stationFetchProgress->setValue(0);
-//    stationFetchProgress->setVisible(true);
-//    stationFetchProgress->setLabelText("Downloading Station Data...");
-//    stationFetchProgress->setCancelButtonText("Cancel");
-//    stationFetchProgress->exec();
     writeToConsole("Downloading Station Data...");
     CPLDebug("STATION_FETCH","Fetch Station GUI Function");
     CPLDebug("STATION_FETCH","---------------------------------------");
@@ -378,7 +336,6 @@ int stationFetchWidget::fetchStation()
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
 
-//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
     }
     //DEM and Time series
@@ -421,28 +378,16 @@ int stationFetchWidget::fetchStation()
             return duration_check;
         }
 
-//       cout<<timeList[0]<<endl;
         //Set station Buffer
         pointInitialization::setStationBuffer(buffer,bufferUnits);
 
         //Generate Station directory, because timeseries is on, specify what time zone the stations will be
         //downloaded in, based on DEM time zone settings, or user specified.
-
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
-                                                           tzString.toStdString(),false);
-
-//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
-
-        
-        CPLDebug("STATION_FETCH","Return: %i",result);
-//        cout<<bufferSpin->text().toDouble()<<endl;
-//        cout<<buffUnits->currentText().toStdString()<<endl;
-//        cout<<startEdit->text().toStdString()<<endl;
-//        cout<<endEdit->text().toStdString()<<endl;
-        
-        
+                                                           tzString.toStdString(),false);       
+        CPLDebug("STATION_FETCH","Return: %i",result);       
     }
     if (terrainPart==1 && timePart==0) //STation ID and 1 step
     {
@@ -455,11 +400,7 @@ int stationFetchWidget::fetchStation()
 
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
 
-//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
-
-//        cout<<stid<<endl;        
-//        cout<<currentBox->isChecked()<<endl;        
         
     }
     if (terrainPart==1 && timePart==1) //STATION ID and timeseries
@@ -485,11 +426,7 @@ int stationFetchWidget::fetchStation()
         istringstream(EndTime.substr(6,4))>>eY;
         istringstream(EndTime.substr(11,2))>>eH;
         istringstream(EndTime.substr(14,2))>>eMi;
-        
-
-//        cout<<sY<<sMo<<sD<<sH<<sMi<<endl;
-//        cout<<eY<<eMo<<eD<<eH<<eMi<<endl;
-        
+                
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
@@ -505,31 +442,16 @@ int stationFetchWidget::fetchStation()
 
         //timeseries, so specify time zone in path name.
         
-//        pointInitialization::writeStationLocationFile(stationPathName,demFileName.toStdString());
         CPLDebug("STATION_FETCH","Return: %i",result);
-
-//        cout<<stid<<endl;        
-//        cout<<startEdit->text().toStdString()<<endl;
-//        cout<<endEdit->text().toStdString()<<endl;
     }
     if(result==false) //If there are no stations, tell the user
     {
         pointInitialization::removeBadDirectory(stationPathName);
         writeToConsole("Could not read station File: Possibly no stations exist for request");
-//        stationFetchProgress->setValue(100);
-//        stationFetchProgress->setLabelText("No Station Data Found!");
-//        stationFetchProgress->setCancelButtonText("OK!");
-//        pointInitialization::SetRawStationFilename("");
-//        pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
         return -1;
     }
     else
     {
-//        stationFetchProgress->setValue(100);
-//        stationFetchProgress->setLabelText("Download Succesful!");
-//        stationFetchProgress->setCancelButtonText("OK!");
-//        writeToConsole("Data Downlaoded Successfully");
-//        pointInitialization::SetRawStationFilename("");
         if(fetchNow==false)
         {
             pointInitialization::start_and_stop_times.clear(); //Need to clear these times to allow multiple downloads
@@ -569,9 +491,7 @@ void stationFetchWidget::getMetadata()
         }
     }
             else
-                pointInitialization::fetchMetaData(fileName.toStdString(), demFileName.toStdString(), true);
-    
-    
+                pointInitialization::fetchMetaData(fileName.toStdString(), demFileName.toStdString(), true);   
 }
 
 void stationFetchWidget::closeDEM()
@@ -582,7 +502,6 @@ void stationFetchWidget::closeDEM()
 void stationFetchWidget::closeEvent(QCloseEvent *event)
 {
     event->ignore();
-//    this->writeSettings();
     exitWidget();
     event->accept();
 }
