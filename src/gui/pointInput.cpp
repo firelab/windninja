@@ -1470,23 +1470,22 @@ void pointInput::setDiurnalParam(bool diurnalCheck)
 /**
  * *@brief pointInput::checkForModelData
  * Applies filters to the tree
+ * Also clears selection when the user clicks it
  */
 void pointInput::checkForModelData()
 {
+    stationFileList.clear(); //Clear the list
+    treeView->selectionModel()->clear(); //Clear the models selections
+    pointGo = false; //Set the pointInput bool to false just to be extra explicit
 
     QDir wd(cwd);
     QStringList filters;
     filters<<"*.csv"; //Only show CSV
     filters<<"WXSTATIONS-*"; //Add downloadable directories to filters
-
     sfModel->setNameFilters(filters);
     sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
-    stationFileList.clear(); //Clear the list
-    treeView->selectionModel()->clear(); //Clear the models selections
-    pointGo = false; //Set the pointInput bool to false just to be extra explicit
-
 }
 void pointInput::testProg()
 {

@@ -44,6 +44,9 @@
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QComboBox" name="geoLoc">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download From DEM: Download all active weather stations with the bounds of the selected surface input.&lt;/p&gt;&lt;p&gt;Download By Station ID: Manually enter weather station IDs separated by commas. e.g. KMSO,PNTM8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <item>
             <property name="text">
              <string>Download From DEM</string>
@@ -80,6 +83,9 @@
                <width>151</width>
                <height>26</height>
               </rect>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add a buffer to download stations outside the DEM.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <number>100</number>
@@ -151,6 +157,9 @@
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QComboBox" name="timeLoc">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Download Most Recent Data: Download one time step of the latest data available in the mesowest API.&lt;/p&gt;&lt;p&gt;Download Between Two Dates: Download all weather station data within a specified start and stop time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <item>
             <property name="text">
              <string>Download Most Recent Data</string>
@@ -217,6 +226,9 @@
                <width>194</width>
                <height>26</height>
               </rect>
+             </property>
+             <property name="toolTip">
+              <string/>
              </property>
              <property name="calendarPopup">
               <bool>true</bool>

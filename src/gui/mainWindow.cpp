@@ -556,6 +556,8 @@ void mainWindow::createConnections()
   connect(tree->point->startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
   connect(tree->point->stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
 
+  connect(tree->point->refreshToolButton,SIGNAL(clicked(bool)),this,SLOT(checkAllItems()));
+
   //connect selection change in weather to checkers
   connect(tree->weather->treeView->selectionModel(),
       SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
