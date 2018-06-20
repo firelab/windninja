@@ -98,7 +98,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     treeView->setAnimated(true); //Fancy stuff
     treeView->setColumnHidden(1, true);
     treeView->setColumnHidden(2, true);
-    treeView->setAlternatingRowColors( true );
+    treeView->setAlternatingRowColors( false );
     treeView->setSelectionMode(QAbstractItemView::MultiSelection); //Allows multiple files to be selected
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows); //Select entire row when we do select something
 

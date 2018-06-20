@@ -2043,14 +2043,16 @@ vector<std::string> pointInitialization::Split(char* str,const char* delim)
 {
     //Splits strings into vectors of strings based on a delimiter, a "," is used for most functions
     char* saveptr;
-    char* token = strtok_r(str, delim, &saveptr);
+//    char* token = strtok_r(str, delim, &saveptr);
+    char* token = strtok(str, delim);
 
     vector<std::string> result;
 
     while(token != NULL)
     {
         result.push_back(token);
-        token = strtok_r(NULL, delim, &saveptr);
+//        token = strtok_r(NULL, delim, &saveptr);
+        token = strtok(NULL, delim);
     }
     return result;
 }

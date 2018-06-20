@@ -75,7 +75,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeView->setColumnHidden(2, true);
     //treeView->setColumnHidden(3, true);
     //treeView->setDragDropMode( QAbstractItemView::DragOnly );
-    treeView->setAlternatingRowColors( true );
+    treeView->setAlternatingRowColors( false );
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
 

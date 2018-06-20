@@ -35,6 +35,7 @@
 //#include "cellDiurnal.h"
 
 #include <limits>	//for large number
+#include <math.h>
 
 class pointInitialization : public initialize
 {
