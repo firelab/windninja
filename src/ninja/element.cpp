@@ -58,8 +58,8 @@ void element::initializeQuadPtArrays()
     SFV=new double[4*mesh_->NNPE*NUMQPTV]; 
 
     QPTV=new double[NUMQPTV*3]; //QPTV stores the u, v, and w coordinates of the quadrature points
-    QE=new double[mesh_->NNPE];
-    S=new double[mesh_->NNPE*mesh_->NNPE];
+    QE=new double[mesh_->NNPE]; //Q (RHS) for an element
+    S=new double[mesh_->NNPE*mesh_->NNPE]; //A in Ax=b for an element
     DNDX=new double[mesh_->NNPE];
     DNDY=new double[mesh_->NNPE];
     DNDZ=new double[mesh_->NNPE];

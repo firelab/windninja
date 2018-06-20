@@ -1852,6 +1852,13 @@ void ninja::setBoundaryConditions()
     //The other nodes that are "connected" to the known node need to have their equations adjusted accordingly.
     //This is done by moving the term with the known value to the RHS.
 
+    //Note that this method only works because of our particular BCs. If other BCs were used, an alternative method,
+    //such as "blasting the diagonal" as discussed on p. 42 of Thompson's book, would need to be used to avoid destroying
+    //the symmetry of the SK[] matrix (the A in Ax=b).
+
+    //Because we initialize the ground nodes to 0, the ground BC is taken care of simply by not including surface
+    //quadrature in the ground elements. See page 165, Eqn. 9.51 in Thompson's book for details.
+
     int NPK, KNP;
     int i, j, k, l;
 
