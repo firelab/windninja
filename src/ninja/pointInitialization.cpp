@@ -1590,7 +1590,10 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     double pointS = (iPoint - lowX);
     double result = lowY + pointS * slope;
 
-    if(isnan(result))
+    //MSVC 2010 is not c++11 compliant-> isnan doesn't work with MSVC2010
+    //changing to CPLISNan()
+
+    if(CPLIsNan(result))
     {
         result = work;
     }
@@ -1612,7 +1615,8 @@ double pointInitialization::interpolateDirection(double lowDir, double highDir)
     {
         degAverage = degAverage + 360.0;
     }
-    if (isnan(degAverage))
+    //Changing isnan() to CPLIsNan() for MSVC2010 compliance
+    if (CPLIsNan(degAverage))
     {
         degAverage=0.0; //Sometimes the interpolation fails, temporary fix here!
         CPLDebug("STATION_FETCH","Direction Interpolation Failed! Zeroing out bad point!");
@@ -2043,6 +2047,7 @@ vector<std::string> pointInitialization::Split(char* str,const char* delim)
 {
     //Splits strings into vectors of strings based on a delimiter, a "," is used for most functions
     char* saveptr;
+    //strtok_r is for unix systems only, chang to strtok for cross platform use...
 //    char* token = strtok_r(str, delim, &saveptr);
     char* token = strtok(str, delim);
 
@@ -2427,7 +2432,8 @@ vector<double> pointInitialization::Irradiate(const double* solrad, int smallcou
         {
             solFrac=one;
         }
-        if (isnan(solFrac))
+        //Changing isnan to CPLIsNan() for MSVC2010
+        if (CPLIsNan(solFrac))
         {
             solFrac=one;
         }
