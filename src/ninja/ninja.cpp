@@ -1693,6 +1693,46 @@ void ninja::discretize()
         double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
 #endif
 
+        //pre-calculate 3-D station weighting field
+        //this weighting field will be used during discretization to
+        //adjust the alpha terms near station locations in order to make it
+        //very costly for the solver to adjust the locations where the node
+        //weights are high (i.e., at observation locations)
+        if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+        {
+            std::vector<double> stationElevationList;
+            double x, y;
+
+            //get elevation at station locations
+            for(i=0; i<input.stations.size(); i++)
+            {
+                x = input.stations[i].get_projXord();
+                y = input.stations[i].get_projYord();
+                stationElevationList.push_back(input.dem.interpolateGrid(x, y,
+                                               AsciiGrid<double>::order1));
+            }
+
+            stationWeightField.allocate(&mesh); //station weight at each node
+
+            for(k=0;k<mesh.nlayers;k++)
+            {
+                for(i=0;i<input.dem.get_nRows();i++)
+                {
+                    for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                    {
+                        //calculate distance from node to each station and set weight
+                        //prevent overlap of weighting from stations by limiting
+                        //influence radius of individual station weighting to 4-5 cells
+
+                        //apply weighting function (e.g., cressman or similar) over a radial
+                        //distance of 4-5 grid cells in 3-D and store for use later
+                        //when Rx, Ry, Rz are calculated.
+
+                    }
+                }
+            }
+        }
+
 #pragma omp for
         for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
         {

@@ -154,6 +154,7 @@ public:
 
     //AsciiGrid<double> alphaVGrid; //store spatially varying alphaV variable
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
+    wn_3dScalarField stationWeightField; //station weight field
 
     #ifdef FRICTION_VELOCITY
     AsciiGrid<double>UstarGrid;
