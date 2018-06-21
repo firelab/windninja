@@ -246,6 +246,8 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     layout->addWidget(ninjafoamConflictLabel);
     setLayout( layout ); //done
 
+    checkForModelData();//On load check for model data to filter out directories and stuff we don't want
+
 //####################################################
 // Connect Signls to Slots                           #
 //####################################################
@@ -939,11 +941,10 @@ void pointInput::checkForModelData()
     stationFileList.clear(); //Clear the list
     treeView->selectionModel()->clear(); //Clear the models selections
     pointGo = false; //Set the pointInput bool to false just to be extra explicit
-
     QDir wd(cwd);
     QStringList filters;
     filters<<"*.csv"; //Only show CSV
-    filters<<"WXSTATIONS-*"; //Add downloadable directories to filters
+    filters<<"WXSTATIONS-*"; //Add downloadable directories to filters    
     sfModel->setNameFilters(filters);
     sfModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
     treeView->setRootIndex(sfModel->index(wd.absolutePath()));

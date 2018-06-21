@@ -325,10 +325,10 @@ int stationFetchWidget::fetchStation()
         CPLDebug("STATION_FETCH","Fetch Params: DEM and Current Data");
         buffer=bufferSpin->text().toDouble();
         bufferUnits=buffUnits->currentText().toStdString();
-        fetchNow=true;        
+        fetchNow=true;
         
 //        cout<<bufferSpin->text().toDouble()<<endl;
-        cout<<buffUnits->currentText().toStdString()<<endl;
+//        cout<<buffUnits->currentText().toStdString()<<endl;
 //        cout<<currentBox->isChecked()<<endl;
         //Set the Station Buffer
         pointInitialization::setStationBuffer(buffer,bufferUnits);

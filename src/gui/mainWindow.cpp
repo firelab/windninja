@@ -2837,7 +2837,7 @@ int mainWindow::checkWeatherItem()
     if( mi.isValid() ) {
         fi = tree->weather->model->fileInfo( mi );
         std::string filename = fi.absoluteFilePath().toStdString();
-        char *p, *q;
+        char *p, *q; //code gore
         p = strdup( filename.c_str() );
         q = strrchr( p, '/' );
         int n = 0;
