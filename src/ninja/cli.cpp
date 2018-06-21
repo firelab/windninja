@@ -1095,7 +1095,7 @@ int windNinjaCLI(int argc, char* argv[])
                     if(fetchSuccess==false) //If we fail to download any data
                     {
                         pointInitialization::removeBadDirectory(stationPathName); //Delete the above generated directory
-                        throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
+                        throw std::runtime_error(pointInitialization::error_msg);
                     }
 
                     //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
@@ -1112,7 +1112,7 @@ int windNinjaCLI(int argc, char* argv[])
                     if(fetchSuccess==false) //Fail to download data
                     {
                         pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
-                        throw std::runtime_error("OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.");
+                        throw std::runtime_error(pointInitialization::error_msg);
                     }
 //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
                     pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
@@ -1522,7 +1522,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {
-                    CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i);
+                    CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i_);
 //                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
 //                    vm["wx_station_kml_filename"].as<std::string>());
                     if(vm.count("output_path")){

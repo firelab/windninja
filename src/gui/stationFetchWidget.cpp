@@ -154,7 +154,8 @@ void stationFetchWidget::updateFetchProgress()
 
         if (result==-1)
         {
-            stationFetchProgress->setLabelText("An Error Occured, Possibly no Data Exists for request");
+//            stationFetchProgress->setLabelText("An Error Occured, Possibly no Data Exists for request");
+            stationFetchProgress->setLabelText(QString(pointInitialization::error_msg.c_str()));
             stationFetchProgress->setRange(0,1);
             stationFetchProgress->setValue(0);
             stationFetchProgress->setCancelButtonText("Close");

@@ -144,6 +144,7 @@ class pointInitialization : public initialize
         static std::string rawStationFilename; //Need to be public, so that they can be accessed by the GUI
         static vector<boost::local_time::local_date_time> start_and_stop_times;
         static bool enforce_limits;
+        static std::string error_msg;
 
     private:
         void setInitializationGrids(WindNinjaInputs& input);
@@ -165,9 +166,8 @@ class pointInitialization : public initialize
                                           const double *dxCloud, int count1,
                                           int count2,int count3, int backupcount);
 
-        static vector<double> Irradiate(const double* solrad, int smallcount,
-                                        int largecount, std::string timeZone,
-                                        double lat, double lon,char** times);
+        static vector<double> Irradiate(vector<std::string> solar_radiation,
+                                        std::string timeZone,double lat,double lon, char** times);
 
         static vector<std::string> fixWindDir(const double *winddir, std::string filler, int count);
 
@@ -196,10 +196,11 @@ class pointInitialization : public initialize
                                             std::string yeary, std::string monthy,
                                             std::string dayy, std::string clocky);
 
-//        static std::string generateBasePlate(std::string);
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
-        static bool fetchStationData(std::string URL, std::string timeZone, bool latest,std::vector<boost::posix_time::ptime> timeList);
         static double getStationBuffer();
+        static std::vector<std::string> outputToVec(const double* dataArray,int data_idx,int dataCount,std::string data_name);
+        static std::vector<std::string> fixEmptySensor(std::vector<std::string> data_vec,std::string data_name,std::vector<std::string> valid_vec);
+        static bool fetchStationData(std::string URL, std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList);
 
         static std::string dtoken;
         static const std::string backup_token;
