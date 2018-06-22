@@ -364,7 +364,7 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
     vector<boost::posix_time::ptime> stationStops;
     vector<std::string> stationNames; //Just for organization purposes, probably not necessary after initial debugging
 
-    cout<<wxStationData.size()<<endl;
+//    cout<<wxStationData.size()<<endl;
     for (int i=0; i<wxStationData.size();i++)
     {
         boost::posix_time::ptime SD_start;
@@ -2923,6 +2923,39 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
         outFile<<stationFiles[i]<<endl;
     }
 }
+/**
+ * @brief pointInitialization::parseStationHeight
+ * @param name_list
+ * uses the name of a station to aid in determining the height of the wind sensor
+ * IRAWS stations are at 6ft AGL
+ * Permanent RAWS are at 20ft AGL
+ *
+ * I think all IRAWS stations are named IRAWS
+ *
+ * @return
+ */
+double pointInitialization::parseStationHeight(const char* name_list)
+{
+    double perma_raws = 6.0959; //meters (20 ft above ground for standard raws station)
+    double incident_raws = 1.8288; //meters (6 feet above ground for IRAWS station)
+    std::string iraws = "IRAWS";
+
+    std::stringstream name_ss;
+    name_ss<<name_list;
+    std::string nam = name_ss.str();
+    std::size_t iraws_found = nam.find(iraws);
+    if(iraws_found!=std::string::npos)
+    {
+        CPLDebug("STATION_FETCH","STATION IS IRAWS, changing height...");
+        return incident_raws;
+    }
+    else
+    {
+        return perma_raws;
+    }
+}
+
+
 
 /**
  * @brief pointInitialization::outputToVec
@@ -3300,12 +3333,17 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             std::vector<double> raws_cloud = Irradiate(raws_solar,
                                                        timeZone,raws_latitude,
                                                        raws_longitude,raws_datetime);
+
+            int name_idx = OGR_F_GetFieldIndex(hFeature,"name");
+            const char* raws_name =(OGR_F_GetFieldAsString(hFeature,name_idx));
+            double raws_height = parseStationHeight(raws_name);
+
             if(write_this_station==true)
             {
                 CPLDebug("STATION_FETCH","Writing station: %s to file %s",writeID,tName.c_str());
-                std::string raws_height="10"; //This may get changed later
+//                std::string raws_height="10"; //This may get changed later
                 outFile.open(tName.c_str());
-                cout<<tName<<endl;
+//                cout<<tName<<endl;
                 outFile<<header<<endl;
                 stationCSVNames.push_back(tName);
                 storeFileNames(stationCSVNames);

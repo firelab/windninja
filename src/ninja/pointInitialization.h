@@ -198,6 +198,7 @@ class pointInitialization : public initialize
 
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
         static double getStationBuffer();
+        static double parseStationHeight(const char *name_list);
         static std::vector<std::string> outputToVec(const double* dataArray,int data_idx,int dataCount,std::string data_name);
         static std::vector<std::string> fixEmptySensor(std::vector<std::string> data_vec,std::string data_name,std::vector<std::string> valid_vec);
         static bool fetchStationData(std::string URL, std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList);
