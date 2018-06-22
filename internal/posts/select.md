@@ -397,3 +397,24 @@ DOI 10.1007/s00267-014-0432-6</span>
       </div>
   </div>
 </div>
+<div class="col col-12">
+  <div class="block blue">
+      <div class="block-body height-.5">
+      <div class="col col-3">
+        <!-- <a href="http://firelab.github.io/windninja/pdf/nhess.pdf"><img src="http://firelab.github.io/windninja/assets/rios_fig.png" alt="fiyah!" -->
+      <!-- style="width:155px;height:135px;"></a> -->
+      </div>
+      <div class="col col-.5">
+      </div>
+      <div class="col col-8">
+
+          <h7>
+            <a class="post-link white-text" href="http://firelab.github.io/windninja/pdf/nhess.pdf">Evaluation of forest fire models on a large observation database</a>
+          </h7>
+            <span class="post-meta white-text">J.B. Filippi, V. Mallet, B. Nader</span><br>
+            <!-- <a class="post-meta white-text" href="http://firelab.github.io/windninja/pdf/JAST.pdf">Direct PDF Link</a><br> -->
+            <span class="post-meta white-text"> https://doi.org/10.5194/nhess-14-3077-2014</span>
+            </div>
+      </div>
+  </div>
+</div>
