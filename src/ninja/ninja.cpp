@@ -1692,7 +1692,7 @@ void ninja::discretize()
 
     int nodeNumber = 0;
     double distanceOfInfluence = mesh.meshResolution*5.;
-    //cout<<"distanceOfInfluence = "<<distanceOfInfluence<<endl;
+    CPLDebug("POINT", "distanceOfInfluence = %f\n", distanceOfInfluence);
     double stationElevation, nodeToStationDistance;
 
     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
@@ -1704,13 +1704,14 @@ void ninja::discretize()
         for(i=0; i<input.stations.size(); i++)
         {
             //get x, y, z at station locations
-            xStation = input.stations[i].get_projXord(); //DEM coords
-            yStation = input.stations[i].get_projYord();
-            stationElevation = input.dem.interpolateGrid(xStation, yStation, AsciiGrid<double>::order1);
             xStation = input.stations[i].get_xord(); //mesh coords
             yStation = input.stations[i].get_yord();
-            //account for vegetation height ?
-            zStation = input.stations[i].get_height() + stationElevation;
+
+            //account for vegetation height
+            //still need to account for cases where station is not in the DEM bounds
+            zStation = input.stations[i].get_height() +
+                       input.surface.Rough_h.interpolateGridLocalCoordinates(xStation, yStation, AsciiGrid<double>::order1) +
+                       input.dem.interpolateGridLocalCoordinates(xStation, yStation, AsciiGrid<double>::order1);
 
             //set weights at each node for current station
             for(i=0; i<mesh.nrows; i++)
@@ -1723,12 +1724,12 @@ void ninja::discretize()
                         yNode=mesh.YORD(i,j,k);
                         zNode=mesh.ZORD(i,j,k);
 
-                        //cout<<"xNode, yNode, zNode = "<<xNode<<", "<<yNode<<", "<<zNode<<endl;
-
                         //calculate distance from node to station we're on and set weight at the node
                         nodeToStationDistance = pow(((xNode-xStation)*(xNode-xStation) +
                                                 (yNode-yStation)*(yNode-yStation) +
                                                 (zNode-zStation)*(zNode-zStation)), 0.5);
+
+                        CPLDebug("POINT", "nodeToStationDistance = %f\n", nodeToStationDistance);
 
                         //apply smoothing function (e.g., cressman or similar) over distanceOfInfluence
                         //and store for use later when Rx, Ry, Rz are calculated.
