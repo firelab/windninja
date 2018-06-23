@@ -2238,6 +2238,9 @@ void ninja::computeUVWField()
 #ifdef STABILITY
     alphaVfield.deallocate();
 #endif
+    alphaHfield.deallocate();
+
+    reportStationDiffs();
 }
 
 /**Prepares for writing output files.
@@ -2423,6 +2426,51 @@ void ninja::prepareOutput()
             fclose(output);
 
         }
+    }
+}
+
+/**
+ * Compares the simulated wind field to the measured wind at stations
+ * and prints the differences in the u, v, w components.
+ */
+void ninja::reportStationDiffs()
+{
+    element elem(&mesh);
+    double x, y, z;
+    double u_loc, v_loc, w_loc;
+    int cell_i, cell_j, cell_k;
+    double true_u, true_v, true_w;
+    double output_u, output_v, output_w;
+
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Stations matching check:");
+
+    for(unsigned int i=0; i<input.stations.size(); i++)
+    {
+        //Get (x,y,z) value of station
+        x = input.stations[i].get_xord();
+        y = input.stations[i].get_yord();
+        //Check if station is in mesh, if not, can't do matching so skip
+        if(!mesh.inMeshXY(x, y))
+            continue;
+        z = input.stations[i].get_height() +
+            input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) +
+            input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
+
+        //Get cell number and "parent cell" coordinates of station location
+        elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+
+        //Get velocity at the station location
+        output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+        output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+        output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+
+        //Convert true station values to u, v for comparison below
+        wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
+        true_w = input.stations[i].get_w_speed();
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf",
+                input.stations[i].get_stationName().c_str(), true_u - output_u, true_v - output_v,
+                true_w - output_w);
     }
 }
 

@@ -258,6 +258,7 @@ public:
 
 
 //stationFetch
+    void reportStationDiffs();
     std::vector<wxStation> get_wxStations();
     void set_meshResChoice( std::string choice );
     void set_meshResChoice( const Mesh::eMeshChoice );
