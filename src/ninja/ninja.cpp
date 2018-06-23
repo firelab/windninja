@@ -1683,6 +1683,91 @@ void ninja::discretize()
 
 #endif //STABILITY
 
+    //Calculate the 3-D alphaH field for a pointInitialization run.
+    //Nodes within the specified distanceOfInfluence will have their alphaH terms multiplied by a
+    //nudging coefficient. This modification to the alphaH terms near station locations makes it
+    //very costly for the solver to make changes in the horizontal wind at these locations
+    //(i.e., near observation locations). The spatially-varying alphaH field is used during discretization
+    //when the Rx, Ry terms are calculated for each element.
+
+    int nodeNumber = 0;
+    double distanceOfInfluence = mesh.meshResolution*5.;
+    //cout<<"distanceOfInfluence = "<<distanceOfInfluence<<endl;
+    double stationElevation, nodeToStationDistance;
+
+    if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+    {
+        double xStation, yStation, zStation, xNode, yNode, zNode;
+        alphaHfield.allocate(&mesh); //alphaH at each node
+        double alphaHstation = 0.1; //alphaH at station locations
+
+        for(i=0; i<input.stations.size(); i++)
+        {
+            //get x, y, z at station locations
+            xStation = input.stations[i].get_projXord(); //DEM coords
+            yStation = input.stations[i].get_projYord();
+            stationElevation = input.dem.interpolateGrid(xStation, yStation, AsciiGrid<double>::order1);
+            xStation = input.stations[i].get_xord(); //mesh coords
+            yStation = input.stations[i].get_yord();
+            //account for vegetation height ?
+            zStation = input.stations[i].get_height() + stationElevation;
+
+            //set weights at each node for current station
+            for(i=0; i<mesh.nrows; i++)
+            {
+                for(j=0; j<mesh.ncols; j++)
+                {
+                    for(k=0; k<mesh.nlayers; k++)
+                    {
+                        xNode=mesh.XORD(i,j,k); //Coodinates of the nodal point
+                        yNode=mesh.YORD(i,j,k);
+                        zNode=mesh.ZORD(i,j,k);
+
+                        //cout<<"xNode, yNode, zNode = "<<xNode<<", "<<yNode<<", "<<zNode<<endl;
+
+                        //calculate distance from node to station we're on and set weight at the node
+                        nodeToStationDistance = pow(((xNode-xStation)*(xNode-xStation) +
+                                                (yNode-yStation)*(yNode-yStation) +
+                                                (zNode-zStation)*(zNode-zStation)), 0.5);
+
+                        //apply smoothing function (e.g., cressman or similar) over distanceOfInfluence
+                        //and store for use later when Rx, Ry, Rz are calculated.
+                        //we prevent overlap of weighting from stations by limiting
+                        //influence radius of individual stations to 5 cells
+                        //e^(r/2R) Cressman-type smoothing is from Haupt et al. 2010
+                        if(nodeToStationDistance < distanceOfInfluence)
+                        {
+                            //cressman-type smoothing function
+                            //alphaHfield(i,j,k) = alphaHstation*exp(-1.0*nodeToStationDistance/(2*distanceOfInfluence));
+
+                            //linear smoothing function
+                            alphaHfield(i,j,k) = -(alphaHstation-1)/distanceOfInfluence*
+                                                        nodeToStationDistance+alphaHstation;
+                        }
+                        else
+                        {
+                            alphaHfield(i,j,k) = 1.0;
+                        }
+                        if(alphaHfield(i,j,k) != 1.0)
+                            cout<<"alphaHfield = "<<alphaHfield(i,j,k)<<endl;
+                    }
+                }
+            }
+        }//end loop over stations
+    }
+    //AsciiGrid<double> testGrid;
+    //testGrid.set_headerData(input.dem);
+    //std::string filename;
+    //for(int k_ = 0; k_<alphaHfield.scalarData_.layers_; k_++){
+    //    for(int i_ = 0; i_<alphaHfield.scalarData_.rows_; i_++){
+    //        for(int j_ = 0; j_<alphaHfield.scalarData_.cols_; j_++ ){
+    //            testGrid(i_,j_) = alphaHfield(i_,j_,k_);
+    //        }
+    //    }
+    //    filename = "alphaHfield" + boost::lexical_cast<std::string>(k_);
+    //    testGrid.write_Grid(filename.c_str(), 2);
+    //}
+
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         element elem(&mesh);
@@ -1692,46 +1777,6 @@ void ninja::discretize()
         int ii, jj, kk;
         double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
 #endif
-
-        //pre-calculate 3-D station weighting field
-        //this weighting field will be used during discretization to
-        //adjust the alpha terms near station locations in order to make it
-        //very costly for the solver to adjust the locations where the node
-        //weights are high (i.e., at observation locations)
-        if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-        {
-            std::vector<double> stationElevationList;
-            double x, y;
-
-            //get elevation at station locations
-            for(i=0; i<input.stations.size(); i++)
-            {
-                x = input.stations[i].get_projXord();
-                y = input.stations[i].get_projYord();
-                stationElevationList.push_back(input.dem.interpolateGrid(x, y,
-                                               AsciiGrid<double>::order1));
-            }
-
-            stationWeightField.allocate(&mesh); //station weight at each node
-
-            for(k=0;k<mesh.nlayers;k++)
-            {
-                for(i=0;i<input.dem.get_nRows();i++)
-                {
-                    for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
-                    {
-                        //calculate distance from node to each station and set weight
-                        //prevent overlap of weighting from stations by limiting
-                        //influence radius of individual station weighting to 4-5 cells
-
-                        //apply weighting function (e.g., cressman or similar) over a radial
-                        //distance of 4-5 grid cells in 3-D and store for use later
-                        //when Rx, Ry, Rz are calculated.
-
-                    }
-                }
-            }
-        }
 
 #pragma omp for
         for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
@@ -1782,10 +1827,21 @@ void ninja::discretize()
 
                 elem.HVJ=0.0;
 
-                double alphaV = 1;
+                //re-set alphas before loop over each element
+                //alphas should both be set to 1 unless we are setting spatially-variable alphas,
+                //e.g., for stability (setting alphaV) or pointInitialization (setting alphaH)
+                double alphaV = 1.;
+                alphaH = 1.;
+
+                if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+                {
+                    //should be 0 since we are adding the alphaHfield and nodes
+                    //outside the distanceOfInfluence are set to 1 in alphaHfield
+                    alphaH = 0.;
+                }
 
 #ifdef STABILITY
-                alphaV = 0;
+                alphaV = 0.;
 #endif
 
                 for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
@@ -1795,6 +1851,10 @@ void ninja::discretize()
                     elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+
                              (elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
 
+                    if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+                    {
+                        alphaH=alphaH+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaHfield(elem.NPK);
+                    }
 #ifdef STABILITY
                     alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
 #endif
@@ -1875,6 +1935,20 @@ void ninja::discretize()
 	    } //End loop over nodes in the element
 	} //End loop over elements
     } //End parallel region
+
+    //debugging SK[] for point solver work
+    int layer;
+    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
+    {
+        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
+        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
+    }
+    nodeNumber=layer*mesh.nrows*mesh.ncols + 10*mesh.ncols + 10;
+    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
+    {
+        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
+        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
+    }
 
 #ifdef STABILITY
     stb.alphaField.deallocate();
