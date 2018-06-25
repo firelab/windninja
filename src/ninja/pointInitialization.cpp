@@ -1197,7 +1197,9 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
         if (CoordSys=="projcs")
         {
-            //do something?
+            //This has not been tested, I have no idea if this works or not
+            cout<<"using PROJCS"<<endl;
+            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
         }
         else //WGS84!
         {

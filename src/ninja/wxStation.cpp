@@ -891,8 +891,17 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
     const char *demChar = CPLGetBasename(demFileName.c_str());
 
-    outFileNameStamp=basePath+demChar+"-stations-"+timestream.str()+".kml";
+    const char *demPath = CPLGetPath(demFileName.c_str());
+    std::string path_str(demPath);
 
+    if(basePath=="") //If the user doesn't specify out output path, put with dEM
+    {
+        outFileNameStamp=path_str+"/"+demChar+"-stations-"+timestream.str()+".kml";
+    }
+    else //put with other output files in output path
+    {
+        outFileNameStamp=basePath+"/"+demChar+"-stations-"+timestream.str()+".kml";
+    }
     if( stations.size() == 0 )
         return;
 

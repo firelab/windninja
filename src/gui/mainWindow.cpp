@@ -1989,7 +1989,9 @@ int mainWindow::solve()
             nRuns = army->getSize();
             for (int i_=0;i_<nRuns;i_++)
             {
-                wxStation::writeKmlFile(army->getWxStations(i_),demFile,QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/");
+                wxStation::writeKmlFile(army->getWxStations(i_),
+                                        demFile,
+                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/");
             }
         }
 //                if (writeStationCSV==true)
