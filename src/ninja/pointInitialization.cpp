@@ -724,6 +724,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
         {
             //This is bad, kill it with fire!
             //need informative and concise warning meassages.
+            error_msg="User Provided start and stop times are both outside datasets time span!";
             throw std::runtime_error("User Provided start and stop times are both outside datasets time span!");
         }
         //does all interpolation 
@@ -771,6 +772,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     {
         oErrorString = "Cannot open csv file: ";
         oErrorString += stationLoc;
+        error_msg = oErrorString;
         throw( std::runtime_error( oErrorString ) );
     }
 
@@ -821,7 +823,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
-
+                error_msg = oErrorString;
                 throw( std::domain_error( oErrorString ) );
             }
 
@@ -836,7 +838,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
-
+                error_msg = oErrorString;
                 throw( std::domain_error( oErrorString ) );
             }
 
@@ -859,7 +861,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 1 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
-
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -873,7 +875,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 5 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
-
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
         if( EQUAL( pszKey, "meters" ) )
@@ -892,7 +894,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 6 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
-
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -907,6 +909,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 7 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -936,6 +939,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 8 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -977,6 +981,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 11 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -989,6 +994,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 12 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
+            error_msg = oErrorString;
             dfTempValue=0.0; //TEMPORARY UNTIL SOLRAD IS FIXED
         }
 
@@ -1025,6 +1031,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 14 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
+            error_msg = oErrorString;
             throw( std::domain_error( oErrorString ) );
         }
 
@@ -1761,6 +1768,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
 
     if (hDS==NULL)
     {
+        error_msg="Bad metadata in the downloaded file!";
         throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
@@ -2762,6 +2770,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     bRet=GDALGetBounds(poDS,bounds);
     if (bRet==false)
     {
+        error_msg="GDALGetBounds returned false, DEM file is lacking readable data.";
         throw std::runtime_error("GDALGetBounds returned false, DEM file is lacking readable data.");
         return false;
 
@@ -2775,6 +2784,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
         if(buffer>170000.0)//The Buffer is too big! (170000.0m is ~105 Miles, so its a little bigger)
         {//Sanity Check on Buffer Input
             //Greater than 100 miles
+            error_msg="Selected Buffer around DEM is too big! Greater than 100 miles. Use a custom API token to enable larger buffers.";
             throw std::runtime_error("Selected Buffer around DEM is too big! Greater than 100 miles. Use a custom API token to enable larger buffers.");
             return false;
         }

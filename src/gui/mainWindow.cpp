@@ -1916,9 +1916,29 @@ int mainWindow::solve()
                 boost::posix_time::ptime noTime;
                 timeList.push_back(noTime);
             }
-            
-            army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
+            try{ //Try to run windninja
+                army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
+            }
+            catch(...){ //catch all exceptions and tell the user, prevent segfaults
+
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in makeStationArmy() - OldFormat! This is "
+                                        "usually due to a failure in reading a"
+                                         "weather station file. Check your files and "
+                                         "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor);
+                setCursor(Qt::ArrowCursor);
+                tree->weather->checkForModelData();
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
+            }
             nRuns = army->getSize();
+
         }
         if (pointFormat==1 || pointFormat==2) //New Format
         {
@@ -1957,9 +1977,29 @@ int mainWindow::solve()
                     CPLDebug("STATION_FETCH","TIME LIST GENERATED...");
                     pointInitialization::storeFileNames(pointFileList); //Files get stored
                     CPLDebug("STATION_FETCH","FILES STORED...");
-                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
+
+                    try{ //try running with timelist
+                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
+                    }
+                    catch(...){ //catch any and all exceptions and tell the user
+
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - timeSeries! This is "
+                                                "usually due to a failure in reading a"
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        setCursor(Qt::ArrowCursor);
+                        tree->weather->checkForModelData();
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }
                     nRuns = army->getSize();
-                    
                 }
                 if (useTimeList == false)//Current Data/Single Step
                 {
@@ -1972,7 +2012,27 @@ int mainWindow::solve()
                     boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
                     timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
-                    army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
+                    try{ //try making the army with current data
+                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
+                    }
+                    catch(...){ //catch any and all exceptions and tell the user
+
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - currentwxdata! This is "
+                                                "usually due to a failure in reading a"
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        setCursor(Qt::ArrowCursor);
+                        tree->weather->checkForModelData();
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }
                     nRuns = army->getSize();
                 }               
             }
