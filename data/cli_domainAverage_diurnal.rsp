@@ -1,5 +1,5 @@
 --num_threads 1
---elevation_file test_data/mackay.tif
+--elevation_file test_data/missoula_valley.tif
 --initialization_method domainAverageInitialization
 --time_zone America/Denver
 --input_speed 10.0

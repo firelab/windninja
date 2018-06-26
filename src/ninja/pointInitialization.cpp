@@ -571,7 +571,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
             std::string strTime = boost::posix_time::to_iso_extended_string(abs_time)+"Z";
             outFile<<curVec.stationName<<","<<"GEOGCS"<<","<<"WGS84"<<","<<curVec.lat<<","<<curVec.lon<<",";
             outFile<<curVec.heightList[udx]<<",meters,"<<curVec.speedList[udx]<<","<<"mps"<<","<<curVec.directionList[udx];
-            outFile<<","<<curVec.temperatureList[udx]<<",K,"<<curVec.cloudCoverList[udx]<<","<<curVec.influenceRadiusList[udx];
+            outFile<<","<<curVec.temperatureList[udx]<<",K,"<<curVec.cloudCoverList[udx]*100<<","<<curVec.influenceRadiusList[udx];
             outFile<<",meters,"<<strTime<<endl;
         }
         outFile.close();
