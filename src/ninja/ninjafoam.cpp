@@ -939,6 +939,7 @@ int NinjaFoam::readDem(double &expansionRatio)
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
     
+    CPLDebug("NINJAFOAM", "blockMeshDz = %f", blockMeshDz);
     CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
     CPLDebug("NINJAFOAM", "side = %f", side);
