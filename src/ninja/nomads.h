@@ -186,7 +186,17 @@ static const char *apszNomadsKeys[][11] =
 #elif defined(NOMADS_GFS_1P0DEG)
       "filter_gfs_1p00.pl",
 #else /* NOMADS_GFS_0.25DEG is default */
+      /*
+      ** The hourly output has a different script in nomads, but this one seems
+      ** to work too.  The official hourly is:
+      **
+      ** filter_gfs_0p25_1hr.pl
+      */
+#if defined(NOMADS_GFS_0P5DEG) || defined(NOMADS_GFS_1P0DEG)
+      "filter_gfs_0p25_1hr.pl",
+#else
       "filter_gfs_0p25.pl",
+#endif /* defined(NOMADS_GFS_0P5DEG) || defined(NOMADS_GFS_1P0DEG) */
 #endif
       /* File naming format */
 #if defined(NOMADS_GFS_0P5DEG)
@@ -202,8 +212,13 @@ static const char *apszNomadsKeys[][11] =
       "%Y%m%d",
       /* Forecast hours, start:stop:stride */
       NOMADS_GENERIC_FCST_HOURS,
+#if defined(NOMADS_GFS_0P5DEG) || defined(NOMADS_GFS_1P0DEG)
       /* Forecast run hours, start:stop:stride,start:stop:stride,... */
       "0:240:3,252:384:12",
+#else
+      /* Hourly for 1/4 degree */
+      "0:120:1,123:240:3,252:384:12",
+#endif /* defined(NOMADS_GFS_0P5DEG) || defined(NOMADS_GFS_1P0DEG) */
       /* Variable list */
       NOMADS_GENERIC_VAR_LIST,
       /* Level list. XXX Note entire_atmosphere instead of the default */
@@ -334,11 +349,6 @@ static const char *apszNomadsKeys[][11] =
       "NAM North America" },
     /* XXX: NAM Caribbean/Central America */
     /* XXX: NAM Pacific */
-#ifdef NOMADS_EXPER_FORECASTS
-    /*
-    ** The nest grids are moving, we don't know if they are anywhere near our
-    ** domain, use HIRES instead.
-    */
     /*
     ** NAM Alaska NEST
     */
@@ -371,6 +381,7 @@ static const char *apszNomadsKeys[][11] =
       "NAM NEST CONUS" },
     /* XXX: NAM Hawaii NEST */
     /* XXX: NAM Puerto Rico NEST */
+#ifdef NOMADS_EXPER_FORECASTS
     /* Alaska RTMA */
     {
       "rtma_ak",

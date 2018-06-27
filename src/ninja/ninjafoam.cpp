@@ -1459,6 +1459,9 @@ int NinjaFoam::RefineSurfaceLayer(){
         meshResolution /= 2.0;
         
         UpdateDictFiles();
+
+        pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         
         CopyFile(pszInput, pszOutput, 
                 CPLSPrintf("nearDistance    %.2f", oldFirstCellHeight),
@@ -2040,9 +2043,9 @@ int NinjaFoam::SampleCloud()
         dfU = OGR_F_GetFieldAsDouble( hFeature, nUIndex );
         dfV = OGR_F_GetFieldAsDouble( hFeature, nVIndex );
         TransformGeoToPixelSpace( adfInvGeoTransform, dfX, dfY, &nPixel, &nLine );
-        GDALRasterIO( hUBand, GF_Write, nPixel, nLine, 1, 1, &dfU,
+        rc = GDALRasterIO( hUBand, GF_Write, nPixel, nLine, 1, 1, &dfU,
                       1, 1, GDT_Float64, 0, 0 );
-        GDALRasterIO( hVBand, GF_Write, nPixel, nLine, 1, 1, &dfV,
+        rc = GDALRasterIO( hVBand, GF_Write, nPixel, nLine, 1, 1, &dfV,
                       1, 1, GDT_Float64, 0, 0 );
         i++;
     }
@@ -2153,7 +2156,7 @@ int NinjaFoam::SampleCloudGrid()
     GDALRasterBandH hBand;
     hBand = GDALGetRasterBand( hGriddedDS, 1 );
     GDALSetRasterNoDataValue( hBand, -9999 );
-    GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
+    rc = GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
     /* V field */
@@ -2163,7 +2166,7 @@ int NinjaFoam::SampleCloudGrid()
 
     hBand = GDALGetRasterBand( hGriddedDS, 2 );
     GDALSetRasterNoDataValue( hBand, -9999 );
-    GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
+    rc = GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
     /* Set the projection from the DEM */

@@ -255,6 +255,7 @@ int windNinjaCLI(int argc, char* argv[])
                                 "configuration file ('config_file' flag not required)")
                         ("response_file", po::value<std::string>(),
                                  "response file (can be specified with '@name', also)")
+                        ("citation", "how to cite WindNinja in a publication")
                                 ;
         /*
         ** Set the available wx model names using hard codes for UCAR and api
@@ -314,9 +315,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
                 ("input_speed", po::value<double>(), "input wind speed")
-                ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph)")
-                ("output_speed_units", po::value<std::string>()->default_value("mph"), "units of output wind speed (mps, mph, kph)")
+                ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph, kts)")
+                ("output_speed_units", po::value<std::string>()->default_value("mph"), "units of output wind speed (mps, mph, kph, kts)")
                 ("input_direction", po::value<double>(), "input wind direction")
+                ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
+                ("input_dir_grid", po::value<std::string>(), "path/filename of input raster dir file (*.asc)")
                 ("uni_air_temp", po::value<double>(), "surface air temperature")
                 ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
@@ -385,8 +388,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
-                ("input_speed_grid", po::value<std::string>(), "path/filename of input raster speed file (*.asc)")
-                ("input_dir_grid", po::value<std::string>(), "path/filename of input raster dir file (*.asc)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -496,6 +497,21 @@ int windNinjaCLI(int argc, char* argv[])
 
         if (vm.count("help")) {
             cout << visible << "\n";
+            return 0;
+        }
+
+        if (vm.count("citation")) {
+            cout << "To cite WindNinja in a publication use: " << "\n\n";
+
+            cout << "Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison " << "\n";
+            cout << "of three approaches for simulating fine-scale surface winds in " << "\n";
+            cout << "support of wildland fire management. Part I. Model formulation and " << "\n";
+            cout << "comparison against measurements. International Journal of Wildland " << "\n";
+            cout << "Fire, 23:969-931. doi: 10.1071/WF12089." << "\n\n";
+
+            cout << "See here for additional WindNinja publications:" << "\n\n";
+            cout << "http://firelab.github.io/windninja/publications/" << "\n\n";
+
             return 0;
         }
 
@@ -898,6 +914,7 @@ int windNinjaCLI(int argc, char* argv[])
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
+        conflicting_options(vm, "momentum_flag", "mesh_resolution");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -983,8 +1000,6 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
-                conflicting_options(vm, "mesh_resolution", "mesh_count");
-                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
@@ -1279,6 +1294,7 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 
                 verify_option_set(vm, "input_speed_grid");
+                option_dependency(vm, "input_speed_grid", "input_speed_units");
                 verify_option_set(vm, "input_dir_grid");
                 
                 verify_option_set(vm, "input_wind_height");
@@ -1320,9 +1336,10 @@ int windNinjaCLI(int argc, char* argv[])
                                         osTimeZone);
                 }
                 
-                windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>());
-                windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
+                windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>(),
+                        velocityUnits::getUnit( vm["input_speed_units"].as<std::string>() ) );
 
+                windsim.setDirInitGrid( i_, vm["input_dir_grid"].as<std::string>());
             }
 
             //check if lcp to determine if surface veg needs to be set or not
@@ -1511,7 +1528,25 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["write_farsite_atm"].as<bool>())
         {
             option_dependency(vm, "write_farsite_atm", "write_ascii_output");
-            windsim.set_writeFarsiteAtmFile(true);
+
+            if((vm["output_wind_height"].as<double>() == 20 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::feet &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::milesPerHour) ||
+               (vm["output_wind_height"].as<double>() == 10 &&
+                lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::meters &&
+                velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()) == velocityUnits::kilometersPerHour))
+            {
+                windsim.set_writeFarsiteAtmFile(true);
+            }
+
+            else
+            {
+                throw std::runtime_error("The output wind settings for atm files must "
+                       "either be 10m for output height and "
+                       "output speed units in kph, or "
+                       "20ft for output height and "
+                       "output speed units in mph.");
+            }
         }
 
         //run the simulations

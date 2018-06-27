@@ -56,6 +56,7 @@ outputMetaData::outputMetaData( QWidget *parent ) : QWidget( parent )
     outputSpeedUnitsCombo->addItem( "mph" );
     outputSpeedUnitsCombo->addItem( "m/s" );
     outputSpeedUnitsCombo->addItem( "kph" );
+    outputSpeedUnitsCombo->addItem( "kts" );
 
     outputSpeedUnitsLayout = new QHBoxLayout();
     outputSpeedUnitsLayout->addWidget( outputSpeedUnitsLabel );

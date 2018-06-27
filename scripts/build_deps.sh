@@ -5,7 +5,14 @@ POPPLER="poppler-0.23.4"
 PROJ="proj-4.8.0"
 GDAL="gdal-2.0.3"
 
+#Ubuntu
 sudo apt-get install libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev qt4-dev-tools libqtwebkit-dev libboost-program-options-dev libboost-date-time-dev libgeos-dev libboost-test-dev
+
+#CentOs
+#sudo yum install boost-devel.x86_64 fontconfig-devel.x86_64 libcurl-devel.x86_64 epel-release netcdf-devel qt-devel qtwebkit-devel
+
+#If the Boost version is < 1.41.1, a newer Boost version will need to be built from source
+#e.g., CentOS 6.9 comes with Boost 1.41.0
 
 #Get and build poppler for PDF support in GDAL
 wget http://poppler.freedesktop.org/$POPPLER.tar.xz

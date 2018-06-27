@@ -73,12 +73,6 @@ ninja::ninja()
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -172,12 +166,6 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
-    speedInitializationGrid=NULL;
-    dirInitializationGrid=NULL;
-    uInitializationGrid=NULL;
-    vInitializationGrid=NULL;
-    airTempGrid=NULL;
-    cloudCoverGrid=NULL;
 }
 
 /**
@@ -251,12 +239,6 @@ ninja &ninja::operator=(const ninja &rhs)
         slope=NULL;
         shade=NULL;
         solar=NULL;
-        speedInitializationGrid=NULL;
-        dirInitializationGrid=NULL;
-        uInitializationGrid=NULL;
-        vInitializationGrid=NULL;
-        airTempGrid=NULL;
-        cloudCoverGrid=NULL;
     }
     return *this;
 }
@@ -3151,30 +3133,6 @@ void ninja::deleteDynamicMemory()
 	{	delete[] DIAG;
 		DIAG=NULL;
 	}
-	if(speedInitializationGrid)
-	{	delete speedInitializationGrid;
-		speedInitializationGrid = NULL;
-	}
-	if(dirInitializationGrid)
-	{	delete dirInitializationGrid;
-		dirInitializationGrid = NULL;
-	}
-	if(uInitializationGrid)
-	{	delete uInitializationGrid;
-		uInitializationGrid = NULL;
-	}
-	if(vInitializationGrid)
-	{	delete vInitializationGrid;
-		vInitializationGrid = NULL;
-	}
-	if(airTempGrid)
-	{	delete airTempGrid;
-		airTempGrid = NULL;
-	}
-	if(cloudCoverGrid)
-	{	delete cloudCoverGrid;
-		cloudCoverGrid = NULL;
-	}
 
 	u0.deallocate();
 	v0.deallocate();
@@ -3572,12 +3530,14 @@ void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 }
 #endif
 
-void ninja::set_speedFile(std::string speedFile)
+void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)
 {
     input.speedInitGridFilename = speedFile;
     if(!CPLCheckForFile((char*)speedFile.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 speedFile + " does not exist or may be in use by another program.");
+
+    input.inputSpeedUnits = units; //units set here, conversion to base units in griddedInitialization
 }
 
 void ninja::set_dirFile(std::string dirFile)

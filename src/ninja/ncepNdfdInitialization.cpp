@@ -36,7 +36,7 @@
 ncepNdfdInitialization::ncepNdfdInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground1";
-    path = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
+    path = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best/LambertConformal_1377X2145-38p22N-95p43W?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
     LoadFromCsv();
 }
 
@@ -619,6 +619,8 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
     for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
         psWarpOptions->padfDstNoDataReal[b] = dfNoData;
         psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
     }
 
     psWarpOptions->papszWarpOptions =

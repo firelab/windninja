@@ -128,26 +128,6 @@ int wrfSurfInitialization::getEndHour()
 */
 void wrfSurfInitialization::checkForValidData()
 {
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
-
-    //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
-
-    boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
-
-    //check times
-    for(unsigned int i = 0; i < timeList.size(); i++)
-    {
-        if(timeList[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
-            throw badForecastFile("Bad time in forecast file.");
-        if(timeList[i] < low_time || timeList[i] > high_time)
-            throw badForecastFile("Bad time in forecast file.");
-    }
-
     // open ds variable by variable
     GDALDataset *srcDS;
     std::string temp;
@@ -165,7 +145,7 @@ void wrfSurfInitialization::checkForValidData()
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
+        temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
         //cout << "temp = " <<temp<<endl;
 
         CPLPushErrorHandler(&CPLQuietErrorHandler);
@@ -342,7 +322,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     if(bandNum < 0)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
 
-
     GDALDataset* poDS;
     //attempt to grab the projection from the dem?
     //check for member prjString first
@@ -432,8 +411,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     else {
         status = nc_get_att_float( ncid, NC_GLOBAL, "DY", &dy );
     }
-
-    //cout <<"dx, dy = "<<dx<<", "<<dy<<endl;
 
     /*
      * Get global attributes CEN_LAT, CEN_LON
@@ -601,7 +578,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
+        temp = "NETCDF:\"" + input.forecastFilename + "\":" + varList[i];
         
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
@@ -611,7 +588,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                     "Bad forecast file" );
         }
 
-        //cout<<"varList[i] = " <<varList[i]<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "varList[i] = %s", varList[i].c_str());
 
         /*
          * Set up spatial reference stuff for setting projections
@@ -662,15 +639,13 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
         else throw badForecastFile("Cannot determine projection from the forecast file information.");
 
-        OGRSpatialReference oSRS, oDemSRS, *poLatLong;
+        OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
         char* prj2 = (char*)projString.c_str();
         oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
 
-        oDemSRS.importFromEPSG(32612);
-
-        //printf("%s\n", srcWKT);
+        CPLDebug("WX_MODEL_INITIALIZATION", "srcWKT= %s", srcWKT);
 
         OGRCoordinateTransformation *poCT;
         poLatLong = oSRS.CloneGeogCS();
@@ -679,25 +654,18 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
          * Transform domain center from lat/long to WRF space
          */
         double zCenter;
-        bool transformed;
         zCenter = 0;
         double xCenter, yCenter;
         xCenter = (double)cenLon;
         yCenter = (double)cenLat;
-        //double xCenterArray[2] = {-113, -112.3552}; //1st value is MOAD, 2nd is current domain center
-        //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
+        delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");
 
-        //if(poCT==NULL || !poCT->Transform(2, xCenterArray, yCenterArray))  //for testing
-            //printf("Transformation failed.\n");
-
-        //cout<<"transformed = "<<transformed<<endl;
-        //cout<<"xCenter = "<<xCenter<<endl;
-        //cout<<"yCenter = "<<yCenter<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "xCenter, yCenter= %f, %f", xCenter, yCenter);
 
         /*
          * Set the geostransform for the WRF file
@@ -715,11 +683,9 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                     (yCenter+(nrows*dy)),
                                     0, -(dy)};
 
-        //cout<<"ulcornerX = " <<(xCenter-(ncols*dx))<<endl;
-        //cout<<"ulcornerY = " <<(yCenter+(nrows*dy))<<endl;
-        //cout<<"ncols = " <<ncols<<endl;
-        //cout<<"nrows = " <<nrows<<endl;
-        //cout<<"dx = "<<dx<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "ulcornerX, ulcornerY= %f, %f", (xCenter-(ncols*dx)), (yCenter+(nrows*dy)));
+        CPLDebug("WX_MODEL_INITIALIZATION", "nXSize, nYsize= %d, %d", nXSize, nYSize);
+        CPLDebug("WX_MODEL_INITIALIZATION", "dx= %f", dx);
 
         srcDS->SetGeoTransform(adfGeoTransform);
 
@@ -744,7 +710,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         psWarpOptions->nBandCount = nBandCount;
 
-        //cout<<"nBandCount = " << nBandCount <<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
 
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
@@ -790,7 +756,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }*/
         //=======end testing=================================//
 
-        //cout<<"bandNum to write is: " <<bandNum<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "band number to write = %d", bandNum);
 
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
@@ -825,6 +791,14 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         GDALDestroyWarpOptions( psWarpOptions );
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
+    }
+    //don't allow small negative values in cloud cover
+    for(int i=0; i<cloudGrid.get_nRows(); i++){
+        for(int j=0; j<cloudGrid.get_nCols(); j++){
+            if(cloudGrid(i,j) < 0.0){
+                cloudGrid(i,j) = 0.0;
+            }
+        }
     }
     cloudGrid /= 100.0;
     wGrid.set_headerData( uGrid );

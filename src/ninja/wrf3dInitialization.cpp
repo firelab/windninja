@@ -79,7 +79,7 @@ wrf3dInitialization& wrf3dInitialization::operator= (wrf3dInitialization const& 
 *@brief Returns horizontal grid resolution of the model
 *@return return grid resolution (in km unless < 1, then degrees)
 */
-double ncepGfsSurfInitialization::getGridResolution()
+double wrf3dInitialization::getGridResolution()
 {
     return -1.0;
 }
@@ -275,7 +275,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         
         //cout<<"var3dList.size() = "<<var3dList.size()<<endl;
         
-        temp = "NETCDF:" + input.forecastFilename + ":" + var3dList[i];
+        temp = "NETCDF:\"" + input.forecastFilename + "\":" + var3dList[i];
         
         CPLPushErrorHandler(CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
@@ -356,6 +356,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
+        delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             printf("Transformation failed.\n");
@@ -639,6 +640,14 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
                 cloudGrid.replaceValue(dfNoData, -9999.0);
+                //don't allow small negative values in cloud cover
+                for(int i=0; i<cloudGrid.get_nRows(); i++){
+                    for(int j=0; j<cloudGrid.get_nCols(); j++){
+                        if(cloudGrid(i,j) < 0.0){
+                            cloudGrid(i,j) = 0.0;
+                        }
+                    }
+                }
                 cloudGrid /= 100.0;
                 for(unsigned int i = numStripRows/2; i < cloudGrid.get_nRows()-numStripRows/2; i++){
                     for(unsigned int j = numStripCols/2; j < cloudGrid.get_nCols()-numStripCols/2; j++){
