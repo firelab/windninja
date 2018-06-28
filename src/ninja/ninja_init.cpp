@@ -30,6 +30,48 @@
 
 boost::local_time::tz_database globalTimeZoneDB;
 
+/*
+** Query the windninja.org server and ask for the most up to date version.  The
+** return value is a set of key value pairs stored in a GDAL string list.
+** There are three current values:
+**
+** VERSION -> a semantic version string, comparable with strcmp()
+** MESSAGE -> One or more messages to display to the user
+** ABORT   -> There is a fundamental problem with windninja, and it should call
+**            abort() after displaying a message.
+**
+** The response is currently a semi-colon delimeted list of key value pairs as
+** in:
+**
+** VERSION=3.4.0;MESSAGE=some message for the user, may not have
+** semi-colons;ABORT:TRUE
+**
+** The returned string list must be freed by the caller using CSLDestroy().
+*/
+char ** NinjaCheckVersion(void) {
+  CPLHTTPResult *poResult;
+  char **papszTokens = NULL;
+  char *pszResp = NULL;
+  poResult = CPLHTTPFetch("http://windninja.org/version/", NULL);
+  if (!poResult || poResult->nStatus != 0 || poResult->nDataLen == 0) {
+    return NULL;
+  }
+  pszResp = (char *)malloc(poResult->nDataLen + 1);
+  if (pszResp == 0) {
+      return NULL;
+  }
+  /*
+  ** Copy the message body into a null terminated string for
+  ** CSLTokenizeString()
+  */
+  memcpy(pszResp, poResult->pabyData, poResult->nDataLen);
+  pszResp[poResult->nDataLen] = '\0';
+  papszTokens = CSLTokenizeString2((const char *)pszResp, ";", 0);
+  free(pszResp);
+  CPLHTTPDestroyResult( poResult );
+  return papszTokens;
+}
+
 void NinjaCheckThreddsData( void *rc )
 {
     int *r;
@@ -166,4 +208,3 @@ int NinjaInitialize()
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     return 0;
 }
-
