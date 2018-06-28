@@ -47,9 +47,15 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   vectorWidthDoubleSpinBox->setSingleStep(0.1);
   vectorWidthDoubleSpinBox->setAccelerated(true);
 
+  applyVectorScaling = new QCheckBox("Apply Vector Scaling");
+  applyVectorScaling->setToolTip("Enable vector scaling to increase line width with wind speed.");
+  applyVectorScaling->setCheckable(true);
+  applyVectorScaling->setChecked(false);
+
   vectorLayout = new QHBoxLayout;
   vectorLayout->addWidget(vectorWidthLabel);
   vectorLayout->addWidget(vectorWidthDoubleSpinBox);
+  vectorLayout->addWidget(applyVectorScaling);
   vectorLayout->addStretch();
 
   vectorGroupBox->setLayout(vectorLayout);
@@ -114,7 +120,25 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   connect(useMeshResCheckBox, SIGNAL(toggled(bool)), 
 	  googleMetersRadioButton, SLOT(setDisabled(bool)));
   
-  
+  //color options
+   colorblindBox= new QGroupBox(tr("Alternative Color Schemes"));
+   colorblindBox->setCheckable(true);
+   colorblindBox->setChecked(false);
+   inputColorblindComboBox = new QComboBox();
+   inputColorblindComboBox->addItem(tr("Default"));
+   inputColorblindComboBox->addItem(tr("ROPGW (Red Orange Pink Green White)"));
+   inputColorblindComboBox->addItem(tr("Oranges"));
+   inputColorblindComboBox->addItem(tr("Blues"));
+   inputColorblindComboBox->addItem(tr("Pinks"));
+   inputColorblindComboBox->addItem(tr("Greens"));
+   inputColorblindComboBox->addItem(tr("Magic Beans"));
+   inputColorblindComboBox->addItem(tr("Pink to Green"));
+
+   colorLayout=new QGridLayout;
+   colorLayout->addWidget(inputColorblindComboBox,0,0);
+   colorblindBox->setLayout(colorLayout);
+  //end color options
+
   resLayout = new QGridLayout;
   resLayout->addWidget(googleResSpinBox, 0, 0);
   resLayout->addWidget(googleMetersRadioButton, 0, 1);
@@ -126,6 +150,7 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   pageLayout = new QVBoxLayout;
   pageLayout->addLayout(optionLayout);
   pageLayout->addWidget(googleResGroupBox);
+  pageLayout->addWidget(colorblindBox);
   pageLayout->addStretch();
   
   googleGroupBox->setLayout(pageLayout);
@@ -135,4 +160,12 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   mainLayout->addStretch();
   
   setLayout(mainLayout);
+}
+
+void googleOutput::setColorScheme(int choice)
+{
+    if(choice==1)
+    {
+
+    }
 }

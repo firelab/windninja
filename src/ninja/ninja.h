@@ -320,6 +320,9 @@ public:
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
+
+    void set_googColor(std::string scheme,bool scaling);
+
     void set_wxModelGoogOutFlag(bool flag);
     void set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling);	//sets the desired method of speed scaling in the Google Earth legend (equal_color=>equal numbers of arrows for each color,  equal_interval=>equal speed intervals over the speed range)
     void set_googLineWidth(double width);								//sets the line width for the vectors in the Google Earth kmz file

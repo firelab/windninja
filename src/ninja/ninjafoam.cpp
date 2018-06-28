@@ -2563,7 +2563,7 @@ int NinjaFoam::WriteOutputFiles()
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
 			ninjaKmlFiles.setTime(input.ninjaTime);
 
-			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))
+            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
 					ninjaKmlFiles.removeKmlFile();

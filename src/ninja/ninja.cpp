@@ -2971,8 +2971,7 @@ void ninja::writeOutputFiles()
 			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
 			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
-
-			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))
+            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
 					ninjaKmlFiles.removeKmlFile();
@@ -4379,6 +4378,12 @@ void ninja::set_writeAtmFile(bool flag)
 void ninja::set_googOutFlag(bool flag)
 {
     input.googOutFlag = flag;
+}
+
+void ninja::set_googColor(std::string scheme, bool scaling)
+{
+    input.googColor = scheme;
+    input.googVectorScale = scaling;
 }
 
 

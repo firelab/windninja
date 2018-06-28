@@ -1768,6 +1768,51 @@ int mainWindow::solve()
     else
     googleScale = KmlVector::equal_color;
 
+    std::string googleScheme;
+    bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
+    if(tree->google->colorblindBox->isChecked())
+    {
+        std::string googCheckScheme;
+        QString QgoogleScheme=tree->google->inputColorblindComboBox->currentText();
+        googCheckScheme=QgoogleScheme.toStdString();
+
+        if (googCheckScheme=="Default")
+        {
+            googleScheme="default";
+        }
+        if (googCheckScheme=="ROPGW")
+        {
+            googleScheme="ROPGW";
+        }
+        if (googCheckScheme=="Oranges")
+        {
+            googleScheme="oranges";
+        }
+        if (googCheckScheme=="Blues")
+        {
+            googleScheme="blues";
+        }
+        if (googCheckScheme=="Pinks")
+        {
+            googleScheme="pinks";
+        }
+        if (googCheckScheme=="Greens")
+        {
+            googleScheme="greens";
+        }
+        if (googCheckScheme=="Magic Beans")
+        {
+            googleScheme="magic_beans";
+        }
+        if (googCheckScheme=="Pink to Green")
+        {
+            googleScheme="pink_to_green";
+        }
+    }
+    else
+    {
+        googleScheme="default";
+    }
     //ascii raster fb files
     bool writeFb = tree->fb->fbGroupBox->isChecked();
     double fbRes = tree->fb->fbResSpinBox->value();
@@ -2329,6 +2374,7 @@ int mainWindow::solve()
         army->setGoogLineWidth   (i,vectorWidth);
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
+        army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);

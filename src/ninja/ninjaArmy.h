@@ -923,6 +923,16 @@ public:
     * \param units units of the resolution value
     * \return errval Returns NINJA_SUCCESS upon success
     */
+    int setGoogColor(const int nIndex, std::string colorScheme,bool scaling);
+    /**
+     * @brief setGoogResolution
+     * @param nIndex
+     * @param resolution
+     * @param units
+     * @param papszOptions
+     * @return
+     * Set the colorscheme for colorblind mode
+     */
     int setGoogResolution( const int nIndex, const double resolution,
                            const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
     /**
