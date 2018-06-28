@@ -609,9 +609,6 @@ void mainWindow::createConnections()
       tree->point, SLOT(setInputFile(QString)));
   connect(this,SIGNAL(inputFileChanged(QString)),
           tree->point, SLOT(checkForModelData())); //Update csv list when file changes in point
-  /** Station Fetch **/
-//  connect(this, SIGNAL(inputFileChanged(QString)),
-//          tree->tw,SLOT(setInputFile(QString)));
 //Signal To Point Input what Diurnal Input is doing
   connect(this, SIGNAL(mainDiurnalChanged(bool)),tree->point,SLOT(setDiurnalParam(bool)));
 
@@ -2005,10 +2002,6 @@ int mainWindow::solve()
                     if(numTimeSteps==1)
                     {
                         CPLDebug("STATION_FETCH","USER WANTS 1 STEP, USING START TIME...");
-//                        for(int ix=0;ix<xStartTime.size();ix++)
-//                        {
-//                            cout<<xStartTime[ix]<<endl;
-//                        }
                         boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],timeZone);
                         timeList.push_back(singleTime);
                     }
@@ -2051,7 +2044,6 @@ int mainWindow::solve()
                     //Get time from file attributes, if its diurnal this matters
                     //if not, then it really doesn't matter and who cares
                     boost::posix_time::ptime noTime;
-//                    timeList.push_back(noTime);
                     CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
                     std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
                     boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
@@ -2105,10 +2097,6 @@ int mainWindow::solve()
         {
             writeToConsole("Writing Weather Station .csv");
             nRuns = army->getSize();
-//                    for (int i_=0;i_<nRuns;i_++)
-//                    {
-//                        wxStation::writeStationFile(army->getWxStations(i_),demFile);
-//                    }
             QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
             QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
             std::string csvPath = demPath.toStdString()+demBase.toStdString();
@@ -2198,12 +2186,6 @@ int mainWindow::solve()
     progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
     runProgress = new int[nRuns]; //I don't think this is needed anymore
 
-//    for (int ix=0;ix<nRuns;ix++) //delete this, moved to other place
-//    {
-//        progressLog.push_back(0);
-//    }
-
-
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
     {
@@ -2289,12 +2271,6 @@ int mainWindow::solve()
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag )
             {
-//                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(), //moved to makestationArmy
-//                        tree->point->dateTimeEdit->date().month(),
-//                        tree->point->dateTimeEdit->date().day(),
-//                        tree->point->dateTimeEdit->time().hour(),
-//                        tree->point->dateTimeEdit->time().minute(),
-//                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
@@ -2403,7 +2379,6 @@ int mainWindow::solve()
 
     for( unsigned int i = 0; i < army->getSize(); i++ )
     {
-//        runProgress[i] = 0;
         progressLog.push_back(0); //Initialize the progressLog, which stores the progress of each ninja with a zero for each ninja in the army
     }
 
@@ -2850,12 +2825,6 @@ int mainWindow::checkPointItem()
 {
     eInputStatus status = blue;
     if( tree->point->pointGroupBox->isChecked() ) {
-//    QFileInfo fi( tree->point->stationFileName ); // Intentionally broken to get station fetch to work
-//    if( !fi.exists() || !fi.isFile() ) {
-//        status = green;
-//        tree->pointItem->setIcon( 0, tree->cross );
-//        tree->pointItem->setToolTip( 0, "Cannot read or open point input file" );
-//    }
         bool shortGo=tree->point->pointGo;
         if (shortGo==false)
         {

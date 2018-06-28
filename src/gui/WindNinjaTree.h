@@ -125,8 +125,6 @@ class WindNinjaTree : public QWidget
 #endif
   windInput *wind;
   pointInput *point;
-  /** Station Fetch **/  
-//  testWidget *tw;
   weatherModel *weather;
   outputMetaData *output;
   googleOutput *google;
