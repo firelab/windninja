@@ -267,7 +267,9 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 130, 165, 244, orangeWidth);
         colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
         colors[1] = new Style("green", 255, 222, 197,146, greenWidth);
-        colors[0] = new Style("blue", 255, 176, 113, 5, blueWidth);
+//        colors[0] = new Style("blue", 255, 176, 113, 5, blueWidth); //For some reason
+        //Google earth will not render with a Red = 5, works fine with 0 or 30 though...
+        colors[0] = new Style("blue", 255, 176, 113, 30, blueWidth);
     }
     if (cScheme=="pink_to_green")
     {

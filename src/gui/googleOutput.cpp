@@ -136,7 +136,6 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
 
    colorLayout=new QGridLayout;
    colorLayout->addWidget(inputColorblindComboBox,0,0);
-//   colorLayout->addWidget(applyVectorScaling,1,0);
    colorblindBox->setLayout(colorLayout);
   //end color options
 
@@ -152,7 +151,6 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   pageLayout->addLayout(optionLayout);
   pageLayout->addWidget(googleResGroupBox);
   pageLayout->addWidget(colorblindBox);
-//  pageLayout->addWidget(applyVectorScaling);
   pageLayout->addStretch();
   
   googleGroupBox->setLayout(pageLayout);
