@@ -1115,6 +1115,57 @@ int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
 }
 
 /**
+ * @brief pointInitialization::checkWxStationSize
+ * @param wxStationIDs
+ * This is kind of a final sanity check.
+ *
+ * Quickly checks the file formats to make sure they are all the same
+ * they should be good by this point, but this is just in case
+ *
+ * If its an old format, just carry on because the old format is weird
+ *
+ * if its a new format, you can't have multiple unique stations in one file
+ * so check to see if the number of physical files on disk match the number of
+ * unique stations we find in our list, if they are different, it means
+ * someone is gaslighting us and we need to stop before we hit a segfault.
+ *
+ * @return true if its good, throw an error if its not.
+ */
+bool pointInitialization::checkWxStationSize(vector<string> wxStationIDs)
+{
+    std::vector<int> formatVec;
+    for(int i=0;i<stationFiles.size();i++) //Quickly check to be sure that everything is the same format
+    {
+        int file_format = wxStation::GetHeaderVersion(stationFiles[i].c_str());
+        formatVec.push_back(file_format);
+    }
+    if(std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin())!=true)
+    {
+        error_msg = "ERROR: Stations are not all of the same type!";
+        throw std::runtime_error("ERROR: Stations are not all of the same type!");
+    }
+    if(formatVec[0]==1) //If its an old format, don't do this check and just carry on.
+    {
+        return true;
+    }
+
+    //Check to see how many unique stations there are
+    std::sort(wxStationIDs.begin(),wxStationIDs.end());
+    int uniqueStations = std::unique(wxStationIDs.begin(), wxStationIDs.end()) - wxStationIDs.begin();
+
+    if(stationFiles.size()!=uniqueStations) //This is very bad, and we can't continue
+    {
+        error_msg = "ERROR: Mutliple different Stations "
+                    "detected in one file! Each unique station must be in a unique file!";
+        throw std::runtime_error("ERROR: Mutliple different Stations"
+                                 " detected in one file! Each unique station must be in a unique file!");
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * @brief pointInitialization::makeWxStation
  * Converts the nested vectors of station data into a wxStation Object, which stores
  * data as vectors inside the object.
@@ -1151,6 +1202,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 //        stationNames.push_back(oStationName);
 //    }
     stationNames=fetchWxStationID();
+    bool final_sanity_check = checkWxStationSize(stationNames);
+
+    if(final_sanity_check==false)
+    {
+        error_msg = "FAILED Size check, check data on disk!";
+        throw std::runtime_error("FAILED Size check, check data on disk!");
+    }
 
     int statCount;
     statCount=stationNames.size();
@@ -1192,6 +1250,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
         countLimiter.push_back(e);
     }
+
     vector<vector<preInterpolate> >stationDataList;
     stationDataList=data;
     //here is where a wxstation is made
@@ -1229,7 +1288,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         stationData.push_back(subDat);
     }
     
-
     return stationData;
 }
 /**

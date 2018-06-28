@@ -86,6 +86,7 @@ class pointInitialization : public initialize
 
         static vector<preInterpolate> readDiskLine(std::string demFile,std::string stationLoc);
         static vector<std::string> fetchWxStationID();
+        static bool checkWxStationSize(vector<std::string> wxStationIDs);
         static vector<wxStation> makeWxStation(vector<vector<preInterpolate> > data, std::string demFile); //prepares final product
 
         static vector<wxStation> interpolateNull(std::string demFileName,

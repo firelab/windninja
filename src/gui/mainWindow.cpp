@@ -1968,7 +1968,7 @@ int mainWindow::solve()
 
                 QMessageBox::critical(this,tr("Failure."),
                                       "An error occured in makeStationArmy() - OldFormat! This is "
-                                        "usually due to a failure in reading a"
+                                        "usually due to a failure in reading a "
                                          "weather station file. Check your files and "
                                          "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
                                          QMessageBox::Ok | QMessageBox::Default);
@@ -2030,7 +2030,7 @@ int mainWindow::solve()
 
                         QMessageBox::critical(this,tr("Failure."),
                                               "An error occured in makeStationArmy() - timeSeries! This is "
-                                                "usually due to a failure in reading a"
+                                                "usually due to a failure in reading a "
                                                  "weather station file. Check your files and "
                                                  "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
                                                  QMessageBox::Ok | QMessageBox::Default);
@@ -2064,7 +2064,7 @@ int mainWindow::solve()
 
                         QMessageBox::critical(this,tr("Failure."),
                                               "An error occured in makeStationArmy() - currentwxdata! This is "
-                                                "usually due to a failure in reading a"
+                                                "usually due to a failure in reading a "
                                                  "weather station file. Check your files and "
                                                  "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
                                                  QMessageBox::Ok | QMessageBox::Default);
