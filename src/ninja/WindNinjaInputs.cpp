@@ -63,6 +63,7 @@ WindNinjaInputs::WindNinjaInputs()
     googOutFlag = false;
 
     googColor = "default";
+    googVectorScale = false;
 
     writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;

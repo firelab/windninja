@@ -898,7 +898,7 @@ public:
     * \param units units of the resolution value
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setGoogColor(const int nIndex, std::string colorScheme);
+    int setGoogColor(const int nIndex, std::string colorScheme,bool scaling);
     /**
      * @brief setGoogResolution
      * @param nIndex

@@ -101,12 +101,12 @@ public:
 
 
 	inline void setLineWidth(double width){lineWidth = width;}
-    bool makeDefaultStyles(std::string cScheme);
+    bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
 
 	inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 
-    bool writeKml(string cScheme);
-    bool writeKml(egoogSpeedScaling scaling,std::string cScheme);
+    bool writeKml(string cScheme,bool vector_scaling);
+    bool writeKml(egoogSpeedScaling scaling,std::string cScheme,bool vector_scaling);
 	bool makeKmz();
 	bool removeKmlFile();
 

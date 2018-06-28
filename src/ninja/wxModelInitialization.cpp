@@ -1565,7 +1565,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
             wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
 
-            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling,input.googColor))
+            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling,input.googColor,input.googVectorScale))
             {
                 if(wxModelKmlFiles.makeKmz())
                     wxModelKmlFiles.removeKmlFile();

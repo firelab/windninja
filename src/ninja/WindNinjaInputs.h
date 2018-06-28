@@ -184,6 +184,7 @@ public:
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
 
     std::string googColor; //sets color scheme for output /Colorblind mode
+    bool googVectorScale; //sets the vector scaling
 
     KmlVector::egoogSpeedScaling googSpeedScaling;		//flag specifying the speed scaling for the legend/colors in the *.kmz file (0=>equal colors, 1=>equal interval)
     double googLineWidth;		//drawing line width for google output vectors

@@ -1554,9 +1554,9 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googResolution( resolution, units ) );
 }
-int ninjaArmy::setGoogColor(const int nIndex, string colorScheme)
+int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme));
+    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
 }
 
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,

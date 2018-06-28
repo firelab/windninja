@@ -1752,6 +1752,7 @@ int mainWindow::solve()
     googleScale = KmlVector::equal_color;
 
     std::string googleScheme;
+    bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
     if(tree->google->colorblindBox->isChecked())
     {
         std::string googCheckScheme;
@@ -1790,7 +1791,6 @@ int mainWindow::solve()
         {
             googleScheme="pink_to_green";
         }
-    //    tree->google->inputColorblindComboBox->
     }
     else
     {
@@ -2137,7 +2137,7 @@ int mainWindow::solve()
         army->setGoogLineWidth   (i,vectorWidth);
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
-        army->setGoogColor       (i,googleScheme);
+        army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);

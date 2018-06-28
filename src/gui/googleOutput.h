@@ -59,9 +59,10 @@ class googleOutput : public QWidget
   QRadioButton *googleMetersRadioButton, *googleFeetRadioButton;
   QCheckBox *useMeshResCheckBox;
   
-  //Colorblind Options
+  //alternative color Options
   QGroupBox *colorblindBox;
   QComboBox *inputColorblindComboBox;
+  QCheckBox *applyVectorScaling;
 
   QGridLayout *colorLayout;
 
