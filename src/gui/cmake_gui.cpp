@@ -92,13 +92,13 @@ int main(int argc, char *argv[])
     list << "WindNinja " + ver + " loaded.";
 
     mainWindow *mw;
+    QMessageBox mbox;
     try
     {
         mw = new mainWindow;
     }
     catch(...)
     {
-        QMessageBox mbox;
         mbox.setText("WindNinja failed to initialize.  Most "
                      "likely cause is failure to find data "
                      "dependencies.  Try setting the environment "
@@ -108,6 +108,28 @@ int main(int argc, char *argv[])
     }
     splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
     splash->display();
+    char **papszMsg = NinjaCheckVersion();
+    if (papszMsg != NULL) {
+      const char *pszVers =
+          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
+      if (strcmp(pszVers, NINJA_VERSION_STRING) != 0) {
+        mbox.setText("A new version of WindNinja is available: " +
+                     QString(NINJA_VERSION_STRING));
+        mbox.exec();
+      }
+      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
+      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
+        mbox.setText(QString(papszUserMsg[i]));
+        mbox.exec();
+      }
+      CSLDestroy(papszUserMsg);
+      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
+        mbox.setText("There is a fatal flaw in Windninja, it must close.");
+        mbox.exec();
+        abort();
+      }
+    }
+    CSLDestroy(papszMsg);
 
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
 

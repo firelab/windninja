@@ -44,6 +44,7 @@
 #endif
 
 int NinjaInitialize();
+char ** NinjaCheckVersion(void);
 
 #endif /* NINJA_INIT_H_ */
 
