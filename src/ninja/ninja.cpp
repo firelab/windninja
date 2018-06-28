@@ -1729,7 +1729,7 @@ void ninja::discretize()
                                                 (yNode-yStation)*(yNode-yStation) +
                                                 (zNode-zStation)*(zNode-zStation)), 0.5);
 
-                        CPLDebug("POINT", "nodeToStationDistance = %f\n", nodeToStationDistance);
+                        //CPLDebug("POINT", "nodeToStationDistance = %f\n", nodeToStationDistance);
 
                         //apply smoothing function (e.g., cressman or similar) over distanceOfInfluence
                         //and store for use later when Rx, Ry, Rz are calculated.
@@ -2437,11 +2437,24 @@ void ninja::prepareOutput()
 void ninja::reportStationDiffs()
 {
     element elem(&mesh);
-    double x, y, z;
+    double x, y, z, x_, y_, z_bottom, z_top;
     double u_loc, v_loc, w_loc;
     int cell_i, cell_j, cell_k;
+    int elemNum;
     double true_u, true_v, true_w;
     double output_u, output_v, output_w;
+    double speed1, speed2, outputSpeed;
+    double ustar;
+
+    double uLower, vLower, uUpper, vUpper, speedUpper, speedLower, dirUpper, dirLower;
+    int NPK;
+    std::vector<double> uList;
+    std::vector<double> vList;
+    std::vector<double> distanceList;
+
+    windProfile profile;
+    profile.profile_switch = windProfile::monin_obukov_similarity;
+    int i_, j_;
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Stations matching check:");
 
@@ -2457,12 +2470,106 @@ void ninja::reportStationDiffs()
             input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) +
             input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
 
-        //Get cell number and "parent cell" coordinates of station location
-        elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+// OLD INTERPOLATION METHOD
+//        elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+//
+//        //Get velocity at the station location
+//        output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+//        output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+//        output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
-        //Get velocity at the station location
-        output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-        output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+        //get element containing x,y,z of station
+        elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+        cout<<"cell_i, j, k = "<<cell_i<<", "<<cell_j<<", "<<cell_k<<endl;
+
+        //get values at nodes of the element
+        for(int k=0;k<mesh.NNPE;k++) //loop over nodes in the element
+        {
+            NPK = mesh.get_global_node(k, cell_i, cell_j, cell_k); //NPK is the global node number
+            uList.push_back(u(NPK));
+            vList.push_back(v(NPK));
+            cout<<"v(NPK) = "<<v(NPK)<<endl;
+
+            //calcluate distances from station to each node
+            distanceList.push_back(sqrt((mesh.XORD(NPK)-x)*(mesh.XORD(NPK)-x) +
+                                        (mesh.YORD(NPK)-y)*(mesh.YORD(NPK)-y) +
+                                        (mesh.ZORD(NPK)-z)*(mesh.ZORD(NPK)-z))); 
+        }
+        cout<<"vList[0] = "<<vList[0]<<endl;
+        cout<<"vList[1] = "<<vList[1]<<endl;
+        cout<<"vList[2] = "<<vList[2]<<endl;
+        cout<<"vList[3] = "<<vList[3]<<endl;
+        cout<<"vList[4] = "<<vList[4]<<endl;
+        cout<<"vList[5] = "<<vList[5]<<endl;
+        cout<<"vList[6] = "<<vList[6]<<endl;
+        cout<<"vList[7] = "<<vList[7]<<endl;
+
+        cout<<"distanceList[0] = "<<distanceList[0]<<endl;
+        cout<<"distanceList[1] = "<<distanceList[1]<<endl;
+        cout<<"distanceList[2] = "<<distanceList[2]<<endl;
+        cout<<"distanceList[3] = "<<distanceList[3]<<endl;
+        cout<<"distanceList[4] = "<<distanceList[4]<<endl;
+        cout<<"distanceList[5] = "<<distanceList[5]<<endl;
+        cout<<"distanceList[6] = "<<distanceList[6]<<endl;
+        cout<<"distanceList[7] = "<<distanceList[7]<<endl;
+
+        //horizontally interpolate at the top corner points and bottom corner points 
+        //to station x,y location
+        uLower = (distanceList[0]*uList[0]+distanceList[1]*uList[1]+
+                      distanceList[2]*uList[2]+distanceList[3]*uList[3]) / 
+                     (distanceList[0]+distanceList[1]+distanceList[2]+distanceList[3]);
+
+        uUpper = (distanceList[4]*uList[4]+distanceList[5]*uList[5]+
+                      distanceList[6]*uList[6]+distanceList[7]*uList[7]) / 
+                     (distanceList[4]+distanceList[5]+distanceList[6]+distanceList[7]);
+
+        vLower = (distanceList[0]*vList[0]+distanceList[1]*vList[1]+
+                      distanceList[2]*vList[2]+distanceList[3]*vList[3]) / 
+                     (distanceList[0]+distanceList[1]+distanceList[2]+distanceList[3]);
+
+        vUpper = (distanceList[4]*vList[4]+distanceList[5]*vList[5]+
+                      distanceList[6]*vList[6]+distanceList[7]*vList[7]) / 
+                     (distanceList[4]+distanceList[5]+distanceList[6]+distanceList[7]);
+
+        cout<<"uLower = "<<uLower<<endl;
+        cout<<"vLower = "<<vLower<<endl;
+        cout<<"uUpper = "<<uUpper<<endl;
+        cout<<"vUpper = "<<vUpper<<endl;
+
+        //convert to speed for profile calculations
+        wind_uv_to_sd(uLower, vLower, &speedLower, &dirLower);
+        wind_uv_to_sd(uUpper, vUpper, &speedUpper, &dirUpper);
+        cout<<"speedLower = "<<speedLower<<endl;
+        cout<<"speedUpper = "<<speedUpper<<endl;
+        cout<<"dirUpper = "<<dirUpper<<endl;
+        cout<<"dirLower = "<<dirLower<<endl;
+
+        //fit log profiles to the points calculated above to get the value at station x,y,z
+        //set needed surface values for profile calculations
+        profile.inputWindHeight = input.stations[i].get_height();
+        input.dem.get_cellIndex(input.stations[i].get_projXord(),
+                                input.stations[i].get_projYord(), &i_, &j_);
+
+        profile.Roughness = (input.surface.Roughness)(i_, j_);
+        profile.Rough_h = (input.surface.Rough_h)(i_, j_);
+        profile.Rough_d = (input.surface.Rough_d)(i_, j_);
+
+        //get z AGL at top and bottom of cell at station x,y
+        elemNum = mesh.get_elemNum(cell_i, cell_j, cell_k);
+        elem.get_xyz(elemNum, u_loc, v_loc, -1.0, x_, y_, z_bottom); //bottom face of cell
+        elem.get_xyz(elemNum, u_loc, v_loc, 1.0, x_, y_, z_top); //top face of cell
+        z_bottom = z_bottom - input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1); 
+        z_top = z_top - input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1); 
+
+        ustar = speedLower*0.4/(log((z_bottom + profile.Rough_h - profile.Rough_d)/profile.Roughness));
+        speed1 = ustar/0.4 * log((z_bottom + profile.Rough_h - profile.Rough_d)/profile.Roughness);
+        ustar = speedUpper*0.4/(log((z_top + profile.Rough_h - profile.Rough_d)/profile.Roughness));
+        speed2 = ustar/0.4 * log((z_top + profile.Rough_h - profile.Rough_d)/profile.Roughness);
+
+        outputSpeed = (speed1+speed2)/2; //average the two results from the upper and lower profiles
+        wind_sd_to_uv(outputSpeed, dirUpper, &output_u, &output_v); //just use dirUpper here for now
+
+        //just use the FE interpolation for w
         output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
         //Convert true station values to u, v for comparison below
