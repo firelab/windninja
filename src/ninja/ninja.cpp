@@ -2443,10 +2443,9 @@ void ninja::reportStationDiffs()
     int elemNum;
     double true_u, true_v, true_w;
     double output_u, output_v, output_w;
-    double speed1, speed2, outputSpeed;
     double ustar;
 
-    double uLower, vLower, uUpper, vUpper, speedUpper, speedLower, dirUpper, dirLower;
+    double uLower, vLower, uUpper, vUpper;
     int NPK;
     std::vector<double> uList;
     std::vector<double> vList;
@@ -2463,9 +2462,6 @@ void ninja::reportStationDiffs()
         //Get (x,y,z) value of station
         x = input.stations[i].get_xord();
         y = input.stations[i].get_yord();
-        //Check if station is in mesh, if not, can't do matching so skip
-        if(!mesh.inMeshXY(x, y))
-            continue;
         z = input.stations[i].get_height() +
             input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) +
             input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
@@ -2536,23 +2532,8 @@ void ninja::reportStationDiffs()
         cout<<"uUpper = "<<uUpper<<endl;
         cout<<"vUpper = "<<vUpper<<endl;
 
-        //convert to speed for profile calculations
-        wind_uv_to_sd(uLower, vLower, &speedLower, &dirLower);
-        wind_uv_to_sd(uUpper, vUpper, &speedUpper, &dirUpper);
-        cout<<"speedLower = "<<speedLower<<endl;
-        cout<<"speedUpper = "<<speedUpper<<endl;
-        cout<<"dirUpper = "<<dirUpper<<endl;
-        cout<<"dirLower = "<<dirLower<<endl;
-
-        //fit log profiles to the points calculated above to get the value at station x,y,z
-        //set needed surface values for profile calculations
-        profile.inputWindHeight = input.stations[i].get_height();
-        input.dem.get_cellIndex(input.stations[i].get_projXord(),
-                                input.stations[i].get_projYord(), &i_, &j_);
-
-        profile.Roughness = (input.surface.Roughness)(i_, j_);
-        profile.Rough_h = (input.surface.Rough_h)(i_, j_);
-        profile.Rough_d = (input.surface.Rough_d)(i_, j_);
+        //fit profiles to the points calculated above to get the value at station x,y,z
+        //if we're in the canopy use a linear profile, otherwise a log profile
 
         //get z AGL at top and bottom of cell at station x,y
         elemNum = mesh.get_elemNum(cell_i, cell_j, cell_k);
@@ -2561,13 +2542,33 @@ void ninja::reportStationDiffs()
         z_bottom = z_bottom - input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1); 
         z_top = z_top - input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1); 
 
-        ustar = speedLower*0.4/(log((z_bottom + profile.Rough_h - profile.Rough_d)/profile.Roughness));
-        speed1 = ustar/0.4 * log((z_bottom + profile.Rough_h - profile.Rough_d)/profile.Roughness);
-        ustar = speedUpper*0.4/(log((z_top + profile.Rough_h - profile.Rough_d)/profile.Roughness));
-        speed2 = ustar/0.4 * log((z_top + profile.Rough_h - profile.Rough_d)/profile.Roughness);
+        //set needed surface values for profile calculations
+        profile.inputWindHeight = input.stations[i].get_height();
+        input.dem.get_cellIndex(input.stations[i].get_projXord(),
+                                input.stations[i].get_projYord(), &i_, &j_);
 
-        outputSpeed = (speed1+speed2)/2; //average the two results from the upper and lower profiles
-        wind_sd_to_uv(outputSpeed, dirUpper, &output_u, &output_v); //just use dirUpper here for now
+        profile.ObukovLength = init->L(cell_i,cell_j);
+        profile.ABL_height = init->bl_height(cell_i,cell_j);
+        profile.Roughness = (input.surface.Roughness)(i_, j_);
+        profile.Rough_h = (input.surface.Rough_h)(i_, j_);
+        profile.Rough_d = (input.surface.Rough_d)(i_, j_);
+        //calculate the u,v from the lower profile
+        profile.AGL = z_bottom;
+        profile.inputWindSpeed = uLower;
+        profile.AGL = z;
+        uLower = profile.getWindSpeed();
+        profile.inputWindSpeed = vLower;
+        vLower = profile.getWindSpeed();
+        //calculate the speed from the upper profile
+        profile.AGL = z_top;
+        profile.inputWindSpeed = uUpper;
+        profile.AGL = z;
+        uUpper = profile.getWindSpeed();
+        profile.inputWindSpeed = vUpper;
+        vUpper = profile.getWindSpeed();
+
+        output_u = (uLower+uUpper)/2;
+        output_v = (vLower+vUpper)/2;
 
         //just use the FE interpolation for w
         output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
