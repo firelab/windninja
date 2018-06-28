@@ -2486,10 +2486,9 @@ void ninja::reportStationDiffs()
             vList.push_back(v(NPK));
             cout<<"v(NPK) = "<<v(NPK)<<endl;
 
-            //calcluate distances from station to each node
+            //calcluate distances from each node to station x,y 
             distanceList.push_back(sqrt((mesh.XORD(NPK)-x)*(mesh.XORD(NPK)-x) +
-                                        (mesh.YORD(NPK)-y)*(mesh.YORD(NPK)-y) +
-                                        (mesh.ZORD(NPK)-z)*(mesh.ZORD(NPK)-z))); 
+                                        (mesh.YORD(NPK)-y)*(mesh.YORD(NPK)-y))); 
         }
         cout<<"vList[0] = "<<vList[0]<<endl;
         cout<<"vList[1] = "<<vList[1]<<endl;
@@ -2509,8 +2508,7 @@ void ninja::reportStationDiffs()
         cout<<"distanceList[6] = "<<distanceList[6]<<endl;
         cout<<"distanceList[7] = "<<distanceList[7]<<endl;
 
-        //horizontally interpolate at the top corner points and bottom corner points 
-        //to station x,y location
+        //horizontally interpolate on the top face and the bottom face
         uLower = (distanceList[0]*uList[0]+distanceList[1]*uList[1]+
                       distanceList[2]*uList[2]+distanceList[3]*uList[3]) / 
                      (distanceList[0]+distanceList[1]+distanceList[2]+distanceList[3]);
@@ -2533,8 +2531,6 @@ void ninja::reportStationDiffs()
         cout<<"vUpper = "<<vUpper<<endl;
 
         //fit profiles to the points calculated above to get the value at station x,y,z
-        //if we're in the canopy use a linear profile, otherwise a log profile
-
         //get z AGL at top and bottom of cell at station x,y
         elemNum = mesh.get_elemNum(cell_i, cell_j, cell_k);
         elem.get_xyz(elemNum, u_loc, v_loc, -1.0, x_, y_, z_bottom); //bottom face of cell
