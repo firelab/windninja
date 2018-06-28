@@ -154,7 +154,7 @@ std::string FindDataPath(std::string file)
 //#ifdef USE_MANUAL_VSIREAD_DIR_RECURSIVE
 char **NinjaVSIReadDirRecursive( const char *pszPathIn )
 {
-    CPLStringList oFiles = NULL;
+    CPLStringList oFiles;
     char **papszFiles = NULL;
     VSIStatBufL psStatBuf;
     CPLString osTemp1, osTemp2;
