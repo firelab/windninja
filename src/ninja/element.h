@@ -54,7 +54,6 @@ class element
 		void computeJacobianQuadraturePoint(const int &localQuadPointNum, const int &elementNum, double &x, double &y, double &z);
 		void computeJacobianQuadraturePoint(const int &localQuadPointNum, const int &elementNum);
 
-		double interpolate_z(double const& x, double const& y, double const& layer); // interpolates z coord in specified layer to requested (x,y)
         void get_ij(double const& x,double const& y,
                      int& cell_i, int& cell_j); // given (x,y) returns cell (i,j)
 

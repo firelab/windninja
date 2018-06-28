@@ -706,65 +706,6 @@ double element::SFNSv(const double &u, const double &v, const int &n)
 }
 
 /**
- * @brief Interpolate ZORD to a given (x,y) for a specified layer in the mesh.
- *
- * Uses an interpolation scheme in the x-y plane that is consistent with interpolation
- * methods used in other elemennt functions, such as element::get_uvw(). 
- *
- * @param x Requested x location in WN coordinates.
- * @param y Requested y location in WN coordinates.
- * @param layer Layer in WN mesh to perform the interpolation.
- * @return Interpolated value
- */
-
-double element::interpolate_z(double const& x, double const& y, double const& layer)
-{
-    
-    //needs to be double checked -- not sure if this interpolation is working correctly
-    
-    int node_i, node_j, node_k;
-    int cell_i, cell_j;
-    double answer; // the result of the interpolation
-
-    node_k = layer; // the layer we want to interpolate on
-
-    //initialize cell values
-    cell_i = -1;
-    cell_j = -1;
-
-    //compute cell i value
-    for(node_i=1; node_i<mesh_->nrows; node_i++)
-    {
-        if(y <= mesh_->YORD(node_i, 0, 0))
-        {
-            cell_i = node_i - 1;
-            break;
-        }
-    }
-    if(cell_i<0)
-        throw std::range_error("Range error in element::interpolate_xy()");
-
-    //compute cell j value
-    for(node_j=1; node_j<mesh_->ncols; node_j++)
-    {
-        if(x <= mesh_->XORD(0, node_j, 0))
-        {
-            cell_j = node_j - 1;
-            break;
-        }
-    }
-    if(cell_j<0)
-        throw std::range_error("Range error in element::interpolate_xy()");
-
-    answer = (mesh_->ZORD(node_i-1, node_j-1, node_k) +
-              mesh_->ZORD(node_i-1, node_j, node_k) +
-              mesh_->ZORD(node_i, node_j-1, node_k) +
-              mesh_->ZORD(node_i, node_j, node_k)) / 4.0;
-
-    return answer;
-}
-
-/**
  * @brief Given (x,y), find cell (i,j) index.
  *
  * Similar to element::get_uvw() except does not compute (u,v,w) and does not 
@@ -787,9 +728,9 @@ void element::get_ij(double const& x,double const& y,
     cell_j = -1;
 
     //compute cell i value
-    for(node_i=1; node_i<mesh_->nrows; node_i++)
+    for(node_i=1; node_i<mesh_->ncols; node_i++)
     {
-        if(y <= mesh_->YORD(node_i, 0, 0))
+        if(x <= mesh_->XORD(node_i, 0, 0))
         {
             cell_i = node_i - 1;
             break;
@@ -799,9 +740,9 @@ void element::get_ij(double const& x,double const& y,
         throw std::range_error("Range error in element::get_ij()");
 
     //compute cell j value
-    for(node_j=1; node_j<mesh_->ncols; node_j++)
+    for(node_j=1; node_j<mesh_->nrows; node_j++)
     {
-        if(x <= mesh_->XORD(0, node_j, 0))
+        if(y <= mesh_->YORD(0, node_j, 0))
         {
             cell_j = node_j - 1;
             break;
