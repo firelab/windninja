@@ -707,7 +707,7 @@ void pointInput::setWxStationFormat(int format)
        wxStationFormat = format;
 }
 
-void pointInput::ex(const QItemSelection &x, const QItemSelection &y) //Generic test function, delete once everything is good
+void pointInput::selChanged(const QItemSelection &x, const QItemSelection &y) //Generic test function, delete once everything is good
 {
     CPLDebug("STATION_FETCH","TEST");
 }
