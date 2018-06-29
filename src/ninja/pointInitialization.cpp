@@ -3364,8 +3364,8 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 }
             }
         }
+        OGR_F_Destroy(hFeature);
     }
-    OGR_F_Destroy(hFeature);
     OGR_DS_Destroy(hDS);
     if(stationChecks.size()>=fCount)
     {
