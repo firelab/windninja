@@ -34,8 +34,6 @@ set(NINJA_GUI_INCLUDES consoleDockWidget.h
                        outputHeightWidget.h
                        outputMetaData.h
                        pdfOutput.h
-                       pointDataModel.h
-                       pointInputDelegate.h
                        pointInput.h
                        shapeOutput.h
                        solvePage.h
@@ -82,9 +80,7 @@ set(NINJA_GUI_SOURCES cmake_gui.cpp
                       nativeSolverInput.cpp
                       ninjafoamInput.cpp
                       pdfOutput.cpp
-                      pointDataModel.cpp
                       pointInput.cpp
-                      pointInputDelegate.cpp
                       shapeOutput.cpp
                       solvePage.cpp
                       solveThread.cpp

@@ -1907,12 +1907,12 @@ int mainWindow::solve()
         int pointFormat = tree->point->simType;
         std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
         std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
-        std::vector<int> xStartTime = tree->point->startSeries;
-        std::vector<int> xEndTime = tree->point->endSeries;
-        int numTimeSteps = tree->point->numSteps->value();
-        bool useTimeList = tree->point->enableTimeseries;
-        bool writeStationKML = tree->point->writeStationKmlButton->isChecked();
-        bool writeStationCSV = tree->point->writeStationFileButton->isChecked();
+        std::vector<int> xStartTime = tree->point->startSeries; //Get the start time from pointInput
+        std::vector<int> xEndTime = tree->point->endSeries; //Get the Stop time from pointInput
+        int numTimeSteps = tree->point->numSteps->value(); //Get the number of steps from pointInput
+        bool useTimeList = tree->point->enableTimeseries; //Find out if its a timeseries run or not
+        bool writeStationKML = tree->point->writeStationKmlButton->isChecked(); //Write a kml file
+        bool writeStationCSV = tree->point->writeStationFileButton->isChecked(); //hidden for now
 
         /*
          * Note that pointFormat is not the same as stationFormat!
@@ -1971,9 +1971,7 @@ int mainWindow::solve()
                                          QMessageBox::Ok | QMessageBox::Default);
                 disconnect(progressDialog, SIGNAL(canceled()), this,
                            SLOT(cancelSolve()));
-                setCursor(Qt::ArrowCursor);
-                setCursor(Qt::ArrowCursor);
-                tree->weather->checkForModelData();
+                setCursor(Qt::ArrowCursor); //Restart everything
                 progressDialog->cancel();
                 progressDialog->hide();
                 delete army;
@@ -1988,7 +1986,7 @@ int mainWindow::solve()
             std::vector<int> formatVec;
             std::vector<boost::posix_time::ptime> timeList;
             CPLDebug("STATION_FETCH","NEW FORMAT...");
-            for (int i=0;i<pointFileList.size();i++)
+            for (int i=0;i<pointFileList.size();i++) //Get the file type for all selected stations
             {
                 formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
             }
@@ -2030,8 +2028,6 @@ int mainWindow::solve()
                         disconnect(progressDialog, SIGNAL(canceled()), this,
                                    SLOT(cancelSolve()));
                         setCursor(Qt::ArrowCursor);
-                        setCursor(Qt::ArrowCursor);
-                        tree->weather->checkForModelData();
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
@@ -2046,8 +2042,10 @@ int mainWindow::solve()
                     boost::posix_time::ptime noTime;
                     CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
                     std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
-                    boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
-                    timeList.push_back(singleTime);
+                    boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],
+                                                                                                        xSingleTime[1],xSingleTime[2],
+                                                                                                        xSingleTime[3],xSingleTime[4],timeZone);
+                        timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
                     try{ //try making the army with current data
                         army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
@@ -2063,8 +2061,6 @@ int mainWindow::solve()
                         disconnect(progressDialog, SIGNAL(canceled()), this,
                                    SLOT(cancelSolve()));
                         setCursor(Qt::ArrowCursor);
-                        setCursor(Qt::ArrowCursor);
-                        tree->weather->checkForModelData();
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
@@ -2105,7 +2101,7 @@ int mainWindow::solve()
         }
         const char *metaOpt = CPLGetConfigOption("FETCH_METADATA","FALSE");
         if(metaOpt!="FALSE") //set a config option to get the metadata from the DEM
-        { //There is also a button for this, that is hidden
+        { //There is also a button for this, that is hidden (see stationFetchWidget)
             writeToConsole("Fetching station metadata for DEM...");
             QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
             QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
@@ -2213,21 +2209,8 @@ int mainWindow::solve()
         }
         if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
         {
-//           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
-//            {
-//                QMessageBox::critical( this,
-//                                       tr("Invalid Point inititialization file" ),
-//                                       tr( "Invalid Point initialization file" ),
-//                                       QMessageBox::Ok | QMessageBox::Default );
-//                    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-//                    setCursor(Qt::ArrowCursor);
-//                    tree->weather->checkForModelData();
-//                    progressDialog->cancel();
-//                    delete army;
-//                    return false;
-//            }
+
         }
-        
         else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
         {
             //get speed
@@ -2305,12 +2288,6 @@ int mainWindow::solve()
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
             {
-//                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
-//                        tree->point->dateTimeEdit->date().month(),
-//                        tree->point->dateTimeEdit->date().day(),
-//                        tree->point->dateTimeEdit->time().hour(),
-//                        tree->point->dateTimeEdit->time().minute(),
-//                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
         }

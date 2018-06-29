@@ -27,6 +27,12 @@
  *
  *****************************************************************************/
  
+/** @file stationFetchWidget.cpp
+  *
+  * Fetch stations from the Mesonet API
+  *
+  */
+
 #include "stationFetchWidget.h"
 //#include <vld.h>
 
@@ -108,7 +114,6 @@ void stationFetchWidget::watchStartTime()
     {
         writeToConsole("Start Time is greater than End Time!, reverting...");
         CPLDebug("STATION_FETCH","START TIME > END TIME, FIXING END TIME");
-//        startEdit->setDateTime(endEdit->dateTime().addSecs(-3600));
         endEdit->setDateTime(startEdit->dateTime().addSecs(3600));
     }
 }
@@ -152,16 +157,15 @@ void stationFetchWidget::updateFetchProgress()
         stationFutureWatcher.waitForFinished();
         int result = stationFutureWatcher.result(); //Get the result, 1 good, -1 bad
 
-        if (result==-1)
-        {
-//            stationFetchProgress->setLabelText("An Error Occured, Possibly no Data Exists for request");
+        if (result==-1) //Means that we failed to get data, the error_msg should tell the user
+        { //What happened
             stationFetchProgress->setLabelText(QString(pointInitialization::error_msg.c_str()));
             stationFetchProgress->setRange(0,1);
             stationFetchProgress->setValue(0);
             stationFetchProgress->setCancelButtonText("Close");
             setCursor(Qt::ArrowCursor);
         }
-        else if (result==-2)
+        else if (result==-2) //Special type of error that we catch in the GUI
         {
             stationFetchProgress->setLabelText("ERROR: Selected Time Range is greater than 1 year! Input custom API KEY to remove limits");
             stationFetchProgress->setRange(0,1);
@@ -169,7 +173,7 @@ void stationFetchWidget::updateFetchProgress()
             stationFetchProgress->setCancelButtonText("Close");
             setCursor(Qt::ArrowCursor);
         }
-        else
+        else //IT WORKED!
         {
             stationFetchProgress->setRange(0,100);
             stationFetchProgress->setValue(1);
@@ -215,8 +219,15 @@ void stationFetchWidget::executeFetchStation()
 //    stationFutureWatcher.cancel(); //commented for now, probably can be deleted...
 
 }
-
-std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up spaces in text
+/**
+ * @brief stationFetchWidget::removeWhiteSpace
+ * //Cleans up spaces in text
+ * if the user types in a station name and then puts a space
+ * strip it out
+ * @param str
+ * @return
+ */
+std::string stationFetchWidget::removeWhiteSpace(std::string str)
 {
     std::string tofind=" ";
     std::string toreplace="";
@@ -227,7 +238,12 @@ std::string stationFetchWidget::removeWhiteSpace(std::string str) //Cleans up sp
     }
     return(str);
 }
-
+/**
+ * @brief stationFetchWidget::demButcher
+ * get rid of some crap in the dem so that the file name looks nice
+ *
+ * @return
+ */
 std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the downloader
 {
     std::string demRaw = demFileName.toStdString();
@@ -315,10 +331,7 @@ int stationFetchWidget::fetchStation()
     // where they downloaded the times at
     // This is only necessary for timeseries however, because the other options, such as 1 step/current data
     //are time  naive and require the user to specify a time for what is current.
-    //These two lines of code are the old way for which files were generated, leaving them in for debugging for now...
-//    stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
-//    pointInitialization::SetRawStationFilename(stationPathName);
-       
+
     // This means DEM and Current Data 1 step
     if (terrainPart==0 && timePart==0)
     {
@@ -327,9 +340,6 @@ int stationFetchWidget::fetchStation()
         bufferUnits=buffUnits->currentText().toStdString();
         fetchNow=true;
         
-//        cout<<bufferSpin->text().toDouble()<<endl;
-//        cout<<buffUnits->currentText().toStdString()<<endl;
-//        cout<<currentBox->isChecked()<<endl;
         //Set the Station Buffer
         pointInitialization::setStationBuffer(buffer,bufferUnits);
         //Generates the directory to store the file names, because current data is on, don't specify time zone        
@@ -367,9 +377,6 @@ int stationFetchWidget::fetchStation()
         istringstream(EndTime.substr(11,2))>>eH;
         istringstream(EndTime.substr(14,2))>>eMi;
         
-
-//        cout<<sY<<sMo<<sD<<sH<<sMi<<endl;
-//        cout<<eY<<eMo<<eD<<eH<<eMi<<endl;
         std::vector<boost::posix_time::ptime> timeList;
         timeList=pointInitialization::getTimeList(sY,sMo,sD,sH,sMi,eY,eMo,eD,eH,eMi,
                                                   numSteps,tzString.toStdString());
@@ -461,6 +468,17 @@ int stationFetchWidget::fetchStation()
     }
 }
 
+/**
+ * @brief stationFetchWidget::getMetadata
+ *
+ * GUI wrapper for metadata fetcher,
+ * we don't currently use this
+ * and instead have a config option
+ * that fetches metadata at runtime
+ *
+ * leave this in incase we decide to add in a
+ * metadata button later
+ */
 void stationFetchWidget::getMetadata()
 {
     QString fileName;    

@@ -257,7 +257,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
         this, SLOT(checkForModelData()));
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStartTime(QDateTime))); //update time into a vector from the timeboxes
     connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(updateStopTime(QDateTime)));
-    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));
+    connect(stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStopTime()));//Watch the times to make sure the user can't do crazy things
     connect(startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(watchStartTime()));
     connect(treeView->selectionModel(),
             SIGNAL(selectionChanged(const QItemSelection &,const QItemSelection &)),
@@ -335,17 +335,17 @@ void pointInput::readStationFiles(const QItemSelection &x ,const QItemSelection 
     stationFileList = selectedStations;
     stationFileTypes = vecInt;
 
-    if (vecInt.size()>1)
+    if (vecInt.size()>1) //Set the simulation type to -1 -> user selects  different file types
     {
         simType = -1;
-        displayInformation(-1);
+        displayInformation(-1); //Display some information to the console
     }
-    if (vecInt.size()==1)
+    if (vecInt.size()==1) //Set the sim type to whatever it is
     {
         simType = vecInt[0];
         displayInformation(vecInt[0]);
     }
-    else
+    else //we probably failed to open it because its a bad file
     {
         simType = -1;
         displayInformation(-1);
@@ -406,9 +406,9 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         idx2 = poLayer->GetFeatureCount();
 
-        CPLDebug("STATION_FETCH","Number of Time Entries: %llu",idx2);
+        CPLDebug("STATION_FETCH","Number of Time Entries: %llu",idx2); //How many lines are on disk
         QString qFileName = QFileInfo(xFileName).fileName();
-        writeToConsole(QString(qFileName+" has: "+QString::number(idx2)+" time entries"));
+        writeToConsole(QString(qFileName+" has: "+QString::number(idx2)+" time entries")); //tell the user in the console
         const char* emptyChair; //Muy Importante!
 
         poFeature = poLayer->GetFeature(iBig);
@@ -424,11 +424,6 @@ int pointInput::directStationTraffic(const char* xFileName)
 
         CPLDebug("STATION_FETCH","STATION START TIME: %s",start_datetime.c_str());
         CPLDebug("STATION_FETCH","STATION END TIME: %s",stop_datetime.c_str());
-
-//        writeToConsole(QString(qFileName+"\nfirst time: "+start_datetime.c_str()));
-//        writeToConsole(QString(qFileName+"\nlaste Time: "+stop_datetime.c_str()));
-//        writeToConsole("Start Time (UTC): "+QString(start_datetime.c_str()));
-//        writeToConsole("Stop Time (UTC): "+QString(stop_datetime.c_str()));
 
         if (start_datetime.empty()==true && stop_datetime.empty()==true)
         {
@@ -453,7 +448,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         //Old Format
         //Prevent users from using time series with old format
         enableTimeseries=false;
-        startTime->setEnabled(false);
+        startTime->setEnabled(false); //Hide these things because its an old format run
         stopTime->setEnabled(false);
         numSteps->setEnabled(false);
 
@@ -599,7 +594,7 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
     startTime->setDateTime(loc_start_time);
     stopTime->setDateTime(loc_end_time); //Updates date time based on disk information
 
-    updateTimeSteps();
+    updateTimeSteps(); //Calculate how many steps we can do between the start and stop time
 }
 /**
  * @brief pointInput::displayInformation
@@ -672,7 +667,7 @@ void pointInput::displayInformation(int dataType)
 QDateTime pointInput::readNinjaNowName(const char *fileName)
 {
     CPLDebug("STATION_FETCH","Reading 1 step Station start Time");
-    QDateTime qxDate = QFileInfo(fileName).created();
+    QDateTime qxDate = QFileInfo(fileName).created(); //Get when the file was created because that is when the simulation time is
     return qxDate;
 }
 /**
@@ -712,7 +707,7 @@ void pointInput::selChanged(const QItemSelection &x, const QItemSelection &y) //
     CPLDebug("STATION_FETCH","TEST");
 }
 
-void pointInput::openMainWindow()
+void pointInput::openMainWindow() //This is for opening and closing the station-fetch widget
 {
     this->setEnabled(true);
 }

@@ -53,8 +53,6 @@
 
 #include <vector>
 
-#include "pointDataModel.h"
-#include "pointInputDelegate.h"
 #include "latLonWidget.h"
 #include "wxStation.h"
 #include "ninjaUnits.h"

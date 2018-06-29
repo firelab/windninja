@@ -356,19 +356,40 @@ if(VERBOSE_CMAKE)
 endif(VERBOSE_CMAKE)
 
 # install target related files
-set(etc_files mackay.tif
+set(etc_files missoula_valley.tif
                   example_lcp.lcp
                   example_lcp.prj
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
                   cli_pointInitialization_diurnal.cfg
                   cli_wxModelInitialization_diurnal.cfg
-                  cli_momentumSolver_diurnal.cfg
-                  mackay_wx_stations.csv)
+                  cli_momentumSolver_diurnal.cfg)
 foreach(f ${etc_files})
     install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
             etc/windninja/example-files COMPONENT apps)
 endforeach(f ${etc_files})
+
+#add weather station files to example files
+set(wx_station_current_files  WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv)
+foreach(f ${wx_station_current_files})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+            etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley COMPONENT apps)
+endforeach(f ${wx_station_current_files})
+
+#add weather station time series files
+set(wx_station_ts_files  WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
+foreach(f ${wx_station_ts_files})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+            etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley COMPONENT apps)
+endforeach(f ${wx_station_ts_files})
 
 set(share_files date_time_zonespec.csv
                 tz_world.zip

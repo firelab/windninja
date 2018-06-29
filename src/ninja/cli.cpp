@@ -324,33 +324,28 @@ int windNinjaCLI(int argc, char* argv[])
                 ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
-//STATION_FETCH
-                ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (true/false)")
-                ("fetch_station_path", po::value<std::string>(), "path where the downloaded station file will be written")
-                ("start_year",po::value<int>(),"start year for simulation")
-                ("start_month",po::value<int>(),"start month for simulation")
-                ("start_day",po::value<int>(),"start day for simulation")
-                ("start_hour",po::value<int>(),"start hour for simulation")
-                ("start_minute",po::value<int>(),"start minute for simulation")
-                ("end_year",po::value<int>(),"end year for simulation")
-                ("end_month",po::value<int>(),"end month for simulation")
-                ("end_day",po::value<int>(),"end day for simulation")
-                ("end_hour",po::value<int>(),"end hour for simulation")
-                ("end_minute",po::value<int>(),"end minute for simulation")
-                ("number_time_steps",po::value<int>(),"number of timesteps for simulation")
-                ("fetch_metadata",po::value<bool>()->default_value(false),"get station metadata for a domain")
-                ("metadata_filename",po::value<std::string>(),"filename for metadata")
-                ("fetch_type",po::value<std::string>(),"bbox or stid")
-                ("fetch_current_station_data",po::value<bool>()->default_value(false),"true for latest, false for timeseries")
-                ("station_buffer",po::value<double>()->default_value(0.00))
-                ("station_buffer_units",po::value<std::string>()->default_value("km"))
-                ("fetch_station_name",po::value<std::string>(),"list of stations to initialize with")
-//STATION_FETCH
+                ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (Mesonet API) (true/false)")
+                ("start_year",po::value<int>(),"point initialization: start year for simulation")
+                ("start_month",po::value<int>(),"point initialization: start month for simulation")
+                ("start_day",po::value<int>(),"point initialization: start day for simulation")
+                ("start_hour",po::value<int>(),"point initialization: start hour for simulation")
+                ("start_minute",po::value<int>(),"point initialization: start minute for simulation")
+                ("end_year",po::value<int>(),"point initialization: end year for simulation")
+                ("end_month",po::value<int>(),"point initialization: end month for simulation")
+                ("end_day",po::value<int>(),"point initialization: end day for simulation")
+                ("end_hour",po::value<int>(),"point initialization: end hour for simulation")
+                ("end_minute",po::value<int>(),"point initialization: end minute for simulation")
+                ("number_time_steps",po::value<int>(),"point initialization: number of timesteps for simulation")
+                ("fetch_metadata",po::value<bool>()->default_value(false),"get weather station metadata for a domain")
+                ("metadata_filename",po::value<std::string>(),"filename for weather station metadata")
+                ("fetch_type",po::value<std::string>(),"fetch weather station from bounding box (bbox) or by station ID (stid)")
+                ("fetch_current_station_data",po::value<bool>()->default_value(false),"fetch the latest weather station data (true) or fetch a timeseries (false) (true/false)")
+                ("station_buffer",po::value<double>()->default_value(0.00),"distance around dem to fetch station data")
+                ("station_buffer_units",po::value<std::string>()->default_value("km"),"Units of distance around DEM")
+                ("fetch_station_name",po::value<std::string>(),"list of stations IDs to fetch")
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
-                ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
-                ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
-                ("write_wx_station_csv",po::value<bool>()->default_value(false),"write a csv of the interpolated wxdata")
-                ("wx_station_csv_filename",po::value<std::string>())
+                ("write_wx_station_kml", po::value<bool>()->default_value(false), " point initialization: write a Google Earth kml file for the input wx stations (true, false)")
+                ("write_wx_station_csv",po::value<bool>()->default_value(false),"point initialization: write a csv of the interpolated weather data (true,false)")
                 ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
                 ("units_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
                 ("output_wind_height", po::value<double>()/*->required()*/, "height of output wind speed above the vegetation")
@@ -1021,24 +1016,11 @@ int windNinjaCLI(int argc, char* argv[])
                 std::string stationPathName;
                 wxStation::SetStationFormat(wxStation::newFormat);
 
-                if (vm.count("fetch_station_path")) //Inform that old options no longer are used
-                {
-//                    stationPathName=vm["fetch_station_path"].as<std::string>();
-//                    pointInitialization::SetRawStationFilename(stationPathName);
-                    CPLDebug("STATION_FETCH","fetch_station_path has been disabled.");                    
-                }
-//                else
-//                {
-//                    stationPathName="blank";
-//                    pointInitialization::SetRawStationFilename(stationPathName);
-//                }
-                               
                 pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
                         vm["station_buffer_units"].as<std::string>()); //Sets buffer
 
                 if (vm["fetch_current_station_data"].as<bool>()==false) //If they want a time series
                 {
-//                    option_dependency(vm, "fetch_station", "fetch_station_path");
                     option_dependency(vm, "fetch_station", "start_year");
                     option_dependency(vm, "fetch_station", "start_month");
                     option_dependency(vm, "fetch_station", "start_day");
@@ -1498,16 +1480,11 @@ int windNinjaCLI(int argc, char* argv[])
             else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
 //STATION_FETCH
-
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-//                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
-//                option_dependency(vm, "write_wx_station_csv","wx_station_csv_filename"); //No Longer need to require a filename
 
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
-//                    wxStation::writeStationFile(windsim.getWxStations( i_ ),
-//                                                vm["wx_station_csv_filename"].as<std::string>());
                     if(vm.count("output_path")){
                         pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
                                                    vm["output_path"].as<std::string>(),
@@ -1526,8 +1503,6 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i_);
-//                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-//                    vm["wx_station_kml_filename"].as<std::string>());
                     if(vm.count("output_path")){
                         wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                                                 vm["elevation_file"].as<std::string>(),

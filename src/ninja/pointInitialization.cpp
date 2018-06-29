@@ -30,24 +30,24 @@
 
 #include "pointInitialization.h"
 
-std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4";
-const std::string pointInitialization::backup_token = "33e3c8ee12dc499c86de1f2076a9e9d4";
-const std::string pointInitialization::dvar = "wind_speed,wind_direction,air_temp,"
-                                             "solar_radiation,cloud_layer_1_code";
+std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4"; //This is the base token for fetching
+const std::string pointInitialization::backup_token = "33e3c8ee12dc499c86de1f2076a9e9d4"; //the same token repeated just in case
+const std::string pointInitialization::dvar = "wind_speed,wind_direction,air_temp," //variables we want
+                                             "solar_radiation,cloud_layer_1_code"; //from the API
 
-const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_temp,"
-                                              "solar_radiation,cloud_layer_1_code,"
-                                              "cloud_layer_2_code,cloud_layer_3_code";
+const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_temp," //variables we
+                                              "solar_radiation,cloud_layer_1_code," //want for
+                                              "cloud_layer_2_code,cloud_layer_3_code";//Airport stations
 
-const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/stations/";
-std::string pointInitialization::rawStationFilename = "";
-double pointInitialization::stationBuffer;
-std::vector<std::string> pointInitialization::stationFiles;
-std::string pointInitialization::tzAbbrev;
-vector<boost::local_time::local_date_time> pointInitialization::start_and_stop_times;
+const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/stations/"; //API baseurl
+std::string pointInitialization::rawStationFilename = ""; //make the station name blank at first
+double pointInitialization::stationBuffer; //Buffer
+std::vector<std::string> pointInitialization::stationFiles; //Where the files are stored
+std::string pointInitialization::tzAbbrev; //Abbreviation of the time zone
+vector<boost::local_time::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
-bool pointInitialization::enforce_limits = true;
-std::string pointInitialization::error_msg = "An Error Occured, Possibly no Data Exists for request";
+bool pointInitialization::enforce_limits = true; //Enfore limitations on the API ->set to false if the user provides a custom key
+std::string pointInitialization::error_msg = "An Error Occured, Possibly no Data Exists for request"; //generic error message
 //Set to whether or not we enforce the limits of 1 year and buffer range
 extern boost::local_time::tz_database globalTimeZoneDB;
 
@@ -354,7 +354,7 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     delete[] influenceRadius;
     influenceRadius = NULL;
 }
-/*
+/** @brief
  * Check to see if the station data is within the range of user desired times
  * If not, throw a tantrum...
  */
@@ -364,8 +364,7 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
     vector<boost::posix_time::ptime> stationStops;
     vector<std::string> stationNames; //Just for organization purposes, probably not necessary after initial debugging
 
-//    cout<<wxStationData.size()<<endl;
-    for (int i=0; i<wxStationData.size();i++)
+    for (int i=0; i<wxStationData.size();i++) //loop over all the stations
     {
         boost::posix_time::ptime SD_start;
         boost::posix_time::ptime SD_stop;
@@ -436,25 +435,14 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
 std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
                                                         std::vector<boost::posix_time::ptime> timeList,bool latest)
 {
-//    genPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s", t.c_str())));
-//    genPath = CPLStrdup(CPLGenerateTempFilename(dirName.c_str()));
     std::string subDem;
     std::string xDem;
     std::string fullPath;
-    std::string sTime;
-    stringstream ss;
    
     xDem = demFile.substr(0,demFile.find(".",0));   
     std::size_t found = xDem.find_last_of("/");
     subDem=xDem.substr(found+1);   
-   
-    //Calcualte timestamp
-//    boost::posix_time::ptime time  = boost::posix_time::second_clock::local_time();
-//    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-//    boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
-//    ss<<dNew;
-//    sTime = ss.str();
-    
+      
     //NEW WAY
     stringstream timeStream,timeStream2;
     boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d-%H%M");
@@ -480,7 +468,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 //        cout<<start_and_stop_times[0].local_time()<<endl;
 //        cout<<start_and_stop_times[1].local_time()<<endl;
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     
@@ -514,7 +502,6 @@ bool pointInitialization::removeBadDirectory(string badStationPath)
 void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect,
                                               string basePathName, string demFileName, bool latest)
 {
-//    cout<<"WRITE STATION CSV"<<endl;
     std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps,kts)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
     std::string subDem;
     std::string xDem;
@@ -559,7 +546,6 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
         wxStation curVec = stationVect[j];
         std::ostringstream xs;
         xs<<j;
-//        std::string testPath=basePathName+subDem+"-"+curVec.stationName+xs.str()+".csv";
         std::string writePath=fullPath+curVec.stationName+".csv";
         outFile.open(writePath.c_str());
         outFile<<header<<endl;
@@ -588,25 +574,16 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
 vector<string> pointInitialization::openCSVList(string csvPath)
 {
     vector<string> csvList;
-    FILE *wxStationList = VSIFOpen( csvPath.c_str(), "r" );
-    while(1){
+    FILE *wxStationList = VSIFOpen( csvPath.c_str(), "r" ); //If we detect that this is a pointer csv
+    while(1){ //Open it up and check it
         const char* f = CPLReadLine(wxStationList);
-//        cout<<f<<endl;
-        if (f == NULL)
+        if (f == NULL) //Means its not what we want
             break;
-        if(strstr(f,".csv")){
-//            cout<<"f is what we are looking for!"<<f<<endl;            
+        if(strstr(f,".csv")){ //It is what we want
             csvList.push_back(f);
-        }
-//        else{
-//        cout<<"f is NOT WHAT we are looking for!"<<f<<endl;  
-//        }
-        
-        
+        }       
     }
     VSIFClose(wxStationList);
-        
-    
     return csvList;
 }
 /**
@@ -619,50 +596,30 @@ vector<string> pointInitialization::openCSVList(string csvPath)
  */
 vector<wxStation> pointInitialization::readWxStations(string demFileName, string timeZone) //This is how we handle the old format now!
 {
-    vector<wxStation> tWork;
-//    cout<<rawStationFilename<<endl;
-    vector<string>wxLoc;
-    wxLoc.push_back(rawStationFilename);
-    storeFileNames(wxLoc);
+    vector<string>wxLoc; //list of station locations
+    wxLoc.push_back(rawStationFilename); //add the one file to the list
+    storeFileNames(wxLoc); //store the file for later
     
-    vector<string>stationLocs;
+    vector<string>stationLocs; //get the id for each station
     stationLocs=fetchWxStationID();
     
     vector<vector<preInterpolate> > wxVector;  
     vector<vector<preInterpolate> > wxOrganized;
     
-//    for (int i=0;i<stationLocs.size();i++)
-//    {
     vector<preInterpolate> singleStationData;
-    singleStationData = readDiskLine(demFileName, rawStationFilename);    
-    wxVector.push_back(singleStationData);
-//    cout<<wxVector[0].size()<<endl;
-//        for (int i=0;i<wxVector[0].size();i++)
-//        {
-//          cout<<wxVector[0][i].stationName<<endl;
-//        }
-        for (int i=0;i<wxVector[0].size();i++)
-        {
-            vector<preInterpolate> tempVec;
-            tempVec.push_back(wxVector[0][i]);
-            wxOrganized.push_back(tempVec);
-        }
-//        cout<<wxOrganized.size()<<endl;
-//        for (int i=0;i<wxOrganized.size();i++)
-//        {
-//            cout<<"i "<<i<<endl;
-//            for (int k=0;k<wxOrganized[i].size();k++)
-//            {
-//                cout<<"k "<<k<<endl;
-//                cout<<wxOrganized[i][k].stationName<<endl;
-//            }
-//        }
-        vector<wxStation> readyToGo;
-        readyToGo=interpolateNull(demFileName,wxOrganized,timeZone);
-        
+    singleStationData = readDiskLine(demFileName, rawStationFilename);    //Read in the station data as uninterpolated data
+    wxVector.push_back(singleStationData); //store it in the vector
 
-    
-    
+    for (int i=0;i<wxVector[0].size();i++) //loop over all the data
+    {
+        vector<preInterpolate> tempVec;
+        tempVec.push_back(wxVector[0][i]);
+        wxOrganized.push_back(tempVec);
+    }
+
+    vector<wxStation> readyToGo;
+    readyToGo=interpolateNull(demFileName,wxOrganized,timeZone); //make the data into a weather station without interpolating
+
     return readyToGo;
 }
 /**
@@ -760,10 +717,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     std::string oErrorString = "";
     preInterpolate oStation;
     std::vector<preInterpolate> oStations;
-    preInterpolate work;
-    std::vector<preInterpolate> vecwork;
-    work.stationName="aaaaaaaa";
-    vecwork.push_back(work);
 
     OGRDataSourceH hDS;
     hDS = OGROpen( stationLoc.c_str(), FALSE, NULL );
@@ -789,9 +742,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
     CPLDebug("STATION_FETCH", "Reading csvName: %s", stationLoc.c_str());
-
-    const char* station;
-    int idx=0;
 
     poLayer->ResetReading();
 
@@ -1178,31 +1128,9 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     CPLDebug("STATION_FETCH", "converting Interpolated struct to wxStation...");
     vector<std::string> stationNames;
     vector<wxStation> stationData;
-//    OGRDataSourceH hDS;
-//    hDS = OGROpen( rawStationFilename.c_str(), FALSE, NULL );
-//
-//    OGRLayer *poLayer;
-//    OGRFeature *poFeature;
-//    OGRFeatureDefn *poFeatureDefn;
-//    poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
-//
-//    std::string oStationName;
-//
-//    OGRLayerH hLayer;
-//    hLayer=OGR_DS_GetLayer(hDS,0);
-//    OGR_L_ResetReading(hLayer);
-//
-//    poLayer->ResetReading();
-//    while( ( poFeature = poLayer->GetNextFeature() ) != NULL )
-//    {
-//        poFeatureDefn = poLayer->GetLayerDefn();
-//
-//        // get Station name
-//        oStationName = poFeature->GetFieldAsString( 0 );
-//        stationNames.push_back(oStationName);
-//    }
-    stationNames=fetchWxStationID();
-    bool final_sanity_check = checkWxStationSize(stationNames);
+
+    stationNames=fetchWxStationID(); //Get the weather station names
+    bool final_sanity_check = checkWxStationSize(stationNames); //Check to make sure everything is good
 
     if(final_sanity_check==false)
     {
@@ -1219,7 +1147,12 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     int j=0;
     int q=0;
 
-    for (int i=0;i<statCount;i++)
+    /*
+     * This sorts the stations based on station name
+     * to organize them into unique wxStations
+     */
+
+    for (int i=0;i<statCount;i++) //loop over the stations
     {
         CPLDebug("STATION_FETCH", "looks at: %d", q);
         CPLDebug("STATION_FETCH", "starts at: %d", j);
@@ -1244,7 +1177,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     CPLDebug("STATION_FETCH", "idxCount size: %ld", idxCount.size());
     vector<int> countLimiter;
 
-    for (int ei=1;ei<=idxCount.size();ei++)
+    for (int ei=1;ei<=idxCount.size();ei++) //This appears to do nothing
     {
         int rounder=idxCount.size()-ei;
         int e=std::accumulate(idxCount.begin(),idxCount.end()-rounder,0);
@@ -1254,12 +1187,12 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
     vector<vector<preInterpolate> >stationDataList;
     stationDataList=data;
     //here is where a wxstation is made
-    for (int i=0;i<idxCount.size();i++)
+    for (int i=0;i<idxCount.size();i++) //loop over the stations
     {
         wxStation subDat;
-        subDat.set_stationName(stationDataList[i][0].stationName);
+        subDat.set_stationName(stationDataList[i][0].stationName); //Set the name for each station
 
-        std::string CoordSys=stationDataList[i][0].datumType;
+        std::string CoordSys=stationDataList[i][0].datumType; //set the datum type
 
         if (CoordSys=="projcs")
         {
@@ -1274,7 +1207,7 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
                     demFile,stCoorDat);
         }
 
-        for (int k=0;k<stationDataList[i].size();k++)
+        for (int k=0;k<stationDataList[i].size();k++) //set the weather values for each time step and station
         {    
             subDat.set_speed(stationDataList[i][k].speed, stationDataList[i][k].inputSpeedUnits);
             subDat.set_direction(stationDataList[i][k].direction);
@@ -1429,11 +1362,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         }
         for (int i = 0; i<numSteps;i++)
         {
-//            CPLDebug("STATION_FETCH","Positive Time %i",posStepTime[i]);
-//            CPLDebug("STATION_FETCH","Negative Time %lu",negStepTime[i]);
             CPLDebug("STATION_FETCH","Positive IDX %i",posStepIdx[i]);
             CPLDebug("STATION_FETCH","Negative IDX %i \n",negStepIdx[i]);
-
         }
         posMasterTime.push_back(posStepTime);
         negMasterTime.push_back(negStepTime);
@@ -1508,12 +1438,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
                  * Remember that Negative is future (high)
                  * Positive is past (low)
                  */
-//                cout<<interpolatedWxData[k][i].stationName<<endl;
-//                cout<<"NEG IDX: "<<negMasterIdx[k][i]<<endl;
-//                cout<<"NEG TIME: "<<vecStations[k][negMasterIdx[k][i]].datetime<<endl;
-//                cout<<"POS IDX: "<<posMasterIdx[k][i]<<endl;
-//                cout<<"POS TIME: "<<vecStations[k][posMasterIdx[k][i]].datetime<<endl;
-
                 //Get the Time of the past and future station and set the interpolate time to the timeList
                 boost::posix_time::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
                 boost::posix_time::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
@@ -1525,12 +1449,11 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 
                 //Get Low and High for each data Type
                 //Wind Speed
-//                cout<<"WIND SPEED"<<endl;
                 double speed_L = vecStations[k][posMasterIdx[k][i]].speed;
                 double speed_H = vecStations[k][negMasterIdx[k][i]].speed;
 
                 double speed_I = interpolator(inter,low,high,speed_L,speed_H);
-                if(speed_I > 113.000)
+                if(speed_I > 113.000) //this is too fast, probably a bad interpolation
                 {
                     speed_I = speed_L;
 
@@ -1546,12 +1469,11 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
                 interpolatedWxData[k][i].direction = dir_I;
 
                 //Temperature
-//                cout<<"TEMPERATURE"<<endl;
                 double temp_L = vecStations[k][posMasterIdx[k][i]].temperature;
                 double temp_H = vecStations[k][negMasterIdx[k][i]].temperature;
 
                 double temp_I  = interpolator(inter,low,high,temp_L,temp_H);
-                if(temp_I > 57.0)
+                if(temp_I > 57.0) //this is very hot, probably a bad interpolation
                 {
                     temp_I = temp_H;
                     if(temp_I > 57.0)
@@ -1560,14 +1482,13 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
                     }
                     if(temp_I > 57.0)
                     {
-                        temp_I = 25;
+                        temp_I = 25; //if something is really bad, just let it be 25degC
                     }
                 }
                 interpolatedWxData[k][i].temperature = temp_I;
                 interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
 
                 //Cloud Cover
-//                cout<<"CLOUD COVER"<<endl;
                 double cloud_L = vecStations[k][posMasterIdx[k][i]].cloudCover;
                 double cloud_H = vecStations[k][negMasterIdx[k][i]].cloudCover;
 
@@ -1721,18 +1642,19 @@ std::string pointInitialization::BuildTime(std::string year_0, std::string month
 /**
  * @brief pointInitialization::UnifyTime
  * Builds a unified timelist as a vector of strings for use in interpolation and fetching stations
+ *
+ * this function gets the start and stop time as a vector of strings so that we can fetch a time series
+ * from the time list
  * @param timeList
  * @return
  */
 vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
 {
     vector<std::string> buildTimes;
-    vector<std::string> work;
-    work.push_back("0");
     stringstream startstream;
     stringstream endstream;
     boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y%m%d%H%M");
-    boost::posix_time::time_duration buffer(1, 0, 0, 0);
+    boost::posix_time::time_duration buffer(1, 0, 0, 0); //add a 1 hour pad to each side
 
     startstream.imbue(locale(startstream.getloc(), facet));
     timeList[0] = timeList[0] - buffer;
@@ -2291,14 +2213,6 @@ vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, v
     vector<std::string> totalCloudcat;
     std::string aa;
 
-//    cout<<low.size()<<endl;
-//    cout<<med.size()<<endl;
-//    cout<<high.size()<<endl;
-
-//    cout<<countlow<<endl;
-//    cout<<countmed<<endl;
-//    cout<<counthigh<<endl;
-
     if (low!=med)
     { /*This is some sort of Bug with the METAR/ASOS stations, the low clouds are always missing 40 data points, and it is only occuring today
         (2/17), earlier times like in january do not have this problem.
@@ -2646,7 +2560,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     boost::posix_time::ptime endUtc=endLocal.utc_time();
 
 
-//This is all old stuff that I am leaving in until I am sure the above stuff works.
+//This is all old stuff that I am leaving in until I am sure the above stuff works. Good for debugging if we get time zone issues
 //    boost::posix_time::ptime utcStart(dStart,dStartTime);
 //    boost::local_time::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
 //    boost::local_time::local_date_time startLocal(utcStart,timeZoneUtc);
@@ -2756,7 +2670,6 @@ int pointInitialization::checkFetchTimeDuration(std::vector<boost::posix_time::p
 
         if(tSec>=max_download_time)//Sanity Check on requested Time Download
         {
-    //        throw std::runtime_error("Cannot download more than 1 year worth of data at one time!");
             return -2;
         }
         else
@@ -2963,6 +2876,15 @@ void pointInitialization::setLocalStartAndStopTimes(boost::local_time::local_dat
     start_and_stop_times.push_back(start);
     start_and_stop_times.push_back(stop);
 }
+/**
+ * @brief pointInitialization::writeStationLocationFile
+ * writes a csv that points to the weather station csvs
+ * this is needed for CLI runs
+ * note the comma after the header
+ * @param stationPath
+ * @param demFile
+ * @param current_data
+ */
 void pointInitialization::writeStationLocationFile(string stationPath, std::string demFile, bool current_data){
     std::string cName;
     stringstream statLen;
@@ -2982,7 +2904,7 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     outFile.open(cName.c_str());
     if(current_data==true)
     {
-        outFile<<"Recent_Station_File_List,"<<endl;
+        outFile<<"Recent_Station_File_List,"<<endl; //note the "," very important
     }
     if(current_data==false)
     {
