@@ -988,6 +988,17 @@ void AsciiGrid<T>::interpolateFromPoints(T* pointData, double* X, double* Y, dou
             {
                 get_cellIndex(X[k], Y[k], &i_, &j_);
 
+                distance = std::sqrt((xC-X[k])*(xC-X[k]) + (yC-Y[k])*(yC-Y[k]));
+                if(influenceRadius[k] >= 0.0)   //negative influence radius means infinite influence radius
+                {
+                    //if distance from current cell location to station is larger than the influence radius, skip this station
+                    if(distance > influenceRadius[k])
+                        continue;
+                }
+                weight = 1.0/std::pow(distance,interpDistPower);
+                weight_sum = weight_sum + weight;
+                value = value + pointData[k] * weight;
+
                 //set the 4 nodes around the point to the point value
                 if(i == i_ && j == j_)
                 {
@@ -996,26 +1007,17 @@ void AsciiGrid<T>::interpolateFromPoints(T* pointData, double* X, double* Y, dou
                     set_cellValue(i+1, j+1, pointData[k]);
                     set_cellValue(i+1, j, pointData[k]);
                 }
-                else
-                {//do the IDW interpolation
-
-                    distance = std::sqrt((xC-X[k])*(xC-X[k]) + (yC-Y[k])*(yC-Y[k]));
-                    if(influenceRadius[k] >= 0.0)   //negative influence radius means infinite influence radius
-                    {
-                        if(distance > influenceRadius[k])   //if distance from current cell location to station is larger than the influence radius, skip this station
-                            continue;
-                    }
-                    weight = 1.0/std::pow(distance,interpDistPower);
-                    weight_sum = weight_sum + weight;
-                    value = value + pointData[k] * weight;
-                }
             }
-            if(weight_sum != 0) //if value IS zero, then don't set the value because this means all points don't have an influence radius that reaches this cell (this effectively leaves the value as the no_data value)
+            //if value IS zero, then don't set the value because this means all points don't have an influence
+            //radius that reaches this cell (this effectively leaves the value as the no_data value)
+            //don't set an interpolated value if the value has already been set above (i.e., if it's a node of a cell
+            //containing point data; these nodes are set to the point value and should not be influenced by other points)
+            if(weight_sum != 0 && get_cellValue(i,j) == data.getNoDataValue())
+            {
                 set_cellValue(i, j, value/weight_sum);
+            }
         }
     }
-
-
 }
 
 template <class T>
