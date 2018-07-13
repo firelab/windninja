@@ -35,6 +35,7 @@ branches:
   - "para-nomads"
   - "gh-pages"
   - "gh"
+  - "go"
 
 notifications:
   email:
