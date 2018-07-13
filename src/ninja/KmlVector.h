@@ -38,6 +38,8 @@
 #include "ninjaUnits.h"
 #include "ninjaMathUtility.h"
 
+#include "ninjago.h"
+
 #include "ogr_spatialref.h"
 #include "ogr_core.h"
 #include "gdal_version.h"

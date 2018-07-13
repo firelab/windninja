@@ -137,7 +137,7 @@ else(WIN32)
     add_library(ninja STATIC SHARED ${NINJA_SOURCES})
 endif(WIN32)
 
-target_link_libraries(ninja ${LINK_LIBS})
+target_link_libraries(ninja ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/go/ninjago.a)
 
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
 install(FILES WindNinjaInputs.h ninja.h windninja.h DESTINATION include COMPONENT includes)

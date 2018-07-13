@@ -18,6 +18,8 @@
 cmake_minimum_required(VERSION 2.6)
 project(WindNinja)
 
+include_directories(${CMAKE_BINARY_DIR}/src/go)
+
 # Needed for FindNetCDF and GET_DATE()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 

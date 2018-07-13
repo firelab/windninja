@@ -38,6 +38,7 @@
 #include <string>
 #include <exception>
 
+#include "ninjago.h"
 #include "SurfProperties.h"
 #include "Elevation.h"
 #include "ninjaUnits.h"

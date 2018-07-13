@@ -522,6 +522,8 @@ bool KmlVector::writeHtmlLegend(VSILFILE *fileOut)
 
 bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
 {
+#define NINJA_GO
+#ifndef NINJA_GO
 	//make bitmap
 	int legendWidth = 180;
 	int legendHeight = int(legendWidth / 0.75);
@@ -688,11 +690,30 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
 	legend.WriteToFile(legendFile.c_str());
 
 	//printf("\n\nfileOut in writeScreenOverlayLegend = %x\n", fileOut);
+#else /* NINJA_GO */
+  std::string unitString = "mph";
+	switch(speedUnits)
+	{
+		case velocityUnits::metersPerSecond:	// m/s
+      unitString = "m/s";
+			break;
+		case velocityUnits::milesPerHour:		// mph
+      unitString = "mph";
+			break;
+		case velocityUnits::kilometersPerHour:	// kph
+      unitString = "kph";
+			break;
+		case velocityUnits::knots:	// kts
+      unitString = "knots";
+      break;
+	}
 
+  int rc = ninja_draw_legend((char*)legendFile.c_str(), &splitValue[0], 5, NINJA_CS_DEFAULT, (char*)unitString.c_str());
+#endif
 	std::string shortName;
 	shortName = CPLGetFilename(legendFile.c_str());
 
-    VSIFPrintfL(fileOut, "<ScreenOverlay>");
+  VSIFPrintfL(fileOut, "<ScreenOverlay>");
 	VSIFPrintfL(fileOut, "\n<name>Legend</name>");
 	VSIFPrintfL(fileOut, "\n<visibility>1</visibility>");
 	VSIFPrintfL(fileOut, "\n<color>9bffffff</color>");
