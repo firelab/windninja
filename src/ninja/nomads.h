@@ -459,9 +459,9 @@ static const char *apszNomadsKeys[][11] =
     */
     {
       "hrrr_alaska",
-      "filter_hrrr_2d.pl",
+      "filter_hrrrak_2d.pl",
       "hrrr.t%02dz.wrfsfcf%02d.ak.grib2",
-      "hrrr.%s",
+      "hrrr.%s/alaska",
       NOMADS_GENERIC_DATE,
       "0:23:1",
       "0:18:1",
@@ -476,8 +476,8 @@ static const char *apszNomadsKeys[][11] =
     {
       "hrrr_conus",
       "filter_hrrr_2d.pl",
-      "hrrr.t%02dz.wrfsfcf%02d.conus.grib2",
-      "hrrr.%s",
+      "hrrr.t%02dz.wrfsfcf%02d.grib2",
+      "hrrr.%s/conus",
       NOMADS_GENERIC_DATE,
       "0:23:1",
       "0:18:1",
