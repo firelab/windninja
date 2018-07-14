@@ -325,7 +325,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
 
     int i;
     char **papszFileList = NULL;
-    const char *pszPath;
+    char *pszPath;
     VSIStatBufL sStat;
     VSIStatL( wxModelFileName.c_str(), &sStat );
     if( VSI_ISDIR( sStat.st_mode ) )
@@ -334,7 +334,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
-    const char *pszFullPath = NULL;
+    char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );
     if( !nCount )
@@ -351,7 +351,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     for( i = 0; i < nCount; i++ )
     {
         SKIP_DOT_AND_DOTDOT( papszFileList[i] );
-        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        pszFullPath = CPLStrdup( CPLSPrintf( "%s/%s", pszPath, papszFileList[i] ) );
         if( !CheckFileName( papszFileList[i],
                             ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
         {
@@ -362,6 +362,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
+            CPLFree( (void*)pszFullPath );
             throw badForecastFile( "Could not open forecast file with GDAL" );
         }
         hBand = GDALGetRasterBand( hDS, 1 );
@@ -370,6 +371,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
+            CPLFree( (void*)pszFullPath );
             GDALClose( hDS );
             throw badForecastFile( "Could not fetch ref time or forecast time " \
                                    "from GRIB file" );
@@ -388,6 +390,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     }
     CSLDestroy( papszFileList );
     CPLFree( (void*)pszPath );
+    CPLFree( (void*)pszFullPath );
     aoCachedTimes = aoTimeList;
     return aoCachedTimes;
 }
@@ -406,7 +409,7 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
         pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
-    const char *pszFullPath = NULL;
+    char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );
     if( !nCount )
@@ -427,10 +430,11 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
         {
             continue;
         }
-        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        pszFullPath = CPLStrdup( CPLSPrintf( "%s/%s", pszPath, papszFileList[i] ) );
         hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
+            CPLFree( pszFullPath );
             continue;
         }
         hBand = GDALGetRasterBand( hDS, 1 );
@@ -438,6 +442,7 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
         if( !pszValidTime )
         {
             GDALClose( hDS );
+            CPLFree( pszFullPath );
             continue;
         }
         nValidTime = (time_t)atoi( pszValidTime );
@@ -447,13 +452,14 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
             CSLDestroy( papszFileList );
             CPLPopErrorHandler();
             GDALClose( hDS );
-            return CPLStrdup( pszFullPath );
+            return pszFullPath;
         }
         GDALClose( hDS );
     }
     CPLFree( (void*)pszPath );
     CSLDestroy( papszFileList );
     CPLPopErrorHandler();
+    CPLFree( pszFullPath );
     return NULL;
 }
 
@@ -503,6 +509,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     }
 
     hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    if( hSrcDS == NULL ) {
+        throw badForecastFile( "Could not find forecast associated with " \
+                               "requested time step" );
+    }
     CPLFree( (void*) pszForecastFile );
     pszForecastFile = NULL;
     nBandCount = GDALGetRasterCount( hSrcDS );

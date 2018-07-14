@@ -617,7 +617,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", pszConfigOpt );
     }
 
-    nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
+    nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "4" ) );
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
     {
         nMaxFcstRewind = 2;
@@ -629,7 +629,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) ||
         EQUALN( pszModelKey, "rtma", 4 ) )
     {
-        nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
+        nMaxFcstRewind = nMaxFcstRewind > 5 ? nMaxFcstRewind : 5;
     }
 
 #ifdef NOMADS_ENABLE_ASYNC
