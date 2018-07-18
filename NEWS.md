@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+WindNinja 3.3.2
+---------------
+
+- Fix bug related to HRRR/RAP upgrade on NOMADS (\#298)
+
 WindNinja 3.3.1
 ---------------
 
