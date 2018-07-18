@@ -256,7 +256,8 @@ int windNinjaCLI(int argc, char* argv[])
                         ("response_file", po::value<std::string>(),
                                  "response file (can be specified with '@name', also)")
                         ("citation", "how to cite WindNinja in a publication")
-                                ;
+                        ("runtime_options","print all available configuration options")
+                            ;
         /*
         ** Set the available wx model names using hard codes for UCAR and api
         ** for NOMADS.
@@ -539,6 +540,46 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "SCM version: " << NINJA_SCM_VERSION << "\n";
             cout << "Release date: " << NINJA_RELEASE_DATE << "\n";
             return 0;
+        }
+
+        if(vm.count("runtime_options")){
+            cout<<"==============================================="<<endl;
+            cout<<" List of available config options in WindNinja"<<endl;
+            cout<<"==============================================="<<endl;
+
+            std::string cfg_path=FindDataPath("config_options.csv"); //Find the csv file with all the config options
+            std::ifstream cfg_file(cfg_path.c_str()); //Read that file in
+            std::string cfg_line;
+
+            //This file is delimited with ":" (colons)
+            //The definititions of each cfg option has a space before the actual text
+            //ex: CFG_OPT: def
+
+            if(cfg_file.is_open())
+            {
+                while(getline(cfg_file,cfg_line)) //loop over all the lines while its valid
+                {
+
+                    if(cfg_line.find("-:")<10000) //find all the sections which are specially marked with a "-:"
+                    {
+                        int l_find=cfg_line.find("-:"); //Find that special "-:"
+                        //once found, print out the section title along with some spacing and organizational lines
+                        cout<<"\n-----------------------------------------------"<<endl;
+                        cout<<" "<<cfg_line.substr(0,l_find)<<endl;
+                        cout<<"-----------------------------------------------"<<endl;
+                    }
+                    else //If its not a title, just print it
+                    {
+                        cout<<cfg_line<<endl;
+                    }
+                }
+                cfg_file.close(); //Close the file
+            }
+            else{
+                cout<<"Unable to open config_options.csv..."<<endl;
+            }
+
+            return 0; //exit the cli
         }
 
         if (vm.count("response_file")) {

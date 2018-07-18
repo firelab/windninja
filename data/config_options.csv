@@ -1,0 +1,61 @@
+General Options-:
+NINJA_FILL_DEM_NO_DATA: Attempt to fill no data values without checking with the user. This will overwrite your input DEM.
+CPL_DEBUG: CPL_DEBUG: Turn on additional output useful for debugging. For example, CPL_DEBUG = NINJAFOAM will turn on messages related to the conservation of mass and momentum solver.
+WINDNINJA_DATA: Specify the Windninja data path
+CPL_DEBUG Options-:
+STATION_FETCH: Debugging information related to fetching weather station data, weather station interpolation and point Initialization.
+NINJA: Solver Related Debugging information and messages.
+WINDNINJA : General Debugging information and messages.
+STABILITY: Messages related to the atmospheric stability model.
+DUST: Dust Messages
+NINJAFOAM: Messages related to the conservation of mass and momentum solver.
+NOMADS: Messages related to weather model fetching.
+WX_MODEL_INITIALIZATION: Messages related to weather model initialization.
+MOBILE_APP: Messages related to the mobile app.
+GTIFF: Messages related to writing TIFF files to disk.
+Momentum Solver Options-:
+NINJAFOAM_ITERATIONS: Specify the number of solver iterations.
+NINJAFOAM_MESH_COUNT: Specify the mesh count.
+WRITE_FOAM_FILES: Exit normally at various stages of a simulation. Useful for debugging. 0 = generate the STL surface and write the OpenFOAM case files; 1 = write the mesh dict files, but do not generate the mesh; 2 = generate the mesh.
+NINJAFOAM_USE_GDALGRID: If set to YES Sample a point cloud and create a 2-band GDALDataset of U and V values, use function SampleCloudGrid(), else: use function SampleCloud()
+NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS: if set to YES, will not use NinjaElevationToStl to create the output surface.
+Point Initialization-:
+NINJA_POINT_MATCH_OUT_RELAX: Adjust the outer loop relaxation for a point initialization run.
+NINJA_POINT_MAX_MATCH_ITERS: Maximum outer 'loops' to try to solve a point initialization.
+NINJA_POINT_INV_DIST_WEIGHT: Inverse distance weighting used for point initialization, 1.0 -> inverse distance, 2.0 -> inversed distance squared, etc.
+WRITE_CSV: Writes an interpolated weather station csv.
+FETCH_METADATA: Fetch Weather Station Metadata from the Mesonet API.
+CHANGE_DATE_TIME: Change the date and time for a single step simulation in the GUI.
+CUSTOM_API_KEY: Specify a custom API token for fetching weather stations. Built in token restrictions do not apply to custom keys.
+Google Maps API-:
+ENABLE_QWEBINSPECTOR: Enable the QWebInspector for debugging the Google Maps widget.
+DEM Downloader:
+SURF_FETCH_EXTRACT_BLOCK_SIZE: Extract the Block Size
+Landfire client-:
+LCP_DOWNLOAD_WAIT: Time in seconds between attempts to contact the landfire server.
+LCP_DOWNLOAD_TRIES: The number of times to try downloading the lcp from landfire before quitting.  Note that LCP_DOWNLOAD_WAIT * LCP_DOWNLOAD_TRIES = total timeout for lcp.
+LCP_KEEP_ARCHIVE: Don't delete the downloaded lcp zip archive if it's set to ON
+NCAR THREDDS Client-:
+NINJA_WX_KEEP_FORECAST: Don't delete the downloaded forecast file if it's set to `ON` (only for thredds/ncar models).
+NINJA_DISABLE_THREDDS_UPDATE: Don't try to download thredds update file on start up if it's set to `ON`.  Note that this is completely disabled if `DISABLE_THREDDS_UPDATE` is set to `ON` in cmake.
+NOMADS Client-:
+NOMADS_THREAD_COUNT: Number of threads to use to download files from nomads(default: 4).  You can get good speed up from a ratio of 1:1 threads per file to 1:4.
+NOMADS_MAX_FCST_REWIND: Number of forecast runs to go back in time to try and get a full forecast(default: 2).
+NOMADS_VSI_BLOCK_SIZE: If NOMADS_USE_VSI_READ is set to ON in cmake, this is  the chunk size that is read in each download(default: 512).
+NOMADS_HTTP_TIMEOUT: The timeout in seconds for a request
+GDAL-:
+See This Page For More Information: https://trac.osgeo.org/gdal/wiki/ConfigOptions
+GDAL_CACHEMAX: Set the Maximum GDAL cache for writing a GTIFF.
+GDAL_PAM_ENABLED: Enable PAM 
+GDAL_HTTP_TIMEOUT: Set HTTP Timeout for GDAL
+GDAL_DISABLE_READDIR_ON_OPEN: Disable unneeded reading of entire directories default TRUE, improves speed.
+Miscellaneous-:
+GTIFF_DIRECT_IO:
+CPL_VSIL_CURL_ALLOWED_EXTENSIONS:
+LIBKML_USE_DOC.KML: If TRUE create a root doc.kml
+CPL_TMPDIR: Force the Temporary working directory to a specific location (see line ~380 in NinjaArmy.cpp)
+CPLTMPDIR: Force the Temporary working directory to a specific location  
+TEMP: Force the Temporary working directory to a specific location 
+VSI_CACHE: Disable VSI caching, this breaks nomads downloader if it's on (default is false)
+MPI_BUFFER_SIZE: Change the MPI Buffer size
+NINJA_DISABLE_CALL_HOME: Disable call home.

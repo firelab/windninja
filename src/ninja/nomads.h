@@ -455,16 +455,32 @@ static const char *apszNomadsKeys[][11] =
       "RTMA PUERTO RICO" },
 #endif /* NOMADS_EXPER_FORECASTS */
     /*
-    ** HRRR
+    ** HRRR Alaska
+    */
+    {
+      "hrrr_alaska",
+      "filter_hrrrak_2d.pl",
+      "hrrr.t%02dz.wrfsfcf%02d.ak.grib2",
+      "hrrr.%s/alaska",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      NOMADS_GENERIC_VAR_LIST,
+      "2_m_above_ground,10_m_above_ground," \
+      "entire_atmosphere",
+      "3 km",
+      "HRRR ALASKA" },
+    /*
+    ** HRRR Conus
     */
     {
       "hrrr_conus",
       "filter_hrrr_2d.pl",
       "hrrr.t%02dz.wrfsfcf%02d.grib2",
-      "hrrr.%s",
+      "hrrr.%s/conus",
       NOMADS_GENERIC_DATE,
       "0:23:1",
-      "0:15:1",
+      "0:18:1",
       NOMADS_GENERIC_VAR_LIST,
       "2_m_above_ground,10_m_above_ground," \
       "entire_atmosphere",

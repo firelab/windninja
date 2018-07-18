@@ -106,15 +106,13 @@ int main(int argc, char *argv[])
         mbox.exec();
         return 1;
     }
-    splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
-    splash->display();
     char **papszMsg = NinjaCheckVersion();
     if (papszMsg != NULL) {
       const char *pszVers =
           CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
-      if (strcmp(pszVers, NINJA_VERSION_STRING) != 0) {
+      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
         mbox.setText("A new version of WindNinja is available: " +
-                     QString(NINJA_VERSION_STRING));
+                     QString(pszVers));
         mbox.exec();
       }
       char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
@@ -131,8 +129,9 @@ int main(int argc, char *argv[])
     }
     CSLDestroy(papszMsg);
 
+    splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
+    splash->display();
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
-
     result = app.exec();
 
 #ifdef _OPENMP
