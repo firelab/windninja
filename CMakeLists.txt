@@ -392,6 +392,7 @@ foreach(f ${wx_station_ts_files})
 endforeach(f ${wx_station_ts_files})
 
 set(share_files date_time_zonespec.csv
+                config_options.csv
                 tz_world.zip
                 landfire.zip
                 map.htm
