@@ -528,7 +528,7 @@ int NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFi
         VSIFWriteL(d, nSize, 1, fout);
     }
     else if(std::string(pszFilename) == "sampleDict"){
-        std::string t = NinjaRemoveSpaces(std::string(CPLGetBasename(input.dem.fileName.c_str())));
+        std::string t = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
         t += "_out.stl";
         ReplaceKeys(s, "$stlFileName$", t);
         const char * d = s.c_str();
@@ -1077,7 +1077,8 @@ int NinjaFoam::writeMoveDynamicMesh()
 
     std::string s(data);
 
-    std::string t = NinjaRemoveSpaces(std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    std::string t = NinjaSanitizeString((std::string(CPLGetBasename(input.dem.fileName.c_str()))));
+
     ReplaceKeys(s, "$stlName$", t);
     const char * d = s.c_str();
     int nSize = strlen(d);
@@ -1180,12 +1181,15 @@ int NinjaFoam::SurfaceTransformPoints()
 {
     int nRet = -1;
 
-    std::string stl = NinjaRemoveSpaces(std::string(CPLSPrintf("%s/constant/triSurface/%s.stl",
-                    pszFoamPath,
-                    CPLGetBasename(input.dem.fileName.c_str()))));
-    std::string stlOut = NinjaRemoveSpaces(std::string(CPLSPrintf("%s/constant/triSurface/%s_out.stl",
-                    pszFoamPath,
-                    CPLGetBasename(input.dem.fileName.c_str()))));
+    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+
+    std::string stl = std::string(CPLSPrintf("%s/constant/triSurface/%s.stl",
+                      pszFoamPath,
+                      demName.c_str()));
+
+    std::string stlOut = std::string(CPLSPrintf("%s/constant/triSurface/%s_out.stl",
+                         pszFoamPath,
+                         demName.c_str()));
 
     const char *const papszArgv[] = { "surfaceTransformPoints",
                                       "-case",
@@ -1209,7 +1213,7 @@ int NinjaFoam::SurfaceCheck()
 {
     int nRet = -1;
 
-    std::string stlName = NinjaRemoveSpaces(std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    std::string stlName = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
 
     const char *const papszArgv[] = { "surfaceCheck",
                                       "-case",
@@ -1410,7 +1414,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
 
-    std::string stlName = NinjaRemoveSpaces(std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    std::string stlName = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
 
     CopyFile(pszInput, pszOutput, "$terrain$", 
             CPLFormFilename(CPLSPrintf("%s/constant/triSurface", pszFoamPath), stlName.c_str(), ""));
@@ -2781,18 +2785,18 @@ int NinjaFoam::GenerateNewCase()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
+    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+
     const char *pszStlFileName = CPLStrdup(CPLFormFilename(
                 (CPLSPrintf("%s/constant/triSurface/", pszFoamPath)),
-                CPLGetBasename(input.dem.fileName.c_str()), ".stl"));
-
-    std::string stlName = NinjaRemoveSpaces(std::string(pszStlFileName));
+                CPLSPrintf("%s.stl", demName.c_str()), ""));
 
     int nBand = 1;
     const char * inFile = input.dem.fileName.c_str();
     CPLErr eErr;
 
     eErr = NinjaElevationToStl(inFile,
-                        (const char*)stlName.c_str(),
+                        pszStlFileName,
                         nBand,
                         input.dem.get_cellSize(),
                         NinjaStlBinary,
@@ -2827,13 +2831,12 @@ int NinjaFoam::GenerateNewCase()
             return NINJA_E_OTHER;
         }
     }else{
-        pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath,
-                    CPLGetBasename(input.dem.fileName.c_str()))));
-        stlName = NinjaRemoveSpaces(std::string(pszStlFileName));
+        std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+        pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
         nBand = 1;
 
         eErr = NinjaElevationToStl(inFile,
-                            (const char*)stlName.c_str(),
+                            pszStlFileName,
                             nBand,
                             input.dem.get_cellSize(),
                             NinjaStlBinary,
@@ -3058,7 +3061,7 @@ int NinjaFoam::CheckForValidDem()
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetFilename( papszFileList[i] );
         std::string s(pszFilename);
-        std::string ss = NinjaRemoveSpaces(CPLGetBasename( input.dem.fileName.c_str() ));
+        std::string ss = NinjaSanitizeString(CPLGetBasename( input.dem.fileName.c_str() ));
         if( s.find(".stl") != s.npos & s.find("_out.stl") == s.npos){
             s = (CPLGetBasename(pszFilename));
             if( s.compare(ss) != s.npos ){

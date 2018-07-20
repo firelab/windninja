@@ -81,6 +81,7 @@ int NinjaUnlinkTree( const char *pszPath );
 void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );
 std::string NinjaRemoveSpaces( std::string s);
+std::string NinjaSanitizeString( std::string s );
 
 #endif /* NINJA_CONV_H */
 
