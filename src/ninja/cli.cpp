@@ -1780,8 +1780,15 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setMeshResolution( i_, vm["mesh_resolution"].as<double>(), lengthUnits::getUnit(vm["units_mesh_resolution"].as<std::string>()));
             }
             else{
+#ifdef NINJAFOAM
+                if(!vm.count("existing_case_directory")){
+                    cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
+                    return -1;
+                }
+#else
                 cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
                 return -1;
+#endif
             }
             windsim.setNumVertLayers( i_, 20);
 
