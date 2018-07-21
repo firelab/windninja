@@ -2263,7 +2263,6 @@ void NinjaFoam::SetOutputFilenames()
 
     /* set the output path member variable */
     input.outputPath = pathName;
-    set_outputPath(pathName);
 
     timeAppend = timestream.str();
 
