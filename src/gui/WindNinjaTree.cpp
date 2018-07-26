@@ -140,7 +140,7 @@ void WindNinjaTree::createInputItems()
 
 #ifdef STABILITY
   stabilityItem = new QTreeWidgetItem;
-  stabilityItem->setText(0, tr("Stability Input (Beta)"));
+  stabilityItem->setText(0, tr("Stability Input"));
   stabilityItem->setIcon(0, blue);
 #endif
 
