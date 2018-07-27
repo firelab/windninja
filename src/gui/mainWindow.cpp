@@ -110,6 +110,9 @@ mainWindow::mainWindow(QWidget *parent)
     army = NULL;
 }
 
+/*
+** Check for version updates, or messages from the server.
+*/
 void mainWindow::checkMessages(void) {
     QMessageBox mbox;
     char **papszMsg = NinjaCheckVersion();
