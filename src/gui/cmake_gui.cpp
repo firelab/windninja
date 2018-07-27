@@ -106,31 +106,9 @@ int main(int argc, char *argv[])
         mbox.exec();
         return 1;
     }
-    char **papszMsg = NinjaCheckVersion();
-    if (papszMsg != NULL) {
-      const char *pszVers =
-          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
-      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
-        mbox.setText("A new version of WindNinja is available: " +
-                     QString(pszVers));
-        mbox.exec();
-      }
-      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
-      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
-        mbox.setText(QString(papszUserMsg[i]));
-        mbox.exec();
-      }
-      CSLDestroy(papszUserMsg);
-      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
-        mbox.setText("There is a fatal flaw in Windninja, it must close.");
-        mbox.exec();
-        abort();
-      }
-    }
-    CSLDestroy(papszMsg);
-
     splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
     splash->display();
+    QObject::connect(splash, SIGNAL(done()), mw, SLOT(checkMessages()));
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
     result = app.exec();
 

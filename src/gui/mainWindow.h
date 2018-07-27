@@ -145,6 +145,7 @@ class mainWindow : public QMainWindow
   void mainDiurnalChanged(bool dC);
 
  public slots:
+  void checkMessages();
 #ifdef NINJAFOAM  
   void openExistingCase();
   void updateFileInputForCase(const char* file);

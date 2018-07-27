@@ -110,6 +110,32 @@ mainWindow::mainWindow(QWidget *parent)
     army = NULL;
 }
 
+void mainWindow::checkMessages(void) {
+    QMessageBox mbox;
+    char **papszMsg = NinjaCheckVersion();
+    if (papszMsg != NULL) {
+      const char *pszVers =
+          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
+      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
+        mbox.setText("A new version of WindNinja is available: " +
+                     QString(pszVers));
+        mbox.exec();
+      }
+      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
+      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
+        mbox.setText(QString(papszUserMsg[i]));
+        mbox.exec();
+      }
+      CSLDestroy(papszUserMsg);
+      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
+        mbox.setText("There is a fatal flaw in Windninja, it must close.");
+        mbox.exec();
+        abort();
+      }
+    }
+    CSLDestroy(papszMsg);
+}
+
 bool mainWindow::okToContinue()
 {
   if(okToContinueCheck)
