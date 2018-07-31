@@ -1215,6 +1215,7 @@ void mainWindow::aboutWindNinja()
   aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br />");
   aboutText.append("Joint Fire Sciences Program<br />");
   aboutText.append("Washington State University</p>");
+  aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS\">Special Thanks</a></p>");
 
   QMessageBox::about(this, tr("About WindNinja"),
              aboutText);
