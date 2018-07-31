@@ -4,6 +4,23 @@ title: Help
 permalink: /help/
 ---
 
+
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/help.html">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/help.html";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+<h2><a href="https://weather.firelab.org/windninja/help.html">
+  WindNinja has moved, click here to view the latest version of this page</a></h2>
+
 <br>
 
 

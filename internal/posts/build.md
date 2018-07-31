@@ -9,9 +9,20 @@ categories: main
 permalink: /build/
 ---
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/building/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/building/";
+    }
+    </script>
 
-### WindNinja can be built from source on both Windows and Linux
+    <body onload="redirect()">
+</html>
 
+##[WindNinja has moved, click here to view the latest website](https://weather.firelab.org/windninja/building/)
 
 <div class="col col-6">
   <div class="block red">
@@ -49,4 +60,3 @@ permalink: /build/
       </div>
   </div>
 </div>-->
-

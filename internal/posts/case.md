@@ -9,6 +9,23 @@ categories: main
 permalink: /IntheField/
 ---
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/field/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/field/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the latest case studies](https://weather.firelab.org/windninja/field/)
+
+
+
 ***
 <br>
 <div class="col col-12">

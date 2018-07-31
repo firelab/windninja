@@ -8,6 +8,22 @@ date:   2016-06-23 13:45:49 +0200
 categories: main
 permalink: /advanced/
 ---
+
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the developer information](https://weather.firelab.org/windninja/)
+
 <div class="col col-9">
 <div class="col col-6">
   <div class="block blue">

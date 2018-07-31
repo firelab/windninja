@@ -9,6 +9,20 @@ categories: main
 permalink: /contributors/
 ---
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/contributors/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/contributors/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the latest website](https://weather.firelab.org/windninja/contributors/)
 
 
 

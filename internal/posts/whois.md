@@ -9,6 +9,23 @@ categories: main
 permalink: /whois/
 ---
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/howdoes/who_uses.html">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/howdoes/who_uses.html";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+<h2><a href="https://weather.firelab.org/windninja/howdoes/who_uses.html">WindNinja has moved, click here to view the latest version of this page</a></h2>
+
+
+
 The following is a list of agencies, organizations, and programs that may use WindNinja. These groups have expressed interest in WindNinja, and at some point used WindNinja, but their level of use of WindNinja has not been verified.
 
 ***

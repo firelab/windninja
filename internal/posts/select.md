@@ -13,6 +13,20 @@ permalink: /publications/
 
 <br>
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/publications/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/publications/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the latest publications](https://weather.firelab.org/windninja/publications/)
 
 <div class="col col-12">
   <div class="block purple">

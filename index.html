@@ -9,6 +9,13 @@ layout: default
     <head>
         <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/">
     </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/";
+    }
+    </script>
+
+    <body onload="redirect()">
 </html>
 
 
@@ -34,7 +41,8 @@ layout: default
       </div>
       <div class="col col-9">
         <div class="block-body height-1">
-        <h2>WindNinja is a diagnostic wind model developed for use in wildland fire modeling.</h2>
+        <h2><a href="https://weather.firelab.org/windninja/">WindNinja Has Moved! If you are not automatically redirected, click here to visit the new website.</a></h2>
+<!--         <h2>WindNinja is a diagnostic wind model developed for use in wildland fire modeling.</h2> -->
         <p class="white-text">Wind is one of the most influential environmental factors affecting wildland fire behavior. The complex terrain of fire-prone landscapes causes local changes in wind speed and direction that are not predicted well by standard weather models or expert judgment. WindNinja was developed to help fire managers predict these winds.</p>
       </div>
     </div>

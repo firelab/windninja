@@ -9,6 +9,21 @@ categories: main
 permalink: /mobile/
 ---
 
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/mobile/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/mobile/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view WindNinja Mobile](https://weather.firelab.org/windninja/mobile)
+
 Get high-resolution wind predictions on your Android or iOS mobile device. WindNinja Mobile downscales National Center for Environmental Prediction (NCEP) weather forecasts, accounting for mechanical and thermal effects of the underlying terrain, to generate high-resolution surface wind predictions for your area of interest.
 
 <br>
@@ -182,4 +197,3 @@ WindNinja Mobile is a simplified interface to desktop WindNinja. It is intended 
 <br>
 
 </div>
-

@@ -8,8 +8,20 @@ date:   2016-07-26 13:45:49 +0200
 categories: main
 permalink: /tutorial/
 ---
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/tutorials/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/tutorials/";
+    }
+    </script>
 
-## What is WindNinja?
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the latest tutorials](https://weather.firelab.org/windninja/tutorials/)
 
 WindNinja is a computer program that computes spatially varying wind fields for wildland fire applications. It is specifically designed to simulate the mechanical and thermal effects of the local terrain on the wind. Unlike traditional weather models, WindNinja does not predict wind for future times (it does not step forward in time), rather it simulates the spatial variation of wind for one instant in time.
 

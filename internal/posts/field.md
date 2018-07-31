@@ -8,6 +8,24 @@ date:   2016-07-05 12:45:49 +0200
 categories: main
 permalink: /field/
 ---
+
+<html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=https://weather.firelab.org/windninja/field/">
+    </head>
+    <script>
+    function redirect(){
+        window.location = "https://weather.firelab.org/windninja/field/";
+    }
+    </script>
+
+    <body onload="redirect()">
+</html>
+
+##[WindNinja Has Moved, Click here to view the latest field observations](https://weather.firelab.org/windninja/field/)
+
+
+
 There are many high-resolution wind models available, but there are few observational datasets available to evaluate these models. The pages below briefly summarize two field studies conducted by our group to collect high-resolution wind data that can be used to evaluate such models. See the link on the sidebar to the full paper for more details.
 
 ***
