@@ -17,3 +17,8 @@ github_username:  tfinney9
 
 # Build settings
 markdown: kramdown
+
+plugins_dir:
+  - jekyll-redirect-from
+whitelist:
+   - jekyll-redirect-from
