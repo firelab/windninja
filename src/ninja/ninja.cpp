@@ -1690,7 +1690,6 @@ void ninja::discretize()
     //(i.e., near observation locations). The spatially-varying alphaH field is used during discretization
     //when the Rx, Ry terms are calculated for each element.
 
-    int nodeNumber = 0;
     double distanceOfInfluence = mesh.meshResolution*5.;
     CPLDebug("POINT", "distanceOfInfluence = %f\n", distanceOfInfluence);
     double stationElevation, nodeToStationDistance;
@@ -1726,7 +1725,6 @@ void ninja::discretize()
             //get x, y, z at station locations
             xStation = input.stations[i].get_xord(); //mesh coords
             yStation = input.stations[i].get_yord();
-
 
             //account for vegetation height
             zStation = input.stations[i].get_height() +
@@ -1773,18 +1771,6 @@ void ninja::discretize()
             }
         }//end loop over stations
     }
-    //AsciiGrid<double> testGrid;
-    //testGrid.set_headerData(input.dem);
-    //std::string filename;
-    //for(int k_ = 0; k_<alphaHfield.scalarData_.layers_; k_++){
-    //    for(int i_ = 0; i_<alphaHfield.scalarData_.rows_; i_++){
-    //        for(int j_ = 0; j_<alphaHfield.scalarData_.cols_; j_++ ){
-    //            testGrid(i_,j_) = alphaHfield(i_,j_,k_);
-    //        }
-    //    }
-    //    filename = "alphaHfield" + boost::lexical_cast<std::string>(k_);
-    //    testGrid.write_Grid(filename.c_str(), 2);
-    //}
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
