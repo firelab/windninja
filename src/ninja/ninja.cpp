@@ -1954,20 +1954,6 @@ void ninja::discretize()
 	} //End loop over elements
     } //End parallel region
 
-    //debugging SK[] for point solver work
-//    int layer;
-//    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
-//    {
-//        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
-//        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
-//    }
-//    nodeNumber=layer*mesh.nrows*mesh.ncols + 10*mesh.ncols + 10;
-//    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
-//    {
-//        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
-//        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
-//    }
-
 #ifdef STABILITY
     stb.alphaField.deallocate();
 #endif
