@@ -1699,26 +1699,46 @@ void ninja::discretize()
     {
         double xStation, yStation, zStation, xNode, yNode, zNode;
         alphaHfield.allocate(&mesh); //alphaH at each node
-        double alphaHstation = 0.1; //alphaH at station locations
+        double alphaHstation = 0.01; //alphaH at station locations
 
-        for(i=0; i<input.stations.size(); i++)
+        for(int i=0; i<mesh.nrows; i++)
         {
+            for(int j=0; j<mesh.ncols; j++)
+            {
+                for(int k=0; k<mesh.nlayers; k++)
+                {
+                    alphaHfield(i,j,k) = 1.0; //alphaH default value is 1.0
+                }
+            }
+        }
+
+        cout<<"input.stations.size() = "<<input.stations.size()<<endl;
+
+        for(int i=0; i<input.stations.size(); i++)
+        {
+            cout<<"station #"<<i<<":"<<endl;
+            cout<<"SETTING ALPHAH..............."<<endl;
+            //if the station is not in the DEM bounds, just continue
+            if(!input.dem.check_inBounds(input.stations[i].get_projXord(), input.stations[i].get_projYord())){
+                continue;
+            }
+
             //get x, y, z at station locations
             xStation = input.stations[i].get_xord(); //mesh coords
             yStation = input.stations[i].get_yord();
 
+
             //account for vegetation height
-            //still need to account for cases where station is not in the DEM bounds
             zStation = input.stations[i].get_height() +
                        input.surface.Rough_h.interpolateGridLocalCoordinates(xStation, yStation, AsciiGrid<double>::order1) +
                        input.dem.interpolateGridLocalCoordinates(xStation, yStation, AsciiGrid<double>::order1);
 
             //set weights at each node for current station
-            for(i=0; i<mesh.nrows; i++)
+            for(int i=0; i<mesh.nrows; i++)
             {
-                for(j=0; j<mesh.ncols; j++)
+                for(int j=0; j<mesh.ncols; j++)
                 {
-                    for(k=0; k<mesh.nlayers; k++)
+                    for(int k=0; k<mesh.nlayers; k++)
                     {
                         xNode=mesh.XORD(i,j,k); //Coodinates of the nodal point
                         yNode=mesh.YORD(i,j,k);
@@ -1729,28 +1749,25 @@ void ninja::discretize()
                                                 (yNode-yStation)*(yNode-yStation) +
                                                 (zNode-zStation)*(zNode-zStation)), 0.5);
 
-                        //CPLDebug("POINT", "nodeToStationDistance = %f\n", nodeToStationDistance);
-
                         //apply smoothing function (e.g., cressman or similar) over distanceOfInfluence
                         //and store for use later when Rx, Ry, Rz are calculated.
                         //we prevent overlap of weighting from stations by limiting
                         //influence radius of individual stations to 5 cells
                         //e^(r/2R) Cressman-type smoothing is from Haupt et al. 2010
+                        //R is arbitrarily set to 200 as in Haupt.
                         if(nodeToStationDistance < distanceOfInfluence)
                         {
                             //cressman-type smoothing function
-                            //alphaHfield(i,j,k) = alphaHstation*exp(-1.0*nodeToStationDistance/(2*distanceOfInfluence));
+                            alphaHfield(i,j,k) = alphaHstation/exp(-1.0*nodeToStationDistance/(2.0*200.0));
 
                             //linear smoothing function
-                            alphaHfield(i,j,k) = -(alphaHstation-1)/distanceOfInfluence*
-                                                        nodeToStationDistance+alphaHstation;
+                            //alphaHfield(i,j,k) = (1-alphaHstation)/distanceOfInfluence*
+                            //                           nodeToStationDistance+alphaHstation;
+
+                            //alphaHfield(i,j,k) = alphaHstation;
                         }
-                        else
-                        {
-                            alphaHfield(i,j,k) = 1.0;
-                        }
-                        if(alphaHfield(i,j,k) != 1.0)
-                            cout<<"alphaHfield = "<<alphaHfield(i,j,k)<<endl;
+//                        if(alphaHfield(i,j,k) != 1.0)
+//                            cout<<"alphaHfield = "<<alphaHfield(i,j,k)<<endl;
                     }
                 }
             }
@@ -1938,18 +1955,18 @@ void ninja::discretize()
     } //End parallel region
 
     //debugging SK[] for point solver work
-    int layer;
-    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
-    {
-        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
-        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
-    }
-    nodeNumber=layer*mesh.nrows*mesh.ncols + 10*mesh.ncols + 10;
-    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
-    {
-        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
-        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
-    }
+//    int layer;
+//    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
+//    {
+//        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
+//        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
+//    }
+//    nodeNumber=layer*mesh.nrows*mesh.ncols + 10*mesh.ncols + 10;
+//    for(i=row_ptr[nodeNumber]; i<row_ptr[nodeNumber+1]; i++)
+//    {
+//        layer = (int)(nodeNumber/(mesh.nrows*mesh.ncols));
+//        cout<<"SK("<<layer<<")"<<nodeNumber<<","<<col_ind[i]<<" = "<<SK[i]<<endl;
+//    }
 
 #ifdef STABILITY
     stb.alphaField.deallocate();
@@ -2239,9 +2256,10 @@ void ninja::computeUVWField()
 #ifdef STABILITY
     alphaVfield.deallocate();
 #endif
-    alphaHfield.deallocate();
 
     reportStationDiffs();
+
+    alphaHfield.deallocate();
 }
 
 /**Prepares for writing output files.
@@ -2444,12 +2462,17 @@ void ninja::reportStationDiffs()
     double true_u, true_v, true_w;
     double output_u, output_v, output_w;
     double ustar;
+    std::vector<double> uList;
+    std::vector<double> vList;
+    std::vector<double> wList;
+    std::vector<double> u0List;
+    std::vector<double> v0List;
+    std::vector<double> w0List;
+    std::vector<double> alphaHList;
+    std::vector<double> distanceList;
 
     double uLower, vLower, uUpper, vUpper;
     int NPK;
-    std::vector<double> uList;
-    std::vector<double> vList;
-    std::vector<double> distanceList;
 
     windProfile profile;
     profile.profile_switch = windProfile::monin_obukov_similarity;
@@ -2459,6 +2482,11 @@ void ninja::reportStationDiffs()
 
     for(unsigned int i=0; i<input.stations.size(); i++)
     {
+        //if the station is not in the DEM bounds, just continue
+        if(!input.dem.check_inBounds(input.stations[i].get_projXord(), input.stations[i].get_projYord())){
+            continue;
+        }
+
         //Get (x,y,z) value of station
         x = input.stations[i].get_xord();
         y = input.stations[i].get_yord();
@@ -2484,29 +2512,33 @@ void ninja::reportStationDiffs()
             NPK = mesh.get_global_node(k, cell_i, cell_j, cell_k); //NPK is the global node number
             uList.push_back(u(NPK));
             vList.push_back(v(NPK));
-            cout<<"v(NPK) = "<<v(NPK)<<endl;
+            wList.push_back(w(NPK));
+            u0List.push_back(u0(NPK));
+            v0List.push_back(v0(NPK));
+            w0List.push_back(w0(NPK));
+            alphaHList.push_back(alphaHfield(NPK));
 
             //calcluate distances from each node to station x,y 
             distanceList.push_back(sqrt((mesh.XORD(NPK)-x)*(mesh.XORD(NPK)-x) +
                                         (mesh.YORD(NPK)-y)*(mesh.YORD(NPK)-y))); 
         }
-        cout<<"vList[0] = "<<vList[0]<<endl;
-        cout<<"vList[1] = "<<vList[1]<<endl;
-        cout<<"vList[2] = "<<vList[2]<<endl;
-        cout<<"vList[3] = "<<vList[3]<<endl;
-        cout<<"vList[4] = "<<vList[4]<<endl;
-        cout<<"vList[5] = "<<vList[5]<<endl;
-        cout<<"vList[6] = "<<vList[6]<<endl;
-        cout<<"vList[7] = "<<vList[7]<<endl;
+        //cout<<"vList[0] = "<<vList[0]<<endl;
+        //cout<<"vList[1] = "<<vList[1]<<endl;
+        //cout<<"vList[2] = "<<vList[2]<<endl;
+        //cout<<"vList[3] = "<<vList[3]<<endl;
+        //cout<<"vList[4] = "<<vList[4]<<endl;
+        //cout<<"vList[5] = "<<vList[5]<<endl;
+        //cout<<"vList[6] = "<<vList[6]<<endl;
+        //cout<<"vList[7] = "<<vList[7]<<endl;
 
-        cout<<"distanceList[0] = "<<distanceList[0]<<endl;
-        cout<<"distanceList[1] = "<<distanceList[1]<<endl;
-        cout<<"distanceList[2] = "<<distanceList[2]<<endl;
-        cout<<"distanceList[3] = "<<distanceList[3]<<endl;
-        cout<<"distanceList[4] = "<<distanceList[4]<<endl;
-        cout<<"distanceList[5] = "<<distanceList[5]<<endl;
-        cout<<"distanceList[6] = "<<distanceList[6]<<endl;
-        cout<<"distanceList[7] = "<<distanceList[7]<<endl;
+        //cout<<"distanceList[0] = "<<distanceList[0]<<endl;
+        //cout<<"distanceList[1] = "<<distanceList[1]<<endl;
+        //cout<<"distanceList[2] = "<<distanceList[2]<<endl;
+        //cout<<"distanceList[3] = "<<distanceList[3]<<endl;
+        //cout<<"distanceList[4] = "<<distanceList[4]<<endl;
+        //cout<<"distanceList[5] = "<<distanceList[5]<<endl;
+        //cout<<"distanceList[6] = "<<distanceList[6]<<endl;
+        //cout<<"distanceList[7] = "<<distanceList[7]<<endl;
 
         //horizontally interpolate on the top face and the bottom face
         uLower = (distanceList[0]*uList[0]+distanceList[1]*uList[1]+
@@ -2576,6 +2608,22 @@ void ninja::reportStationDiffs()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "%s\tU_diff = %lf\tV_diff = %lf\tW_diff = %lf",
                 input.stations[i].get_stationName().c_str(), true_u - output_u, true_v - output_v,
                 true_w - output_w);
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "%s\tU_diff_node4 = %lf\tV_diff_node4 = %lf\tW_diff_node4 = %lf",
+                input.stations[i].get_stationName().c_str(), u0List[4] - uList[4], v0List[4] - vList[4],
+                w0List[4] - wList[4]);
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "%s\talphaH_node1 = %lf\talphaH_node2= %lf\talphaH_node4 = %lf",
+                input.stations[i].get_stationName().c_str(), alphaHList[1], alphaHList[2], alphaHList[4]);
+
+        uList.clear();
+        vList.clear();
+        wList.clear();
+        u0List.clear();
+        v0List.clear();
+        w0List.clear();
+        alphaHList.clear();
+        distanceList.clear();
     }
 }
 
