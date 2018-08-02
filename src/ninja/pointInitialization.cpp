@@ -575,12 +575,13 @@ vector<string> pointInitialization::openCSVList(string csvPath)
 {
     vector<string> csvList;
     FILE *wxStationList = VSIFOpen( csvPath.c_str(), "r" ); //If we detect that this is a pointer csv
+    std::string wxStationDir = std::string(CPLGetPath(csvPath.c_str()));
     while(1){ //Open it up and check it
         const char* f = CPLReadLine(wxStationList);
         if (f == NULL) //Means its not what we want
             break;
         if(strstr(f,".csv")){ //It is what we want
-            csvList.push_back(f);
+            csvList.push_back(wxStationDir+"/"+f);
         }       
     }
     VSIFClose(wxStationList);
@@ -2893,13 +2894,8 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     std::string baseName(CPLGetBasename(demFile.c_str()));
     pathName = CPLGetPath(demFile.c_str());
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);    
-//    cout<<baseName<<endl;
-//    cout<<baseName<<endl;
-//    cout<<rootFile<<endl;
 
     cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
-//    cout<<cName<<endl;
-//    exit(1);
     ofstream outFile;
     outFile.open(cName.c_str());
     if(current_data==true)
@@ -2912,7 +2908,8 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     }
 //    outFile<<"Station_File_List,"<<endl;
     for(int i=0;i<stationFiles.size();i++){
-        outFile<<stationFiles[i]<<endl;
+//        outFile<<stationFiles[i]<<endl;
+        outFile<<CPLGetFilename(stationFiles[i].c_str())<<endl;
     }
 }
 /**
