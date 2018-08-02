@@ -2087,6 +2087,7 @@ void ninja::computeUVWField()
         DIAG[i]=0.;
     }
 
+    double _alphaH, _alphaV;
 #pragma omp parallel default(shared) private(i,j,k)
     {
         element elem(&mesh);
@@ -2195,14 +2196,7 @@ void ninja::computeUVWField()
 
 #pragma omp barrier
 
-        double alphaV = 1.0;
-
-#ifdef STABILITY
-        alphaV = 1.0; //should be 1 unless stability parameters are set
-#endif
-
 #pragma omp for
-
         for(i=0;i<mesh.NUMNP;i++)
         {
             u(i)=u(i)/DIAG[i]; //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
@@ -2210,16 +2204,22 @@ void ninja::computeUVWField()
             w(i)=w(i)/DIAG[i];
 
             //Finally, calculate u,v,w
+            _alphaV = 1.0; //should be 1 unless stability parameters are set
+            _alphaH = 1.0; //should be 1 unless set differently during point initialization
 
 #ifdef STABILITY
-            alphaV = alphaVfield(i); //set alphaV for stability
+            _alphaV = alphaVfield(i); //set alphaV for stability
 #endif
+            //if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+            //{
+            //    _alphaH = alphaHfield(i); //set alphaH from station weighting
+            //}
 
-            u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i); //Remember, dPHI/dx is stored in u
-            v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
-            w(i)=w0(i)+1.0/(2.0*alphaV*alphaV)*w(i);
+            u(i)=u0(i)+1.0/(2.0*_alphaH*_alphaH)*u(i); //Remember, dPHI/dx is stored in u
+            v(i)=v0(i)+1.0/(2.0*_alphaH*_alphaH)*v(i);
+            w(i)=w0(i)+1.0/(2.0*_alphaV*_alphaV)*w(i);
         }
-    }		//end parallel section
+    } //end parallel section
 
 #ifdef STABILITY
     alphaVfield.deallocate();
