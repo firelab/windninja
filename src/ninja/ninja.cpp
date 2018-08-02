@@ -1772,7 +1772,8 @@ void ninja::discretize()
         }//end loop over stations
     }
 
-#pragma omp parallel default(shared) private(i,j,k,l)
+    double _alphaH, _alphaV;
+#pragma omp parallel default(shared) private(i,j,k,l,_alphaH,_alphaV)
     {
         element elem(&mesh);
         int pos;
@@ -1834,18 +1835,18 @@ void ninja::discretize()
                 //re-set alphas before loop over each element
                 //alphas should both be set to 1 unless we are setting spatially-variable alphas,
                 //e.g., for stability (setting alphaV) or pointInitialization (setting alphaH)
-                double alphaV = 1.;
-                alphaH = 1.;
+                _alphaV = 1.;
+                _alphaH = 1.;
 
                 if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
                 {
                     //should be 0 since we are adding the alphaHfield and nodes
                     //outside the distanceOfInfluence are set to 1 in alphaHfield
-                    alphaH = 0.;
+                    _alphaH = 0.;
                 }
 
 #ifdef STABILITY
-                alphaV = 0.;
+                _alphaV = 0.;
 #endif
 
                 for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
@@ -1857,16 +1858,16 @@ void ninja::discretize()
 
                     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
                     {
-                        alphaH=alphaH+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaHfield(elem.NPK);
+                        _alphaH=_alphaH+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaHfield(elem.NPK);
                     }
 #ifdef STABILITY
-                    alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+                    _alphaV=_alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
 #endif
                 } //End loop over nodes in the element
 
-                elem.RX = 1.0/(2.0*alphaH*alphaH);
-                elem.RY = 1.0/(2.0*alphaH*alphaH);
-                elem.RZ = 1.0/(2.0*alphaV*alphaV);
+                elem.RX = 1.0/(2.0*_alphaH*_alphaH);
+                elem.RY = 1.0/(2.0*_alphaH*_alphaH);
+                elem.RZ = 1.0/(2.0*_alphaV*_alphaV);
                 elem.DV=elem.DETJ; //DV for volume integration; could be eliminated and just use DETJ everywhere
 
                 if(elem.NUMQPTV==27)
