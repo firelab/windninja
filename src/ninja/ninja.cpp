@@ -1778,11 +1778,6 @@ void ninja::discretize()
         element elem(&mesh);
         int pos;
 
-#ifdef STABILITY
-        int ii, jj, kk;
-        double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
-#endif
-
 #pragma omp for
         for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
         {
