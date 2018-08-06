@@ -2208,7 +2208,7 @@ void ninja::computeUVWField()
             _alphaH = 1.0; //should be 1 unless set differently during point initialization
 
 #ifdef STABILITY
-            _alphaV = alphaVfield(i); //set alphaV for stability
+            //_alphaV = alphaVfield(i); //set alphaV for stability
 #endif
             //if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
             //{
