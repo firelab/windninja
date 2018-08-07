@@ -240,6 +240,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   googOutFlag = rhs.googOutFlag;
   googSpeedScaling = rhs.googSpeedScaling;
   googLineWidth = rhs.googLineWidth;
+  googColor = rhs.googColor;
+  googVectorScale = rhs.googVectorScale;
   wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
   wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
   wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
