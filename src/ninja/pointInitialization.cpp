@@ -802,9 +802,12 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else if( EQUAL( pszKey, "projcs" ) )
         {
-            oStation.lat=poFeature->GetFieldAsDouble(3);
-            oStation.lon=poFeature->GetFieldAsDouble(4);
-            oStation.coordType=pszKey;
+            CPLDebug("STATION_FETCH","PROJCS FOUND!");
+            const char *pszDatum = poFeature->GetFieldAsString( 2 );
+            oStation.datumType=pszDatum; //Set the datum type
+            oStation.yord=poFeature->GetFieldAsDouble(3); //set the projected coordinates
+            oStation.xord=poFeature->GetFieldAsDouble(4);
+            oStation.coordType=pszKey; //set the coord type
         }
         else
         {
@@ -1193,13 +1196,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         wxStation subDat;
         subDat.set_stationName(stationDataList[i][0].stationName); //Set the name for each station
 
-        std::string CoordSys=stationDataList[i][0].datumType; //set the datum type
-
-        if (CoordSys=="projcs")
+        std::string CoordSys=stationDataList[i][0].coordType; //set the datum type
+        if (EQUAL( CoordSys.c_str(), "projcs" ))
         {
             //This has not been tested, I have no idea if this works or not
-            cout<<"using PROJCS"<<endl;
-            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
+            CPLDebug("STATION_FETCH","USING PROJCS!");
+            subDat.set_location_projected(stationDataList[i][0].xord,stationDataList[i][0].yord,demFile);
+//            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
         }
         else //WGS84!
         {

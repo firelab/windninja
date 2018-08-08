@@ -537,16 +537,19 @@ bool wxStation::check_station(wxStation station)
         cout<<"failed datum Check"<<endl;
         return false;
     }
+
     if(station.lat < -90.0 || station.lat > 90.0)
     {
-        cout<<"failed lat Check"<<endl;
+        cout<<"failed lat Check: "<<station.lat<<endl;
         return false;
     }
     if(station.lon < -180.0 || station.lon > 360.0)
     {
-        cout<<"failed lon Check"<<endl;
+        cout<<"failed lon Check: "<<station.lon<<endl;
         return false;
     }
+
+
 
     for (int i=0;i<station.heightList.size();i++)
     {        
