@@ -40,7 +40,7 @@ outputHeightWidget::outputHeightWidget(QWidget *parent) : QWidget(parent)
   outputHeightComboBox->addItem(tr("Custom"));
   
   outputHeightDoubleSpinBox = new QDoubleSpinBox;
-  outputHeightDoubleSpinBox->setRange(0, 100);
+  outputHeightDoubleSpinBox->setRange(0, 10000); //Increased from 100
   outputHeightDoubleSpinBox->setValue(20.00);
   outputHeightDoubleSpinBox->setAccelerated(true);
   outputHeightDoubleSpinBox->setDisabled(true);

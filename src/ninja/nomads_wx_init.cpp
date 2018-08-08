@@ -210,8 +210,18 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     {
         throw badForecastFile( "Model not found" );
     }
+
+    //Check to make sure the DEM is good.
+    //This check is very similar to wxModelInitialization::fetchForecast
+    //Line ~388-394
     GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
-    
+    double demBounds[4];
+    if(!GDALGetBounds((GDALDataset*)hDS,demBounds))//Cast GDALDatasetH as a GdalDataset*
+    {
+        throw badForecastFile("Could not download weather forecast, invalid "
+                              "projection for the DEM");
+    }
+
     double adfNESW[4], adfWENS[4];
     ComputeWxModelBuffer( (GDALDataset*)hDS, adfNESW );
     /* Different order for nomads */

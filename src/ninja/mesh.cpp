@@ -813,6 +813,8 @@ void Mesh::compute_cellsize(Elevation& dem)
 ** Check and make sure the domain height isn't below the maximum roughness plus
 ** the output wind height.
 **
+** 8/8/18 : Added identical check and math for input wind height.
+**
 ** Reference the domain height against the mean sea level datum (add the max
 ** DEM value).
 */
@@ -824,6 +826,10 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
     if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))
     {
         domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
+    }
+    if(domainHeight<3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue()))
+    {
+        domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + input.dem.get_maxValue();
 }

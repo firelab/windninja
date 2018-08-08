@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+WindNinja 3.4.0
+---------------
+
+- Add Mesowest Mesonet API to fetch weather stations for point initialization runs (\#94)
+
+- Add multiple time step point Initialization runs (\#94)
+
+- Convert Tutorials from open office to LaTeX (\#308)
+
+- Add configuration options to CLI (\#297)
+
+- Add "phone home server" (\#295)
+
+- Add various color schemes to google earth outputs (\#296,\#235)
+
 WindNinja 3.3.2
 ---------------
 
@@ -411,5 +426,3 @@ WindNinja 2.0.0
   (Google Earth, fire behavior, and shape file) can now be specified
   independently. Also, an option to use the wind simulation mesh resolution has
   been added and more control over Google Earth output files is now possible.
-
-

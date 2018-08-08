@@ -735,9 +735,11 @@ void mainWindow::openExistingCase()
 
   tree->surface->downloadDEMButton->setEnabled(false);
   tree->surface->meshResComboBox->setEnabled(false);
-  
-  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
-      emit(inputFileChanged(QFileInfo(dir).fileName()));
+
+//  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
+//  {
+//      emit(inputFileChanged(QFileInfo(dir).fileName()));
+//  }
 
   existingCaseDir = QFileInfo(dir).canonicalFilePath();
 
@@ -753,7 +755,6 @@ void mainWindow::openExistingCase()
     const char *pszFilename;
     const char *pszBasename;
     papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", existingCaseDir.toStdString().c_str()) );
-
     //get the basename of the STL
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetFilename( papszFileList[i] );
@@ -762,23 +763,39 @@ void mainWindow::openExistingCase()
             pszBasename = CPLStrdup(CPLGetBasename( pszFilename ));
         }
     }
-
     //look for DEM
     const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
-    const char* pszInputFilename;
+    const char* pszInputFilename=""; //Initialize the inputfile as blank
     papszFileList = VSIReadDir( pszDemPath );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
         std::string s(pszFilename);
-        if( s.compare(pszBasename) == 0 ){
+        if( s.compare(pszBasename) == 0 ){ //Try to find the DEM name in the directory
             pszInputFilename = CPLStrdup( papszFileList[i] );
             break;
         }
     }
+    const char* pszFname="";
+    //if we can't file the DEM (pszInputFilename stays ""), throw an error and reset everything
+    if(strcmp(pszInputFilename,"")==0){
+        QMessageBox::critical(this,tr("Error."),
+                  "Invalid Existing Case.\n"
+                  "No DEM information could be found.",
+                     QMessageBox::Ok | QMessageBox::Default);
+        existingCaseDir = "";
+        tree->surface->foamCaseLineEdit->setText("");
+        tree->surface->downloadDEMButton->setEnabled(true);
+        tree->surface->meshResComboBox->setEnabled(true);
+        return;
+    }
+    else{//Else set pszName to the demfilename
+        pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+    }
 
-    const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
-    updateFileInputForCase(pszFname);
+////        const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+
+    updateFileInputForCase(pszFname); //Update the dem file name
 
     CSLDestroy( papszFileList );
     CPLFree( (void*)pszBasename );
@@ -864,7 +881,6 @@ void mainWindow::openInputFile()
 void mainWindow::updateFileInputForCase(const char* file)
 {
     QString fileName(file);
-
     fileWatcher.addPath(fileName);
 
     if(!fileName.isEmpty())
@@ -3509,6 +3525,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->removeItem(4);
+        tree->surface->meshResComboBox->setCurrentIndex(0);
+        //if the index isn't set when we change solvers,
+        //the index gets set to 4 which does not exist in
+        //the cfg solver, set to Coarse by default
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
