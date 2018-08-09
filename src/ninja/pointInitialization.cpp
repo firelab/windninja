@@ -804,9 +804,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         {
             CPLDebug("STATION_FETCH","PROJCS FOUND!");
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
+            oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
+            oStation.lon=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
-            oStation.yord=poFeature->GetFieldAsDouble(3); //set the projected coordinates
-            oStation.xord=poFeature->GetFieldAsDouble(4);
             oStation.coordType=pszKey; //set the coord type
         }
         else
@@ -1196,19 +1196,21 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         wxStation subDat;
         subDat.set_stationName(stationDataList[i][0].stationName); //Set the name for each station
 
-        std::string CoordSys=stationDataList[i][0].coordType; //set the datum type
+        std::string CoordSys=stationDataList[i][0].coordType; //get the coordinate system
+        std::string Datum = stationDataList[i][0].datumType; //get the datum type
+
         if (EQUAL( CoordSys.c_str(), "projcs" ))
         {
             //This has not been tested, I have no idea if this works or not
             CPLDebug("STATION_FETCH","USING PROJCS!");
-            subDat.set_location_projected(stationDataList[i][0].xord,stationDataList[i][0].yord,demFile);
+            subDat.set_location_projected(stationDataList[i][0].lon,stationDataList[i][0].lat,demFile);
 //            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
         }
-        else //WGS84!
+        else //GEOGCS!
         {
-            const char* stCoorDat=CoordSys.c_str();
+            CPLDebug("STATION_FETCH","USING GEOGCS!");
             subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
-                    demFile,stCoorDat);
+                    demFile,Datum.c_str());
         }
 
         for (int k=0;k<stationDataList[i].size();k++) //set the weather values for each time step and station
@@ -1224,7 +1226,6 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
 
         stationData.push_back(subDat);
     }
-    
     return stationData;
 }
 /**

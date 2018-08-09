@@ -2117,7 +2117,22 @@ int mainWindow::solve()
             }
             else
             {
+                //Note that This error is not normally reachable if all other error
+                //handling works correctly
                 CPLDebug("STATION_FETCH","WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in deteriming data types This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again",
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor);
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
             }
             
             

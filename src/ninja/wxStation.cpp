@@ -356,7 +356,6 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
 
     if( demFile.empty() || demFile == "" )
         return;
-
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
 
     if( poDS == NULL )
@@ -895,19 +894,25 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     const char *demChar = CPLGetBasename(demFileName.c_str());
 
     const char *demPath = CPLGetPath(demFileName.c_str());
+//    const char *demPath = CPLGetDirname(demFileName.c_str());
+
+    cout<<demPath<<endl;
     std::string path_str(demPath);
+    std::string filePart = std::string(demChar)+"-stations-"+timestream.str();
 
     if(basePath=="") //If the user doesn't specify out output path, put with dEM
     {
-        outFileNameStamp=path_str+"/"+demChar+"-stations-"+timestream.str()+".kml";
+        outFileNameStamp = std::string(CPLFormFilename(path_str.c_str(),filePart.c_str(),".kml"));
+//      outFileNameStamp=path_str+demChar+"-stations-"+timestream.str()+".kml";
     }
     else //put with other output files in output path
     {
-        outFileNameStamp=basePath+"/"+demChar+"-stations-"+timestream.str()+".kml";
+        outFileNameStamp = std::string(CPLFormFilename(basePath.c_str(),filePart.c_str(),".kml"));
+//        outFileNameStamp=basePath+demChar+"-stations-"+timestream.str()+".kml";
     }
     if( stations.size() == 0 )
         return;
-
+    CPLDebug("STATION_FETCH","KML PATH: %s",outFileNameStamp.c_str());
     FILE *fout = fopen( outFileNameStamp.c_str(), "w" );
 
     if( fout == NULL )
