@@ -896,7 +896,6 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     const char *demPath = CPLGetPath(demFileName.c_str());
 //    const char *demPath = CPLGetDirname(demFileName.c_str());
 
-    cout<<demPath<<endl;
     std::string path_str(demPath);
     std::string filePart = std::string(demChar)+"-stations-"+timestream.str();
 
