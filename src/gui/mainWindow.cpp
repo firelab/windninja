@@ -2117,7 +2117,22 @@ int mainWindow::solve()
             }
             else
             {
+                //Note that This error is not normally reachable if all other error
+                //handling works correctly
                 CPLDebug("STATION_FETCH","WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in deteriming data types This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again",
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor);
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
             }
             
             
@@ -2149,9 +2164,10 @@ int mainWindow::solve()
         if(metaOpt!="FALSE") //set a config option to get the metadata from the DEM
         { //There is also a button for this, that is hidden (see stationFetchWidget)
             writeToConsole("Fetching station metadata for DEM...");
-            QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
-            QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
-            std::string metaPath = demPath.toStdString()+demBase.toStdString()+"-metadata.csv";
+            std::string pathDem = std::string(CPLGetDirname(demFile.c_str()));
+            std::string baseDem = std::string(CPLGetBasename(demFile.c_str()));
+            std::string baseMeta = baseDem+"-metadata";
+            std::string metaPath = std::string(CPLFormFilename(pathDem.c_str(),baseMeta.c_str(),".csv"));
             CPLDebug("STATION_FETCH","Saving Metadata to: %s",metaPath.c_str());
             pointInitialization::fetchMetaData(metaPath,demFile,true);
         }
