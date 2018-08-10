@@ -1538,8 +1538,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                    vm["elevation_file"].as<std::string>(),
                                                    true);
                     }
-
-
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {

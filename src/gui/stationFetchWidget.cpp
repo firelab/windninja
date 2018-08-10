@@ -246,14 +246,15 @@ std::string stationFetchWidget::removeWhiteSpace(std::string str)
  */
 std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the downloader
 {
-    std::string demRaw = demFileName.toStdString();
-    size_t lastDot=demRaw.find_last_of("/");
-    if (lastDot==std::string::npos)
-    {
-        return demRaw;
-    }
-    std::string demBetter=demRaw.substr(0,lastDot)+"/";
-    return demBetter;    
+    std::string demPath = std::string(CPLGetDirname(demFileName.toStdString().c_str()));
+//    std::string demRaw = demFileName.toStdString();
+//    size_t lastDot=demRaw.find_last_of("/");
+//    if (lastDot==std::string::npos)
+//    {
+//        return demRaw;
+//    }
+//    std::string demBetter=demRaw.substr(0,lastDot)+"/";
+    return demPath;
 }
 /**
  * @brief stationFetchWidget::fetchStation
