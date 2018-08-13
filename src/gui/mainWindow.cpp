@@ -1823,7 +1823,7 @@ int mainWindow::solve()
         {
             googleScheme="default";
         }
-        if (googCheckScheme=="ROPGW")
+        if (googCheckScheme=="ROPGW (Red Orange Pink Green White)")
         {
             googleScheme="ROPGW";
         }
