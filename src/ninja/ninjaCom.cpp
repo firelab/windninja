@@ -42,6 +42,7 @@ ninjaComClass::ninjaComClass()
     errorCount = 0;
     nMaxErrors = 10;
     printSolverProgress = true;
+    progressWeight = 1.0;
 
 #ifdef NINJA_GUI
     progressMultiplier = 0;

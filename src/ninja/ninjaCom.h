@@ -59,6 +59,7 @@ class ninjaComClass //virtual base class
 public:
     ninjaComClass();
     virtual ~ninjaComClass();
+    double progressWeight;
 
 #ifdef NINJA_GUI
     int *runProgress;
