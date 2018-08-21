@@ -1344,7 +1344,7 @@ int windNinjaCLI(int argc, char* argv[])
                         return -1;
                     }
                 }
-                if(vm.count("mesh_count") && !vm.count("mesh_choice")){
+                if(vm.count("mesh_count")){
                     windsim.setMeshCount( i_,
                         vm["mesh_count"].as<int>() );
                 }
@@ -1779,7 +1779,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
             else{
 #ifdef NINJAFOAM
-                if(!vm.count("existing_case_directory")){
+                if(!vm.count("mesh_count") && !vm.count("existing_case_directory")){
                     cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
                     return -1;
                 }
