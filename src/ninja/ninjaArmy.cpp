@@ -522,6 +522,14 @@ bool ninjaArmy::startRuns(int numProcessors)
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
+
+            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+            {
+                //Set the ninjafoam solver progress bar to stop at 80% so that
+                //the diurnal solver can contribute too
+                ninjas[0]->set_progressWeight(0.80);
+            }
+
             //start the run
             if(!ninjas[0]->simulate_wind())
                printf("Return of false from simulate_wind()");
@@ -531,6 +539,9 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                //Set the diurnal ninja to have the same com object,
+                //so that it can update the progress of the original ninja
+                diurnal_ninja->input.Com = ninjas[0]->input.Com;
                 diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
                 diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
                 if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
@@ -596,7 +607,13 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
- 
+
+                if(ninjas[i]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+                {
+                    //Set the ninjafoam solver progress bar to stop at 80% so that
+                    //the diurnal solver can contribute too
+                    ninjas[i]->set_progressWeight(0.80);
+                }
                 //start the run
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
@@ -606,6 +623,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    //Set the diurnal ninja to have the same com object,
+                    //so that it can update the progress of the original ninja
+                    diurnal_ninja->input.Com = ninjas[i]->input.Com;
                     diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
                     diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
