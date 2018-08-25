@@ -1169,6 +1169,22 @@ void WidgetDownloadDEM::updateSTWBoundCoordInputs()
  */
 void WidgetDownloadDEM::saveDEM()
 {
+    QVariant mbr = wvGoogleMaps->page()->mainFrame()->evaluateJavaScript("mbr()");
+    if(mbr.isNull()) {
+        qDebug()<<"no mbr";
+        return;
+    }
+    qDebug()<<mbr;
+    QVariantList mbrl = mbr.toList();
+    for(int i=0; i < mbrl.size(); i++) {
+        qDebug() << mbrl[i];
+    }
+    northBound = mbrl[3].toDouble();
+    southBound = mbrl[2].toDouble();
+    eastBound = mbrl[1].toDouble();
+    westBound = mbrl[0].toDouble();
+    demSelected = true;
+
     QString fileName;
     double boundArray[] = {this->northBound, this->eastBound, this->southBound, this->westBound};
     double *boundBox;

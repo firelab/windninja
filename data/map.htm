@@ -80,10 +80,17 @@
     });
 
     map.on(L.Draw.Event.CREATED, function (e) {
-        console.log(e.layer._bounds);
         mbrLayer.addLayer(e.layer);
         map.addLayer(mbrLayer);
+        console.log(mbr());
     });
+    function mbr() {
+     if(mbrLayer.getLayers().length > 0){
+      var b = mbrLayer.getLayers()[0]._bounds;
+      return [b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat];
+     }
+     return null;
+    }
 </script>
 </body>
 </html>
