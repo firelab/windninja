@@ -1,48 +1,51 @@
+<!DOCTYPE html>
 <html>
+<meta charset="UTF-8">
 <head>
-<title>Google Maps Interface</title>
-    <link rel="stylesheet" href="libs/leaflet.css"/>
-    <link rel="stylesheet" href="../../src/leaflet.draw.css"/>
+    <title>Leaflet.draw drawing and editing tools</title>
 
-    <script src="../data/leaflet/leaflet-src.js"></script>
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
 
-    <script src="../data/leaflet/draw/src/Leaflet.draw.js"></script>
-    <script src="../data/leaflet/draw/src/Leaflet.Draw.Event.js"></script>
+    <script src="leaflet/leaflet-src.js"></script>
 
-    <script src="../data/leaflet/draw/rc/edit/handler/Edit.Poly.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/handler/Edit.SimpleShape.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/handler/Edit.Rectangle.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/handler/Edit.Marker.js"></script>
-  	<script src="../data/leaflet/draw/rc/edit/handler/Edit.CircleMarker.js"></script>
-  	<script src="../data/leaflet/draw/rc/edit/handler/Edit.Circle.js"></script>
+    <script src="leaflet/draw/src/Leaflet.draw.js"></script>
+    <script src="leaflet/draw/src/Leaflet.Draw.Event.js"></script>
 
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Feature.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Polyline.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Polygon.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.SimpleShape.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Rectangle.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Circle.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.Marker.js"></script>
-    <script src="../data/leaflet/draw/rc/draw/handler/Draw.CircleMarker.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
+    <script src="leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
 
-    <script src="../data/leaflet/draw/rc/ext/TouchEvents.js"></script>
-    <script src="../data/leaflet/draw/rc/ext/LatLngUtil.js"></script>
-    <script src="../data/leaflet/draw/rc/ext/GeometryUtil.js"></script>
-    <script src="../data/leaflet/draw/rc/ext/LineUtil.Intersect.js"></script>
-    <script src="../data/leaflet/draw/rc/ext/Polyline.Intersect.js"></script>
-    <script src="../data/leaflet/draw/rc/ext/Polygon.Intersect.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
+    <script src="leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
 
-    <script src="../data/leaflet/draw/rc/Control.Draw.js"></script>
-    <script src="../data/leaflet/draw/rc/Tooltip.js"></script>
-    <script src="../data/leaflet/draw/rc/Toolbar.js"></script>
+    <script src="leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="leaflet/draw/src/ext/Polyline.Intersect.js"></script>
+    <script src="leaflet/draw/src/ext/Polygon.Intersect.js"></script>
 
-    <script src="../data/leaflet/draw/rc/draw/DrawToolbar.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/EditToolbar.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/handler/EditToolbar.Edit.js"></script>
-    <script src="../data/leaflet/draw/rc/edit/handler/EditToolbar.Delete.js"></script>
+    <script src="leaflet/draw/src/Control.Draw.js"></script>
+    <script src="leaflet/draw/src/Tooltip.js"></script>
+    <script src="leaflet/draw/src/Toolbar.js"></script>
+
+    <script src="leaflet/draw/src/draw/DrawToolbar.js"></script>
+    <script src="leaflet/draw/src/edit/EditToolbar.js"></script>
+    <script src="leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
+    <script src="leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 </head>
 <body>
-<div id="map"></div>
+<div id="map" style="width: 800px; height: 600px; border: 1px solid #ccc"></div>
 <script>
     var mbl = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
      maxZoom: 18,
@@ -82,6 +85,5 @@
         map.addLayer(mbrLayer);
     });
 </script>
-
 </body>
 </html>
