@@ -335,7 +335,7 @@ std::string NinjaRemoveSpaces( std::string s )
 //mostly for preparing OpenFOAM-compatible filenames
 std::string NinjaSanitizeString( std::string s )
 {
-    NinjaRemoveSpaces(s);
+    s = NinjaRemoveSpaces(s);
 
     //filenames cannot begin with a number
     if(s.find_first_of("0123456789") == 0){
