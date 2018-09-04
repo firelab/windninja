@@ -64,10 +64,6 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 var mapKeys []string
 
 func mapkeyHandler(w http.ResponseWriter, r *http.Request) {
-	if false && r.Method != http.MethodPost {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
 	if mapKeys == nil || r.Header.Get("Cache-Control") == "no-cache" {
 		mapKeys = []string{}
 		fin, err := os.Open("./map_keys")
@@ -83,6 +79,10 @@ func mapkeyHandler(w http.ResponseWriter, r *http.Request) {
 				mapKeys = append(mapKeys, t)
 			}
 		}
+	}
+	if len(mapKeys) == 0 {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	n := rand.Intn(len(mapKeys))
 	err := json.NewEncoder(w).Encode(struct {
