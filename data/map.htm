@@ -58,7 +58,7 @@
     function getKey() {
      xhr = new XMLHttpRequest();
      var url = "https://windninja.org/mapkey/";
-     xhr.open("POST", url, true);
+     xhr.open("GET", url, true);
      xhr.onreadystatechange = function () {
      // readyState == HEADER_RECEIVED or DONE is fine (2 or 4)
      // We need to read the return on the api call, and report a valid
