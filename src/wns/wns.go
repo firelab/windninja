@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	message     = "hello, world"
+	message     = ""
 	threddsFile = "thredds.csv"
 )
 
