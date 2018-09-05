@@ -81,7 +81,7 @@ func mapkeyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(mapKeys) == 0 {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "no keys", http.StatusInternalServerError)
 		return
 	}
 	n := rand.Intn(len(mapKeys))
