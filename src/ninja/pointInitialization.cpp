@@ -439,10 +439,11 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     std::string xDem;
     std::string fullPath;
    
-    xDem = demFile.substr(0,demFile.find(".",0));   
-    std::size_t found = xDem.find_last_of("/");
-    subDem=xDem.substr(found+1);   
-      
+//    xDem = demFile.substr(0,demFile.find(".",0));
+//    std::size_t found = xDem.find_last_of("/");
+//    subDem=xDem.substr(found+1);
+    subDem = std::string(CPLGetBasename(demFile.c_str())); //Use cross platform stuff to avoid weird errors
+
     //NEW WAY
     stringstream timeStream,timeStream2;
     boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d-%H%M");
@@ -472,11 +473,10 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 
     }
     
-    fullPath = outPath+"WXSTATIONS-"+timeComponent+"-"+subDem+"/";
+    std::string newDirPart = "WXSTATIONS-"+timeComponent+"-"+subDem;
+    fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
     CPLDebug("STATION_FETCH","Generating Directory: %s",fullPath.c_str());    
-    
     VSIMkdir(fullPath.c_str(),0777);
-    
     return fullPath;
 }/**
  * @brief pointInitialization::removeBadDirectory
@@ -508,9 +508,11 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     std::string fullPath;
 
 
-    xDem = demFileName.substr(0,demFileName.find(".",0));
-    std::size_t found = xDem.find_last_of("/");
-    subDem=xDem.substr(found+1); //gets just a piece of the DEM
+//    xDem = demFileName.substr(0,demFileName.find(".",0));
+//    std::size_t found = xDem.find_last_of("/");
+//    subDem=xDem.substr(found+1); //gets just a piece of the DEM
+
+    subDem = std::string(CPLGetBasename(demFileName.c_str())); //Use cross platform stuff to avoid weird errors
 
     stringstream timeStream,timeStream2;
     boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
@@ -536,9 +538,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
         timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
 
     }
-    fullPath = basePathName+subDem+"_interpolate_"+timeComponent+"-";
-
-
+    std::string fileComponent = subDem+"_interpolate_"+timeComponent+"-";
 
     for (int j=0;j<stationVect.size();j++)
     {
@@ -546,7 +546,10 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
         wxStation curVec = stationVect[j];
         std::ostringstream xs;
         xs<<j;
-        std::string writePath=fullPath+curVec.stationName+".csv";
+        std::string invidiualFileComponent = fileComponent + curVec.stationName;
+        std::string writePath = std::string(CPLFormFilename(basePathName.c_str(),invidiualFileComponent.c_str(),".csv")); //This is safer than manually stiching the filenames
+        CPLDebug("STATION_FETCH","WRITING STEP CSV FILE: %s",writePath.c_str());
+//        std::string writePath=fullPath+curVec.stationName+".csv";
         outFile.open(writePath.c_str());
         outFile<<header<<endl;
 
@@ -581,7 +584,9 @@ vector<string> pointInitialization::openCSVList(string csvPath)
         if (f == NULL) //Means its not what we want
             break;
         if(strstr(f,".csv")){ //It is what we want
-            csvList.push_back(wxStationDir+"/"+f);
+//            csvList.push_back(wxStationDir+"/"+f); //This works
+            csvList.push_back(std::string(CPLFormFilename(wxStationDir.c_str(),f,NULL))); //But this is safer for cross platform
+
         }       
     }
     VSIFClose(wxStationList);
@@ -2899,7 +2904,10 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     pathName = CPLGetPath(demFile.c_str());
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);    
 
-    cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
+//    cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
+    std::string nameComponent = baseName+ "_" + "stations_" + statLen.str() + ".csv";
+    cName = std::string(CPLFormFilename(stationPath.c_str(),nameComponent.c_str(),".csv"));
+
     ofstream outFile;
     outFile.open(cName.c_str());
     if(current_data==true)
@@ -3134,11 +3142,15 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         //Generate the filename
         if(csvName!="blank")
         {
-            tName = csvName+idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
+            std::string nameComponent = idStream.str() + "-" + timeComponent + "-" + ss.str();
+            tName = std::string(CPLFormFilename(csvName.c_str(),nameComponent.c_str(),".csv"));
+//            tName = csvName+idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
         }
         else
         {
-            tName=idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
+//            tName=idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
+            std::string nameComponent = idStream.str() + "-" + timeComponent + "-" + ss.str();
+            tName = std::string(CPLFormFilename(NULL,nameComponent.c_str(),".csv"));
         }
 
         if(mnetid[ex]==1)

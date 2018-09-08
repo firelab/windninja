@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+WindNinja 3.4.1
+---------------
+- Fix issue where DEM names containing spaces fail with NinjaFOAM (\#230)
+
 WindNinja 3.4.0
 ---------------
 

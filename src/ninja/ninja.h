@@ -183,6 +183,8 @@ public:
     int get_ComNumRuns() const;
     void set_ComNumRuns( int nRuns );
 #endif //NINJA-GUI
+    void set_progressWeight(double progressWeight); //For foam+diurnal simulations
+    double get_progressWeight();
     /*************************************************************
       kyle's fx's for importing several file types through GDAL
       function lives in readInputFile.cpp for now.

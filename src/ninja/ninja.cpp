@@ -762,6 +762,14 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
                 time_percent_complete = 99.0;
             residual_percent_complete_old=residual_percent_complete;
             //fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
+#ifdef NINJAFOAM
+            //If its a foam+diurnal run, progressWeight==0.80, which means we need to modify the
+            //diurnal time_percent_complete
+            if(input.Com->progressWeight!=1.0)
+            {
+                time_percent_complete = (input.Com->progressWeight*100)+(1.0-input.Com->progressWeight)*time_percent_complete;
+            }
+#endif //NINJAFOAM
             input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5)); //Tell the GUI what the percentage to complete for the ninja is
         }
 
@@ -3387,7 +3395,19 @@ void ninja::set_ComNumRuns( int nRuns )
 {
     input.Com->nRuns = nRuns;
 }
+
 #endif //NINJA_GUI
+
+double ninja::get_progressWeight()
+{
+    return input.Com->progressWeight;
+}
+
+void ninja::set_progressWeight(double progressWeight)
+{
+    CPLDebug("NINJA","ADJUSTING PROGRESS BAR WT TO: %f",progressWeight);
+    input.Com->progressWeight = progressWeight;
+}
 
 void ninja::set_initializationMethod( WindNinjaInputs::eInitializationMethod method,
                                       bool matchPoints )

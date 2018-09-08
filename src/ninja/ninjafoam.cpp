@@ -1781,7 +1781,7 @@ int NinjaFoam::SimpleFoam()
                 if(pos != s.npos && s.npos > (pos + 12) && s.rfind("\n", pos) == (pos-1)){
                     t = s.substr(pos+7, (s.find("\n", pos+7) - (pos+7)));
                     //number of iterations is set equal to the write interval
-                    p = atof(t.c_str()) / simpleFoamEndTime * 100;
+                    p = atof(t.c_str()) / simpleFoamEndTime * 100 * input.Com->progressWeight;//progress Weight is so that if we do a diurnal sims can contribute to the total progress.
                     input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d", (int)p);
                 }
             }
