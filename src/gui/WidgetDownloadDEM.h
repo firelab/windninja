@@ -75,11 +75,8 @@ protected:
         void saveDEM();
         void updateProgress();
         void updateDEMSource(int index);
-        void displayDEMBounds(int state);
         bool demBoundsCheck();
-        void showAdditionalData(QTreeWidgetItem *item, int column);
         void zoomToMidpoint();
-        void estFileSize();
         void demSelectedUpdate(bool selected);
         void closeDEM();
 
