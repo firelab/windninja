@@ -79,9 +79,7 @@ void WindNinjaTree::createTree()
 #endif
   windItem->setExpanded(true);
   tree->addTopLevelItem(diurnalItem);
-#ifdef STABILITY
   tree->addTopLevelItem(stabilityItem);
-#endif
   tree->addTopLevelItem(outputItem);
   outputItem->setExpanded(true);
   tree->addTopLevelItem(solveItem);
@@ -138,11 +136,9 @@ void WindNinjaTree::createInputItems()
   diurnalItem->setText(0, tr("Diurnal Input"));
   diurnalItem->setIcon(0, blue);
 
-#ifdef STABILITY
   stabilityItem = new QTreeWidgetItem;
   stabilityItem->setText(0, tr("Stability Input"));
   stabilityItem->setIcon(0, blue);
-#endif
 
   windItem = new QTreeWidgetItem;
   windItem->setText(0, tr("Wind Input"));
@@ -166,9 +162,7 @@ void WindNinjaTree::createInputItems()
   
   inputItem->addChild(surfaceItem);
   inputItem->addChild(diurnalItem);
-#ifdef STABILITY
   inputItem->addChild(stabilityItem);
-#endif
   inputItem->addChild(windItem);
 }
 
@@ -210,9 +204,7 @@ void WindNinjaTree::createStack()
 #endif
   surface = new surfaceInput;
   diurnal = new diurnalInput;
-#ifdef STABILITY
   stability = new stabilityInput;
-#endif
 
   wind = new windInput;
   point = new pointInput;
@@ -233,9 +225,7 @@ void WindNinjaTree::createStack()
 #endif
   stack->addWidget(surface);
   stack->addWidget(diurnal);
-#ifdef STABILITY
   stack->addWidget(stability);
-#endif
 
   stack->addWidget(wind);
   stack->addWidget(point);
@@ -269,10 +259,8 @@ void WindNinjaTree::updateInterface()
     stack->setCurrentWidget(surface);
   else if(item == diurnalItem)
     stack->setCurrentWidget(diurnal);
-#ifdef STABILITY
   else if(item == stabilityItem)
       stack->setCurrentWidget(stability);
-#endif
 #ifdef NINJAFOAM
   else if(item == nativeSolverItem)
       stack->setCurrentWidget(nativesolver);

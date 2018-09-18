@@ -196,9 +196,7 @@ class mainWindow : public QMainWindow
   int checkInputItem();
   int checkSurfaceItem();
   int checkDiurnalItem();
-#ifdef STABILITY
   int checkStabilityItem();
-#endif
 #ifdef NINJAFOAM
   int checkNativeSolverItem();
   int checkNinjafoamItem();

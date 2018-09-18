@@ -38,8 +38,6 @@ ninja::ninja()
 {
     cancel = false;
     alphaH = 1.0;
-    //alphaV = 1.0;
-    alpha = 1.0;
     isNullRun = false;
     maxStartingOuterDiff = -1.0;
     matchTol = 0.22;    //0.22 m/s is about 1/2 mph
@@ -127,8 +125,6 @@ ninja::ninja(const ninja &rhs)
 
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
-    //alphaV = rhs.alphaV;
-    alpha = rhs.alpha;
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
     nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -200,8 +196,6 @@ ninja &ninja::operator=(const ninja &rhs)
 
         cancel = rhs.cancel;
         alphaH = rhs.alphaH;
-        //alphaV = rhs.alphaV;
-        alpha = rhs.alpha;
         isNullRun = rhs.isNullRun;
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
         nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -1651,7 +1645,6 @@ void ninja::discretize()
 
 	 checkCancel();
 
-    #ifdef STABILITY
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
     Stability stb(input);
@@ -1758,18 +1751,12 @@ void ninja::discretize()
 
     CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
 
-    #endif // STABILITY
-
-
 #pragma omp parallel default(shared) private(i,j,k,l)
 	 {
 		 element elem(&mesh);
-		 int pos;
-
-		 #ifdef STABILITY
+		 int pos;  
+                 double alphaV; //used for summing over nodal points below
 		 int ii, jj, kk;
-         double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
-		 #endif
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -1829,11 +1816,7 @@ void ninja::discretize()
 
 				 elem.HVJ=0.0;
 
-				 double alphaV = 1;
-
-				 #ifdef STABILITY
-				 alphaV = 0;
-				 #endif
+				 alphaV = 0; //used for summing over the nodes in the element, reset to 0 each time through loop 
 
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
@@ -1841,10 +1824,7 @@ void ninja::discretize()
 
 					 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
 
-					 #ifdef STABILITY
 					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-					 //cout<<"alphaV = "<<alphaV<<endl;
-                                         #endif
 				 }                             //End loop over nodes in the element
 				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
 
@@ -1934,9 +1914,7 @@ void ninja::discretize()
 		 }                                  //End loop over elements
 	 }		//End parallel region
 
-     #ifdef STABILITY
      stb.alphaField.deallocate();
-     #endif
 }
 
 /**Sets up boundary conditions for the simulation.
@@ -2183,10 +2161,6 @@ void ninja::computeUVWField()
 
      double alphaV = 1.0;
 
-     #ifdef STABILITY
-     alphaV = 1.0; //should be 1 unless stability parameters are set
-     #endif
-
      #pragma omp for
 
      for(i=0;i<mesh.NUMNP;i++)
@@ -2196,10 +2170,7 @@ void ninja::computeUVWField()
           w(i)=w(i)/DIAG[i];
 
           //Finally, calculate u,v,w
-
-          #ifdef STABILITY
           alphaV = alphaVfield(i); //set alphaV for stability
-		  #endif
 
 		  u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i);         //Remember, dPHI/dx is stored in u
 		  v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
@@ -2209,7 +2180,6 @@ void ninja::computeUVWField()
      }
      }		//end parallel section
 
-     #ifdef STABILITY
      alphaVfield.deallocate();
 
     // testing
@@ -2228,9 +2198,6 @@ void ninja::computeUVWField()
         testGrid.write_Grid(filename.c_str(), 2);
     }
     testGrid.deallocate();*/
-
-     #endif
-
 }
 
 /**Prepares for writing output files.
@@ -3487,7 +3454,6 @@ void ninja::setArmySize(int n)
     input.armySize = n;
 }
 
-#ifdef STABILITY
 void ninja::set_stabilityFlag(bool flag)
 {
     input.stabilityFlag = flag;
@@ -3501,7 +3467,6 @@ void ninja::set_alphaStability(double stability_)
         throw std::logic_error("Problem with stability in ninja::set_alphaStability().");
     }
 }
-#endif //STABILITY
 
 #ifdef NINJAFOAM
 void ninja::set_NumberOfIterations(int nIterations)
@@ -4614,10 +4579,8 @@ void ninja::set_outputFilenames(double& meshResolution,
             timestream << input.ninjaTime;
         }
     }
-#ifdef STABILITY
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
         timestream << input.ninjaTime;
-#endif
 
     std::string pathName;
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
@@ -4713,7 +4676,6 @@ void ninja::set_outputFilenames(double& meshResolution,
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
-    #ifdef STABILITY
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
         os       << "_alpha_" << input.alphaStability;
@@ -4730,7 +4692,6 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_non_neutral_stability";
         os_pdf   << "_non_neutral_stability";
     }
-    #endif
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();

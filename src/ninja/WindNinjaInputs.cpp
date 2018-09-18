@@ -123,10 +123,8 @@ WindNinjaInputs::WindNinjaInputs()
     downEntrainmentCoeff = 0.01;
     upDragCoeff = 0.2;
     upEntrainmentCoeff = 0.2;
-#ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
-#endif
 #ifdef FRICTION_VELOCITY
     frictionVelocityFlag = false; 
     frictionVelocityCalculationMethod = "!set";
@@ -314,10 +312,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   ustarFile = rhs.ustarFile;
 #endif
   
-#ifdef STABILITY
   stabilityFlag = rhs.stabilityFlag;
   alphaStability = rhs.alphaStability;
-#endif
   
   outputPath = rhs.outputPath;
 
@@ -498,10 +494,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       upDragCoeff = rhs.upDragCoeff;
       upEntrainmentCoeff = rhs.upEntrainmentCoeff;
       
-#ifdef STABILITY
       stabilityFlag = rhs.stabilityFlag;
       alphaStability = rhs.alphaStability;
-#endif
 #ifdef FRICTION_VELOCITY
       frictionVelocityFlag = rhs.frictionVelocityFlag; 
       frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;

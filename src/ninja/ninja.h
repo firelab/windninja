@@ -106,10 +106,7 @@
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
 #endif
 
-
-#ifdef STABILITY
 #include "stability.h"
-#endif
 
 #ifdef FRICTION_VELOCITY
 #include "frictionVelocity.h"
@@ -152,7 +149,6 @@ public:
     AsciiGrid<double>VelocityGrid;
     AsciiGrid<double>CloudGrid;
 
-    //AsciiGrid<double> alphaVGrid; //store spatially varying alphaV variable
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     #ifdef FRICTION_VELOCITY
@@ -209,10 +205,8 @@ public:
     /*-----------------------------------------------------------------------------
      *  Stability Specific Functions
      *-----------------------------------------------------------------------------*/
-    #ifdef STABILITY
     void set_stabilityFlag(bool flag);
     void set_alphaStability(double stability_);
-    #endif
 
     /*-----------------------------------------------------------------------------
      *  END Stability specific functions

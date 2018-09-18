@@ -178,9 +178,7 @@ class cellDiurnal
 	Air air;  //class holding air properties as function of temperature
 	Solar diurnalSolar;  //class used to compute solar intensity
 
-#ifdef STABILITY
     friend class Stability;
-#endif
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

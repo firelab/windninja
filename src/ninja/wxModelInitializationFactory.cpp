@@ -193,12 +193,10 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
         CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.getForecastReadable() == identifier = %i\n", wrfSurf.getForecastReadable() == identifier);
         return new wrfSurfInitialization(wrfSurf);
     }
-    #ifdef STABILITY
     else if(wrf3d.getForecastReadable() == identifier) {    //fix this later to read either wrf3d or wrfSurf
         CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.getForecastReadable() == identifier = %i\n", wrf3d.getForecastReadable() == identifier);
         return new wrf3dInitialization(wrf3d);
     }
-    #endif
     else if(ncepNamGrib2Surf.getForecastReadable() == identifier) {
         return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
     }

@@ -527,12 +527,10 @@ void mainWindow::createConnections()
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enablePointDate(bool)));
-#ifdef STABILITY
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enablePointDate(bool)));
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableStabilityCells(bool)));
-#endif
 #ifdef NINJAFOAM
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enableNinjafoamOptions(bool)));
@@ -544,10 +542,8 @@ void mainWindow::createConnections()
   //connect the diurnalGroupBox->toggled to checkers
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
-#ifdef STABILITY
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
-#endif
 #ifdef NINJAFOAM
   //connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
@@ -1698,9 +1694,7 @@ int mainWindow::solve()
     int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
     if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
                          tree->weather->weatherGroupBox->isChecked()
-#ifdef STABILITY
                          || tree->stability->stabilityGroupBox->isChecked()
-#endif
                          ))
     {
         QMessageBox::warning(this, tr("WindNinja"), tr("Could not auto-identify "
@@ -1721,9 +1715,7 @@ int mainWindow::solve()
     bool useDiurnal = tree->diurnal->diurnalGroupBox->isChecked();
 
     //stability
-#ifdef STABILITY
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
-#endif
 
     //initialization method
     WindNinjaInputs::eInitializationMethod initMethod;
@@ -2328,7 +2320,6 @@ int mainWindow::solve()
             army->setPosition( i );
         }
 
-#ifdef STABILITY
         //stability, if needed, check for diurnal also so we don't repeat setters
         if( useStability == true && useDiurnal == false )
         {
@@ -2354,7 +2345,6 @@ int mainWindow::solve()
             }
         }
         army->setStabilityFlag( i, useStability );
-#endif
         //set mesh stuff
         if( customMesh )
         {
@@ -2673,21 +2663,18 @@ int mainWindow::checkInputItem()
   
   checkWindItem();
   
-#ifdef STABILITY
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red || checkStabilityItem() == red)
     { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input, stability input, and diurnal input");
       status = red;
     }
-#else
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red )
     { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input and diurnal input");
       status = red;
     }
-#endif
   else if(checkSurfaceItem() == red)
     { 
       tree->inputItem->setIcon(0, tree->cross);
@@ -2700,14 +2687,12 @@ int mainWindow::checkInputItem()
       tree->inputItem->setToolTip(0, "Check diurnal input");
       status = red;
     }
-#ifdef STABILITY
   else if(checkStabilityItem() == red)
     {
       tree->inputItem->setIcon(0, tree->caution);
       tree->inputItem->setToolTip(0, "Check stability input");
       status = red;
     }
-#endif
   else if(checkWindItem() == red)
     {
       tree->inputItem->setIcon(0, tree->cross);
@@ -2763,7 +2748,6 @@ int mainWindow::checkDiurnalItem()
   return status;
 }
 
-#ifdef STABILITY
 int mainWindow::checkStabilityItem()
 {   
     eInputStatus status = green;
@@ -2780,7 +2764,6 @@ int mainWindow::checkStabilityItem()
     }
     return status;
 }
-#endif
 
 int mainWindow::checkWindItem()
 {
@@ -3350,7 +3333,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       }
   }
 #endif
-#ifdef STABILITY
   else if(item == tree->stabilityItem)
   {
       if(tree->stability->stabilityGroupBox->isChecked())
@@ -3358,7 +3340,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       else
           tree->stability->stabilityGroupBox->setChecked(true);
   }
-#endif
   else if( item == tree->spdDirItem ) {
       if( tree->wind->windGroupBox->isChecked() )
       tree->wind->windGroupBox->setChecked( false );
@@ -3493,9 +3474,7 @@ void mainWindow::enablePointDate(bool enable)
     if( tree->point->pointGroupBox->isChecked() )
     {
         if( tree->diurnal->diurnalGroupBox->isChecked()
-#ifdef STABILITY
             || tree->stability->stabilityGroupBox->isChecked()
-#endif
           )
         {
             //Allows for on the fly changes in diurnal parameters as users select/deselect stations of
@@ -3524,12 +3503,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( true );
         tree->stability->ninjafoamConflictLabel->setHidden( false );
-        #endif
          
         tree->wind->windTable->enableDiurnalCells( false ); 
         
@@ -3558,12 +3535,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( false );
         
-        #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( true );
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( false );
         tree->stability->ninjafoamConflictLabel->setHidden( true );
-        #endif
         
         tree->point->pointGroupBox->setCheckable( true );
         tree->point->pointGroupBox->setChecked( false );

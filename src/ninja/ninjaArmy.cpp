@@ -1633,7 +1633,6 @@ std::string ninjaArmy::getInitializationMethodString( const int nIndex,
 /*-----------------------------------------------------------------------------
  *  STABILITY section
  *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
 int ninjaArmy::setStabilityFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_stabilityFlag( flag ) );
@@ -1643,7 +1642,6 @@ int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_alphaStability( stability_ ) );
 }
-#endif //STABILITY
 /*-----------------------------------------------------------------------------
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/

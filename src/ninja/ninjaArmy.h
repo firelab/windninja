@@ -842,7 +842,6 @@ public:
     /*-----------------------------------------------------------------------------
      *  STABILITY section
      *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
     /**
     * \brief Enable/disable stability for a given ninja
     *
@@ -859,7 +858,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAlphaStability( const int nIndex, const double stability_, char ** papszOptions=NULL );
-#endif //STABILITY
 
     /*-----------------------------------------------------------------------------
      *  Output Parameter Methods
