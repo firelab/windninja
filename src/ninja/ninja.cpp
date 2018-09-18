@@ -1826,9 +1826,6 @@ void ninja::discretize()
 
 					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
 				 }                             //End loop over nodes in the element
-				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
-
-				 //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
 
 				 elem.RX = 1.0/(2.0*alphaH*alphaH);
 				 elem.RY = 1.0/(2.0*alphaH*alphaH);
