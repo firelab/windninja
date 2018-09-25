@@ -174,10 +174,8 @@ void initializeOptions()
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolutino (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
-                #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
-                #endif
                 #ifdef EMISSIONS
                 ("compute_emissions",po::value<bool>()->default_value(false), "compute dust emissions (true, false)")
                 ("fire_perimeter_file", po::value<std::string>(), "input burn perimeter path/filename (*.shp)")
@@ -387,10 +385,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_width", po::value<double>(), "width of geospatial pdf")
                 ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
-                #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
-                #endif
                 #ifdef FRICTION_VELOCITY
                 ("compute_friction_velocity",po::value<bool>()->default_value(false), "compute friction velocity (true, false)")
                 ("friction_velocity_calculation_method", po::value<std::string>()->default_value("logProfile"), "friction velocity calculation method (logProfile, shearStress)")
@@ -979,9 +975,7 @@ int windNinjaCLI(int argc, char* argv[])
         #ifdef EMISSIONS
         conflicting_options(vm, "momentum_flag", "compute_emissions");
         #endif
-        #ifdef STABILITY
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
-        #endif
         
 #endif //NINJAFOAM
         
@@ -1476,7 +1470,6 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
-                #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
                 {
@@ -1516,7 +1509,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                                osTimeZone);
                     }
                 }
-                #endif //STABILITY
             }
             else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
@@ -1582,7 +1574,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                  osTimeZone);
                     }
                 }
-#ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
                 {
@@ -1625,8 +1616,6 @@ int windNinjaCLI(int argc, char* argv[])
                         }
                     }
                 }
-#endif //STABILITY
-
             }else if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
             {
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
@@ -1638,7 +1627,6 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     windsim.setDiurnalWinds( i_, true );
                 }
-                #ifdef STABILITY
                 if(vm["non_neutral_stability"].as<bool>())
                 {
                     //windsim.ninjas[i_].set_stabilityFlag(true);
@@ -1662,7 +1650,6 @@ int windNinjaCLI(int argc, char* argv[])
                         windsim.setStabilityFlag( i_, true );
                     }
                 }
-                #endif
             }
             else if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
             {

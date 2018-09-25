@@ -90,7 +90,7 @@ class wrf3dInitialization : public wrfSurfInitialization
     wn_3dArray cellCenterElevationArray;
     
     
-    #endif //STABILITY
+#endif 
 
 };
 

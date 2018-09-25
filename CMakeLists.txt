@@ -238,11 +238,6 @@ if(EMISSIONS)
     set(FRICTION_VELOCITY ON CACHE BOOL "Enable friction velocity calculations" FORCE)
 endif(EMISSIONS)
 
-option(STABILITY "Enable atmospheric stability model" ON)
-if(STABILITY)
-    add_definitions(-DSTABILITY)
-endif(STABILITY)
-
 option(MOBILE_APP "Enable optoins for mobile app" OFF)
 if(MOBILE_APP)
     add_definitions(-DMOBILE_APP)
