@@ -938,6 +938,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           GDALResampleAlg eResampleAlg,
                           double dfMaxError,
                           const GDALWarpOptions *psOptionsIn) {
+    int i = 0;
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
     if(psOptionsIn == NULL) {
@@ -972,12 +973,12 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
         if (psWO->panDstBands == NULL) {
             return NULL;
         }
-        for( int i = 0; i < GDALGetRasterCount( hSrcDS ); i++ ){
+        for( i = 0; i < GDALGetRasterCount( hSrcDS ); i++ ){
             psWO->panSrcBands[i] = i+1;
             psWO->panDstBands[i] = i+1;
         }
     }
-    for( int i = 0; i < psWO->nBandCount; i++ )
+    for( i = 0; i < psWO->nBandCount; i++ )
     {
         GDALRasterBandH band = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
         int hasNoDataValue;
