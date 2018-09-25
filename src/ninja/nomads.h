@@ -44,8 +44,8 @@
 #include "gdal.h"
 #endif /* GDAL_COMPUTE_VERSION */
 
-#include "cpl_string.h"
-#include "cpl_vsi.h"
+#include "gdal_alg.h"
+#include "gdalwarper.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -559,6 +559,14 @@ const char ** NomadsFindModel( const char *pszKey );
 char * NomadsFormName( const char *pszKey, char pszSpacer );
 
 void NomadsFree( void *p );
+
+GDALDatasetH
+NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
+                          const char *pszSrcWKT,
+                          const char *pszDstWKT,
+                          GDALResampleAlg eResampleAlg,
+                          double dfMaxError,
+                          const GDALWarpOptions *psOptionsIn);
 
 #ifdef __cplusplus
 }
