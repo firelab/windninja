@@ -78,11 +78,19 @@
 			d="M 100,24.565 97.904,39.395 83.07,42 76,28.773 86.463,18 Z"
 			inkscape:connector-curvature="0"
 			style="fill:#464646;fill-opacity:1"/>
+        <!-- Modified to be a red rectangle outline -->
+		<path
+			id="rectangle"
+			d="m 140,20 20,0 0,20 -20,0 z"
+			inkscape:connector-curvature="0"
+			style="stroke:red;stroke-width:2;fill:white;"/>
+        <!--
 		<path
 			id="rectangle"
 			d="m 140,20 20,0 0,20 -20,0 z"
 			inkscape:connector-curvature="0"
 			style="fill:#464646;fill-opacity:1"/>
+        -->
 		<path
 			id="circle"
 			d="m 221,30 c 0,6.078 -4.926,11 -11,11 -6.074,0 -11,-4.922 -11,-11 0,-6.074 4.926,-11 11,-11 6.074,0 11,4.926 11,11 z"
