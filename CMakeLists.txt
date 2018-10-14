@@ -402,6 +402,9 @@ foreach(f ${share_files})
             share/windninja COMPONENT apps)
 endforeach(f ${share_files})
 
+# Leaflet data
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
+
 set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf
               download_elevation_file.pdf
