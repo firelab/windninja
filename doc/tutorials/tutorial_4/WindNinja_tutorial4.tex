@@ -6,6 +6,7 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage[margin=1in]{geometry}
+\usepackage[table,x11names]{xcolor}
 
 \graphicspath{{imgs/}}
 
@@ -105,13 +106,55 @@ Local diurnal slope winds can optionally be included in a weather model initiali
 There are currently 17 different weather forecast model initializations to choose from in WindNinja.  The models are all run by the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Centers for Environmental Prediction (NCEP).  WindNinja accesses these data from two different servers, the NOAA NOMADS server and the University Corporation for Atmospheric Research (UCAR) thredds server.  The two servers provide a means for a fail safe for WindNinja in case one server is down.  We recommend using the NOMADS server as a first choice, as it seems to be more reliable.
 
 The 17 different forecast models have certain advantages and disadvantages depending on your particular situation.  Many of the differences have to do with temporal and spatial resolution and extent, and how often the forecast model is run.  Some of the 17 choices in WindNinja are actually duplicates of the same underlying weather forecast model but provided by both servers.  The table below and following paragraphs give some information about each model.
+
 \begin{landscape}
-\begin{figure}[H]
-	\centering
-	\label{wx_model}
-	\includegraphics[scale=1.0]{wx_table}
-	\caption*{Comparison of the forecast weather models available in WindNinja.}
-\end{figure}
+\begin{table}
+\fontsize{8}{12}\selectfont 
+\begin{tabular}{|p{6cm}|p{1.3cm}|p{3.5cm}|p{2cm}|p{1.7cm}|p{2.8cm}|p{2.8cm}|}
+\hline
+\rowcolor{lightgray} Name in WindNinja & Server & Forecast model & Domain & Horizontal resolution & Forecast duration and temporal resolution & Update frequency\\
+\hline
+UCAR-NDFD-CONUS-2.5-KM & UCAR & National Digitial Forecast Database (NDFD) & contiguous US (CONUS) & 2.5 km & 6 hourly to 168 hrs & 2 per day at 12 and 18 UTC\\
+\hline
+UCAR-NAM-CONUS-12-KM & UCAR & North American Mesoscale Model (NAM) & contiguous US (CONUS) & 12 km & 3 hourly to 84 hrs & 4 per day at 00, 06, 12, and 18 UTC\\
+\hline
+UCAR-NAM-ALASKA-11-KM & UCAR & North American Mesoscale Model (NAM) & Alaska & 11 km & 3 hourly to 84 hrs & 4 per day at 00, 06, 12, and 18 UTC\\
+\hline
+UCAR-RAP-CONUS-13-KM & UCAR & Rapid Refresh Model (RAP) & contiguous US (CONUS) & 13 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+UCAR-GFS-GLOBAL-0.5-DEG & UCAR & Global Forecast System (GFS) & global & 0.5 degrees & 3 hourly to 168 hrs & 4 per day at 00, 06, 12, and 18 UTC\\
+\hline
+NOMADS-GFS-GLOBAL-0.25-DEG & NOMADS & Global Forecast System (GFS) & global & 0.25 degrees & 3 hourly to 240 hrs 12 hourly to 384 hrs & 4 per day at 00, 06, 12, and 18 UTC\\
+\hline
+NOMADS-HIRES-ARW-ALASKA-5-KM & NOMADS & High Resolution WRF - ARW Core & Alaska & 5 km & 1 hourly to 48 hrs & 1 per day at 06 UTC\\
+\hline
+NOMADS-HIRES-NMM-ALASKA-5-KM & NOMADS & High Resolution WRF - NMM Core & Alaska & 5 km & 1 hourly to 48 hrs & 1 per day at 06 UTC\\
+\hline
+NOMADS-HIRES-ARW-CONUS-5-KM & NOMADS & High Resolution WRF - ARW Core & contiguous US (CONUS) & 5 km & 1 hourly to 48 hrs & 2 per day at 00 and 12 UTC\\
+\hline
+NOMADS-HIRES-NMM-CONUS-5-KM & NOMADS & High Resolution WRF - NMM Core & contiguous US (CONUS) & 5 km & 1 hourly to 48 hrs & 2 per day at 00 and 12 UTC\\
+\hline
+NOMADS-NAM-ALASKA-11.25-KM & NOMADS & North American Mesoscale Model (NAM) & Alaska & 11.25 km & 3 hourly to 36 hrs 6 hourly to 86 hrs & 4 per day at 00, 06, 12 and 18 UTC\\
+\hline
+NOMADS-NAM-CONUS-12-KM & NOMADS & North American Mesoscale Model (NAM) & contiguous US (CONUS) & 12 km & 1 hourly to 36 hrs 3 hourly to 86 hrs & 4 per day at 00, 06, 12 and 18 UTC\\
+\hline
+NOMADS-NAM-NEST-CONUS-3-KM & NOMADS & North American Mesoscale Model (NAM) & contiguous US (CONUS) & 3 km & 1 hourly to 60 hrs & 4 per day at 00, 06, 12 and 18 UTC\\
+\hline
+NOMADS-NAM-NEST-ALASKA-3-KM & NOMADS & North American Mesoscale Model (NAM) & contiguous US (CONUS) & 3 km & 1 hourly to 60 hrs & 4 per day at 00, 06, 12 and 18 UTC\\
+\hline
+NOMADS-NAM-NORTH-AMERICA-32-KM & NOMADS & North American Mesoscale Model (NAM) & North America & 32 km & 3 hourly to 36 hrs 6 hourly to 86 hrs & 4 per day at 00, 06, 12 and 18 UTC\\
+\hline
+NOMADS-HRRR-CONUS-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & contiguous US (CONUS) & 3 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+NOMADS-HRRR-ALASKA-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & Alaska & 3 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+NOMADS-RAP-CONUS-13-KM & NOMADS & Rapid Refresh (RAP) & contiguous US (CONUS) & 13 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+NOMADS-RAP-NORTH-AMERICA-32-KM & NOMADS & Rapid Refresh (RAP) & North America & 32 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+\end{tabular}
+\caption{Comparison of the forecast weather models available in WindNinja.}
+\end{table}
 \end{landscape}
 
 Users should choose a model that best fits their particular situation, keeping in mind that there may be several forecast models that fit.  In these situations, it isn't a bad idea to try several of them and examine the differences in the results.
