@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,7 +28,7 @@ import (
 )
 
 const (
-	message     = "hello, world"
+	message     = ""
 	threddsFile = "thredds.csv"
 )
 
@@ -57,6 +59,38 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		s += ";MESSAGE=" + message
 	}
 	fmt.Fprintf(w, s)
+}
+
+var mapKeys []string
+
+func mapkeyHandler(w http.ResponseWriter, r *http.Request) {
+	if mapKeys == nil || r.Header.Get("Cache-Control") == "no-cache" {
+		mapKeys = []string{}
+		fin, err := os.Open("./map_keys")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer fin.Close()
+		s := bufio.NewScanner(fin)
+		for s.Scan() {
+			t := strings.TrimSpace(s.Text())
+			if t != "" {
+				mapKeys = append(mapKeys, t)
+			}
+		}
+	}
+	if len(mapKeys) == 0 {
+		http.Error(w, "no keys", http.StatusInternalServerError)
+		return
+	}
+	n := rand.Intn(len(mapKeys))
+	err := json.NewEncoder(w).Encode(struct {
+		Key string `json:"key"`
+	}{mapKeys[n]})
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func visitHandler(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +215,7 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/cgi-bin/ninjavisit", visitHandler)
 	mux.HandleFunc("/version/", versionHandler)
+	mux.HandleFunc("/mapkey/", mapkeyHandler)
 	srv := &http.Server{
 		Addr:         *flagAddr,
 		ReadTimeout:  5 * time.Second,
