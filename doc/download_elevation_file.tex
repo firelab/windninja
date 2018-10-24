@@ -31,7 +31,7 @@
 \rhead{How to download an elevation file using WindNinja}
 \cfoot{\thepage}
 
-\newcommand\vn{3.4.0}
+\newcommand\vn{3.5.0}
 
 \begin{document}
 \begin{titlepage}
@@ -43,7 +43,7 @@
     \includegraphics[scale=0.75]{dem_download_0}
     \vfill
   	{\Huge
-	  7/02/2018 %Date Last Edited
+	  10/24/2018 %Date Last Edited
   	}
     \vfill
 \end{titlepage}
@@ -52,7 +52,7 @@
 \section*{Introduction}
 This document describes the functionality built into WindNinja to download
 elevation files for wind modeling.  We call this utility the “elevation file
-grabber”.  It allows you to use a custom Google Maps\texttrademark interface to zoom into
+grabber”.  It allows you to use a custom \textcopyright Mapbox \textcopyright OpenStreetMap interface to zoom into
 and select a desired area for wind modeling. The elevation data for this area
 is downloaded by WindNinja from a USGS server and saved to a file on your
 computer.  There is also a command line version of the elevation file grabber
@@ -68,7 +68,7 @@ To open the elevation file grabber window, start WindNinja and click \textit{Sur
 \end{figure}
 \newpage
 
-The \textit{Download Elevation File} window will open.  This window is divided into two areas as highlighted in red in the image below.  These areas are discussed in the next two sections.
+The \textit{Download Elevation File} graphics window will open. This graphics window is an interactive mapping display used to navigate into the desired wind simulation area. There are a couple of ways to pan and zoom the map.  Using a mouse, you can pan with the left button and zoom using a mouse scroll wheel.  The keyboard can also be used to pan (arrow keys) and zoom (plus and minus keys).
 
 \begin{figure}[H]
 	\centering
@@ -76,36 +76,13 @@ The \textit{Download Elevation File} window will open.  This window is divided i
 	\includegraphics[scale=0.75]{dem_download_1}
 \end{figure}
 
-\section*{Graphics Window}
-The graphics window is an interactive mapping display used to navigate into the desired wind simulation area.  This window uses a customized version of the popular Google Maps\texttrademark  software.  Various different base maps are available using the \textit{Map} and \textit{Satellite} buttons in the upper right corner.  There are a couple of ways to pan and zoom the map.  Using a mouse, you can pan with the left button and zoom using a mouse scroll wheel.  The keyboard can also be used to pan (arrow keys) and zoom (plus and minus keys).
+\subsection*{Defining Your Simulation Area}
 
-
-\section*{Input Panel}
-\subsection*{Selection Method}
-%Below the 'Go To:' text box is the Selection Method group of buttons and text boxes that allow you to define the area you want to download.  This download area is a rectangular box that will be drawn over the map in the graphics window.  There are four different ways to define this rectangular box that can be chosen from the drop-down box.  They are:
-
-The \textit{Selection Method} section of the input panel allows you to define the area that you want to download. This download area is a rectangular box that will be drawn over the map in the graphics window.  There are four different ways to define this rectangular box that can be chosen from the drop-down box.  They are:
-
-\begin{enumerate}
-
-\item \textbf{Drag Box On Map} \newline
-	By clicking the \textit{Drag Box On Map} button, you can then left-click and drag on 		the graphics window to define a box of the desired size.
-
-\item \textbf{Enter Bounding Box}\newline
-	This option allows you to enter the latitude and longitude bounds for the box.
- 
-\item \textbf{Click Center Point} \newline
-	This option allows you to click a center point on the map to define the center of the 		box and then enter the size of the box.
-	
-\item \textbf{Enter Center Point} \newline
-	With this method, you enter the center point coordinates of the box and the box size.
-\end{enumerate}
-
-After using any of the methods above, a transparent red box will be drawn in the graphics window showing the area you've defined.  If you want, you can enlarge or shrink this box in the graphics window by dragging the sides or corners.  You can also move the box by dragging the center icon.  The \textit{Zoom To Extents} button in the graphics window will zoom the view to fit the box. The \textit{Clear Map} button will clear the box.
+To define the area that you want to download, click the \textit{Draw a rectangle} button in the upper right corner of the graphics window. Draw a box on the map bounding the area that you want to simulate. A transparent blue box will be drawn in the graphics window showing the area you've defined.  If you want, you can enlarge or shrink this bounding box by clicking the \textit{Edit layers} button in the upper right corner of the graphics window. This will allow you to drag the sides or corners of the box. You can also move the box by dragging the center icon. When you are done, click \textit{Save} next to the \textit{Edit layers} button. You can also delete a bounding box by clicking the \textit{Delete layers} button and  \textit{Clear All} in the upper right corner of the graphics window. 
 
 \subsection*{Elevation Data Source}
 
-There are 4 possible on-line data sets to download elevation data from.  These are listed in the \textit{Select Elevation Source} drop-down box.  The main difference between these data sets is the spatial resolution and extent.  The table below briefly describes these differences.  You should be sure to choose a data set that covers your simulation area.
+There are 4 possible on-line data sets to download elevation data from.  These are listed in the \textit{Data Source} drop-down box at the top left of the graphics window.  The main difference between these data sets is the spatial resolution and extent.  The table below briefly describes these differences.  You should be sure to choose a data set that covers your simulation area.
 
 \begin{center}
     \begin{tabular}{| l | l | p{1.75in} | p{1.8in} |}
@@ -125,10 +102,10 @@ There are 4 possible on-line data sets to download elevation data from.  These a
     FARSITE Landscape files including vegetation information \\ \hline
 \end{tabular}
 \end{center}
-You can check the \textit{Show Available Data} check-box to display a blue polygon on the map outlining the chosen data set's extents.
+
 
 \section*{Download The File}
-Once you have defined your download area and selected the elevation data source, click the Download File button at the bottom to download the elevation file.  A window will open to allow you to specify a file name and location.  %The downloaded file is a geotiff file (*.tif) in best fit UTM projection using WGS84.
+Once you have defined your download area and selected the elevation data source, click the \textit{Download File} button at the top left of the graphics window to download the elevation file.  A window will open to allow you to specify a file name and location.  %The downloaded file is a geotiff file (*.tif) in best fit UTM projection using WGS84.
 If you chose the option \textbf{US SRTM}, \textbf{WORLD SRTM}, or \textbf{WORLD GMTED}, the downloaded file will be a GeoTIFF (*.tif). \textbf{Landscape} files are downloaded as a .lcp file.
 After the file is successfully downloaded, you can close the Download elevation file window and the downloaded file will be automatically loaded into the main WindNinja window.
 
