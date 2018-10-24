@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+WindNinja 3.5.0
+---------------
+- Switch to OpenStreetMaps and Mapbox for DEM download window to fix issues related to Google Maps API terms of service changes (\#287)
+
 WindNinja 3.4.1
 ---------------
 - Fix issue where DEM names containing spaces fail with NinjaFOAM (\#230)
