@@ -180,7 +180,7 @@ void WidgetDownloadDEM::setupGM()
     this->wvGoogleMaps->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
     this->wvGoogleMaps->setPage(new QWebPage());
     wvGoogleMaps->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-    this->wvGoogleMaps->load(QUrl(QString(FindDataPath("map.htm").c_str())));
+    this->wvGoogleMaps->load(QUrl(QString(CPLFormFilename("file:///", (FindDataPath("map.htm").c_str()), NULL))));
 
     //enable QWebInspector for degugging google maps widget
     if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
