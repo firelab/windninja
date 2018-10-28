@@ -114,6 +114,12 @@ else(WIN32)
     find_package(GDAL REQUIRED)
 endif(WIN32)
 
+option(NINJA_QT5GUI "build Qt5 experimental GUI" OFF)
+if(NINJA_QT5GUI)
+    message("building qt5 gui")
+    add_subdirectory(src/gui/ui)
+endif(NINJA_QT5GUI)
+
 if(WIN32)
     if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
         set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
