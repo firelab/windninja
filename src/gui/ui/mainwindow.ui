@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>644</width>
-    <height>793</height>
+    <width>563</width>
+    <height>537</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -368,157 +368,169 @@
          </layout>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_2">
-          <property name="title">
-           <string>Download Weather Data</string>
+         <widget class="QStackedWidget" name="stackedWidget_2">
+          <property name="currentIndex">
+           <number>0</number>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_11">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_16">
-             <item>
-              <widget class="QLabel" name="label_17">
-               <property name="text">
-                <string>Source</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_14">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QComboBox" name="comboBox_3"/>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_17">
-             <item>
-              <widget class="QLabel" name="label_18">
-               <property name="text">
-                <string>Start Time</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_15">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDateTimeEdit" name="wxStartDate_2"/>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_18">
-             <item>
-              <widget class="QLabel" name="label_19">
-               <property name="text">
-                <string>End Time</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_16">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDateTimeEdit" name="wxEndDate_2"/>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_19">
-             <item>
-              <spacer name="horizontalSpacer_17">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QToolButton" name="downloadForecastButton">
-               <property name="text">
-                <string>Download</string>
-               </property>
-               <property name="toolButtonStyle">
-                <enum>Qt::ToolButtonTextBesideIcon</enum>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_20">
-             <item>
-              <widget class="QLabel" name="label_20">
-               <property name="text">
-                <string>Forecast File</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_18">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="lineEdit_2"/>
-             </item>
-             <item>
-              <widget class="QToolButton" name="openForecastButton">
-               <property name="text">
-                <string>Open...</string>
-               </property>
-               <property name="toolButtonStyle">
-                <enum>Qt::ToolButtonTextBesideIcon</enum>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
+          <widget class="QWidget" name="page">
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QGroupBox" name="groupBox_2">
+              <property name="title">
+               <string>Download Weather Data</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_11">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <item>
+                  <widget class="QLabel" name="label_17">
+                   <property name="text">
+                    <string>Source</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_14">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_3"/>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <item>
+                  <widget class="QLabel" name="label_18">
+                   <property name="text">
+                    <string>Start Time</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_15">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDateTimeEdit" name="wxStartDate_2"/>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_18">
+                 <item>
+                  <widget class="QLabel" name="label_19">
+                   <property name="text">
+                    <string>End Time</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_16">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QDateTimeEdit" name="wxEndDate_2"/>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_19">
+                 <item>
+                  <spacer name="horizontalSpacer_17">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="downloadForecastButton">
+                   <property name="text">
+                    <string>Download</string>
+                   </property>
+                   <property name="toolButtonStyle">
+                    <enum>Qt::ToolButtonTextBesideIcon</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                 <item>
+                  <widget class="QLabel" name="label_20">
+                   <property name="text">
+                    <string>Forecast File</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_18">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_2"/>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="openForecastButton">
+                   <property name="text">
+                    <string>Open...</string>
+                   </property>
+                   <property name="toolButtonStyle">
+                    <enum>Qt::ToolButtonTextBesideIcon</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="page_2"/>
          </widget>
         </item>
         <item>
@@ -651,7 +663,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>644</width>
+     <width>563</width>
      <height>22</height>
     </rect>
    </property>
