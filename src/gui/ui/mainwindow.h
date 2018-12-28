@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QString>
+#include <QTreeWidgetItem>
 
 #include <cpl_string.h>
 #include <gdal.h>
@@ -39,6 +40,7 @@ private:
     void OGRFormats();
 
 public slots:
+    void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
     void openElevation();
     void updateMesh(int index);
 };
