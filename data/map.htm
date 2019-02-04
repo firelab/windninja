@@ -124,6 +124,12 @@
     function mbr() {
      if(mbrLayer.getLayers().length > 0){
       var b = mbrLayer.getLayers()[0]._bounds;
+			 if(b._southWest.lng < -180) {
+				 b._southWest.lng += 180;
+			 }
+			 if(b._northEast.lng < -180) {
+				 b._northEast.lng += 180;
+			 }
       return [b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat];
      }
      return null;
