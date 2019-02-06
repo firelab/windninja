@@ -4,7 +4,7 @@
     <author>Kyle Shannon</author>
     <forecast forcast_id="conus-nam">
         <base_url>
-            http://nomads.ncep.noaa.gov/cgi-bin/filter_nam.pl
+            https://nomads.ncep.noaa.gov/cgi-bin/filter_nam.pl
         </base_url>
         <directory_frmt>
             nam.YYYYMMDD
