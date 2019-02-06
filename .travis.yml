@@ -36,7 +36,6 @@ notifications:
       - kyle@pobox.com
       - nwagenbrenner@gmail.com
       - jforthofer@gmail.com
-      - tfinney@fs.fed.us
 
   irc:
     channels:
