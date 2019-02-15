@@ -154,7 +154,6 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
-    CPLDebug("NINJAFOAM", "input.nonEqBc = %d", input.nonEqBc);
     CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());
     CPLDebug("NINJAFOAM", "Rough_d = %f", input.surface.Rough_d.get_meanValue());
     CPLDebug("NINJAFOAM", "Rough_h = %f", input.surface.Rough_h.get_meanValue());
@@ -474,21 +473,8 @@ int NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFile
         s.erase(0, pos+len);
     }
 
-    if(input.nonEqBc == 0){
-        if(std::string(pszFilename) == "epsilon"){
-            ReplaceKeys(s, "$wallFunction$", "epsilonWallFunction");
-        }
-        else if(std::string(pszFilename) == "nut"){
-            ReplaceKeys(s, "$wallFunction$", "nutkWallFunction");
-        }
-    }
-    else{
-        if(std::string(pszFilename) == "epsilon"){
-            ReplaceKeys(s, "$wallFunction$", "epsilonNonEquiWallFunction");
-        }
-        else if(std::string(pszFilename) == "nut"){
-            ReplaceKeys(s, "$wallFunction$", "nutNonEquiWallFunction");
-        }
+    else if(std::string(pszFilename) == "nut"){
+        ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( foamRoughness ));
     }
 
     dataString.append(s);
