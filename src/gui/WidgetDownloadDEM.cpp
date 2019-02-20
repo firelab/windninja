@@ -210,7 +210,6 @@ void WidgetDownloadDEM::saveDEM()
         qDebug()<<"no mbr";
         return;
     }
-    qDebug()<<mbr;
     QVariantList mbrl = mbr.toList();
     for(int i=0; i < mbrl.size(); i++) {
         qDebug() << mbrl[i];
