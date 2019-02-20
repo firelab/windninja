@@ -3,7 +3,7 @@ env:
 
 language: cpp
 
-dist: trusty
+dist: xenial
 
 compiler:
   - gcc
