@@ -29,8 +29,6 @@
 
 #include "nomads_wx_init.h"
 
-#define NOMADS_VRT 1
-
 int NomadsWxModel::CheckFileName( const char *pszFile, const char *pszFormat )
 {
     const char *a, *b;

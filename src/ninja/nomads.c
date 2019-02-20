@@ -938,6 +938,8 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           GDALResampleAlg eResampleAlg,
                           double dfMaxError,
                           const GDALWarpOptions *psOptionsIn) {
+
+    CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
     int i = 0;
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
