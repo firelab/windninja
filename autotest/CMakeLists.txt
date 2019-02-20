@@ -148,15 +148,6 @@ add_test(test_gdal_output_kmz
 add_test(test_gdal_output_kmz_color
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz_color)
 
-add_test(test_gdal_output_mackay
-    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/mackay)
-
-add_test(test_gdal_output_raster
-    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/raster)
-
-add_test(test_gdal_output_invalid_format
-    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/invalid_format)
-
 add_test(test_utm_boise
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/boise)
 

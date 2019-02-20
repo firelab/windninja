@@ -35,15 +35,17 @@
 #include "ascii_grid.h"
 
 #define NINJA_OUTPUT_VECTOR 1 << 0
-#define NINJA_OUTPUT_RASTER 1 << 1
-#define NINJA_OUTPUT_ARROWS 1 << 2
-#define NINJA_OUTPUT_STYLED 1 << 3
-#define NINJA_OUTPUT_PALLET 1 << 4
+#define NINJA_OUTPUT_ARROWS 1 << 1
+#define NINJA_OUTPUT_STYLED 1 << 2
+#define NINJA_OUTPUT_PALLET 1 << 3
 
 /*
 ** NinjaGDALOutput writes wind ninja output to an arbitrary driver.
 */
-int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
-                    AsciiGrid<double> &spd, AsciiGrid<double> &dir,
-                    char **papszOptions);
+int NinjaGDALVectorOutput(const char *pszDriver,
+                          const char *pszFilename,
+                          int nFlags,
+                          AsciiGrid<double> &spd,
+                          AsciiGrid<double> &dir,
+                          char **papszOptions);
 #endif /* NINJA_GDAL_OUTPUT_H_ */
