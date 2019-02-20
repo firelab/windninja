@@ -49,7 +49,8 @@ set(TEST_SOURCES test_main.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
                  test_stl.cpp
-                 test_rmtree.cpp)
+                 test_rmtree.cpp
+                 test_utm.cpp)
 if(WITH_LCP_CLIENT)
     set(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
 endif(WITH_LCP_CLIENT)
@@ -155,6 +156,12 @@ add_test(test_gdal_output_raster
 
 add_test(test_gdal_output_invalid_format
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/invalid_format)
+
+add_test(test_utm_boise
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/boise)
+
+add_test(test_utm_adelaide
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/adelaide)
 
 # ******************************************************************************
 # Slow test section

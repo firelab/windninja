@@ -90,14 +90,14 @@ extern "C" {
 #define NOMADS_HOST                      "nomads.ncep.noaa.gov"
 
 /* Host for NOMADS */
-#define NOMADS_URL_CGI_HOST              "http://" NOMADS_HOST "/cgi-bin/"
-#define NOMADS_URL_CGI_IP                "http://" NOMADS_IP "/cgi-bin/"
+#define NOMADS_URL_CGI_HOST              "https://" NOMADS_HOST "/cgi-bin/"
+#define NOMADS_URL_CGI_IP                "https://" NOMADS_IP "/cgi-bin/"
 
 /*
 ** cgi path, ignoring the IP issues, not used but left in for reference.  Use
 ** the two constant urls above.
 */
-#define NOMADS_URL_CGI                   "http://nomads.ncep.noaa.gov/cgi-bin/"
+#define NOMADS_URL_CGI                   "https://nomads.ncep.noaa.gov/cgi-bin/"
 
 /*
 ** NAM based defaults.  Most models are derived or based on NAM, so we can use
