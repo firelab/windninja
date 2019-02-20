@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QString>
+#include <QThread>
 #include <QTreeWidgetItem>
 
 #include <cpl_string.h>
