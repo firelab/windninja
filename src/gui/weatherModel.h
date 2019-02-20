@@ -37,6 +37,8 @@
 #include <QLabel>
 #include <QString>
 #include <QDirModel>
+#include <QListView>
+#include <QStringListModel>
 #include <QTreeView>
 #include <QHeaderView>
 #include <QDateTime>
@@ -108,6 +110,9 @@ class weatherModel : public QWidget
 
     QTreeView *treeView;
     QDirModel *model;
+
+    QStringListModel *timeModel;
+    QListView *listView;
 
     QDir cwd;
     QString inputFile;

@@ -78,6 +78,13 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeView->setAlternatingRowColors( false );
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    listView = new QListView(this);
+    timeModel = new QStringListModel(this);
+    listView->setModel(timeModel);
+    // Extended selection is clear on click, unless ctrl or shift is held.
+    listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    // Multi selection is click everything on off, no modifiers
+    // listView->setSelectionMode(QAbstractItemView::MultiSelection);
 
     statusLabel = new QLabel(this);
     statusLabel->setText(tr("Ready."));
@@ -124,6 +131,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     weatherLayout->addWidget(downloadGroupBox);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
+    weatherLayout->addWidget(listView);
     weatherLayout->addLayout(loadLayout);
     
     ninjafoamConflictLabel = new QLabel(tr("The weather model initialization option is not currently available for the\n"
@@ -432,6 +440,21 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     dateTime.prepend( "First forecast time: " );
 
     statusLabel->setText( dateTime );
+
+    timeModel->setStringList(QStringList{});
+    QStringList times;
+    for(int i = 0; i < timelist.size(); i++) {
+        blt::local_time_facet* facet;
+        facet = new blt::local_time_facet();
+        std::ostringstream os;
+        os.imbue(std::locale(std::locale::classic(), facet));
+        facet->format("%a %b %d %H:%M %z");
+        os << timelist[i];
+        QString dateTime = QString::fromStdString( os.str() );
+        times.append(dateTime);
+        os.clear();
+    }
+    timeModel->setStringList(times);
 }
 
 /**
