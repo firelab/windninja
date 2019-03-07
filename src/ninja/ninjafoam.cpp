@@ -133,6 +133,13 @@ bool NinjaFoam::simulate_wind()
         init->ninjaFoamInitializeFields(input, CloudGrid);
     }
 
+    if(!input.ninjaTime.is_not_a_date_time())
+    {
+        std::ostringstream out;
+        out << "Simulation time is " << input.ninjaTime;
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
