@@ -1517,6 +1517,9 @@ void NinjaFoam::UpdateDictFiles()
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
+    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/nut", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
@@ -2731,6 +2734,9 @@ int NinjaFoam::UpdateExistingCase()
             CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
+
+    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/nut", latestTime), ""));
 
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), "")); 
