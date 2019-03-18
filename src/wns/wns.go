@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"time"
@@ -33,10 +32,11 @@ const (
 )
 
 var (
-	pool    *sqlite.Pool
-	gh      *github.Client
-	mu      sync.RWMutex
-	version string
+	pool         *sqlite.Pool
+	gh           *github.Client
+	mu           sync.RWMutex
+	version      string
+	ipstackToken = ""
 )
 
 func current() error {
@@ -128,7 +128,6 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Call the geoip server asynchronously
-	// TODO(kyle): replace with vendored freegeoip package.
 	go func() {
 		log.Printf("fetching data for ip: %s", ip)
 		stmt := db.Prep("SELECT COUNT() FROM ip WHERE ip=?")
@@ -145,11 +144,13 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		u := url.URL{
 			Scheme: "https",
-			Host:   "freegeoip.net",
-			Path:   "json",
+			Host:   "api.ipstack.com",
+			Path:   ip,
 		}
-		u.Path = path.Join(u.Path, ip)
-		log.Printf("fetching %s", u.String())
+		q := url.Values{}
+		q.Set("format", "1")
+		q.Set("access_key", ipstackToken)
+		u.RawQuery = q.Encode()
 		resp, err := http.Get(u.String())
 		if err != nil {
 			log.Println(err)
@@ -211,6 +212,12 @@ func main() {
 			}
 		}
 	}()
+
+	buf, err := ioutilReadFile("ipstack.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ipstackToken = string(buf)
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/cgi-bin/ninjavisit", visitHandler)
