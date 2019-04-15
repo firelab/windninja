@@ -1,11 +1,14 @@
 Release Notes
 =============
 
+=======
+WindNinja 3.5.2
+---------------
+- Fix bug related to lat/lon calculations in DEM downloader (\#327, \#328, \#333)
+
 WindNinja 3.5.1
 ---------------
 - Switch to using HTTPS for NOMADS downloads (\#329)
-
-- Fix bug causing DEM downloads to fail in certain geographic areas (\#328)
 
 WindNinja 3.5.0
 ---------------
