@@ -48,8 +48,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
 
 void Usage(const char *pszError)
 {
-    printf("solar_grid [--perc-cloud-cover percent] [--minute minute]\n"
-           "           [--hour hour] [--day day] [--month month]\n"
+    printf("solar_grid [--perc-cloud-cover percent] [--cloud-file cloud_raster]\n"
+           "           [--minute minute] [--hour hour] [--day day] [--month month]\n"
 #ifdef _OPENMP
            "           [--year year] [--time-zone zone] [--num-threads n]\n"
 #else
@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
     double dfCellSize = -1;
     const char *pszInputFile = NULL;
     const char *pszOutputFile = NULL;
+    const char *pszCloudFile = NULL;
 
     int i = 1;
     while(i < argc)
@@ -100,6 +101,10 @@ int main(int argc, char *argv[])
         if(EQUAL(argv[i], "--perc-cloud-cover") || EQUAL(argv[i], "--p"))
         {
             nPercCloudCover = atoi(argv[++i]);
+        }
+        if(EQUAL(argv[i], "--cloud-file"))
+        {
+            pszCloudFile = argv[++i];
         }
         else if(EQUAL(argv[i], "--minute") || EQUAL(argv[i], "--m"))
         {
@@ -231,7 +236,11 @@ int main(int argc, char *argv[])
     Slope slp(&elev,nNumThreads);
     Shade shd(&elev, solar.get_theta(), solar.get_phi(), nNumThreads);
     AsciiGrid<double> CloudCover((AsciiGrid<double>&)elev);
-    CloudCover = (double)nPercCloudCover / 100.0;
+    if(pszCloudFile != NULL) {
+        CloudCover.GDALReadGrid(pszCloudFile, 1);
+    } else {
+        CloudCover = (double)nPercCloudCover / 100.0;
+    }
     AsciiGrid<double> solar_grid(elev);
     
 #ifdef _OPENMP
