@@ -239,8 +239,9 @@ int main(int argc, char *argv[])
     if(pszCloudFile != NULL) {
         CloudCover.GDALReadGrid(pszCloudFile, 1);
     } else {
-        CloudCover = (double)nPercCloudCover / 100.0;
+        CloudCover = (double)nPercCloudCover;
     }
+    CloudCover /= 100.0;
     AsciiGrid<double> solar_grid(elev);
     
 #ifdef _OPENMP
