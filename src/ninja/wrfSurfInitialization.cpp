@@ -574,8 +574,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     /*
      * Set the initial values in the warped dataset to no data
      */
-    GDALWarpOptions* psWarpOptions;
-
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + input.forecastFilename + "\":" + varList[i];
@@ -704,36 +702,17 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue( &pbSuccess );
 
-        psWarpOptions = GDALCreateWarpOptions();
-
         int nBandCount = srcDS->GetRasterCount();
 
-        psWarpOptions->nBandCount = nBandCount;
-
         CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
-
-        psWarpOptions->padfDstNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-        psWarpOptions->padfDstNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-        for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-        }
 
         if( pbSuccess == false )
             dfNoData = -9999.0;
 
-        psWarpOptions->papszWarpOptions =
-            CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                            "INIT_DEST", "NO_DATA" );
-
-
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWKT,
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
-                                                        1.0, psWarpOptions );
+                                                        1.0, NULL );
 
         //=======for testing==================================//
         /*AsciiGrid<double> tempGrid;
@@ -788,7 +767,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
         CPLFree(srcWKT);
         delete poCT;
-        GDALDestroyWarpOptions( psWarpOptions );
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
     }

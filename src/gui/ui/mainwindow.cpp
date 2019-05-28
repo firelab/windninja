@@ -18,13 +18,18 @@ void MainWindow::init() {
     setIcons();
     setConnections();
     OGRFormats();
+
+    // Set the number of cores available.  We only have to do this once
+    int cores = QThread::idealThreadCount();
+    ui->availCoreLabel->setText("Available Processors: " + QString::number(cores));
+    ui->availCoreSpinBox->setMaximum(cores);
 }
 
 void MainWindow::setIcons() {
     ui->openElevButton->setIcon(QIcon(":icons/open.svg"));
     ui->downloadElevButton->setIcon(QIcon(":icons/save-as.svg"));
 
-    //ui->addDomainRunButton->setIcon(QIcon(":icons/add.svg"));
+    ui->addDomainRunButton->setIcon(QIcon(":icons/add.svg"));
 
     ui->downloadForecastButton->setIcon(QIcon(":icons/save-as.svg"));
     ui->openForecastButton->setIcon(QIcon(":icons/open.svg"));

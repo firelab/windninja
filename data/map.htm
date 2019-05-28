@@ -124,12 +124,21 @@
     function mbr() {
      if(mbrLayer.getLayers().length > 0){
       var b = mbrLayer.getLayers()[0]._bounds;
-       if(b._southWest.lng < -180) {
-         b._southWest.lng += 360;
-       }
-       if(b._northEast.lng < -180) {
-         b._northEast.lng += 360;
-       }
+      b._southWest.lng = b._southWest.lng % 360;
+      if(b._southWest.lng < -180) {
+        b._southWest.lng += 360;
+      }
+      b._northEast.lng = b._northEast.lng % 360;
+      if(b._northEast.lng < -180) {
+        b._northEast.lng += 360;
+      }
+      // switch to negative longitudes if needed
+      if(b._southWest.lng > 180){
+        b._southWest.lng -= 360;
+      }
+      if(b._northEast.lng > 180){
+        b._northEast.lng -= 360;
+      }
       return [b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat];
      }
      return null;

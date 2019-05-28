@@ -479,6 +479,9 @@ int GetUTMZoneInEPSG( double lon, double lat )
     int wkid;
     int baseValue;
 
+    // Check for wrapped longitude
+    lon = fmod( lon, 360.0 );
+
     // Southern hemisphere if latitude is less than 0
     if ( lat < 0 )
     {

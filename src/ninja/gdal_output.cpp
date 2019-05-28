@@ -238,9 +238,12 @@ static OGRGeometryH drawArrow(double x, double y, double s, double d,
   return hGeom;
 }
 
-int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
-                    AsciiGrid<double> &spd, AsciiGrid<double> &dir,
-                    char **papszOptions) {
+int NinjaGDALVectorOutput(const char *pszDriver, // GDAL vector driver name
+                          const char *pszFilename, // Destination filename
+                          int nFlags, // Style flags (maybe more)
+                          AsciiGrid<double> &spd, // Speed grid
+                          AsciiGrid<double> &dir, // Direction grid
+                          char **papszOptions) { // Creation options for the dataset
   // Driver to create the output
   GDALDriverH hDrv = 0;
   // If hDrv only supports CreateCopy, use a working driver.
@@ -275,32 +278,16 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
     return 1;
   }
 
-  /*
-  ** TODO(kyle): handle AAIGrid(or other single band formats) early,
-  ** pszFilename is a stub?
-  */
-  if (pszDriver == "AAIGrid" && nFlags & NINJA_OUTPUT_RASTER &&
-      !(nFlags & NINJA_OUTPUT_VECTOR)) {
-  }
-
   hDrv = GDALGetDriverByName(pszDriver);
   if (hDrv == 0) {
     return 1;
   }
 
   pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_VECTOR, 0);
-  if (pszMDI == 0 && (nFlags & NINJA_OUTPUT_VECTOR)) {
+  if (pszMDI == 0) {
     return 1;
   }
-  if ((nFlags & NINJA_OUTPUT_VECTOR) && !CSLTestBoolean(pszMDI)) {
-    return 1;
-  }
-
-  pszMDI = GDALGetMetadataItem(hDrv, GDAL_DCAP_RASTER, 0);
-  if (pszMDI == 0 && (nFlags & NINJA_OUTPUT_RASTER)) {
-    return 1;
-  }
-  if ((nFlags & NINJA_OUTPUT_RASTER) && !CSLTestBoolean(pszMDI)) {
+  if (!CSLTestBoolean(pszMDI)) {
     return 1;
   }
 
@@ -341,167 +328,105 @@ int NinjaGDALOutput(const char *pszDriver, const char *pszFilename, int nFlags,
 
   double splits[5];
   spd.divide_gridData(splits, 5);
-
-  if (nFlags & NINJA_OUTPUT_RASTER) {
-    char *pabyRed = (char *)malloc(spd.get_nCols() * spd.get_nRows());
-    assert(pabyRed);
-    char *pabyGreen = (char *)malloc(spd.get_nCols() * spd.get_nRows());
-    assert(pabyGreen);
-    char *pabyBlue = (char *)malloc(spd.get_nCols() * spd.get_nRows());
-    assert(pabyBlue);
-    double s;
-    for (int i = 0; i < spd.get_nRows(); i++) {
-      for (int j = 0; j < spd.get_nCols(); j++) {
-        s = spd.get_cellValue(i, j);
-        if (s <= splits[1]) {
-          pabyRed[i * j + i] = 0;
-          pabyGreen[i * j + i] = 0;
-          pabyBlue[i * j + i] = 255;
-        } else if (s <= splits[3]) {
-          pabyRed[i * j + i] = 0;
-          pabyGreen[i * j + i] = 255;
-          pabyBlue[i * j + i] = 0;
-        } else if (s <= splits[3]) {
-          pabyRed[i * j + i] = 255;
-          pabyGreen[i * j + i] = 255;
-          pabyBlue[i * j + i] = 0;
-        } else if (s <= splits[4]) {
-          pabyRed[i * j + i] = 255;
-          pabyGreen[i * j + i] = 127;
-          pabyBlue[i * j + i] = 0;
-        } else {
-          pabyRed[i * j + i] = 255;
-          pabyGreen[i * j + i] = 0;
-          pabyBlue[i * j + i] = 0;
-        }
-      }
-    }
-    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
-    assert(hBand);
-    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
-                      (void *)pabyRed, spd.get_nCols(), spd.get_nRows(),
-                      GDT_Byte, 0, 0);
-    assert(rc == 0);
-    hBand = GDALGetRasterBand(hDS, 2);
-    assert(hBand);
-    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
-                      (void *)pabyGreen, spd.get_nCols(), spd.get_nRows(),
-                      GDT_Byte, 0, 0);
-    assert(rc == 0);
-    hBand = GDALGetRasterBand(hDS, 3);
-    assert(hBand);
-    rc = GDALRasterIO(hBand, GF_Write, 0, 0, spd.get_nCols(), spd.get_nRows(),
-                      (void *)pabyBlue, spd.get_nCols(), spd.get_nRows(),
-                      GDT_Byte, 0, 0);
-    assert(rc == 0);
-    if (bCreateCopy) {
-      GDALDatasetH hRDS =
-          GDALCreateCopy(hDrv, pszFilename, hDS, FALSE, 0, 0, 0);
-      assert(hRDS);
-      GDALClose(hRDS);
-    }
+  // Handle the KML special options
+  char **papszKMLOptions = 0;
+  if (EQUAL(pszDriver, "LIBKML")) {
+    // Don't create a root doc.kml, this aligns with our old format
+    CPLSetConfigOption("LIBKML_USE_DOC.KML", "NO");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "ADD_REGION", "YES");
+    papszKMLOptions =
+        CSLAddNameValue(papszKMLOptions, "SO_HREF", "legend.png");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_NAME", "Legend");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_X", "0");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_Y", "1");
+    papszKMLOptions =
+        CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_XUNITS", "fraction");
+    papszKMLOptions =
+        CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_YUNITS", "fraction");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_X", "0");
+    papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_Y", "1");
+    papszKMLOptions =
+        CSLAddNameValue(papszKMLOptions, "SO_SCREEN_XUNITS", "fraction");
+    papszKMLOptions =
+        CSLAddNameValue(papszKMLOptions, "SO_SCREEN_YUNITS", "fraction");
+    papszOptions = CSLMerge(papszKMLOptions, papszOptions);
   }
 
-  if (nFlags & NINJA_OUTPUT_VECTOR) {
-    // Handle the KML special options
-    char **papszKMLOptions = 0;
-    if (EQUAL(pszDriver, "LIBKML")) {
-      // Don't create a root doc.kml, this aligns with our old format
-      CPLSetConfigOption("LIBKML_USE_DOC.KML", "NO");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "ADD_REGION", "YES");
-      papszKMLOptions =
-          CSLAddNameValue(papszKMLOptions, "SO_HREF", "legend.png");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_NAME", "Legend");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_X", "0");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_Y", "1");
-      papszKMLOptions =
-          CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_XUNITS", "fraction");
-      papszKMLOptions =
-          CSLAddNameValue(papszKMLOptions, "SO_OVERLAY_YUNITS", "fraction");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_X", "0");
-      papszKMLOptions = CSLAddNameValue(papszKMLOptions, "SO_SCREEN_Y", "1");
-      papszKMLOptions =
-          CSLAddNameValue(papszKMLOptions, "SO_SCREEN_XUNITS", "fraction");
-      papszKMLOptions =
-          CSLAddNameValue(papszKMLOptions, "SO_SCREEN_YUNITS", "fraction");
-      papszOptions = CSLMerge(papszKMLOptions, papszOptions);
-    }
+  const char *pszLayerName = "Wind Speed";
+  if (nFlags & NINJA_OUTPUT_ARROWS) {
+    hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbLineString,
+                                    papszOptions);
+  } else {
+    hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbPoint,
+                                    papszOptions);
+  }
+  if (hLayer == 0) {
+    GDALClose(hDS);
+    return 1;
+  }
 
-    const char *pszLayerName = "Wind Speed";
-    if (nFlags & NINJA_OUTPUT_ARROWS) {
-      hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbLineString,
-                                      papszOptions);
-    } else {
-      hLayer = GDALDatasetCreateLayer(hDS, pszLayerName, hDstSRS, wkbPoint,
-                                      papszOptions);
-    }
-    if (hLayer == 0) {
-      GDALClose(hDS);
-      return 1;
-    }
+  hFieldDefn = OGR_Fld_Create("name", OFTString);
+  rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
+  if (rc != OGRERR_NONE) {
+    GDALClose(hDS);
+    return 1;
+  }
+  OGR_Fld_Destroy(hFieldDefn);
 
-    hFieldDefn = OGR_Fld_Create("name", OFTString);
+  const char *apszFieldDefn[] = {"spd", "dir", 0};
+
+  for (int i = 0; apszFieldDefn[i] != 0; i++) {
+    hFieldDefn = OGR_Fld_Create(apszFieldDefn[i], OFTReal);
     rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
     if (rc != OGRERR_NONE) {
       GDALClose(hDS);
       return 1;
     }
     OGR_Fld_Destroy(hFieldDefn);
+  }
 
-    const char *apszFieldDefn[] = {"spd", "dir", 0};
-
-    for (int i = 0; apszFieldDefn[i] != 0; i++) {
-      hFieldDefn = OGR_Fld_Create(apszFieldDefn[i], OFTReal);
-      rc = OGR_L_CreateField(hLayer, hFieldDefn, TRUE);
-      if (rc != OGRERR_NONE) {
+  double x, y, s, d;
+  for (int i = 0; i < spd.get_nRows(); i++) {
+    for (int j = 0; j < spd.get_nCols(); j++) {
+      hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
+      s = spd.get_cellValue(i, j);
+      d = dir.get_cellValue(i, j);
+      OGR_F_SetFieldString(hFeat, OGR_F_GetFieldIndex(hFeat, "name"),
+                           CPLSPrintf("cell %d, %d", i, j));
+      OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
+      OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
+      if (s <= splits[1]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#0000ff;w:10px);");
+      } else if (s <= splits[2]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#00ff00;w:10px);");
+      } else if (s <= splits[3]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ffff00;w:10px);");
+      } else if (s <= splits[4]) {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ffa500;w:10px);");
+      } else {
+        OGR_F_SetStyleString(hFeat, "PEN(c:#ff0000;w:10px);");
+      }
+      spd.get_cellPosition(i, j, &x, &y);
+      if (nFlags & NINJA_OUTPUT_ARROWS) {
+        hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
+      } else {
+        hGeom = OGR_G_CreateGeometry(wkbPoint);
+        OGR_G_SetPoint_2D(hGeom, 0, x, y);
+      }
+      if (bTransform) {
+        OGR_G_Transform(hGeom, hCT);
+      }
+      OGR_F_SetGeometry(hFeat, hGeom);
+      if (OGR_L_CreateFeature(hLayer, hFeat) != OGRERR_NONE) {
+        OGR_G_DestroyGeometry(hGeom);
         GDALClose(hDS);
         return 1;
       }
-      OGR_Fld_Destroy(hFieldDefn);
-    }
-
-    double x, y, s, d;
-    for (int i = 0; i < spd.get_nRows(); i++) {
-      for (int j = 0; j < spd.get_nCols(); j++) {
-        hFeat = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
-        s = spd.get_cellValue(i, j);
-        d = dir.get_cellValue(i, j);
-        OGR_F_SetFieldString(hFeat, OGR_F_GetFieldIndex(hFeat, "name"),
-                             CPLSPrintf("cell %d, %d", i, j));
-        OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "spd"), s);
-        OGR_F_SetFieldDouble(hFeat, OGR_F_GetFieldIndex(hFeat, "dir"), d);
-        if (s <= splits[1]) {
-          OGR_F_SetStyleString(hFeat, "PEN(c:#0000ff;w:10px);");
-        } else if (s <= splits[2]) {
-          OGR_F_SetStyleString(hFeat, "PEN(c:#00ff00;w:10px);");
-        } else if (s <= splits[3]) {
-          OGR_F_SetStyleString(hFeat, "PEN(c:#ffff00;w:10px);");
-        } else if (s <= splits[4]) {
-          OGR_F_SetStyleString(hFeat, "PEN(c:#ffa500;w:10px);");
-        } else {
-          OGR_F_SetStyleString(hFeat, "PEN(c:#ff0000;w:10px);");
-        }
-        spd.get_cellPosition(i, j, &x, &y);
-        if (nFlags & NINJA_OUTPUT_ARROWS) {
-          hGeom = drawArrow(x, y, s, d, 1.0, spd.get_cellSize());
-        } else {
-          hGeom = OGR_G_CreateGeometry(wkbPoint);
-          OGR_G_SetPoint_2D(hGeom, 0, x, y);
-        }
-        if (bTransform) {
-          OGR_G_Transform(hGeom, hCT);
-        }
-        OGR_F_SetGeometry(hFeat, hGeom);
-        if (OGR_L_CreateFeature(hLayer, hFeat) != OGRERR_NONE) {
-          OGR_G_DestroyGeometry(hGeom);
-          GDALClose(hDS);
-          return 1;
-        }
-        OGR_G_DestroyGeometry(hGeom);
-        OGR_F_Destroy(hFeat);
-      }
+      OGR_G_DestroyGeometry(hGeom);
+      OGR_F_Destroy(hFeat);
     }
   }
+  
   OSRDestroySpatialReference(hSRS);
   OSRDestroySpatialReference(hDstSRS);
   OCTDestroyCoordinateTransformation(hCT);

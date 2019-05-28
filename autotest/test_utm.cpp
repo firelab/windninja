@@ -1,8 +1,8 @@
 /******************************************************************************
  *
  * Project:  WindNinja
- * Purpose:  Arbitrary output writer for any GDAL driver
- * Author:   Kyle Shannon <kyle@pobox.com>
+ * Purpose:  Test utm zone calculations
+ * Author:   Kyle Shannon <kyle at pobox dot com>
  *
  ******************************************************************************
  *
@@ -25,27 +25,51 @@
  *
  *****************************************************************************/
 
-#ifndef NINJA_GDAL_OUTPUT_H_
-#define NINJA_GDAL_OUTPUT_H_
+#ifndef WIN32
+#include "ninja_conv.h"
 
-#include "gdal.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
+#include <boost/test/unit_test.hpp>
 
-#include "ascii_grid.h"
+#include "gdal_util.h"
 
-#define NINJA_OUTPUT_VECTOR 1 << 0
-#define NINJA_OUTPUT_ARROWS 1 << 1
-#define NINJA_OUTPUT_STYLED 1 << 2
-#define NINJA_OUTPUT_PALLET 1 << 3
+BOOST_AUTO_TEST_SUITE(utm)
 
+struct utmTest {
+  double x;
+  double y;
+  int z;
+}utmTest;
 /*
-** NinjaGDALOutput writes wind ninja output to an arbitrary driver.
+** Test on western hemisphere and one eastern, we'll use Boise and Adelaide.
 */
-int NinjaGDALVectorOutput(const char *pszDriver,
-                          const char *pszFilename,
-                          int nFlags,
-                          AsciiGrid<double> &spd,
-                          AsciiGrid<double> &dir,
-                          char **papszOptions);
-#endif /* NINJA_GDAL_OUTPUT_H_ */
+BOOST_AUTO_TEST_CASE(boise) {
+  struct utmTest utmTests[]{
+      { -116.24053, 43.56704, 32611 },
+      { -476.24053, 43.56704, 32611 },
+      { -836.24053, 43.56704, 32611 },
+  };
+  int i = 0;
+  int got = 0;
+  for(i = 0; i < sizeof(utmTests) / sizeof(utmTest); i++) {
+      got = GetUTMZoneInEPSG( utmTests[i].x, utmTests[i].y );
+      BOOST_REQUIRE( got == utmTests[i].z );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(adelaide) {
+  struct utmTest utmTests[]{
+      { 138.601111, -34.928889, 32754 },
+      { 498.601111, -34.928889, 32754 },
+      { 858.601111, -34.928889, 32754 },
+  };
+  int i = 0;
+  int got = 0;
+  for(i = 0; i < sizeof(utmTests) / sizeof(utmTest); i++) {
+      got = GetUTMZoneInEPSG( utmTests[i].x, utmTests[i].y );
+      BOOST_REQUIRE( got == utmTests[i].z );
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+#endif /* WIN32 */

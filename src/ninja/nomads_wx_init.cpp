@@ -546,9 +546,15 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
+#ifdef NOMADS_VRT
+    hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                        GRA_NearestNeighbour, 1.0,
+                                        psWarpOptions );
+#else
     hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
+#endif
 
     const char *pszElement;
     const char *pszShortName;
@@ -647,9 +653,15 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                 throw badForecastFile( "Could not load cloud data." );
             }
             pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+#ifdef NOMADS_VRT
+            hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                              GRA_NearestNeighbour, 1.0,
+                                              psWarpOptions );
+#else
             hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                               GRA_NearestNeighbour, 1.0,
                                               psWarpOptions );
+#endif
             if( hVrtDS == NULL )
             {
                 throw badForecastFile( "Could not load cloud data." );
@@ -841,9 +853,15 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
     pszSrcWkt = GDALGetProjectionRef( hDS );
     pszDstWkt = input.dem.prjString.c_str();
+#ifdef NOMADS_VRT
+    hVrtDS = NomadsAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+#else
     hVrtDS = GDALAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
+#endif
 
     int nSkipRows, nSkipCols;
     hBand = GDALGetRasterBand( hVrtDS, 1 );

@@ -70,6 +70,10 @@ NOMADS Configuration
   current implementation.  NARR and NEST almost fit, but don't with the current
   organization.  Primarily a debugging tool.  Not recommended.
 
+* `NOMADS_INTERNAL_VRT` Use an internal warper that allows subsetting of bands.
+  This provides substantial speed up running large model output, specifically
+  wrfout files.
+
 ### GFS horizontal grid resolution
 
 GFS has three horizontal grid resolutions, 0.25 (default), 0.5 and 1.0 degrees.
