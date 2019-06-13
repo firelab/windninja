@@ -207,7 +207,7 @@ static const char *apszNomadsKeys[][11] =
       "gfs.t%02dz.pgrb2.0p25.f%03d",
 #endif
       /* Directory formats, string is date formatted as folowing */
-      "gfs.%s%02d",
+      "gfs.%s/%02d",
       /* Date format for directory */
       "%Y%m%d",
       /* Forecast hours, start:stop:stride */
