@@ -1,7 +1,10 @@
 Release Notes
 =============
 
-=======
+WindNinja 3.5.3
+---------------
+- Update for NOMADS directory structure changes for the GFS (\#341)
+
 WindNinja 3.5.2
 ---------------
 - Fix bug related to lat/lon calculations in DEM downloader (\#327, \#328, \#333)
