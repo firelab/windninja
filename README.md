@@ -35,7 +35,7 @@ Dependencies (versions are versions we build against):
     * boost_program_options
     * boost_test
  * NetCDF 4.1.1
- * GDAL 1.11.1
+ * GDAL 2.2.2
     * NetCDF support
     * PROJ.4 support
     * GEOS support
