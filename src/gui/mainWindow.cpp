@@ -761,15 +761,21 @@ void mainWindow::openExistingCase()
     }
     //look for DEM
     const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
-    const char* pszInputFilename=""; //Initialize the inputfile as blank
+    const char* pszInputFilename= ""; //Initialize the inputfile as blank
     papszFileList = VSIReadDir( pszDemPath );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
         std::string s(pszFilename);
         if( s.compare(pszBasename) == 0 ){ //Try to find the DEM name in the directory
-            pszInputFilename = CPLStrdup( papszFileList[i] );
-            break;
+            if(!strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"tif") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"lcp") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"img") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"asc"))
+            {
+                pszInputFilename = CPLStrdup( papszFileList[i] );
+                break;
+            }
         }
     }
     const char* pszFname="";

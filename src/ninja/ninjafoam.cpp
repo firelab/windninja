@@ -133,6 +133,13 @@ bool NinjaFoam::simulate_wind()
         init->ninjaFoamInitializeFields(input, CloudGrid);
     }
 
+    if(!input.ninjaTime.is_not_a_date_time())
+    {
+        std::ostringstream out;
+        out << "Simulation time is " << input.ninjaTime;
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
@@ -1510,6 +1517,9 @@ void NinjaFoam::UpdateDictFiles()
             CPLSPrintf("firstCellHeight %.2f;", initialFirstCellHeight),
             CPLSPrintf("firstCellHeight %.2f;", finalFirstCellHeight)); 
             
+    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/nut", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
+
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
@@ -1572,7 +1582,7 @@ int NinjaFoam::RefineMesh()
 int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
-    char* currentDir = CPLGetCurrentDir();
+
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
                                     pszFoamPath,
@@ -2054,6 +2064,8 @@ int NinjaFoam::SampleCloud()
                       1, 1, GDT_Float64, 0, 0 );
         i++;
     }
+    OGR_G_DestroyGeometry( hGeometry );
+    OGR_F_Destroy( hFeature );
     OGR_DS_Destroy( hDS );
     GDALClose( hGriddedDS );
 
@@ -2192,6 +2204,8 @@ int NinjaFoam::SampleCloudGrid()
     CPLFree( (void*)padfV );
 
     CPLFree( (void*)padfData );
+    OGR_G_DestroyGeometry( hGeometry );
+    OGR_F_Destroy( hFeature );
     OGR_DS_Destroy( hDS );
     GDALClose( hGriddedDS );
 
@@ -2724,6 +2738,9 @@ int NinjaFoam::UpdateExistingCase()
             CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
             "-9999.9", 
             CPLSPrintf("%.2f", finalFirstCellHeight));
+
+    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/nut", latestTime), ""));
 
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), "")); 
