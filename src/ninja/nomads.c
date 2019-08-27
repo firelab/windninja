@@ -941,6 +941,10 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 
     int i = 0;
     GDALWarpOptions *psWO = NULL;
+    double adfDstGeoTransform[6] = { 0.0 };
+    int nDstPixels = 0;
+    int nDstLines = 0;
+
     CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
@@ -1032,9 +1036,6 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Figure out the desired output bounds and resolution.            */
 /* -------------------------------------------------------------------- */
-    double adfDstGeoTransform[6] = { 0.0 };
-    int nDstPixels = 0;
-    int nDstLines = 0;
     CPLErr eErr =
         GDALSuggestedWarpOutput( hSrcDS, psWO->pfnTransformer,
                                  psWO->pTransformerArg,
