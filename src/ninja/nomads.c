@@ -932,6 +932,7 @@ void NomadsFree( void *p )
 ** NomadsAutoCreateWarpedVRT is a copy of GDALAutoCreateWarpedVRT() that allows
 ** for band subsetting.
 */
+#ifdef NOMADS_INTERNAL_VRT
 GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           const char *pszSrcWKT,
                           const char *pszDstWKT,
@@ -1095,5 +1096,6 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 
     return hDstDS;
 }
+#endif /* NOMADS_INTERNAL_VRT */
 
 

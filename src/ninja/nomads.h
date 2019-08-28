@@ -560,6 +560,7 @@ char * NomadsFormName( const char *pszKey, char pszSpacer );
 
 void NomadsFree( void *p );
 
+#ifdef NOMADS_INTERNAL_VRT
 GDALDatasetH
 NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           const char *pszSrcWKT,
@@ -567,6 +568,7 @@ NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           GDALResampleAlg eResampleAlg,
                           double dfMaxError,
                           const GDALWarpOptions *psOptionsIn);
+#endif
 
 #ifdef __cplusplus
 }
