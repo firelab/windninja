@@ -129,7 +129,7 @@ int NinjaInitialize()
 #if defined(FIRELAB_PACKAGE)
     char szDriverPath[MAX_PATH+1];
     rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
-    const char *pszPlugins = CPLSPrintf("%s/plugins", CPLGetPath(szDriverPath));
+    const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
     CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
 
     CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
