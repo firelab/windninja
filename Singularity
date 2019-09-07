@@ -19,12 +19,12 @@ From: alpine
     curl
 
   cd /opt
-  git clone https://github.com/firelab/windninja
+  git clone --depth=1 https://github.com/firelab/windninja
   cd windninja
   mkdir build
   cd build
-  cmake ..
-  make
+  cmake -D..
+  make -j 6
 
 %test
   export WINDNINJA_DATA=/opt/windninja/data
