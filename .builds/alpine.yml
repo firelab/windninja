@@ -1,4 +1,4 @@
-image: alpine
+image: alpine/edge
 
 packages:
   - alpine-sdk
@@ -11,8 +11,8 @@ sources:
 
 tasks:
   - apk: |
-      apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.8/main qt-dev
-      apk add --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev netcdf-dev
+      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.8/main qt-dev
+      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev netcdf-dev
   - build: |
       cd windninja
       mkdir build
