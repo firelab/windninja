@@ -1013,7 +1013,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
          */
 
         for( unsigned int i = 0;i < timelen;i++ ) {
-            bpt::time_duration td = bpt::hours( varvals[i] );
+            bpt::time_duration td = bpt::hours( (int)varvals[i] );
             bpt::ptime first_pt( reference_pt + td );
             blt::local_date_time first_pt_local(first_pt, timeZonePtr);
             timeList.push_back( first_pt_local );
