@@ -25,7 +25,7 @@ tasks:
         -D STABILITY=ON \
         -D CMAKE_BUILD_TYPE=debug \
         ..
-      make
+      make -j 2
 
   - test: |
       export WINDNINJA_DATA=~/windninja/data
