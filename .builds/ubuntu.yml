@@ -26,10 +26,10 @@ tasks:
         -D STABILITY=ON \
         -D CMAKE_BUILD_TYPE=debug \
         ..
-      make -j 2
+      make -j 3
 
   - test: |
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
       # ignore rtma config test
-      ctest -j 2 -E 'rtma'
+      ctest -j 3 -E 'rtma'

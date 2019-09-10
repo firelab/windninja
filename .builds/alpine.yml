@@ -25,10 +25,10 @@ tasks:
         -D STABILITY=ON \
         -D CMAKE_BUILD_TYPE=debug \
         ..
-      make -j 2
+      make -j 3
 
   - test: |
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
       # GDAL on alpine not built with libkml
-      ctest -j 2 -E 'gdal_output_km'
+      ctest -j 3 -E 'gdal_output_km'
