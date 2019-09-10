@@ -31,4 +31,4 @@ tasks:
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
       # GDAL on alpine not built with libkml
-      ctest -E 'gdal_output_km'
+      ctest -j 2 -E 'gdal_output_km'

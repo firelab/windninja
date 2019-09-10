@@ -31,4 +31,4 @@ tasks:
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
       # ignore rtma config test
-      ctest -E 'rtma'
+      ctest -j 2 -E 'rtma'
