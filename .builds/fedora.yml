@@ -1,9 +1,10 @@
-image: fedora
+image: fedora/latest
 
 packages:
+  - boost-devel
   - cmake
   - gdal-devel
-  - boost-devel
+  - netcdf-devel
   - qt-webkit-devel
   - qt-devel
 
