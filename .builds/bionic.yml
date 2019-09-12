@@ -1,4 +1,4 @@
-image: ubuntu/bionic
+image: ubuntu/lts
 
 packages:
   - cmake

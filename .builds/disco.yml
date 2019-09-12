@@ -1,4 +1,4 @@
-image: ubuntu/disco
+image: ubuntu/latest
 
 packages:
   - cmake
