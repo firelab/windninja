@@ -1,0 +1,19 @@
+image: ubuntu/disco
+
+packages:
+  - cmake
+  - libgdal-dev
+  - libboost-date-time-dev
+  - libboost-program-options-dev
+  - libboost-test-dev
+  - libqtwebkit-dev
+  - qt4-dev-tools
+
+sources:
+  - https://github.com/firelab/windninja
+
+tasks:
+  - build: |
+      echo 'FIXME(kyle): add support for disco'
+  - test: |
+      echo 'FIXME(kyle): add support for disco'
