@@ -1,4 +1,4 @@
-image: fedora/latest
+image: fedora/29
 
 packages:
   - boost-devel
