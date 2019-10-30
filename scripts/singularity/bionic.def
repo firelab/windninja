@@ -7,7 +7,10 @@ From: kyle/default/ubuntu:18.04
 
 %post
   apt -y install \
+    ca-certificates \
     cmake-curses-gui \
+    curl \
+    evince \
     gdb \
     libboost-date-time-dev \
     libboost-program-options-dev \
@@ -15,6 +18,9 @@ From: kyle/default/ubuntu:18.04
     libgdal-dev \
     libnetcdf-dev \
     libqtwebkit-dev \
+    libssl1.0-dev \
+    openssl \
+    qgis \
     qt4-dev-tools \
     valgrind
 
