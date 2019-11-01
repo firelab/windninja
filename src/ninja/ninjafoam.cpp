@@ -1571,7 +1571,7 @@ int NinjaFoam::RefineMesh()
 int NinjaFoam::BlockMesh()
 {
     int nRet = -1;
-    char* currentDir = CPLGetCurrentDir();
+
     const char *const papszArgv[] = { "blockMesh", 
                                     "-case",
                                     pszFoamPath,
@@ -2053,6 +2053,8 @@ int NinjaFoam::SampleCloud()
                       1, 1, GDT_Float64, 0, 0 );
         i++;
     }
+    OGR_G_DestroyGeometry( hGeometry );
+    OGR_F_Destroy( hFeature );
     OGR_DS_Destroy( hDS );
     GDALClose( hGriddedDS );
 
@@ -2191,6 +2193,8 @@ int NinjaFoam::SampleCloudGrid()
     CPLFree( (void*)padfV );
 
     CPLFree( (void*)padfData );
+    OGR_G_DestroyGeometry( hGeometry );
+    OGR_F_Destroy( hFeature );
     OGR_DS_Destroy( hDS );
     GDALClose( hGriddedDS );
 

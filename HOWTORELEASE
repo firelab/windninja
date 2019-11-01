@@ -1,16 +1,2 @@
 
-WindNinja Release Procedure
-===========================
-
-0. Update VERSION and src/version.h with appropriate versions and git sha1 hash.
-
-0. Build
-
-### Firelab release
-
-0. Build win-64 package
-
-0. Build win-32 package
-
-0. Post on firelab.org
-
+## TBD

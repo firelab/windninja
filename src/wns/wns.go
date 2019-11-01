@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -25,6 +26,35 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/crypto/acme/autocert"
 )
+
+type ipStackResp struct {
+	City          string  `json:"city"`
+	ContinentCode string  `json:"continent_code"`
+	ContinentName string  `json:"continent_name"`
+	CountryCode   string  `json:"country_code"`
+	CountryName   string  `json:"country_name"`
+	IP            string  `json:"ip"`
+	Latitude      float64 `json:"latitude"`
+	Location      struct {
+		CallingCode             string `json:"calling_code"`
+		Capital                 string `json:"capital"`
+		CountryFlag             string `json:"country_flag"`
+		CountryFlagEmoji        string `json:"country_flag_emoji"`
+		CountryFlagEmojiUnicode string `json:"country_flag_emoji_unicode"`
+		GeonameID               int64  `json:"geoname_id"`
+		IsEu                    bool   `json:"is_eu"`
+		Languages               []struct {
+			Code   string `json:"code"`
+			Name   string `json:"name"`
+			Native string `json:"native"`
+		} `json:"languages"`
+	} `json:"location"`
+	Longitude  float64 `json:"longitude"`
+	RegionCode string  `json:"region_code"`
+	RegionName string  `json:"region_name"`
+	Type       string  `json:"type"`
+	Zip        string  `json:"zip"`
+}
 
 const (
 	message     = ""
@@ -120,7 +150,19 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	log.Printf("visit from ip: %s", ip)
-	stmt := db.Prep("INSERT INTO visit(timestamp, ip) VALUES(datetime('now'), ?)")
+	stmt := db.Prep("SELECT COUNT() FROM visit WHERE ip=?")
+	stmt.BindText(1, ip)
+	_, err = stmt.Step()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if stmt.ColumnInt64(0) < 0 {
+		w.WriteHeader(200)
+		return
+	}
+	stmt.Finalize()
+	stmt = db.Prep("INSERT INTO visit(timestamp, ip) VALUES(datetime('now'), ?)")
 	stmt.BindText(1, ip)
 	_, err = stmt.Step()
 	if err != nil {
@@ -143,7 +185,7 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		u := url.URL{
-			Scheme: "https",
+			Scheme: "http",
 			Host:   "api.ipstack.com",
 			Path:   ip,
 		}
@@ -151,6 +193,7 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 		q.Set("format", "1")
 		q.Set("access_key", ipstackToken)
 		u.RawQuery = q.Encode()
+		log.Print(u.String())
 		resp, err := http.Get(u.String())
 		if err != nil {
 			log.Println(err)
@@ -161,27 +204,18 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("response from geoip: %s", http.StatusText(resp.StatusCode))
 			return
 		}
-		var m map[string]interface{}
-		if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		var ips ipStackResp
+		if err := json.NewDecoder(resp.Body).Decode(&ips); err != nil {
 			log.Println(err)
 			return
 		}
-		var ms map[string]string
-		for k, v := range m {
-			if s, ok := v.(string); ok {
-				ms[k] = s
-			} else {
-				log.Print("invalid type")
-			}
-		}
-
 		stmt = db.Prep("INSERT INTO ip VALUES(?,?,?,?,?,?)")
-		stmt.BindText(1, ms["ip"])
-		stmt.BindText(2, ms["country_code"])
-		stmt.BindText(3, ms["region_name"])
-		stmt.BindText(4, ms["city"])
-		stmt.BindText(5, ms["longitude"])
-		stmt.BindText(6, ms["latitude"])
+		stmt.BindText(1, ips.IP)
+		stmt.BindText(2, ips.CountryCode)
+		stmt.BindText(3, ips.RegionName)
+		stmt.BindText(4, ips.City)
+		stmt.BindFloat(5, ips.Longitude)
+		stmt.BindFloat(6, ips.Longitude)
 		_, err = stmt.Step()
 		if err != nil {
 			log.Print(err)
@@ -189,7 +223,41 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+func reportHandler(w http.ResponseWriter, r *http.Request) {
+	db := pool.Get(r.Context().Done())
+	stmt := db.Prep(`SELECT COUNT() AS c, city, region, country
+		FROM visit JOIN ip USING(ip) GROUP BY city ORDER BY c DESC`)
+	type usage struct {
+		City    string
+		Region  string
+		Country string
+		Count   int64
+	}
+	var u usage
+	var us []usage
+	for {
+		if hasRow, err := stmt.Step(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else if !hasRow {
+			break
+		}
+		u = usage{}
+		u.City = stmt.ColumnText(1)
+		u.Region = stmt.ColumnText(2)
+		u.Country = stmt.ColumnText(3)
+		u.Count = stmt.ColumnInt64(0)
+		us = append(us, u)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(us)
+	if err != nil {
+		log.Print(err)
+	}
+}
+
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flagAddr := flag.String("addr", ":https", "address to listen on (:8888)")
 	flagDB := flag.String("db", "", "database file")
 	flag.Parse()
@@ -213,16 +281,18 @@ func main() {
 		}
 	}()
 
-	buf, err := ioutilReadFile("ipstack.txt")
+	buf, err := ioutil.ReadFile("ipstack.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	ipstackToken = string(buf)
+	ipstackToken = strings.TrimSpace(string(buf))
+	log.Printf("ipstack token: %s", ipstackToken)
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/cgi-bin/ninjavisit", visitHandler)
 	mux.HandleFunc("/version/", versionHandler)
 	mux.HandleFunc("/mapkey/", mapkeyHandler)
+	mux.HandleFunc("/report/", reportHandler)
 	srv := &http.Server{
 		Addr:         *flagAddr,
 		ReadTimeout:  5 * time.Second,

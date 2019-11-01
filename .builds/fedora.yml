@@ -1,0 +1,34 @@
+image: fedora/29
+
+packages:
+  - boost-devel
+  - cmake
+  - gdal-devel
+  - netcdf-devel
+  - qt-webkit-devel
+  - qt-devel
+
+sources:
+  - https://github.com/firelab/windninja
+
+tasks:
+  - build: |
+      cd windninja
+      mkdir build
+      cd build
+      cmake \
+        -D SUPRESS_WARNINGS=ON \
+        -D SKIP_GETDATE=ON \
+        -D BUILD_TESTING=ON \
+        -D DISABLE_THREDDS_UPDATE=ON \
+        -D RUN_CFG_TESTS=ON \
+        -D STABILITY=ON \
+        -D CMAKE_BUILD_TYPE=debug \
+        ..
+      make -j 3
+
+  - test: |
+      export WINDNINJA_DATA=~/windninja/data
+      cd windninja/build
+      # ignore rtma config test
+      ctest -j 3 -E 'rtma'

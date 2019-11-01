@@ -932,6 +932,7 @@ void NomadsFree( void *p )
 ** NomadsAutoCreateWarpedVRT is a copy of GDALAutoCreateWarpedVRT() that allows
 ** for band subsetting.
 */
+#ifdef NOMADS_INTERNAL_VRT
 GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           const char *pszSrcWKT,
                           const char *pszDstWKT,
@@ -939,8 +940,20 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                           double dfMaxError,
                           const GDALWarpOptions *psOptionsIn) {
 
-    CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
     int i = 0;
+    GDALWarpOptions *psWO = NULL;
+    double adfDstGeoTransform[6];
+    int nDstPixels = 0;
+    int nDstLines = 0;
+
+    adfDstGeoTransform[0] = 0.0;
+    adfDstGeoTransform[1] = 0.0;
+    adfDstGeoTransform[2] = 0.0;
+    adfDstGeoTransform[3] = 0.0;
+    adfDstGeoTransform[4] = 0.0;
+    adfDstGeoTransform[5] = 0.0;
+
+    CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
     if(psOptionsIn == NULL) {
@@ -948,7 +961,6 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                     dfMaxError, psOptionsIn);
     }
 
-    GDALWarpOptions *psWO = NULL;
     if( psOptionsIn != NULL ) {
         psWO = GDALCloneWarpOptions( psOptionsIn );
     }
@@ -1032,9 +1044,6 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Figure out the desired output bounds and resolution.            */
 /* -------------------------------------------------------------------- */
-    double adfDstGeoTransform[6] = { 0.0 };
-    int nDstPixels = 0;
-    int nDstLines = 0;
     CPLErr eErr =
         GDALSuggestedWarpOutput( hSrcDS, psWO->pfnTransformer,
                                  psWO->pTransformerArg,
@@ -1087,5 +1096,6 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 
     return hDstDS;
 }
+#endif /* NOMADS_INTERNAL_VRT */
 
 

@@ -1,6 +1,7 @@
 [WindNinja](http://firelab.org/project/windninja) 
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
+[![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
 WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
@@ -35,7 +36,7 @@ Dependencies (versions are versions we build against):
     * boost_program_options
     * boost_test
  * NetCDF 4.1.1
- * GDAL 1.11.1
+ * GDAL 2.2.2
     * NetCDF support
     * PROJ.4 support
     * GEOS support
