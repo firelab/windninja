@@ -15,22 +15,10 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 RASModel            kEpsilon;
-//RASModel            RNGkEpsilon;
 
 turbulence          on;
 
 printCoeffs         on;
-
-RNGkEpsilonCoeffs
-{
-     Cmu         0.085;
-     C1          0.92;
-     C2          1.68;
-     sigmak      0.7179;
-     sigmaEps    0.7179;
-     eta0        4.38;
-     beta        0.012;
-}
 
 kEpsilonCoeffs
 {
