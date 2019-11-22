@@ -1,13 +1,12 @@
-image: ubuntu/bionic
+image: fedora/rawhide
 
 packages:
+  - boost-devel
   - cmake
-  - libgdal-dev
-  - libboost-date-time-dev
-  - libboost-program-options-dev
-  - libboost-test-dev
-  - libqtwebkit-dev
-  - qt4-dev-tools
+  - gdal-devel
+  - netcdf-devel
+  - qt-webkit-devel
+  - qt-devel
 
 sources:
   - https://github.com/firelab/windninja
@@ -32,4 +31,4 @@ tasks:
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
       # ignore rtma config test
-      ctest -j 3 -E 'rtma|color'
+      ctest -j 3 -E 'rtma'
