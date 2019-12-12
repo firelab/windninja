@@ -1,0 +1,40 @@
+Bootstrap: library
+From: kyle/default/ubuntu:18.04
+
+%environment
+  WINDNINJA_DATA=$HOME/src/windninja/data
+  export WINDNINJA_DATA
+
+%post
+  apt -y install \
+    ca-certificates \
+    cmake-curses-gui \
+    curl \
+    evince \
+    gdb \
+    libboost-date-time-dev \
+    libboost-program-options-dev \
+    libboost-test-dev \
+    libgdal-dev \
+    libnetcdf-dev \
+    libqtwebkit-dev \
+    libssl1.0-dev \
+    openssl \
+    qgis \
+    qt4-dev-tools \
+    valgrind
+
+%help
+  This container allows the building and debugging of WindNinja with the ubuntu
+  18.04 (bionic) runtime.  To use:
+
+  $ cd /path/to/windninja/
+  $ mkdir -p build/bionic
+  $ cd build/bionic
+  $ sudo singularity build bionic.sif ../../scripts/singularity/bionic.def
+  $ singularity exec ./bionic.sif ccmake ../../
+  $ singularity exec ./bionic.sif make -j 4
+  $ singularity exec ./bionic.sif gdb -tui ./src/gui/WindNinja
+
+  WINDNINJA_DATA is set to $HOME/src/windninja/data, if that doesn't match your
+  environment, you have to set it.

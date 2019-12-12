@@ -3491,10 +3491,6 @@ void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
         throw std::range_error("The mesh resolution choice has been set improperly.");
     }
 }
-void ninja::set_NonEqBc(bool flag)
-{
-    input.nonEqBc = flag;
-}
 
 WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::string meshChoice)
 {

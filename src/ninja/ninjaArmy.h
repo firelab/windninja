@@ -329,15 +329,6 @@ public:
                       char ** papszOptions=NULL );
 
     /**
-    * \brief Enable/disable non-equilbrium boundary conditions for a NinjaFOAM run
-    *
-    * \param nIndex index of a ninja
-    * \param nMeshCount Mesh count
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL );
-
-    /**
     * \brief Set the path to an existing case for a NinjaFOAM run
     *
     * \param nIndex index of a ninja

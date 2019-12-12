@@ -441,17 +441,19 @@ install(FILES ${CMAKE_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja
 install(FILES ${CMAKE_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
 install(FILES ${CMAKE_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
 
+set(ZIPFILES "")
+
 # GDAL data
 if(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
-    INSTALL(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
+    install(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
 endif(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
 
 if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
         message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
-    FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
-    FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
+    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
+    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
 # CPack related scripting

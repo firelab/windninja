@@ -286,7 +286,6 @@ public:
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
     void set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice); //mesh count for a ninjafoam run
-    void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_ExistingCaseDirectory(std::string directory); //use existing case for ninjafoam run
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
