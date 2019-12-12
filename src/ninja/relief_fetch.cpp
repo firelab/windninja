@@ -277,7 +277,15 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     /* GTiff Create() driver requires OGC WKT projection reference */
     OGRSpatialReferenceH hSrcSRS = OSRNewSpatialReference( GDALGetProjectionRef( inDS ) );
+/*
+** OSRFixup was removed after the 3.0.0 release.  See:
+** https://trac.osgeo.org/gdal/wiki/rfc73_proj6_wkt2_srsbarn
+*/
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM < GDAL_COMPUTE_VERSION(3,0,0)
     OSRFixup( hSrcSRS );
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
+#endif /* GDAL_COMPUTE_VERSION */
     OSRExportToWkt( hSrcSRS, (char**)&pszDstWKT );
     OSRDestroySpatialReference( hSrcSRS );
     GDALClose( inDS );
