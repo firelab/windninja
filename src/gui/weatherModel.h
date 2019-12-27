@@ -128,6 +128,8 @@ class weatherModel : public QWidget
     QVBoxLayout *layout;
 
     QString tzString;
+
+    std::vector<std::string> timeList();
  private:
     void loadModelComboBox();
 

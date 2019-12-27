@@ -2198,13 +2198,23 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
+
+        std::vector<blt::local_date_time> times;
+        std::vector<std::string> tl = tree->weather->timeList();
+        if(tl.size() > 0) {
+            std::vector<std::string> t;
+            for(int i = 0; i < tl.size(); i++) {
+                t.push_back(tl[i]);
+            }
+            times = toBoostLocal(t, timeZone);
+        }
         /* This can throw a badForecastFile */
         try
         {
 #ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, useNinjaFoam );
+            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
 #else
-            army->makeArmy( weatherFile, timeZone, false );
+            army->makeArmy( weatherFile, timeZone, times, false );
 #endif
         }
         catch( badForecastFile &e )

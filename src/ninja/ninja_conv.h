@@ -45,9 +45,19 @@
 #define SKIP_DOT_AND_DOTDOT(a) if(EQUAL(a,"..")||EQUAL(a,".")) continue
 #endif
 
+#ifndef Q_MOC_RUN
+#include "boost/date_time/local_time/local_time.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#endif
+
 #ifndef MAX_PATH
 #define MAX_PATH 8192
 #endif
+
+namespace blt = boost::local_time;
+namespace bpt = boost::posix_time;
+
+extern boost::local_time::tz_database globalTimeZoneDB;
 
 typedef struct
 {
@@ -82,6 +92,7 @@ void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );
 std::string NinjaRemoveSpaces( std::string s);
 std::string NinjaSanitizeString( std::string s );
+std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
 
 #endif /* NINJA_CONV_H */
 

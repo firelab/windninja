@@ -442,14 +442,15 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     statusLabel->setText( dateTime );
 
     timeModel->setStringList(QStringList{});
+    blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
     QStringList times;
     for(int i = 0; i < timelist.size(); i++) {
         blt::local_time_facet* facet;
         facet = new blt::local_time_facet();
         std::ostringstream os;
         os.imbue(std::locale(std::locale::classic(), facet));
-        facet->format("%a %b %d %H:%M %z");
-        os << timelist[i];
+        facet->format("%Y%m%dT%H%M%S");
+        os << timelist[i].local_time_in(utc);
         QString dateTime = QString::fromStdString( os.str() );
         times.append(dateTime);
         os.clear();
@@ -513,4 +514,14 @@ void weatherModel::setComboToolTip(int)
     QString s = modelComboBox->currentText();
     s = ExpandDescription( s.toLocal8Bit().data() );
     modelComboBox->setToolTip( s );
+}
+
+std::vector<std::string> weatherModel::timeList() {
+  QModelIndexList mi = listView->selectionModel()->selectedIndexes();
+  std::vector<std::string> tl;
+  for(int i = 0; i < mi.size(); i++) {
+      tl.push_back(mi[i].data().toString().toStdString());
+      qDebug() << QString::fromStdString(tl[i]);
+  }
+  return tl;
 }
