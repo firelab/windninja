@@ -189,7 +189,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
-                ("forecast_time", po::value<std::vector<std::string>>(), "specific time to run in wx model")
+                ("forecast_time", po::value<std::vector<std::string> >(), "specific time to run in wx model")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
                 ("input_speed", po::value<double>(), "input wind speed")
                 ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph, kts)")
@@ -863,7 +863,7 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "wx_model_type", "time_zone");
             std::vector<blt::local_date_time> timeList;
             if(vm.count("forecast_time")) {
-              timeList = toBoostLocal(vm["forecast_time"].as<std::vector<std::string>>(), osTimeZone);
+              timeList = toBoostLocal(vm["forecast_time"].as<std::vector<std::string> >(), osTimeZone);
             }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
