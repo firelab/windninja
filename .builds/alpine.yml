@@ -1,4 +1,4 @@
-image: alpine/edge
+image: alpine/3.10
 
 packages:
   - alpine-sdk
