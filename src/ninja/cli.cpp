@@ -91,129 +91,6 @@ pair<string, string> at_option_parser(string const&s)
         return pair<string, string>();
 }
 
-/** @brief This method initializes the CLI options so that both the command line and the API can use them
- *
- */
-/*
-void initializeOptions()
-{
-    try {
-        // Declare a group of options that will be
-        // allowed only on command line
-        po::options_description generic("Generic options");
-        generic.add_options()
-                        ("version", "print version")
-                        ("help", "produce help message")
-                        ("config_file", po::value<std::string>(),
-                                "configuration file ('config_file' flag not required)")
-                        ("response_file", po::value<std::string>(),
-                                 "response file (can be specified with '@name', also)")
-                                ;
-
-        // Declare a group of options that will be
-        // allowed both on command line and in
-        // config file
-        po::options_description config("Simulation options");
-        config.add_options()
-                ("num_threads", po::value<int>()->default_value(1), "number of threads to use during simulation")
-                ("elevation_file", po::value<std::string>(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
-                ("fetch_elevation", po::value<std::string>(), "fetch elevation file and save to path/filename")
-                ("north", po::value<double>(), "north extent of elevation file bounding box")
-                ("east", po::value<double>(), "east extent of elevation file bounding box")
-                ("south", po::value<double>(), "south extent of elevation file bounding box")
-                ("west", po::value<double>(), "west extent of elevation file bounding box")
-                ("x_center", po::value<double>(), "x coordinate of center of elevation domain to be downloaded")
-                ("y_center", po::value<double>(), "y coordinate of center of elevation domain to be downloaded")
-                ("x_buffer", po::value<double>(), "x buffer of elevation domain to be downloaded")
-                ("y_buffer", po::value<double>(), "y buffer of elevation domain to be downloaded")
-                ("buffer_units", po::value<std::string>()->default_value("miles"), "units for buffer (kilometers, miles)")
-                ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "Source for downloading elevation data (us_srtm, world_srtm, gmted)")
-                ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
-                ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; all choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-2.5-KM, UCAR-RAP-13-KM)")
-                ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
-                ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
-                ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
-                ("input_speed", po::value<double>(), "input wind speed")
-                ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph)")
-                ("output_speed_units", po::value<std::string>()->default_value("mph"), "units of output wind speed (mps, mph, kph)")
-                ("input_direction", po::value<double>(), "input wind direction")
-                ("uni_air_temp", po::value<double>(), "surface air temperature")
-                ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
-                ("uni_cloud_cover", po::value<double>(), "cloud cover")
-                ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
-                ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
-                ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
-                ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
-                ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
-                ("units_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
-                ("output_wind_height", po::value<double>()->required(), "height of output wind speed above the vegetation")
-                ("units_output_wind_height", po::value<std::string>(), "units of output wind height (ft, m)")
-                ("vegetation", po::value<std::string>(), "dominant type of vegetation (grass, brush, trees)")
-                ("diurnal_winds", po::value<bool>()->default_value(false), "include diurnal winds in simulation (true, false)")
-                ("year", po::value<int>(), "year of simulation")
-                ("month", po::value<int>(), "month of simulation")
-                ("day", po::value<int>(), "day of simulation")
-                ("hour", po::value<int>(), "hour of simulation")
-                ("minute", po::value<int>(), "minute of simulation")
-                ("mesh_choice", po::value<std::string>(), "mesh resolution choice (coarse, medium, fine)")
-                ("mesh_resolution", po::value<double>(), "mesh resolution")
-                ("units_mesh_resolution", po::value<std::string>(), "mesh resolution units (ft, m)")
-                ("output_buffer_clipping", po::value<double>()->default_value(0.0), "percent to clip buffer on output files")
-                ("write_wx_model_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file for the raw wx model forecast (true, false)")
-                ("write_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file (true, false)")
-                ("goog_out_resolution", po::value<double>()->default_value(-1.0), "resolution of Google Earth output file (-1 to use mesh resolution)")
-                ("units_goog_out_resolution", po::value<std::string>()->default_value("m"), "units of Google Earth resolution (ft, m)")
-                ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
-                ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
-                ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
-                ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
-                ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
-                ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
-                ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
-                ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolutino (ft, m)")
-                ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
-                ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
-                ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
-                ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
-                #ifdef EMISSIONS
-                ("compute_emissions",po::value<bool>()->default_value(false), "compute dust emissions (true, false)")
-                ("fire_perimeter_file", po::value<std::string>(), "input burn perimeter path/filename (*.shp)")
-                ("dust_file_out", po::value<std::string>(), "name of emissions output file")
-                #endif
-                ;
-
-        // Hidden options, will be allowed both on command line and
-        // in config file, but will not be shown to the user.
-        //po::options_description hidden("Hidden options");
-        //hidden.add_options()
-        //                ("input-file", po::value< vector<string> >(), "input file")
-        //                ;
-
-
-        po::options_description cmdline_options;
-        //cmdline_options.add(generic).add(config).add(hidden);
-        cmdline_options.add(generic).add(config);
-
-        po::options_description config_file_options;
-        //config_file_options.add(config).add(hidden);
-        config_file_options.add(config);
-
-        po::options_description visible("Allowed options");
-        visible.add(generic).add(config);
-
-        po::positional_options_description p;
-        p.add("config_file", -1);
-
-        po::variables_map vm;
-
-        po::parsed_options opts_command = po::command_line_parser(argc, argv).
-                        options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
-
-    initialized = true;
-}
-*/
-
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
  * from an input file.
@@ -312,6 +189,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
+                ("forecast_time", po::value<std::vector<std::string>>(), "specific time to run in wx model")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
                 ("input_speed", po::value<double>(), "input wind speed")
                 ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph, kts)")
@@ -983,7 +861,10 @@ int windNinjaCLI(int argc, char* argv[])
             conflicting_options(vm, "wx_model_type", "forecast_filename");
             option_dependency(vm, "wx_model_type", "forecast_duration");
             option_dependency(vm, "wx_model_type", "time_zone");
-
+            std::vector<blt::local_date_time> timeList;
+            if(vm.count("forecast_time")) {
+              timeList = toBoostLocal(vm["forecast_time"].as<std::vector<std::string>>(), osTimeZone);
+            }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
                 std::string model_type = vm["wx_model_type"].as<std::string>();
@@ -995,11 +876,13 @@ int windNinjaCLI(int argc, char* argv[])
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
+                                                            timeList,
                                                             vm["momentum_flag"].as<bool>() );
 #else
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
+                                                            timeList,
                                                             false );
 #endif
                 }
@@ -1016,11 +899,13 @@ int windNinjaCLI(int argc, char* argv[])
 #ifdef NINJAFOAM
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
+                                 timeList,
                                  vm["momentum_flag"].as<bool>());
 #else
 
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
+                                 timeList,
                                  false);
 #endif
             }

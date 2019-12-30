@@ -38,6 +38,7 @@
 
 #include "ninjaArmy.h"
 #include "ninja.h"
+#include "ninja_conv.h"
 #include "ninja_version.h"
 #include "gdal_util.h"
 #include "ninjaUnits.h"

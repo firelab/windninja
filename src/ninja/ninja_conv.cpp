@@ -353,7 +353,6 @@ toBoostLocal(std::vector<std::string> in, std::string timeZone) {
     for(int i = 0; i < in.size(); i++) {
         bpt::ptime pt = bpt::from_iso_string(in[i]);
         blt::local_date_time ldt = blt::local_date_time(pt, utc);
-        std::cout << ldt << std::endl;
         //ldt = ldt.local_time_in(zone);
         out.push_back(ldt);
     }
