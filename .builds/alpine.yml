@@ -12,7 +12,7 @@ sources:
 tasks:
   - apk: |
       sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.8/main qt-dev
-      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev netcdf-dev
+      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/3.10/testing gdal-dev netcdf-dev
   - build: |
       cd windninja
       mkdir build
