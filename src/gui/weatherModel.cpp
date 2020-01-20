@@ -377,6 +377,7 @@ void weatherModel::checkForModelData()
     treeView->setRootIndex(model->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
     statusLabel->setText( "" );
+    timeModel->setStringList(QStringList{});
 
     unselectForecast(false);
     // QModelIndex index = treeView->indexBelow( treeView->rootIndex() );
@@ -404,6 +405,9 @@ void weatherModel::setInputFile(QString newFile)
  */
 void weatherModel::displayForecastTime( const QModelIndex &index )
 {
+    timelist.clear();
+    timeModel->setStringList(QStringList{});
+
     if(model->fileInfo(index).isDir()==true)
     {
         treeView->selectionModel()->select(index,QItemSelectionModel::Deselect|QItemSelectionModel::Rows);
@@ -417,7 +421,6 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     }
     std::string filename = fi.absoluteFilePath().toStdString();
     wxModelInitialization* model = NULL;
-    std::vector<blt::local_date_time> timelist;
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
         timelist = model->getTimeList(tzString.toStdString());
@@ -441,18 +444,15 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
 
     statusLabel->setText( dateTime );
 
-    timeModel->setStringList(QStringList{});
-    blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
+    //blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
     QStringList times;
     for(int i = 0; i < timelist.size(); i++) {
-        blt::local_time_facet* facet;
-        facet = new blt::local_time_facet();
         std::ostringstream os;
         os.imbue(std::locale(std::locale::classic(), facet));
-        facet->format("%Y%m%dT%H%M%S");
-        os << timelist[i].local_time_in(utc);
-        QString dateTime = QString::fromStdString( os.str() );
-        times.append(dateTime);
+        facet->format("%a %b %d %H:%M %z");
+        //os << timelist[i].local_time_in(utc);
+        os << timelist[i];
+        times.append(QString::fromStdString(os.str()));
         os.clear();
     }
     timeModel->setStringList(times);
@@ -516,12 +516,11 @@ void weatherModel::setComboToolTip(int)
     modelComboBox->setToolTip( s );
 }
 
-std::vector<std::string> weatherModel::timeList() {
+std::vector<blt::local_date_time> weatherModel::timeList() {
   QModelIndexList mi = listView->selectionModel()->selectedIndexes();
-  std::vector<std::string> tl;
+  std::vector<blt::local_date_time> tl;
   for(int i = 0; i < mi.size(); i++) {
-      tl.push_back(mi[i].data().toString().toStdString());
-      qDebug() << QString::fromStdString(tl[i]);
+      tl.push_back(timelist[mi[i].row()]);
   }
   return tl;
 }

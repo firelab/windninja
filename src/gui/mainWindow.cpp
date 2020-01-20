@@ -2199,15 +2199,7 @@ int mainWindow::solve()
             return false;
         }
 
-        std::vector<blt::local_date_time> times;
-        std::vector<std::string> tl = tree->weather->timeList();
-        if(tl.size() > 0) {
-            std::vector<std::string> t;
-            for(int i = 0; i < tl.size(); i++) {
-                t.push_back(tl[i]);
-            }
-            times = toBoostLocal(t, timeZone);
-        }
+        std::vector<blt::local_date_time> times = tree->weather->timeList();
         /* This can throw a badForecastFile */
         try
         {

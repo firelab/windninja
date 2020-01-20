@@ -129,7 +129,7 @@ class weatherModel : public QWidget
 
     QString tzString;
 
-    std::vector<std::string> timeList();
+    std::vector<blt::local_date_time> timeList();
  private:
     void loadModelComboBox();
 
@@ -145,6 +145,8 @@ class weatherModel : public QWidget
     int nNomadsCount;
     NomadsWxModel **papoNomads;
 #endif
+
+    std::vector<blt::local_date_time> timelist;
 
  private slots:
     void getData();
