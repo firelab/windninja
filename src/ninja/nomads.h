@@ -502,6 +502,21 @@ static const char *apszNomadsKeys[][11] =
       "3 km",
       "HRRR CONUS SUBHOURLY" },
     /*
+    ** HRRR AK - subhourly
+    */
+    {
+      "hrrr_ak_sub",
+      "filter_hrrrak_sub.pl",
+      "hrrr.t%02dz.wrfsubhf%02d.ak.grib2",
+      "hrrr.%s/alaska",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      "TMP,UGRD,VGRD",
+      "2_m_above_ground,10_m_above_ground",
+      "3 km",
+      "HRRR ALASKA SUBHOURLY" },
+    /*
     ** RAP
     */
     {
