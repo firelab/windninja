@@ -52,7 +52,9 @@ char ** NinjaCheckVersion(void) {
   CPLHTTPResult *poResult;
   char **papszTokens = NULL;
   char *pszResp = NULL;
+  CPLPushErrorHandler(CPLQuietErrorHandler);
   poResult = CPLHTTPFetch("http://windninja.org/version/", NULL);
+  CPLPopErrorHandler();
   if (!poResult || poResult->nStatus != 0 || poResult->nDataLen == 0) {
     return NULL;
   }
@@ -117,6 +119,11 @@ int NinjaInitialize()
 {
     GDALAllRegister();
     OGRRegisterAll();
+    /*
+    ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
+    ** but that doesn't mean we are in trouble.
+    */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
@@ -212,5 +219,6 @@ int NinjaInitialize()
     }
 #endif
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+    CPLPopErrorHandler();
     return 0;
 }
