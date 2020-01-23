@@ -377,7 +377,7 @@ void weatherModel::checkForModelData()
     treeView->setRootIndex(model->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
     statusLabel->setText( "" );
-    timeModel->setStringList(QStringList{});
+    timeModel->setStringList(QStringList());
 
     unselectForecast(false);
     // QModelIndex index = treeView->indexBelow( treeView->rootIndex() );
@@ -406,7 +406,7 @@ void weatherModel::setInputFile(QString newFile)
 void weatherModel::displayForecastTime( const QModelIndex &index )
 {
     timelist.clear();
-    timeModel->setStringList(QStringList{});
+    timeModel->setStringList(QStringList());
 
     if(model->fileInfo(index).isDir()==true)
     {

@@ -36,6 +36,7 @@
 #include <QToolButton>
 #include <QLabel>
 #include <QString>
+#include <QStringList>
 #include <QDirModel>
 #include <QListView>
 #include <QStringListModel>
