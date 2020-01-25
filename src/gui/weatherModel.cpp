@@ -82,9 +82,10 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     timeModel = new QStringListModel(this);
     listView->setModel(timeModel);
     // Extended selection is clear on click, unless ctrl or shift is held.
-    listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    // listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     // Multi selection is click everything on off, no modifiers
-    // listView->setSelectionMode(QAbstractItemView::MultiSelection);
+    listView->setSelectionMode(QAbstractItemView::MultiSelection);
+    listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     statusLabel = new QLabel(this);
     statusLabel->setText(tr("Ready."));
@@ -456,6 +457,8 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
         os.clear();
     }
     timeModel->setStringList(times);
+    listView->selectAll();
+    listView->setFocus(Qt::OtherFocusReason);
 }
 
 /**
