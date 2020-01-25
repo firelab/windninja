@@ -112,6 +112,7 @@ class weatherModel : public QWidget
     QTreeView *treeView;
     QDirModel *model;
 
+    QLabel *timeLabel;
     QStringListModel *timeModel;
     QListView *listView;
 

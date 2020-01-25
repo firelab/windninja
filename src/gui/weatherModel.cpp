@@ -78,6 +78,9 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeView->setAlternatingRowColors( false );
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    timeLabel = new QLabel(this);
+    timeLabel->setText("Available forecast times");
+
     listView = new QListView(this);
     timeModel = new QStringListModel(this);
     listView->setModel(timeModel);
@@ -132,6 +135,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     weatherLayout->addWidget(downloadGroupBox);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
+    weatherLayout->addWidget(timeLabel);
     weatherLayout->addWidget(listView);
     weatherLayout->addLayout(loadLayout);
     
