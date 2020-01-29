@@ -112,9 +112,11 @@ class weatherModel : public QWidget
     QTreeView *treeView;
     QDirModel *model;
 
-    QLabel *timeLabel;
+    QGroupBox *timeGroupBox;
     QStringListModel *timeModel;
     QListView *listView;
+    QToolButton *selectAllTimesButton;
+    QToolButton *selectNoTimesButton;
 
     QDir cwd;
     QString inputFile;
@@ -126,6 +128,7 @@ class weatherModel : public QWidget
     QHBoxLayout *treeLayout;
     QHBoxLayout *listLayout;
     QHBoxLayout *loadLayout;
+    QVBoxLayout *timeLayout;
     QVBoxLayout *weatherLayout;
     QVBoxLayout *layout;
 
@@ -160,7 +163,6 @@ class weatherModel : public QWidget
  public slots:
     void checkForModelData();
     void updateTz( QString tz );
-
 };
 
 #endif /* WEATHER_MODEL_H */

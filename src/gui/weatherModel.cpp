@@ -78,8 +78,9 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeView->setAlternatingRowColors( false );
     treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    timeLabel = new QLabel(this);
-    timeLabel->setText("Available forecast times");
+    timeGroupBox = new QGroupBox(tr("Select specific time steps"), this);
+    timeGroupBox->setCheckable(true);
+    timeGroupBox->setChecked(false);
 
     listView = new QListView(this);
     timeModel = new QStringListModel(this);
@@ -89,6 +90,16 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     // Multi selection is click everything on off, no modifiers
     listView->setSelectionMode(QAbstractItemView::MultiSelection);
     listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    selectAllTimesButton = new QToolButton(this);
+    selectAllTimesButton->setText(tr("Select All"));
+    selectAllTimesButton->setToolTip(tr("Select all forecast times"));
+    selectAllTimesButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    selectNoTimesButton = new QToolButton(this);
+    selectNoTimesButton->setText(tr("Select None"));
+    selectNoTimesButton->setToolTip(tr("Select no forecast times"));
+    selectNoTimesButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
     statusLabel = new QLabel(this);
     statusLabel->setText(tr("Ready."));
@@ -116,6 +127,12 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(setComboToolTip(int)));
 
+    connect(selectAllTimesButton, SIGNAL(clicked(bool)),
+        listView, SLOT(selectAll(void)));
+
+    connect(selectNoTimesButton, SIGNAL(clicked(bool)),
+        listView, SLOT(clearSelection(void)));
+
     //layout
     downloadLayout = new QHBoxLayout;
     downloadLayout->addWidget(modelComboBox);
@@ -127,6 +144,13 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeLayout = new QHBoxLayout;
     treeLayout->addWidget(treeView);
 
+    timeLayout = new QVBoxLayout(this);
+    timeLayout->addWidget(listView);
+    timeLayout->addWidget(selectAllTimesButton);
+    timeLayout->addWidget(selectNoTimesButton);
+
+    timeGroupBox->setLayout(timeLayout);
+
     loadLayout = new QHBoxLayout;
     loadLayout->addWidget(statusLabel);
     loadLayout->addWidget(refreshToolButton);
@@ -135,8 +159,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     weatherLayout->addWidget(downloadGroupBox);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
-    weatherLayout->addWidget(timeLabel);
-    weatherLayout->addWidget(listView);
+    weatherLayout->addWidget(timeGroupBox);
     weatherLayout->addLayout(loadLayout);
     
     ninjafoamConflictLabel = new QLabel(tr("The weather model initialization option is not currently available for the\n"
@@ -524,8 +547,11 @@ void weatherModel::setComboToolTip(int)
 }
 
 std::vector<blt::local_date_time> weatherModel::timeList() {
-  QModelIndexList mi = listView->selectionModel()->selectedIndexes();
   std::vector<blt::local_date_time> tl;
+  if(!timeGroupBox->isChecked()) {
+    return tl;
+  }
+  QModelIndexList mi = listView->selectionModel()->selectedIndexes();
   for(int i = 0; i < mi.size(); i++) {
       tl.push_back(timelist[mi[i].row()]);
   }
