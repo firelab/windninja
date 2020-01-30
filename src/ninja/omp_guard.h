@@ -30,6 +30,7 @@
  *
  *****************************************************************************/
 
+#ifdef _OPENMP
 
 #ifndef OMP_GUARD_H
 #define OMP_GUARD_H
@@ -68,3 +69,4 @@ private:
 
 #endif /*OMP_GUARD_H*/
 
+#endif /* _OPENMP */
