@@ -144,10 +144,15 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeLayout = new QHBoxLayout;
     treeLayout->addWidget(treeView);
 
-    timeLayout = new QVBoxLayout(this);
+    timeLayout = new QVBoxLayout;
     timeLayout->addWidget(listView);
-    timeLayout->addWidget(selectAllTimesButton);
-    timeLayout->addWidget(selectNoTimesButton);
+
+    selectLayout = new QHBoxLayout;
+    selectLayout->addStretch();
+    selectLayout->addWidget(selectAllTimesButton);
+    selectLayout->addWidget(selectNoTimesButton);
+
+    timeLayout->addLayout(selectLayout);
 
     timeGroupBox->setLayout(timeLayout);
 

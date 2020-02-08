@@ -129,6 +129,7 @@ class weatherModel : public QWidget
     QHBoxLayout *listLayout;
     QHBoxLayout *loadLayout;
     QVBoxLayout *timeLayout;
+    QHBoxLayout *selectLayout;
     QVBoxLayout *weatherLayout;
     QVBoxLayout *layout;
 
