@@ -534,6 +534,11 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "WindNinja version: " << NINJA_VERSION_STRING << "\n";
             cout << "SCM version: " << NINJA_SCM_VERSION << "\n";
             cout << "Release date: " << NINJA_RELEASE_DATE << "\n";
+#ifdef _OPENMP
+            cout << "OpenMP enabled (" << omp_get_num_procs(); << ")\n";
+#else
+            cout << "OpenMP disabled\n";
+#endif
             return 0;
         }
 
