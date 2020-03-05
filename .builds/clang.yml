@@ -14,6 +14,9 @@ packages:
   - linux-headers
   - llvm-dev
 
+sources:
+  - https://github.com/firelab/windninja
+
 tasks:
   - build: |
       cd windninja
