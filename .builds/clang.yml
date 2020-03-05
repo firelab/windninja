@@ -13,6 +13,7 @@ packages:
   - libc6-compat
   - linux-headers
   - llvm-dev
+  - netcdf-dev
 
 sources:
   - https://github.com/firelab/windninja
