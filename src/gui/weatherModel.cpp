@@ -438,8 +438,7 @@ void weatherModel::setInputFile(QString newFile)
  */
 void weatherModel::displayForecastTime( const QModelIndex &index )
 {
-    timelist.clear();
-    timeModel->setStringList(QStringList());
+    clearTimes();
 
     if(model->fileInfo(index).isDir()==true)
     {
@@ -512,10 +511,9 @@ void weatherModel::updateTz( QString tz )
  */
 void weatherModel::unselectForecast( bool checked )
 {
-    if( checked )
-    return;
-    else
+    if( checked ) return;
     treeView->selectionModel()->clear();
+    clearTimes();
 }
 const char * weatherModel::ExpandDescription( const char *pszReadable )
 {
@@ -561,4 +559,9 @@ std::vector<blt::local_date_time> weatherModel::timeList() {
       tl.push_back(timelist[mi[i].row()]);
   }
   return tl;
+}
+
+void weatherModel::clearTimes() {
+  timelist.clear();
+  timeModel->setStringList(QStringList());
 }
