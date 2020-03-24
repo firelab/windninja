@@ -2590,7 +2590,13 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
 
     //Get Total Time duration of simulation and divide it into time steps
     boost::posix_time::time_duration diffTime=endUtc-startUtc;
-    boost::posix_time::time_duration stepTime=diffTime/nTimeSteps;
+    boost::posix_time::time_duration stepTime;
+    if(nTimeSteps > 1){
+        stepTime=diffTime/(nTimeSteps-1);
+    }
+    else{
+        stepTime=diffTime/nTimeSteps;
+    }
 
     std::vector<boost::posix_time::ptime> timeOut;
     std::vector<boost::posix_time::ptime> timeConstruct;
@@ -2600,14 +2606,19 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     //Create Time Steps by multiplying steps by durations
     //Sets first step to be start time
     //Sets last step to be stop time
-    timeOut.push_back(startUtc);
-    for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
-    {
-        boost::posix_time::time_duration specTime;
-        specTime=stepTime*i;
-        timeOut.push_back(startUtc+specTime);
+    if(nTimeSteps > 1){ //If there is only one timestep, just use startUtc
+        timeOut.push_back(startUtc);
+        for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
+        {
+            boost::posix_time::time_duration specTime;
+            specTime=stepTime*i;
+            timeOut.push_back(startUtc+specTime);
+        }
+        timeOut.push_back(endUtc);
     }
-    timeOut.push_back(endUtc);
+    else{
+        timeOut.push_back(startUtc+diffTime/2); //if it's a single timestep, run the midpoint of start/end
+    }
     timeList=timeOut;
 
     return timeList;
