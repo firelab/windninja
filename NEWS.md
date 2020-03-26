@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+WindNinja 3.6.0
+---------------
+- Fix issue related to time interpolation in point initialization (\#352)
+
+- Add sub-hourly HRRR (\#240)
+
+- Add ability to select forecast times to simulate (\#49)
+
+- Add UTC to list of time zone options (\#353)
+
+- Check for proper file extension on elevation files when reusing a CFD case (\#345)
+
+- CFD model upgrades (\#213, \#145)
+
 WindNinja 3.5.3
 ---------------
 - Update for NOMADS directory structure changes for the GFS (\#341)
