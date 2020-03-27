@@ -39,10 +39,16 @@
 #include "WindNinjaInputs.h"
 #include "mesh.h"
 #include "stability.h"
+#include "wn_3dScalarField.h"
+#include "initialize.h"
+#include "ninja_errors.h"
+#include "preconditioner.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+
+#define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
 class Discretization
 {
@@ -50,17 +56,26 @@ class Discretization
         Discretization();
         ~Discretization();
         
-        int Discretize(const Mesh &mesh, WindNinjaInputs &input);
+        int Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+                    wn_3dScalarField &u0, wn_3dScalarField &v0, wn_3dScalarField &w0);
         int SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
+        int SetStability(const Mesh &mesh, WindNinjaInputs &input,
+                    wn_3dScalarField &u0,
+                    wn_3dScalarField &v0,
+                    wn_3dScalarField &w0,
+                    AsciiGrid<double> &CloudGrid,
+                    boost::shared_ptr<initialize> &init);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
-        void Write_A_and_b(int NUMNP, double *A, int *col_ind, int *row_ptr, double *b);
+        void Write_A_and_b(int NUMNP);
         void Deallocate();
 
         double *PHI;
         double *DIAG;
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
         double alpha; //alpha = alphaH/alphaV, determined by stability
+
+        wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     private:
         void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);

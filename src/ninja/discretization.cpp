@@ -45,7 +45,10 @@ Discretization::~Discretization()      //destructor
 
 }
 
-int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input)
+int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+        wn_3dScalarField &u0, 
+        wn_3dScalarField &v0, 
+        wn_3dScalarField &w0)
 {
     //The governing equation to solve is
     //
@@ -246,115 +249,6 @@ int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input)
     }
     row_ptr[mesh.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
 
-    checkCancel();
-
-    CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
-    CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
-    Stability stb(input);
-    alphaVfield.allocate(&mesh);
-
-    if(input.stabilityFlag==0) // if stabilityFlag not set
-    {
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows;i++)
-            {
-                for(unsigned int j=0; j<mesh.ncols; j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/1.0;
-                }
-            }
-        }
-    }
-    else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
-    {
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows; i++)
-            {
-                for(unsigned int j=0; j<mesh.ncols; j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/input.alphaStability;
-                }
-            }
-        }
-    }
-    else if(input.stabilityFlag==1 &&
-            input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) //it's a domain-average run
-    {
-        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows; i++)
-            {
-                for(unsigned int j=0;j<input.dem.get_nCols();j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
-                }
-            }
-        }
-    }
-    else if(input.stabilityFlag==1 &&
-            input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
-    {
-        stb.SetPointInitializationAlpha(input, mesh);
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows; i++)
-            {
-                for(unsigned int j=0; j<mesh.ncols; j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
-                }
-            }
-        }
-    }
-    //If the run is a 2D WX model run
-    else if(input.stabilityFlag==1 &&
-            input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
-    {
-        stb.Set2dWxInitializationAlpha(input, mesh, CloudGrid);
-
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows; i++)
-            {
-                for(unsigned int j=0; j<mesh.ncols; j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
-                }
-            }
-        }
-    }
-    //If the run is a WX model run where the full WX vertical profile is used and
-    //the potential temp (theta) is available, then use the method below
-    else if(input.stabilityFlag==1 &&
-            input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
-            init->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
-
-        stb.Set3dVariableAlpha(input, mesh, init->air3d, u0, v0);
-        init->air3d.deallocate();
-
-        for(unsigned int k=0; k<mesh.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh.nrows; i++)
-            {
-                for(unsigned int j=0; j<mesh.ncols; j++)
-                {
-                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
-                }
-            }
-        }
-    }
-    else{
-        throw logic_error( string("Can't determine how to set atmophseric stability.") );
-    }
-
-    CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
-
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         element elem(&mesh);
@@ -495,12 +389,10 @@ int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input)
         } //End loop over elements
     } //End parallel region
 
-    stb.alphaField.deallocate();
-
     return NINJA_SUCCESS;
 }
 
-int Discretization::SetBoundaryConditions(const Mesh &mesh, WindNinjaInput &input)
+int Discretization::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
 {
     //Specify known values of PHI
     //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
@@ -661,7 +553,6 @@ bool Discretization::Solve(WindNinjaInputs &input, int NUMNP, int max_iter, int 
     //start iterating---------------------------------------------------------------------------------------
     for (int i = 1; i <= max_iter; i++)
     {
-        checkCancel();
 
         M.solve(r, z, row_ptr, col_ind);	//apply preconditioner
 
@@ -1317,4 +1208,124 @@ void Discretization::Deallocate()
         delete[] DIAG;
         DIAG=NULL;
     }
+}
+
+int Discretization::SetStability(const Mesh &mesh, 
+        WindNinjaInputs &input,
+        wn_3dScalarField &u0,
+        wn_3dScalarField &v0,
+        wn_3dScalarField &w0,
+        AsciiGrid<double> &CloudGrid,
+        boost::shared_ptr<initialize> &init)
+{
+    CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
+    CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
+    Stability stb(input);
+    alphaVfield.allocate(&mesh);
+
+    if(input.stabilityFlag==0) // if stabilityFlag not set
+    {
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows;i++)
+            {
+                for(unsigned int j=0; j<mesh.ncols; j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/1.0;
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
+    {
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0; j<mesh.ncols; j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/input.alphaStability;
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) //it's a domain-average run
+    {
+        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0;j<input.dem.get_nCols();j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
+    {
+        stb.SetPointInitializationAlpha(input, mesh);
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0; j<mesh.ncols; j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    //If the run is a 2D WX model run
+    else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
+            init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
+    {
+        stb.Set2dWxInitializationAlpha(input, mesh, CloudGrid);
+
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0; j<mesh.ncols; j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    //If the run is a WX model run where the full WX vertical profile is used and
+    //the potential temp (theta) is available, then use the method below
+    else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
+            init->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
+
+        stb.Set3dVariableAlpha(input, mesh, init->air3d, u0, v0);
+        init->air3d.deallocate();
+
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0; j<mesh.ncols; j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    else{
+        throw logic_error( string("Can't determine how to set atmophseric stability.") );
+    }
+
+    CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
+
+    stb.alphaField.deallocate();
+
+    return NINJA_SUCCESS;
 }

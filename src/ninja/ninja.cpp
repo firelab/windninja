@@ -37,7 +37,6 @@ extern boost::local_time::tz_database globalTimeZoneDB;
 ninja::ninja()
 {
     cancel = false;
-    alphaH = 1.0;
     isNullRun = false;
     maxStartingOuterDiff = -1.0;
     matchTol = 0.22;    //0.22 m/s is about 1/2 mph
@@ -118,7 +117,6 @@ ninja::ninja(const ninja &rhs)
 
 
     cancel = rhs.cancel;
-    alphaH = rhs.alphaH;
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
     nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -183,7 +181,6 @@ ninja &ninja::operator=(const ninja &rhs)
         input = rhs.input;
 
         cancel = rhs.cancel;
-        alphaH = rhs.alphaH;
         isNullRun = rhs.isNullRun;
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
         nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -351,8 +348,8 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
 		//build A arrray
-                Discretization d;
-		d.Discretize();
+                discretization.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
+		discretization.Discretize(mesh, input, u0, v0, w0);
 
         checkCancel();
 
@@ -361,7 +358,7 @@ do
 /*  ----------------------------------------*/
 
 		//set boundary conditions
-		d.SetBoundaryConditions();
+		discretization.SetBoundaryConditions(mesh, input);
 
 		//#define WRITE_A_B
 		#ifdef WRITE_A_B	//used for debugging...
@@ -386,8 +383,8 @@ do
 		//solver
 
 		//if the CG solver diverges, try the minres solver
-		if(d.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-		    if(d.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+		if(discretization.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+		    if(discretization.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
 
 		#ifdef _OPENMP
@@ -758,15 +755,15 @@ void ninja::computeUVWField()
 	 u.allocate(&mesh);           //u is positive toward East
 	 v.allocate(&mesh);           //v is positive toward North
 	 w.allocate(&mesh);           //w is positive up
-	 if(DIAG == NULL)
-		 DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];        //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
+	 if(discretization.DIAG == NULL)
+		 discretization.DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];        //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
 
 	 for(i=0;i<mesh.NUMNP;i++)                         //Initialize u,v, and w
      {
           u(i)=0.;
           v(i)=0.;
           w(i)=0.;
-	    DIAG[i]=0.;
+          discretization.DIAG[i]=0.;
      }
 
 	#pragma omp parallel default(shared) private(i,j,k)
@@ -793,7 +790,7 @@ void ninja::computeUVWField()
           uScratch[i]=0.;
           vScratch[i]=0.;
           wScratch[i]=0.;
-	      DIAGScratch[i]=0.;
+          DIAGScratch[i]=0.;
      }
 
 	 #pragma omp for
@@ -803,7 +800,7 @@ void ninja::computeUVWField()
           for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
           {
 
-			   DPHIDX=0.0;     //Set DPHI/DX, etc. to zero for the new quad point
+               DPHIDX=0.0;     //Set DPHI/DX, etc. to zero for the new quad point
                DPHIDY=0.0;
                DPHIDZ=0.0;
 
@@ -814,9 +811,9 @@ void ninja::computeUVWField()
                {
                     elem.NPK=mesh.get_global_node(k, i);            //NPK is the global node number
 
-                    DPHIDX=DPHIDX+elem.DNDX[k]*d.PHI[elem.NPK];       //Calculate the DPHI/DX, etc. for the quad point we are on
-                    DPHIDY=DPHIDY+elem.DNDY[k]*d.PHI[elem.NPK];
-                    DPHIDZ=DPHIDZ+elem.DNDZ[k]*d.PHI[elem.NPK];
+                    DPHIDX=DPHIDX+elem.DNDX[k]*discretization.PHI[elem.NPK];       //Calculate the DPHI/DX, etc. for the quad point we are on
+                    DPHIDY=DPHIDY+elem.DNDY[k]*discretization.PHI[elem.NPK];
+                    DPHIDZ=DPHIDZ+elem.DNDZ[k]*discretization.PHI[elem.NPK];
                }
 
                //Now we know DPHI/DX, etc. for quad point j.  We will distribute this inverse distance weighted average to each nodal point for the cell we're on
@@ -851,7 +848,7 @@ void ninja::computeUVWField()
           u(i) += uScratch[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
           v(i) += vScratch[i];
           w(i) += wScratch[i];
-		  DIAG[i] += DIAGScratch[i];
+          discretization.DIAG[i] += DIAGScratch[i];
 	 }
 	 } //end critical
 
@@ -884,22 +881,22 @@ void ninja::computeUVWField()
 
      for(i=0;i<mesh.NUMNP;i++)
      {
-          u(i)=u(i)/d.DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-          v(i)=v(i)/d.DIAG[i];
-          w(i)=w(i)/d.DIAG[i];
+          u(i)=u(i)/discretization.DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
+          v(i)=v(i)/discretization.DIAG[i];
+          w(i)=w(i)/discretization.DIAG[i];
 
           //Finally, calculate u,v,w
-          alphaV = alphaVfield(i); //set alphaV for stability
+          alphaV = discretization.alphaVfield(i); //set alphaV for stability
 
-		  u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i);         //Remember, dPHI/dx is stored in u
-		  v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
+		  u(i)=u0(i)+1.0/(2.0*discretization.alphaH*discretization.alphaH)*u(i); //Remember, dPHI/dx is stored in u
+		  v(i)=v0(i)+1.0/(2.0*discretization.alphaH*discretization.alphaH)*v(i);
 		  w(i)=w0(i)+1.0/(2.0*alphaV*alphaV)*w(i);
 
 
      }
      }		//end parallel section
 
-     alphaVfield.deallocate();
+     discretization.alphaVfield.deallocate();
 
     // testing
     /*std::string filename;

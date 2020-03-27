@@ -86,6 +86,7 @@
 #include "initializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
+#include "discretization.h"
 
 
 
@@ -115,8 +116,6 @@
 #ifdef EMISSIONS
 #include "dust.h"
 #endif
-
-#define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
 #define LENGTH 256
 
@@ -148,8 +147,6 @@ public:
     AsciiGrid<double>AngleGrid;
     AsciiGrid<double>VelocityGrid;
     AsciiGrid<double>CloudGrid;
-
-    wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     #ifdef FRICTION_VELOCITY
     AsciiGrid<double>UstarGrid;
@@ -368,6 +365,8 @@ private:
     std::vector<int> num_outer_iter_tries_u;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
+
+    Discretization discretization;
 
     wn_3dScalarField u, v, w;
     wn_3dScalarField u0;		//u is positive toward East
