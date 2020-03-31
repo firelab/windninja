@@ -223,133 +223,137 @@ ninja &ninja::operator=(const ninja &rhs)
  */
 bool ninja::simulate_wind()
 {
-	checkCancel();
+    checkCancel();
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
-	
-	readInputFile();
-	set_position();
-	set_uniVegetation();
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
-	checkInputs();
+    readInputFile();
+    set_position();
+    set_uniVegetation();
 
-	if(!input.ninjaTime.is_not_a_date_time())
-	{
-	    std::ostringstream out;
-	    out << "Simulation time is " << input.ninjaTime;
-	    input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
-	}
+    checkInputs();
 
-	#ifdef _OPENMP
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
-	#endif
+    if(!input.ninjaTime.is_not_a_date_time())
+    {
+        std::ostringstream out;
+        out << "Simulation time is " << input.ninjaTime;
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
+    }
 
-	#ifdef _OPENMP
-		startTotal = omp_get_wtime();
-	#endif
+#ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", 
+            input.inputsRunNumber, input.numberCPUs);
+#endif
 
-	 //taucs_double *SK;
+#ifdef _OPENMP
+    startTotal = omp_get_wtime();
+#endif
 
 /*  ----------------------------------------*/
 /*  USER INPUTS                             */
 /*  ----------------------------------------*/
-     int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-     double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-     int print_iters = 10;          //Iterations to print out
+    int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
+    double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
+    int print_iters = 10;          //Iterations to print out
+
     /*
     ** Set matching its from config options, default to 150.
     ** See constructor to set default.
     */
-    int max_matching_iters = nMaxMatchingIters;		//maximum number of outer iterations to do (for matching observations)
+    //maximum number of outer iterations to do (for matching observations)
+    int max_matching_iters = nMaxMatchingIters;
 
 /*  ----------------------------------------*/
 /*  MESH GENERATION                         */
 /*  ----------------------------------------*/
 
-	#ifdef _OPENMP
-		startMesh = omp_get_wtime();
-	#endif
+#ifdef _OPENMP
+    startMesh = omp_get_wtime();
+#endif
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-	//generate mesh
-	mesh.buildStandardMesh(input);
-	
-	u0.allocate(&mesh);		//u is positive toward East
-	v0.allocate(&mesh);		//v is positive toward North
-	w0.allocate(&mesh);		//w is positive up
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
+    //generate mesh
+    mesh.buildStandardMesh(input);
 
-	#ifdef _OPENMP
-		endMesh = omp_get_wtime();
-	#endif
+    u0.allocate(&mesh);		//u is positive toward East
+    v0.allocate(&mesh);		//v is positive toward North
+    w0.allocate(&mesh);		//w is positive up
+
+#ifdef _OPENMP
+    endMesh = omp_get_wtime();
+#endif
 
 /*  ----------------------------------------*/
 /*  START OUTER INTERATIVE LOOP FOR         */
-/*	MATCHING INPUT POINTS					*/
+/*  MATCHING INPUT POINTS		    */
 /*  ----------------------------------------*/
 
-if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-{
-	if(input.matchWxStations == true)
-	{
+    if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+    {
+        if(input.matchWxStations == true)
+        {
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
-            input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
-        //If this is commented, it messes with the progress-bar
+            //don't print normal solver progress, just "outer iter" "matching" progress
+            //If this is commented, it messes with the progress-bar
+            input.Com->noSolverProgress();
+        }
     }
-}
 
-int matchingIterCount = 0;
-bool matchFlag = false;
-if(input.matchWxStations == true)
-{
-    num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
-    num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
-    num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
-}
-do
-{
+    int matchingIterCount = 0;
+    bool matchFlag = false;
+    if(input.matchWxStations == true)
+    {
+        num_outer_iter_tries_u = std::vector<int>(input.stations.size(),0);
+        num_outer_iter_tries_v = std::vector<int>(input.stations.size(),0);
+        num_outer_iter_tries_w = std::vector<int>(input.stations.size(),0);
+    }
+
 /*  ----------------------------------------*/
 /*  VELOCITY INITIALIZATION                 */
 /*  ----------------------------------------*/
-
-		if(input.matchWxStations == true)
-		{
+    do
+    {
+        if(input.matchWxStations == true)
+        {
             matchingIterCount++;
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...",
+                    matchingIterCount);
         }
 
 #ifdef _OPENMP
-                startInit = omp_get_wtime();
+        startInit = omp_get_wtime();
 #endif
 
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
-		//initialize
-                init.reset(initializationFactory::makeInitialization(input));
-                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+        //initialize
+        init.reset(initializationFactory::makeInitialization(input));
+        init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+
 #ifdef _OPENMP
-                endInit = omp_get_wtime();
+        endInit = omp_get_wtime();
 #endif
 
-		checkCancel();
+        checkCancel();
 
 /*  ----------------------------------------*/
 /*  CHECK FOR "NULL" RUN                    */
 /*  ----------------------------------------*/
-		if(checkForNullRun())	//if it's a run with all zero velocity...
-			break;
+        if(checkForNullRun())	//if it's a run with all zero velocity...
+            break;
 
 /*  ----------------------------------------*/
 /*  BUILD "A" ARRAY OF AX=B                 */
 /*  ----------------------------------------*/
-		#ifdef _OPENMP
-			startBuildEq = omp_get_wtime();
-		#endif
+#ifdef _OPENMP
+        startBuildEq = omp_get_wtime();
+#endif
 
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
-		//build A arrray
-                FEM.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
-		FEM.Discretize(mesh, input, u0, v0, w0);
+        //build A arrray
+        FEM.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
+        FEM.Discretize(mesh, input, u0, v0, w0);
 
         checkCancel();
 
@@ -357,89 +361,89 @@ do
 /*  SET BOUNDARY CONDITIONS                 */
 /*  ----------------------------------------*/
 
-		//set boundary conditions
-		FEM.SetBoundaryConditions(mesh, input);
+        //set boundary conditions
+        FEM.SetBoundaryConditions(mesh, input);
 
-		//#define WRITE_A_B
-		#ifdef WRITE_A_B	//used for debugging...
-			 FEM.Write_A_and_b(1000);
-		#endif
+//#define WRITE_A_B
+#ifdef WRITE_A_B	//used for debugging...
+        FEM.Write_A_and_b(1000);
+#endif
 
-		#ifdef _OPENMP
-			endBuildEq = omp_get_wtime();
-		#endif
+#ifdef _OPENMP
+        endBuildEq = omp_get_wtime();
+#endif
 
-		 checkCancel();
+        checkCancel();
 
 /*  ----------------------------------------*/
 /*  CALL SOLVER                             */
 /*  ----------------------------------------*/
 
-		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving...");
-		#ifdef _OPENMP
-		    startSolve = omp_get_wtime();
-		#endif
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving...");
+#ifdef _OPENMP
+        startSolve = omp_get_wtime();
+#endif
 
-		//solver
+        //solver
+        //if the CG solver diverges, try the minres solver
+        if(FEM.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+            if(FEM.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+                throw std::runtime_error("Solver returned false.");
 
-		//if the CG solver diverges, try the minres solver
-		if(FEM.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-		    if(FEM.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-			throw std::runtime_error("Solver returned false.");
+#ifdef _OPENMP
+        endSolve = omp_get_wtime();
+#endif
 
-		#ifdef _OPENMP
-		    endSolve = omp_get_wtime();
-		#endif
-
-		checkCancel();
+checkCancel();
 
 /*  ----------------------------------------*/
 /*  COMPUTE UVW WIND FIELD                   */
 /*  ----------------------------------------*/
 
-		 //compute uvw field from phi field
-		 FEM.ComputeUVWField(mesh, input, u0, v0, w0, u, v, w);
+        //compute uvw field from phi field
+        FEM.ComputeUVWField(mesh, input, u0, v0, w0, u, v, w);
 
-		 checkCancel();
+        checkCancel();
 
-		 matchFlag = matched(matchingIterCount);
+        matchFlag = matched(matchingIterCount);
 
- }while(matchingIterCount<max_matching_iters && !matchFlag);	//end outer iterations is over max_matching_iters or wind field matches wx stations
+    }while(matchingIterCount<max_matching_iters && !matchFlag);	//end outer iterations is over max_matching_iters or wind field matches wx stations
 
-if(input.matchWxStations == true && !isNullRun)
-{
-	double smallestInfluenceRadius = getSmallestRadiusOfInfluence();
-
-	if(matchFlag == false)
+    if(input.matchWxStations == true && !isNullRun)
     {
-        const char* error;
-        error = CPLSPrintf("Solution did not converge to match weather stations.\n" \
-                "Sometimes this is caused by a very low radius of influence when compared to the mesh resolution.\n" \
-                "Your horizontal mesh resolution is %lf meters and the smallest radius of influence is %.2E meters,\n" \
-                "which means that the radius of influence is %.2E cells in distance.\n" \
-                "It is usually a good idea to have at least 10 cells of distance (%.2E meters in this case).\n" \
-                "If convergence is still not reached, try increasing the radius of influence even more.\n", \
-                mesh.meshResolution, smallestInfluenceRadius, smallestInfluenceRadius/mesh.meshResolution, 10.0*mesh.meshResolution);
+        double smallestInfluenceRadius = getSmallestRadiusOfInfluence();
 
-        input.Com->ninjaCom(ninjaComClass::ninjaWarning, error);
-        throw(std::runtime_error(error));
-	}
-}
+        if(matchFlag == false)
+        {
+            const char* error;
+            error = CPLSPrintf("Solution did not converge to match weather stations.\n" \
+            "Sometimes this is caused by a very low radius of influence when compared to the mesh resolution.\n" \
+            "Your horizontal mesh resolution is %lf meters and the smallest radius of influence is %.2E meters,\n" \
+            "which means that the radius of influence is %.2E cells in distance.\n" \
+            "It is usually a good idea to have at least 10 cells of distance (%.2E meters in this case).\n" \
+            "If convergence is still not reached, try increasing the radius of influence even more.\n", \
+            mesh.meshResolution, smallestInfluenceRadius, 
+            smallestInfluenceRadius/mesh.meshResolution, 10.0*mesh.meshResolution);
+
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, error);
+            throw(std::runtime_error(error));
+        }
+    }
 
 /*  ----------------------------------------*/
 /*  COMPUTE FRICTION VELOCITY               */
 /*  ----------------------------------------*/
 #ifdef FRICTION_VELOCITY
-if(input.frictionVelocityFlag == 1){
+    if(input.frictionVelocityFlag == 1){
 #ifdef _OPENMP
-    startComputeFrictionVelocity = omp_get_wtime();
+        startComputeFrictionVelocity = omp_get_wtime();
 #endif
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Computing friction velocities...");
-    computeFrictionVelocity();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Computing friction velocities...");
+        computeFrictionVelocity();
 #ifdef _OPENMP
-    endComputeFrictionVelocity = omp_get_wtime();
+        endComputeFrictionVelocity = omp_get_wtime();
 #endif
-}
+    }
 #endif
 
 #ifdef EMISSIONS
@@ -464,85 +468,84 @@ if(input.frictionVelocityFlag == 1){
 /*  PREPARE OUTPUT                          */
 /*  ----------------------------------------*/
 
-		 #ifdef _OPENMP
-			startWriteOut = omp_get_wtime();
-		 #endif
+#ifdef _OPENMP
+    startWriteOut = omp_get_wtime();
+#endif
 
-		 //prepare output arrays
-		 prepareOutput();
+    //prepare output arrays
+    prepareOutput();
 
-		 checkCancel();
+    checkCancel();
 
 /*  ----------------------------------------*/
 /*  WRITE OUTPUT FILES                      */
 /*  ----------------------------------------*/
 
-	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing output files...");
 
-	//write output files
-	writeOutputFiles();
+    //write output files
+    writeOutputFiles();
 
-	#ifdef _OPENMP
-		endWriteOut = omp_get_wtime();
-		endTotal = omp_get_wtime();
-	#endif
+#ifdef _OPENMP
+    endWriteOut = omp_get_wtime();
+    endTotal = omp_get_wtime();
+#endif
 
 /*  ----------------------------------------*/
 /*  WRAP UP...                              */
 /*  ----------------------------------------*/
 
-	//write timers
-	#ifdef _OPENMP
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Friction velocity calculation time was %lf seconds.",endComputeFrictionVelocity-startComputeFrictionVelocity);
-			}
-			#endif
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",endDustEmissions-startDustEmissions);
-			}
-			#endif
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
-			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
-	#endif
+    //write timers
+#ifdef _OPENMP
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Equation building time was %lf seconds.",endBuildEq-startBuildEq);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
+#ifdef FRICTION_VELOCITY
+    if(input.frictionVelocityFlag == 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Friction velocity calculation time was %lf seconds.",endComputeFrictionVelocity-startComputeFrictionVelocity);
+    }
+#endif
+#ifdef EMISSIONS
+    if(input.dustFlag == 1){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Dust emissions simulation time was %lf seconds.",endDustEmissions-startDustEmissions);
+    }
+#endif
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
+#endif
 
      input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
 
-     //If its a pointInitialization Run, explicitly set run completion to 100 when they finish
-     //for some reason this doesn't happen automatically
-     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
-     {
-         if(input.matchWxStations == true)
-         {
-             int time_percent_complete=100;
-             input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
-         }
-     }
+    //If its a pointInitialization Run, explicitly set run completion to 100 when they finish
+    //for some reason this doesn't happen automatically
+    if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+    {
+        if(input.matchWxStations == true)
+        {
+            int time_percent_complete=100;
+            input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+        }
+    }
 
-
-	 deleteDynamicMemory();
-	 if(!input.keepOutGridsInMemory)
-	 {
-	     AngleGrid.deallocate();
-         VelocityGrid.deallocate();
-	     CloudGrid.deallocate();
-	     #ifdef FRICTION_VELOCITY
-	     if(input.frictionVelocityFlag == 1){
+    deleteDynamicMemory();
+    if(!input.keepOutGridsInMemory)
+    {
+        AngleGrid.deallocate();
+        VelocityGrid.deallocate();
+        CloudGrid.deallocate();
+#ifdef FRICTION_VELOCITY
+        if(input.frictionVelocityFlag == 1){
             UstarGrid.deallocate();
-	     }
-	     #endif
-	     #ifdef EMISSIONS
-	     if(input.dustFlag == 1){
+        }
+#endif
+#ifdef EMISSIONS
+        if(input.dustFlag == 1){
             DustGrid.deallocate();
-	     }
-         #endif
-	 }
-     return true;
+        }
+#endif
+    }
+    return true;
 }
 
 /**Method used to get the smallest radius of influence from a vector of wxStation.
