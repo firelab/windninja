@@ -35,10 +35,10 @@ volVTK::volVTK()
 }
 
 volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, 
-	       wn_3dArray& y, wn_3dArray& z, int i, int j, int k, 
+	       wn_3dArray& y, wn_3dArray& z, int ncols, int nrows, int nlayers,
 	       std::string filename)
 {
-  writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
+  writeVolVTK(u, v, w, x, y, z, ncols, nrows, nlayers, filename);
 }
 
 volVTK::~volVTK()
@@ -48,7 +48,7 @@ volVTK::~volVTK()
 
 bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
 			 wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
-			 int i, int j, int k, std::string filename)
+			 int ncols, int nrows, int nlayers, std::string filename)
 {
   FILE *fout;
   std::string surface_filename;
@@ -69,15 +69,15 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
   fprintf(fout, "ASCII\n");
   
   fprintf(fout, "DATASET STRUCTURED_GRID\n");
-  fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, 1);
-  fprintf(fout, "POINTS %i double\n", i*j*1);
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, 1);
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*1);
   
-  for(int ii=0; ii<i; ii++)
+  for(int ii=0; ii<ncols; ii++)
   {
-      for(int jj=0; jj<j; jj++)
+      for(int jj=0; jj<nrows; jj++)
 	  {
-		fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj), 
-		  y(1*i*j + ii*j + jj), z(1*i*j + ii*j + jj));
+		fprintf(fout, "%lf %lf %lf\n", x(1*ncols*nrows + ii*nrows + jj), 
+		  y(1*ncols*nrows + ii*nrows + jj), z(1*ncols*nrows + ii*nrows + jj));
 	  }
   }
   
@@ -95,33 +95,33 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
   
   //Write volume grid
   fprintf(fout, "\nDATASET STRUCTURED_GRID\n");
-  fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, k);
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, nlayers);
   
-  fprintf(fout, "POINTS %i double\n", i*j*k);
-  for(int kk=0; kk<k; kk++)
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*nlayers);
+  for(int kk=0; kk<nlayers; kk++)
     {
-      for(int ii=0; ii<i; ii++)
+      for(int ii=0; ii<ncols; ii++)
 	{
-	  for(int jj=0; jj<j; jj++)
+	  for(int jj=0; jj<nrows; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj), 
-		      y(kk*i*j + ii*j + jj), z(kk*i*j + ii*j + jj));
+	      fprintf(fout, "%lf %lf %lf\n", x(kk*ncols*nrows + ii*nrows + jj), 
+		      y(kk*ncols*nrows + ii*nrows + jj), z(kk*ncols*nrows + ii*nrows + jj));
 	    }
 	}
     }
   
   //Write data
-  fprintf(fout, "\nPOINT_DATA %i\n", i*j*k);
+  fprintf(fout, "\nPOINT_DATA %i\n", ncols*nrows*nlayers);
   fprintf(fout, "VECTORS wind_vectors double\n");
   
-  for(int kk=0; kk<k; kk++)
+  for(int kk=0; kk<nlayers; kk++)
     {
-      for(int ii=0; ii<i; ii++)
+      for(int ii=0; ii<ncols; ii++)
 	{
-	  for(int jj=0; jj<j; jj++)
+	  for(int jj=0; jj<nrows; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", u(kk*i*j + ii*j + jj), 
-		      v(kk*i*j + ii*j + jj), w(kk*i*j + ii*j + jj));
+	      fprintf(fout, "%lf %lf %lf\n", u(kk*ncols*nrows + ii*nrows + jj), 
+		      v(kk*ncols*nrows + ii*nrows + jj), w(kk*ncols*nrows + ii*nrows + jj));
 	    }
 	}
     }
@@ -131,7 +131,7 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
 }
 
 bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
-                            int i, int j, int k, std::string filename)
+                            int ncols, int nrows, int nlayers, std::string filename)
 {
   FILE *fout;
   std::string surface_filename;
@@ -152,15 +152,15 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
   fprintf(fout, "ASCII\n");
   
   fprintf(fout, "DATASET STRUCTURED_GRID\n");
-  fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, 1);
-  fprintf(fout, "POINTS %i double\n", i*j*1);
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, 1);
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*1);
   
-  for(int ii=0; ii<i; ii++)
+  for(int ii=0; ii<ncols; ii++)
   {
-      for(int jj=0; jj<j; jj++)
+      for(int jj=0; jj<nrows; jj++)
 	  {
-		fprintf(fout, "%lf %lf %lf\n", x(1*i*j + ii*j + jj), 
-		  y(1*i*j + ii*j + jj), z(1*i*j + ii*j + jj));
+		fprintf(fout, "%lf %lf %lf\n", x(1*ncols*nrows + ii*nrows + jj), 
+		  y(1*ncols*nrows + ii*nrows + jj), z(1*ncols*nrows + ii*nrows + jj));
 	  }
   }
   
@@ -178,17 +178,17 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
   
   //Write volume grid
   fprintf(fout, "\nDATASET STRUCTURED_GRID\n");
-  fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, k);
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, nlayers);
   
-  fprintf(fout, "POINTS %i double\n", i*j*k);
-  for(int kk=0; kk<k; kk++)
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*nlayers);
+  for(int kk=0; kk<nlayers; kk++)
     {
-      for(int ii=0; ii<i; ii++)
+      for(int ii=0; ii<ncols; ii++)
 	{
-	  for(int jj=0; jj<j; jj++)
+	  for(int jj=0; jj<nrows; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", x(kk*i*j + ii*j + jj), 
-		      y(kk*i*j + ii*j + jj), z(kk*i*j + ii*j + jj));
+	      fprintf(fout, "%lf %lf %lf\n", x(kk*ncols*nrows + ii*nrows + jj), 
+		      y(kk*ncols*nrows + ii*nrows + jj), z(kk*ncols*nrows + ii*nrows + jj));
 	    }
 	}
     }
