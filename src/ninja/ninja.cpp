@@ -348,8 +348,8 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
 		//build A arrray
-                discretization.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
-		discretization.Discretize(mesh, input, u0, v0, w0);
+                FEM.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
+		FEM.Discretize(mesh, input, u0, v0, w0);
 
         checkCancel();
 
@@ -358,11 +358,11 @@ do
 /*  ----------------------------------------*/
 
 		//set boundary conditions
-		discretization.SetBoundaryConditions(mesh, input);
+		FEM.SetBoundaryConditions(mesh, input);
 
 		//#define WRITE_A_B
 		#ifdef WRITE_A_B	//used for debugging...
-			 d.Write_A_and_b(1000);
+			 FEM.Write_A_and_b(1000);
 		#endif
 
 		#ifdef _OPENMP
@@ -383,8 +383,8 @@ do
 		//solver
 
 		//if the CG solver diverges, try the minres solver
-		if(discretization.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-		    if(discretization.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+		if(FEM.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+		    if(FEM.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
 
 		#ifdef _OPENMP
@@ -398,7 +398,7 @@ do
 /*  ----------------------------------------*/
 
 		 //compute uvw field from phi field
-		 computeUVWField();
+		 FEM.ComputeUVWField(mesh, input, u0, v0, w0, u, v, w);
 
 		 checkCancel();
 
@@ -700,220 +700,6 @@ bool ninja::checkForNullRun()
 	}
 
 	return isNullRun;
-}
-
-/**
- * @brief Computes the u,v,w 3d volume wind field.
- *
- * Calculate @f$u@f$, @f$v@f$, and @f$w@f$ from derivitives of @f$\Phi@f$. Where:
- *
- * @f$ u = u_{0} + \frac{1}{2} * \frac{d\Phi}{dx} @f$
- *
- * @f$ v = v_{0} + \frac{1}{2} * \frac{d\Phi}{dy} @f$
- *
- * @f$ w = w_{0} + \frac{\alpha^{2}}{2} * \frac{d\Phi}{dz} @f$
- *
- * @note Since the derivatives cannot be directly calculated because they are
- * located at the nodal points(the derivatives across element boundaries are
- * discontinuous), another method must be used.  The method used here is that
- * used in Thompson's book on page 228 called "stress smoothing".  It is
- * basically an inverse-distance weighted average from the gauss points of the
- * surrounding cells.
- *
- * This is the result of the @f$ A*x=b @f$ calculation.
- */
-void ninja::computeUVWField()
-{
-
-     /*-----------------------------------------------------*/
-     /*      Calculate u,v, and w from derivatives of PHI   */
-     /*                     1         d PHI                 */
-     /*     u =  u  +  -----------  * ----                  */
-     /*           0     2*alphaH^2     dx                   */
-     /*                                                     */
-     /*                     1         d PHI                 */
-     /*     v =  v  +  -----------  * ----                  */
-     /*           0     2*alphaH^2     dy                   */
-     /*                                                     */
-     /*                     1         d PHI                 */
-     /*     w =  w  +  -----------  * ----                  */
-     /*           0     2*alphaV^2     dz                   */
-     /*                                                     */
-     /*     Since the derivatives cannot be directly        */
-     /*     calculated because they are located at the      */
-     /*     nodal points(the derivatives across element     */
-     /*     boundaries are discontinuous), another method   */
-     /*     must be used.  The method used here is that     */
-     /*     used in Thompson's book on page 228 called      */
-     /*     "stress smoothing".  It is basically an inverse-*/
-     /*     distance weighted average from the gauss points */
-     /*     of the surrounding cells.                       */
-     /*-----------------------------------------------------*/
-
-	 int i, j, k;
-
-	 u.allocate(&mesh);           //u is positive toward East
-	 v.allocate(&mesh);           //v is positive toward North
-	 w.allocate(&mesh);           //w is positive up
-	 if(discretization.DIAG == NULL)
-		 discretization.DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];        //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
-
-	 for(i=0;i<mesh.NUMNP;i++)                         //Initialize u,v, and w
-     {
-          u(i)=0.;
-          v(i)=0.;
-          w(i)=0.;
-          discretization.DIAG[i]=0.;
-     }
-
-	#pragma omp parallel default(shared) private(i,j,k)
-	{
-
-	 element elem(&mesh);
-
-     double DPHIDX, DPHIDY, DPHIDZ;
-	 double XJ, YJ, ZJ;
-     double wght, XK, YK, ZK;
-	 double *uScratch, *vScratch, *wScratch, *DIAGScratch;
-	 uScratch=NULL;
-	 vScratch=NULL;
-	 wScratch=NULL;
-	 DIAGScratch=NULL;
-
-	 uScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 vScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 wScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 DIAGScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-
-     for(i=0;i<mesh.NUMNP;i++)                         //Initialize scratch u,v, and w
-     {
-          uScratch[i]=0.;
-          vScratch[i]=0.;
-          wScratch[i]=0.;
-          DIAGScratch[i]=0.;
-     }
-
-	 #pragma omp for
-     for(i=0;i<mesh.NUMEL;i++)                  //Start loop over elements
-     {
-          elem.node0 = mesh.get_node0(i);  //get the global node number of local node 0 of element i
-          for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
-          {
-
-               DPHIDX=0.0;     //Set DPHI/DX, etc. to zero for the new quad point
-               DPHIDY=0.0;
-               DPHIDZ=0.0;
-
-			   elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
-
-               //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
-               for(k=0;k<mesh.NNPE;k++)
-               {
-                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global node number
-
-                    DPHIDX=DPHIDX+elem.DNDX[k]*discretization.PHI[elem.NPK];       //Calculate the DPHI/DX, etc. for the quad point we are on
-                    DPHIDY=DPHIDY+elem.DNDY[k]*discretization.PHI[elem.NPK];
-                    DPHIDZ=DPHIDZ+elem.DNDZ[k]*discretization.PHI[elem.NPK];
-               }
-
-               //Now we know DPHI/DX, etc. for quad point j.  We will distribute this inverse distance weighted average to each nodal point for the cell we're on
-               for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
-               {                            //Calculate the Jacobian at the quad point
-                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
-
-                    XK=mesh.XORD(elem.NPK);            //Coodinates of the nodal point
-                    YK=mesh.YORD(elem.NPK);
-                    ZK=mesh.ZORD(elem.NPK);
-
-                    wght=std::pow((XK-XJ),2)+std::pow((YK-YJ),2)+std::pow((ZK-ZJ),2);
-                    wght=1.0/(std::sqrt(wght));
-//c				    #pragma omp critical
-				    {
-                    uScratch[elem.NPK]=uScratch[elem.NPK]+wght*DPHIDX;   //Here we store the summing values of DPHI/DX, etc. in the u,v,w arrays for later use (to actually calculate u,v,w)
-                    vScratch[elem.NPK]=vScratch[elem.NPK]+wght*DPHIDY;
-                    wScratch[elem.NPK]=wScratch[elem.NPK]+wght*DPHIDZ;
-                    DIAGScratch[elem.NPK]=DIAGScratch[elem.NPK]+wght;     //Store the sum of the weights for the node
-					}
-
-               }                             //End loop over nodes in the element
-
-
-          }                                  //End loop over quadrature points in the element
-     }                                       //End loop over elements
-
-	 #pragma omp critical
-	 {
-     for(i=0;i<mesh.NUMNP;i++)
-     {
-          u(i) += uScratch[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-          v(i) += vScratch[i];
-          w(i) += wScratch[i];
-          discretization.DIAG[i] += DIAGScratch[i];
-	 }
-	 } //end critical
-
-	 if(uScratch)
-	 {
-		delete[] uScratch;
-		uScratch=NULL;
-	 }
-	 if(vScratch)
-	 {
-		delete[] vScratch;
-		vScratch=NULL;
-	 }
-	 if(wScratch)
-	 {
-		delete[] wScratch;
-		wScratch=NULL;
-	 }
-	 if(DIAGScratch)
-	 {
-		delete[] DIAGScratch;
-		DIAGScratch=NULL;
-	 }
-
-     #pragma omp barrier
-
-     double alphaV = 1.0;
-
-     #pragma omp for
-
-     for(i=0;i<mesh.NUMNP;i++)
-     {
-          u(i)=u(i)/discretization.DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-          v(i)=v(i)/discretization.DIAG[i];
-          w(i)=w(i)/discretization.DIAG[i];
-
-          //Finally, calculate u,v,w
-          alphaV = discretization.alphaVfield(i); //set alphaV for stability
-
-		  u(i)=u0(i)+1.0/(2.0*discretization.alphaH*discretization.alphaH)*u(i); //Remember, dPHI/dx is stored in u
-		  v(i)=v0(i)+1.0/(2.0*discretization.alphaH*discretization.alphaH)*v(i);
-		  w(i)=w0(i)+1.0/(2.0*alphaV*alphaV)*w(i);
-
-
-     }
-     }		//end parallel section
-
-     discretization.alphaVfield.deallocate();
-
-    // testing
-    /*std::string filename;
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
-    testGrid.set_noDataValue(-9999.0);
-
-    for(int k = 0; k < mesh.nlayers; k++){
-        for(int i = 0; i <mesh.nrows; i++){
-            for(int j = 0; j < mesh.ncols; j++ ){
-                testGrid(i,j) = u(i,j,k);
-                filename = "u" + boost::lexical_cast<std::string>(k);
-            }
-        }
-        testGrid.write_Grid(filename.c_str(), 2);
-    }
-    testGrid.deallocate();*/
 }
 
 /**Prepares for writing output files.

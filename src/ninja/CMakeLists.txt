@@ -28,7 +28,7 @@ set(NINJA_SOURCES air.cpp
                   cellDiurnal.cpp
                   cli.cpp
                   dbfopen.cpp
-                  discretization.cpp
+                  finiteElementMethod.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
                   EasyBMP.cpp

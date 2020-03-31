@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Discretization
+ * Purpose:  Finite Element Method operations
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -26,10 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-#include "discretization.h"
+#include "finiteElementMethod.h"
 
 
-Discretization::Discretization()        //default constructor
+FiniteElementMethod::FiniteElementMethod()        //default constructor
 {
     //Pointers to dynamically allocated memory
     DIAG=NULL;
@@ -38,14 +38,16 @@ Discretization::Discretization()        //default constructor
     SK=NULL;
     row_ptr=NULL;
     col_ind=NULL;
+
+    alphaH=1.0;
 }
 
-Discretization::~Discretization()      //destructor
+FiniteElementMethod::~FiniteElementMethod()      //destructor
 {
 
 }
 
-int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, 
         wn_3dScalarField &u0, 
         wn_3dScalarField &v0, 
         wn_3dScalarField &w0)
@@ -392,7 +394,7 @@ int Discretization::Discretize(const Mesh &mesh, WindNinjaInputs &input,
     return NINJA_SUCCESS;
 }
 
-int Discretization::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+int FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
 {
     //Specify known values of PHI
     //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
@@ -476,7 +478,7 @@ int Discretization::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &inp
  * @param tol Convergence tolerance to stop at.
  * @return Returns true if solver converges and completes properly.
  */
-bool Discretization::Solve(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
 {
     double *A = SK;
     double *b = RHS;
@@ -669,7 +671,7 @@ bool Discretization::Solve(WindNinjaInputs &input, int NUMNP, int max_iter, int 
 //  MINRES from PetSc (found in google code search)
 //    This solver seems to be monotonic in its convergence (residual always goes down)
 //    Could use this if CG diverges, but haven't seen divergence yet...
-bool Discretization::SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
 {
     double *A = SK;
     double *b = RHS;
@@ -919,7 +921,7 @@ bool Discretization::SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter
  * @param X Source vector.
  * @param incX Number of values to skip.  MUST BE 1 FOR THIS VERSION!!
  */
-void Discretization::cblas_dscal(const int N, const double alpha, double *X, const int incX)
+void FiniteElementMethod::cblas_dscal(const int N, const double alpha, double *X, const int incX)
 {
      int i, ix;
 
@@ -941,7 +943,7 @@ void Discretization::cblas_dscal(const int N, const double alpha, double *X, con
  * @param Y Target vector to copy values to.
  * @param incY Number of values to skip.  MUST BE 1 FOR THIS VERSION!!
  */
-void Discretization::cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY)
+void FiniteElementMethod::cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY)
 {
 	int i;
 	for(i=0; i<N; i++)
@@ -957,7 +959,7 @@ void Discretization::cblas_dcopy(const int N, const double *X, const int incX, d
  * @param incY Number of values to skip.  MUST BE 1 FOR THIS VERSION!!
  * @return Dot product X*Y value.
  */
-double Discretization::cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY)
+double FiniteElementMethod::cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY)
 {
 	double val=0.0;
 	int i;
@@ -978,7 +980,7 @@ double Discretization::cblas_ddot(const int N, const double *X, const int incX, 
  * @param Y Vector of size N.
  * @param incY Number of values to skip.  MUST BE 1 FOR THIS VERSION!!
  */
-void Discretization::cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY)
+void FiniteElementMethod::cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY)
 {
 	int i;
 
@@ -994,7 +996,7 @@ void Discretization::cblas_daxpy(const int N, const double alpha, const double *
  * @param incX Number of values to skip.  MUST BE 1 FOR THIS VERSION!!
  * @return Value of the 2-norm of X.
  */
-double Discretization::cblas_dnrm2(const int N, const double *X, const int incX)
+double FiniteElementMethod::cblas_dnrm2(const int N, const double *X, const int incX)
 {
 	double val=0.0;
 	int i;
@@ -1032,7 +1034,7 @@ double Discretization::cblas_dnrm2(const int N, const double *X, const int incX)
  * @param beta Not used here, but included to stay with the BLAS.
  * @param y Vector of size m (and k) in the A*x=y computation.
  */
-void Discretization::mkl_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y)
+void FiniteElementMethod::mkl_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y)
 {	// My version of MKL's compressed sparse row (CSR) matrix vector product function
 	// MINE ONLY WORKS FOR A SYMMETRICALLY STORED, UPPER TRIANGULAR MATRIX!!!!!!
 	// AND ALPHA==1 AND BETA==0
@@ -1098,7 +1100,7 @@ void Discretization::mkl_dcsrmv(char *transa, int *m, int *k, double *alpha, cha
  * @param beta Not used here, but included to stay with the BLAS.
  * @param y Vector of size m (and k) in the A*x=y computation.
  */
-void Discretization::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y)
+void FiniteElementMethod::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra, double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y)
 {
 		//function multiplies the traspose of a sparse matrix "val" times a vector "x", result is stored in "y"
 		//		ie. A^Tx = y
@@ -1152,7 +1154,7 @@ void Discretization::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alph
  * @param row_ptr Row pointer vector for compressed row stored matrix A.
  * @param b "b" vector in A*x=b computation.  Size is NUMNP.
  */
-void Discretization::Write_A_and_b(int NUMNP)
+void FiniteElementMethod::Write_A_and_b(int NUMNP)
 {
     double *A = SK;
     double *b = RHS;
@@ -1176,7 +1178,7 @@ void Discretization::Write_A_and_b(int NUMNP)
 	fclose(b_file);
 }
 
-void Discretization::Deallocate()
+void FiniteElementMethod::Deallocate()
 {
     if(PHI)
     {	
@@ -1210,7 +1212,7 @@ void Discretization::Deallocate()
     }
 }
 
-int Discretization::SetStability(const Mesh &mesh, 
+int FiniteElementMethod::SetStability(const Mesh &mesh, 
         WindNinjaInputs &input,
         wn_3dScalarField &u0,
         wn_3dScalarField &v0,
@@ -1326,6 +1328,228 @@ int Discretization::SetStability(const Mesh &mesh,
     CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
 
     stb.alphaField.deallocate();
+
+    return NINJA_SUCCESS;
+}
+
+/**
+ * @brief Computes the u,v,w 3d volume wind field.
+ *
+ * Calculate @f$u@f$, @f$v@f$, and @f$w@f$ from derivitives of @f$\Phi@f$. Where:
+ *
+ * @f$ u = u_{0} + \frac{1}{2} * \frac{d\Phi}{dx} @f$
+ *
+ * @f$ v = v_{0} + \frac{1}{2} * \frac{d\Phi}{dy} @f$
+ *
+ * @f$ w = w_{0} + \frac{\alpha^{2}}{2} * \frac{d\Phi}{dz} @f$
+ *
+ * @note Since the derivatives cannot be directly calculated because they are
+ * located at the nodal points(the derivatives across element boundaries are
+ * discontinuous), another method must be used.  The method used here is that
+ * used in Thompson's book on page 228 called "stress smoothing".  It is
+ * basically an inverse-distance weighted average from the gauss points of the
+ * surrounding cells.
+ *
+ * This is the result of the @f$ A*x=b @f$ calculation.
+ */
+bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+                                wn_3dScalarField &u0,
+                                wn_3dScalarField &v0,
+                                wn_3dScalarField &w0,
+                                wn_3dScalarField &u,
+                                wn_3dScalarField &v,
+                                wn_3dScalarField &w)
+{
+
+     /*-----------------------------------------------------*/
+     /*      Calculate u,v, and w from derivatives of PHI   */
+     /*                     1         d PHI                 */
+     /*     u =  u  +  -----------  * ----                  */
+     /*           0     2*alphaH^2     dx                   */
+     /*                                                     */
+     /*                     1         d PHI                 */
+     /*     v =  v  +  -----------  * ----                  */
+     /*           0     2*alphaH^2     dy                   */
+     /*                                                     */
+     /*                     1         d PHI                 */
+     /*     w =  w  +  -----------  * ----                  */
+     /*           0     2*alphaV^2     dz                   */
+     /*                                                     */
+     /*     Since the derivatives cannot be directly        */
+     /*     calculated because they are located at the      */
+     /*     nodal points(the derivatives across element     */
+     /*     boundaries are discontinuous), another method   */
+     /*     must be used.  The method used here is that     */
+     /*     used in Thompson's book on page 228 called      */
+     /*     "stress smoothing".  It is basically an inverse-*/
+     /*     distance weighted average from the gauss points */
+     /*     of the surrounding cells.                       */
+     /*-----------------------------------------------------*/
+
+	 int i, j, k;
+
+	 u.allocate(&mesh);           //u is positive toward East
+	 v.allocate(&mesh);           //v is positive toward North
+	 w.allocate(&mesh);           //w is positive up
+	 if(DIAG == NULL)
+		 DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];        //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
+
+	 for(i=0;i<mesh.NUMNP;i++)                         //Initialize u,v, and w
+     {
+          u(i)=0.;
+          v(i)=0.;
+          w(i)=0.;
+          DIAG[i]=0.;
+     }
+
+	#pragma omp parallel default(shared) private(i,j,k)
+	{
+
+	 element elem(&mesh);
+
+     double DPHIDX, DPHIDY, DPHIDZ;
+	 double XJ, YJ, ZJ;
+     double wght, XK, YK, ZK;
+	 double *uScratch, *vScratch, *wScratch, *DIAGScratch;
+	 uScratch=NULL;
+	 vScratch=NULL;
+	 wScratch=NULL;
+	 DIAGScratch=NULL;
+
+	 uScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+	 vScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+	 wScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+	 DIAGScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+
+     for(i=0;i<mesh.NUMNP;i++)                         //Initialize scratch u,v, and w
+     {
+          uScratch[i]=0.;
+          vScratch[i]=0.;
+          wScratch[i]=0.;
+          DIAGScratch[i]=0.;
+     }
+
+	 #pragma omp for
+     for(i=0;i<mesh.NUMEL;i++)                  //Start loop over elements
+     {
+          elem.node0 = mesh.get_node0(i);  //get the global node number of local node 0 of element i
+          for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
+          {
+
+               DPHIDX=0.0;     //Set DPHI/DX, etc. to zero for the new quad point
+               DPHIDY=0.0;
+               DPHIDZ=0.0;
+
+			   elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
+
+               //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
+               for(k=0;k<mesh.NNPE;k++)
+               {
+                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global node number
+
+                    DPHIDX=DPHIDX+elem.DNDX[k]*PHI[elem.NPK];       //Calculate the DPHI/DX, etc. for the quad point we are on
+                    DPHIDY=DPHIDY+elem.DNDY[k]*PHI[elem.NPK];
+                    DPHIDZ=DPHIDZ+elem.DNDZ[k]*PHI[elem.NPK];
+               }
+
+               //Now we know DPHI/DX, etc. for quad point j.  We will distribute this inverse distance weighted average to each nodal point for the cell we're on
+               for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
+               {                            //Calculate the Jacobian at the quad point
+                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
+
+                    XK=mesh.XORD(elem.NPK);            //Coodinates of the nodal point
+                    YK=mesh.YORD(elem.NPK);
+                    ZK=mesh.ZORD(elem.NPK);
+
+                    wght=std::pow((XK-XJ),2)+std::pow((YK-YJ),2)+std::pow((ZK-ZJ),2);
+                    wght=1.0/(std::sqrt(wght));
+//c				    #pragma omp critical
+				    {
+                    uScratch[elem.NPK]=uScratch[elem.NPK]+wght*DPHIDX;   //Here we store the summing values of DPHI/DX, etc. in the u,v,w arrays for later use (to actually calculate u,v,w)
+                    vScratch[elem.NPK]=vScratch[elem.NPK]+wght*DPHIDY;
+                    wScratch[elem.NPK]=wScratch[elem.NPK]+wght*DPHIDZ;
+                    DIAGScratch[elem.NPK]=DIAGScratch[elem.NPK]+wght;     //Store the sum of the weights for the node
+					}
+
+               }                             //End loop over nodes in the element
+
+
+          }                                  //End loop over quadrature points in the element
+     }                                       //End loop over elements
+
+	 #pragma omp critical
+	 {
+     for(i=0;i<mesh.NUMNP;i++)
+     {
+          u(i) += uScratch[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
+          v(i) += vScratch[i];
+          w(i) += wScratch[i];
+          DIAG[i] += DIAGScratch[i];
+	 }
+	 } //end critical
+
+	 if(uScratch)
+	 {
+		delete[] uScratch;
+		uScratch=NULL;
+	 }
+	 if(vScratch)
+	 {
+		delete[] vScratch;
+		vScratch=NULL;
+	 }
+	 if(wScratch)
+	 {
+		delete[] wScratch;
+		wScratch=NULL;
+	 }
+	 if(DIAGScratch)
+	 {
+		delete[] DIAGScratch;
+		DIAGScratch=NULL;
+	 }
+
+     #pragma omp barrier
+
+     double alphaV = 1.0;
+
+     #pragma omp for
+
+     for(i=0;i<mesh.NUMNP;i++)
+     {
+          u(i)=u(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
+          v(i)=v(i)/DIAG[i];
+          w(i)=w(i)/DIAG[i];
+
+          //Finally, calculate u,v,w
+          alphaV = alphaVfield(i); //set alphaV for stability
+
+		  u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i); //Remember, dPHI/dx is stored in u
+		  v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
+		  w(i)=w0(i)+1.0/(2.0*alphaV*alphaV)*w(i);
+
+
+     }
+     }		//end parallel section
+
+     alphaVfield.deallocate();
+
+    // testing
+    /*std::string filename;
+    AsciiGrid<double> testGrid;
+    testGrid.set_headerData(input.dem);
+    testGrid.set_noDataValue(-9999.0);
+
+    for(int k = 0; k < mesh.nlayers; k++){
+        for(int i = 0; i <mesh.nrows; i++){
+            for(int j = 0; j < mesh.ncols; j++ ){
+                testGrid(i,j) = u(i,j,k);
+                filename = "u" + boost::lexical_cast<std::string>(k);
+            }
+        }
+        testGrid.write_Grid(filename.c_str(), 2);
+    }
+    testGrid.deallocate();*/
 
     return NINJA_SUCCESS;
 }

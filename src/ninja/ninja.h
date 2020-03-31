@@ -86,9 +86,7 @@
 #include "initializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
-#include "discretization.h"
-
-
+#include "finiteElementMethod.h"
 
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
@@ -366,7 +364,7 @@ private:
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
-    Discretization discretization;
+    FiniteElementMethod FEM;
 
     wn_3dScalarField u, v, w;
     wn_3dScalarField u0;		//u is positive toward East
@@ -424,7 +422,6 @@ private:
     //double stability_function(double z_over_L, double L_switch);
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
-    void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
     void writeOutputFiles(); 

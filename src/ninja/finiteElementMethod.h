@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Discretization 
+ * Purpose:  Finite Element Method operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#ifndef DISCRETIZATION_H
-#define DISCRETIZATION_H
+#ifndef FINITE_ELEMENT_METHOD_H
+#define FINITE_ELEMENT_METHOD_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,30 +50,36 @@
 
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
-class Discretization
+class FiniteElementMethod
 {
     public:
-        Discretization();
-        ~Discretization();
+        FiniteElementMethod();
+        ~FiniteElementMethod();
         
         int Discretize(const Mesh &mesh, WindNinjaInputs &input, 
                     wn_3dScalarField &u0, wn_3dScalarField &v0, wn_3dScalarField &w0);
         int SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
         int SetStability(const Mesh &mesh, WindNinjaInputs &input,
-                    wn_3dScalarField &u0,
-                    wn_3dScalarField &v0,
-                    wn_3dScalarField &w0,
-                    AsciiGrid<double> &CloudGrid,
-                    boost::shared_ptr<initialize> &init);
+                        wn_3dScalarField &u0,
+                        wn_3dScalarField &v0,
+                        wn_3dScalarField &w0,
+                        AsciiGrid<double> &CloudGrid,
+                        boost::shared_ptr<initialize> &init);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
+        bool ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+                            wn_3dScalarField &u0,
+                            wn_3dScalarField &v0,
+                            wn_3dScalarField &w0,
+                            wn_3dScalarField &u,
+                            wn_3dScalarField &v,
+                            wn_3dScalarField &w);
         void Deallocate();
 
         double *PHI;
         double *DIAG;
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
-        double alpha; //alpha = alphaH/alphaV, determined by stability
 
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
@@ -94,4 +100,4 @@ class Discretization
         int *row_ptr, *col_ind;
 };
 
-#endif	//DISCRETIZATION_H
+#endif	//FINITE_ELEMENT_METHOD_H
