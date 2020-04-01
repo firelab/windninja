@@ -505,19 +505,16 @@ double wn_3dScalarField::operator() (int num) const
 /**
  * @brief Calculate and store gradients at each node
  *
- * @param Reference to inputs
- * @param Reference to a wn_3dVectorField
+ * @param input Reference to inputs
+ * @param gradientVectorXComponent Output x component of gradient
+ * @param gradientVectorYComponent Output y component of gradient
+ * @param gradientVectorZComponent Output z component of gradient
  */
-void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dVectorField &derivatives)
+void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent)
 {
     int i, j, k;
     double *DIAG;
-    wn_3dScalarField x, y, z;
     DIAG = NULL;
-
-    x.allocate(mesh_);    //x is positive toward East
-    y.allocate(mesh_);    //y is positive toward North
-    z.allocate(mesh_);    //z is positive up
 
     if(DIAG == NULL)
 
@@ -525,9 +522,9 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dVectorField 
 
     for(i=0;i<mesh_->NUMNP;i++)    //Initialize x,y, and z
     {
-        x(i)=0.;
-        y(i)=0.;
-        z(i)=0.;
+        gradientVectorXComponent(i)=0.;
+        gradientVectorYComponent(i)=0.;
+        gradientVectorZComponent(i)=0.;
         DIAG[i]=0.;
     }
 
@@ -606,9 +603,9 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dVectorField 
     {
     for(i=0;i<mesh_->NUMNP;i++)
     {
-        x(i) += xScratch[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (stored in the x,y,z arrays)
-        y(i) += yScratch[i];
-        z(i) += zScratch[i];
+        gradientVectorXComponent(i) += xScratch[i];
+        gradientVectorYComponent(i) += yScratch[i];
+        gradientVectorZComponent(i) += zScratch[i];
         DIAG[i] += DIAGScratch[i];
     }
     } //end critical
@@ -639,18 +636,11 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dVectorField 
     #pragma omp for
     for(i=0;i<mesh_->NUMNP;i++)
     {
-        x(i)=x(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc.
-        y(i)=y(i)/DIAG[i];
-        z(i)=z(i)/DIAG[i];
+        gradientVectorXComponent(i)=gradientVectorXComponent(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc.
+        gradientVectorYComponent(i)=gradientVectorYComponent(i)/DIAG[i];
+        gradientVectorZComponent(i)=gradientVectorZComponent(i)/DIAG[i];
     }
     }   //end parallel section
-
-    wn_3dVectorField gradient_vector(x, y, z);
-    derivatives = gradient_vector;
-
-    x.deallocate();  //should these be here??
-    y.deallocate();
-    z.deallocate();
 
     //cout << "gradient_vector = " << (*gradient_vector.vectorData_x)(0,0,0) << endl;
 }

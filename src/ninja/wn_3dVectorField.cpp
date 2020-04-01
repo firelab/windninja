@@ -37,10 +37,9 @@ wn_3dVectorField::wn_3dVectorField()
 
 wn_3dVectorField::wn_3dVectorField(const wn_3dScalarField& x, const wn_3dScalarField& y, const wn_3dScalarField& z)
 {
-    vectorData_x = new wn_3dScalarField(x);
-    vectorData_y = new wn_3dScalarField(y);
-    vectorData_z = new wn_3dScalarField(z);
-
+    vectorData_x = x;
+    vectorData_y = y;
+    vectorData_z = z;
 }
 
 wn_3dVectorField::wn_3dVectorField(wn_3dVectorField const& f)	// Copy constructor
@@ -52,19 +51,15 @@ wn_3dVectorField::wn_3dVectorField(wn_3dVectorField const& f)	// Copy constructo
 
 wn_3dVectorField::~wn_3dVectorField()
 {
-    vectorData_x = NULL;
-    vectorData_y = NULL;
-    vectorData_z = NULL;
+
 }
 
 wn_3dVectorField& wn_3dVectorField::operator= (const wn_3dVectorField& f)	// Assignment operator
 {
-    vectorData_x = f.vectorData_x;
-    vectorData_y = f.vectorData_y;
-    vectorData_z = f.vectorData_z;
+    if(&f != this){
+        vectorData_x = f.vectorData_x;
+        vectorData_y = f.vectorData_y;
+        vectorData_z = f.vectorData_z;
+    }
     return *this;
 }
-
-
-
-

@@ -88,11 +88,11 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
 void TransportSemiLagrangian::transportScalar(const wn_3dVectorField &U0, const wn_3dScalarField &S0, wn_3dScalarField &S1, const double &dt)
 {
     double xEnd, yEnd, zEnd;
-    for(int k=0;k<U0.vectorData_x->mesh_->nlayers;k++)
+    for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
     {
-        for(int i=0;i<U0.vectorData_x->mesh_->nrows;i++)
+        for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
         {
-            for(int j=0;j<U0.vectorData_x->mesh_->ncols;j++)
+            for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
             {
                 traceParticle(U0, dt, i, j, k, xEnd, yEnd, zEnd);
                 S1(i, j, k) = S0.interpolate(xEnd, yEnd, zEnd);
@@ -120,9 +120,9 @@ void TransportSemiLagrangian::transportScalar(const wn_3dVectorField &U0, const 
 void TransportSemiLagrangian::traceParticle(const wn_3dVectorField &U0, const double &dt, int &startI, int &startJ, int &startK, double &endX, double &endY, double &endZ)
 {
     double u, v, w;
-    u = U0.vectorData_x->operator()(startI,startJ,startK);
-    v = U0.vectorData_y->operator()(startI,startJ,startK);
-    w = U0.vectorData_z->operator()(startI,startJ,startK);
+    u = U0.vectorData_x(startI,startJ,startK);
+    v = U0.vectorData_y(startI,startJ,startK);
+    w = U0.vectorData_z(startI,startJ,startK);
     if(transportType==firstOrderTransport)
     {
         double directionCosineX, directionCosineY, directionCosineZ, vectorLength, travelDistance;
@@ -132,9 +132,9 @@ void TransportSemiLagrangian::traceParticle(const wn_3dVectorField &U0, const do
         directionCosineY = v/vectorLength;
         directionCosineZ = w/vectorLength;
 
-        endX = U0.vectorData_x->mesh_->XORD(startI,startJ,startK) + directionCosineX*travelDistance;
-        endY = U0.vectorData_x->mesh_->YORD(startI,startJ,startK) + directionCosineY*travelDistance;
-        endZ = U0.vectorData_x->mesh_->ZORD(startI,startJ,startK) + directionCosineZ*travelDistance;
+        endX = U0.vectorData_x.mesh_->XORD(startI,startJ,startK) + directionCosineX*travelDistance;
+        endY = U0.vectorData_x.mesh_->YORD(startI,startJ,startK) + directionCosineY*travelDistance;
+        endZ = U0.vectorData_x.mesh_->ZORD(startI,startJ,startK) + directionCosineZ*travelDistance;
     }else if(transportType==secondOrderRungeKutta)
     {
 

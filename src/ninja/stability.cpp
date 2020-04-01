@@ -131,7 +131,7 @@ void Stability::Set3dVariableAlpha(WindNinjaInputs &input,
 
     
     wn_3dVectorField thetaDerivatives;
-    theta.ComputeGradient(input, thetaDerivatives); // calculate dtheta/dz, dx, dy at each node
+    theta.ComputeGradient(input, thetaDerivatives.vectorData_x, thetaDerivatives.vectorData_y, thetaDerivatives.vectorData_z); // calculate dtheta/dz, dx, dy at each node
     
     hTest = 0.0;
     hMax = mesh.ZORD(0,0,0);
@@ -198,13 +198,13 @@ void Stability::Set3dVariableAlpha(WindNinjaInputs &input,
                         _U = 0.2;
                     }
                 
-                if( (*thetaDerivatives.vectorData_z)(i,j,k) >= 0.0 ){ // Str = HN/U
+                if( thetaDerivatives.vectorData_z(i,j,k) >= 0.0 ){ // Str = HN/U
                                         
-                    _N = std::sqrt( _g/theta(i,j,k) * (*thetaDerivatives.vectorData_z)(i,j,k) );
+                    _N = std::sqrt( _g/theta(i,j,k) * thetaDerivatives.vectorData_z(i,j,k) );
                     strouhalNumber = _H(i,j) * _N / _U;
                 }
-                else if( (*thetaDerivatives.vectorData_z)(i,j,k) < 0.0 ){ // Str = -H/Ut
-                    _t = std::sqrt( -_g/theta(i,j,k) * (*thetaDerivatives.vectorData_z)(i,j,k) );
+                else if( thetaDerivatives.vectorData_z(i,j,k) < 0.0 ){ // Str = -H/Ut
+                    _t = std::sqrt( -_g/theta(i,j,k) * thetaDerivatives.vectorData_z(i,j,k) );
                     strouhalNumber = -_H(i,j) / _U *_t;
                 }
                 else{

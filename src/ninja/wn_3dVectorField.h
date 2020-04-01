@@ -31,7 +31,6 @@
 
 #include "wn_3dScalarField.h"
 
-class wn_3dScalarField;
 class wn_3dVectorField
 {
 	public:
@@ -41,13 +40,12 @@ class wn_3dVectorField
 		wn_3dVectorField(wn_3dVectorField const& f);           // Copy constructor
 		wn_3dVectorField& operator= (wn_3dVectorField const& f);
 
-        wn_3dScalarField* vectorData_x;
-        wn_3dScalarField* vectorData_y;
-        wn_3dScalarField* vectorData_z;
+        wn_3dScalarField vectorData_x;
+        wn_3dScalarField vectorData_y;
+        wn_3dScalarField vectorData_z;
 
     private:
 
 };
 
 #endif /* WN_3D_VECTOR_FIELD_H */
-

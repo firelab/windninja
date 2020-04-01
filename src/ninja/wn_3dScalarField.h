@@ -35,11 +35,9 @@
 #include "wn_3dArray.h"
 #include "mesh.h"
 #include "element.h"
-#include "wn_3dVectorField.h"
 #include "WindNinjaInputs.h"
 
 class wxModelInitialization;
-class wn_3dVectorField;
 class wn_3dScalarField
 {
 public:
@@ -61,7 +59,7 @@ public:
                                
     double interpolate(double const& x,double const& y, double const& z);
     double interpolate(element &elem, const int &cell_i, const int &cell_j, const int &cell_k, const double &u, const double &v, const double &w);
-    void ComputeGradient(WindNinjaInputs &input, wn_3dVectorField &gradient_vector);
+    void ComputeGradient(WindNinjaInputs &input, wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent);
 
     double& operator() (int row, int col, int layer);
     double  operator() (int row, int col, int layer) const;
