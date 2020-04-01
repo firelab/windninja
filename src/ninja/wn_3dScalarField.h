@@ -67,9 +67,9 @@ public:
     double  operator() (int row, int col, int layer) const;
     double& operator() (int num);
     double  operator() (int num) const;
+    Mesh const* mesh_;
 
 private:
-    Mesh const* mesh_;
     wn_3dArray scalarData_;
 };
 
