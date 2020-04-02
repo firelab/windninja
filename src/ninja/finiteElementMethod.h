@@ -40,6 +40,7 @@
 #include "mesh.h"
 #include "stability.h"
 #include "wn_3dScalarField.h"
+#include "wn_3dVectorField.h"
 #include "initialize.h"
 #include "ninja_errors.h"
 #include "preconditioner.h"
@@ -57,21 +58,17 @@ class FiniteElementMethod
         ~FiniteElementMethod();
         
         int Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dScalarField &u0, wn_3dScalarField &v0, wn_3dScalarField &w0);
+                    wn_3dVectorField &U0);
         int SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
         int SetStability(const Mesh &mesh, WindNinjaInputs &input,
-                        wn_3dScalarField &u0,
-                        wn_3dScalarField &v0,
-                        wn_3dScalarField &w0,
+                        wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
                         boost::shared_ptr<initialize> &init);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
         bool ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                            wn_3dScalarField &u0,
-                            wn_3dScalarField &v0,
-                            wn_3dScalarField &w0,
+                            wn_3dVectorField &U0,
                             wn_3dScalarField &u,
                             wn_3dScalarField &v,
                             wn_3dScalarField &w);

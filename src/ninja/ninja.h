@@ -367,9 +367,9 @@ private:
     FiniteElementMethod FEM;
 
     wn_3dScalarField u, v, w;
-    wn_3dScalarField u0;		//u is positive toward East
-    wn_3dScalarField v0;		//v is positive toward North
-    wn_3dScalarField w0;		//w is positive up
+    //u is positive toward East, v is positive toward North,
+    //w is positive up
+    wn_3dVectorField U0; 
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;

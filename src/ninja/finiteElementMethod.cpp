@@ -47,10 +47,7 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 
 }
 
-int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-        wn_3dScalarField &u0, 
-        wn_3dScalarField &v0, 
-        wn_3dScalarField &w0)
+int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0) 
 {
     //The governing equation to solve is
     //

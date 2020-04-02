@@ -50,8 +50,8 @@ initialize::~initialize()
     dirInitializationGrid.deallocate();
 }
 
-void initialize::initializeWindToZero( Mesh const& mesh,
-                                    wn_3dScalarField& U0)
+void initialize::initializeWindToZero(Mesh const& mesh,
+                                    wn_3dVectorField& U0)
 {
     int i, j, k;
 
@@ -74,9 +74,7 @@ void initialize::initializeWindToZero( Mesh const& mesh,
 
 void initialize::initializeWindFromProfile(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0)
+                                wn_3dVectorField& U0)
 {
     int i, j, k;
 //#pragma omp parallel for default(shared) firstprivate(profile) private(i,j,k)
@@ -97,13 +95,13 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
                 profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);
 
                 profile.inputWindSpeed = uInitializationGrid(i,j);
-                u0(i, j, k) += profile.getWindSpeed();
+                U0.vectorData_x(i, j, k) += profile.getWindSpeed();
 
                 profile.inputWindSpeed = vInitializationGrid(i,j);
-                v0(i, j, k) += profile.getWindSpeed();
+                U0.vectorData_y(i, j, k) += profile.getWindSpeed();
 
                 profile.inputWindSpeed = 0.0;
-                w0(i, j, k) += profile.getWindSpeed();
+                U0.vectorData_z(i, j, k) += profile.getWindSpeed();
             }
         }
     }
@@ -210,9 +208,7 @@ void initialize::addDiurnal(WindNinjaInputs& input, Aspect const* asp, Slope con
 
 void initialize::addDiurnalComponent(WindNinjaInputs &input,
                                     const Mesh& mesh,
-                                    wn_3dScalarField& u0,
-                                    wn_3dScalarField& v0,
-                                    wn_3dScalarField& w0)
+                                    wn_3dVectorField& U0)
 {
     int i, j, k;
     double AGL=0; //height above top of roughness elements
@@ -229,9 +225,9 @@ void initialize::addDiurnalComponent(WindNinjaInputs &input,
 
                 if((AGL - input.surface.Rough_d(i,j)) < height(i,j))
                 {
-                    u0(i, j, k) += uDiurnal(i,j);
-                    v0(i, j, k) += vDiurnal(i,j);
-                    w0(i, j, k) += wDiurnal(i,j);
+                    U0.vectorData_x(i, j, k) += uDiurnal(i,j);
+                    U0.vectorData_y(i, j, k) += vDiurnal(i,j);
+                    U0.vectorData_z(i, j, k) += wDiurnal(i,j);
                 }
             }
         }

@@ -54,9 +54,7 @@ class foamWxModelInitialization : public initialize
     
         virtual void initializeFields(WindNinjaInputs &input,
 		        Mesh const& mesh,
-		        wn_3dScalarField& u0,
-		        wn_3dScalarField& v0,
-		        wn_3dScalarField& w0,
+		        wn_3dVectorField& U0,
 		        AsciiGrid<double>& cloud);
         
         AsciiGrid<double> inputVelocityGrid;

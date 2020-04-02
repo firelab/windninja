@@ -36,7 +36,7 @@
 #include "mesh.h"
 #include "wxStation.h"
 #include "windProfile.h"
-#include "wn_3dScalarField.h"
+#include "wn_3dVectorField.h"
 #include <vector>
 #include "cellDiurnal.h"
 #include "SurfProperties.h"
@@ -52,9 +52,7 @@ class initialize
         //Pure virtual function for initializing volume wind fields.
         virtual void initializeFields(WindNinjaInputs &input,
                         Mesh const& mesh,
-                        wn_3dScalarField& u0,
-                        wn_3dScalarField& v0,
-                        wn_3dScalarField& w0,
+                        wn_3dVectorField& U0,
                         AsciiGrid<double>& cloud) = 0;
 #ifdef NINJAFOAM
         virtual void ninjaFoamInitializeFields( WindNinjaInputs &input,
@@ -84,17 +82,13 @@ class initialize
 
         void initializeWindFromProfile(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                wn_3dScalarField& U0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0);
+                                wn_3dVectorField& U0);
 
         virtual void initializeBoundaryLayer(WindNinjaInputs& input);
 
         void addDiurnalComponent(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0);
+                                wn_3dVectorField& U0);
 
         void setCloudCover(WindNinjaInputs &input);
 

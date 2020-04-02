@@ -104,9 +104,7 @@ ninja::ninja(const ninja &rhs)
 , u(rhs.u)
 , v(rhs.v)
 , w(rhs.w)
-, u0(rhs.u0)
-, v0(rhs.v0)
-, w0(rhs.w0)
+, U0(rhs.U0)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
@@ -173,9 +171,7 @@ ninja &ninja::operator=(const ninja &rhs)
         u = rhs.u;
         v = rhs.v;
         w = rhs.w;
-        u0 = rhs.u0;
-        v0 = rhs.v0;
-        w0 = rhs.w0;
+        U0 = rhs.U0;
 
         mesh = rhs.mesh;
         input = rhs.input;
@@ -275,9 +271,10 @@ bool ninja::simulate_wind()
     //generate mesh
     mesh.buildStandardMesh(input);
 
-    u0.allocate(&mesh);		//u is positive toward East
-    v0.allocate(&mesh);		//v is positive toward North
-    w0.allocate(&mesh);		//w is positive up
+    //u is positive toward East
+    //v is positive toward North
+    //w is positive up
+    U0.allocate(&mesh);	
 
 #ifdef _OPENMP
     endMesh = omp_get_wtime();
@@ -328,7 +325,7 @@ bool ninja::simulate_wind()
 
         //initialize
         init.reset(initializationFactory::makeInitialization(input));
-        init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+        init->initializeFields(input, mesh, U0, CloudGrid);
 
 #ifdef _OPENMP
         endInit = omp_get_wtime();
@@ -352,8 +349,8 @@ bool ninja::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        FEM.SetStability(mesh, input, u0, v0, w0, CloudGrid, init);
-        FEM.Discretize(mesh, input, u0, v0, w0);
+        FEM.SetStability(mesh, input, U0, CloudGrid, init);
+        FEM.Discretize(mesh, input, U0);
 
         checkCancel();
 
@@ -401,7 +398,7 @@ checkCancel();
 /*  ----------------------------------------*/
 
         //compute uvw field from phi field
-        FEM.ComputeUVWField(mesh, input, u0, v0, w0, u, v, w);
+        FEM.ComputeUVWField(mesh, input, U0, u, v, w);
 
         checkCancel();
 
@@ -1606,9 +1603,7 @@ void ninja::deleteDynamicMemory()
 	//	w=NULL;
 	//}
 
-	u0.deallocate();
-	v0.deallocate();
-	w0.deallocate();
+	U0.deallocate();
 }
 
 /**Checks the cancel flag for cancelling simulation.
