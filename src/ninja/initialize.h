@@ -80,13 +80,11 @@ class initialize
                     Slope const* slp, Shade const* shd, Solar *inSolar);
 
         void initializeWindToZero(Mesh const& mesh,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0);
+                                wn_3dVectorField& U0);
 
         void initializeWindFromProfile(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                wn_3dScalarField& u0,
+                                wn_3dScalarField& U0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0);
 

@@ -51,13 +51,11 @@ initialize::~initialize()
 }
 
 void initialize::initializeWindToZero( Mesh const& mesh,
-                                    wn_3dScalarField& u0,
-                                    wn_3dScalarField& v0,
-                                    wn_3dScalarField& w0)
+                                    wn_3dScalarField& U0)
 {
     int i, j, k;
 
-    //initialize u0, v0, w0 equal to zero
+    //initialize U0 equal to zero
     #pragma omp parallel for default(shared) private(i,j,k)
     for(k=0;k<mesh.nlayers;k++)
     {
@@ -65,9 +63,9 @@ void initialize::initializeWindToZero( Mesh const& mesh,
         {
             for(j=0;j<mesh.ncols;j++)
             {
-                u0(i, j, k) = 0.0;
-                v0(i, j, k) = 0.0;
-                w0(i, j, k) = 0.0;
+                U0.vectorData_x(i, j, k) = 0.0;
+                U0.vectorData_y(i, j, k) = 0.0;
+                U0.vectorData_z(i, j, k) = 0.0;
             }
         }
     }

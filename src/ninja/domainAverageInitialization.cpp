@@ -42,24 +42,22 @@ domainAverageInitialization::~domainAverageInitialization()
 
 void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                 Mesh const& mesh,
-                wn_3dScalarField& u0,
-                wn_3dScalarField& v0,
-                wn_3dScalarField& w0,
+                wn_3dVectorField& U0,
                 AsciiGrid<double>& cloud)
 {
     setGridHeaderData(input, cloud);
 
     setInitializationGrids(input);
 
-    initializeWindToZero(mesh, u0, v0, w0);
+    initializeWindToZero(mesh, U0);
 
     initializeBoundaryLayer(input);
 
-    initializeWindFromProfile(input, mesh, u0, v0, w0);
+    initializeWindFromProfile(input, mesh, U0);
 
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
-        addDiurnalComponent(input, mesh, u0, v0, w0);
+        addDiurnalComponent(input, mesh, U0);
     }
 
     cloud = cloudCoverGrid;
