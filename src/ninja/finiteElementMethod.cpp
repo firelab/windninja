@@ -306,8 +306,9 @@ int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn
                 {
                     elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
 
-                    elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+
-                            (elem.DNDZ[k]*w0(elem.NPK)));
+                    elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
+                            (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
+                            (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
 
                     alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
                 } //End loop over nodes in the element
@@ -1211,9 +1212,7 @@ void FiniteElementMethod::Deallocate()
 
 int FiniteElementMethod::SetStability(const Mesh &mesh, 
         WindNinjaInputs &input,
-        wn_3dScalarField &u0,
-        wn_3dScalarField &v0,
-        wn_3dScalarField &w0,
+        wn_3dVectorField &U0,
         AsciiGrid<double> &CloudGrid,
         boost::shared_ptr<initialize> &init)
 {
@@ -1304,7 +1303,7 @@ int FiniteElementMethod::SetStability(const Mesh &mesh,
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
 
-        stb.Set3dVariableAlpha(input, mesh, init->air3d, u0, v0);
+        stb.Set3dVariableAlpha(input, mesh, init->air3d, U0);
         init->air3d.deallocate();
 
         for(unsigned int k=0; k<mesh.nlayers; k++)
