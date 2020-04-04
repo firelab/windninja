@@ -274,7 +274,9 @@ bool ninja::simulate_wind()
     //u is positive toward East
     //v is positive toward North
     //w is positive up
-    U0.allocate(&mesh);	
+    u0.allocate(&mesh);	
+    v0.allocate(&mesh);	
+    w0.allocate(&mesh);	
 
 #ifdef _OPENMP
     endMesh = omp_get_wtime();

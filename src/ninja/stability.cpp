@@ -102,15 +102,13 @@ Stability& Stability::operator= (const Stability& rhs) // Assignment operator
  * @param input WindNinja inputs
  * @param mesh WindNinja computational mesh
  * @param theta wn_3dScalarField of thetas (potential temperature)
- * @param u0 initial u-component of the wind field
- * @param v0 initial v-compoennet of the wind field
+ * @param U0 initial wind field
  */
 
 void Stability::Set3dVariableAlpha(WindNinjaInputs &input,
                                    const Mesh &mesh,
                                    wn_3dScalarField &theta,
-                                   const wn_3dScalarField &u0,
-                                   const wn_3dScalarField &v0)
+                                   const wn_3dVectorField &U0)
 {
     double hTest;
     double hMax, hMin; // max, min terrain heights
@@ -193,7 +191,7 @@ void Stability::Set3dVariableAlpha(WindNinjaInputs &input,
         for(int i=0; i<mesh.nrows; i++){
             for(int j=0; j<mesh.ncols; j++){
 
-                _U = std::sqrt( ( std::pow(u0(i,j,k), 2) + std::pow(v0(i,j,k), 2) ) );
+                _U = std::sqrt( ( std::pow(U0.vectorData_x(i,j,k), 2) + std::pow(U0.vectorData_y(i,j,k), 2) ) );
                     if (_U < 0.2){
                         _U = 0.2;
                     }

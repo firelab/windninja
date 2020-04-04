@@ -369,6 +369,7 @@ private:
     wn_3dScalarField u, v, w;
     //u is positive toward East, v is positive toward North,
     //w is positive up
+    wn_3dScalarField u0, v0, w0;
     wn_3dVectorField U0; 
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;

@@ -54,8 +54,7 @@ class Stability{
         void Set3dVariableAlpha(WindNinjaInputs &input,
                                 const Mesh &mesh,
                                 wn_3dScalarField &theta,
-                                const wn_3dScalarField &u0,
-                                const wn_3dScalarField &v0);
+                                const wn_3dVectorField &U0);
         void Set2dWxInitializationAlpha(WindNinjaInputs &input,
                                         const Mesh &mesh,
                                         const AsciiGrid<double> &cloud);

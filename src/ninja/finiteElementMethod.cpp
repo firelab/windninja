@@ -1349,9 +1349,7 @@ int FiniteElementMethod::SetStability(const Mesh &mesh,
  * This is the result of the @f$ A*x=b @f$ calculation.
  */
 bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                                wn_3dScalarField &u0,
-                                wn_3dScalarField &v0,
-                                wn_3dScalarField &w0,
+                                wn_3dVectorField &U0,
                                 wn_3dScalarField &u,
                                 wn_3dScalarField &v,
                                 wn_3dScalarField &w)
@@ -1520,9 +1518,9 @@ bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
           //Finally, calculate u,v,w
           alphaV = alphaVfield(i); //set alphaV for stability
 
-		  u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i); //Remember, dPHI/dx is stored in u
-		  v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
-		  w(i)=w0(i)+1.0/(2.0*alphaV*alphaV)*w(i);
+		  u(i)=U0.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*u(i); //Remember, dPHI/dx is stored in u
+		  v(i)=U0.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*v(i);
+		  w(i)=U0.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*w(i);
 
 
      }
