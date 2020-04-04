@@ -63,3 +63,17 @@ wn_3dVectorField& wn_3dVectorField::operator= (const wn_3dVectorField& f)	// Ass
     }
     return *this;
 }
+
+void wn_3dVectorField::allocate(Mesh const* m)
+{
+    vectorData_x.allocate(m);
+    vectorData_y.allocate(m);
+    vectorData_z.allocate(m);
+}
+
+void wn_3dVectorField::deallocate()
+{
+    vectorData_x.deallocate();
+    vectorData_y.deallocate();
+    vectorData_z.deallocate();
+}

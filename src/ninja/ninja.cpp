@@ -274,9 +274,7 @@ bool ninja::simulate_wind()
     //u is positive toward East
     //v is positive toward North
     //w is positive up
-    u0.allocate(&mesh);	
-    v0.allocate(&mesh);	
-    w0.allocate(&mesh);	
+    U0.allocate(&mesh);
 
 #ifdef _OPENMP
     endMesh = omp_get_wtime();
@@ -687,17 +685,17 @@ bool ninja::checkForNullRun()
 	isNullRun = true;
 	for(i=0;i<mesh.NUMNP;i++)
 	{
-		if(u0(i) != 0.0)
+        if(U0.vectorData_x(i) != 0.0)
 			isNullRun = false;
 	}
 	for(i=0;i<mesh.NUMNP;i++)
 	{
-		if(v0(i) != 0.0)
+        if(U0.vectorData_y(i) != 0.0)
 			isNullRun = false;
 	}
 	for(i=0;i<mesh.NUMNP;i++)
 	{
-		if(w0(i) != 0.0)
+        if(U0.vectorData_z(i) != 0.0)
 			isNullRun = false;
 	}
 

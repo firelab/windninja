@@ -40,6 +40,9 @@ class wn_3dVectorField
 		wn_3dVectorField(wn_3dVectorField const& f);           // Copy constructor
 		wn_3dVectorField& operator= (wn_3dVectorField const& f);
 
+        void allocate(Mesh const* m);
+        void deallocate();
+
         wn_3dScalarField vectorData_x;
         wn_3dScalarField vectorData_y;
         wn_3dScalarField vectorData_z;

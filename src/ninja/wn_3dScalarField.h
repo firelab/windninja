@@ -50,7 +50,6 @@ public:
     wn_3dScalarField& operator= (wn_3dScalarField const& f);
 
     void allocate(Mesh const* m);
-    void allocate();
     void deallocate();
 
     void interpolateScalarData(wn_3dScalarField &newScalarData,
