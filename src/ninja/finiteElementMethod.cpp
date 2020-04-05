@@ -1350,9 +1350,7 @@ int FiniteElementMethod::SetStability(const Mesh &mesh,
  */
 bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                                 wn_3dVectorField &U0,
-                                wn_3dScalarField &u,
-                                wn_3dScalarField &v,
-                                wn_3dScalarField &w)
+                                wn_3dVectorField &U)
 {
 
      /*-----------------------------------------------------*/
@@ -1380,153 +1378,163 @@ bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
      /*     of the surrounding cells.                       */
      /*-----------------------------------------------------*/
 
-	 int i, j, k;
+    int i, j, k;
 
-	 u.allocate(&mesh);           //u is positive toward East
-	 v.allocate(&mesh);           //v is positive toward North
-	 w.allocate(&mesh);           //w is positive up
-	 if(DIAG == NULL)
-		 DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];        //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
+    //u is positive toward East
+    //v is positive toward North
+    //w is positive up
+    U.allocate(&mesh);
 
-	 for(i=0;i<mesh.NUMNP;i++)                         //Initialize u,v, and w
-     {
-          u(i)=0.;
-          v(i)=0.;
-          w(i)=0.;
-          DIAG[i]=0.;
-     }
+    //DIAG is the sum of the weights at each nodal point; eventually,
+    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
+    //value of dPHI/dx at each node point
+    if(DIAG == NULL)
+        DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
 
-	#pragma omp parallel default(shared) private(i,j,k)
-	{
+    for(i=0;i<mesh.NUMNP;i++) //Initialize u,v, and w
+    {
+        U.vectorData_x(i)=0.;
+        U.vectorData_y(i)=0.;
+        U.vectorData_z(i)=0.;
+        DIAG[i]=0.;
+    }
 
-	 element elem(&mesh);
+#pragma omp parallel default(shared) private(i,j,k)
+    {
+        element elem(&mesh);
 
-     double DPHIDX, DPHIDY, DPHIDZ;
-	 double XJ, YJ, ZJ;
-     double wght, XK, YK, ZK;
-	 double *uScratch, *vScratch, *wScratch, *DIAGScratch;
-	 uScratch=NULL;
-	 vScratch=NULL;
-	 wScratch=NULL;
-	 DIAGScratch=NULL;
+        double DPHIDX, DPHIDY, DPHIDZ;
+        double XJ, YJ, ZJ;
+        double wght, XK, YK, ZK;
+        double *uScratch, *vScratch, *wScratch, *DIAGScratch;
+        uScratch=NULL;
+        vScratch=NULL;
+        wScratch=NULL;
+        DIAGScratch=NULL;
 
-	 uScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 vScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 wScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-	 DIAGScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        uScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        vScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        wScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        DIAGScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
 
-     for(i=0;i<mesh.NUMNP;i++)                         //Initialize scratch u,v, and w
-     {
-          uScratch[i]=0.;
-          vScratch[i]=0.;
-          wScratch[i]=0.;
-          DIAGScratch[i]=0.;
-     }
+        for(i=0;i<mesh.NUMNP;i++)
+        {
+            uScratch[i]=0.;
+            vScratch[i]=0.;
+            wScratch[i]=0.;
+            DIAGScratch[i]=0.;
+        }
 
-	 #pragma omp for
-     for(i=0;i<mesh.NUMEL;i++)                  //Start loop over elements
-     {
-          elem.node0 = mesh.get_node0(i);  //get the global node number of local node 0 of element i
-          for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
-          {
+#pragma omp for
+        for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
+        {
+            elem.node0 = mesh.get_node0(i); //get the global node number of local node 0 of element i
+            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                DPHIDX=0.0; //Set DPHI/DX, etc. to zero for the new quad point
+                DPHIDY=0.0;
+                DPHIDZ=0.0;
 
-               DPHIDX=0.0;     //Set DPHI/DX, etc. to zero for the new quad point
-               DPHIDY=0.0;
-               DPHIDZ=0.0;
+                elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
 
-			   elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
+                //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
+                for(k=0;k<mesh.NNPE;k++)
+                {
+                    elem.NPK=mesh.get_global_node(k, i); //NPK is the global node number
 
-               //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
-               for(k=0;k<mesh.NNPE;k++)
-               {
-                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global node number
-
-                    DPHIDX=DPHIDX+elem.DNDX[k]*PHI[elem.NPK];       //Calculate the DPHI/DX, etc. for the quad point we are on
+                    //Calculate the DPHI/DX, etc. for the quad point we are on
+                    DPHIDX=DPHIDX+elem.DNDX[k]*PHI[elem.NPK];
                     DPHIDY=DPHIDY+elem.DNDY[k]*PHI[elem.NPK];
                     DPHIDZ=DPHIDZ+elem.DNDZ[k]*PHI[elem.NPK];
-               }
+                }
 
-               //Now we know DPHI/DX, etc. for quad point j.  We will distribute this inverse distance weighted average to each nodal point for the cell we're on
-               for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
-               {                            //Calculate the Jacobian at the quad point
-                    elem.NPK=mesh.get_global_node(k, i);            //NPK is the global nodal number
+                //Now we know DPHI/DX, etc. for quad point j. 
+                //We will distribute this inverse distance weighted average 
+                //to each nodal point for the cell we're on
+                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                {   //Calculate the Jacobian at the quad point
+                    elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
 
-                    XK=mesh.XORD(elem.NPK);            //Coodinates of the nodal point
+                    XK=mesh.XORD(elem.NPK); //Coodinates of the nodal point
                     YK=mesh.YORD(elem.NPK);
                     ZK=mesh.ZORD(elem.NPK);
 
                     wght=std::pow((XK-XJ),2)+std::pow((YK-YJ),2)+std::pow((ZK-ZJ),2);
                     wght=1.0/(std::sqrt(wght));
-//c				    #pragma omp critical
-				    {
-                    uScratch[elem.NPK]=uScratch[elem.NPK]+wght*DPHIDX;   //Here we store the summing values of DPHI/DX, etc. in the u,v,w arrays for later use (to actually calculate u,v,w)
-                    vScratch[elem.NPK]=vScratch[elem.NPK]+wght*DPHIDY;
-                    wScratch[elem.NPK]=wScratch[elem.NPK]+wght*DPHIDZ;
-                    DIAGScratch[elem.NPK]=DIAGScratch[elem.NPK]+wght;     //Store the sum of the weights for the node
-					}
+                    //c				    #pragma omp critical
+                    {
+                        //Here we store the summing values of DPHI/DX, etc.
+                        //in the u,v,w arrays for later use (to actually calculate u,v,w)
+                        uScratch[elem.NPK]=uScratch[elem.NPK]+wght*DPHIDX;
+                        vScratch[elem.NPK]=vScratch[elem.NPK]+wght*DPHIDY;
+                        wScratch[elem.NPK]=wScratch[elem.NPK]+wght*DPHIDZ;
+                        //Store the sum of the weights for the node
+                        DIAGScratch[elem.NPK]=DIAGScratch[elem.NPK]+wght;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+        } //End loop over elements
 
-               }                             //End loop over nodes in the element
+#pragma omp critical
+        {
+            for(i=0;i<mesh.NUMNP;i++)
+            {
+                //Dividing by the DIAG[NPK] gives the value of DPHI/DX,
+                //etc. (still stored in the u,v,w arrays)
+                U.vectorData_x(i) += uScratch[i];
+                U.vectorData_y(i) += vScratch[i];
+                U.vectorData_z(i) += wScratch[i];
+                DIAG[i] += DIAGScratch[i];
+            }
+        } //end critical
 
+        if(uScratch)
+        {
+            delete[] uScratch;
+            uScratch=NULL;
+        }
+        if(vScratch)
+        {
+            delete[] vScratch;
+            vScratch=NULL;
+        }
+        if(wScratch)
+        {
+            delete[] wScratch;
+            wScratch=NULL;
+        }
+        if(DIAGScratch)
+        {
+            delete[] DIAGScratch;
+            DIAGScratch=NULL;
+        }
 
-          }                                  //End loop over quadrature points in the element
-     }                                       //End loop over elements
+#pragma omp barrier
 
-	 #pragma omp critical
-	 {
-     for(i=0;i<mesh.NUMNP;i++)
-     {
-          u(i) += uScratch[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-          v(i) += vScratch[i];
-          w(i) += wScratch[i];
-          DIAG[i] += DIAGScratch[i];
-	 }
-	 } //end critical
+        double alphaV = 1.0;
 
-	 if(uScratch)
-	 {
-		delete[] uScratch;
-		uScratch=NULL;
-	 }
-	 if(vScratch)
-	 {
-		delete[] vScratch;
-		vScratch=NULL;
-	 }
-	 if(wScratch)
-	 {
-		delete[] wScratch;
-		wScratch=NULL;
-	 }
-	 if(DIAGScratch)
-	 {
-		delete[] DIAGScratch;
-		DIAGScratch=NULL;
-	 }
+#pragma omp for
 
-     #pragma omp barrier
+        for(i=0;i<mesh.NUMNP;i++)
+        {
+            //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
 
-     double alphaV = 1.0;
+            U.vectorData_x(i)=U.vectorData_x(i)/DIAG[i];
+            U.vectorData_y(i)=U.vectorData_y(i)/DIAG[i];
+            U.vectorData_z(i)=U.vectorData_z(i)/DIAG[i];
 
-     #pragma omp for
+            //Finally, calculate u,v,w
+            alphaV = alphaVfield(i); //set alphaV for stability
 
-     for(i=0;i<mesh.NUMNP;i++)
-     {
-          u(i)=u(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-          v(i)=v(i)/DIAG[i];
-          w(i)=w(i)/DIAG[i];
+            U.vectorData_x(i)=U0.vectorData_x(i)+
+            1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i); //Remember, dPHI/dx is stored in u
+            U.vectorData_y(i)=U0.vectorData_y(i)+
+            1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
+            U.vectorData_z(i)=U0.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
+        }
+    } //end parallel section
 
-          //Finally, calculate u,v,w
-          alphaV = alphaVfield(i); //set alphaV for stability
-
-		  u(i)=U0.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*u(i); //Remember, dPHI/dx is stored in u
-		  v(i)=U0.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*v(i);
-		  w(i)=U0.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*w(i);
-
-
-     }
-     }		//end parallel section
-
-     alphaVfield.deallocate();
+    alphaVfield.deallocate();
 
     // testing
     /*std::string filename;

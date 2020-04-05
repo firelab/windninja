@@ -69,9 +69,7 @@ class FiniteElementMethod
         void Write_A_and_b(int NUMNP);
         bool ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
-                            wn_3dScalarField &u,
-                            wn_3dScalarField &v,
-                            wn_3dScalarField &w);
+                            wn_3dVectorField &U);
         void Deallocate();
 
         double *PHI;

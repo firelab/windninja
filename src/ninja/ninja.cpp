@@ -101,9 +101,7 @@ ninja::ninja(const ninja &rhs)
 #ifdef FRICTION_VELOCITY
 , UstarGrid(rhs.UstarGrid)
 #endif
-, u(rhs.u)
-, v(rhs.v)
-, w(rhs.w)
+, U(rhs.U)
 , U0(rhs.U0)
 , mesh(rhs.mesh)
 , input(rhs.input)
@@ -168,9 +166,7 @@ ninja &ninja::operator=(const ninja &rhs)
         #ifdef FRICTION_VELOCITY
         UstarGrid = rhs.UstarGrid;
         #endif
-        u = rhs.u;
-        v = rhs.v;
-        w = rhs.w;
+        U = rhs.U;
         U0 = rhs.U0;
 
         mesh = rhs.mesh;
@@ -398,7 +394,7 @@ checkCancel();
 /*  ----------------------------------------*/
 
         //compute uvw field from phi field
-        FEM.ComputeUVWField(mesh, input, U0, u, v, w);
+        FEM.ComputeUVWField(mesh, input, U0, U);
 
         checkCancel();
 
@@ -606,24 +602,27 @@ void ninja::interp_uvw()
 
                     profile.AGL=input.outputWindHeight + input.surface.Rough_h(i,j);			//this is height above THE GROUND!! (not "z=0" for the log profile)
 
-                    profile.inputWindSpeed = u(i, j, k);
+                    profile.inputWindSpeed = U.vectorData_x(i, j, k);
                     uu = profile.getWindSpeed();
 
-                    profile.inputWindSpeed = v(i, j, k);
+                    profile.inputWindSpeed = U.vectorData_y(i, j, k);
                     vv = profile.getWindSpeed();
 
-                    profile.inputWindSpeed = w(i, j, k);
+                    profile.inputWindSpeed = U.vectorData_z(i, j, k);
                     ww = profile.getWindSpeed();
 
                     VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
 
                 }else{  //else use linear interpolation
-                    slopeu=(u(i, j, k)-u(i, j, k-1))/(h2-h1);
-                    slopev=(v(i, j, k)-v(i, j, k-1))/(h2-h1);
-                    slopew=(w(i, j, k)-w(i, j, k-1))/(h2-h1);
-                    uu=slopeu*(input.outputWindHeight + input.surface.Rough_h(i,j))+u(i, j, k-1)-slopeu*h1;
-                    vv=slopev*(input.outputWindHeight + input.surface.Rough_h(i,j))+v(i, j, k-1)-slopev*h1;
-                    ww=slopew*(input.outputWindHeight + input.surface.Rough_h(i,j))+w(i, j, k-1)-slopew*h1;
+                    slopeu=(U.vectorData_x(i, j, k)-U.vectorData_x(i, j, k-1))/(h2-h1);
+                    slopev=(U.vectorData_y(i, j, k)-U.vectorData_y(i, j, k-1))/(h2-h1);
+                    slopew=(U.vectorData_z(i, j, k)-U.vectorData_z(i, j, k-1))/(h2-h1);
+                    uu=slopeu*(input.outputWindHeight + input.surface.Rough_h(i,j))+
+                        U.vectorData_x(i, j, k-1)-slopeu*h1;
+                    vv=slopev*(input.outputWindHeight + input.surface.Rough_h(i,j))+
+                        U.vectorData_y(i, j, k-1)-slopev*h1;
+                    ww=slopew*(input.outputWindHeight + input.surface.Rough_h(i,j))+
+                        U.vectorData_z(i, j, k-1)-slopew*h1;
                     VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
                 }
 
@@ -853,18 +852,18 @@ void ninja::prepareOutput()
                     elem.get_xyz(elem_num, u_coord, v_coord, 1, x, y, z_temp); // get z at first layer
 
                     profile.inputWindHeight = z_temp - z_ground - input.surface.Rough_h(elem_i, elem_j); // height above vegetation
-                    profile.inputWindSpeed = u.interpolate(x, y, z_temp);
+                    profile.inputWindSpeed = U.vectorData_x.interpolate(x, y, z_temp);
 
                     new_u = profile.getWindSpeed();
-                    profile.inputWindSpeed = v.interpolate(x, y, z_temp);
+                    profile.inputWindSpeed = U.vectorData_y.interpolate(x, y, z_temp);
                     new_v = profile.getWindSpeed();
-                    profile.inputWindSpeed = w.interpolate(x, y, z_temp);
+                    profile.inputWindSpeed = U.vectorData_z.interpolate(x, y, z_temp);
                     new_w = profile.getWindSpeed();
                 }
                 else{//else use linear interpolation
-                    new_u = u.interpolate(x,y,z);
-                    new_v = v.interpolate(x,y,z);
-                    new_w = w.interpolate(x,y,z);
+                    new_u = U.vectorData_x.interpolate(x,y,z);
+                    new_v = U.vectorData_y.interpolate(x,y,z);
+                    new_w = U.vectorData_z.interpolate(x,y,z);
                 }
 
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ //if wx model run
@@ -934,9 +933,9 @@ bool ninja::matched(int iter)
 			elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
             //Get velocity at the station location
-            try_output_u = u.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-            try_output_v = v.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
-            try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            try_output_u = U.vectorData_x.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            try_output_v = U.vectorData_y.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
+            try_output_w = U.vectorData_z.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
             wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
@@ -1208,349 +1207,352 @@ void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
-	//Write volume data to VTK format (always in m/s?)
-	if(input.volVTKOutFlag)
-	{
-		try{
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
-		}catch (exception& e)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-		}catch (...)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-		}
-	}
+    //Write volume data to VTK format (always in m/s?)
+    if(input.volVTKOutFlag)
+    {
+        try{
+            volVTK VTK(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
+            input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning,
+                    "Exception caught during volume VTK file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning,
+                    "Exception caught during volume VTK file writing: Cannot determine exception type.");
+        }
+    }
 
-	u.deallocate();
-	v.deallocate();
-	w.deallocate();
+    U.deallocate();
 
-	#pragma omp parallel sections
-	{
-
-
-	//write FARSITE files
-	#pragma omp section
-	{
-	try{
-		if(input.asciiOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
-
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
-                        //ensure grids cover original DEM extents for FARSITE
-                        tempCloud.BufferGridInPlace();
-                        angTempGrid->BufferGridInPlace();
-                        velTempGrid->BufferGridInPlace();
-
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
-
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                AsciiGrid<double> *ustarTempGrid;
-                ustarTempGrid=NULL;
-
-                ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
-
-                ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
-
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid=NULL;
-                }
-			}
-			#endif
-
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                AsciiGrid<double> *dustTempGrid;
-                dustTempGrid=NULL;
-
-                dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
-
-                dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
-
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid=NULL;
-                }
-            }
-			#endif
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
-	}
-
-	}//end omp section
-
-
-	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
-	#pragma omp section
-	{
-	try{
-		if(input.txtOutFlag==true)
-			write_compare_output();
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
-	}
-	}//end omp section
-
-	//write shape files
-	#pragma omp section
-	{
-	try{
-		if(input.shpOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid, *ustarTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-			ustarTempGrid=NULL;
-
-			ShapeVector ninjaShapeFiles;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-
-			ninjaShapeFiles.setDirGrid(*angTempGrid);
-			ninjaShapeFiles.setSpeedGrid(*velTempGrid);
-			ninjaShapeFiles.setDataBaseName(input.dbfFile);
-			ninjaShapeFiles.setShapeFileName(input.shpFile);
-			ninjaShapeFiles.makeShapeFiles();
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
-	}
-	}//end omp section
-
-
-	//write kmz file
-	#pragma omp section
-	{
-	try{
-		if(input.googOutFlag==true)
-
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-
-			KmlVector ninjaKmlFiles;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-			    AsciiGrid<double> *ustarTempGrid;
-
-			    ustarTempGrid=NULL;
-
-                ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-
-                ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
-                ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
-
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid=NULL;
-                }
-			}
-            #endif //FRICTION_VELOCITY
-
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-			    AsciiGrid<double> *dustTempGrid;
-
-                dustTempGrid=NULL;
-
-                dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-
-                ninjaKmlFiles.setDustFlag(input.dustFlag);
-                ninjaKmlFiles.setDustGrid(*dustTempGrid);
-
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid=NULL;
-                }
-			}
-            #endif //EMISSIONS
-
-			ninjaKmlFiles.setKmlFile(input.kmlFile);
-			ninjaKmlFiles.setKmzFile(input.kmzFile);
-			ninjaKmlFiles.setDemFile(input.dem.fileName);
-
-
-			ninjaKmlFiles.setLegendFile(input.legFile);
-			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
-			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-			ninjaKmlFiles.setDirGrid(*angTempGrid);
-
-            ninjaKmlFiles.setLineWidth(input.googLineWidth);
-			ninjaKmlFiles.setTime(input.ninjaTime);
-			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-			{
-			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
-			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
-			}
-            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
-			{
-				if(ninjaKmlFiles.makeKmz())
-					ninjaKmlFiles.removeKmlFile();
-			}
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
-	}
-	}//end omp section
-
+#pragma omp parallel sections
+    {
+    //write FARSITE files
 #pragma omp section
-	{
-	try{
-		if(input.pdfOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-            OutputWriter output;
+    {
+        try{
+            if(input.asciiOutFlag==true)
+            {
+                AsciiGrid<double> *velTempGrid, *angTempGrid;
+                velTempGrid=NULL;
+                angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
+                            AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, 
+                            AsciiGrid<double>::order0));
 
-			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-            output.setDEMfile(input.pdfDEMFileName);
-            output.setLineWidth(input.pdfLineWidth);
-            output.setDPI(input.pdfDPI);
-            output.setSize(input.pdfWidth, input.pdfHeight);
-            output.write(input.pdfFile, "PDF");
+                AsciiGrid<double> tempCloud(CloudGrid);
+                tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
+                //ensure grids cover original DEM extents for FARSITE
+                tempCloud.BufferGridInPlace();
+                angTempGrid->BufferGridInPlace();
+                velTempGrid->BufferGridInPlace();
 
+                tempCloud.write_Grid(input.cldFile.c_str(), 1);
+                angTempGrid->write_Grid(input.angFile.c_str(), 0);
+                velTempGrid->write_Grid(input.velFile.c_str(), 2);
 
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-		}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
-	}
-	} //end omp section
+#ifdef FRICTION_VELOCITY
+                if(input.frictionVelocityFlag == 1){
+                    AsciiGrid<double> *ustarTempGrid;
+                    ustarTempGrid=NULL;
 
-#pragma omp section
-	{
-#ifdef EMISSIONS
-	try{
-		if(input.geotiffOutFlag==true)
-		{
-            OutputWriter output;
-            
-            output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
-            output.setRunNumber(input.inputsRunNumber);
-            output.setMaxRunNumber(input.armySize-1);
+                    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution,
+                                AsciiGrid<double>::order0));
 
-			output.setDirGrid(AngleGrid);
-			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-			
-			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
+                    ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
 
-			
-#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                output.setDustGrid(DustGrid);
-            }
+                    if(ustarTempGrid)
+                    {
+                        delete ustarTempGrid;
+                        ustarTempGrid=NULL;
+                    }
+                }
 #endif
-            output.write(input.geotiffOutFilename, "GTiff");
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-	}
+
+#ifdef EMISSIONS
+                if(input.dustFlag == 1){
+                    AsciiGrid<double> *dustTempGrid;
+                    dustTempGrid=NULL;
+
+                    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution,
+                                AsciiGrid<double>::order0));
+
+                    dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
+
+                    if(dustTempGrid)
+                    {
+                        delete dustTempGrid;
+                        dustTempGrid=NULL;
+                    }
+                }
+#endif
+                if(angTempGrid)
+                {
+                    delete angTempGrid;
+                    angTempGrid=NULL;
+                }
+                if(velTempGrid)
+                {
+                    delete velTempGrid;
+                    velTempGrid=NULL;
+                }
+
+                //Write .atm file for this run.  Only has one time value in file.
+                if(input.writeAtmFile)
+                {
+                    farsiteAtm atmosphere;
+                    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+                    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                }
+            }
+        }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning,
+                "Exception caught during ascii file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, 
+                "Exception caught during ascii file writing: Cannot determine exception type.");
+    }
+    }//end omp section
+
+    //write text file comparing measured to simulated winds (measured read from file, 
+    //filename, etc. hard-coded in function)
+#pragma omp section
+    {
+    try{
+    if(input.txtOutFlag==true)
+    write_compare_output();
+    }catch (exception& e)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
+    }catch (...)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
+    }
+    }//end omp section
+
+    //write shape files
+#pragma omp section
+    {
+    try{
+    if(input.shpOutFlag==true)
+    {
+    AsciiGrid<double> *velTempGrid, *angTempGrid, *ustarTempGrid;
+    velTempGrid=NULL;
+    angTempGrid=NULL;
+    ustarTempGrid=NULL;
+
+    ShapeVector ninjaShapeFiles;
+
+    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+    ninjaShapeFiles.setDirGrid(*angTempGrid);
+    ninjaShapeFiles.setSpeedGrid(*velTempGrid);
+    ninjaShapeFiles.setDataBaseName(input.dbfFile);
+    ninjaShapeFiles.setShapeFileName(input.shpFile);
+    ninjaShapeFiles.makeShapeFiles();
+
+    if(angTempGrid)
+    {
+    delete angTempGrid;
+    angTempGrid=NULL;
+    }
+    if(velTempGrid)
+    {
+    delete velTempGrid;
+    velTempGrid=NULL;
+    }
+    }
+    }catch (exception& e)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+    }catch (...)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+    }
+    }//end omp section
+
+
+    //write kmz file
+#pragma omp section
+    {
+    try{
+    if(input.googOutFlag==true)
+
+    {
+    AsciiGrid<double> *velTempGrid, *angTempGrid;
+    velTempGrid=NULL;
+    angTempGrid=NULL;
+
+    KmlVector ninjaKmlFiles;
+
+    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+#ifdef FRICTION_VELOCITY
+    if(input.frictionVelocityFlag == 1){
+    AsciiGrid<double> *ustarTempGrid;
+
+    ustarTempGrid=NULL;
+
+    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+    ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
+    ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
+
+    if(ustarTempGrid)
+    {
+    delete ustarTempGrid;
+    ustarTempGrid=NULL;
+    }
+    }
+#endif //FRICTION_VELOCITY
+
+#ifdef EMISSIONS
+    if(input.dustFlag == 1){
+    AsciiGrid<double> *dustTempGrid;
+
+    dustTempGrid=NULL;
+
+    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+    ninjaKmlFiles.setDustFlag(input.dustFlag);
+    ninjaKmlFiles.setDustGrid(*dustTempGrid);
+
+    if(dustTempGrid)
+    {
+    delete dustTempGrid;
+    dustTempGrid=NULL;
+    }
+    }
 #endif //EMISSIONS
-	} //end omp section
-	}	//end parallel sections region
+
+    ninjaKmlFiles.setKmlFile(input.kmlFile);
+    ninjaKmlFiles.setKmzFile(input.kmzFile);
+    ninjaKmlFiles.setDemFile(input.dem.fileName);
+
+
+    ninjaKmlFiles.setLegendFile(input.legFile);
+    ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
+    ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+    ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+    ninjaKmlFiles.setLineWidth(input.googLineWidth);
+    ninjaKmlFiles.setTime(input.ninjaTime);
+    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    {
+    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
+    }
+    if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
+    {
+    if(ninjaKmlFiles.makeKmz())
+    ninjaKmlFiles.removeKmlFile();
+    }
+    if(angTempGrid)
+    {
+    delete angTempGrid;
+    angTempGrid=NULL;
+    }
+    if(velTempGrid)
+    {
+    delete velTempGrid;
+    velTempGrid=NULL;
+    }
+    }
+    }catch (exception& e)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
+    }catch (...)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+    }
+    }//end omp section
+
+#pragma omp section
+    {
+    try{
+    if(input.pdfOutFlag==true)
+    {
+    AsciiGrid<double> *velTempGrid, *angTempGrid;
+    velTempGrid=NULL;
+    angTempGrid=NULL;
+    OutputWriter output;
+
+    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+    output.setDirGrid(*angTempGrid);
+    output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+    output.setDEMfile(input.pdfDEMFileName);
+    output.setLineWidth(input.pdfLineWidth);
+    output.setDPI(input.pdfDPI);
+    output.setSize(input.pdfWidth, input.pdfHeight);
+    output.write(input.pdfFile, "PDF");
+
+
+
+    if(angTempGrid)
+    {
+    delete angTempGrid;
+    angTempGrid=NULL;
+    }
+    if(velTempGrid)
+    {
+    delete velTempGrid;
+    velTempGrid=NULL;
+    }
+    }
+    }catch (exception& e)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
+    }catch (...)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
+    }
+    } //end omp section
+
+#pragma omp section
+    {
+#ifdef EMISSIONS
+    try{
+    if(input.geotiffOutFlag==true)
+    {
+    OutputWriter output;
+
+    output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
+    output.setRunNumber(input.inputsRunNumber);
+    output.setMaxRunNumber(input.armySize-1);
+
+    output.setDirGrid(AngleGrid);
+    output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+
+    output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
+
+
+#ifdef EMISSIONS
+    if(input.dustFlag == 1){
+    output.setDustGrid(DustGrid);
+    }
+#endif
+    output.write(input.geotiffOutFilename, "GTiff");
+    }
+    }catch (exception& e)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+    }catch (...)
+    {
+    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+    }
+#endif //EMISSIONS
+    } //end omp section
+    }	//end parallel sections region
 }
 
 /**Deletes allocated dynamic memory.

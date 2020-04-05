@@ -34,11 +34,11 @@ volVTK::volVTK()
 
 }
 
-volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, 
+volVTK::volVTK(wn_3dVectorField const& U, wn_3dArray& x, 
 	       wn_3dArray& y, wn_3dArray& z, int ncols, int nrows, int nlayers,
 	       std::string filename)
 {
-  writeVolVTK(u, v, w, x, y, z, ncols, nrows, nlayers, filename);
+  writeVolVTK(U, x, y, z, ncols, nrows, nlayers, filename);
 }
 
 volVTK::~volVTK()
@@ -46,8 +46,7 @@ volVTK::~volVTK()
 
 }
 
-bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
-			 wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+bool volVTK::writeVolVTK(wn_3dVectorField const& U, wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
 			 int ncols, int nrows, int nlayers, std::string filename)
 {
   FILE *fout;
@@ -120,8 +119,9 @@ bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, w
 	{
 	  for(int jj=0; jj<nrows; jj++)
 	    {
-	      fprintf(fout, "%lf %lf %lf\n", u(kk*ncols*nrows + ii*nrows + jj), 
-		      v(kk*ncols*nrows + ii*nrows + jj), w(kk*ncols*nrows + ii*nrows + jj));
+	      fprintf(fout, "%lf %lf %lf\n", U.vectorData_x(kk*ncols*nrows + ii*nrows + jj), 
+		      U.vectorData_y(kk*ncols*nrows + ii*nrows + jj),
+                      U.vectorData_z(kk*ncols*nrows + ii*nrows + jj));
 	    }
 	}
     }
