@@ -1121,9 +1121,7 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
 void wxModelInitialization::initializeFields(WindNinjaInputs &input,
                          Mesh const& mesh,
-                         wn_3dScalarField& u0,
-                         wn_3dScalarField& v0,
-                         wn_3dScalarField& w0,
+                         wn_3dVectorField& U0,
                          AsciiGrid<double>& cloud)
 {
     input.inputWindHeight = Get_Wind_Height();
@@ -1143,7 +1141,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     //Write wx model grids
     writeWxModelGrids(input);
 
-    initializeWindToZero(mesh, u0, v0, w0);
+    initializeWindToZero(mesh, U0);
 
     initializeBoundaryLayer(input);
 
@@ -1157,15 +1155,15 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
     }
 #endif
     if(wxModel3d == true){
-        initializeWindFrom3dData(input, mesh, u0, v0, w0);
+        initializeWindFrom3dData(input, mesh, U0);
     } 
     else{
-        initializeWindFromProfile(input, mesh, u0, v0, w0);
+        initializeWindFromProfile(input, mesh, U0);
     }
 
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
-        addDiurnalComponent(input, mesh, u0, v0, w0);
+        addDiurnalComponent(input, mesh, U0);
     }
 
     cloud = cloudCoverGrid;
@@ -1226,9 +1224,7 @@ void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &inpu
 
 void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                                 const Mesh& mesh,
-                                wn_3dScalarField& u0,
-                                wn_3dScalarField& v0,
-                                wn_3dScalarField& w0)
+                                wn_3dVectorField& U0)
 { 
     int kk;
     int i, j, k;
@@ -1247,7 +1243,7 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                 profile.AGL=mesh.ZORD(i, j, k)-input.dem(i,j);  // height above the ground
 
                 if(u3d(i,j,k) != -9999) {  // if have 3d winds for current cell
-                    u0(i, j, k) = u3d(i,j,k);
+                    U0.vectorData_x(i, j, k) = u3d(i,j,k);
                 }
                 else{ // use log profile from first 3d layer down to ground
                     kk = k;
@@ -1256,10 +1252,10 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                         profile.inputWindHeight = mesh.ZORD(i,j,kk) - mesh.ZORD(i,j,0) - input.surface.Rough_h(i,j); // height above vegetation
                         profile.inputWindSpeed = u3d(i,j,kk);
                     }while (u3d(i,j,kk) == -9999);
-                    u0(i, j, k) += profile.getWindSpeed();
+                    U0.vectorData_x(i, j, k) += profile.getWindSpeed();
                 }
                 if(v3d(i,j,k) != -9999){  // if have 3d winds for current cell
-                    v0(i, j, k) = v3d(i,j,k);
+                    U0.vectorData_y(i, j, k) = v3d(i,j,k);
                 }
                 else{
                     kk = k;
@@ -1269,10 +1265,10 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                         profile.inputWindSpeed = v3d(i,j,kk);
                     }while (v3d(i,j,kk) == -9999);
 
-                    v0(i, j, k) += profile.getWindSpeed();
+                    U0.vectorData_y(i, j, k) += profile.getWindSpeed();
                 }
                 if(w3d(i,j,k) != -9999){  // if have 3d winds for current cell
-                    w0(i, j, k) = w3d(i,j,k);
+                    U0.vectorData_z(i, j, k) = w3d(i,j,k);
                 }
                 else{
                     kk = k;
@@ -1282,7 +1278,7 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                         profile.inputWindSpeed = w3d(i,j,kk);
                     }while (w3d(i,j,kk) == -9999);
 
-                    w0(i, j, k) += profile.getWindSpeed();
+                    U0.vectorData_z(i, j, k) += profile.getWindSpeed();
                 }
                 if(air3d(i,j,k) == -9999){ //if don't have 3d T for current cell
                     kk = k;
