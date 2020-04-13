@@ -909,6 +909,9 @@ int NinjaFoam::readDem(double &expansionRatio)
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
     meshResolution = side;
 
+
+
+
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
@@ -1398,7 +1401,7 @@ int NinjaFoam::MoveDynamicMesh()
     return nRet;
 }
 
-int NinjaFoam::RefineSurfaceLayer(){    
+int NinjaFoam::RefineSurfaceLayer(int nRoundsRefinement){    
     const char *pszInput;
     const char *pszOutput;
     int nRet = 0;
@@ -1437,7 +1440,7 @@ int NinjaFoam::RefineSurfaceLayer(){
     
     double percentDone = 0.0;
 
-    while(cellCount < input.meshCount){ 
+    for(int i = 0; i < nRoundsRefinement; i++){
         nRet = TopoSet();
         if(nRet != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during TopoSet().");
@@ -1448,7 +1451,6 @@ int NinjaFoam::RefineSurfaceLayer(){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineMesh().");
             return nRet;
         }
-        CheckMesh(); //update cellCount
         
         //update time, near-wall cell height, BC files, topoSetDict file
         latestTime += 1;
@@ -1467,7 +1469,7 @@ int NinjaFoam::RefineSurfaceLayer(){
         
         CPLDebug("NINJAFOAM", "finalFirstCellHeght = %f", finalFirstCellHeight);
 
-        percentDone = 100.0 - double(input.meshCount - cellCount) / double(input.meshCount) * 100.0;
+        percentDone = 100.0 - i/nRoundsRefinement * 100.0;
 
         if(percentDone < 100.0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) %.0f%% complete...", percentDone);
@@ -1659,57 +1661,6 @@ int NinjaFoam::RenumberMesh()
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
 
     VSIFCloseL(fout);
-
-    return nRet;
-}
-
-int NinjaFoam::CheckMesh()
-{
-    int nRet = -1;
-
-    const char *const papszArgv[] = { "checkMesh",
-                                      "-latestTime",
-                                      "-case",
-                                      pszFoamPath,
-                                      NULL };
-
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.checkmesh", ""), "w");
-
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-
-    VSIFCloseL(fout);
-    
-    //update cellCount from log.checkmesh
-    VSILFILE *fin;
-
-    const char *pszInput;
-
-    pszInput = CPLFormFilename(pszFoamPath, "log.checkmesh", "");
-
-    fin = VSIFOpenL( pszInput, "r" );
-
-    char *data;
-
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
-
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
-    
-    std::string s(data);
-    int pos, endPos;
-    int found;
-    pos = s.find("cells:");
-    if(pos != s.npos){
-        cellCount = atof(s.substr(pos+7, (s.find("\n", pos+7) - (pos+7))).c_str());
-        CPLDebug("NINJAFOAM", "cellCount = %d", cellCount);
-    }
-
-    CPLFree(data);
-    VSIFCloseL(fin);
 
     return nRet;
 }
@@ -2903,7 +2854,8 @@ int NinjaFoam::GenerateNewCase()
     checkCancel();
 
     /*refine mesh near the ground */
-    status = RefineSurfaceLayer();
+    int nRoundsRefinement = 2;
+    status = RefineSurfaceLayer(nRoundsRefinement);
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineSurfaceLayer().");
         return NINJA_E_OTHER;

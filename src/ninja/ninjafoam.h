@@ -149,7 +149,7 @@ private:
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();
     int SurfaceCheck();
-    int RefineSurfaceLayer();
+    int RefineSurfaceLayer(int nRoundsRefinement);
     int MoveDynamicMesh();
     int TopoSet();
     int RefineMesh();
@@ -158,7 +158,6 @@ private:
     int ReconstructParMesh();
     int ReconstructPar();
     int RenumberMesh();
-    int CheckMesh();
     int ApplyInit();
     int SimpleFoam();
     int Sample();
