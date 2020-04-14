@@ -26,7 +26,6 @@ tasks:
         -D SKIP_GETDATE=ON \
         -D BUILD_TESTING=ON \
         -D RUN_CFG_TESTS=ON \
-        -D RUN_SLOW_TESTS=ON \
         -D DISABLE_THREDDS_UPDATE=ON \
         -D CMAKE_BUILD_TYPE=debug \
         -D NINJA_QTGUI=OFF \
