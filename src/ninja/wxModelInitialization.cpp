@@ -1590,55 +1590,27 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
  */
 double wxModelInitialization::GetWindHeight(std::string varName)
 {
-    /* Override with internal storage */
-    varName = heightVarName;
-    int status, ncid, height_id;
-    size_t unit_len;
-    double d;
-    std::string var_name = varName;
-    char *units;
-
-    static size_t var_index[] = {0};
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-    status = nc_open(wxModelFileName.c_str(), 0, &ncid);
-    status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
-
-    if(status == 0)
-    {
-        status = nc_get_var1_double(ncid, height_id, var_index, &d);
+  const char *pszSDS = nullptr;
+  GDALDatasetH hDS = nullptr;
+  GDALRasterBandH hBand = nullptr;
+  pszSDS = CPLSPrintf("NETCDF:%s:u-component_of_wind_height_above_ground", wxModelFileName.c_str() );
+  hDS = GDALOpen( pszSDS, GA_ReadOnly );
+  if( hDS == nullptr ) {
+    // Try the ndfd variable
+    pszSDS = CPLSPrintf("NETCDF:%s:Wind_speed_height_above_ground", wxModelFileName.c_str() );
+    hDS = GDALOpen( pszSDS, GA_ReadOnly );
+    if( hDS == nullptr ) {
+      throw( badForecastFile( "failed to open " + wxModelFileName ) );
     }
-
-    if( status != 0 )
-    {
-        std::string err = "Failed to find height for " + varName;
-        throw badForecastFile( err );
-    }
-
-    status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
-    units = (char*)malloc(unit_len + 1);
-    status = nc_get_att_text(ncid, height_id, "units", units);
-    units[unit_len] = '\0';
-
-    if(EQUAL(units,"m") || EQUAL(units, "meters"))
-    {
-    }
-    else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
-    {
-        lengthUnits::toBaseUnits(d, "feet");
-    }
-    else
-    {
-        free(units);
-        nc_close(ncid);
-        throw badForecastFile("Cannot determine wind height units in "
-                              "forecast file");
-    }
-    free(units);
-    nc_close(ncid);
-
-    return d;
+  }
+  hBand = GDALGetRasterBand( hDS, 1 );
+  const char *pszMDI = nullptr;
+  std::string vn = "NETCDF_DIM_" + varName;
+  pszMDI = GDALGetMetadataItem( hBand, vn.c_str(), nullptr );
+  GDALClose( hDS );
+  double h = atof( pszMDI );
+  assert( h > 0.0 );
+  return h;
 }
 
 /**
