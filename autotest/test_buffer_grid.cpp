@@ -30,7 +30,6 @@
 #include <string>
 
 #include "ascii_grid.h"
-#include "omp_guard.h"
 
 #include <iostream>
 

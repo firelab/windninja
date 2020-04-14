@@ -138,11 +138,6 @@ void wrfSurfInitialization::checkForValidData()
 
     std::vector<std::string> varList = getVariableList();
 
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
@@ -245,11 +240,6 @@ bool wrfSurfInitialization::identify( std::string fileName )
 {
     bool identified = true;
 
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
     /*
      * Open the dataset
      */
@@ -345,11 +335,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
 
 //==========get global attributes to set projection===========================
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
     /*
      * Open the dataset
      */

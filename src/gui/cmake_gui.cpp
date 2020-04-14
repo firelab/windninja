@@ -47,23 +47,13 @@
 #include "gdal.h"
 #include "ogr_api.h"
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
 int main(int argc, char *argv[])
 {
     int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
-
     if(argc > 1)
     {
         CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
         result = windNinjaCLI(argc, argv);
-#ifdef _OPENMP
-        omp_destroy_lock (&netCDF_lock);
-#endif
         return result;
     }
 
@@ -111,10 +101,6 @@ int main(int argc, char *argv[])
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(checkMessages()));
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
     result = app.exec();
-
-#ifdef _OPENMP
-    omp_destroy_lock (&netCDF_lock);
-#endif
 
     return result;
 }

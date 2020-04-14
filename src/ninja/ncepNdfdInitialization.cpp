@@ -200,11 +200,6 @@ void ncepNdfdInitialization::checkForValidData()
 
     std::vector<std::string> varList = getVariableList();
 
-    //Acquire a lock to protect the non-thread safe netCDF libraryi
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
@@ -313,11 +308,6 @@ bool ncepNdfdInitialization::identify( std::string fileName )
      */
 
     bool identified = true;
-
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
 
     int status, ncid, ndims, nvars, ngatts, unlimdimid;
 
@@ -529,11 +519,6 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         throw std::runtime_error("Could not match ninjaTime with a band number for temperature in the forecast file.");
 
     //get some info from the ndfd file in input
-
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
 
     GDALDataset* poDS;
 

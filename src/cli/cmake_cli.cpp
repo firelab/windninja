@@ -35,10 +35,6 @@
 #include "gdal.h"
 #include "ogr_api.h"
 
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
-#endif
-
 /**
  * @brief Main function for WindNinja.
  * Allow for a few options:
@@ -53,15 +49,6 @@ int main(int argc, char *argv[])
     CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
     NinjaInitialize();
     int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
-
     result = windNinjaCLI(argc, argv);
-
-#ifdef _OPENMP
-    omp_destroy_lock (&netCDF_lock);
-#endif
-
     return result;
 }

@@ -53,7 +53,6 @@
 /* omp */
 #ifdef _OPENMP
 #include <omp.h>
-#include "omp_guard.h"
 #endif /* _OPENMP */
 /* boost */
 #ifndef Q_MOC_RUN
@@ -70,10 +69,6 @@ namespace bpt = boost::posix_time;
 #include "volVTK.h"
 
 #include "ninja_init.h"
-
-#ifdef _OPENMP
-extern omp_lock_t netCDF_lock;
-#endif /* _OPENMP */
 
 static char **papszThreddsCsv = NULL;
 
