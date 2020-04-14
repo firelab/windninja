@@ -1590,23 +1590,23 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
  */
 double wxModelInitialization::GetWindHeight(std::string varName)
 {
-  const char *pszSDS = nullptr;
-  GDALDatasetH hDS = nullptr;
-  GDALRasterBandH hBand = nullptr;
+  const char *pszSDS = NULL;
+  GDALDatasetH hDS = NULL;
+  GDALRasterBandH hBand = NULL;
   pszSDS = CPLSPrintf("NETCDF:%s:u-component_of_wind_height_above_ground", wxModelFileName.c_str() );
   hDS = GDALOpen( pszSDS, GA_ReadOnly );
-  if( hDS == nullptr ) {
+  if( hDS == NULL ) {
     // Try the ndfd variable
     pszSDS = CPLSPrintf("NETCDF:%s:Wind_speed_height_above_ground", wxModelFileName.c_str() );
     hDS = GDALOpen( pszSDS, GA_ReadOnly );
-    if( hDS == nullptr ) {
+    if( hDS == NULL ) {
       throw( badForecastFile( "failed to open " + wxModelFileName ) );
     }
   }
   hBand = GDALGetRasterBand( hDS, 1 );
-  const char *pszMDI = nullptr;
+  const char *pszMDI = NULL;
   std::string vn = "NETCDF_DIM_" + varName;
-  pszMDI = GDALGetMetadataItem( hBand, vn.c_str(), nullptr );
+  pszMDI = GDALGetMetadataItem( hBand, vn.c_str(), NULL );
   GDALClose( hDS );
   double h = atof( pszMDI );
   assert( h > 0.0 );
