@@ -6,6 +6,7 @@ packages:
   - build-base
   - cmake
   - gdal-dev
+  - gdb
   - git
   - libc-dev
   - libc6-compat
