@@ -320,9 +320,10 @@ if(RUN_CFG_TESTS)
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
         file(COPY ${cfgtest} DESTINATION ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
         message(STATUS "COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
-        execute_process(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
-                                OUTPUT_VARIABLE ELEV_FILE
-                                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(WORKING_DIRECTORY .
+                        COMMAND grep -Eo "[a-zA-Z_]+\\.tif" ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
+                        OUTPUT_VARIABLE ELEV_FILE
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(STRIP ${ELEV_FILE} ELEV_FILE)
         file(COPY ${PROJECT_SOURCE_DIR}/data/${ELEV_FILE} DESTINATION
              ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
