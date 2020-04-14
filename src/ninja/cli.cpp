@@ -805,7 +805,8 @@ int windNinjaCLI(int argc, char* argv[])
             osTimeZone = vm["time_zone"].as<std::string>();
             if(osTimeZone =="auto-detect")
             {
-                double p[2];
+                double longitude = 0;
+                double latitude = 0;
                 GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_ReadOnly);
                 if(poDS == NULL)
                 {
@@ -813,9 +814,9 @@ int windNinjaCLI(int argc, char* argv[])
                     fprintf(stderr, "Unable to open input DEM\n");
                     return 1;
                 }
-                GDALGetCenter(poDS, p);
+                GDALGetCenter(poDS, &longitude, &latitude);
                 GDALClose((GDALDatasetH)poDS);
-                std::string tz = FetchTimeZone(p[0], p[1], NULL);
+                std::string tz = FetchTimeZone(longitude, latitude, NULL);
                 if(tz == "")
                 {
                     fprintf(stderr, "Could not detect timezone\n");
