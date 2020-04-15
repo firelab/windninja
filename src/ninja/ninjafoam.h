@@ -121,6 +121,7 @@ private:
     std::vector<double> bbox;
     std::vector<int> nCells; //number of cells in x,y,z directions of blockMesh
     int cellCount; //total cell count in the mesh
+    int nRoundsRefinement; //number of times refineMesh is called
     double meshResolution; // mesh resolution
     double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
     double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
@@ -149,7 +150,7 @@ private:
     /* OpenFOAM utilities */
     int SurfaceTransformPoints();
     int SurfaceCheck();
-    int RefineSurfaceLayer(int nRoundsRefinement);
+    int RefineSurfaceLayer();
     int MoveDynamicMesh();
     int TopoSet();
     int RefineMesh();

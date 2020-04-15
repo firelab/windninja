@@ -52,6 +52,7 @@ NinjaFoam::NinjaFoam() : ninja()
     finalFirstCellHeight = -1.0;
     latestTime = 0;
     cellCount = 0; 
+    nRoundsRefinement = 0;
     simpleFoamEndTime = 1000; //initial value in controlDict_simpleFoam
 
     startTotal = 0.0;
@@ -909,12 +910,24 @@ int NinjaFoam::readDem(double &expansionRatio)
     side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
     meshResolution = side;
 
-
-
-
     nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
     nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = nCells[0] * nCells[1]; 
+    while(refinedCellCount < (0.5 * input.meshCount)){
+        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+        nRoundsRefinement += 1;
+    }
+    CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
+    CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
+    CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
+    CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
 
     initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
     expansionRatio = 1.0;
@@ -1401,7 +1414,7 @@ int NinjaFoam::MoveDynamicMesh()
     return nRet;
 }
 
-int NinjaFoam::RefineSurfaceLayer(int nRoundsRefinement){    
+int NinjaFoam::RefineSurfaceLayer(){    
     const char *pszInput;
     const char *pszOutput;
     int nRet = 0;
@@ -2854,8 +2867,7 @@ int NinjaFoam::GenerateNewCase()
     checkCancel();
 
     /*refine mesh near the ground */
-    int nRoundsRefinement = 2;
-    status = RefineSurfaceLayer(nRoundsRefinement);
+    status = RefineSurfaceLayer();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during RefineSurfaceLayer().");
         return NINJA_E_OTHER;

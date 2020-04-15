@@ -1414,7 +1414,17 @@ double mainWindow::computeCellSize(int index)
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
     meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
-    meshResolution /= 4.0; //assume 2 rounds of refinement at surface
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/meshResolution) * int(YLength/meshResolution);
+    while(refinedCellCount < (0.5 * cellCount)){
+        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+        meshResolution /= 2.0; 
+    }
   }
   else{
     /* native windninja mesh */
