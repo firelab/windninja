@@ -323,6 +323,23 @@ bool ninja::simulate_wind()
         init.reset(initializationFactory::makeInitialization(input));
         init->initializeFields(input, mesh, U0, CloudGrid);
 
+
+        /////////////Test/////////////////////////////////
+        volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
+        input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "test.vtk");
+        printf("here\n");
+
+
+
+        //////////////////////////////////////////////////
+
+
+
+
+
+
+
+
 #ifdef _OPENMP
         endInit = omp_get_wtime();
 #endif
@@ -574,6 +591,42 @@ void ninja::interp_uvw()
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
 
                                                                         //make sure rough_h is set to zero if profile switch is 0 or 2
+
+
+
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        //            JUST TESTING!!!!!!     DELETE!!!!!
+
+        //Add a blob of stronger wind using a multiplier of existing wind speed
+        double blobWindSpeedMultiplier = 3.0;
+        double blobWindSpeed = 30.0;
+
+        for(int k=0; k<U.vectorData_x.mesh_->nlayers; k++)
+        {
+            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+            {
+                for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+                {
+                    if(j>5 && j<10)
+                    {
+                        if(k>5 && k<10)
+                        {
+                            //U.vectorData_x(i,j,k) = blobWindSpeedMultiplier * U.vectorData_x(i,j,k);
+                            U.vectorData_x(i,j,k) = blobWindSpeed;
+                        }
+                    }
+                }
+            }
+        }
+
+        double dt = 10.0;
+        wn_3dVectorField U1(U);
+        TransportSemiLagrangian transport;
+        transport.transportVector(U, U1, dt);
+        U = U1;
+        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 #pragma omp for
         for(i=0;i<VelocityGrid.get_nRows();i++)
         {
@@ -1592,18 +1645,6 @@ void ninja::deleteDynamicMemory()
 	{	delete height;
 		height=NULL;
 	}
-	//if(u)
-	//{	delete[] u;
-	//	u=NULL;
-	//}
-	//if(v)
-	//{	delete[] v;
-	//	v=NULL;
-	//}
-	//if(w)
-	//{	delete[] w;
-	//	w=NULL;
-	//}
 
 	U0.deallocate();
 }

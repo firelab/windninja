@@ -87,6 +87,7 @@
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
 #include "finiteElementMethod.h"
+#include "transportSemiLagrangian.h"
 
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
@@ -369,7 +370,7 @@ private:
     //u is positive toward East, v is positive toward North,
     //w is positive up
     wn_3dVectorField U; 
-    wn_3dVectorField U0; 
+    wn_3dVectorField U0;    //Initial velocity field, or last timestep's velocity field for transient simulations
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;
@@ -425,7 +426,7 @@ private:
     void prepareOutput();
     bool matched(int iter);
     void writeOutputFiles(); 
-    void deleteDynamicMemory();
+    virtual void deleteDynamicMemory();
 };
 
 #endif	//NINJA_HEADER

@@ -77,3 +77,51 @@ void wn_3dVectorField::deallocate()
     vectorData_y.deallocate();
     vectorData_z.deallocate();
 }
+
+/**
+ * \brief Checks if a node is an inlet node.
+ *
+ * Checks if a node is an inlet node, which means it is on the outer surface of the mesh and the normal component of the flow goes into the mesh.
+ * We do not check the ground boundary here, because it is more difficult (not flat surface, have to compute normals, etc.) and not necessary
+ * where this function is used because we always set the ground surface velocity to zero (no slip boundary).
+ *
+ * \param i Node index in row (y) direction
+ *        j Node index in row (x) direction
+ *        k Node index in row (z) direction
+ *
+ * \return True if node is an inlet, false if not.
+ */
+bool wn_3dVectorField::isInlet(const int &i, const int &j, const int &k)
+{
+    if(i==0 && vectorData_y(i,j,k)>0.0)
+        return true;
+    else if(i==vectorData_y.mesh_->nrows-1 && vectorData_y(i,j,k)<0.0)
+        return true;
+    else if(j==0 && vectorData_x(i,j,k)>0.0)
+        return true;
+    else if(j==vectorData_x.mesh_->ncols-1 && vectorData_x(i,j,k)<0.0)
+        return true;
+    else if(k==vectorData_z.mesh_->nlayers-1 && vectorData_z(i,j,k)<0.0)
+        return true;
+    else
+        return false;
+}
+
+/**
+ * \brief Checks if a node is on the ground.
+ *
+ * Checks if a node is on the ground.
+ *
+ * \param i Node index in row (y) direction
+ *        j Node index in row (x) direction
+ *        k Node index in row (z) direction
+ *
+ * \return True if node is on the ground, false if not.
+ */
+bool wn_3dVectorField::isOnGround(const int &i, const int &j, const int &k)
+{
+    if(k!=0)
+        return false;
+    else
+        return true;
+}

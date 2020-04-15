@@ -48,11 +48,12 @@ class TransportSemiLagrangian
         TransportSemiLagrangian();
         ~TransportSemiLagrangian();
         
-        void transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double &dt);
-        void transportScalar(const wn_3dVectorField &U0, const wn_3dScalarField &S0, wn_3dScalarField &S1, const double &dt);
+        void transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double dt);
+        void transportScalar(const wn_3dVectorField &U0, const wn_3dScalarField &S0, wn_3dScalarField &S1, double dt);
         
         enum eTransportType{
             firstOrderTransport,
+            settls,
             secondOrderRungeKutta,
             adaptiveParticleTracer
         };

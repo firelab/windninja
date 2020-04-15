@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Class for storing a 3D field of vectors
- * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
+ * Purpose:  Semi lagrangian solver
+ * Author:   Jason Forthofer
  *
  ******************************************************************************
  *
@@ -26,32 +26,61 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-#ifndef WN_3D_VECTOR_FIELD_H
-#define WN_3D_VECTOR_FIELD_H
 
-#include "wn_3dScalarField.h"
+#ifndef NINJA_SEMI_LAGRANGIAN_INCLUDED_
+#define NINJA_SEMI_LAGRANGIAN_INCLUDED_
 
-class wn_3dVectorField
+#include "ninja.h"
+
+#include "assert.h"
+
+#include "stl_create.h"
+#include "ninja_conv.h"
+#include "ninja_errors.h"
+#include "transportSemiLagrangian.h"
+
+#include "gdal_alg.h"
+#include "cpl_spawn.h"
+
+/**
+ * \brief Main interface to semi lagrangian solver simulations.
+ *
+ */
+class NinjaSemiLagrangian : public ninja
 {
-	public:
-		wn_3dVectorField();			//Default constructor
-		~wn_3dVectorField();        // Destructor
-		wn_3dVectorField(wn_3dScalarField const& x, wn_3dScalarField const& y, wn_3dScalarField const& z);     //constructor
-		wn_3dVectorField(wn_3dVectorField const& f);           // Copy constructor
-		wn_3dVectorField& operator= (wn_3dVectorField const& f);
 
-        void allocate(Mesh const* m);
-        void deallocate();
+public:
+    NinjaSemiLagrangian();
+    virtual ~NinjaSemiLagrangian();
 
-        bool isInlet(const int &i, const int &j, const int &k);
-        bool isOnGround(const int &i, const int &j, const int &k);
+    NinjaSemiLagrangian( NinjaSemiLagrangian const& A );
+    NinjaSemiLagrangian& operator= ( NinjaSemiLagrangian const& A );
 
-        wn_3dScalarField vectorData_x;
-        wn_3dScalarField vectorData_y;
-        wn_3dScalarField vectorData_z;
+    virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninjaSemiLagrangian");}
 
-    private:
+    TransportSemiLagrangian transport;
+
+private:
+
+    /* Output */
+    int WriteOutputFiles();
+    void SetOutputResolution();
+    void SetOutputFilenames();
+    virtual void deleteDynamicMemory();
+
+    wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
+
+    
+#ifdef NINJA_BUILD_TESTING
+public:
+#endif
+
+#ifdef NINJA_BUILD_TESTING
+private:
+#endif
 
 };
 
-#endif /* WN_3D_VECTOR_FIELD_H */
+#endif /* NINJA_SEMI_LAGRANGIAN_INCLUDED_ */
+

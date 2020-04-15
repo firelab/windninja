@@ -67,6 +67,7 @@ set(NINJA_SOURCES air.cpp
                   ninjaException.cpp
                   ninja_init.cpp
                   ninjaMathUtility.cpp
+                  ninjaSemiLagrangian.cpp
                   ninjaUnits.cpp
                   ninja_threaded_exception.cpp
                   omp_guard.cpp

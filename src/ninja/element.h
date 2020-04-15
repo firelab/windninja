@@ -71,6 +71,7 @@ class element
 		         double& u, double &v, double& w);	//Given (x,y,z), this function locates the cell (i,j,k) that the point is in AND
 	                                                //    the internal "parent" local cell coordinates (u,v,w) for use in interpolation in
 	                                                //    functions such as wn_3dScalarField::interpolate().
+        bool isInMesh(double const& x,double const& y, double const& z);    //Determines if the point at (x,y,z) is located inside the mesh (returns true)
 
 		double SFNV(const double &u, const double &v, const double &w, const int &n);
 

@@ -958,6 +958,117 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	}
 }
 
+bool element::isInMesh(double const& x,double const& y, double const& z)	//Determines if a (x,y,z) point is in the mesh
+{
+    int node_i, node_j, node_k;
+    double zAverage, zAverage_ground;
+    double u, v, w;
+
+    //initialize cell values
+    int cell_i = -1;
+    int cell_j = -1;
+    int cell_k = -1;
+
+    //compute cell i value
+    for(node_i=1; node_i<mesh_->nrows; node_i++)
+    {
+        if(y <= mesh_->YORD(node_i, 0, 0))
+        {
+            cell_i = node_i - 1;
+            break;
+        }
+    }
+    if(cell_i<0)
+        return false;
+
+    //compute cell j value
+    for(node_j=1; node_j<mesh_->ncols; node_j++)
+    {
+        if(x <= mesh_->XORD(0, node_j, 0))
+        {
+            cell_j = node_j - 1;
+            break;
+        }
+    }
+    if(cell_j<0)
+        return false;
+
+    //compute cell k value (estimate using average of 4 points surrounding)
+    for(node_k=1; node_k<mesh_->nlayers; node_k++)
+    {
+        zAverage = (mesh_->ZORD(node_i-1, node_j-1, node_k) + mesh_->ZORD(node_i-1, node_j, node_k) + mesh_->ZORD(node_i, node_j-1, node_k) + mesh_->ZORD(node_i, node_j, node_k)) / 4.0;
+        //zAverage_ground = (mesh_->ZORD(node_i-1, node_j-1, 0) + mesh_->ZORD(node_i-1, node_j, 0) + mesh_->ZORD(node_i, node_j-1, 0) + mesh_->ZORD(node_i, node_j, 0)) / 4.0;
+
+
+        if(z <= zAverage)
+        //if(z < zAverage)
+        {
+            cell_k = node_k - 1;
+            break;
+        }
+    }
+    if(cell_k<0)
+        cell_k = 0;
+
+    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+
+    if(u > 1.0)
+    {
+        do{
+            cell_j++;
+            if(cell_j>mesh_->ncolsElem-1)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(u > 1.0);
+    }
+    if(v > 1.0)
+    {
+        do{
+            cell_i++;
+            if(cell_i>mesh_->nrowsElem-1)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(v > 1.0);
+    }
+    if(w > 1.0)
+    {
+        do{
+            cell_k++;
+            if(cell_k>mesh_->nlayersElem-1)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(w > 1.0);
+    }
+    if(u < -1.0)
+    {
+        do{
+            cell_j--;
+            if(cell_j<0)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(u < -1.0);
+    }
+    if(v < -1.0)
+    {
+        do{
+            cell_i--;
+            if(cell_i<0)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(v < -1.0);
+    }
+    if(w < -1.0)
+    {
+        do{
+            cell_k--;
+            if(cell_k<0)
+                return false;
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        }while(w < -1.0);
+    }
+    return true;
+}
+
 void element::get_uvw(double const& x,double const& y, double const& z,
 		         double& u, double &v, double& w)	//Given (x,y,z), this function locates the cell (i,j,k) that the point is in AND 
 	                                                //    the internal "parent" local cell coordinates (u,v,w) for use in interpolation in

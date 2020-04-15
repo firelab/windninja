@@ -64,13 +64,47 @@ TransportSemiLagrangian::~TransportSemiLagrangian()      //destructor
  *
  * \param U0 Both the vector field to transport, and the vector flow field the (vector) quantity is tranported by.
  *        U1 The resulting transported vector field.
- *        dt Time step the field is tranported for.  Normally negative for the standard semi-lagrangian method.
+ *        dt Time step the field is tranported for.  Should be positive value (this will back trace).
  *
  * \return
  */
-void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double &dt)
+void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double dt)
 {
+    double xEnd, yEnd, zEnd, reducedDt;
+    dt = -dt;   //Set to negative to back trace
+    for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
+            {
+                if(U0.isOnGround(i,j,k))  //If this node is on the ground, set to zero velocity for no-slip boundary
+                {
+                    U1.vectorData_x(i, j, k) = 0.0;
+                    U1.vectorData_y(i, j, k) = 0.0;
+                    U1.vectorData_z(i, j, k) = 0.0;
+                }else if(U0.isInlet(i,j,k))   //If this is an inlet boundary node, don't traceParticle, just set to boundary value
+                {
+                    U1.vectorData_x(i, j, k) = U0.vectorData_x(i,j,k);
+                    U1.vectorData_y(i, j, k) = U0.vectorData_y(i,j,k);
+                    U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
+                }else   //Else we're on an interior node and should back-trace a particle
+                {
+                    element elem(U0.vectorData_x.mesh_);
+                    reducedDt = dt;
+                    do {
+                        traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
+                        reducedDt /= 2.0;
+                    }
+                    while(!elem.isInMesh(xEnd, yEnd, zEnd));
 
+                    U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xEnd, yEnd, zEnd);
+                    U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xEnd, yEnd, zEnd);
+                    U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xEnd, yEnd, zEnd);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -85,17 +119,34 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
  *
  * \return
  */
-void TransportSemiLagrangian::transportScalar(const wn_3dVectorField &U0, const wn_3dScalarField &S0, wn_3dScalarField &S1, const double &dt)
+void TransportSemiLagrangian::transportScalar(const wn_3dVectorField &U0, const wn_3dScalarField &S0, wn_3dScalarField &S1, double dt)
 {
-    double xEnd, yEnd, zEnd;
+    double xEnd, yEnd, zEnd, reducedDt;
+    dt = -dt;   //Set to negative to back trace
     for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
     {
         for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
         {
             for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
             {
-                traceParticle(U0, dt, i, j, k, xEnd, yEnd, zEnd);
-                S1(i, j, k) = S0.interpolate(xEnd, yEnd, zEnd);
+                if(U0.isOnGround(i,j,k))  //If this node is on the ground, set to value of S0 (because this is a no-slip boundary, zero velocity)
+                {
+                    S1(i, j, k) = S0(i,j,k);
+                }else if(U0.isInlet(i,j,k))   //If this is an inlet boundary node, don't traceParticle, just set to boundary value
+                {
+                    S1(i, j, k) = S0(i,j,k);
+                }else   //Else we're on an interior node and should back-trace a particle
+                {
+                    element elem(U0.vectorData_x.mesh_);
+                    reducedDt = dt;
+                    do {
+                        traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
+                        reducedDt /= 2.0;
+                    }
+                    while(!elem.isInMesh(xEnd, yEnd, zEnd));
+
+                    S1(i, j, k) = S0.interpolate(xEnd, yEnd, zEnd);
+                }
             }
         }
     }
@@ -131,6 +182,10 @@ void TransportSemiLagrangian::traceParticle(const wn_3dVectorField &U0, const do
         directionCosineX = u/vectorLength;
         directionCosineY = v/vectorLength;
         directionCosineZ = w/vectorLength;
+
+        double startX = U0.vectorData_x.mesh_->XORD(startI,startJ,startK);
+        double startY = U0.vectorData_x.mesh_->YORD(startI,startJ,startK);
+        double startZ = U0.vectorData_x.mesh_->ZORD(startI,startJ,startK);
 
         endX = U0.vectorData_x.mesh_->XORD(startI,startJ,startK) + directionCosineX*travelDistance;
         endY = U0.vectorData_x.mesh_->YORD(startI,startJ,startK) + directionCosineY*travelDistance;
