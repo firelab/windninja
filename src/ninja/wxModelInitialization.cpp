@@ -1594,7 +1594,9 @@ double wxModelInitialization::GetWindHeight(std::string varName)
   GDALDatasetH hDS = NULL;
   GDALRasterBandH hBand = NULL;
   pszSDS = CPLSPrintf("NETCDF:%s:u-component_of_wind_height_above_ground", wxModelFileName.c_str() );
+  CPLPushErrorHandler( CPLQuietErrorHandler );
   hDS = GDALOpen( pszSDS, GA_ReadOnly );
+  CPLPopErrorHandler();
   if( hDS == NULL ) {
     // Try the ndfd variable
     pszSDS = CPLSPrintf("NETCDF:%s:Wind_speed_height_above_ground", wxModelFileName.c_str() );
@@ -1623,70 +1625,43 @@ double wxModelInitialization::GetWindHeight(std::string varName)
  */
 std::string wxModelInitialization::GetTimeName(const char *pszVariable)
 {
-    /* return time if pszVariable is null */
-    if(pszVariable == NULL)
-        //return "time";
-        return "Times";
-    int ncid;
-    int status, varid, ndims, nvars, ngatts, unlimdimid;
-    nc_type vartype;
-    int varndims, varnatts;
-    int vardimids[NC_MAX_VAR_DIMS];   /* dimension IDs */
+  // FIXME(kyle): NDFD is broken here, provide a fix when the no-netcdf branch
+  // is working.
+  assert( getForecastIdentifier() != "UCAR-NDFD-CONUS-2.5-KM" );
+  std::string tv;
+  if( pszVariable == NULL ) {
+    return "Times";
+  }
+  if( EQUAL( pszVariable, "time" ) ) {
+    return "time";
+  }
+  GDALDatasetH hDS = NULL;
+  const char *pszSDS = NULL;
+  pszSDS = CPLSPrintf("NETCDF:%s:%s", wxModelFileName.c_str(), pszVariable );
+  hDS = GDALOpen( pszSDS, GA_ReadOnly );
+  if( hDS == NULL ) {
+    throw( badForecastFile( "failed to open " + wxModelFileName ) );
+  }
 
-    int timeid;
-    nc_type timetype;
-    int timendims, timenatts;
-    int timedimids[NC_MAX_VAR_DIMS];
-    char timename[NC_MAX_NAME+1];
-    size_t namelength;
-    char *tp;
-
-    //std::string timestring = "time";
-    std::string timestring = "Times";
-
-    status = nc_open(wxModelFileName.c_str(), 0, &ncid);
-    status = nc_inq(ncid, &ndims, &nvars, &ngatts, &unlimdimid);
-    /*
-    ** If we are looking for just a 'time' var, it may or may not be 'time'.
-    ** In order to bandage #149, we'll check for time, time0, time1, time2...
-    */
-    status = nc_inq_varid(ncid, pszVariable, &varid);
-    if (status != NC_NOERR && EQUALN(pszVariable, "time", strlen("time"))) {
-        const char *pszT = NULL;
-        int iSuffix = 0;
-        while (status != NC_NOERR && iSuffix < 5) {
-            pszT = CPLSPrintf("time%d", iSuffix);
-            status = nc_inq_varid(ncid, pszT, &varid);
-            iSuffix++;
-        }
+  const char *pszMDI = NULL;
+  const char *pszKey = NULL;
+  for( int i = -1; i < 8; i++ ) {
+    if( i == -1 ) {
+      pszKey = CPLSPrintf( "time#standard_name" );
+    } else {
+      pszKey = CPLSPrintf( "time%d#standard_name", pszVariable, i );
     }
-    if (status != NC_NOERR) {
-        nc_close(ncid);
-        throw badForecastFile(CPLSPrintf(
-            "Could not identify time dimension for variable: %s", pszVariable));
+    pszMDI = GDALGetMetadataItem( hDS, pszKey, NULL );
+    if( pszMDI != NULL )  {
+      break;
     }
-    status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
-    for(int i = 0; i < varndims; i++) {
-        status = nc_inq_dimname(ncid, vardimids[i], timename);
-        status = nc_inq_varid(ncid, timename, &timeid);
-        status = nc_inq_var(ncid, timeid, timename, &timetype, &timendims, timedimids, &timenatts);
-        status = nc_inq_attlen(ncid, timeid, "standard_name", &namelength);
-        if(status == 0 && namelength > 0) {
-            tp = (char*)malloc(namelength + 1);
-            status = nc_get_att_text(ncid, timeid, "standard_name", tp);
-            tp[namelength] = '\0';
-            if(strcmp("time", tp) == 0) {
-                timestring =  std::string(timename);
-                CPLDebug( "WINDNINJA", "Found time: %s for variable: %s",
-                          timename, pszVariable );
-                free( (void*)tp );
-                break;
-            }
-            free( (void*)tp );
-        }
-    }
-    nc_close(ncid);
-    return timestring;
+  }
+  GDALClose( hDS );
+  if( pszMDI == NULL ) {
+    pszMDI = "Times";
+  }
+  tv = pszMDI;
+  return tv;
 }
 
 int wxModelInitialization::LoadFromCsv()
