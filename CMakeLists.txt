@@ -551,8 +551,9 @@ set(CPACK_COMPONENT_INCLUDES_DISABLED TRUE)
 # *****************************************************************************
 # CPack call
 # *****************************************************************************
-include(CPack)
 include(CTest)
+if(FALSE)
+include(CPack)
 
 # *****************************************************************************
 # CPack groupings
@@ -572,4 +573,4 @@ CPACK_ADD_COMPONENT(includes
                     DESCRIPTION "Development include files"
                     #GROUP Development
                     )
-
+endif()
