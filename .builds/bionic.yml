@@ -31,5 +31,5 @@ tasks:
   - test: |
       export WINDNINJA_DATA=~/windninja/data
       cd windninja/build
-      # ignore rtma config test
-      ctest -j 3 -E 'rtma|color'
+      # ignore rtma, ndfd config test and color test
+      ctest -j 3 -E 'rtma|color|ucar_ndfd'
