@@ -1,0 +1,30 @@
+image: alpine/edge
+
+packages:
+  - git
+  - singularity
+
+sources:
+  - https://github.com/firelab/windninja
+
+tasks:
+  - build: |
+      cd windninja
+      mkdir build
+      cd build
+      singularity pull wn.sif library://kyle/default/windninja:dev
+      singularity exec ./wn.sif cmake \
+        -D SUPRESS_WARNINGS=ON \
+        -D SKIP_GETDATE=ON \
+        -D BUILD_TESTING=ON \
+        -D RUN_CFG_TESTS=ON \
+        -D DISABLE_THREDDS_UPDATE=ON \
+        -D CMAKE_BUILD_TYPE=debug \
+        -D NINJA_QTGUI=OFF \
+        ..
+      singularity exec wn.sif make -j 3
+  - test: |
+      export WINDNINJA_DATA=~/windninja/data
+      cd windninja/build
+      # GDAL on alpine not built with libkml
+      singularity exec wn.sif ctest -j 3 -E 'gdal_output_km|ucar_ndfd'
