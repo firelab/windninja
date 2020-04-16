@@ -353,33 +353,12 @@ protected:
     void checkCancel();
     void write_compare_output();
     boost::shared_ptr<initialize> init;
-
-private:
-
-
-    double matchTol;		//tolerance (in m/s) used in outer "matching" looping to check if solved velocity field matches at each wx station.
-                            //Each u, v, w velocity component is checked.
-
-    int nMaxMatchingIters;
-    std::vector<int> num_outer_iter_tries_u;   //used in outer iterations calcs
-    std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
-    std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
-
-    FiniteElementMethod FEM;
+    virtual void deleteDynamicMemory();
 
     //u is positive toward East, v is positive toward North,
     //w is positive up
     wn_3dVectorField U; 
     wn_3dVectorField U0;    //Initial velocity field, or last timestep's velocity field for transient simulations
-
-    AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
-    Aspect *aspect;
-    Slope *slope;
-    Shade *shade;
-    Solar *solar;
-
-    bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
-    double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
 
     //Timers
     double startTotal, endTotal;
@@ -396,6 +375,27 @@ private:
     #endif
 
     double getSmallestRadiusOfInfluence();
+    bool isNullRun; //flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
+    bool matched(int iter);
+    double matchTol;		//tolerance (in m/s) used in outer "matching" looping to check if solved velocity field matches at each wx station.
+                            //Each u, v, w velocity component is checked.
+
+    int nMaxMatchingIters;
+    std::vector<int> num_outer_iter_tries_u;   //used in outer iterations calcs
+    std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
+    std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
+
+    FiniteElementMethod FEM;
+
+
+    AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
+    Aspect *aspect;
+    Slope *slope;
+    Shade *shade;
+    Solar *solar;
+
+    double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
+
     void get_rootname(const char *NAME,char *shortname);
 
     void interp_uvw();
@@ -424,9 +424,10 @@ private:
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
     void prepareOutput();
-    bool matched(int iter);
     void writeOutputFiles(); 
-    virtual void deleteDynamicMemory();
+
+private:
+
 };
 
 #endif	//NINJA_HEADER

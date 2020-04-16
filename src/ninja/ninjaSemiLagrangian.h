@@ -38,6 +38,7 @@
 #include "ninja_conv.h"
 #include "ninja_errors.h"
 #include "transportSemiLagrangian.h"
+#include "wn_3dVectorField.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
@@ -48,7 +49,6 @@
  */
 class NinjaSemiLagrangian : public ninja
 {
-
 public:
     NinjaSemiLagrangian();
     virtual ~NinjaSemiLagrangian();
@@ -62,24 +62,10 @@ public:
     TransportSemiLagrangian transport;
 
 private:
-
     /* Output */
-    int WriteOutputFiles();
-    void SetOutputResolution();
-    void SetOutputFilenames();
     virtual void deleteDynamicMemory();
 
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
-
-    
-#ifdef NINJA_BUILD_TESTING
-public:
-#endif
-
-#ifdef NINJA_BUILD_TESTING
-private:
-#endif
-
 };
 
 #endif /* NINJA_SEMI_LAGRANGIAN_INCLUDED_ */
