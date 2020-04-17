@@ -4142,6 +4142,7 @@ void ninja::set_meshResChoice( const Mesh::eMeshChoice choice )
 {
     mesh.set_meshResChoice( choice );
 }
+
 void ninja::set_meshResolution( double resolution, lengthUnits::eLengthUnits units )
 {
     mesh.set_meshResolution( resolution, units );

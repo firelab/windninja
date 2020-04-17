@@ -850,7 +850,6 @@ int windNinjaCLI(int argc, char* argv[])
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
-        conflicting_options(vm, "momentum_flag", "mesh_resolution");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1214,7 +1213,9 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
+                conflicting_options(vm, "mesh_choice", "mesh_resolution");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
+                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }

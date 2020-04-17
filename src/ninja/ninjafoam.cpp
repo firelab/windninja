@@ -103,6 +103,17 @@ NinjaFoam::~NinjaFoam()
     CPLFree( (void*)pszGridFilename );
 }
 
+void NinjaFoam::set_meshResolution(double resolution, lengthUnits::eLengthUnits units)
+{
+    //set mesh resolution, always stored in meters
+    if(resolution<0.0)
+        throw std::range_error("Mesh resolution out of range in NinjaFoam::set_meshResolution().");
+
+    meshResolutionUnits = units;
+    lengthUnits::toBaseUnits(resolution, units);
+    meshResolution = resolution;
+}
+
 double NinjaFoam::get_meshResolution()
 {
     return meshResolution;
@@ -892,46 +903,69 @@ int NinjaFoam::readDem(double &expansionRatio)
     yBuffer = input.dem.get_cellSize();
     
     double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
-
-    bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
-    bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-    bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
-    bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
-    bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-    bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
-
+    int minNumberVerticalLayers = 5;
     double meshVolume;
     double cellVolume;
     double side;
 
-    meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); // total volume for block mesh
-    cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
-    cellVolume = meshVolume/cellCount; // volume of 1 cell
-    side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
-    meshResolution = side;
+    //if the mesh resolution hasn't been set
+    if(meshResolution < 0.0){
+        bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
+        bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
+        bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
+        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
+        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
+        bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
 
-    nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
-    nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
-    nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
+        //total volume for block mesh
+        meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); 
+        cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
+        cellVolume = meshVolume/cellCount; // volume of 1 cell
+        side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
 
-    //determine number of rounds of refinement
-    int nCellsToAdd = 0;
-    int refinedCellCount = 0;
-    int nCellsInLowestLayer = nCells[0] * nCells[1]; 
-    while(refinedCellCount < (0.5 * input.meshCount)){
-        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
-        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
-        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
-        nRoundsRefinement += 1;
+        nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
+        nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
+        nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
+
+        //determine number of rounds of refinement
+        int nCellsToAdd = 0;
+        int refinedCellCount = 0;
+        int nCellsInLowestLayer = nCells[0] * nCells[1]; 
+        while(refinedCellCount < (0.5 * input.meshCount)){
+            nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+            refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+            nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+            nRoundsRefinement += 1;
+        }
+        CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
+        CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
+        CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
+
+        set_meshResolution(side/(nRoundsRefinement*2), lengthUnits::meters);
+    } 
+    else{ //if the mesh resolution has been set
+        side = meshResolution * 4.0; //blockMesh cell size
+        nRoundsRefinement = 2; 
+
+        blockMeshDz = max(blockMeshDz, minNumberVerticalLayers*side);
+
+        bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
+        bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
+        bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
+        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
+        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
+        bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
+
+        nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
+        nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
+        nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
     }
-    CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
-    CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
-    CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
-    CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
 
     initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
     expansionRatio = 1.0;
-    
+
+    CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
+
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
             CPLFormFilename(pszFoamPath, "0/U", ""), 
@@ -1469,7 +1503,7 @@ int NinjaFoam::RefineSurfaceLayer(){
         latestTime += 1;
         oldFirstCellHeight = finalFirstCellHeight;
         finalFirstCellHeight /= 2.0; //keep track of first cell height
-        meshResolution /= 2.0;
+        //meshResolution /= 2.0;
         
         UpdateDictFiles();
 

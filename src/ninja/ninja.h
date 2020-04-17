@@ -256,7 +256,7 @@ public:
     std::vector<wxStation> get_wxStations();
     void set_meshResChoice( std::string choice );
     void set_meshResChoice( const Mesh::eMeshChoice );
-    void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
+    virtual void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
     virtual double get_meshResolution();
     void set_numVertLayers( const int nLayers );
 #ifdef NINJA_SPEED_TESTING

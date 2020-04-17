@@ -75,7 +75,8 @@ public:
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
-    double get_meshResolution();
+    virtual void set_meshResolution(double resolution, lengthUnits::eLengthUnits units);
+    virtual double get_meshResolution();
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
 
@@ -123,6 +124,7 @@ private:
     int cellCount; //total cell count in the mesh
     int nRoundsRefinement; //number of times refineMesh is called
     double meshResolution; // mesh resolution
+    lengthUnits::eLengthUnits meshResolutionUnits; //mesh resolution units (feet, meters, miles, kilometers)
     double initialFirstCellHeight; //approx height of near-ground cell after moveDynamicMesh
     double oldFirstCellHeight; //approx height of near-ground cell at previous time-step
     double finalFirstCellHeight; //final approx height of near-ground cell after refinement

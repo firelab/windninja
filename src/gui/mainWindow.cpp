@@ -1703,6 +1703,12 @@ int mainWindow::solve()
             ninjafoamMeshChoice = WindNinjaInputs::medium;
         else if (meshIndex == 2)
             ninjafoamMeshChoice = WindNinjaInputs::fine;
+        meshRes = tree->surface->meshResDoubleSpinBox->value();
+        customMesh = true;
+        if( tree->surface->meshFeetRadioButton->isChecked() )
+            meshUnits = lengthUnits::feet;
+        else
+            meshUnits = lengthUnits::meters;
     }
 #endif
 
@@ -3535,11 +3541,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
-        tree->surface->meshResComboBox->removeItem(4);
-        tree->surface->meshResComboBox->setCurrentIndex(0);
-        //if the index isn't set when we change solvers,
-        //the index gets set to 4 which does not exist in
-        //the cfg solver, set to Coarse by default
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
