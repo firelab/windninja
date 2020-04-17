@@ -323,23 +323,6 @@ bool ninja::simulate_wind()
         init.reset(initializationFactory::makeInitialization(input));
         init->initializeFields(input, mesh, U0, CloudGrid);
 
-
-        /////////////Test/////////////////////////////////
-        volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
-        input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "test.vtk");
-        printf("here\n");
-
-
-
-        //////////////////////////////////////////////////
-
-
-
-
-
-
-
-
 #ifdef _OPENMP
         endInit = omp_get_wtime();
 #endif
