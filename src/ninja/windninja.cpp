@@ -84,7 +84,7 @@ extern "C"
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-    ( unsigned int numNinjas, std::string solver_type, char ** papszOptions  )
+    ( unsigned int numNinjas, const char * solver_type, char ** papszOptions  )
 {
     try
     {

@@ -75,14 +75,8 @@ typedef int   NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-    #ifndef NINJAFOAM
     NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-        ( unsigned int numNinjas, char ** papszOptions  );
-    #endif
-    #ifdef NINJAFOAM
-    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-        ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
-    #endif
+        ( unsigned int numNinjas, const char * solver_type, char ** papszOptions  );
     NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
         ( NinjaH * ninja );
 
