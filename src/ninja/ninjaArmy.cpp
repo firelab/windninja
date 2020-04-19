@@ -1993,7 +1993,7 @@ void ninjaArmy::destoryLocalData(void)
     CPLPopErrorHandler();
 }
 
-eSolverType ninjaArmy::getSolverType(std::string type)
+ninjaArmy::eSolverType ninjaArmy::getSolverType(std::string type)
 {
     if(type == "massConservingSteadyState")
             return massConservingSteadyState;
