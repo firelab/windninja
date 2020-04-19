@@ -53,9 +53,9 @@ void WindNinjaTree::createTree()
   tree = new QTreeWidget;
   tree->setColumnCount(1);
   createInputItems();
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   createSolverMethodItems();
-#endif
+//#endif
   createOutputItems();
 
   mainItem = new QTreeWidgetItem;
@@ -67,16 +67,16 @@ void WindNinjaTree::createTree()
   
   //add items in gui order
   tree->setHeaderItem(mainItem);
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   tree->addTopLevelItem(solverMethodItem);
   solverMethodItem->setExpanded(true);
   solverMethodItem->setSelected(true);
-#endif
+//#endif
   tree->addTopLevelItem(inputItem);
   inputItem->setExpanded(true);
-#ifndef NINJAFOAM
+//#ifndef NINJAFOAM
   surfaceItem->setSelected(true);
-#endif
+//#endif
   windItem->setExpanded(true);
   tree->addTopLevelItem(diurnalItem);
   tree->addTopLevelItem(stabilityItem);
@@ -99,7 +99,7 @@ void WindNinjaTree::createIcons()
   sun.addFile(":weather_sun.png");
 }
 
-#ifdef NINJAFOAM 
+//#ifdef NINJAFOAM 
 void WindNinjaTree::createSolverMethodItems()
 {
   solverMethodItem = new QTreeWidgetItem;
@@ -118,7 +118,7 @@ void WindNinjaTree::createSolverMethodItems()
 
   solverMethodItem->addChild(ninjafoamItem);
 }
-#endif //NINJAFOAM
+//#endif //NINJAFOAM
 
 void WindNinjaTree::createInputItems()
 {
@@ -198,10 +198,10 @@ void WindNinjaTree::createOutputItems()
 
 void WindNinjaTree::createStack()
 {
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   ninjafoam = new ninjafoamInput;
   nativesolver = new nativeSolverInput;
-#endif
+//#endif
   surface = new surfaceInput;
   diurnal = new diurnalInput;
   stability = new stabilityInput;
@@ -219,10 +219,10 @@ void WindNinjaTree::createStack()
   
   stack = new QStackedWidget;
   
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   stack->addWidget(nativesolver);
   stack->addWidget(ninjafoam);
-#endif
+//#endif
   stack->addWidget(surface);
   stack->addWidget(diurnal);
   stack->addWidget(stability);
@@ -261,14 +261,14 @@ void WindNinjaTree::updateInterface()
     stack->setCurrentWidget(diurnal);
   else if(item == stabilityItem)
       stack->setCurrentWidget(stability);
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   else if(item == nativeSolverItem)
       stack->setCurrentWidget(nativesolver);
   else if(item == ninjafoamItem)
       stack->setCurrentWidget(ninjafoam);
   else if(item == solverMethodItem)
       stack->setCurrentWidget(ninjafoam);
-#endif
+//#endif
   else if(item == windItem)
     stack->setCurrentWidget(wind);
   else if(item == spdDirItem)

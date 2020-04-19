@@ -544,7 +544,7 @@ void mainWindow::createConnections()
       this, SLOT(checkAllItems()));
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   //connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
@@ -554,7 +554,7 @@ void mainWindow::createConnections()
        this, SLOT( selectNativeSolver( bool ) ) );      
   connect( tree->ninjafoam->ninjafoamGroupBox, SIGNAL( toggled( bool ) ),
        this, SLOT( selectNinjafoamSolver( bool ) ) );
-#endif
+//#endif
 
   //connect the speed and direction in the first row to the checkers
   connect(tree->wind->windTable->speed[0], SIGNAL(valueChanged(double)), this,
@@ -702,7 +702,7 @@ void mainWindow::selectWeatherInitialization( bool pick )
     tree->output->wxModelOutputCheckBox->setEnabled( pick );
 }
 
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
 void mainWindow::selectNativeSolver( bool pick )
 {
     if( pick ) {
@@ -719,6 +719,7 @@ void mainWindow::selectNinjafoamSolver( bool pick )
     }
 }
 
+#ifdef NINJAFOAM
 void mainWindow::openExistingCase()
 {
   QString dir = QFileDialog::getExistingDirectory(this,
@@ -2582,10 +2583,10 @@ int mainWindow::checkAllItems()
 {
   //check and see if the objects have been visited before changing
   eInputStatus status = green;
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   checkSolverMethodItem();
   checkMeshCombo();
-#endif
+//#endif
   checkInputItem();
   checkOutputItem();
   checkSolveItem();
@@ -2593,7 +2594,7 @@ int mainWindow::checkAllItems()
   return status;
 }
 
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
 int mainWindow::checkSolverMethodItem()
 {
     eInputStatus status = blue;
@@ -2660,7 +2661,7 @@ int mainWindow::checkNinjafoamItem()
 
     return status;
 }
-#endif //NINJAFOAM
+//#endif //NINJAFOAM
 
 int mainWindow::checkInputItem()
 {  
