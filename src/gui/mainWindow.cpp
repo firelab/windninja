@@ -2201,11 +2201,9 @@ int mainWindow::solve()
         /* This can throw a badForecastFile */
         try
         {
-#ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
-#else
-            army->makeArmy( weatherFile, timeZone, times, false );
-#endif
+
+            army->makeWeatherModelInitializationArmy(weatherFile, timeZone, times, useNinjaFoam );
+
         }
         catch( badForecastFile &e )
         {

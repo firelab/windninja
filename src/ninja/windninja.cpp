@@ -78,39 +78,25 @@ extern "C"
  *                             None
  *
  * \param numNinjas The number of runs to create.
+ * \param solver_type The type of solver to use (massConservingSteadyState, cfdSteadyState, semiLagrangianSteadyState, semiLagrangianTransient).
  * \param papszOptions Key, value option pairs from the options listed above.
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
-#ifndef NINJAFOAM
 NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-    ( unsigned int numNinjas, char ** papszOptions  )
+    ( unsigned int numNinjas, std::string solver_type, char ** papszOptions  )
 {
     try
     {
-        return reinterpret_cast<NinjaH*>( new ninjaArmy( numNinjas ) );
+        ninjaArmy* army = new ninjaArmy;
+        army->makeDomainAverageInitializationArmy(numNinjas, army->getSolverType(solver_type));
+        return reinterpret_cast<NinjaH*>( army );
     }
     catch( bad_alloc& )
     {
         return NULL;
     }
 }
-#endif
-
-#ifdef NINJAFOAM
-NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-    ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  )
-{
-    try
-    {
-        return reinterpret_cast<NinjaH*>( new ninjaArmy( numNinjas, momentumFlag ) );
-    }
-    catch( bad_alloc& )
-    {
-        return NULL;
-    }
-}
-#endif
 
 /**
  * \brief Destroy a suite of windninja runs.
