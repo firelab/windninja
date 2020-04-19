@@ -886,8 +886,6 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
 
-#endif //NINJAFOAM
-        
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
@@ -909,7 +907,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
                                                             timeList,
-                                                            windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                                                            windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 catch(... )
                 {
@@ -924,7 +922,7 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeWeatherModelInitializationArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
                                  timeList,
-                                 windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                                 windsim.getSolverType( vm["solver_type"].as<std::string>() ));
             }
         }
 //STATION_FETCH
@@ -1051,7 +1049,7 @@ int windNinjaCLI(int argc, char* argv[])
                                         stationPathName,
                                         vm["elevation_file"].as<std::string>(),
                                         vm["match_points"].as<bool>(),
-                                        windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                                        windsim.getSolverType( vm["solver_type"].as<std::string>() ));
 
                 if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
@@ -1125,7 +1123,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                     }
                     if(fileSubFormat==1) //not a time series
                     {
@@ -1136,7 +1134,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                     }
                 }
                 else if (stationFormat==1) //old format
@@ -1145,7 +1143,7 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                     windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
@@ -1178,7 +1176,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else if (stationFormat==4) // New Format where there are multiple one step recent station files
                 {
@@ -1192,7 +1190,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(), windsim.getSolverType( vm["solver_type"].as<std::string>() );
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(), windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else
                 {
