@@ -890,7 +890,7 @@ AsciiGrid<T> AsciiGrid<T>::BufferGrid( int nAddCols, int nAddRows )
         throw std::range_error("Invalid number of rows or columns to be "
                                "removed");
     }
-    AsciiGrid<T>A( get_nCols() + 1, get_nRows() + 1, get_xllCorner(),
+    AsciiGrid<T>A( get_nCols() + nAddCols, get_nRows() + nAddRows, get_xllCorner(),
                    get_yllCorner(), get_cellSize(), get_noDataValue(),
                    prjString );
     for( int i = 0;i < A.get_nRows();i++ )
