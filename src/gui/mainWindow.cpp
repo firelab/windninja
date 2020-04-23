@@ -2140,7 +2140,7 @@ int mainWindow::solve()
             {
                 wxStation::writeKmlFile(army->getWxStations(i_),
                                         demFile,
-                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/");
+                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
             }
         }
 //                if (writeStationCSV==true)
