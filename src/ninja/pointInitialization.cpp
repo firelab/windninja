@@ -260,10 +260,13 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
                         double projXord = input.stationsScratch[ii].get_projXord();
                         double projYord = input.stationsScratch[ii].get_projYord();
                         cDiurnal.initialize(projXord, projYord, 0.0, 0.0,
-                                            cloudCoverGrid(i_, j_), airTempGrid(i_, j_),
+                                            input.stationsScratch[ii].get_cloudCover(), input.stationsScratch[ii].get_temperature(),
                                             input.stationsScratch[ii].get_speed(),
                                             input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_,
                                             anthropogenic_, profile.Roughness, profile.Rough_h, profile.Rough_d);
+
+                        input.dem.get_nearestCellIndex(input.stationsScratch[ii].get_projXord(),
+                                                input.stationsScratch[ii].get_projYord(), &i_, &j_);
 
                         cDiurnal.compute_cell_diurnal_parameters(i_, j_, &profile.ObukovLength, &U_star, &profile.ABL_height);
                     }
