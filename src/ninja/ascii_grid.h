@@ -205,6 +205,8 @@ public:
 
     AsciiGrid<T> BufferGrid( int nAddCols=1, int nAddRows=1 );
     void BufferGridInPlace( int nAddCols=1, int nAddRows=1 );
+    AsciiGrid<T> BufferAroundGrid( int nAddCols=1, int nAddRows=1 );
+    void BufferAroundGridInPlace( int nAddCols=1, int nAddRows=1 );
 
     /* @todo
      * Ideally this would not be a public variable that other classes have access to, instead
@@ -932,6 +934,86 @@ template<class T>
 void AsciiGrid<T>::BufferGridInPlace( int nAddCols, int nAddRows )
 {
     AsciiGrid<T>A = BufferGrid(nAddCols, nAddRows);
+    *this = A;
+}
+
+/**
+ * \brief Add cells around all edges of an ascii grid
+ *
+ * Add or remove one or more cells around the Grid.
+ *
+ * \param nAddCols number of columns to add
+ * \param nAddRows number of rows to add
+ * \return a new grid with a buffer
+ */
+template<class T>
+AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
+{
+    int nOrigXSize = get_nCols();
+    int nOrigYSize = get_nRows();
+    if( nOrigXSize + nAddCols <= 0 || nOrigYSize + nAddRows <= 0 )
+    {
+        throw std::range_error("Invalid number of rows or columns to be "
+                               "removed");
+    }
+    AsciiGrid<T>A( get_nCols() + 2*nAddCols, get_nRows() + 2*nAddRows,
+            get_xllCorner()-(nAddCols*get_cellSize()),
+            get_yllCorner()-(nAddRows*get_cellSize()),
+            get_cellSize(), get_noDataValue(), prjString );
+    for( int i = 0;i < A.get_nRows();i++ )
+    {
+        for( int j = 0;j < A.get_nCols();j++ )
+        {
+            if( i < nAddRows && j < nAddCols )
+            {
+                A.set_cellValue( i, j, get_cellValue( i, j) );
+            }
+            else if( i < nAddRows )
+            {
+                A.set_cellValue( i, j, get_cellValue( i, j-nAddCols) );
+            }
+            else if( i > (nOrigYSize-nAddRows) && j < nAddCols )
+            {
+                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows, j) );
+            }
+            else if( j < nAddCols )
+            {
+                A.set_cellValue( i, j, get_cellValue( i-nAddRows, j) );
+            }
+            else if( i < nOrigYSize && j < nOrigXSize )
+            {
+                A.set_cellValue( i, j, get_cellValue( i-nAddRows, j-nAddCols) );
+            }
+            else if( i > (nOrigYSize-nAddRows) && j > (nOrigXSize-nAddCols) )
+            {
+                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows,
+                                                      nOrigXSize-nAddCols ) );
+            }
+            else if( i > (nOrigYSize-nAddRows) )
+            {
+                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows, j-nAddCols ) );
+            }
+            else if( j > (nOrigXSize-nAddCols) )
+            {
+                A.set_cellValue( i, j, get_cellValue( i-nAddRows, nOrigXSize-nAddCols) );
+            }
+        }
+    }
+    return A;
+}
+
+/**
+ * \brief Add cells to all edges of an ascii grid
+ *
+ * Add or remove one or more cells around the Grid.
+ *
+ * \param nAddCols number of columns to add
+ * \param nAddRows number of rows to add
+ */
+template<class T>
+void AsciiGrid<T>::BufferAroundGridInPlace( int nAddCols, int nAddRows )
+{
+    AsciiGrid<T>A = BufferAroundGrid(nAddCols, nAddRows);
     *this = A;
 }
 
