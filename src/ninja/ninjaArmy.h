@@ -140,13 +140,6 @@ public:
 
     int getSize();
 
-    /**
-    * \brief Set the number of ninja in the army
-    *
-    * \param nRuns number of ninjas to create
-    * \return
-    */
-    void setSize( int nRuns, eSolverType solverType);
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/

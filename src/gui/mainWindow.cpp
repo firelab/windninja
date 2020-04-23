@@ -1938,11 +1938,8 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-#ifdef NINJAFOAM    
-    army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
-#else
-    army = new ninjaArmy(1); // native ninja solver
-#endif
+    army = new ninjaArmy;
+
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
@@ -2001,7 +1998,7 @@ int mainWindow::solve()
                 timeList.push_back(noTime);
             }
             try{ //Try to run windninja
-                army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
+                army->makePointInitializationArmy(timeList,timeZone, pointFile, demFile, true, ninjaArmy::massConservingSteadyState);
             }
             catch(...){ //catch all exceptions and tell the user, prevent segfaults
 
@@ -2057,7 +2054,7 @@ int mainWindow::solve()
                     CPLDebug("STATION_FETCH","FILES STORED...");
 
                     try{ //try running with timelist
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
+                        army->makePointInitializationArmy(timeList,timeZone,pointFileList[0],demFile,true,ninjaArmy::massConservingSteadyState); //setting pointFileList[0] is just for header checks etc
                     }
                     catch(...){ //catch any and all exceptions and tell the user
 
@@ -2090,7 +2087,7 @@ int mainWindow::solve()
                         timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
                     try{ //try making the army with current data
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
+                        army->makePointInitializationArmy(timeList,timeZone,pointFileList[0],demFile,true,ninjaArmy::massConservingSteadyState);
                     }
                     catch(...){ //catch any and all exceptions and tell the user
 
@@ -2176,11 +2173,12 @@ int mainWindow::solve()
         {
             nRuns++;
         }
-#ifdef NINJAFOAM
-        army->setSize( nRuns, useNinjaFoam);
-#else
-        army->setSize( nRuns, false);
-#endif
+
+        //Natalie needs to fix to add ninjaSemiLagrangian solvers, trade out bool useNinjaFoam for a ninjaArmy::eSolverType
+        if(useNinjaFoam)
+            army->makeDomainAverageInitializationArmy(nRuns, ninjaArmy::cfdSteadyState);
+        else
+            army->makeDomainAverageInitializationArmy(nRuns, ninjaArmy::massConservingSteadyState);
     }
     else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
     {
@@ -2201,9 +2199,11 @@ int mainWindow::solve()
         /* This can throw a badForecastFile */
         try
         {
-
-            army->makeWeatherModelInitializationArmy(weatherFile, timeZone, times, useNinjaFoam );
-
+            //Natalie needs to fix to add ninjaSemiLagrangian solvers, trade out bool useNinjaFoam for a ninjaArmy::eSolverType
+            if(useNinjaFoam)
+                army->makeWeatherModelInitializationArmy(weatherFile, timeZone, times, ninjaArmy::cfdSteadyState);
+            else
+                army->makeWeatherModelInitializationArmy(weatherFile, timeZone, times, ninjaArmy::massConservingSteadyState);
         }
         catch( badForecastFile &e )
         {
@@ -2343,7 +2343,7 @@ int mainWindow::solve()
                                    coverUnits::percent );
             army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
+            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makePointInitializationArmy
             {
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }

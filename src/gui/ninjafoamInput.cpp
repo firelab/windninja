@@ -55,7 +55,7 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
     ninjafoamLabel = new QLabel(tr("WindNinja must be re-compiled with NINJAFOAM set to ON in CMake\n"
                "to enable this solver."
                 ), this);
-#endif NINJAFOAM
+#endif //NINJAFOAM
     ninjafoamGroupBox->setChecked(false);
     
     ninjafoamLayout = new QVBoxLayout;
