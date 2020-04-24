@@ -229,8 +229,7 @@ void NomadsUtcCopy( nomads_utc *dst, const nomads_utc *src )
         return;
     dst->t = src->t;
     memcpy( dst->ts, src->ts, sizeof( struct tm ) );
-    if( src->s )
-        strncpy( dst->s, src->s, NOMADS_UTC_STRFTIME_SIZE );
+    strncpy( dst->s, src->s, NOMADS_UTC_STRFTIME_SIZE );
 }
 
 /*

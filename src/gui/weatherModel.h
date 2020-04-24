@@ -36,7 +36,10 @@
 #include <QToolButton>
 #include <QLabel>
 #include <QString>
+#include <QStringList>
 #include <QDirModel>
+#include <QListView>
+#include <QStringListModel>
 #include <QTreeView>
 #include <QHeaderView>
 #include <QDateTime>
@@ -109,6 +112,12 @@ class weatherModel : public QWidget
     QTreeView *treeView;
     QDirModel *model;
 
+    QGroupBox *timeGroupBox;
+    QStringListModel *timeModel;
+    QListView *listView;
+    QToolButton *selectAllTimesButton;
+    QToolButton *selectNoTimesButton;
+
     QDir cwd;
     QString inputFile;
 
@@ -119,10 +128,14 @@ class weatherModel : public QWidget
     QHBoxLayout *treeLayout;
     QHBoxLayout *listLayout;
     QHBoxLayout *loadLayout;
+    QVBoxLayout *timeLayout;
+    QHBoxLayout *selectLayout;
     QVBoxLayout *weatherLayout;
     QVBoxLayout *layout;
 
     QString tzString;
+
+    std::vector<blt::local_date_time> timeList();
  private:
     void loadModelComboBox();
 
@@ -139,6 +152,8 @@ class weatherModel : public QWidget
     NomadsWxModel **papoNomads;
 #endif
 
+    std::vector<blt::local_date_time> timelist;
+
  private slots:
     void getData();
     void displayForecastTime(const QModelIndex &index);
@@ -146,10 +161,10 @@ class weatherModel : public QWidget
     void unselectForecast( bool checked );
     void setTimeLimits( int index );
     void setComboToolTip( int index );
+    void clearTimes();
  public slots:
     void checkForModelData();
     void updateTz( QString tz );
-
 };
 
 #endif /* WEATHER_MODEL_H */

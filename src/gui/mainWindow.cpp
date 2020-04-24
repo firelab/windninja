@@ -1545,14 +1545,11 @@ int mainWindow::checkInputFile(QString fileName)
         else
         {
             hasPrj = true;
-            double ll[2];
-            if(GDALGetCenter(poInputDS, ll))
+            double longitude, latitude;
+            if(GDALGetCenter(poInputDS, &longitude, &latitude))
             {
-                GDALCenterLon = ll[0];
-                GDALCenterLat = ll[1];
-
                 //set diurnal location, also set DD.DDDDD
-                QString oTimeZone = FetchTimeZone(GDALCenterLon, GDALCenterLat, NULL).c_str();
+                QString oTimeZone = FetchTimeZone(longitude, latitude, NULL).c_str();
                 if(oTimeZone != "")
                 {
                     /* Show all time zones, so we can search all time zones */
@@ -2143,7 +2140,7 @@ int mainWindow::solve()
             {
                 wxStation::writeKmlFile(army->getWxStations(i_),
                                         demFile,
-                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/");
+                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
             }
         }
 //                if (writeStationCSV==true)
@@ -2198,13 +2195,15 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
+
+        std::vector<blt::local_date_time> times = tree->weather->timeList();
         /* This can throw a badForecastFile */
         try
         {
 #ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, useNinjaFoam );
+            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
 #else
-            army->makeArmy( weatherFile, timeZone, false );
+            army->makeArmy( weatherFile, timeZone, times, false );
 #endif
         }
         catch( badForecastFile &e )

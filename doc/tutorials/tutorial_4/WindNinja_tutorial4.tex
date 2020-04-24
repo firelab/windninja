@@ -35,7 +35,7 @@
 \rhead{WindNinja Tutorial 4: Weather Model Initialization}
 \cfoot{\thepage}
 
-\newcommand\vn{3.4.0}
+\newcommand\vn{3.6.0}
 
 \begin{document}
 \begin{titlepage}
@@ -47,14 +47,14 @@
     \includegraphics[scale=0.35]							{title_fig}
     \vfill
   	{\Huge
-	  6/27/2018 %Date Last Edited
+	  3/25/2020 %Date Last Edited
   	}
     \vfill
 \end{titlepage}
 
 \section*{Introduction}
 
-Welcome to WindNinja Tutorial 4: Weather Model Initialization.  This tutorial will step you through the process of running a WindNinja simulation that is initialized by output from a weather forecast model.  This tutorial assumes you have already gone through \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial1.pdf} and \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial2.pdf}{WindNinja Tutorial 2: Diurnal Winds and Non-neutral Stability}, and that you have a working Internet connection.  After this tutorial, you should feel comfortable downloading weather forecast data, using this data to initialize a series of WindNinja runs, and viewing the output.
+Welcome to WindNinja Tutorial 4: Weather Model Initialization.  This tutorial will step you through the process of running a WindNinja simulation that is initialized by output from a weather forecast model.  This tutorial assumes you have already gone through \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial1.pdf}{WindNinja Tutorial 1: The Basics} and \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial2.pdf}{WindNinja Tutorial 2: Diurnal Winds and Non-neutral Stability}, and that you have a working Internet connection.  After this tutorial, you should feel comfortable downloading weather forecast data, using this data to initialize a series of WindNinja runs, and viewing the output.
     
 Note:  All required user actions in this tutorial are shown in \textbf{\color{red}red}.
 
@@ -68,7 +68,7 @@ The “weather model initialization” feature in WindNinja is an attempt to com
 
 \section*{How does the weather model initialization work?}
 
-The first step in the process is to download the latest forecast (which is automated in WindNinja described in detail later).  Currently, WindNinja only uses near surface information from the weather forecast model, but the ability to use information at all vertical levels will be added shortly.  The download includes 10 meter wind speed and direction, cloud cover, and 2 meter temperature at the coarse weather model resolution for every output time step.  WindNinja does an individual WindNinja simulation for every output time step of the forecast.  For each WindNinja run, the coarse information is interpolated onto the fine WindNinja grid.  Diurnal winds are then added if the diurnal model is enabled to produce the WindNinja initialized wind field.  Finally, the WindNinja solver is run from this initial wind field to adjust the velocities for the local terrain, stability, and to conserve mass.  The result is a fine resolution forecast of the winds for your area.
+The first step in the process is to download the latest forecast (which is automated in WindNinja and described in detail later).  Currently, WindNinja only uses near surface information from the weather forecast model, but the ability to use information at all vertical levels will be added shortly.  The download includes 10 meter wind speed and direction, cloud cover, and 2 meter temperature at the coarse weather model resolution for every output time step.  By default, WindNinja does an individual WindNinja simulation for every output time step of the forecast.  As of version 3.6.0, however, users can select specific time steps from the forecast to simulate. This can save substantial computational time if you have a forecast with many time steps in it, particualry if you are using the conservation of mass and momentum solver. For each WindNinja run, the coarse information is interpolated onto the fine WindNinja grid.  Diurnal winds are then added if the diurnal model is enabled to produce the WindNinja initialized wind field.  Finally, the WindNinja solver is run from this initial wind field to adjust the velocities for the local terrain, stability, and to conserve mass.  The result is a fine resolution forecast of the winds for your area.
 
 \section{Getting Started}
 
@@ -81,7 +81,7 @@ The first step in the process is to download the latest forecast (which is autom
 
 \textbf{\color{red} In the input panel, load your existing elevation file or download one using the “Download File” button.}
 
-If you are just practicing, you can use an elevation file provided in the WindNinja installation.  They can be found by going to Start WindNinja by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\ $\Rightarrow$Example Files  In the file browser that opens, you will see the elevation file called “missoula\_valley.tif”, and "example\_lcp.lcp". Either of these can be used.
+If you are just practicing, you can use an elevation file provided in the WindNinja installation.  They can be found by going to Start WindNinja by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ etc $\Rightarrow$ windninja $\Rightarrow$ example-files  In the file browser that opens, you will see the elevation file called “missoula\_valley.tif”, and "example\_lcp.lcp". Either of these can be used.
 
 \textbf{\color{red} Select the dominant vegetation type using the “Vegetation” drop down list.  If your elevation file was a FARSITE landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  In this case, you do not need to select a vegetation type.}
 
@@ -103,14 +103,14 @@ Local diurnal slope winds can optionally be included in a weather model initiali
 
 \textbf{\color{red} Left-click on “Weather Model” in the navigation tree, which is located under  “Wind Input”.  In the input panel, check the “Weather Model Initialization” check box.}
 
-There are currently 17 different weather forecast model initializations to choose from in WindNinja.  The models are all run by the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Centers for Environmental Prediction (NCEP).  WindNinja accesses these data from two different servers, the NOAA NOMADS server and the University Corporation for Atmospheric Research (UCAR) thredds server.  The two servers provide a means for a fail safe for WindNinja in case one server is down.  We recommend using the NOMADS server as a first choice, as it seems to be more reliable.
+There are currently 21 different weather forecast model initializations to choose from in WindNinja.  The models are all run by the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Centers for Environmental Prediction (NCEP).  WindNinja accesses these data from two different servers, the NOAA NOMADS server and the University Corporation for Atmospheric Research (UCAR) thredds server.  The two servers provide a means for a fail safe for WindNinja in case one server is down.  We recommend using the NOMADS server as a first choice, as it seems to be more reliable.
 
-The 17 different forecast models have certain advantages and disadvantages depending on your particular situation.  Many of the differences have to do with temporal and spatial resolution and extent, and how often the forecast model is run.  Some of the 17 choices in WindNinja are actually duplicates of the same underlying weather forecast model but provided by both servers.  The table below and following paragraphs give some information about each model.
+The 21 different forecast models have certain advantages and disadvantages depending on your particular situation.  Many of the differences have to do with temporal and spatial resolution and extent, and how often the forecast model is run.  Some of the 21 choices in WindNinja are actually duplicates of the same underlying weather forecast model but provided by both servers.  The table below and following paragraphs give some information about each model.
 
 \begin{landscape}
 \begin{table}
 \fontsize{8}{12}\selectfont 
-\begin{tabular}{|p{6cm}|p{1.3cm}|p{3.5cm}|p{2cm}|p{1.7cm}|p{2.8cm}|p{2.8cm}|}
+\begin{tabular}{|p{6.6cm}|p{1.3cm}|p{3.3cm}|p{2cm}|p{1.7cm}|p{2.8cm}|p{2.8cm}|}
 \hline
 \rowcolor{lightgray} Name in WindNinja & Server & Forecast model & Domain & Horizontal resolution & Forecast duration and temporal resolution & Update frequency\\
 \hline
@@ -147,6 +147,10 @@ NOMADS-NAM-NORTH-AMERICA-32-KM & NOMADS & North American Mesoscale Model (NAM) &
 NOMADS-HRRR-CONUS-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & contiguous US (CONUS) & 3 km & 1 hourly to 18 hrs & updated every 1 hour\\
 \hline
 NOMADS-HRRR-ALASKA-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & Alaska & 3 km & 1 hourly to 18 hrs & updated every 1 hour\\
+\hline
+NOMADS-HRRR-CONUS-SUBHOURLY-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & contiguous US (CONUS) & 3 km & every 15 min to 18 hrs & updated every 1 hour\\
+\hline
+NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & Alaska & 3 km & every 15 min to 18 hrs & updated every 1 hour\\
 \hline
 NOMADS-RAP-CONUS-13-KM & NOMADS & Rapid Refresh (RAP) & contiguous US (CONUS) & 13 km & 1 hourly to 18 hrs & updated every 1 hour\\
 \hline
@@ -204,11 +208,11 @@ Below is some general information to consider when choosing a forecast model:
 \end{figure}
 Some comments about each forecast model:
 \begin{itemize}
-\item \textbf{NDFD} – This model has good spatial resolution (2.5 km), but currently only 6 hour temporal resolution.  It provides a relatively long forecast (7 days).  Unlike the other models, this one is not just “raw” forecast model output.  The UCAR-NDFD-CONUS-2.5km starts out as “raw” output from a computer model, but goes through a process of inspection and manipulation by local weather forecasters.  The hope is that the expertise of the local weather forecasters can add value to the forecast.  At this time, it is unclear if this method is an advantage or disadvantage for use in WindNinja, as certain issues may arise such as “border” effects where one forecaster's area meets another.
+\item \textbf{NDFD} – This model has good spatial resolution (2.5 km), but currently only 6 hour temporal resolution.  It provides a relatively long forecast (7 days).  Unlike the other models, this one is not just “raw” forecast model output.  The UCAR-NDFD-CONUS-2.5-KM starts out as “raw” output from a computer model, but goes through a process of inspection and manipulation by local weather forecasters.  The hope is that the expertise of the local weather forecasters can add value to the forecast.  At this time, it is unclear if this method is an advantage or disadvantage for use in WindNinja, as certain issues may arise such as “border” effects where one forecaster's area meets another.
 
 \item \textbf{NAM} – This model is a good all-round choice, providing a forecast out to 3.5 days and covering all of North America.  The NAM model is one of the most commonly used mesoscale models in the U.S.
 
-\item \textbf{HRRR} and \textbf{NAM-NEST} – The HRRR and the NAM-NEST models have the highest resolution of all the models (3 km), excluding NDFD. This high resolution allows these models to resolve some smaller atmospheric features better than other models (sea-breezes, local density driven winds, etc.). These models also produces the highest temporal output resolution (every hour). The HRRR is specifically designed for very short range forecasts (out to 18 hours). The NAM-NEST models produce forecasts out to 60 hours. The HRRR uses advanced data assimilation (e.g., for lightning) and explicit simulation of convection, which should translate to better thunderstorm predictions. Another big advantage of the HRRR over most of the other models is that it is run every hour, so that its forecasts use very current information about the state of the atmosphere.  The HRRR would likely be the best model to use if you need a very short term forecast (say, for the next few hours).
+\item \textbf{HRRR} and \textbf{NAM-NEST} – The HRRR and the NAM-NEST models have the highest resolution of all the models (3 km), excluding NDFD. This high resolution allows these models to resolve some smaller atmospheric features better than other models (sea-breezes, local density-driven winds, etc.). These models also produce the highest temporal output resolution (every hour). The HRRR is specifically designed for very short range forecasts (out to 18 hours). The NAM-NEST models produce forecasts out to 60 hours. The HRRR uses advanced data assimilation (e.g., for lightning) and explicit simulation of convection, which should translate to better thunderstorm predictions. Another big advantage of the HRRR over most of the other models is that it is run every hour, so that its forecasts use very current information about the state of the atmosphere.  The HRRR would likely be the best model to use if you need a very short term forecast (say, for the next few hours).
 
 \item \textbf{RAP} – This model is very similar to HRRR, except at a coarser resolution.  Probably only use this model if HRRR is not possible.
 
@@ -223,7 +227,7 @@ The download of the file should normally only take a few seconds, but will depen
 
 When your download is finished, a new folder will appear in the “Downloaded forecasts” list on the input panel.  You can download several forecasts (selecting different forecast models) at this time and each will be added to the list.
 
-The “Downloaded forecasts” list is an expandable tree structure showing the files and folders that WindNinja has made during the download process.  You can expand the folders to navigate down to the actual downloaded weather file, which has a “.nc” file extension (which stands for “NetCDF”, which is a standard weather file type) for the UCAR server or a “.zip” file extension for the NOMADS server (the zip contains many GRIB files, which is a common weather raster data format).  The naming convention used for these folders and files is automatically generated by WindNinja using the forecast model name, forecast start time, and elevation filename.  At the top level, there is a folder for each type of forecast model for your elevation file that looks like this:
+The “Downloaded forecasts” list is an expandable tree structure showing the files and folders that WindNinja has made during the download process.  You can expand the folders to navigate down to the actual downloaded weather file, which has a “.nc” file extension (which stands for “NetCDF”, a standard weather file type) for the UCAR server or a “.zip” file extension for the NOMADS server (the zip contains many GRIB files, which is a common weather raster data format).  The naming convention used for these folders and files is automatically generated by WindNinja using the forecast model name, forecast start time, and elevation filename.  At the top level, there is a folder for each type of forecast model for your elevation file that looks like this:
 
 \begin{figure}[H]
 	\centering
@@ -232,7 +236,7 @@ The “Downloaded forecasts” list is an expandable tree structure showing the 
 
 Note:  This is a \textbf{folder}, even though it has the “.tif” at the end.
 
-Under this folder, there is a folder for each time you've downloaded a forecast for this model and elevation file (for example, if you downloaded a forecast yesterday and then downloaded a forecast today, 2 folders would be shown, one with yesterday's date/time and one with today's date/time).  The date/time used for the folder name is the date and time of the first time “step” in the forecast.  WindNinja calls this the “first forecast time” and is used to identify when the forecast model was run by the weather model provider.  If you download a forecast, and then download the same forecast again before a new forecast has been issued (essentially downloading the exact same forecast twice), the second forecast downloaded will just replace the first forecast and so only one folder will be made.
+Under this folder, there is a folder for each time you've downloaded a forecast for this model and elevation file (for example, if you downloaded a forecast yesterday and then downloaded a forecast today, 2 folders would be shown, one with yesterday's date/time and one with today's date/time).  The date/time used for the folder name is the date and time of the first time “step” in the forecast.  WindNinja calls this the “first forecast time” and it is used to identify when the forecast model was run by the weather model provider.  If you download a forecast, and then download the same forecast again before a new forecast has been issued (essentially downloading the exact same forecast twice), the second forecast downloaded will just replace the first forecast and so only one folder will be made.
 
 The date/time naming format for these folders is shown below with colors added for clarity.  Unfortunately, these dates and times are in Coordinated Universal Time (UTC), not local time.  Conversion to local time is described later in this tutorial.
 
@@ -252,12 +256,14 @@ Since you may have many different forecasts downloaded to your computer, you nee
 
 After you select your forecast file, the local time for the “first forecast time” appears below the “Downloaded forecasts” list area.  This local time uses the time zone you specified earlier.
 
+By default WindNinja will simulate each time step in the weather model forecast. As of version 3.6.0, however, you can choose to select specific time steps from the forecast to simulate. To do this, check the box labeled “Select specific time steps" located below the “Download forecasts" box. This will activate the window below the “Select specific time steps" making the list of time steps selectable. Initially, all time steps will be selected (selected time steps are highlighted in grey). You can click on specific time steps to de-select or choose the “Select None" button below the window to de-select all time steps and then click on time steps to select the ones you want to simulate.
+
 \section{Output}
-The same output files are written for weather model initialized simulations as other simulations (Google Earth, Fire Behavior, Shape files).  WindNinja does a separate simulation for each weather forecast model time “step” and writes output files for each of these time “steps”.  There is also an optional choice of writing output for the “raw” weather forecast model data, which is written at that forecast model's resolution.  All of these output files are written to the date/time folder described above.  The naming convention for the WindNinja output files is similar to a “Domain Average Wind” initialized simulation with diurnal turned on.  You should reference \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial2.pdf}{WindNinja Tutorial 2: Diurnal Winds and Non-neutral Stability} for more information.  The “raw” weather forecast output files are written with a similar naming convention, except that in place of the elevation file name is the weather forecast model name and the resolution is absent (since the resolution is that of the forecast model).  Below is an example of a Google Earth output file name and the corresponding “raw” forecast model file name for April 11th at 1500.  The elevation file used was called “missoula\_valley.tif” and the weather forecast model was the “UCAR-NAM-CONUS-12km”.
+The same output files are written for weather model initialized simulations as other simulations (Google Earth, Fire Behavior, Shape files).  WindNinja does a separate simulation for each weather forecast model time “step” and writes output files for each of these time “steps”.  There is also an optional choice of writing output for the “raw” weather forecast model data, which is written at that forecast model's resolution.  All of these output files are written to the date/time folder described above.  The naming convention for the WindNinja output files is similar to a “Domain Average Wind” initialized simulation with diurnal turned on.  You should reference \href{https://weather.firelab.org/windninja/tutorials/WindNinja_tutorial2.pdf}{WindNinja Tutorial 2: Diurnal Winds and Non-neutral Stability} for more information.  The “raw” weather forecast output files are written with a similar naming convention, except that in place of the elevation file name is the weather forecast model name and the resolution is absent (since the resolution is that of the forecast model).  Below is an example of a Google Earth output file name and the corresponding “raw” forecast model file name for April 11th at 1500.  The elevation file used was called “missoula\_valley.tif” and the weather forecast model was the “UCAR-NAM-CONUS-12-KM”.
 
 missoula\_valley\_04-11-2011\_1500\_176m.kmz $\Leftarrow$ WindNinja output file
 
-UCAR-NAM-CONUS-12km-04-11-2011\_1500.kmz  $\Leftarrow$  “raw” forecast file
+UCAR-NAM-CONUS-12-KM-04-11-2011\_1500.kmz  $\Leftarrow$  “raw” forecast file
 
 \textbf{\color{red} In the navigation tree, left-click on “Output” and select the “Output Height”, “Output Speed Units”, and“Clip output by:” values you want.  Also, check the “Write Raw Weather Model Output” checkbox.}
 
@@ -271,7 +277,7 @@ Note that the fire behavior cloud cover file written by WindNinja uses the gridd
 
 \textbf{\color{red} Left-click on “Solve” in the navigation tree.  Set the number of processors you would like using the “Number of Processors” text box.  Finally, left-click the “Solve” button to start the simulation(s).}
 
-Since WindNinja is doing a simulation for each weather forecast model time “step”, it may take a while for WindNinja to complete the simulations.  Typical simulation time for an average dual core computer in 2015 should be around 1-5 minutes depending on the computer, number of forecast model time “steps”, simulation resolution, etc.
+Since WindNinja is doing a simulation for each weather forecast model time “step”, it may take a while for WindNinja to complete the simulations.  Typical simulation time for an average dual core computer in 2020 should be around 1-5 minutes depending on the computer, number of forecast model time “steps”, simulation resolution, etc.
 
 \textbf{\color{red} When the simulation is finished, close the progress window.}
 

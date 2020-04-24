@@ -140,6 +140,7 @@ public:
     void get_cellIndex(double xCoord, double yCoord, int *i, int *j) const;
     void get_cellIndexLocalCoordinates(double xCoord, double yCoord, int *i,
                                        int *j) const;
+    void get_nearestCellIndex(double xCoord, double yCoord, int *i, int *j) const;
     double get_xDimension() const {return cellSize * data.get_numCols();};
     double get_yDimension() const {return cellSize * data.get_numRows();};
 
@@ -639,7 +640,7 @@ void AsciiGrid<T>::get_cellPositionLocalCoordinates(int i, int j, double *xCoord
 
 template <class T>
 void AsciiGrid<T>::get_cellIndex(double xCoord, double yCoord, int *i, int *j) const
-{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system.
+{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system.  Throws exception if (xCoord,yCoord) are outside the domain
     if(xCoord < xllCorner || yCoord < yllCorner ||
         xCoord > (xllCorner + ((data.get_numCols()) * cellSize)) ||
         yCoord > (yllCorner + ((data.get_numRows()) * cellSize)))
@@ -660,7 +661,7 @@ void AsciiGrid<T>::get_cellIndex(double xCoord, double yCoord, int *i, int *j) c
 
 template <class T>
 void AsciiGrid<T>::get_cellIndexLocalCoordinates(double xCoord, double yCoord, int *i, int *j) const
-{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the local coordinate system.
+{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the local coordinate system.  Throws exception if (xCoord,yCoord) are outside the domain
     //The local coordinate system is a coordinate system in which the lower left corner of the grid is (0, 0).
     if(xCoord < 0.0 || yCoord < 0.0 ||
         xCoord > (data.get_numCols() * cellSize) ||
@@ -678,6 +679,37 @@ void AsciiGrid<T>::get_cellIndexLocalCoordinates(double xCoord, double yCoord, i
     *j = long(xCoord / cellSize);
     *i = long(yCoord / cellSize);
     //return true;
+}
+
+template <class T>
+void AsciiGrid<T>::get_nearestCellIndex(double xCoord, double yCoord, int *i, int *j) const
+{   //Function computes the closest cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system. Works even when (xCoord, yCoord) is outside the grid's domain (doesn't throw like the other functions).
+    if(xCoord < xllCorner || yCoord < yllCorner ||
+        xCoord > (xllCorner + ((data.get_numCols()) * cellSize)) ||
+        yCoord > (yllCorner + ((data.get_numRows()) * cellSize)))   // (xCoord,yCoord) are outside the grid's domain
+    {
+        //Use brute force computation of closest cell center (could make faster and more sophisticated, but not necessary at this time)
+        double dist = std::numeric_limits<double>::max();
+        double cellX, cellY, computedDist;
+        for( int ii = 0;ii < data.get_numRows();ii++ )
+        {
+            for( int jj = 0;jj < data.get_numCols();jj++ )
+            {
+                get_cellPosition(ii, jj, &cellX, &cellY);
+                computedDist = sqrt((cellX-xCoord)*(cellX-xCoord) + (cellY-yCoord)*(cellY-yCoord));
+                if( computedDist < dist )
+                {
+                    dist = computedDist;
+                    *i = ii;
+                    *j = jj;
+                }
+            }
+        }
+    }else   // (xCoord,yCoord) are in the grid's domain
+    {
+        *j = long(((xCoord - xllCorner) / cellSize));
+        *i = long(((yCoord - yllCorner) / cellSize));
+    }
 }
 
 template <class T>

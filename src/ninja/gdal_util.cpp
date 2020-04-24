@@ -64,10 +64,11 @@ double GDALGetMin( GDALDataset *poDS )
 /** Fetch the center of a domain.
  * Fetch the center of a domain from any valid GDAL dataset
  * @param poDS a pointer to a valid GDAL Dataset
- * @param centerLonLat a pointer to a double size of double * 2
+ * @param x the longitude of the center
+ * @param y the latitude of the center
  * @return true on valid population of the double*
  */
-bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat )
+bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 {
     char* pszPrj;
     double adfGeoTransform[6];
@@ -75,11 +76,12 @@ bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat )
     double xCenter, yCenter;
     double lon, lat;
 
+    assert(poDS);
+    assert(longitude);
+    assert(latitude);
+
     OGRSpatialReference oSourceSRS, oTargetSRS;
     OGRCoordinateTransformation *poCT;
-
-    if( poDS == NULL )
-	return false;
 
     xSize = poDS->GetRasterXSize( );
     ySize = poDS->GetRasterYSize( );
@@ -113,8 +115,8 @@ bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat )
 	return false;
     }
 
-    centerLonLat[0] = lon;
-    centerLonLat[1] = lat;
+    *longitude = lon;
+    *latitude = lat;
 
     OGRCoordinateTransformation::DestroyCT( poCT );
     return true;
@@ -450,13 +452,12 @@ int GDALGetUtmZone( GDALDataset *poDS )
     if( poDS == NULL )
         return 0;
 
-    double centerLonLat[2];
-    if( !GDALGetCenter( poDS, centerLonLat ) )
+    double longitude = 0;
+    double latitude = 0;
+    if( !GDALGetCenter( poDS, &longitude, &latitude ) )
         return 0;
-    double lon = centerLonLat[0];
-    double lat = centerLonLat[1];
 
-    return GetUTMZoneInEPSG( lon, lat );
+    return GetUTMZoneInEPSG( longitude, latitude );
 }
 
 /**

@@ -239,6 +239,19 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
  */
 void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
 {
+  return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
+}
+
+/**
+ * @brief Makes an army (array) of ninjas for a weather forecast run.
+ *
+ * @param forecastFilename Name of forecast file.
+ * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
+ * @param times a vector of times to run from the forecast.  If the vector is
+ *        empty, run all of the times in the forecast
+ */
+void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
+{
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -304,6 +317,9 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+        if(times.size() > 0) {
+          timeList = times;
+        }
         ninjas.resize(timeList.size());
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
@@ -319,6 +335,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
             ninjas[i] = new ninja();
 #endif
         }
+
 
         for(unsigned int i = 0; i < timeList.size(); i++)
         //int i = 0;

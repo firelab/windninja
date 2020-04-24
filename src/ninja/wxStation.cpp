@@ -877,7 +877,7 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
  * @return void
  */
 void wxStation::writeKmlFile( std::vector<wxStation> stations,
-                              std::string demFileName,std::string basePath)
+                              std::string demFileName,std::string basePath, velocityUnits::eVelocityUnits velUnits)
 {
     std::string outFileNameStamp;
     std::string outFileNameMod;
@@ -941,7 +941,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
         lengthUnits::fromBaseUnits(heightTemp, stations[i].heightUnits);
         //lengthUnits::fromBaseUnits(heightTemp, lengthUnits::feet);
-        velocityUnits::fromBaseUnits(speedTemp, stations[i].inputSpeedUnits);
+        velocityUnits::fromBaseUnits(speedTemp, velUnits);
         //lengthUnits::fromBaseUnits(directionTemp, heightUnits);
         coverUnits::fromBaseUnits(ccTemp, stations[i].cloudCoverUnits);
         temperatureUnits::fromBaseUnits(temperatureTemp, stations[i].tempUnits);
@@ -964,7 +964,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
         fprintf( fout, "          Height: %.2lf %s\n", heightTemp,
                 lengthUnits::getString(stations[i].heightUnits).c_str() );
         fprintf( fout, "          Speed: %.2lf %s\n",
-                speedTemp, velocityUnits::getString(stations[i].inputSpeedUnits).c_str() );
+                speedTemp, velocityUnits::getString(velUnits).c_str() );
         fprintf( fout, "          Direction: %.0lf %s\n",
                 directionTemp, "degrees" );
         fprintf( fout, "          Cloud Cover: %.2lf %s\n",

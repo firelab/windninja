@@ -1,18 +1,24 @@
 image: alpine/edge
 
 packages:
-  - alpine-sdk
+  - binutils
   - boost-dev
+  - build-base
+  - clang
+  - clang-dev
   - cmake
-  - curl
+  - gdal-dev
+  - git
+  - libc-dev
+  - libc6-compat
+  - linux-headers
+  - llvm-dev
+  - netcdf-dev
 
 sources:
   - https://github.com/firelab/windninja
 
 tasks:
-  - apk: |
-      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.8/main qt-dev
-      sudo apk add --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing gdal-dev netcdf-dev
   - build: |
       cd windninja
       mkdir build
@@ -24,6 +30,10 @@ tasks:
         -D DISABLE_THREDDS_UPDATE=ON \
         -D STABILITY=ON \
         -D CMAKE_BUILD_TYPE=debug \
+        -D CMAKE_C_COMPILER=clang \
+        -D CMAKE_CXX_COMPILER=clang++ \
+        -D OPENMP_SUPPORT=OFF \
+        -D NINJA_QTGUI=OFF \
         ..
       make -j 3
 

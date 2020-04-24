@@ -49,6 +49,11 @@
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
 
+namespace blt = boost::local_time;
+namespace bpt = boost::posix_time;
+
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /*-----------------------------------------------------------------------------
  *  Helper Macros
  *-----------------------------------------------------------------------------*/
@@ -117,7 +122,9 @@ public:
     void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
                           std::string demFile,bool matchPoints,bool override );
+    static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
+    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
@@ -1183,6 +1190,7 @@ protected:
 private:
     char *pszTmpColorRelief;
     farsiteAtm atmosphere;
+    std::vector<blt::local_date_time> overrideList;
 };
 
 #endif /* NINJA_ARMY_H */

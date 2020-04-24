@@ -835,7 +835,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
             char* tp = new char[t_len + 1];
             //char tp[t_len + 1];
             for (int i=0; i<t_len; i++){
-                const size_t varindex[] = {t,i};  /* where to get value from */
+                const size_t varindex[] = {t,static_cast<size_t>(i)};  /* where to get value from */
                 status = nc_get_var1_text( ncid, varid, varindex, tp+i );
             }
             if( status != NC_NOERR ) {
