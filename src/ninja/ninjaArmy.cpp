@@ -41,48 +41,6 @@ ninjaArmy::ninjaArmy()
 }
 
 /**
-* @brief Constructor that allocates numNinjas of ninjas or ninjafoams.
-*
-* @param numNinjas Number of ninjas to allocate.
-* @param momentumFlag flag inidicating if it is a NinjaFoam run
-*/
-#ifdef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        if(momentumFlag == true){
-            ninjas[i] = new NinjaFoam();
-        }
-        else{
-             ninjas[i] = new ninja();
-        }
-    }
-    initLocalData();
-}
-#endif
-
-/**
-* @brief Constructor that allocates numNinjas of ninjas.
-*
-* @param numNinjas Number of ninjas to allocate.
-*/
-#ifndef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        ninjas[i] = new ninja();
-    }
-    initLocalData();
-}
-#endif
-
-/**
 * @brief Copy constructor.
 *
 * @param A Object to copy.
@@ -100,7 +58,13 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    delete ninjas[0];
+    for(int i=0; i<ninjas.size(); i++)
+    {
+        delete ninjas[i];
+        ninjas[i] = NULL;
+    }
+
+    //delete ninjas[0];
     destoryLocalData();
 }
 
@@ -131,126 +95,184 @@ int ninjaArmy::getSize()
     return ninjas.size();
 }
 
+/**
+* @brief ninjaArmy::makeDomainAverageInitializationArmy Makes an army (array) of solvers for a domain initialization run.
+*
+* @param numNinjas Number of ninjas to allocate.
+* @param solverType Type of solver to use.
+*/
+#ifdef NINJAFOAM
+void ninjaArmy::makeDomainAverageInitializationArmy(int numNinjas, eSolverType solverType)
+{
+    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
+    for(unsigned int i = 0; i < ninjas.size(); i++)
+    {
+#ifdef NINJAFOAM
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
+            }
+            else if(solverType == cfdSteadyState){
+                 ninjas[i] = new NinjaFoam();
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
+            }
+#else
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
+            }
+            else if(solverType == cfdSteadyState){
+                 throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
+            }
+#endif //NINJAFOAM
+    }
+    initLocalData();
+}
+#endif
 
 /**
- * @brief ninjaArmy::makeStationArmy Makes an army (array) of ninjas for a Point Initialization run.
+ * @brief ninjaArmy::makePointInitializationArmy Makes an army (array) of ninjas for a Point Initialization run.
  * @param timeList vector of simulation times
  * @param timeZone
  * @param stationFileName
  * @param demFile
+ * @param matchPoints Sets whether solver should iterate to match station velocity values.
+ * @param solverType Type of solver to use.
  */
-void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
-                             string timeZone, string stationFileName,
-                             string demFile, bool matchPoints, bool override)
+void ninjaArmy::makePointInitializationArmy( std::vector<boost::posix_time::ptime> timeList,
+                                             std::string timeZone,std::string stationFileName,
+                                             std::string demFile,bool matchPoints,eSolverType solverType )
 {
-    vector<wxStation> stationList;
-    boost::posix_time::ptime noTime;
-    //interpolate raw data to actual time steps
-    int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
-    
-    if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
+    if(solverType==massConservingSteadyState)
     {
-        stationList = pointInitialization::readWxStations(demFile,timeZone);
-    }
-    else //New Format (station fetch or multiple time steps)
-    {
-        stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
-    }
-    
-    ninjas.resize(timeList.size());
+        vector<wxStation> stationList;
+        boost::posix_time::ptime noTime;
+        //interpolate raw data to actual time steps
+        int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
 
-    for(unsigned int i=0; i<timeList.size(); i++)
-    {
-        ninjas[i] = new ninja();
-    }
-
-    boost::local_time::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    boost::local_time::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
-    boost::local_time::local_date_time localStandard(standard, timeZonePtr);
-    vector<boost::local_time::local_date_time> localTimeList;
-    CPLDebug("STATION_FETCH","\n!!\nList of steps generated with Local and UTC times\n!!:\n");
-    for(unsigned int i = 0; i<timeList.size(); i++)//Take the UTC timelist and covert it to local time (again)
-    {
-        boost::posix_time::ptime aGlobal = timeList[i];
-        boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
-        localTimeList.push_back(aLocal);
-        //This is a bit convoluted and obfuscated but all it does
-        //is get the times to print correctly for debugging of timelist
-        //in case that is necessary
-        CPLDebug("STATION_FETCH","STEP NUM:%i",i);
-        CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
-        CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
-        CPLDebug("STATION_FETCH","----");
-    }
-    //handle old wxStation format
-//    if (timeList.size() == 1 && timeList[0] == noTime)
-    if(timeList.size()==1)
-    {
-        CPLDebug("STATION_FETCH","Single Step Run Detected!");
-        if (timeList[0]!=noTime)
+        if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
         {
-            CPLDebug("STATION_FETCH","Date Time info available for 1 step!");
-            timeList.assign(1, timeList[0]);
-            localTimeList.assign(1, boost::local_time::local_date_time(timeList[0],timeZonePtr));
+            stationList = pointInitialization::readWxStations(demFile,timeZone);
         }
-        if (timeList[0]==noTime)
+        else //New Format (station fetch or multiple time steps)
         {
-            CPLDebug("STATION_FETCH","No date time data available, assigning simulation time to now!");
-            timeList.assign(1, standard);
-            localTimeList.assign(1, localStandard);
+            stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
         }
-    }
-    for(unsigned int k=0; k<stationList.size(); k++)
-    {
-        for (unsigned int i=0; i<timeList.size(); i++)
+
+        if(ninjas.size()>0)
         {
-            boost::posix_time::ptime aGlobal=timeList[i];
+            for(int i=0; i<ninjas.size(); i++)
+            {
+                if(ninjas[i]!=NULL)
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+            }
+        }
+        ninjas.resize(timeList.size());
+
+        for(unsigned int i=0; i<timeList.size(); i++)
+        {
+            ninjas[i] = new ninja();
+        }
+
+        boost::local_time::tz_database tz_db;
+        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+        boost::local_time::time_zone_ptr timeZonePtr;
+        timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+        boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
+        boost::local_time::local_date_time localStandard(standard, timeZonePtr);
+        vector<boost::local_time::local_date_time> localTimeList;
+        CPLDebug("STATION_FETCH","\n!!\nList of steps generated with Local and UTC times\n!!:\n");
+        for(unsigned int i = 0; i<timeList.size(); i++)//Take the UTC timelist and covert it to local time (again)
+        {
+            boost::posix_time::ptime aGlobal = timeList[i];
             boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
-            stationList[k].set_localDateTime(aLocal);
+            localTimeList.push_back(aLocal);
+            //This is a bit convoluted and obfuscated but all it does
+            //is get the times to print correctly for debugging of timelist
+            //in case that is necessary
+            CPLDebug("STATION_FETCH","STEP NUM:%i",i);
+            CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
+            CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
+            CPLDebug("STATION_FETCH","----");
         }
-    }
-
-    for(unsigned int i = 0; i<timeList.size(); i++)
-    {
-        ninjas[i]->set_stationFetchFlag(true);
-        ninjas[i]->set_date_time(localTimeList[i]);
-        for(int k=0; k<stationList.size(); k++)
+        //handle old wxStation format
+        //    if (timeList.size() == 1 && timeList[0] == noTime)
+        if(timeList.size()==1)
         {
-            stationList[k].set_currentTimeStep(ninjas[i]->get_date_time());
+            CPLDebug("STATION_FETCH","Single Step Run Detected!");
+            if (timeList[0]!=noTime)
+            {
+                CPLDebug("STATION_FETCH","Date Time info available for 1 step!");
+                timeList.assign(1, timeList[0]);
+                localTimeList.assign(1, boost::local_time::local_date_time(timeList[0],timeZonePtr));
+            }
+            if (timeList[0]==noTime)
+            {
+                CPLDebug("STATION_FETCH","No date time data available, assigning simulation time to now!");
+                timeList.assign(1, standard);
+                localTimeList.assign(1, localStandard);
+            }
         }
-        ninjas[i]->set_wxStations(stationList);
-        ninjas[i]->set_wxStationFilename(stationFileName);
-        //Setting the filename also implicitly sets the stations, set above
-        //in set_wxStations. Also it gets the units from the first station
-        //The function name is a bit misleading as to what it really does.
-        ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
-   }
+        for(unsigned int k=0; k<stationList.size(); k++)
+        {
+            for (unsigned int i=0; i<timeList.size(); i++)
+            {
+                boost::posix_time::ptime aGlobal=timeList[i];
+                boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
+                stationList[k].set_localDateTime(aLocal);
+            }
+        }
+
+        for(unsigned int i = 0; i<timeList.size(); i++)
+        {
+            ninjas[i]->set_stationFetchFlag(true);
+            ninjas[i]->set_date_time(localTimeList[i]);
+            for(int k=0; k<stationList.size(); k++)
+            {
+                stationList[k].set_currentTimeStep(ninjas[i]->get_date_time());
+            }
+            ninjas[i]->set_wxStations(stationList);
+            ninjas[i]->set_wxStationFilename(stationFileName);
+            //Setting the filename also implicitly sets the stations, set above
+            //in set_wxStations. Also it gets the units from the first station
+            //The function name is a bit misleading as to what it really does.
+            ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
+        }
+    }else
+    {
+        throw std::runtime_error(std::string("Point initialization run can only be run with the massConservingSteadyState solver."));
+    }
 }
 
 /**
- * @brief Makes an army (array) of ninjas for a weather forecast run.
+ * @brief Makes an army (array) of ninjas for a weather model initialization run.
  *
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
+ * @param solverType Type of solver to use for simulation.
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
+void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename, std::string timeZone, eSolverType solverType)
 {
-  return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
+  return makeWeatherModelInitializationArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), solverType);
 }
 
 /**
- * @brief Makes an army (array) of ninjas for a weather forecast run.
+ * @brief Makes an army (array) of ninjas for a weather model initialization run.
  *
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  * @param times a vector of times to run from the forecast.  If the vector is
  *        empty, run all of the times in the forecast
+ * @param solverType Type of solver to use for simulation.
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
+void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, eSolverType solverType)
 {
     wxModelInitialization* model;
     
@@ -274,19 +296,41 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
         
         model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
         
+        if(ninjas.size()>0)
+        {
+            for(int i=0; i<ninjas.size(); i++)
+            {
+                if(ninjas[i]!=NULL)
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+            }
+        }
         ninjas.resize(wxList.size());
         
         for(unsigned int i = 0; i < wxList.size(); i++)
         {
 #ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
             }
-            else{
-                 ninjas[i] = new ninja();
+            else if(solverType == cfdSteadyState){
+                 ninjas[i] = new NinjaFoam();
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
             }
 #else
-            ninjas[i] = new ninja();
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
+            }
+            else if(solverType == cfdSteadyState){
+                 throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
+            }
 #endif //NINJAFOAM
         }
         
@@ -320,37 +364,51 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
         if(times.size() > 0) {
           timeList = times;
         }
+        if(ninjas.size()>0)
+        {
+            for(int i=0; i<ninjas.size(); i++)
+            {
+                if(ninjas[i]!=NULL)
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+            }
+        }
         ninjas.resize(timeList.size());
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
         {
 #ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
             }
-            else{
-                 ninjas[i] = new ninja();
+            else if(solverType == cfdSteadyState){
+                 ninjas[i] = new NinjaFoam();
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
             }
 #else
-            ninjas[i] = new ninja();
+            if(solverType == massConservingSteadyState){
+                ninjas[i] = new ninja();
+            }
+            else if(solverType == cfdSteadyState){
+                 throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
+            }else
+            {
+                throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
+            }
 #endif
         }
 
 
         for(unsigned int i = 0; i < timeList.size(); i++)
-        //int i = 0;
-        //FOR_EVERY( iter_ninja, ninjas )
         {
             ninjas[i]->set_date_time(timeList[i]);
             ninjas[i]->set_wxModelFilename(forecastFilename);
             ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-
-            /*iter_ninja->set_date_time( timeList[i] );
-            iter_ninja->set_wxModelFilename( forecastFilename );
-            iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
-            iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-            i++;*/
         }
         delete model;
     }
@@ -1013,24 +1071,6 @@ void ninjaArmy::setAtmFlags()
                 ninjas[i]->set_writeAtmFile(true);
             }
         }
-    }
-}
-
-void ninjaArmy::setSize( int nSize, bool momentumFlag )
-{
-    int i;
-    for( i=0; i < ninjas.size();i ++) 
-        delete ninjas[i];
-    ninjas.resize( nSize );
-    for( i = 0; i < nSize; i++ ){
-#ifdef NINJAFOAM
-        if(momentumFlag)
-            ninjas[i] = new NinjaFoam();
-        else
-            ninjas[i] = new ninja();
-#else
-        ninjas[i] = new ninja();
-#endif
     }
 }
 
@@ -1963,4 +2003,18 @@ void ninjaArmy::destoryLocalData(void)
 
     CPLFree( (void*)pszTmpColorRelief );
     CPLPopErrorHandler();
+}
+
+ninjaArmy::eSolverType ninjaArmy::getSolverType(std::string type)
+{
+    if(type == "massConservingSteadyState")
+            return massConservingSteadyState;
+    else if(type == "cfdSteadyState")
+        return cfdSteadyState;
+    else if(type == "semiLagrangianSteadyState")
+        return semiLagrangianSteadyState;
+    else if(type == "semiLagrangianTransient")
+        return semiLagrangianTransient;
+    else
+        throw std::runtime_error(std::string("Cannot determine solver type in ninjaArmy::getSolverType()."));
 }

@@ -197,13 +197,13 @@ class mainWindow : public QMainWindow
   int checkSurfaceItem();
   int checkDiurnalItem();
   int checkStabilityItem();
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   int checkNativeSolverItem();
   int checkNinjafoamItem();
   int checkSolverMethodItem();
   void selectNativeSolver( bool pick );
   void selectNinjafoamSolver( bool pick );
-#endif
+//#endif
   int checkWindItem();
   int checkSpdDirItem();
   int checkPointItem();

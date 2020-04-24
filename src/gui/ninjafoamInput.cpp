@@ -38,9 +38,8 @@
 ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
 {
     ninjafoamGroupBox = new QGroupBox(tr("Conservation of Mass and Momentum"));
+#ifdef NINJAFOAM
     ninjafoamGroupBox->setCheckable(true);
-    ninjafoamGroupBox->setChecked(false);
-    
     ninjafoamLabel = new QLabel(tr("This solver conserves both mass and momentum. It is based on the OpenFOAM\n"
                 "CFD toolbox. This solver should give more accurate wind predictions in regions where\n"
                 "momentum effects are important, such as on the lee side of terrain obstacles. Because\n"
@@ -51,6 +50,13 @@ ninjafoamInput::ninjafoamInput(QWidget *parent) : QWidget(parent)
                 "stability) are not available for this solver at this time. We plan to make these options\n"
                 "available in future releases."
                 ), this);
+#else
+    ninjafoamGroupBox->setCheckable(false);
+    ninjafoamLabel = new QLabel(tr("WindNinja must be re-compiled with NINJAFOAM set to ON in CMake\n"
+               "to enable this solver."
+                ), this);
+#endif //NINJAFOAM
+    ninjafoamGroupBox->setChecked(false);
     
     ninjafoamLayout = new QVBoxLayout;
   

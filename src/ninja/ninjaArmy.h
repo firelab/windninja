@@ -99,17 +99,17 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-#ifdef NINJAFOAM
-    ninjaArmy(int numNinjas, bool momentumFlag);
-#else
-    ninjaArmy(int numNinjas);
-#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    //ninjaComClass *Com;
+    enum eSolverType{
+        massConservingSteadyState,
+        cfdSteadyState,
+        semiLagrangianSteadyState,
+        semiLagrangianTransient
+    };
 
     enum eWxModelType{
         ncepNdfd,
@@ -119,15 +119,17 @@ public:
         ncepGfsSurf
     };
 
-    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
+    void makeDomainAverageInitializationArmy(int numNinjas, eSolverType solverType);
+    void makePointInitializationArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
-                          std::string demFile,bool matchPoints,bool override );
+                          std::string demFile,bool matchPoints,eSolverType solverType );
     static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
-    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
+    void makeWeatherModelInitializationArmy(std::string forecastFilename, std::string timeZone, eSolverType solverType);
+    void makeWeatherModelInitializationArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, eSolverType solverType);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
+    eSolverType getSolverType(std::string type);
 
     /**
     * \brief Return the number of ninjas in the army
@@ -138,13 +140,6 @@ public:
 
     int getSize();
 
-    /**
-    * \brief Set the number of ninja in the army
-    *
-    * \param nRuns number of ninjas to create
-    * \return
-    */
-    void setSize( int nRuns, bool momentumFlag);
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/

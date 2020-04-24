@@ -184,7 +184,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("y_buffer", po::value<double>(), "y buffer of elevation domain to download (distance in north-south direction from center to edge of domain)")
                 ("buffer_units", po::value<std::string>()->default_value("miles"), "units for x_buffer and y_buffer of  elevation file to download (kilometers, miles)")
                 ("elevation_source", po::value<std::string>()->default_value("us_srtm"), osSurfaceSources.c_str())
-                ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
+                ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization, griddedInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices are listed in date_time_zonespec.csv)")
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
@@ -279,7 +279,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
                 ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory") 
-                ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
+                ("solver_type", po::value<std::string>()->default_value("massConservingSteadyState"), "solver type (massConservingSteadyState, cfdSteadyState, semiLagrangianSteadyState, semiLagrangianTransient)")
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 #endif
@@ -545,12 +545,6 @@ int windNinjaCLI(int argc, char* argv[])
                  }
             }
         }
-
-#ifdef NINJAFOAM
-        ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
-#else
-        ninjaArmy windsim(1); //-Moved to header file
-#endif
 
         /* Do we have to fetch an elevation file */
         
@@ -840,28 +834,62 @@ int windNinjaCLI(int argc, char* argv[])
         }
         
         //---------------------------------------------------------------------
-        //  only some options are possible with momentum solver
-        //---------------------------------------------------------------------
-#ifdef NINJAFOAM 
-        
-        if(vm["initialization_method"].as<std::string>()==string("pointInitialization") &&
-           vm["momentum_flag"].as<bool>()){
-            cout << "'pointInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
+        //  only some options are possible with certain solvers
+        //---------------------------------------------------------------------   
+        if(vm["initialization_method"].as<std::string>()==string("pointInitialization"))
+        {
+            if(vm["solver_type"].as<string>()==string("cfdSteadyState"))
+            {
+                cout << "'pointInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
+                return -1;
+            }
+            if(vm["solver_type"].as<string>()==string("semiLagrangianSteadyState"))
+            {
+                cout << "'pointInitialization' is not a valid 'initialization_method' if the semiLagrangianSteadyState solver is enabled.\n";
+                return -1;
+            }
+            if(vm["solver_type"].as<string>()==string("semiLagrangianTransient"))
+            {
+                cout << "'pointInitialization' is not a valid 'initialization_method' if the semiLagrangianTransient solver is enabled.\n";
+                return -1;
+            }
+        }
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm.count("input_points_file"))
+        {
+            cout << "'input_points_file' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
         }
-        conflicting_options(vm, "momentum_flag", "input_points_file");
-        conflicting_options(vm, "momentum_flag", "write_vtk_output");
-        conflicting_options(vm, "momentum_flag", "mesh_resolution");
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["write_vtk_output"].as<bool>()==true)
+        {
+            cout << "'write_vtk_output' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
+            return -1;
+        }
         #ifdef FRICTION_VELOCITY
-        conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["compute_friction_velocity"].as<bool>()==true))
+        {
+            cout << "'compute_friction_velocity' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
+            return -1;
+        }
         #endif
         #ifdef EMISSIONS
-        conflicting_options(vm, "momentum_flag", "compute_emissions");
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["compute_emissions"].as<bool>()==true)
+        {
+            cout << "'compute_emissions' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
+            return -1;
+        }
         #endif
-        conflicting_options(vm, "momentum_flag", "non_neutral_stability");
-        
-#endif //NINJAFOAM
-        
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["non_neutral_stability"].as<bool>()==true)
+        {
+            cout << "'non_neutral_stability' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
+            return -1;
+        }
+
+        ninjaArmy windsim;
+        if(vm["initialization_method"].as<std::string>() == string("domainAverageInitialization"))
+        {
+            windsim.makeDomainAverageInitializationArmy(1, windsim.getSolverType( vm["solver_type"].as<std::string>() ));
+        }
+
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
@@ -878,19 +906,12 @@ int windNinjaCLI(int argc, char* argv[])
                 try
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
-#ifdef NINJAFOAM
-                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
+
+                    windsim.makeWeatherModelInitializationArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
                                                             timeList,
-                                                            vm["momentum_flag"].as<bool>() );
-#else
-                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
-                                                            vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone,
-                                                            timeList,
-                                                            false );
-#endif
+                                                            windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 catch(... )
                 {
@@ -902,18 +923,10 @@ int windNinjaCLI(int argc, char* argv[])
             option_dependency(vm, "forecast_filename", "time_zone");
             if(vm.count("forecast_filename"))   //if a forecast file already exists
             {
-#ifdef NINJAFOAM
-                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
+                windsim.makeWeatherModelInitializationArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
                                  timeList,
-                                 vm["momentum_flag"].as<bool>());
-#else
-
-                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
-                                 osTimeZone,
-                                 timeList,
-                                 false);
-#endif
+                                 windsim.getSolverType( vm["solver_type"].as<std::string>() ));
             }
         }
 //STATION_FETCH
@@ -1035,11 +1048,12 @@ int windNinjaCLI(int argc, char* argv[])
                 }
 
                 //make the army for a fetched station
-                windsim.makeStationArmy(timeList,
+                windsim.makePointInitializationArmy(timeList,
                                         osTimeZone,
                                         stationPathName,
                                         vm["elevation_file"].as<std::string>(),
-                                        vm["match_points"].as<bool>(),false);
+                                        vm["match_points"].as<bool>(),
+                                        windsim.getSolverType( vm["solver_type"].as<std::string>() ));
 
                 if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
@@ -1112,8 +1126,8 @@ int windNinjaCLI(int argc, char* argv[])
                         std::vector<std::string> sFiles;
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
-                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                        windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                     }
                     if(fileSubFormat==1) //not a time series
                     {
@@ -1123,8 +1137,8 @@ int windNinjaCLI(int argc, char* argv[])
                         std::vector<std::string> sFiles;
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
-                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                        windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                     }
                 }
                 else if (stationFormat==1) //old format
@@ -1132,8 +1146,8 @@ int windNinjaCLI(int argc, char* argv[])
                     wxStation::SetStationFormat(wxStation::oldFormat);
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                    windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
@@ -1165,8 +1179,8 @@ int windNinjaCLI(int argc, char* argv[])
                     std::vector<std::string> sFiles;
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                    windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else if (stationFormat==4) // New Format where there are multiple one step recent station files
                 {
@@ -1179,8 +1193,8 @@ int windNinjaCLI(int argc, char* argv[])
                     std::vector<std::string> sFiles;
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                    windsim.makePointInitializationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(), windsim.getSolverType( vm["solver_type"].as<std::string>() ));
                 }
                 else
                 {
@@ -1198,7 +1212,7 @@ int windNinjaCLI(int argc, char* argv[])
         windsim.Com->lastMsg = msg;
         */
 
-        //For loop over all ninjas (just 1 ninja unless it's a weather model run)--------------------
+        //For loop over all ninjas (just 1 ninja unless it's a weather model or point init run)--------------------
 
         for(int i_ = 0; i_ < windsim.getSize(); i_++)
         {
@@ -1213,7 +1227,7 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setPosition( i_ );    //get position from DEM file
             
             #ifdef NINJAFOAM
-            if(vm["momentum_flag"].as<bool>()){
+            if(vm["solver_type"].as<string>()==string("cfdSteadyState")){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
                 if(vm.count("number_of_iterations")){

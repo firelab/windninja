@@ -75,14 +75,12 @@ typedef int   NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-    #ifndef NINJAFOAM
-    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-        ( unsigned int numNinjas, char ** papszOptions  );
-    #endif
-    #ifdef NINJAFOAM
-    NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-        ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  );
-    #endif
+    NinjaH* WINDNINJADLL_EXPORT NinjaMakeDomainAverageInitializationArmy
+        ( unsigned int numNinjas, const char * solver_type, char ** papszOptions  );
+
+    NinjaH*  WINDNINJADLL_EXPORT NinjaMakeArmy
+    ( const char * forecastFilename, const char * timezone, const char * solver_type, char ** papszOptions);
+
     NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
         ( NinjaH * ninja );
 
@@ -91,12 +89,6 @@ typedef int   NinjaErr;
      *-----------------------------------------------------------------------------*/
     NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
-
-    NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
-        ( NinjaH * ninja, const char * forecastFilename,
-          const char * timezone,
-          bool momentumFlag );
-
 
     /*-----------------------------------------------------------------------------
      *  Various Simulation Parameters

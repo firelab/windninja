@@ -72,45 +72,62 @@ extern "C"
  * There are other creation methods that automatically allocate the correct
  * number of runs for the input type.
  *
- * \see NinjaMakeArmy
+ * \see NinjaMakeDomainAverageInitializationArmy
  *
  * Avaliable Creation Options:
  *                             None
  *
  * \param numNinjas The number of runs to create.
+ * \param solver_type The type of solver to use (massConservingSteadyState, cfdSteadyState, semiLagrangianSteadyState, semiLagrangianTransient).
  * \param papszOptions Key, value option pairs from the options listed above.
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
-#ifndef NINJAFOAM
-NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-    ( unsigned int numNinjas, char ** papszOptions  )
+NinjaH* WINDNINJADLL_EXPORT NinjaMakeDomainAverageInitializationArmy
+    ( unsigned int numNinjas, const char * solver_type, char ** papszOptions  )
 {
     try
     {
-        return reinterpret_cast<NinjaH*>( new ninjaArmy( numNinjas ) );
+        ninjaArmy* army = new ninjaArmy;
+        army->makeDomainAverageInitializationArmy(numNinjas, army->getSolverType(solver_type));
+        return reinterpret_cast<NinjaH*>( army );
     }
     catch( bad_alloc& )
     {
         return NULL;
     }
 }
-#endif
 
-#ifdef NINJAFOAM
-NinjaH* WINDNINJADLL_EXPORT NinjaCreateArmy
-    ( unsigned int numNinjas, bool momentumFlag, char ** papszOptions  )
+/**
+ * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ *
+ * This method will create a set of runs for windninja based on the contents of
+ * the weather forecast file.  One run is done for each timestep in the *.nc
+ * file.
+ *
+ * \param forecastFilename A valid thredds/UCAR based weather model file.
+ * \param timezone a timezone string representing a valid timezone, e.g.
+ *                 America/Boise.
+ *                 See WINDNINJA_DATA/date_time_zonespec.csv
+ * \param solver_type The type of solver to use (massConservingSteadyState, cfdSteadyState, semiLagrangianSteadyState, semiLagrangianTransient).
+ *
+ * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
+ */
+
+NinjaH* WINDNINJADLL_EXPORT NinjaMakeWeatherModelInitializationArmy
+    ( const char * forecastFilename, const char * timezone, const char * solver_type, char ** papszOptions)
 {
     try
     {
-        return reinterpret_cast<NinjaH*>( new ninjaArmy( numNinjas, momentumFlag ) );
+        ninjaArmy* army = new ninjaArmy;
+        army->makeWeatherModelInitializationArmy(forecastFilename, timezone, army->getSolverType(solver_type));
+        return reinterpret_cast<NinjaH*>( army );
     }
     catch( bad_alloc& )
     {
         return NULL;
     }
 }
-#endif
 
 /**
  * \brief Destroy a suite of windninja runs.
@@ -139,45 +156,6 @@ NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
     }
 }
 
-/**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
- *
- * This method will create a set of runs for windninja based on the contents of
- * the weather forecast file.  One run is done for each timestep in the *.nc
- * file.
- *
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param forecastFilename A valid thredds/UCAR based weather model file.
- * \param timezone a timezone string representing a valid timezone, e.g.
- *                 America/Boise.
- *                 See WINDNINJA_DATA/date_time_zonespec.csv
- *
- * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
- */
-NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
-    ( NinjaH * ninja, const char * forecastFilename,
-      const char * timezone,
-      bool momentumFlag )
-{
-    NinjaErr retval = NINJA_E_INVALID;
-    if( NULL != ninja )
-    {
-       try
-       {
-           reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
-               ( std::string( forecastFilename ),
-                 std::string( timezone ),
-                 momentumFlag );
-
-           retval = NINJA_SUCCESS;
-       }
-       catch( armyException & e )
-       {
-           retval = NINJA_E_INVALID;
-       }
-    }
-    return retval;
-}
 
 /**
  * \brief Start the simulations.

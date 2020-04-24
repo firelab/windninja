@@ -40,10 +40,10 @@
 
 #include "stabilityInput.h"
 
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
 #include "ninjafoamInput.h"
 #include "nativeSolverInput.h"
-#endif
+//#endif
 
 #include "windInput.h"
 #include "pointInput.h"
@@ -83,10 +83,10 @@ class WindNinjaTree : public QWidget
   QTreeWidgetItem *modelItem;
   QTreeWidgetItem *diurnalItem;
   QTreeWidgetItem *stabilityItem;
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   QTreeWidgetItem *ninjafoamItem;
   QTreeWidgetItem *nativeSolverItem;
-#endif
+//#endif
   
   //output file items...
   QTreeWidgetItem *outputItem;
@@ -113,10 +113,10 @@ class WindNinjaTree : public QWidget
   surfaceInput *surface;
   diurnalInput *diurnal;
   stabilityInput *stability;
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
   ninjafoamInput *ninjafoam;
   nativeSolverInput *nativesolver;
-#endif
+//#endif
   windInput *wind;
   pointInput *point;
   weatherModel *weather;
