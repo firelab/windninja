@@ -546,8 +546,6 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-        ninjaArmy windsim;
-
         /* Do we have to fetch an elevation file */
         
 #ifdef EMISSIONS
@@ -861,29 +859,35 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "'input_points_file' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
         }
-        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm.count("write_vtk_output"))
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["write_vtk_output"].as<bool>()==true)
         {
             cout << "'write_vtk_output' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
         }
         #ifdef FRICTION_VELOCITY
-        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm.count("compute_friction_velocity"))
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["compute_friction_velocity"].as<bool>()==true))
         {
             cout << "'compute_friction_velocity' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
         }
         #endif
         #ifdef EMISSIONS
-        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm.count("compute_emissions"))
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["compute_emissions"].as<bool>()==true)
         {
             cout << "'compute_emissions' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
         }
         #endif
-        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm.count("non_neutral_stability"))
+        if(vm["solver_type"].as<string>()==string("cfdSteadyState") && vm["non_neutral_stability"].as<bool>()==true)
         {
             cout << "'non_neutral_stability' cannot be used with 'solver_type' equal to 'cfdSteadyState'.\n";
             return -1;
+        }
+
+        ninjaArmy windsim;
+        if(vm["initialization_method"].as<std::string>() == string("domainAverageInitialization"))
+        {
+            windsim.makeDomainAverageInitializationArmy(1, windsim.getSolverType( vm["solver_type"].as<std::string>() ));
         }
 
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
@@ -1208,7 +1212,7 @@ int windNinjaCLI(int argc, char* argv[])
         windsim.Com->lastMsg = msg;
         */
 
-        //For loop over all ninjas (just 1 ninja unless it's a weather model run)--------------------
+        //For loop over all ninjas (just 1 ninja unless it's a weather model or point init run)--------------------
 
         for(int i_ = 0; i_ < windsim.getSize(); i_++)
         {
