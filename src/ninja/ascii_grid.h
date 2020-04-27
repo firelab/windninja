@@ -149,6 +149,7 @@ public:
     T get_minValue();
 
     double get_meanValue() const;
+    bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
 
     bool find_firstValue(T m, T buffer, int *k, int *l);
 
@@ -938,7 +939,7 @@ void AsciiGrid<T>::BufferGridInPlace( int nAddCols, int nAddRows )
 }
 
 /**
- * \brief Add cells around all edges of an ascii grid
+ * \brief Add or remove cells around all edges of an ascii grid
  *
  * Add or remove one or more cells around the Grid.
  *
@@ -959,47 +960,85 @@ AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
     AsciiGrid<T>A( get_nCols() + 2*nAddCols, get_nRows() + 2*nAddRows,
             get_xllCorner()-(nAddCols*get_cellSize()),
             get_yllCorner()-(nAddRows*get_cellSize()),
-            get_cellSize(), get_noDataValue(), prjString );
-    for( int i = 0;i < A.get_nRows();i++ )
+            get_cellSize(), get_noDataValue(), get_noDataValue(), prjString );
+
+    for( int i = 0;i < nOrigYSize;i++ )
     {
-        for( int j = 0;j < A.get_nCols();j++ )
+        for( int j = 0;j < nOrigXSize;j++ )
         {
-            if( i < nAddRows && j < nAddCols )
+            if(i+nAddRows < 0 || i+nAddRows >= A.get_nRows() ||
+                j+nAddCols < 0 || j+nAddCols >= A.get_nCols())
             {
-                A.set_cellValue( i, j, get_cellValue( i, j) );
-            }
-            else if( i < nAddRows )
-            {
-                A.set_cellValue( i, j, get_cellValue( i, j-nAddCols) );
-            }
-            else if( i > (nOrigYSize-nAddRows) && j < nAddCols )
-            {
-                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows, j) );
-            }
-            else if( j < nAddCols )
-            {
-                A.set_cellValue( i, j, get_cellValue( i-nAddRows, j) );
-            }
-            else if( i < nOrigYSize && j < nOrigXSize )
-            {
-                A.set_cellValue( i, j, get_cellValue( i-nAddRows, j-nAddCols) );
-            }
-            else if( i > (nOrigYSize-nAddRows) && j > (nOrigXSize-nAddCols) )
-            {
-                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows,
-                                                      nOrigXSize-nAddCols ) );
-            }
-            else if( i > (nOrigYSize-nAddRows) )
-            {
-                A.set_cellValue( i, j, get_cellValue( nOrigYSize-nAddRows, j-nAddCols ) );
-            }
-            else if( j > (nOrigXSize-nAddCols) )
-            {
-                A.set_cellValue( i, j, get_cellValue( i-nAddRows, nOrigXSize-nAddCols) );
-            }
+                continue;
+            } 
+            A.set_cellValue( i+nAddRows, j+nAddCols, get_cellValue(i, j));
         }
     }
+    if(!A.fillNoDataValues(1, 50.0, 1000))
+        throw std::runtime_error("Could not fill no data values in AsciiGrid::BufferAroundGrid()");
+
     return A;
+}
+
+template<class T>
+bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue())
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sum;
+    int nValues;
+    int numPasses = 0;
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == get_noDataValue())
+                    {
+                        sum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii < i+1; ii++)
+                        {
+                            for(int jj = j-1; jj < j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                    continue;
+
+                                if(get_cellValue(ii, jj) == get_noDataValue())
+                                    continue;
+
+                                sum = sum + get_cellValue(ii, jj);
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                            set_cellValue(i, j, sum/nValues);
+                        else
+                            numNoDataValues++;
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
 }
 
 /**
