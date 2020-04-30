@@ -208,6 +208,7 @@ public:
     void BufferGridInPlace( int nAddCols=1, int nAddRows=1 );
     AsciiGrid<T> BufferAroundGrid( int nAddCols=1, int nAddRows=1 );
     void BufferAroundGridInPlace( int nAddCols=1, int nAddRows=1 );
+    void BufferToOverlapGrid(AsciiGrid &A);
 
     /* @todo
      * Ideally this would not be a public variable that other classes have access to, instead
@@ -980,6 +981,59 @@ AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
     return A;
 }
 
+/**
+ * \brief Add cells to overlap another ascii grid
+ *
+ * Add cells to overlap an ascii grid.
+ *
+ * \param A grid to buffer
+ * \return a new grid buffered to overlap another grid
+ */
+template<class T>
+void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
+{
+    double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
+    double biggest, biggestX, biggestY;
+    int nColsBuffer, nRowsBuffer;
+    xMinOverlap = get_xllCorner() - A.get_xllCorner();
+    xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
+        (A.get_xllCorner() + A.get_nCols()*A.get_cellSize());
+    yMinOverlap = get_yllCorner() - A.get_yllCorner();
+    yMaxOverlap = (get_yllCorner() + get_nRows()*get_cellSize()) -
+        (A.get_yllCorner() + A.get_nRows()*A.get_cellSize());
+
+    if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
+    {
+        //if we only need to buffer on top and right side of grid
+        if(get_xllCorner() <= A.get_xllCorner() && get_yllCorner() <= A.get_yllCorner())
+        {
+            nColsBuffer = (int)(xMaxOverlap/get_cellSize())+1;
+            nRowsBuffer = (int)(yMaxOverlap/get_cellSize())+1;
+            if(nColsBuffer < 0)
+                nColsBuffer = 0;
+            if(nRowsBuffer < 0)
+                nRowsBuffer = 0;
+            BufferGridInPlace(nColsBuffer, nRowsBuffer);
+        }
+        else //if we need to buffer all sides of the grid
+        {
+            biggestX = xMaxOverlap;
+            if(xMinOverlap > biggestX)
+                biggestX = xMinOverlap;
+            biggestY = yMaxOverlap;
+            if(yMinOverlap > biggestY)
+                biggestY = yMinOverlap;
+            nColsBuffer = (int)(biggestX/get_cellSize())+1;
+            nRowsBuffer = (int)(biggestY/get_cellSize())+1;
+            if(nColsBuffer < 0)
+                nColsBuffer = 0;
+            if(nRowsBuffer < 0)
+                nRowsBuffer = 0;
+            BufferAroundGridInPlace(nColsBuffer, nRowsBuffer);
+        }
+    }
+}
+
 template<class T>
 bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
 {
@@ -1014,9 +1068,9 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
                     {
                         sum = 0.0;
                         nValues = 0;
-                        for(int ii = i-1; ii < i+1; ii++)
+                        for(int ii = i-1; ii <= i+1; ii++)
                         {
-                            for(int jj = j-1; jj < j+1; jj++)
+                            for(int jj = j-1; jj <= j+1; jj++)
                             {
                                 if(ii < 0 || ii >= get_nRows() ||
                                     jj < 0 || jj >= get_nCols())
