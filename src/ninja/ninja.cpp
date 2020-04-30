@@ -4184,11 +4184,12 @@ bool ninja::set_position()
     if(poDS == NULL)
     throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
 
-    double lonLat[2];
+    double longitude, latitude;
 
-    if( GDALGetCenter( poDS, lonLat ) )
+    if( GDALGetCenter( poDS, &longitude, &latitude ) )
     {
-        set_position(lonLat[1], lonLat[0]);
+        // XXX: note y/x axis ordering
+        set_position(latitude, longitude);
         GDALClose( (GDALDatasetH)poDS );
         return true;
     }

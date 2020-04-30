@@ -1555,14 +1555,11 @@ int mainWindow::checkInputFile(QString fileName)
         else
         {
             hasPrj = true;
-            double ll[2];
-            if(GDALGetCenter(poInputDS, ll))
+            double longitude, latitude;
+            if(GDALGetCenter(poInputDS, &longitude, &latitude))
             {
-                GDALCenterLon = ll[0];
-                GDALCenterLat = ll[1];
-
                 //set diurnal location, also set DD.DDDDD
-                QString oTimeZone = FetchTimeZone(GDALCenterLon, GDALCenterLat, NULL).c_str();
+                QString oTimeZone = FetchTimeZone(longitude, latitude, NULL).c_str();
                 if(oTimeZone != "")
                 {
                     /* Show all time zones, so we can search all time zones */
