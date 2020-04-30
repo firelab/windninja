@@ -133,6 +133,14 @@ bool NinjaFoam::simulate_wind()
     set_position();
     set_uniVegetation();
 
+    int status = 0;
+
+    status = SetMeshResolutionAndResampleDem();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting mesh resolution.");
+        return NINJA_E_OTHER;
+    }
+
     checkInputs();
 
     /* 
@@ -177,8 +185,6 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "Rough_d = %f", input.surface.Rough_d.get_meanValue());
     CPLDebug("NINJAFOAM", "Rough_h = %f", input.surface.Rough_h.get_meanValue());
     CPLDebug("NINJAFOAM", "input.nIterations = %d", input.nIterations);
-
-    int status = 0;
 
     //if pszFoamPath is not valid, create a new case 
     if(CheckForValidCaseDir(pszFoamPath) != NINJA_SUCCESS){
@@ -891,80 +897,38 @@ int NinjaFoam::WriteUBoundaryField(std::string &dataString)
     return NINJA_SUCCESS;
 }
 
-int NinjaFoam::readDem(double &expansionRatio)
+int NinjaFoam::SetBlockMeshParametersFromDem()
 {
-    // get some info from the DEM
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
     double dx = input.dem.get_xDimension();
     double dy = input.dem.get_yDimension();
-    double xBuffer, yBuffer;
-    
-    xBuffer = input.dem.get_cellSize(); // buffers for MDM
-    yBuffer = input.dem.get_cellSize();
     
     double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
-    int minNumberVerticalLayers = 5;
-    double meshVolume;
-    double cellVolume;
-    double side;
 
-    //if the mesh resolution hasn't been set
-    if(meshResolution < 0.0){
-        bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
-        bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-        bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
-        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
-        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-        bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
+    //set blockMesh parameters based on the meshResolution
+    //input.dem has already been re-sampled to meshResolution
+    //the blockMesh is built directly on top of this re-sampled DEM
+    bbox.push_back( input.dem.get_xllCorner() ); //xmin 
+    bbox.push_back( input.dem.get_yllCorner() ); //ymin
+    bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (above highest point in DEM for MDM)
+    bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() ); //xmax
+    bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() ); //ymax
+    bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
 
-        //total volume for block mesh
-        meshVolume = (bbox[3] - bbox[0]) * (bbox[4] - bbox[1]) * (bbox[5] - bbox[2]); 
-        cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
-        cellVolume = meshVolume/cellCount; // volume of 1 cell
-        side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+    nCells.push_back(int( (bbox[3] - bbox[0]) / (meshResolution*2*nRoundsRefinement))); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / (meshResolution*2*nRoundsRefinement))); // Ny1
+    nCells.push_back(int( (bbox[5] - bbox[2]) / (meshResolution*2*nRoundsRefinement))); // Nz1
 
-        nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
-        nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
-        nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
-
-        //determine number of rounds of refinement
-        int nCellsToAdd = 0;
-        int refinedCellCount = 0;
-        int nCellsInLowestLayer = nCells[0] * nCells[1]; 
-        while(refinedCellCount < (0.5 * input.meshCount)){
-            nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
-            refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
-            nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
-            nRoundsRefinement += 1;
-        }
-        CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
-        CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
-        CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
-
-        set_meshResolution(side/(nRoundsRefinement*2), lengthUnits::meters);
-    } 
-    else{ //if the mesh resolution has been set
-        side = meshResolution * 4.0; //blockMesh cell size
-        nRoundsRefinement = 2; 
-
-        blockMeshDz = max(blockMeshDz, minNumberVerticalLayers*side);
-
-        bbox.push_back( input.dem.get_xllCorner() + xBuffer ); //xmin 
-        bbox.push_back( input.dem.get_yllCorner() + yBuffer ); //ymin
-        bbox.push_back( input.dem.get_maxValue() + 0.05 * blockMeshDz ); //zmin (should be above highest point in DEM for MDM)
-        bbox.push_back( input.dem.get_xllCorner() + input.dem.get_xDimension() - xBuffer ); //xmax
-        bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() - yBuffer ); //ymax
-        bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
-
-        nCells.push_back(int( (bbox[3] - bbox[0]) / side)); // Nx1
-        nCells.push_back(int( (bbox[4] - bbox[1]) / side)); // Ny1
-        nCells.push_back(int( (bbox[5] - bbox[2]) / side)); // Nz1
+    //we need several cells on all sides of the blockMesh
+    //the blockMesh is at least twice as coarse as the refined mesh (meshResolution)
+    if(nCells[0] < 4 || nCells[1] < 4 || nCells[2] < 4)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                "The requested mesh resolution %.1f m is too coarse.", meshResolution);
+        return NINJA_E_OTHER;
     }
 
-    initialFirstCellHeight = ((bbox[5] - bbox[2]) / nCells[2]); //height of first cell
-    expansionRatio = 1.0;
-
-    CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
+    initialFirstCellHeight = meshResolution*2*nRoundsRefinement; //height of first cell
 
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
@@ -982,11 +946,9 @@ int NinjaFoam::readDem(double &expansionRatio)
             "-9999.9", 
             CPLSPrintf("%.2f", initialFirstCellHeight));
     
+    CPLDebug("NINJAFOAM", "cellCount = %d", cellCount);
     CPLDebug("NINJAFOAM", "blockMeshDz = %f", blockMeshDz);
-    CPLDebug("NINJAFOAM", "meshVolume = %f", meshVolume);
     CPLDebug("NINJAFOAM", "firstCellHeight = %f", initialFirstCellHeight);
-    CPLDebug("NINJAFOAM", "side = %f", side);
-    CPLDebug("NINJAFOAM", "expansionRatio = %f", expansionRatio);
     
     CPLDebug("NINJAFOAM", "Nx1 = %d", nCells[0]);
     CPLDebug("NINJAFOAM", "Ny1 = %d", nCells[1]);
@@ -1008,12 +970,13 @@ int NinjaFoam::writeBlockMesh()
     const char *pszOutput;
     const char *pszPath;
     const char *pszArchive;
-    double ratio_;
+    double ratio_ = 1.0; //expansion ratio in blockMesh
     int status;
 
-    status = readDem(ratio_);
+    status = SetBlockMeshParametersFromDem();
     if(status != 0){
-        //do something
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error writing the mesh.");
+        return NINJA_E_OTHER;
     }
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
@@ -1218,59 +1181,6 @@ int NinjaFoam::CopyFile(const char *pszInput, const char *pszOutput, std::string
     VSIFCloseL(fout);
     
     return NINJA_SUCCESS;
-}
-
-int NinjaFoam::SurfaceTransformPoints()
-{
-    int nRet = -1;
-
-    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-
-    std::string stl = std::string(CPLSPrintf("%s/constant/triSurface/%s.stl",
-                      pszFoamPath,
-                      demName.c_str()));
-
-    std::string stlOut = std::string(CPLSPrintf("%s/constant/triSurface/%s_out.stl",
-                         pszFoamPath,
-                         demName.c_str()));
-
-    const char *const papszArgv[] = { "surfaceTransformPoints",
-                                      "-case",
-                                      pszFoamPath,
-                                      "-translate",
-                                      CPLSPrintf("(0 0 %.0f)", input.outputWindHeight),
-                                      (const char*)stl.c_str(),
-                                      (const char*)stlOut.c_str(),
-                                      NULL };
-
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "surfaceTransformPoints.log", ""), "w");
-
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //create output surface stl in pszTemppath/constant/triSurface
-
-    VSIFCloseL(fout);
-
-    return nRet;
-}
-
-int NinjaFoam::SurfaceCheck()
-{
-    int nRet = -1;
-
-    std::string stlName = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
-
-    const char *const papszArgv[] = { "surfaceCheck",
-                                      "-case",
-                                      pszFoamPath,
-                                      CPLSPrintf("%s/constant/triSurface/%s.stl", pszFoamPath, stlName.c_str()),
-                                      NULL };
-
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.json", ""), "w");
-
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE); //writes log.json used in mesh file writing
-
-    VSIFCloseL(fout);
-
-    return nRet;
 }
 
 int NinjaFoam::MoveDynamicMesh()
@@ -1994,18 +1904,18 @@ int NinjaFoam::SampleCloud()
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
 
-    dfXMin = input.dem.get_xllCorner();
-    dfXMax = input.dem.get_xllCorner() + input.dem.get_xDimension();
-    dfYMin = input.dem.get_yllCorner();
-    dfYMax = input.dem.get_yllCorner() + input.dem.get_yDimension();
-    dfCellSize = input.dem.get_cellSize();
+    dfXMin = outputSampleGrid.get_xllCorner();
+    dfXMax = outputSampleGrid.get_xllCorner() + outputSampleGrid.get_xDimension();
+    dfYMin = outputSampleGrid.get_yllCorner();
+    dfYMax = outputSampleGrid.get_yllCorner() + outputSampleGrid.get_yDimension();
+    dfCellSize = outputSampleGrid.get_cellSize();
 
     nPoints = OGR_L_GetFeatureCount( hLayer, TRUE );
     CPLDebug( "WINDNINJA", "NinjaFoam gridding %d points", nPoints );
 
     /* Get DEM/output specs */
-    nXSize = input.dem.get_nCols();
-    nYSize = input.dem.get_nRows();
+    nXSize = outputSampleGrid.get_nCols();
+    nYSize = outputSampleGrid.get_nRows();
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
@@ -2018,7 +1928,7 @@ int NinjaFoam::SampleCloud()
     GDALSetRasterNoDataValue( hVBand, -9999 );
 
     /* Set the projection from the DEM */
-    rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
+    rc = GDALSetProjection( hGriddedDS, outputSampleGrid.prjString.c_str() );
 
     adfGeoTransform[0] = dfXMin;
     adfGeoTransform[1] = dfCellSize;
@@ -2352,10 +2262,10 @@ int NinjaFoam::SampleRawOutput()
     int rc;
     rc = SanitizeOutput();
 
-    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_GDALGRID", "NO" ) ) )
+    //if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_GDALGRID", "NO" ) ) )
         rc = SampleCloudGrid();
-    else
-        rc = SampleCloud();
+    //else
+        //rc = SampleCloud();
     GDALDatasetH hDS;
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
@@ -2367,19 +2277,17 @@ int NinjaFoam::SampleRawOutput()
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
 
-    AsciiGrid<double> foamSpd( foamU );
-    AsciiGrid<double> foamDir( foamU );
+    AngleGrid = foamU;
+    VelocityGrid = foamU;
 
     for(int i=0; i<foamU.get_nRows(); i++)
     {
         for(int j=0; j<foamU.get_nCols(); j++)
         {
-            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(VelocityGrid)(i,j), &(AngleGrid)(i,j));
         }
     }
 
-    AngleGrid = foamDir;
-    VelocityGrid = foamSpd;
     // If we failed to fill in the data for the entire grid, we've failed.
     // Report a better message.
     if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
@@ -2456,9 +2364,19 @@ int NinjaFoam::WriteOutputFiles()
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                         //ensure grids cover original DEM extents for FARSITE
-                        tempCloud.BufferGridInPlace();
-                        angTempGrid->BufferGridInPlace();
-                        velTempGrid->BufferGridInPlace();
+                        AsciiGrid<double> demGrid;
+                        GDALDatasetH hDS;
+                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                        if( hDS == NULL )
+                        {
+                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                    "Problem reading DEM during output writing." );
+                        }
+
+                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                        tempCloud.BufferToOverlapGrid(demGrid);
+                        angTempGrid->BufferToOverlapGrid(demGrid);
+                        velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -2779,6 +2697,18 @@ int NinjaFoam::GenerateNewCase()
     checkCancel();
 
     /*-------------------------------------------------------------------*/
+    /*  write blockMesh mesh file(s)                                     */
+    /*  the meshResolution is also set here if needed                    */
+    /*  and the DEM is resampled to the meshResolution                   */
+    /*-------------------------------------------------------------------*/
+
+    status = writeBlockMesh();
+    if(status != 0){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlockMesh().");
+        return NINJA_E_OTHER;
+    }
+
+    /*-------------------------------------------------------------------*/
     /*  convert DEM to STL format and write to constant/triSurface       */
     /*-------------------------------------------------------------------*/
 
@@ -2789,22 +2719,19 @@ int NinjaFoam::GenerateNewCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Converting DEM to STL format...");
 
     std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-
     const char *pszStlFileName = CPLStrdup(CPLFormFilename(
                 (CPLSPrintf("%s/constant/triSurface/", pszFoamPath)),
                 CPLSPrintf("%s.stl", demName.c_str()), ""));
 
-    int nBand = 1;
-    const char * inFile = input.dem.fileName.c_str();
-    CPLErr eErr;
+    //buffer input.dem on all edges to ensure it is larger than the blockMesh
+    Elevation bufferedDemGrid = input.dem;
+    bufferedDemGrid.BufferAroundGridInPlace(1, 1);
 
-    eErr = NinjaElevationToStl(inFile,
+    CPLErr eErr;
+    eErr = NinjaElevationToStl(bufferedDemGrid,
                         pszStlFileName,
-                        nBand,
-                        input.dem.get_cellSize(),
                         NinjaStlBinary,
-                        0,
-                        NULL);
+                        0.0);
 
     CPLFree((void*)pszStlFileName);
 
@@ -2826,45 +2753,30 @@ int NinjaFoam::GenerateNewCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
 
     // create the output surface stl with NinjaElevationToStl unless
-    // NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS = YES.
-    if( CSLTestBoolean( CPLGetConfigOption( "NINJAFOAM_USE_SURFACE_TRANSFORM_POINTS", "NO" ) ) ) {
-        status = SurfaceTransformPoints();
-        if(status != 0){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during surfaceTransformPoints().");
-            return NINJA_E_OTHER;
-        }
-    }else{
-        std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-        pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
-        nBand = 1;
+    demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+    pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
 
-        eErr = NinjaElevationToStl(inFile,
-                            pszStlFileName,
-                            nBand,
-                            input.dem.get_cellSize(),
-                            NinjaStlBinary,
-                            input.outputWindHeight,
-                            NULL);
+    //create the grid to sample on (input.outputWindHeight above the DEM)
+    //note that input.dem has already been resampled to the mesh resolution
+    outputSampleGrid = input.dem; 
+    //make sure the grid is completely inside the mesh
+    outputSampleGrid.BufferAroundGridInPlace(-1, -1);
 
-        CPLFree((void*)pszStlFileName);
-    }
+    eErr = NinjaElevationToStl(outputSampleGrid,
+                        pszStlFileName,
+                        NinjaStlBinary,
+                        input.outputWindHeight);
 
-    checkCancel();
-	
+    CPLFree((void*)pszStlFileName);
+
     if( atoi( CPLGetConfigOption("WRITE_FOAM_FILES", "-1") ) == 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "WRITE_FOAM_FILES set to 0. STL surfaces written.");
         return true;
     }
 
     /*-------------------------------------------------------------------*/
-    /*  write necessary mesh file(s)                                     */
+    /*  write remaining mesh file(s)                                     */
     /*-------------------------------------------------------------------*/
-
-    status = writeBlockMesh();
-    if(status != 0){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeBlockMesh().");
-        return NINJA_E_OTHER;
-    }
     status = writeMoveDynamicMesh();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during writeMoveDynamicMesh().");
@@ -3077,4 +2989,110 @@ int NinjaFoam::CheckForValidDem()
     CSLDestroy( papszFileList );
 
     return NINJA_E_OTHER;
+}
+
+int NinjaFoam::SetMeshResolutionAndResampleDem()
+{
+    //if we are re-using a case, just set the meshResolution
+    if(CheckForValidCaseDir(pszFoamPath) == NINJA_SUCCESS){
+        //set meshResolution from log.ninja
+        const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+        VSILFILE *fin;
+        fin = VSIFOpenL(pszInput, "r");
+
+        char *data;
+
+        vsi_l_offset offset;
+        VSIFSeekL(fin, 0, SEEK_END);
+        offset = VSIFTellL(fin);
+
+        VSIRewindL(fin);
+        data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+        VSIFReadL(data, offset, 1, fin);
+        data[offset] = '\0';
+
+        std::string s(data);
+
+        CPLFree(data);
+        VSIFCloseL(fin);
+
+        std::string h;
+        int pos;
+        if(s.find("meshResolution") != s.npos){
+            pos = s.find("firstCellHeight ");
+            h = s.substr(pos+18, pos+23);
+        }
+
+        meshResolution = atof(h.c_str());
+    }
+    //otherwise, if the mesh resolution hasn't been set, calculate it
+    else if(meshResolution < 0.0){
+        // get some info from the DEM
+        double xmin, ymin, zmin, xmax, ymax, zmax;
+        double meshVolume;
+        double cellVolume;
+        double side;
+
+        double dz = input.dem.get_maxValue() - input.dem.get_minValue();
+        double dx = input.dem.get_xDimension();
+        double dy = input.dem.get_yDimension();
+
+        double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
+
+        int nCellsX, nCellsY, nCellsZ;
+
+        xmin = input.dem.get_xllCorner(); //xmin 
+        ymin = input.dem.get_yllCorner(); //ymin
+        zmin = input.dem.get_maxValue() + 0.05 * blockMeshDz; //zmin (above highest point in DEM for MDM)
+        xmax = input.dem.get_xllCorner() + input.dem.get_xDimension(); //xmax
+        ymax = input.dem.get_yllCorner() + input.dem.get_yDimension(); //ymax
+        zmax = input.dem.get_maxValue() + blockMeshDz; //zmax
+
+        //total volume for block mesh
+        meshVolume = (xmax - xmin) * (ymax - ymin) * (zmax - zmin); 
+        cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
+        cellVolume = meshVolume/cellCount; // volume of 1 cell
+        side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
+
+        nCellsX=int( (xmax - xmin) / side);
+        nCellsY=int( (ymax - ymin) / side);
+        nCellsZ=int( (zmax - zmin) / side);
+        //determine number of rounds of refinement
+        int nCellsToAdd = 0;
+        int refinedCellCount = 0;
+        int nCellsInLowestLayer = nCellsX * nCellsY; 
+        while(refinedCellCount < (0.5 * input.meshCount)){
+            nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+            refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+            nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+            nRoundsRefinement += 1;
+        }
+        CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
+        CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
+        CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
+
+        set_meshResolution(side/(nRoundsRefinement*2), lengthUnits::meters);
+    } 
+    else{ //if the mesh resolution has been set
+        //default to two rounds of refinement
+        nRoundsRefinement = 2; 
+    }
+
+    //Resample DEM to desired computational resolution
+    //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
+    if(meshResolution < input.dem.get_cellSize())
+    {
+        input.dem.resample_Grid_in_place(meshResolution,
+                Elevation::order1); //make the grid finer
+        input.surface.resample_in_place(meshResolution,
+                AsciiGrid<double>::order1); //make the grid finer
+    }else if(meshResolution > input.dem.get_cellSize())
+    {
+        input.dem.resample_Grid_in_place(meshResolution,
+                Elevation::order0); //coarsen the grid
+        input.surface.resample_in_place(meshResolution,
+                AsciiGrid<double>::order0); //coarsen the grids
+    }
+
+    return NINJA_SUCCESS;
 }

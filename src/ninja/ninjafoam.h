@@ -115,7 +115,7 @@ private:
     /* mesh */
     int writeMoveDynamicMesh();
     int writeBlockMesh();
-    int readDem(double &ratio_); //sets blockMesh data from DEM
+    int SetBlockMeshParametersFromDem(); //sets blockMesh data from DEM
 
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
@@ -146,12 +146,11 @@ private:
     double GetFirstCellHeightFromDisk();
     int CheckForValidCaseDir(const char* dir);
     int CheckForValidDem();
+    int SetMeshResolutionAndResampleDem();
 
     int WriteNinjaLog();
     
     /* OpenFOAM utilities */
-    int SurfaceTransformPoints();
-    int SurfaceCheck();
     int RefineSurfaceLayer();
     int MoveDynamicMesh();
     int TopoSet();
@@ -166,6 +165,7 @@ private:
     int Sample();
 
     /* Output */
+    Elevation outputSampleGrid;
     int SampleRawOutput();
     int WriteOutputFiles();
     void SetOutputResolution();
