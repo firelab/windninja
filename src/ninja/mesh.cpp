@@ -258,9 +258,6 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     {
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
-     
-        input.dem.BufferGridInPlace(); //make sure grid at least covers the original domain
-        input.surface.BufferGridInPlace();
     }
 
     nrows = input.dem.get_nRows();

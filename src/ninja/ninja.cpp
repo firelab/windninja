@@ -2742,9 +2742,19 @@ void ninja::writeOutputFiles()
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                         //ensure grids cover original DEM extents for FARSITE
-                        tempCloud.BufferGridInPlace();
-                        angTempGrid->BufferGridInPlace();
-                        velTempGrid->BufferGridInPlace();
+                        AsciiGrid<double> demGrid;
+                        GDALDatasetH hDS;
+                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                        if( hDS == NULL )
+                        {
+                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                    "Problem reading DEM during output writing." );
+                        }
+
+                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                        tempCloud.BufferToOverlapGrid(demGrid);
+                        angTempGrid->BufferToOverlapGrid(demGrid);
+                        velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
