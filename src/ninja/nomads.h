@@ -517,6 +517,26 @@ static const char *apszNomadsKeys[][11] =
       "3 km",
       "HRRR ALASKA SUBHOURLY" },
     /*
+    ** HRRR Conus Extended
+    ** SCN20-46 adds some extened cycles to HRRR and RAP:
+    ** https://www.weather.gov/media/notification/scn20-46rapv5_hrrr_v4.pdf
+    **
+    ** The HRRR-*-EXT and RAP-*-EXT handle these models.
+    */
+    {
+      "hrrr_conus_ext",
+      "filter_hrrr_2d.pl",
+      "hrrr.t%02dz.wrfsfcf%02d.grib2",
+      "hrrr.%s/conus",
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      "0:48:1",
+      NOMADS_GENERIC_VAR_LIST,
+      "2_m_above_ground,10_m_above_ground," \
+      "entire_atmosphere",
+      "3 km",
+      "HRRR CONUS EXT" },
+    /*
     ** RAP
     */
     {
