@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninjaSemiLagrangian.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
@@ -340,6 +341,57 @@ public:
     int setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions=NULL );
         
 #endif //NINJAFOAM
+
+    /*-----------------------------------------------------------------------------
+     *  NinjaSemiLagrangian Methods
+     *-----------------------------------------------------------------------------*/
+    /**
+    * \brief Set the start time for a transient semi-lagrangian simulation
+    *
+    * \param nIndex index of a ninja
+    * \param yr   simulation year
+    * \param mo   simulation month
+    * \param day  simulation day
+    * \param hr   simulation hour
+    * \param min  simulation minute
+    * \param sec  simulation second
+    * \param timeZoneString timezone of the date and time (see WINDNINJA_DATA/date_time_zonespec.csv)
+    * \return
+    */
+    int setSimulationStartTime( const int nIndex, int const &yr, int const &mo, int const &day,
+                     int const &hr, int const &min, int const &sec,
+                     std::string const &timeZoneString, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the stop time for a transient semi-lagrangian simulation
+    *
+    * \param nIndex index of a ninja
+    * \param yr   simulation year
+    * \param mo   simulation month
+    * \param day  simulation day
+    * \param hr   simulation hour
+    * \param min  simulation minute
+    * \param sec  simulation second
+    * \param timeZoneString timezone of the date and time (see WINDNINJA_DATA/date_time_zonespec.csv)
+    * \return
+    */
+    int setSimulationStopTime( const int nIndex, int const &yr, int const &mo, int const &day,
+                     int const &hr, int const &min, int const &sec,
+                     std::string const &timeZoneString, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the output writing frequency for a transient simulation
+    *
+    * \param nIndex index of a ninja
+    * \param hr   simulation hour
+    * \param min  simulation minute
+    * \param sec  simulation second
+    * \param timeZoneString timezone of the date and time (see WINDNINJA_DATA/date_time_zonespec.csv)
+    * \return
+    */
+    int setSimulationOutputFrequency( const int nIndex, int const &hr, int const &min, int const &sec,
+                    char ** papszOptions=NULL );
+
 
     /*-----------------------------------------------------------------------------
      *  Forecast Model Methods

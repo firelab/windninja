@@ -31,6 +31,9 @@
 
 WindNinjaInputs::WindNinjaInputs()
 : ninjaTime(boost::local_time::not_a_date_time)
+, simulationStartTime(boost::local_time::not_a_date_time)
+, simulationStopTime(boost::local_time::not_a_date_time)
+, simulationOutputFrequency(boost::local_time::not_a_date_time)
 {
     //Initialize variables
     hSpdMemDs = NULL;
@@ -172,6 +175,9 @@ WindNinjaInputs::~WindNinjaInputs()
  */
 WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 : ninjaTime(boost::local_time::not_a_date_time)
+, simulationStartTime(boost::local_time::not_a_date_time)
+, simulationStopTime(boost::local_time::not_a_date_time)
+, simulationOutputFrequency(boost::local_time::not_a_date_time)
 {
   armySize = rhs.armySize;
   hSpdMemDs = rhs.hSpdMemDs;
@@ -219,6 +225,9 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   heightList = rhs.heightList;
 
   ninjaTime = rhs.ninjaTime;
+  simulationStartTime = rhs.simulationStartTime;
+  simulationStopTime = rhs.simulationStopTime;
+  simulationOutputFrequency = rhs.simulationOutputFrequency;
   if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
       ninjaTimeZone.reset();
   else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty
@@ -344,6 +353,9 @@ bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
         cloudCover == rhs.cloudCover &&
         cloudCoverUnits == rhs.cloudCoverUnits &&
         ninjaTime == rhs.ninjaTime &&
+        simulationStartTime == rhs.simulationStartTime &&
+        simulationStopTime == rhs.simulationStopTime &&
+        simulationOutputFrequency == rhs.simulationOutputFrequency &&
         diurnalWinds == rhs.diurnalWinds)
     {
         return true;
@@ -417,6 +429,9 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       heightList = rhs.heightList;
 
       ninjaTime = rhs.ninjaTime;
+      simulationStartTime = rhs.simulationStartTime;
+      simulationStopTime = rhs.simulationStopTime;
+      simulationOutputFrequency = rhs.simulationOutputFrequency;
       if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
           ninjaTimeZone.reset();
       else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty

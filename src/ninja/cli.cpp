@@ -202,16 +202,21 @@ int windNinjaCLI(int argc, char* argv[])
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (Mesonet API) (true/false)")
-                ("start_year",po::value<int>(),"point initialization: start year for simulation")
-                ("start_month",po::value<int>(),"point initialization: start month for simulation")
-                ("start_day",po::value<int>(),"point initialization: start day for simulation")
-                ("start_hour",po::value<int>(),"point initialization: start hour for simulation")
-                ("start_minute",po::value<int>(),"point initialization: start minute for simulation")
-                ("end_year",po::value<int>(),"point initialization: end year for simulation")
-                ("end_month",po::value<int>(),"point initialization: end month for simulation")
-                ("end_day",po::value<int>(),"point initialization: end day for simulation")
-                ("end_hour",po::value<int>(),"point initialization: end hour for simulation")
-                ("end_minute",po::value<int>(),"point initialization: end minute for simulation")
+                ("start_year",po::value<int>(),"point initialization or transient: start year for simulation")
+                ("start_month",po::value<int>(),"point initialization or transient: start month for simulation")
+                ("start_day",po::value<int>(),"point initialization or transient: start day for simulation")
+                ("start_hour",po::value<int>(),"point initialization or transient: start hour for simulation")
+                ("start_minute",po::value<int>(),"point initialization or transient: start minute for simulation")
+                ("start_second",po::value<int>(),"transient: start second for simulation")
+                ("stop_year",po::value<int>(),"point initialization or transient: stop year for simulation")
+                ("stop_month",po::value<int>(),"point initialization or transient: stop month for simulation")
+                ("stop_day",po::value<int>(),"point initialization or transient: stop day for simulation")
+                ("stop_hour",po::value<int>(),"point initialization or transient: stop hour for simulation")
+                ("stop_minute",po::value<int>(),"point initialization or transient: stop minute for simulation")
+                ("stop_second",po::value<int>(),"transient: stop second for simulation")
+                ("output_frequency_hour",po::value<int>(),"transient solver: hourly frequency of output for simulation")
+                ("output_frequency_minute",po::value<int>(),"transient solver: minute frequency of output for simulation")
+                ("output_frequency_second",po::value<int>(),"transient solver: second frequency of output for simulation")
                 ("number_time_steps",po::value<int>(),"point initialization: number of timesteps for simulation")
                 ("fetch_metadata",po::value<bool>()->default_value(false),"get weather station metadata for a domain")
                 ("metadata_filename",po::value<std::string>(),"filename for weather station metadata")
@@ -964,11 +969,11 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "fetch_station", "start_day");
                     option_dependency(vm, "fetch_station", "start_hour");
                     option_dependency(vm, "fetch_station", "start_minute");
-                    option_dependency(vm, "fetch_station", "end_year");
-                    option_dependency(vm, "fetch_station", "end_month");
-                    option_dependency(vm, "fetch_station", "end_day");
-                    option_dependency(vm, "fetch_station", "end_hour");
-                    option_dependency(vm, "fetch_station", "end_minute");
+                    option_dependency(vm, "fetch_station", "stop_year");
+                    option_dependency(vm, "fetch_station", "stop_month");
+                    option_dependency(vm, "fetch_station", "stop_day");
+                    option_dependency(vm, "fetch_station", "stop_hour");
+                    option_dependency(vm, "fetch_station", "stop_minute");
                     option_dependency(vm, "fetch_station", "number_time_steps");
 
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -976,11 +981,11 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["start_day"].as<int>(),
                                                          vm["start_hour"].as<int>(),
                                                          vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
 
@@ -1104,11 +1109,11 @@ int windNinjaCLI(int argc, char* argv[])
                         option_dependency(vm, "wx_station_filename", "start_day");
                         option_dependency(vm, "wx_station_filename", "start_hour");
                         option_dependency(vm, "wx_station_filename", "start_minute");
-                        option_dependency(vm, "wx_station_filename", "end_year");
-                        option_dependency(vm, "wx_station_filename", "end_month");
-                        option_dependency(vm, "wx_station_filename", "end_day");
-                        option_dependency(vm, "wx_station_filename", "end_hour");
-                        option_dependency(vm, "wx_station_filename", "end_minute");
+                        option_dependency(vm, "wx_station_filename", "stop_year");
+                        option_dependency(vm, "wx_station_filename", "stop_month");
+                        option_dependency(vm, "wx_station_filename", "stop_day");
+                        option_dependency(vm, "wx_station_filename", "stop_hour");
+                        option_dependency(vm, "wx_station_filename", "stop_minute");
                         option_dependency(vm, "wx_station_filename", "number_time_steps");
 
                         timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -1116,11 +1121,11 @@ int windNinjaCLI(int argc, char* argv[])
                                                              vm["start_day"].as<int>(),
                                                              vm["start_hour"].as<int>(),
                                                              vm["start_minute"].as<int>(),
-                                                             vm["end_year"].as<int>(),
-                                                             vm["end_month"].as<int>(),
-                                                             vm["end_day"].as<int>(),
-                                                             vm["end_hour"].as<int>(),
-                                                             vm["end_minute"].as<int>(),
+                                                             vm["stop_year"].as<int>(),
+                                                             vm["stop_month"].as<int>(),
+                                                             vm["stop_day"].as<int>(),
+                                                             vm["stop_hour"].as<int>(),
+                                                             vm["stop_minute"].as<int>(),
                                                              vm["number_time_steps"].as<int>(),
                                                              osTimeZone );
                         std::vector<std::string> sFiles;
@@ -1158,22 +1163,22 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "wx_station_filename", "start_day");
                     option_dependency(vm, "wx_station_filename", "start_hour");
                     option_dependency(vm, "wx_station_filename", "start_minute");
-                    option_dependency(vm, "wx_station_filename", "end_year");
-                    option_dependency(vm, "wx_station_filename", "end_month");
-                    option_dependency(vm, "wx_station_filename", "end_day");
-                    option_dependency(vm, "wx_station_filename", "end_hour");
-                    option_dependency(vm, "wx_station_filename", "end_minute");
+                    option_dependency(vm, "wx_station_filename", "stop_year");
+                    option_dependency(vm, "wx_station_filename", "stop_month");
+                    option_dependency(vm, "wx_station_filename", "stop_day");
+                    option_dependency(vm, "wx_station_filename", "stop_hour");
+                    option_dependency(vm, "wx_station_filename", "stop_minute");
                     option_dependency(vm, "wx_station_filename", "number_time_steps");
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
                                                          vm["start_month"].as<int>(),
                                                          vm["start_day"].as<int>(),
                                                          vm["start_hour"].as<int>(),
                                                          vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
                     std::vector<std::string> sFiles;
@@ -1346,6 +1351,35 @@ int windNinjaCLI(int argc, char* argv[])
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
+
+                if(vm["solver_type"].as<string>()==string("semiLagrangianTransient"))
+                {
+                    verify_option_set(vm, "start_year");
+                    verify_option_set(vm, "start_month");
+                    verify_option_set(vm, "start_day");
+                    verify_option_set(vm, "start_hour");
+                    verify_option_set(vm, "start_minute");
+                    verify_option_set(vm, "start_second");
+                    verify_option_set(vm, "stop_year");
+                    verify_option_set(vm, "stop_month");
+                    verify_option_set(vm, "stop_day");
+                    verify_option_set(vm, "stop_hour");
+                    verify_option_set(vm, "stop_minute");
+                    verify_option_set(vm, "stop_second");
+                    verify_option_set(vm, "time_zone");
+                    verify_option_set(vm, "output_frequency_hour");
+                    verify_option_set(vm, "output_frequency_minute");
+                    verify_option_set(vm, "output_frequency_second");
+
+                    windsim.setSimulationStartTime( i_, vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>(),
+                                     vm["start_hour"].as<int>(), vm["start_minute"].as<int>(), vm["start_second"].as<int>(),
+                                     osTimeZone );
+                    windsim.setSimulationStopTime( i_, vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>(),
+                                     vm["stop_hour"].as<int>(), vm["stop_minute"].as<int>(), vm["stop_second"].as<int>(),
+                                     osTimeZone );
+
+                    windsim.setSimulationOutputFrequency( i_, vm["output_frequency_hour"].as<int>(), vm["output_frequency_minute"].as<int>(), vm["output_frequency_second"].as<int>());
+                }
 
                 if(vm["diurnal_winds"].as<bool>())
                 {

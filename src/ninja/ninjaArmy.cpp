@@ -113,6 +113,12 @@ void ninjaArmy::makeDomainAverageInitializationArmy(int numNinjas, eSolverType s
             }
             else if(solverType == cfdSteadyState){
                  ninjas[i] = new NinjaFoam();
+            }
+            else if(solverType == semiLagrangianSteadyState){
+                 ninjas[i] = new NinjaSemiLagrangian();
+            }
+            else if(solverType == semiLagrangianTransient){
+                 ninjas[i] = new NinjaSemiLagrangian();
             }else
             {
                 throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
@@ -123,6 +129,12 @@ void ninjaArmy::makeDomainAverageInitializationArmy(int numNinjas, eSolverType s
             }
             else if(solverType == cfdSteadyState){
                  throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
+            }
+            else if(solverType == semiLagrangianSteadyState){
+                 ninjas[i] = new NinjaSemiLagrangian();
+            }
+            else if(solverType == semiLagrangianTransient){
+                 ninjas[i] = new NinjaSemiLagrangian();
             }else
             {
                 throw std::runtime_error(std::string("Cannot determine solverType in ninjaArmy::makeWeatherModelInitializationArmy()."));
@@ -1211,6 +1223,34 @@ int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string dir
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
 }
 #endif
+
+
+/*-----------------------------------------------------------------------------
+ *  NinjaSemiLagrangian Methods
+ *-----------------------------------------------------------------------------*/
+int ninjaArmy::setSimulationStartTime( const int nIndex, int const &yr, int const &mo, int const &day,
+                 int const &hr, int const &min, int const &sec,
+                 std::string const &timeZoneString, char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_simulationStartTime( yr, mo, day, hr, min, sec, timeZoneString ) );
+}
+
+int ninjaArmy::setSimulationStopTime( const int nIndex, int const &yr, int const &mo, int const &day,
+                 int const &hr, int const &min, int const &sec,
+                 std::string const &timeZoneString, char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_simulationStopTime( yr, mo, day, hr, min, sec, timeZoneString ) );
+}
+
+int ninjaArmy::setSimulationOutputFrequency( const int nIndex, int const &hr, int const &min, int const &sec,
+                char ** papszOptions=NULL )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_simulationOutputFrequency( hr, min, sec ) );
+}
+
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
  *-----------------------------------------------------------------------------*/

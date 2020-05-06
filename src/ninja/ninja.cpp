@@ -277,8 +277,8 @@ bool ninja::simulate_wind()
 #endif
 
 /*  ----------------------------------------*/
-/*  START OUTER INTERATIVE LOOP FOR         */
-/*  MATCHING INPUT POINTS		    */
+/*  START OUTER ITERATIVE LOOP FOR          */
+/*  MATCHING INPUT POINTS		            */
 /*  ----------------------------------------*/
 
     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
@@ -304,7 +304,7 @@ bool ninja::simulate_wind()
 /*  ----------------------------------------*/
 /*  VELOCITY INITIALIZATION                 */
 /*  ----------------------------------------*/
-    do
+    do  //start wx station matching do-while loop
     {
         if(input.matchWxStations == true)
         {
@@ -581,32 +581,32 @@ void ninja::interp_uvw()
         //            JUST TESTING!!!!!!     DELETE!!!!!
 
         //Add a blob of stronger wind using a multiplier of existing wind speed
-        double blobWindSpeedMultiplier = 3.0;
-        double blobWindSpeed = 30.0;
+//        double blobWindSpeedMultiplier = 3.0;
+//        double blobWindSpeed = 30.0;
 
-        for(int k=0; k<U.vectorData_x.mesh_->nlayers; k++)
-        {
-            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
-            {
-                for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
-                {
-                    if(j>5 && j<10)
-                    {
-                        if(k>5 && k<10)
-                        {
-                            //U.vectorData_x(i,j,k) = blobWindSpeedMultiplier * U.vectorData_x(i,j,k);
-                            U.vectorData_x(i,j,k) = blobWindSpeed;
-                        }
-                    }
-                }
-            }
-        }
+//        for(int k=0; k<U.vectorData_x.mesh_->nlayers; k++)
+//        {
+//            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+//            {
+//                for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+//                {
+//                    if(j>5 && j<10)
+//                    {
+//                        if(k>5 && k<10)
+//                        {
+//                            //U.vectorData_x(i,j,k) = blobWindSpeedMultiplier * U.vectorData_x(i,j,k);
+//                            U.vectorData_x(i,j,k) = blobWindSpeed;
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
-        double dt = 10.0;
-        wn_3dVectorField U1(U);
-        TransportSemiLagrangian transport;
-        transport.transportVector(U, U1, dt);
-        U = U1;
+//        double dt = 10.0;
+//        wn_3dVectorField U1(U);
+//        TransportSemiLagrangian transport;
+//        transport.transportVector(U, U1, dt);
+//        U = U1;
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -2488,6 +2488,55 @@ void ninja::set_date_time(boost::local_time::local_date_time time)
 
     if(input.ninjaTime.is_not_a_date_time())
         throw std::runtime_error("Time could not be properly set in ninja::set_date_time().");
+}
+
+void ninja::set_simulationStartTime(int const &yr, int const &mo, int const &day, int const &hr,
+                          int const &min, int const &sec, std::string const &timeZoneString)
+{
+  input.ninjaTimeZone =
+      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if( NULL ==  input.ninjaTimeZone )
+    {
+        ostringstream os;
+        os << "The time zone string: " << timeZoneString.c_str() << " does not match any in "
+                << "the time zone database file: date_time_zonespec.csv.";
+        throw std::runtime_error(os.str());
+    }
+
+    input.simulationStartTime = boost::local_time::local_date_time( boost::gregorian::date(yr, mo, day),
+            boost::posix_time::time_duration(hr,min,sec,0),
+            input.ninjaTimeZone,
+            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+
+    if(input.simulationStartTime.is_not_a_date_time())
+        throw std::runtime_error("Time could not be properly set in ninja::set_simulationStartTime().");
+}
+
+void ninja::set_simulationStopTime(int const &yr, int const &mo, int const &day, int const &hr,
+                          int const &min, int const &sec, std::string const &timeZoneString)
+{
+  input.ninjaTimeZone =
+      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if( NULL ==  input.ninjaTimeZone )
+    {
+        ostringstream os;
+        os << "The time zone string: " << timeZoneString.c_str() << " does not match any in "
+                << "the time zone database file: date_time_zonespec.csv.";
+        throw std::runtime_error(os.str());
+    }
+
+    input.simulationStopTime = boost::local_time::local_date_time( boost::gregorian::date(yr, mo, day),
+            boost::posix_time::time_duration(hr,min,sec,0),
+            input.ninjaTimeZone,
+            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+
+    if(input.simulationStopTime.is_not_a_date_time())
+        throw std::runtime_error("Time could not be properly set in ninja::set_simulationStopTime().");
+}
+
+void ninja::set_simulationOutputFrequency( int const &hr, int const &min, int const &sec )
+{
+    input.simulationOutputFrequency = boost::posix_time::time_duration(hr,min,sec,0);
 }
 
 boost::local_time::local_date_time ninja::get_date_time() const

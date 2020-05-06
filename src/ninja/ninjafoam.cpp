@@ -2481,7 +2481,7 @@ int NinjaFoam::WriteOutputFiles()
 			if(input.writeAtmFile)
 			{
 			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+                atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
 			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
 			}
 		}
@@ -2562,12 +2562,12 @@ int NinjaFoam::WriteOutputFiles()
 			ninjaKmlFiles.setDemFile(input.dem.fileName);
 
 			ninjaKmlFiles.setLegendFile(input.legFile);
-			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
+            ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
 			ninjaKmlFiles.setDirGrid(*angTempGrid);
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
-			ninjaKmlFiles.setTime(input.ninjaTime);
+            ninjaKmlFiles.setTime(input.ninjaTime);
 
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{

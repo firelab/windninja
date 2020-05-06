@@ -236,6 +236,11 @@ public:
                        std::string const &timeZoneString);
 
     void set_date_time(boost::local_time::local_date_time time);
+    void set_simulationStartTime(int const &yr, int const &mo, int const &day, int const &hr,
+                              int const &min, int const &sec, std::string const &timeZoneString);
+    void set_simulationStopTime(int const &yr, int const &mo, int const &day, int const &hr,
+                              int const &min, int const &sec, std::string const &timeZoneString);
+    void set_simulationOutputFrequency( int const &hr, int const &min, int const &sec );
     boost::local_time::local_date_time get_date_time() const;
 
     void set_uniAirTemp(double temp, temperatureUnits::eTempUnits units);

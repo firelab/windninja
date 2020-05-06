@@ -304,6 +304,13 @@ public:
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
 #endif
+
+    /*-----------------------------------------------------------------------------
+     *  ninjaSemiLagrangian section
+     *-----------------------------------------------------------------------------*/
+    boost::local_time::local_date_time simulationStartTime;		//time and date class
+    boost::local_time::local_date_time simulationStopTime;		//time and date class
+    boost::posix_time::time_duration simulationOutputFrequency;
 };
 
 #endif	/* WINDNINJAINPUTS_H */

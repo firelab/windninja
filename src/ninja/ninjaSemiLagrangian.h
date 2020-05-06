@@ -61,9 +61,14 @@ public:
 
     TransportSemiLagrangian transport;
 
+    boost::local_time::local_date_time currentTime;		//tracks current time as simulation progresses
+    boost::posix_time::time_duration currentDt;   //current time step size in seconds (can change during simulation)
+    boost::posix_time::time_duration currentDt0;  //current old time step size in seconds (from last time step)
+
 private:
     /* Output */
     virtual void deleteDynamicMemory();
+    void stepForwardOneTimestep();
 
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
