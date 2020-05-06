@@ -138,7 +138,7 @@ bool NinjaFoam::simulate_wind()
     status = SetMeshResolutionAndResampleDem();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting mesh resolution.");
-        return NINJA_E_OTHER;
+        return false;
     }
 
     checkInputs();
@@ -191,14 +191,14 @@ bool NinjaFoam::simulate_wind()
         status = GenerateNewCase();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up new OpenFOAM case");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
     else{ //otherwise, we're just updating an existing case
         status = UpdateExistingCase();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error setting up existing case.");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
 
@@ -215,7 +215,7 @@ bool NinjaFoam::simulate_wind()
     status = ApplyInit();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during applyInit().");
-        return NINJA_E_OTHER;
+        return false;
     }
 
     checkCancel();
@@ -234,7 +234,7 @@ bool NinjaFoam::simulate_wind()
         status = DecomposePar();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during decomposePar().");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
 
@@ -247,7 +247,7 @@ bool NinjaFoam::simulate_wind()
             //no coarsening if this is an existing case
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
                     "mesh for existing case directory. Try again without using an existing case.");
-            return NINJA_E_OTHER;
+            return false;
         }
         //try solving with previous mesh iterations (less refinement)
         while(latestTime > 50){
@@ -270,7 +270,7 @@ bool NinjaFoam::simulate_wind()
             status = ApplyInit();
             if(status != 0){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during applyInit().");
-                return NINJA_E_OTHER;
+                return false;
             }
             if(input.numberCPUs > 1){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
@@ -287,7 +287,7 @@ bool NinjaFoam::simulate_wind()
         //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
         if( status != 0 & latestTime == 50 ){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
     CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
@@ -297,7 +297,7 @@ bool NinjaFoam::simulate_wind()
         status = ReconstructPar();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during ReconstructPar(). Check that number of iterations is a multiple of 100.");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
 
@@ -316,13 +316,13 @@ bool NinjaFoam::simulate_wind()
     status = Sample();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while sampling the output.");
-        return NINJA_E_OTHER;
+        return false;
     }
 
     status = SampleRawOutput();
     if(status != 0){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error while sampling the raw output.");
-        return NINJA_E_OTHER;
+        return false;
     }
 
     #ifdef _OPENMP
@@ -343,7 +343,7 @@ bool NinjaFoam::simulate_wind()
         status = WriteOutputFiles();
         if(status != 0){
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during output file writing.");
-            return NINJA_E_OTHER;
+            return false;
         }
     }
            
@@ -921,7 +921,7 @@ int NinjaFoam::SetBlockMeshParametersFromDem()
 
     //we need several cells on all sides of the blockMesh
     //the blockMesh is at least twice as coarse as the refined mesh (meshResolution)
-    if(nCells[0] < 4 || nCells[1] < 4 || nCells[2] < 4)
+    if(nCells[0] < 4 || nCells[1] < 4 || nCells[2] < 2)
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone,
                 "The requested mesh resolution %.1f m is too coarse.", meshResolution);
