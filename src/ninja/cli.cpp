@@ -1424,13 +1424,13 @@ int windNinjaCLI(int argc, char* argv[])
                     if(vm.count("output_path")){
                         wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                                                 vm["elevation_file"].as<std::string>(),
-                                                vm["output_path"].as<std::string>());
+                                                vm["output_path"].as<std::string>(), velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
                     }
                     else
                     {
                         wxStation::writeKmlFile(windsim.getWxStations( i_ ),
                                                 vm["elevation_file"].as<std::string>(),
-                                                    "");
+                                                    "", velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
                     }
                 }
 

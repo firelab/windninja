@@ -154,7 +154,7 @@ class wxStation
     static void stationViewer(wxStation station);
 
     static void writeKmlFile( std::vector<wxStation> stations,
-                  std::string demFileName,std::string basePath );
+                  std::string demFileName,std::string basePath, velocityUnits::eVelocityUnits velUnits);
     static void writeKMZFile(std::vector<wxStation> stations,std::string basePath, std::string demFileName);
     static vector<std::string> stationKmlNames;
 
