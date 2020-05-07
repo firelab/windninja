@@ -250,7 +250,6 @@ bool ninja::simulate_wind()
 	
 	readInputFile();
 	set_position();
-	set_uniVegetation();
 
 	checkInputs();
 

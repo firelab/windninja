@@ -368,6 +368,8 @@ void ninja::importSingleBand(GDALDataset *poDataset)
 	}
     }
     delete[] padfScanline;
+
+    set_uniVegetation();
 }
 
 /**
