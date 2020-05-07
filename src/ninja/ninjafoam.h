@@ -84,17 +84,17 @@ private:
     static const char *pszFoamPath;
 
     /* OpenFOAM case setup */
-    int UpdateExistingCase();
-    int GenerateNewCase();
-    int WriteFoamFiles();
-    int WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
-    int WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
-    int WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
-    int AddBcBlock(std::string &dataString);
-    int WritePBoundaryField(std::string &dataString);
-    int WriteUBoundaryField(std::string &dataString);
-    int WriteKBoundaryField(std::string &dataString);
-    int WriteEpsilonBoundaryField(std::string &dataString);
+    void UpdateExistingCase();
+    void GenerateNewCase();
+    void WriteFoamFiles();
+    void WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
+    void WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
+    void WriteConstantFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFilename);
+    void AddBcBlock(std::string &dataString);
+    void WritePBoundaryField(std::string &dataString);
+    void WriteUBoundaryField(std::string &dataString);
+    void WriteKBoundaryField(std::string &dataString);
+    void WriteEpsilonBoundaryField(std::string &dataString);
     
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
@@ -113,9 +113,9 @@ private:
     std::string template_;
 
     /* mesh */
-    int writeMoveDynamicMesh();
-    int writeBlockMesh();
-    int SetBlockMeshParametersFromDem(); //sets blockMesh data from DEM
+    void writeMoveDynamicMesh();
+    void writeBlockMesh();
+    void SetBlockMeshParametersFromDem(); //sets blockMesh data from DEM
 
     std::vector<std::string> bboxField;
     std::vector<std::string> cellField;
@@ -132,7 +132,7 @@ private:
     /* OpenFOAM case control */
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
-    int CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
+    void CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
     void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
     void UpdateSimpleFoamControlDict();
 
@@ -144,30 +144,29 @@ private:
     std::vector<std::string> GetProcessorDirsOnDisk();
     bool StringIsNumeric(const std::string &str);
     double GetFirstCellHeightFromDisk();
-    int CheckForValidCaseDir(const char* dir);
-    int CheckForValidDem();
-    int SetMeshResolutionAndResampleDem();
+    bool CheckForValidCaseDir(const char* dir);
+    bool CheckForValidDem();
+    void SetMeshResolutionAndResampleDem();
 
-    int WriteNinjaLog();
+    void WriteNinjaLog();
     
     /* OpenFOAM utilities */
-    int RefineSurfaceLayer();
-    int MoveDynamicMesh();
-    int TopoSet();
-    int RefineMesh();
-    int BlockMesh();
-    int DecomposePar();
-    int ReconstructParMesh();
-    int ReconstructPar();
-    int RenumberMesh();
-    int ApplyInit();
-    int SimpleFoam();
-    int Sample();
+    void RefineSurfaceLayer();
+    void MoveDynamicMesh();
+    void TopoSet();
+    void RefineMesh();
+    void BlockMesh();
+    void DecomposePar();
+    void ReconstructPar();
+    void RenumberMesh();
+    void ApplyInit();
+    bool SimpleFoam();
+    void Sample();
 
     /* Output */
     Elevation outputSampleGrid;
-    int SampleRawOutput();
-    int WriteOutputFiles();
+    void SampleRawOutput();
+    void WriteOutputFiles();
     void SetOutputResolution();
     void SetOutputFilenames();
 
