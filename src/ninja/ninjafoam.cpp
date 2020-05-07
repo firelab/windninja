@@ -901,8 +901,12 @@ int NinjaFoam::SetBlockMeshParametersFromDem()
     double dz = input.dem.get_maxValue() - input.dem.get_minValue();
     double dx = input.dem.get_xDimension();
     double dy = input.dem.get_yDimension();
+
+    double blockMeshResolution = meshResolution*2*nRoundsRefinement;
     
+    int minNumVerticalLayers = 11;
     double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
+    blockMeshDz = max(blockMeshDz, minNumVerticalLayers*blockMeshResolution);
 
     //set blockMesh parameters based on the meshResolution
     //input.dem has already been re-sampled to meshResolution
@@ -914,20 +918,20 @@ int NinjaFoam::SetBlockMeshParametersFromDem()
     bbox.push_back( input.dem.get_yllCorner() + input.dem.get_yDimension() ); //ymax
     bbox.push_back( input.dem.get_maxValue() + blockMeshDz ); //zmax
 
-    nCells.push_back(int( (bbox[3] - bbox[0]) / (meshResolution*2*nRoundsRefinement))); // Nx1
-    nCells.push_back(int( (bbox[4] - bbox[1]) / (meshResolution*2*nRoundsRefinement))); // Ny1
-    nCells.push_back(int( (bbox[5] - bbox[2]) / (meshResolution*2*nRoundsRefinement))); // Nz1
+    nCells.push_back(int( (bbox[3] - bbox[0]) / (blockMeshResolution))); // Nx1
+    nCells.push_back(int( (bbox[4] - bbox[1]) / (blockMeshResolution))); // Ny1
+    nCells.push_back(int( (bbox[5] - bbox[2]) / (blockMeshResolution))); // Nz1
 
     //we need several cells on all sides of the blockMesh
     //the blockMesh is at least twice as coarse as the refined mesh (meshResolution)
-    if(nCells[0] < 4 || nCells[1] < 4 || nCells[2] < 2)
+    if(nCells[0] < 10 || nCells[1] < 10 || nCells[2] < 10)
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone,
                 "The requested mesh resolution %.1f m is too coarse.", meshResolution);
         return NINJA_E_OTHER;
     }
 
-    initialFirstCellHeight = meshResolution*2*nRoundsRefinement; //height of first cell
+    initialFirstCellHeight = blockMeshResolution; //height of first cell
 
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
