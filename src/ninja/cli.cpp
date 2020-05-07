@@ -912,11 +912,77 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
 
-                    windsim.makeWeatherModelInitializationArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
-                                                            vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone,
-                                                            timeList,
-                                                            windsim.getSolverType( vm["solver_type"].as<std::string>() ));
+                    std::string forecastFileName = model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                                                                                vm["forecast_duration"].as<int>() );
+                    if(vm.count("start_year"))
+                    {
+                        conflicting_options(vm, "forecast_time", "start_year");
+                        verify_option_set(vm, "start_month");
+                        verify_option_set(vm, "start_day");
+                        verify_option_set(vm, "start_hour");
+                        verify_option_set(vm, "start_minute");
+                        verify_option_set(vm, "stop_year");
+                        verify_option_set(vm, "stop_month");
+                        verify_option_set(vm, "stop_day");
+                        verify_option_set(vm, "stop_hour");
+                        verify_option_set(vm, "stop_minute");
+
+                        std::vector<blt::local_date_time> fullModelTimes;
+                        fullModelTimes = model->getTimeList(osTimeZone);
+
+                        boost::local_time::time_zone_ptr timeZone;
+                        timeZone = globalTimeZoneDB.time_zone_from_region(osTimeZone);
+                        if( NULL ==  timeZone )
+                        {
+                            ostringstream os;
+                            os << "The time zone string: " << osTimeZone.c_str() << " does not match any in "
+                               << "the time zone database file: date_time_zonespec.csv.";
+                            throw std::runtime_error(os.str());
+                        }
+
+                        blt::local_date_time simulationStartTime(boost::local_time::not_a_date_time);
+                        blt::local_date_time simulationStopTime(boost::local_time::not_a_date_time);
+                        simulationStartTime = boost::local_time::local_date_time( boost::gregorian::date(vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["start_hour"].as<int>(),vm["start_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        simulationStopTime = boost::local_time::local_date_time( boost::gregorian::date(vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["stop_hour"].as<int>(),vm["stop_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        if(simulationStartTime >= simulationStopTime)
+                        {
+                            ostringstream os;
+                            os << "The simulation start time: " << simulationStartTime << " cannot be after the simulation stop time: "
+                               << simulationStopTime << "." << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+
+                        for(int i=0; i<fullModelTimes.size(); i++)
+                        {
+                            if(fullModelTimes[i] >= simulationStartTime && fullModelTimes[i] <= simulationStopTime)
+                                timeList.push_back(fullModelTimes[i]);
+                        }
+
+                        if(timeList.size() <= 0)
+                        {
+                            ostringstream os;
+                            os << "No timesteps in the forecast occurred between the specified start and stop times: " << std::endl
+                               << "Simulation start time:\t" << simulationStartTime << std::endl
+                               << "Simulation stop time:\t" << simulationStopTime << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+                    }
+
+                    windsim.makeWeatherModelInitializationArmy( forecastFileName,
+                                                                osTimeZone,
+                                                                timeList,
+                                                                windsim.getSolverType( vm["solver_type"].as<std::string>() ));
+                }
+                catch (exception& e)
+                {
+                    cout << "Exception caught: " << e.what() << endl;
+                    return -1;
                 }
                 catch(... )
                 {

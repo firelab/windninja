@@ -217,7 +217,7 @@ bool ninja::simulate_wind()
 {
     checkCancel();
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
+	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
     readInputFile();
     set_position();
