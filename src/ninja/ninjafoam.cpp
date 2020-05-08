@@ -44,8 +44,6 @@ NinjaFoam::NinjaFoam() : ninja()
     inletoutletvalue = "";
     template_ = "";
     
-    foamRoughness = 0.01; 
-
     meshResolution = -1.0;
     initialFirstCellHeight = -1.0;
     oldFirstCellHeight = -1.0;
@@ -385,14 +383,7 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
                                                               direction[1],
                                                               direction[2]));
     ReplaceKeys(s, "$InputWindHeight$", boost::lexical_cast<std::string>(input.inputWindHeight)); //input wind height in ninjafoam mesh is always height above canopy
-
-    /*
-     * set roughness to 0.01 regardless of veg type until we fix how roughness
-     * is handled in the OpenFOAM BCs and turbulence model
-     */
-    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( foamRoughness ));
-    //ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
-
+    ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
     ReplaceKeys(s, "$Rd$", boost::lexical_cast<std::string>( input.surface.Rough_d.get_meanValue() ));
     ReplaceKeys(s, "$inletoutletvalue$", inletoutletvalue);
 
@@ -451,7 +442,7 @@ void NinjaFoam::WriteZeroFiles(VSILFILE *fin, VSILFILE *fout, const char *pszFil
     }
 
     else if(std::string(pszFilename) == "nut"){
-        ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( foamRoughness ));
+        ReplaceKeys(s, "$z0$", boost::lexical_cast<std::string>( input.surface.Roughness.get_meanValue() ));
     }
 
     dataString.append(s);
