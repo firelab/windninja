@@ -41,7 +41,7 @@ double GDALGetMax( GDALDataset *poDS )
     GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
     double adfMinMax[2];
 
-    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
 
     return adfMinMax[1];
 }
@@ -56,7 +56,7 @@ double GDALGetMin( GDALDataset *poDS )
     GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
     double adfMinMax[2];
 
-    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
 
     return adfMinMax[0];
 }
