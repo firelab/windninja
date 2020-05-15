@@ -1400,31 +1400,36 @@ double mainWindow::computeCellSize(int index)
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
 
-    double XLength = (GDALXSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01); //buffer for MDM
-    double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     double dz = GDALMaxValue - GDALMinValue;
     double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
 
     double volume;
     double cellCount;
     double cellVolume;
 
-    volume = XLength * YLength * ZLength; //volume of blockMesh
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
-    meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
 
     //determine number of rounds of refinement
     int nCellsToAdd = 0;
     int refinedCellCount = 0;
-    int nCellsInLowestLayer = int(XLength/meshResolution) * int(YLength/meshResolution);
-    while(refinedCellCount < (0.5 * cellCount)){
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
         nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
         refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
         nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
-        meshResolution /= 2.0; 
+        nRoundsRefinement += 1;
     }
+    meshResolution = side/(nRoundsRefinement*2.0);
   }
   else{
     /* native windninja mesh */
@@ -1700,12 +1705,14 @@ int mainWindow::solve()
             ninjafoamMeshChoice = WindNinjaInputs::medium;
         else if (meshIndex == 2)
             ninjafoamMeshChoice = WindNinjaInputs::fine;
+        else {
         meshRes = tree->surface->meshResDoubleSpinBox->value();
         customMesh = true;
         if( tree->surface->meshFeetRadioButton->isChecked() )
             meshUnits = lengthUnits::feet;
         else
             meshUnits = lengthUnits::meters;
+        }
     }
 #endif
 

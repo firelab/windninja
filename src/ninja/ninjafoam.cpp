@@ -1143,7 +1143,7 @@ void NinjaFoam::MoveDynamicMesh()
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
             checkCancel();
             data[sizeof(data)-1] = '\0';
-            CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
+            //CPLDebug("NINJAFOAM", "moveDynamicMesh: %s", data);
             s.append(data);
 
             if(s.rfind("GAMG") != s.npos){
@@ -1525,7 +1525,7 @@ bool NinjaFoam::SimpleFoam()
             checkCancel();
             data[sizeof(data)-1] = '\0';
             s.append(data);
-            CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
+            //CPLDebug("NINJAFOAM", "simpleFoam: %s", data);
             if(s.rfind("smoothSolver") != s.npos){
                 startPos = s.rfind("smoothSolver");
                 pos = s.rfind("Time = ", startPos);
@@ -2805,7 +2805,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     //otherwise, if the mesh resolution hasn't been set, calculate it
     else if(meshResolution < 0.0){
         // get some info from the DEM
-        double xmin, ymin, zmin, xmax, ymax, zmax;
+        double zmin, zmax;
         double meshVolume;
         double cellVolume;
         double side;
@@ -2816,24 +2816,18 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
 
         double blockMeshDz = max((0.1 * max(dx, dy)), (dz + 0.1 * dz));
 
-        int nCellsX, nCellsY, nCellsZ;
+        int nCellsX, nCellsY;
 
-        xmin = input.dem.get_xllCorner(); //xmin 
-        ymin = input.dem.get_yllCorner(); //ymin
         zmin = input.dem.get_maxValue() + 0.05 * blockMeshDz; //zmin (above highest point in DEM for MDM)
-        xmax = input.dem.get_xllCorner() + input.dem.get_xDimension(); //xmax
-        ymax = input.dem.get_yllCorner() + input.dem.get_yDimension(); //ymax
         zmax = input.dem.get_maxValue() + blockMeshDz; //zmax
 
         //total volume for block mesh
-        meshVolume = (xmax - xmin) * (ymax - ymin) * (zmax - zmin); 
+        meshVolume = dx * dy * (zmax-zmin); 
         cellCount = 0.5 * input.meshCount; //half the cells in the blockMesh and half reserved for refineMesh
         cellVolume = meshVolume/cellCount; // volume of 1 cell
         side = std::pow(cellVolume, (1.0/3.0)); // length of side of regular hex cell
-
-        nCellsX=int( (xmax - xmin) / side);
-        nCellsY=int( (ymax - ymin) / side);
-        nCellsZ=int( (zmax - zmin) / side);
+        nCellsX=int( dx / side);
+        nCellsY=int( dy / side);
         //determine number of rounds of refinement
         int nCellsToAdd = 0;
         int refinedCellCount = 0;
@@ -2847,8 +2841,9 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
         CPLDebug("NINJAFOAM", "refinedCellCount = %d", refinedCellCount);
         CPLDebug("NINJAFOAM", "nCellsInLowestLayer = %d", nCellsInLowestLayer);
         CPLDebug("NINJAFOAM", "nCellsToAdd = %d", nCellsToAdd);
+        CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
 
-        set_meshResolution(side/(nRoundsRefinement*2), lengthUnits::meters);
+        set_meshResolution(side/(nRoundsRefinement*2.0), lengthUnits::meters);
     } 
     else{ //if the mesh resolution has been set
         //default to two rounds of refinement
