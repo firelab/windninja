@@ -1433,8 +1433,8 @@ double mainWindow::computeCellSize(int index)
   }
   else{
     /* native windninja mesh */
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
     double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
     double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1445,8 +1445,8 @@ double mainWindow::computeCellSize(int index)
   
   }
 #else 
-  double XLength = (GDALXSize + 1) * GDALCellSize;
-  double YLength = (GDALYSize + 1) * GDALCellSize;
+  double XLength = GDALXSize * GDALCellSize;
+  double YLength = GDALYSize * GDALCellSize;
   double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
   double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1610,8 +1610,8 @@ int mainWindow::checkInputFile(QString fileName)
 
     GDALClose( (GDALDatasetH)poInputDS );
 
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
 

@@ -785,8 +785,8 @@ void Mesh::compute_cellsize(Elevation& dem)
 {
     double nXcells, nYcells, Xlength, Ylength, Xcellsize, Ycellsize;
 
-    Xlength=(dem.get_nCols()+1)*dem.get_cellSize();
-    Ylength=(dem.get_nRows()+1)*dem.get_cellSize();
+    Xlength=dem.get_nCols()*dem.get_cellSize();
+    Ylength=dem.get_nRows()*dem.get_cellSize();
 
     nXcells=2*std::sqrt((double)targetNumHorizCells)*(Xlength/(Xlength+Ylength));
     nYcells=2*std::sqrt((double)targetNumHorizCells)*(Ylength/(Xlength+Ylength));
