@@ -202,16 +202,16 @@ int windNinjaCLI(int argc, char* argv[])
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
                 ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (Mesonet API) (true/false)")
-                ("start_year",po::value<int>(),"point initialization: start year for simulation")
-                ("start_month",po::value<int>(),"point initialization: start month for simulation")
-                ("start_day",po::value<int>(),"point initialization: start day for simulation")
-                ("start_hour",po::value<int>(),"point initialization: start hour for simulation")
-                ("start_minute",po::value<int>(),"point initialization: start minute for simulation")
-                ("end_year",po::value<int>(),"point initialization: end year for simulation")
-                ("end_month",po::value<int>(),"point initialization: end month for simulation")
-                ("end_day",po::value<int>(),"point initialization: end day for simulation")
-                ("end_hour",po::value<int>(),"point initialization: end hour for simulation")
-                ("end_minute",po::value<int>(),"point initialization: end minute for simulation")
+                ("start_year",po::value<int>(),"point and weather model initialization: start year for simulation")
+                ("start_month",po::value<int>(),"point and weather model initialization: start month for simulation")
+                ("start_day",po::value<int>(),"point and weather model initialization: start day for simulation")
+                ("start_hour",po::value<int>(),"point and weather model initialization: start hour for simulation")
+                ("start_minute",po::value<int>(),"point and weather model initialization: start minute for simulation")
+                ("stop_year",po::value<int>(),"point and weather model initialization: end year for simulation")
+                ("stop_month",po::value<int>(),"point and weather model initialization: end month for simulation")
+                ("stop_day",po::value<int>(),"point and weather model initialization: end day for simulation")
+                ("stop_hour",po::value<int>(),"point and weather model initialization: end hour for simulation")
+                ("stop_minute",po::value<int>(),"point and weather model initialization: end minute for simulation")
                 ("number_time_steps",po::value<int>(),"point initialization: number of timesteps for simulation")
                 ("fetch_metadata",po::value<bool>()->default_value(false),"get weather station metadata for a domain")
                 ("metadata_filename",po::value<std::string>(),"filename for weather station metadata")
@@ -877,12 +877,73 @@ int windNinjaCLI(int argc, char* argv[])
                 try
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                    std::string forecastFileName = model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                                                                                vm["forecast_duration"].as<int>() );
+                    if(vm.count("start_year"))
+                    {
+                        conflicting_options(vm, "forecast_time", "start_year");
+                        verify_option_set(vm, "start_month");
+                        verify_option_set(vm, "start_day");
+                        verify_option_set(vm, "start_hour");
+                        verify_option_set(vm, "start_minute");
+                        verify_option_set(vm, "stop_year");
+                        verify_option_set(vm, "stop_month");
+                        verify_option_set(vm, "stop_day");
+                        verify_option_set(vm, "stop_hour");
+                        verify_option_set(vm, "stop_minute");
+
+                        std::vector<blt::local_date_time> fullModelTimes;
+                        fullModelTimes = model->getTimeList(osTimeZone);
+
+                        boost::local_time::time_zone_ptr timeZone;
+                        timeZone = globalTimeZoneDB.time_zone_from_region(osTimeZone);
+                        if( NULL ==  timeZone )
+                        {
+                            ostringstream os;
+                            os << "The time zone string: " << osTimeZone.c_str() << " does not match any in "
+                               << "the time zone database file: date_time_zonespec.csv.";
+                            throw std::runtime_error(os.str());
+                        }
+
+                        blt::local_date_time simulationStartTime(boost::local_time::not_a_date_time);
+                        blt::local_date_time simulationStopTime(boost::local_time::not_a_date_time);
+                        simulationStartTime = boost::local_time::local_date_time( boost::gregorian::date(vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["start_hour"].as<int>(),vm["start_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        simulationStopTime = boost::local_time::local_date_time( boost::gregorian::date(vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["stop_hour"].as<int>(),vm["stop_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        if(simulationStartTime >= simulationStopTime)
+                        {
+                            ostringstream os;
+                            os << "The simulation start time: " << simulationStartTime << " cannot be after the simulation stop time: "
+                               << simulationStopTime << "." << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+
+                        for(int i=0; i<fullModelTimes.size(); i++)
+                        {
+                            if(fullModelTimes[i] >= simulationStartTime && fullModelTimes[i] <= simulationStopTime)
+                                timeList.push_back(fullModelTimes[i]);
+                        }
+
+                        if(timeList.size() <= 0)
+                        {
+                            ostringstream os;
+                            os << "No timesteps in the forecast occurred between the specified start and stop times: " << std::endl
+                               << "Simulation start time:\t" << simulationStartTime << std::endl
+                               << "Simulation stop time:\t" << simulationStopTime << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+                    }
+
 #ifdef NINJAFOAM
-                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
-                                                            vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone,
-                                                            timeList,
-                                                            vm["momentum_flag"].as<bool>() );
+                    windsim.makeArmy( forecastFileName,
+                                      osTimeZone,
+                                      timeList,
+                                      vm["momentum_flag"].as<bool>() );
 #else
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
@@ -890,6 +951,11 @@ int windNinjaCLI(int argc, char* argv[])
                                                             timeList,
                                                             false );
 #endif
+                }
+                catch (exception& e)
+                {
+                    cout << "Exception caught: " << e.what() << endl;
+                    return -1;
                 }
                 catch(... )
                 {
