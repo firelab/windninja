@@ -183,6 +183,12 @@ bool NinjaFoam::simulate_wind()
     }
     else{ //otherwise, we're just updating an existing case
         UpdateExistingCase();
+
+        //the mesh is re-used so just re-set the meshing timers
+        #ifdef _OPENMP
+        startMesh = omp_get_wtime();
+        endMesh = omp_get_wtime();
+        #endif
     }
 
     /*-------------------------------------------------------------------*/
@@ -190,7 +196,6 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     
     #ifdef _OPENMP
-    endMesh = omp_get_wtime();
     startInit = omp_get_wtime();
     #endif
 
@@ -2614,6 +2619,10 @@ void NinjaFoam::GenerateNewCase()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Renumbering mesh...");
     RenumberMesh();
+
+    #ifdef _OPENMP
+    endMesh = omp_get_wtime();
+    #endif
 
     //write log.ninja
     WriteNinjaLog();
