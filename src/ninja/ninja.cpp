@@ -4070,7 +4070,6 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
  */
 void ninja::set_stationFetchFlag(bool flag)
 {
-//    cout<<"ninja: set_stationFetch=="<<flag<<endl;
     input.stationFetch=flag;   
 }
 

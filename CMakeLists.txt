@@ -216,6 +216,12 @@ if(WITH_LCP_CLIENT)
     add_definitions(-DWITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
 
+#disable for exception handling in the GUI and CLI
+option(C_API "Enable WindNinja C API" OFF)
+if(C_API)
+    add_definitions(-DC_API)
+endif(C_API)
+
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
 if(NINJAFOAM)
