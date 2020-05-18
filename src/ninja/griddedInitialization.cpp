@@ -79,6 +79,7 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 {
     //set initialization grids
+    airTempGrid = input.airTemp;
     setCloudCover(input);
 
     CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
