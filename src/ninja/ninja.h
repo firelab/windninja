@@ -390,8 +390,7 @@ protected:
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
-    FiniteElementMethod FEM;
-
+    FiniteElementMethod conservationOfMass;
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;
