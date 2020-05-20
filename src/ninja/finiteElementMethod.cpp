@@ -29,8 +29,12 @@
 #include "finiteElementMethod.h"
 
 
-FiniteElementMethod::FiniteElementMethod()        //default constructor
+FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
 {
+    equationType = eqType;
+
+    NUMNP=0;
+
     //Pointers to dynamically allocated memory
     DIAG=NULL;
     PHI=NULL;
@@ -42,12 +46,56 @@ FiniteElementMethod::FiniteElementMethod()        //default constructor
     alphaH=1.0;
 }
 
-FiniteElementMethod::~FiniteElementMethod()      //destructor
-{
+/**
+ * Copy constructor.
+ * @param A Copied value.
+ */
 
+FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A )
+{
+    PHI=A.PHI;
+    DIAG=A.DIAG;
+    alphaH=A.alphaH;
+    alphaVfield=A.alphaVfield;
+    equationType=A.equationType;
+
+    NUMNP=A.NUMNP;
+    RHS=A.RHS;
+    SK=A.SK;
+    row_ptr=A.row_ptr;
+    col_ind=A.col_ind;
 }
 
-int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0) 
+/**
+ * Equals operator.
+ * @param A Value to set equal to.
+ * @return a copy of an object
+ */
+
+FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A)
+{
+    if(&A != this) {
+        PHI=A.PHI;
+        DIAG=A.DIAG;
+        alphaH=A.alphaH;
+        alphaVfield=A.alphaVfield;
+        equationType=A.equationType;
+
+        NUMNP=A.NUMNP;
+        RHS=A.RHS;
+        SK=A.SK;
+        row_ptr=A.row_ptr;
+        col_ind=A.col_ind;
+    }
+    return *this;
+}
+
+FiniteElementMethod::~FiniteElementMethod()      //destructor
+{
+    Deallocate();
+}
+
+void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0) 
 {
     //The governing equation to solve is
     //
@@ -65,188 +113,7 @@ int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn
     //    H = ----- + ----- + -----
     //         dx      dy      dz
 
-
-    //Set array values to zero----------------------------
-    if(PHI == NULL)
-        PHI=new double[mesh.NUMNP];
-
-    int interrows=input.dem.get_nRows()-2;
-    int intercols=input.dem.get_nCols()-2;
-    int interlayers=mesh.nlayers-2;
-    int i, ii, j, jj, k, kk, l;
-
-    //NZND is the # of nonzero elements in the SK stiffness array that are stored
-    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
-         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
-         (intercols*interrows*interlayers)*27;
-
-    //this is because we will only store the upper half of the SK matrix since it's symmetric
-    NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	
-
-    //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
-    SK = new double[NZND];
-
-    //This holds the global column number of the corresponding element in the CRS storage
-    col_ind=new int[NZND];
-
-    //This holds the element number in the SK array (CRS) of the first non-zero entry for the
-    //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
-    //many non-zero elements are in the last node)
-    row_ptr=new int[mesh.NUMNP+1];
-
-    RHS=new double[mesh.NUMNP]; //This is the final right hand side (RHS) matrix
-
-    int type; //This is the type of node (corner, edge, side, internal)
-    int temp, temp1;
-
-#pragma omp parallel for default(shared) private(i)
-    for(i=0; i<mesh.NUMNP; i++)
-    {
-        PHI[i]=0.;
-        RHS[i]=0.;
-        row_ptr[i]=0;
-    }
-
-#pragma omp parallel for default(shared) private(i)
-    for(i=0; i<NZND; i++)
-    {
-        col_ind[i]=0;
-        SK[i]=0.;
-    }
-
-    int row, col;
-
-    //Set up Compressed Row Storage (CRS) format (only store upper triangular SK matrix)
-    //temp stores the location (in the SK and col_ind arrays) where the first non-zero element
-    //for the current row is located
-    temp=0;
-    for(k=0;k<mesh.nlayers;k++)
-    {
-        for(i=0;i<input.dem.get_nRows();i++)
-        {
-            for(j=0;j<input.dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
-            {
-                type=mesh.get_node_type(i,j,k);
-                if(type==0) //internal node
-                {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
-                    row_ptr[row]=temp;
-                    temp1=temp;
-                    for(kk=-1;kk<2;kk++)
-                    {
-                        for(ii=-1;ii<2;ii++)
-                        {
-                            for(jj=-1;jj<2;jj++)
-                            {
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
-                                if(col >= row)	//only do if we're on the upper triangular part of SK
-                                {
-                                    col_ind[temp1]=col;
-                                    temp1++;
-                                }
-                            }
-                        }
-                    }
-                    temp=temp1;
-                }
-                else if(type==1) //face node
-                {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
-                    row_ptr[row]=temp;
-                    temp1=temp;
-                    for(kk=-1;kk<2;kk++)
-                    {
-                        for(ii=-1;ii<2;ii++)
-                        {
-                            for(jj=-1;jj<2;jj++)
-                            {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
-                                    continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
-                                    continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
-                                    continue;
-
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
-                                if(col >= row) //only do if we're on the upper triangular part of SK
-                                {
-                                    col_ind[temp1]=col;
-                                    temp1++;
-                                }
-                            }
-                        }
-                    }
-                    temp=temp1;
-                }
-                else if(type==2) //edge node
-                {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
-                    row_ptr[row]=temp;
-                    temp1=temp;
-                    for(kk=-1;kk<2;kk++)
-                    {
-                        for(ii=-1;ii<2;ii++)
-                        {
-                            for(jj=-1;jj<2;jj++)
-                            {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
-                                    continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
-                                    continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
-                                    continue;
-
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
-                                if(col >= row) //only do if we're on the upper triangular part of SK
-                                {
-                                    col_ind[temp1]=col;
-                                    temp1++;
-                                }
-                            }
-                        }
-                    }
-                    //temp=temp+12;
-                    temp=temp1;
-                }
-                else if(type==3) //corner node
-                {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
-                    row_ptr[row]=temp;
-                    temp1=temp;
-                    for(kk=-1;kk<2;kk++)
-                    {
-                        for(ii=-1;ii<2;ii++)
-                        {
-                            for(jj=-1;jj<2;jj++)
-                            {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
-                                    continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
-                                    continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
-                                    continue;
-
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
-                                if(col >= row) //only do if we're on the upper triangular part of SK
-                                {
-                                    col_ind[temp1]=col;
-                                    temp1++;
-                                }
-                            }
-                        }
-                    }
-                    temp=temp1;
-                }
-                else
-                    throw std::logic_error("Error arranging SK array. Exiting...");
-            }
-        }
-    }
-    row_ptr[mesh.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
+    int i, j, k, l;
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
@@ -388,11 +255,9 @@ int FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn
             } //End loop over nodes in the element
         } //End loop over elements
     } //End parallel region
-
-    return NINJA_SUCCESS;
 }
 
-int FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+void FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
 {
     //Specify known values of PHI
     //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
@@ -453,9 +318,6 @@ int FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs
         delete[] isBoundaryNode;
         isBoundaryNode=NULL;
     }
-
-    return NINJA_SUCCESS;
-
 }
 
 //  CG solver
@@ -1210,7 +1072,7 @@ void FiniteElementMethod::Deallocate()
     }
 }
 
-int FiniteElementMethod::SetStability(const Mesh &mesh, 
+void FiniteElementMethod::SetStability(const Mesh &mesh, 
         WindNinjaInputs &input,
         wn_3dVectorField &U0,
         AsciiGrid<double> &CloudGrid,
@@ -1324,8 +1186,6 @@ int FiniteElementMethod::SetStability(const Mesh &mesh,
     CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
 
     stb.alphaField.deallocate();
-
-    return NINJA_SUCCESS;
 }
 
 /**
@@ -1348,7 +1208,7 @@ int FiniteElementMethod::SetStability(const Mesh &mesh,
  *
  * This is the result of the @f$ A*x=b @f$ calculation.
  */
-bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                                 wn_3dVectorField &U0,
                                 wn_3dVectorField &U)
 {
@@ -1552,6 +1412,193 @@ bool FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
         testGrid.write_Grid(filename.c_str(), 2);
     }
     testGrid.deallocate();*/
+}
 
-    return NINJA_SUCCESS;
+/**
+ * @brief Sets up compressed row storage for the SK array.
+ *
+ */
+void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input)
+{
+    //Set array values to zero----------------------------
+    if(PHI == NULL)
+        PHI=new double[mesh.NUMNP];
+
+    int interrows=input.dem.get_nRows()-2;
+    int intercols=input.dem.get_nCols()-2;
+    int interlayers=mesh.nlayers-2;
+    int i, ii, j, jj, k, kk, l;
+
+    //NZND is the # of nonzero elements in the SK stiffness array that are stored
+    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
+         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
+         (intercols*interrows*interlayers)*27;
+
+    //this is because we will only store the upper half of the SK matrix since it's symmetric
+    NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	
+
+    //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
+    SK = new double[NZND];
+
+    //This holds the global column number of the corresponding element in the CRS storage
+    col_ind=new int[NZND];
+
+    //This holds the element number in the SK array (CRS) of the first non-zero entry for the
+    //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
+    //many non-zero elements are in the last node)
+    row_ptr=new int[mesh.NUMNP+1];
+
+    RHS=new double[mesh.NUMNP]; //This is the final right hand side (RHS) matrix
+
+    int type; //This is the type of node (corner, edge, side, internal)
+    int temp, temp1;
+
+#pragma omp parallel for default(shared) private(i)
+    for(i=0; i<mesh.NUMNP; i++)
+    {
+        PHI[i]=0.;
+        RHS[i]=0.;
+        row_ptr[i]=0;
+    }
+
+#pragma omp parallel for default(shared) private(i)
+    for(i=0; i<NZND; i++)
+    {
+        col_ind[i]=0;
+        SK[i]=0.;
+    }
+
+    int row, col;
+
+    //Set up Compressed Row Storage (CRS) format (only store upper triangular SK matrix)
+    //temp stores the location (in the SK and col_ind arrays) where the first non-zero element
+    //for the current row is located
+    temp=0;
+    for(k=0;k<mesh.nlayers;k++)
+    {
+        for(i=0;i<input.dem.get_nRows();i++)
+        {
+            for(j=0;j<input.dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
+            {
+                type=mesh.get_node_type(i,j,k);
+                if(type==0) //internal node
+                {
+                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row_ptr[row]=temp;
+                    temp1=temp;
+                    for(kk=-1;kk<2;kk++)
+                    {
+                        for(ii=-1;ii<2;ii++)
+                        {
+                            for(jj=-1;jj<2;jj++)
+                            {
+                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
+                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                if(col >= row)	//only do if we're on the upper triangular part of SK
+                                {
+                                    col_ind[temp1]=col;
+                                    temp1++;
+                                }
+                            }
+                        }
+                    }
+                    temp=temp1;
+                }
+                else if(type==1) //face node
+                {
+                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row_ptr[row]=temp;
+                    temp1=temp;
+                    for(kk=-1;kk<2;kk++)
+                    {
+                        for(ii=-1;ii<2;ii++)
+                        {
+                            for(jj=-1;jj<2;jj++)
+                            {
+                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                    continue;
+                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                    continue;
+                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                    continue;
+
+                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
+                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                if(col >= row) //only do if we're on the upper triangular part of SK
+                                {
+                                    col_ind[temp1]=col;
+                                    temp1++;
+                                }
+                            }
+                        }
+                    }
+                    temp=temp1;
+                }
+                else if(type==2) //edge node
+                {
+                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row_ptr[row]=temp;
+                    temp1=temp;
+                    for(kk=-1;kk<2;kk++)
+                    {
+                        for(ii=-1;ii<2;ii++)
+                        {
+                            for(jj=-1;jj<2;jj++)
+                            {
+                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                    continue;
+                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                    continue;
+                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                    continue;
+
+                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
+                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                if(col >= row) //only do if we're on the upper triangular part of SK
+                                {
+                                    col_ind[temp1]=col;
+                                    temp1++;
+                                }
+                            }
+                        }
+                    }
+                    //temp=temp+12;
+                    temp=temp1;
+                }
+                else if(type==3) //corner node
+                {
+                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row_ptr[row]=temp;
+                    temp1=temp;
+                    for(kk=-1;kk<2;kk++)
+                    {
+                        for(ii=-1;ii<2;ii++)
+                        {
+                            for(jj=-1;jj<2;jj++)
+                            {
+                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                    continue;
+                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                    continue;
+                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                    continue;
+
+                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
+                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                if(col >= row) //only do if we're on the upper triangular part of SK
+                                {
+                                    col_ind[temp1]=col;
+                                    temp1++;
+                                }
+                            }
+                        }
+                    }
+                    temp=temp1;
+                }
+                else
+                    throw std::logic_error("Error arranging SK array. Exiting...");
+            }
+        }
+    }
+    row_ptr[mesh.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
 }

@@ -30,47 +30,43 @@
 #ifndef FINITE_ELEMENT_METHOD_H
 #define FINITE_ELEMENT_METHOD_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include "ninjaException.h"
-
-#include "ascii_grid.h"
-#include "WindNinjaInputs.h"
-#include "mesh.h"
 #include "stability.h"
-#include "wn_3dScalarField.h"
-#include "wn_3dVectorField.h"
 #include "initialize.h"
-#include "ninja_errors.h"
 #include "preconditioner.h"
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
 class FiniteElementMethod
 {
     public:
-        FiniteElementMethod();
+        enum eEquationType{
+            diffusionEquation,
+            projectionEquation,
+            conservationOfMassEquation};
+
+        FiniteElementMethod(eEquationType eqType);
         ~FiniteElementMethod();
+
+        FiniteElementMethod(FiniteElementMethod const& A);
+        FiniteElementMethod& operator=(FiniteElementMethod const& A);
         
-        int Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+        void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
                     wn_3dVectorField &U0);
-        int SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        int SetStability(const Mesh &mesh, WindNinjaInputs &input,
+        void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
+        void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
                         boost::shared_ptr<initialize> &init);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
-        bool ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+        void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
                             wn_3dVectorField &U);
+        void SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input);
         void Deallocate();
+
+        eEquationType equationType;
 
         double *PHI;
         double *DIAG;
