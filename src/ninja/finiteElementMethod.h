@@ -54,10 +54,10 @@ class FiniteElementMethod
         virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
-                        boost::shared_ptr<initialize> &init)=0;
+                        boost::shared_ptr<initialize> &init);
         virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
-                            wn_3dVectorField &U)=0;
+                            wn_3dVectorField &U);
 
         virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
                     wn_3dVectorField &U0);
@@ -70,9 +70,6 @@ class FiniteElementMethod
 
         double *PHI;
         double *DIAG;
-        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
-
-        wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     protected:
         int NUMNP;

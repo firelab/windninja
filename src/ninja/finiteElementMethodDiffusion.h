@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Finite Element Method operations for mass conservation
+ * Purpose:  Finite Element Method operations for diffusion
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,33 +27,23 @@
  *
  *****************************************************************************/
 
-#ifndef FINITE_ELEMENT_METHOD_MASS_CONSERVATION_H
-#define FINITE_ELEMENT_METHOD_MASS_CONSERVATION_H
+#ifndef FINITE_ELEMENT_METHOD_DIFFUSION_H
+#define FINITE_ELEMENT_METHOD_DIFFUSION_H
 
 #include "finiteElementMethod.h"
 
-class FiniteElementMethodMassConservation : public FiniteElementMethod
+class FiniteElementMethodDiffusion : public FiniteElementMethod
 {
     public:
 
-        FiniteElementMethodMassConservation();
-        virtual ~FiniteElementMethodMassConservation();
+        FiniteElementMethodDiffusion();
+        virtual ~FiniteElementMethodDiffusion();
 
         virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
                     wn_3dVectorField &U0);
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
-                        wn_3dVectorField &U0,
-                        AsciiGrid<double> &CloudGrid,
-                        boost::shared_ptr<initialize> &init);
-        virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                            wn_3dVectorField &U0,
-                            wn_3dVectorField &U);
-
-        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
-        wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
     private:
 
 };
 
-#endif	//FINITE_ELEMENT_METHOD_MASS_CONSERVATION_H
+#endif	//FINITE_ELEMENT_METHOD_DIFFUSION_H

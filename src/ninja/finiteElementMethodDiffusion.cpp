@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Implementation file for Finite Element Method Factory Class
- * Author:   Natalie Wagenbrenner <nwagnebrenner@gmail.com>
+ * Purpose:  Finite Element Method operations for diffusion
+ * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
  *
@@ -26,29 +26,38 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
+#include "finiteElementMethodDiffusion.h"
 
-#include "finiteElementMethodFactory.h"
-
-/**
- * Create a FiniteElementMethod object
- *
- * @param equationType
- *
- * @return a pointer to a FiniteElementMethod object
- */
-FiniteElementMethod* FiniteElementMethodFactory::makeFiniteElementMethod(FiniteElementMethod::eEquationType equationType)
+FiniteElementMethodDiffusion::FiniteElementMethodDiffusion() : FiniteElementMethod()
 {
-    if(equationType==FiniteElementMethod::conservationOfMassEquation)
-        return new FiniteElementMethodMassConservation;
-    else if(equationType==FiniteElementMethod::diffusionEquation)
-        return new FiniteElementMethodDiffusion;
-    else if(equationType==FiniteElementMethod::projectionEquation)
-        return new FiniteElementMethodProjection;
-    else{
-        std::ostringstream outString;
-        outString << "The finite element method object was set improperly.";
-        throw std::runtime_error(outString.str());
-    }
+
 }
 
+
+FiniteElementMethodDiffusion::~FiniteElementMethodDiffusion()      //destructor
+{
+
+}
+
+void FiniteElementMethodDiffusion::Discretize(const Mesh &mesh,
+        WindNinjaInputs &input, wn_3dVectorField &U0) 
+{
+    //The governing equation to solve is
+    //
+    //    d        dPhi      d        dPhi      d        dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
+    //    dx        dx       dy        dy       dz        dz
+    //
+    //    where
+    //
+    //    Rx, Ry, Rz = eddy diffusivities
+    //
+    //    H = source term
+
+}
+
+void FiniteElementMethodDiffusion::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+{
+
+}
 

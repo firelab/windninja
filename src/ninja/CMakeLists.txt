@@ -39,6 +39,8 @@ set(NINJA_SOURCES air.cpp
                   fetch_factory.cpp
                   finiteElementMethod.cpp
                   finiteElementMethodMassConservation.cpp
+                  finiteElementMethodDiffusion.cpp
+                  finiteElementMethodProjection.cpp
                   finiteElementMethodFactory.cpp
                   fluid.cpp
                   frictionVelocity.cpp

@@ -32,6 +32,8 @@
 
 #include "finiteElementMethod.h"
 #include "finiteElementMethodMassConservation.h"
+#include "finiteElementMethodDiffusion.h"
+#include "finiteElementMethodProjection.h"
 
 class FiniteElementMethodFactory
 {

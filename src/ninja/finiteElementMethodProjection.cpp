@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Implementation file for Finite Element Method Factory Class
- * Author:   Natalie Wagenbrenner <nwagnebrenner@gmail.com>
+ * Purpose:  Finite Element Method operations for projection
+ * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
  *
@@ -26,29 +26,26 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
+#include "finiteElementMethodProjection.h"
 
-#include "finiteElementMethodFactory.h"
-
-/**
- * Create a FiniteElementMethod object
- *
- * @param equationType
- *
- * @return a pointer to a FiniteElementMethod object
- */
-FiniteElementMethod* FiniteElementMethodFactory::makeFiniteElementMethod(FiniteElementMethod::eEquationType equationType)
+FiniteElementMethodProjection::FiniteElementMethodProjection() : FiniteElementMethod()
 {
-    if(equationType==FiniteElementMethod::conservationOfMassEquation)
-        return new FiniteElementMethodMassConservation;
-    else if(equationType==FiniteElementMethod::diffusionEquation)
-        return new FiniteElementMethodDiffusion;
-    else if(equationType==FiniteElementMethod::projectionEquation)
-        return new FiniteElementMethodProjection;
-    else{
-        std::ostringstream outString;
-        outString << "The finite element method object was set improperly.";
-        throw std::runtime_error(outString.str());
-    }
+
 }
 
 
+FiniteElementMethodProjection::~FiniteElementMethodProjection()      //destructor
+{
+
+}
+
+void FiniteElementMethodProjection::Discretize(const Mesh &mesh,
+        WindNinjaInputs &input, wn_3dVectorField &U0) 
+{
+
+}
+
+void FiniteElementMethodProjection::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+{
+
+}
