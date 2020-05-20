@@ -86,8 +86,10 @@
 #include "initializationFactory.h"
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
-#include "finiteElementMethod.h"
 #include "transportSemiLagrangian.h"
+#include "finiteElementMethodFactory.h"
+#include "finiteElementMethod.h"
+#include "finiteElementMethodMassConservation.h"
 
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
@@ -390,7 +392,7 @@ protected:
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
-    FiniteElementMethod conservationOfMass;
+    boost::shared_ptr<FiniteElementMethod> conservationOfMass;
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;

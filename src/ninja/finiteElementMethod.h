@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Finite Element Method operations 
+ * Purpose:  Base class for Finite Element Method operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -39,40 +39,45 @@
 class FiniteElementMethod
 {
     public:
-        enum eEquationType{
-            diffusionEquation,
-            projectionEquation,
-            conservationOfMassEquation};
-
-        FiniteElementMethod(eEquationType eqType);
-        ~FiniteElementMethod();
+        FiniteElementMethod();
+        virtual ~FiniteElementMethod();
 
         FiniteElementMethod(FiniteElementMethod const& A);
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
+
+        enum eEquationType{
+                diffusionEquation,
+                projectionEquation,
+                conservationOfMassEquation};
         
-        void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
-        void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        void SetStability(const Mesh &mesh, WindNinjaInputs &input,
+        //pure virtual functions
+        virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
-                        boost::shared_ptr<initialize> &init);
+                        boost::shared_ptr<initialize> &init)=0;
+        virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+                            wn_3dVectorField &U0,
+                            wn_3dVectorField &U)=0;
+
+        virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+                    wn_3dVectorField &U0);
+        virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
-        void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                            wn_3dVectorField &U0,
-                            wn_3dVectorField &U);
         void SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input);
         void Deallocate();
-
-        eEquationType equationType;
 
         double *PHI;
         double *DIAG;
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
 
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
+
+    protected:
+        int NUMNP;
+        double *RHS, *SK;
+        int *row_ptr, *col_ind;
 
     private:
         void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
@@ -86,9 +91,6 @@ class FiniteElementMethod
         void mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra,
                 double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
 
-        int NUMNP;
-        double *RHS, *SK;
-        int *row_ptr, *col_ind;
 };
 
 #endif	//FINITE_ELEMENT_METHOD_H

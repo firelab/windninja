@@ -28,7 +28,6 @@ set(NINJA_SOURCES air.cpp
                   cellDiurnal.cpp
                   cli.cpp
                   dbfopen.cpp
-                  finiteElementMethod.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
                   EasyBMP.cpp
@@ -38,6 +37,9 @@ set(NINJA_SOURCES air.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
+                  finiteElementMethod.cpp
+                  finiteElementMethodMassConservation.cpp
+                  finiteElementMethodFactory.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp
