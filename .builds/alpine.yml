@@ -2,12 +2,12 @@ image: alpine/edge
 
 packages:
   - boost-dev
-  - build-essential
+  - build-base
   - cmake
   - gdal-dev
   - netcdf-dev
   - qt5-qttools-dev
-  - qt5-webkit-dev-5
+  - qt5-qtwebkit-dev
   - qtchooser
 
 sources:
@@ -23,8 +23,6 @@ tasks:
         -D SKIP_GETDATE=ON \
         -D BUILD_TESTING=ON \
         -D DISABLE_THREDDS_UPDATE=ON \
-        -D RUN_CFG_TESTS=ON \
-        -D STABILITY=ON \
         -D CMAKE_BUILD_TYPE=debug \
         ..
       make -j 3
