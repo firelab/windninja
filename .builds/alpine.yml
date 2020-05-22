@@ -1,15 +1,14 @@
 image: alpine/edge
 
 packages:
-apk add
-  boost-dev \
-  build-essential \
-  cmake \
-  gdal-dev \
-  netcdf-dev \
-  qt5-qttools-dev \
-  qt5-webkit-dev-5 \
-  qtchooser \
+  - boost-dev
+  - build-essential
+  - cmake
+  - gdal-dev
+  - netcdf-dev
+  - qt5-qttools-dev
+  - qt5-webkit-dev-5
+  - qtchooser
 
 sources:
   - https://github.com/firelab/windninja
