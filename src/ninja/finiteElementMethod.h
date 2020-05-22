@@ -50,7 +50,6 @@ class FiniteElementMethod
                 projectionEquation,
                 conservationOfMassEquation};
         
-        //pure virtual functions
         virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
@@ -58,10 +57,12 @@ class FiniteElementMethod
         virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
                             wn_3dVectorField &U);
-
-        virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
+        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
+        virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i);
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
+
+        void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
+                    wn_3dVectorField &U0);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);

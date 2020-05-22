@@ -39,9 +39,9 @@ class FiniteElementMethodDiffusion : public FiniteElementMethod
         FiniteElementMethodDiffusion();
         virtual ~FiniteElementMethodDiffusion();
 
-        virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
+        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
+        virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i);
     private:
 
 };

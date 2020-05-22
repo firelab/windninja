@@ -39,8 +39,6 @@ class FiniteElementMethodMassConservation : public FiniteElementMethod
         FiniteElementMethodMassConservation();
         virtual ~FiniteElementMethodMassConservation();
 
-        virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
         virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
@@ -49,6 +47,9 @@ class FiniteElementMethodMassConservation : public FiniteElementMethod
         virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
                             wn_3dVectorField &U);
+
+        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
+        virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i) ;
 
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable

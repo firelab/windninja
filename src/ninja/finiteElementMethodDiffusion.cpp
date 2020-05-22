@@ -39,25 +39,49 @@ FiniteElementMethodDiffusion::~FiniteElementMethodDiffusion()      //destructor
 
 }
 
-void FiniteElementMethodDiffusion::Discretize(const Mesh &mesh,
-        WindNinjaInputs &input, wn_3dVectorField &U0) 
-{
-    //The governing equation to solve is
-    //
-    //    d        dPhi      d        dPhi      d        dPhi
-    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
-    //    dx        dx       dy        dy       dz        dz
-    //
-    //    where
-    //
-    //    Rx, Ry, Rz = eddy diffusivities
-    //
-    //    H = source term
-
-}
-
 void FiniteElementMethodDiffusion::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
 {
 
 }
 
+void CalculateRcoefficients(const Mesh &mesh, element &elem, int j)
+{
+
+//    for(int i = 0; i < mesh.nrows; i++){
+//        for(int j = 0; j < mesh.ncols; j++){
+//            for(int k = 0; k < mesh.nlayers; k++){
+//                                                    
+//            //find distance to ground at each node in mesh and write to wn_3dScalarField
+//            heightAboveGround(i,j,k) = mesh.ZORD(i,j,k) - mesh.ZORD(i,j,0);
+//                                
+//            //compute and store wind velocity at each node
+//            windVelocity(i,j,k) = std::sqrt(u(i,j,k) * u(i,j,k) + v(i,j,k) * v(i,j,k));
+//                                                                                
+//            }
+//        }
+//    }
+//
+//    /*
+//     * calculate diffusivities
+//     * velocityGradients.vectorData_z is the 3-d array with dspeed/dz
+//     * Rz = 0.4 * heightAboveGround * du/dz
+//     */
+//
+//    //calculates and stores dspeed/dx, dspeed/dy, dspeed/dz
+//    windVelocity.ComputeGradient(input, velocityGradients);
+//    for(int i = 0; i < mesh.nrows; i++){
+//        for(int j = 0; j < mesh.ncols; j++){
+//            for(int k = 0; k < mesh.nlayers; k++){
+//                Rz(i,j,k) = 0.4 * heightAboveGround(i,j,k) * (*velocityGradients.vectorData_z)(i,j,k);
+//                Rx(i,j,k) = 2 * Rz(i,j,k);
+//                Ry(i,j,k) = 2 * Rz(i,j,k);
+//            }
+//        }
+//    }
+
+}
+
+void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i)
+{
+
+}

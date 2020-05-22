@@ -28,6 +28,22 @@
  *****************************************************************************/
 #include "finiteElementMethodMassConservation.h"
 
+//The governing equation to solve is
+//
+//    d        dPhi      d        dPhi      d        dPhi
+//   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
+//    dx        dx       dy        dy       dz        dz
+//
+//        where
+//
+//                    1                          1
+//    Rx = Ry =  ------------          Rz = ------------
+//                2*alphaH^2                 2*alphaV^2
+//
+//         du0     dv0     dz0
+//    H = ----- + ----- + -----
+//         dx      dy      dz
+
 FiniteElementMethodMassConservation::FiniteElementMethodMassConservation() : FiniteElementMethod()
 {
     alphaH=1.0;
@@ -37,169 +53,6 @@ FiniteElementMethodMassConservation::FiniteElementMethodMassConservation() : Fin
 FiniteElementMethodMassConservation::~FiniteElementMethodMassConservation()      //destructor
 {
 
-}
-
-void FiniteElementMethodMassConservation::Discretize(const Mesh &mesh,
-        WindNinjaInputs &input, wn_3dVectorField &U0) 
-{
-    //The governing equation to solve is
-    //
-    //    d        dPhi      d        dPhi      d        dPhi
-    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
-    //    dx        dx       dy        dy       dz        dz
-    //
-    //        where
-    //
-    //                    1                          1
-    //    Rx = Ry =  ------------          Rz = ------------
-    //                2*alphaH^2                 2*alphaV^2
-    //
-    //         du0     dv0     dz0
-    //    H = ----- + ----- + -----
-    //         dx      dy      dz
-
-    int i, j, k, l;
-
-#pragma omp parallel default(shared) private(i,j,k,l)
-    {
-        element elem(&mesh);
-        int pos;  
-        double alphaV; //used for summing over nodal points below
-        int ii, jj, kk;
-
-#pragma omp for
-        for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
-        {
-            /*-----------------------------------------------------*/
-            /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
-            /*      THE BOUNDARY CONDITIONS HAVE A NON-ZERO FLUX   */
-            /*      SPECIFICATION:                                 */
-            /*      Flow through =>  Phi = 0                       */
-            /*      Ground       =>  normal flux = 0               */
-            /*-----------------------------------------------------*/
-
-            //Given the above parameters, function computes the element stiffness matrix
-
-            if(elem.SFV == NULL)
-                elem.initializeQuadPtArrays();
-
-            for(j=0;j<mesh.NNPE;j++)
-            {
-                elem.QE[j]=0.0;
-                for(int k=0;k<mesh.NNPE;k++)
-                    elem.S[j*mesh.NNPE+k]=0.0;
-            }
-
-            //Begin quadrature for current element
-            elem.node0=mesh.get_node0(i); //get the global nodal number of local node 0 of element i
-
-            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
-            {
-                elem.computeJacobianQuadraturePoint(j, i);
-
-                //Calculate the coefficient H here and the alpha-squared term in front of the second
-                //partial of z in governing equation (we are still on element i, quadrature point j)
-                //
-                //           d u0   d v0   d w0
-                //     H = ( ---- + ---- + ---- )
-                //           d x    d y    d z
-                //
-                //                and
-                //
-                //                     1                          1
-                //     Rx = Ry =  ------------          Rz = ------------
-                //                 2*alphaH^2                 2*alphaV^2
-
-                elem.HVJ=0.0;
-
-                alphaV = 0; //used for summing over the nodes in the element, reset to 0 each time through loop 
-
-                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
-                {
-                    elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
-
-                    elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
-                            (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
-                            (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
-
-                    alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-                } //End loop over nodes in the element
-
-                elem.RX = 1.0/(2.0*alphaH*alphaH);
-                elem.RY = 1.0/(2.0*alphaH*alphaH);
-                elem.RZ = 1.0/(2.0*alphaV*alphaV);
-
-                //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-                elem.DV=elem.DETJ;
-
-                if(elem.NUMQPTV==27)
-                {
-                    if(j<=7)
-                    {
-                        elem.WT=elem.WT1;
-                    }
-                    else if(j<=19)
-                    {
-                        elem.WT=elem.WT2;
-                    }
-                    else if(j<=25)
-                    {
-                        elem.WT=elem.WT3;
-                    }
-                    else
-                    {
-                        elem.WT=elem.WT4;
-                    }
-                }
-
-                //Create element stiffness matrix---------------------------------------------
-                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
-                {
-                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
-                    for(l=0;l<mesh.NNPE;l++)
-                    {
-                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
-                                elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
-                    }
-                } //End loop over nodes in the element
-            } //End loop over quadrature points in the element
-
-            //Place completed element matrix in global SK and Q matrices
-
-            for(j=0;j<mesh.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
-            {
-                //elem.NPK is the global row number of the element stiffness matrix
-                elem.NPK=mesh.get_global_node(j, i);
-
-#pragma omp atomic
-                RHS[elem.NPK] += elem.QE[j];
-
-                for(k=0;k<mesh.NNPE;k++) //k is the local column number in S[]
-                {
-                    elem.KNP=mesh.get_global_node(k, i);
-
-                    if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
-                    {
-                        pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-
-                        //l increments through col_ind[] starting from where row_ptr[] says until
-                        //we find the column number we're looking for
-                        l=0;
-                        do
-                        {
-                            if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
-                                 pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
-                            l++;
-                        }
-                        while(pos<0);
-#pragma omp atomic
-                        //Here is the final global stiffness matrix in symmetric storage
-                        SK[pos] += elem.S[j*mesh.NNPE+k];
-                    }
-                }
-            } //End loop over nodes in the element
-        } //End loop over elements
-    } //End parallel region
 }
 
 void FiniteElementMethodMassConservation::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
@@ -607,3 +460,42 @@ void FiniteElementMethodMassConservation::ComputeUVWField(const Mesh &mesh, Wind
     testGrid.deallocate();*/
 }
 
+void FiniteElementMethodMassConservation::CalculateRcoefficients(const Mesh &mesh, element &elem, int j)
+{
+    //                    1                          1
+    //    Rx = Ry =  ------------          Rz = ------------
+    //                2*alphaH^2                 2*alphaV^2
+
+    double alphaV = 0;
+
+    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+    {
+        alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+    } //End loop over nodes in the element
+
+    elem.RX = 1.0/(2.0*alphaH*alphaH);
+    elem.RY = 1.0/(2.0*alphaH*alphaH);
+    elem.RZ = 1.0/(2.0*alphaV*alphaV);
+}
+
+void FiniteElementMethodMassConservation::CalculateHterm(const Mesh &mesh, 
+        element &elem, wn_3dVectorField &U0, int i)
+{
+    //Calculate the coefficient H 
+    //
+    //           d u0   d v0   d w0
+    //     H = ( ---- + ---- + ---- )
+    //           d x    d y    d z
+    //
+
+    elem.HVJ=0.0;
+
+    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+    {
+        elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
+
+        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
+                (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
+                (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
+    } //End loop over nodes in the element
+}

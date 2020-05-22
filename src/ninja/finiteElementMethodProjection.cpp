@@ -39,12 +39,6 @@ FiniteElementMethodProjection::~FiniteElementMethodProjection()      //destructo
 
 }
 
-void FiniteElementMethodProjection::Discretize(const Mesh &mesh,
-        WindNinjaInputs &input, wn_3dVectorField &U0) 
-{
-
-}
-
 void FiniteElementMethodProjection::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
 {
 

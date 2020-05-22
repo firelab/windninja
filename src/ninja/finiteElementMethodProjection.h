@@ -39,8 +39,6 @@ class FiniteElementMethodProjection : public FiniteElementMethod
         FiniteElementMethodProjection();
         virtual ~FiniteElementMethodProjection();
 
-        virtual void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
     private:
 

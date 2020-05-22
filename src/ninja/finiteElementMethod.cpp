@@ -87,7 +87,131 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 
 void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0) 
 {
+    //The governing equation to solve is
+    //
+    //    d        dPhi      d        dPhi      d        dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
+    //    dx        dx       dy        dy       dz        dz
+    //
+    //        where
+    //
+    //    Rx, Ry, Rz = 
+    //
+    //    H = source term
 
+    int i, j, k, l;
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        element elem(&mesh);
+        int pos;  
+        int ii, jj, kk;
+
+#pragma omp for
+        for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
+        {
+            /*-----------------------------------------------------*/
+            /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
+            /*      THE BOUNDARY CONDITIONS HAVE A NON-ZERO FLUX   */
+            /*      SPECIFICATION:                                 */
+            /*      Flow through =>  Phi = 0                       */
+            /*      Ground       =>  normal flux = 0               */
+            /*-----------------------------------------------------*/
+
+            //Given the above parameters, function computes the element stiffness matrix
+            if(elem.SFV == NULL)
+                elem.initializeQuadPtArrays();
+
+            for(j=0;j<mesh.NNPE;j++)
+            {
+                elem.QE[j]=0.0;
+                for(int k=0;k<mesh.NNPE;k++)
+                    elem.S[j*mesh.NNPE+k]=0.0;
+            }
+
+            //Begin quadrature for current element
+            elem.node0=mesh.get_node0(i); //get the global nodal number of local node 0 of element i
+
+            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                elem.computeJacobianQuadraturePoint(j, i);
+
+                //calculates elem.HVJ
+                CalculateHterm(mesh, elem, U0, i);
+
+                //calculates elem.RX, elem.RY, elem.RZ
+                CalculateRcoefficients(mesh, elem, j);
+
+                //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
+                elem.DV=elem.DETJ;
+
+                if(elem.NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elem.WT=elem.WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elem.WT=elem.WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elem.WT=elem.WT3;
+                    }
+                    else
+                    {
+                        elem.WT=elem.WT4;
+                    }
+                }
+
+                //Create element stiffness matrix---------------------------------------------
+                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                {
+                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+                    for(l=0;l<mesh.NNPE;l++)
+                    {
+                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
+                                elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+
+            //Place completed element matrix in global SK and Q matrices
+            for(j=0;j<mesh.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            {
+                //elem.NPK is the global row number of the element stiffness matrix
+                elem.NPK=mesh.get_global_node(j, i);
+
+#pragma omp atomic
+                RHS[elem.NPK] += elem.QE[j];
+
+                for(k=0;k<mesh.NNPE;k++) //k is the local column number in S[]
+                {
+                    elem.KNP=mesh.get_global_node(k, i);
+
+                    if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
+                    {
+                        pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                        //l increments through col_ind[] starting from where row_ptr[] says until
+                        //we find the column number we're looking for
+                        l=0;
+                        do
+                        {
+                            if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
+                                 pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
+                            l++;
+                        }
+                        while(pos<0);
+#pragma omp atomic
+                        //Here is the final global stiffness matrix in symmetric storage
+                        SK[pos] += elem.S[j*mesh.NNPE+k];
+                    }
+                }
+            } //End loop over nodes in the element
+        } //End loop over elements
+    } //End parallel region
 }
 
 void FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
@@ -1047,6 +1171,16 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
 void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                     wn_3dVectorField &U0,
                     wn_3dVectorField &U)
+{
+
+}
+
+void FiniteElementMethod::CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i)
+{
+
+}
+
+void FiniteElementMethod::CalculateRcoefficients(const Mesh &mesh, element &elem, int j)
 {
 
 }
