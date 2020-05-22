@@ -30,23 +30,26 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QtGui>
-#include <QMainWindow>
-#include <QMenu>
-#include <QLabel>
-#include <QAction>
-#include <QTime>
-#include <QTextEdit>
-#include <QColor>
-#include <QRgb>
-#include <QProcess>
-#include <QThread>
-#include <QToolBar>
-#include <QString>
-#include <QProgressDialog>
-#include <QMutex>
-#include <QDir>
-#include <QDesktopServices>
+#include <QtCore/QDir>
+#include <QtCore/QMutex>
+#include <QtCore/QProcess>
+#include <QtCore/QString>
+#include <QtCore/QThread>
+#include <QtCore/QTime>
+
+#include <QtGui/QColor>
+#include <QtGui/QDesktopServices>
+#include <QtGui/QRgb>
+#include <QtGui/QtGui>
+
+#include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QMenuBar>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QAction>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QToolBar>
+#include <QtWidgets/QProgressDialog>
 
 #include "gdal_priv.h"
 #include "ogr_srs_api.h"

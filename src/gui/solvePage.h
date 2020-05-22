@@ -30,14 +30,15 @@
 #ifndef SOLVEPAGE_H
 #define SOLVEPAGE_H
 
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QLabel>
-#include <QLineEdit>
-#include <QSpinBox>
-#include <QToolButton>
+#include <QtCore/QFileInfo>
 
-#include <QVBoxLayout>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QToolButton>
+
+#include <QtWidgets/QVBoxLayout>
 
 #ifdef _OPENMP
 #include <omp.h>

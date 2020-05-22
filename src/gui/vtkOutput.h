@@ -30,11 +30,11 @@
 #ifndef VTKOUTPUT_H
 #define VTKOUTPUT_H
 
-#include <QGroupBox>
-#include <QLabel>
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 
 class vtkOutput : public QWidget
 {

@@ -665,13 +665,12 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
         return std::string();
     }
     hLayer = OGR_DS_GetLayer( hDS, 0 );
-    OGR_L_SetSpatialFilter( hLayer, hGeometry );
-    OGR_L_ResetReading( hLayer );
     int nMaxTries = 5;
     int nTries = 0;
     OGRGeometryH hBufferGeometry;
     do
     {
+        OGR_L_ResetReading( hLayer );
         if( nTries == 0 )
         {
             hBufferGeometry = OGR_G_Clone( hGeometry );

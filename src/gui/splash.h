@@ -31,12 +31,13 @@
 #ifndef SPLASH_H_
 #define SPLASH_H_
 
-#include <QTimer>
-#include <QSplashScreen>
-#include <QStringList>
-#include <QMouseEvent>
-#include <QPainter>
-#include <QDebug>
+#include <QtCore/QStringList>
+#include <QtCore/QTimer>
+
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPainter>
+
+#include <QtWidgets/QSplashScreen>
 
 #define FRAMES_PER_MESSAGE 20
 

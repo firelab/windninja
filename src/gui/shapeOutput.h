@@ -30,11 +30,11 @@
 #ifndef SHAPEOUTPUT_H_
 #define SHAPEOUTPUT_H_
 
-#include <QGroupBox>
-#include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QCheckBox>
-#include <QVBoxLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QVBoxLayout>
 
 #include "WindNinjaInputs.h"
 

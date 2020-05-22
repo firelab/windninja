@@ -1,7 +1,7 @@
 #ifndef SETCONFIGDIALOG_H
 #define SETCONFIGDIALOG_H
 
-#include <QDialog>
+#include <QtWidgets/QDialog>
 
 namespace Ui {
 class SetConfigDialog;

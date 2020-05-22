@@ -30,16 +30,17 @@
 #ifndef TIME_ZONE_WIDGET_H
 #define TIME_ZONE_WIDGET_H
 
-#include <QMouseEvent>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QLabel>
-#include <QString>
 
-#include <QHBoxLayout>
-#include <QVBoxLayout>
+#include <QtCore/QDebug>
+#include <QtCore/QString>
 
-#include <QDebug>
+#include <QtGui/QMouseEvent>
+
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"

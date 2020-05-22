@@ -45,7 +45,8 @@ mainWindow::mainWindow(QWidget *parent)
     progressDialog->setMinimumDuration(1);
     progressDialog->setAutoClose(false);
     progressDialog->setAutoReset(false);
-    progressDialog->setWindowModality(Qt::ApplicationModal);
+    //progressDialog->setWindowModality(Qt::ApplicationModal);
+    //progressDialog->hide();
 
     runProgress = 0;
     totalProgress = 0;
@@ -3338,7 +3339,13 @@ void mainWindow::cancelSolve()
 {
   progressDialog->setAutoClose(true);
   progressDialog->setLabelText("Canceling...");
-  army->cancel();  
+  /*
+  ** The progress dialog is popping up on startup in Qt5, and clicking cancel
+  ** calls this before we've ever done any work.  Guard against the segfault.
+  */
+  if( army ) {
+    army->cancel();
+  }
 }
 
 void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)

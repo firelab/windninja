@@ -30,22 +30,30 @@
 #ifndef STATIONFETCHWIDGET_H_
 #define STATIONFETCHWIDGET_H_
 
-#include <QtCore>
-#include <QUrl>
-#include <QDesktopServices>
-#include <QtGui>
-#include <QtWebKit>
-#include <QMessageBox>
-#include <QCloseEvent>
-#include <math.h>
-#include <QFileDialog>
+#include <QtConcurrent/QtConcurrent>
+
+#include <QtCore/QtCore>
+#include <QtCore/QUrl>
+
+#include <QtGui/QDesktopServices>
+#include <QtGui/QtGui>
+#include <QtGui/QCloseEvent>
+
+#include <QtNetwork/qnetworkconfigmanager.h>
+#include <QtNetwork/qnetworksession.h>
+
+#include <QtWebKit/QtWebKit>
+
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QProgressDialog>
+
 #include "fetch_factory.h"
 #include "gdal_util.h"
 #include "ninja_conv.h"
-#include <qnetworkconfigmanager.h>
-#include <qnetworksession.h>
 #include "ui_stationFetchWidget.h"
-#include "GoogleMapsInterface.h"
+
+#include <math.h>
 
 #include "pointInitialization.h"
 

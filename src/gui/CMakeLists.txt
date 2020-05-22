@@ -17,7 +17,7 @@
 
 cmake_minimum_required(VERSION 2.6)
 
-QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
+QT5_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
                         setconfigdialog.ui
                         stationFetchWidget.ui)
 
@@ -62,8 +62,8 @@ include_directories(${QT_INCLUDES}
                     ${PROJECT_SOURCE_DIR}/src/ninja
                     ${CMAKE_CURRENT_BINARY_DIR})
 
-QT4_WRAP_CPP(NINJA_GUI_INCLUDES_MOC ${NINJA_GUI_INCLUDES})
-QT4_ADD_RESOURCES(NINJA_GUI_RESOURCES ${PROJECT_SOURCE_DIR}/wn-resources.qrc)
+QT5_WRAP_CPP(NINJA_GUI_INCLUDES_MOC ${NINJA_GUI_INCLUDES})
+QT5_ADD_RESOURCES(NINJA_GUI_RESOURCES ${PROJECT_SOURCE_DIR}/wn-resources.qrc)
 
 set(NINJA_GUI_SOURCES cmake_gui.cpp
                       ${PROJECT_SOURCE_DIR}/src/ninja/cli.cpp
@@ -104,7 +104,11 @@ if(WIN32)
     add_definitions(-DQT_NO_DEBUG_OUTPUT)
 endif(WIN32)
 
-set(LINK_LIBS ${QT_LIBRARIES}
+set(LINK_LIBS Qt5::Core
+              Qt5::Gui
+              Qt5::WebKit
+              Qt5::WebKitWidgets
+              Qt5::Widgets
               ${GDAL_LIBRARY}
               ${Boost_LIBRARIES}
               ${CURL_LIBRARIES}
@@ -113,7 +117,7 @@ set(LINK_LIBS ${QT_LIBRARIES}
 if(WIN32)
     set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
     if(NOT ENABLE_CONSOLE)
-        set(LINK_LIBS ${LINK_LIBS} ${QT_QTMAIN_LIBRARY})
+        set(LINK_LIBS ${LINK_LIBS} Qt5::WinMain)
         set(GUI_TYPE WIN32)
     else(NOT ENABLE_CONSOLE)
         set(GUI_TYPE "")

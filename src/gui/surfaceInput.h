@@ -30,19 +30,20 @@
 #ifndef SURFACEINPUT_H_
 #define SURFACEINPUT_H_
 
-#include <QGroupBox>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QComboBox>
-#include <QSpinBox>
-#include <QFileDialog>
-#include <QLabel>
-#include <QRadioButton>
-#include <QObject>
-#include <QMessageBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
+#include <QtCore/QObject>
+
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QToolButton>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QGridLayout>
 
 #include "WindNinjaInputs.h"
 #include "timeZoneWidget.h"

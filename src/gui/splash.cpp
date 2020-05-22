@@ -78,7 +78,12 @@ static QPixmap &setAlpha( QPixmap &px, int val )
     QPainter p(&alpha);
     p.fillRect(alpha.rect(), QColor(val, val, val));
     p.end();
-    px.setAlphaChannel(alpha);
+    /*
+    ** This is no longer valid code in Qt 5.x.  disable for the short term.
+    **
+    ** TODO(kyle): fix the alpha fade
+    */
+    //px.setAlphaChannel(alpha);
     return px;
 }
 

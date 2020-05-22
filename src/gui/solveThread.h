@@ -29,7 +29,7 @@
 
 #ifndef SOLVETHREAD_H
 #define SOLVETHREAD_H
-#include <QThread>
+#include <QtCore/QThread>
 
 #ifndef Q_MOC_RUN
 #include "ninja.h"

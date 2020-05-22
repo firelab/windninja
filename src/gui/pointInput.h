@@ -30,41 +30,39 @@
 #ifndef POINT_INPUT_H
 #define POINT_INPUT_H
 
-#include <QDockWidget>
-#include <QTableWidget>
+#include <QtCore/QDateTime>
+#include <QtCore/QString>
 
-#include <QGroupBox>
-#include <QDoubleSpinBox>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QDateTime>
-#include <QDateTimeEdit>
-#include <QFileDialog>
-#include <QString>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QTableWidget>
-#include <QTableWidgetItem>
-#include <QTreeView>
-#include <QSizePolicy>
-#include <QDateTimeEdit>
+#include <QtGui/QMouseEvent>
 
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QDateTimeEdit>
+#include <QtWidgets/QDirModel>
+#include <QtWidgets/QDockWidget>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QHeaderView>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QSizePolicy>
+#include <QtWidgets/QTableWidget>
+#include <QtWidgets/QTableWidgetItem>
+#include <QtWidgets/QToolButton>
+#include <QtWidgets/QTreeView>
+#include <QtWidgets/QVBoxLayout>
+
+#include <set>
 #include <vector>
 
 #include "latLonWidget.h"
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "stationFetchWidget.h"
-#include <set>
-
-#include <QGridLayout>
-#include <QVBoxLayout>
-
-#include <QMouseEvent>
-
-#include <QDebug>
 
 class pointInput : public QWidget
 {

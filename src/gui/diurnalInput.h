@@ -30,14 +30,13 @@
 #ifndef DIURNALINPUT_H_
 #define DIURNALINPUT_H_
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QDoubleSpinBox>
-#include <QLabel>
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QGridLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QGridLayout>
 
 #include <string>
 #include <vector>
@@ -52,8 +51,6 @@
 
 #include "latLonWidget.h"
 #include "timeZoneWidget.h"
-
-#include "qdebug.h"
 
 class diurnalInput : public QWidget
 {

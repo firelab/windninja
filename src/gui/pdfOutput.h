@@ -28,15 +28,15 @@
 #ifndef PDFOUTPUT_H
 #define PDFOUTPUT_H
 
-#include <QGroupBox>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QLabel>
-#include <QDoubleSpinBox>
-#include <QComboBox>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QComboBox>
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QHBoxLayout>
 
 class pdfOutput : public QWidget
 {

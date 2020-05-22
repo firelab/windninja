@@ -114,12 +114,6 @@ else(WIN32)
     find_package(GDAL REQUIRED)
 endif(WIN32)
 
-option(NINJA_QT5GUI "build Qt5 experimental GUI" OFF)
-if(NINJA_QT5GUI)
-    message("building qt5 gui")
-    add_subdirectory(src/gui/ui)
-endif(NINJA_QT5GUI)
-
 if(WIN32)
     if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
         set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
@@ -143,9 +137,13 @@ endif(WIN32)
 option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
-    include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
-    include(${QT_USE_FILE})
+    find_package(Qt5 COMPONENTS Core Gui WebKit WebKitWidgets Widgets REQUIRED)
+    set(QT_INCLUDES ${Qt5Core_INCLUDE_DIRS}
+                    ${Qt5Gui_INCLUDE_DIRS}
+                    ${Qt5WebKit_INCLUDE_DIRS}
+                    ${Qt5WebKitWidgets_INCLUDE_DIRS}
+                    ${Qt5Widgets_INCLUDE_DIRS})
+    #include(${QT_USE_FILE})
     add_definitions(-DNINJA_GUI)
     if(WIN32)
         option(ENABLE_CONSOLE "Show the console for CLI/GUI runs" OFF)

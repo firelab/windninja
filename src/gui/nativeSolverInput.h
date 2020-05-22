@@ -1,14 +1,14 @@
 #ifndef NATIVESOLVERINPUT_H
 #define NATIVESOLVERINPUT_H
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QDoubleSpinBox>
-#include <QLabel>
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QGridLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QGridLayout>
 
 #include <string>
 #include <vector>
@@ -23,8 +23,6 @@
 
 #include "latLonWidget.h"
 #include "timeZoneWidget.h"
-
-#include "qdebug.h"
 
 class nativeSolverInput : public QWidget
 {

@@ -43,10 +43,10 @@
 #endif
 
 #ifdef NINJA_GUI
-#include <QObject>
-#include <QString>
-#include <QColor>
-#include <QCoreApplication>
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtGui/QColor>
+#include <QtCore/QCoreApplication>
 #endif
 
 #define NINJA_MSG_SIZE 1000

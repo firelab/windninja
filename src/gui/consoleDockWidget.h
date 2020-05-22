@@ -30,9 +30,9 @@
 #ifndef CONSOLEDOCKWIDGET_H_
 #define CONSOLEDOCKWIDGET_H_
 
-#include <QDockWidget>
-#include <QTextEdit>
-#include <QMenu>
+#include <QtWidgets/QDockWidget>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QMenu>
 
 /**
  * \brief Console for the GUI

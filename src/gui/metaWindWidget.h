@@ -30,17 +30,16 @@
 #ifndef METAWINDWIDGET_H
 #define METAWINDWIDGET_H
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QCheckBox>
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QGridLayout>
-#include <QSizePolicy>
-
-#include <QToolButton>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QSizePolicy>
+#include <QtWidgets/QToolButton>
 
 #include "gdal_priv.h"
 #include "ogr_srs_api.h"

@@ -30,12 +30,12 @@
 #ifndef FBOUTPUT_H_
 #define FBOUTPUT_H_
 
-#include <QGroupBox>
-#include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QCheckBox>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QCheckBox>
 
-#include <QVBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 
 #include "WindNinjaInputs.h"
 

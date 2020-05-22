@@ -526,7 +526,7 @@ int pointInput::directStationTraffic(const char* xFileName)
         if(optChangeTime!="FALSE")
         {
             QString time_format = "yyyy-MM-ddTHH:mm:ss";
-            QString optXTime = QString::fromAscii(optChangeTime);
+            QString optXTime = QString(optChangeTime);
             QDateTime opt_time_obj = QDateTime::fromString(optXTime,time_format);
             updateSingleTime(opt_time_obj);
             QString oneStepText = "Simulation time set to: "+optXTime;

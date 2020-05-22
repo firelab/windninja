@@ -30,8 +30,8 @@
 #ifndef WINDINPUT_H
 #define WINDINPUT_H
 
-#include <QGroupBox>
-#include <QVBoxLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QVBoxLayout>
 
 #include "metaWindWidget.h"
 #include "windInputTable.h"

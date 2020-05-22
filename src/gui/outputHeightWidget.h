@@ -30,12 +30,12 @@
 #ifndef OUTPUTHEIGHTWIDGET_H
 #define OUTPUTHEIGHTWIDGET_H
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QDoubleSpinBox>
-#include <QRadioButton>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 
 class outputHeightWidget : public QWidget
 {

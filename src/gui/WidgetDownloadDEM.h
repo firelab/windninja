@@ -30,22 +30,34 @@
 #ifndef WIGDET_DOWNLOAD_DEM_H_
 #define WIGDET_DOWNLOAD_DEM_H_
 
-#include <QtCore>
-#include <QUrl>
-#include <QDesktopServices>
-#include <QtGui>
-#include <QtWebKit>
-#include <QMessageBox>
-#include <QCloseEvent>
+#include <QtConcurrent/QtConcurrent>
+
+#include <QtCore/QUrl>
+#include <QtCore/QtCore>
+
+#include <QtGui/QCloseEvent>
+#include <QtGui/QDesktopServices>
+#include <QtGui/QtGui>
+
+#include <QtNetwork/qnetworkconfigmanager.h>
+#include <QtNetwork/qnetworksession.h>
+
+#include <QtWebKit/QtWebKit>
+
+#include <QtWebKitWidgets/QWebFrame>
+#include <QtWebKitWidgets/QWebInspector>
+
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QProgressDialog>
+
 #include <math.h>
-#include <QFileDialog>
 #include "fetch_factory.h"
 #include "gdal_util.h"
 #include "ninja_conv.h"
-#include <qnetworkconfigmanager.h>
-#include <qnetworksession.h>
 #include "ui_WidgetDownloadDEM.h"
 #include "GoogleMapsInterface.h"
+
 
 #ifndef PI
 #define PI 3.14159

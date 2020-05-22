@@ -29,13 +29,16 @@
 
 #include "cli.h"
 
-#include <QApplication>
-#include <QSplashScreen>
-#include <QPixmap>
-#include <QBitmap>
-#include <QString>
-#include <QErrorMessage>
-#include <QMessageBox>
+#include <QtCore/QString>
+
+#include <QtGui/QPixmap>
+#include <QtGui/QBitmap>
+
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QErrorMessage>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QSplashScreen>
+
 #include "mainWindow.h"
 #include "splash.h"
 

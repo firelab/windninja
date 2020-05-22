@@ -28,7 +28,7 @@
  *****************************************************************************/
 #ifndef GOOGLE_MAPS_INTERFACE_H_
 #define GOOGLE_MAPS_INTERFACE_H_
-#include <QObject>
+#include <QtCore/QObject>
 
 class GoogleMapsInterface : public QObject
 {

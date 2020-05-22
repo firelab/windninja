@@ -30,10 +30,10 @@
 #ifndef WINDNINJATREE_H
 #define WINDNINJATREE_H
 
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QSplitter>
-#include <QStackedWidget>
+#include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QTreeWidgetItem>
+#include <QtWidgets/QSplitter>
+#include <QtWidgets/QStackedWidget>
 
 #include "surfaceInput.h"
 #include "diurnalInput.h"

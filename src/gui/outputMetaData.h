@@ -30,11 +30,11 @@
 #ifndef OUTPUT_META_DATA_H
 #define OUTPUT_META_DATA_H
 
-#include <QLabel>
-#include <QSpinBox>
-#include <QCheckBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
 
 #include "outputHeightWidget.h"
 

@@ -31,19 +31,19 @@
 #ifndef WINDINPUTTABLE_H
 #define WINDINPUTTABLE_H
 
-#include <QScrollArea>
+#include <QtWidgets/QScrollArea>
 
 
-#include <QLabel>
-#include <QComboBox>
-#include <QDoubleSpinBox>
-#include <QSpinBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QSpinBox>
 
-#include <QTimeEdit>
-#include <QDateEdit>
+#include <QtWidgets/QTimeEdit>
+#include <QtWidgets/QDateEdit>
 
-#include <QHBoxLayout>
-#include <QGridLayout>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QGridLayout>
 
 class windInputTable : public QWidget
 {

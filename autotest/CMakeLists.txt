@@ -75,6 +75,10 @@ add_executable(test_main ${TEST_SOURCES})
 add_dependencies(test_main ninja)
 #ADD_DEPENDENCIES(test_api  ninja)
 
+# Seems that qt snuck in here...
+# TODO(kyle): remove this dependency if possible
+set(LINK_LIBS ${LINK_LIBS} Qt5::Core Qt5::Gui)
+
 target_link_libraries(test_main ${LINK_LIBS})
 
 set(TEST_API FALSE)

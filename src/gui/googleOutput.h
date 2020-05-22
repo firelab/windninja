@@ -30,15 +30,15 @@
 #ifndef GOOGLEOUTPUT_H
 #define GOOGLEOUTPUT_H
 
-#include <QGroupBox>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QRadioButton>
-#include <QLabel>
-#include <QDoubleSpinBox>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QDoubleSpinBox>
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QHBoxLayout>
 
 class googleOutput : public QWidget
 {

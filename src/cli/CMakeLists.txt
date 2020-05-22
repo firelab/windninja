@@ -31,7 +31,11 @@ set(LINK_LIBS ${Boost_LIBRARIES}
 
 if(NINJA_QTGUI AND NINJA_CLI)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${QT_LIBRARIES})
+                  Qt5::Core
+                  Qt5::Gui
+                  Qt5::WebKit
+                  Qt5::WebKitWidgets
+                  Qt5::Widgets)
     if(PACKAGE_DEBUG)
         message("CLI Linking to Qt Libraries")
     endif(PACKAGE_DEBUG)

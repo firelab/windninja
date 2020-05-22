@@ -31,15 +31,15 @@
 #ifndef LATLONWIDGET_H
 #define LATLONWIDGET_H
 
-#include <QLabel>
-#include <QGroupBox>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QStackedWidget>
-#include <QRadioButton>
-#include <QComboBox>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QGroupBox>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QDoubleSpinBox>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QStackedWidget>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QComboBox>
 
 #include <math.h>
 
