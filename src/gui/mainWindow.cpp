@@ -862,6 +862,7 @@ void mainWindow::openInputFile()
 
       inputFileName = fileName;
       inputFileDir = QFileInfo(fileName).absolutePath();
+      tree->solve->setOutputDir( inputFileDir.absolutePath() );
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
@@ -2264,6 +2265,12 @@ int mainWindow::solve()
     progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
     runProgress = new int[nRuns]; //I don't think this is needed anymore
 
+    std::string outputDir = tree->solve->outputDirectory().toStdString();
+    if( outputDir == "" ) {
+      // This should never happen, so if it does, fix it.
+      throw( "no output directory specified in solve page" );
+    }
+
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
     {
@@ -2313,6 +2320,8 @@ int mainWindow::solve()
 
         //set clipping
         army->setOutputBufferClipping( i, (double) clip );
+
+        army->setOutputPath( i, outputDir.c_str() );
 
         //diurnal, if needed
         army->setDiurnalWinds( i, useDiurnal );
@@ -2546,7 +2555,7 @@ int mainWindow::solve()
 
     //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
-    outputPath = QString::fromStdString( army->getOutputPath( 0 ) );
+    outputPath = QString::fromStdString( outputDir );
 
     //clear the army
     army->reset();
