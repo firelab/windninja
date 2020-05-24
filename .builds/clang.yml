@@ -14,6 +14,9 @@ packages:
   - linux-headers
   - llvm-dev
   - netcdf-dev
+  - qt5-qttools-dev
+  - qt5-qtwebkit-dev
+  - qtchooser
 
 sources:
   - https://github.com/firelab/windninja
@@ -32,8 +35,7 @@ tasks:
         -D CMAKE_BUILD_TYPE=debug \
         -D CMAKE_C_COMPILER=clang \
         -D CMAKE_CXX_COMPILER=clang++ \
-        -D OPENMP_SUPPORT=OFF \
-        -D NINJA_QTGUI=OFF \
+        -D OPENMP_SUPPORT=OFF
         ..
       make -j 3
 
