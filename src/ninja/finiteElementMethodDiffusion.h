@@ -40,7 +40,7 @@ class FiniteElementMethodDiffusion : public FiniteElementMethod
         virtual ~FiniteElementMethodDiffusion();
 
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
+        virtual void CalculateRcoefficients(const Mesh &mesh, wn_3dVectorField &U0);
         virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i);
     private:
 
