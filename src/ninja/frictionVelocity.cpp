@@ -542,9 +542,9 @@ void FrictionVelocity::ComputeUstar(WindNinjaInputs &input,
 {
     wn_3dVectorField uDerivatives, vDerivatives, wDerivatives;
 
-    u.ComputeGradient(input, uDerivatives.vectorData_x, uDerivatives.vectorData_y, uDerivatives.vectorData_z);  //calculates du/dx, du/dy, du/dz
-    v.ComputeGradient(input, vDerivatives.vectorData_x, vDerivatives.vectorData_y, vDerivatives.vectorData_z);  //calculates dv/dx, dv/dy, dv/dz
-    w.ComputeGradient(input, wDerivatives.vectorData_x, wDerivatives.vectorData_y, wDerivatives.vectorData_z);  //calculates dw/dx, dw/dy, dw/dz
+    u.ComputeGradient(uDerivatives.vectorData_x, uDerivatives.vectorData_y, uDerivatives.vectorData_z);  //calculates du/dx, du/dy, du/dz
+    v.ComputeGradient(vDerivatives.vectorData_x, vDerivatives.vectorData_y, vDerivatives.vectorData_z);  //calculates dv/dx, dv/dy, dv/dz
+    w.ComputeGradient(wDerivatives.vectorData_x, wDerivatives.vectorData_y, wDerivatives.vectorData_z);  //calculates dw/dx, dw/dy, dw/dz
 
     //cout << "### uDeriv.vectorData_z(0,0,0) = " << (*uDerivatives.vectorData_z)(0,0,0) << endl;
     //cout << "### uDeriv.vectorData_z = " << (uDerivatives.vectorData_z) << endl;

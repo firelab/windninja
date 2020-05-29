@@ -28,27 +28,9 @@
  *****************************************************************************/
 #include "finiteElementMethodDiffusion.h"
 
-FiniteElementMethodDiffusion::FiniteElementMethodDiffusion() : FiniteElementMethod()
+FiniteElementMethodDiffusion::FiniteElementMethodDiffusion(const Mesh &mesh,
+        wn_3dVectorField &U0) : FiniteElementMethod()
 {
-
-}
-
-
-FiniteElementMethodDiffusion::~FiniteElementMethodDiffusion()      //destructor
-{
-
-}
-
-void FiniteElementMethodDiffusion::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
-{
-
-}
-
-void FiniteElementMethodDiffusion::CalculateRcoefficients(const Mesh &mesh, wn_3dVectorField &U0)
-{
-    wn_3dScalarField heightAboveGround;
-    wn_3dScalarField windSpeed;
-    wn_3dScalarField windSpeedGradient;
     heightAboveGround.allocate(&mesh);
     windSpeed.allocate(&mesh);
     windSpeedGradient.allocate(&mesh);
@@ -67,24 +49,80 @@ void FiniteElementMethodDiffusion::CalculateRcoefficients(const Mesh &mesh, wn_3
         }
     }
 
+    //calculates and stores dspeed/dx, dspeed/dy, dspeed/dz
+    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                            windSpeedGradient.vectorData_y,
+                            windSpeedGradient.vectorData_z);
+}
+
+
+FiniteElementMethodDiffusion::~FiniteElementMethodDiffusion()      //destructor
+{
+    heightAboveGround.deallocate();
+    windSpeed.deallocate();
+    windSpeedGradient.deallocate();
+
+}
+
+void FiniteElementMethodDiffusion::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+{
+
+}
+
+void FiniteElementMethodDiffusion::CalculateRcoefficients(const Mesh &mesh, element &elem)
+{
+//    wn_3dScalarField heightAboveGround;
+//    wn_3dScalarField windSpeed;
+//    wn_3dVectorField windSpeedGradient;
+//    heightAboveGround.allocate(&mesh);
+//    windSpeed.allocate(&mesh);
+//    windSpeedGradient.allocate(&mesh);
+
+//    for(int i = 0; i < mesh.nrows; i++){
+//        for(int j = 0; j < mesh.ncols; j++){
+//            for(int k = 0; k < mesh.nlayers; k++){
+//                                                    
+//            //find distance to ground at each node in mesh and write to wn_3dScalarField
+//            heightAboveGround(i,j,k) = mesh.ZORD(i,j,k) - mesh.ZORD(i,j,0);
+//                                
+//            //compute and store wind speed at each node
+//            windSpeed(i,j,k) = std::sqrt(U0.vectorData_x(i,j,k) * U0.vectorData_x(i,j,k) +
+//                    U0.vectorData_y(i,j,k) * U0.vectorData_y(i,j,k));
+//            }
+//        }
+//    }
+
     /*
      * calculate diffusivities
      * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
      * Rz = 0.4 * heightAboveGround * du/dz
      */
 
-    //calculates and stores dspeed/dx, dspeed/dy, dspeed/dz
-    windSpeed.ComputeGradient(input, windSpeedGradient);
+    //TODO:
+    //elem.RZ, RX, RY need to be calcluated for current element. Need to get mesh info for current
+    //element to grab correct windSpeedGradient and heightAboveGround.
 
-    for(int i = 0; i < mesh.nrows; i++){
-        for(int j = 0; j < mesh.ncols; j++){
-            for(int k = 0; k < mesh.nlayers; k++){
-                Rz(i,j,k) = 0.4 * heightAboveGround(i,j,k) * windSpeedGradient.vectorData_z(i,j,k);
-                Rx(i,j,k) = 2 * Rz(i,j,k);
-                Ry(i,j,k) = 2 * Rz(i,j,k);
-            }
-        }
-    }
+    //calculates and stores dspeed/dx, dspeed/dy, dspeed/dz
+//    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+//                            windSpeedGradient.vectorData_y,
+//                            windSpeedGradient.vectorData_z);
+//
+//    for(int i = 0; i < mesh.nrows; i++){
+//        for(int j = 0; j < mesh.ncols; j++){
+//            for(int k = 0; k < mesh.nlayers; k++){
+//                elem.RZ(i,j,k) = 0.4 * heightAboveGround(i,j,k) * windSpeedGradient.vectorData_z(i,j,k);
+//                elem.RX(i,j,k) = 2 * elem.RZ(i,j,k);
+//                elem.RY(i,j,k) = 2 * elem.RZ(i,j,k);
+//            }
+//        }
+//    }
+
+
+    int elemNum = get_elemNum(elem_i, elem_j, elem_k);
+
+    elem.RZ = 0.4 * heightAboveGround(i,j,k) * windSpeedGradient.vectorData_z(i,j,k);
+    elem.RX = 2 * elem.RZ;
+    elem.RY = 2 * elem.RZ;
 
 }
 

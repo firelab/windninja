@@ -505,12 +505,11 @@ double wn_3dScalarField::operator() (int num) const
 /**
  * @brief Calculate and store gradients at each node
  *
- * @param input Reference to inputs
  * @param gradientVectorXComponent Output x component of gradient
  * @param gradientVectorYComponent Output y component of gradient
  * @param gradientVectorZComponent Output z component of gradient
  */
-void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent)
+void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent)
 {
     int i, j, k;
     double *DIAG;
@@ -518,7 +517,7 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dScalarField 
 
     if(DIAG == NULL)
 
-        DIAG=new double[mesh_->nlayers*input.dem.get_nRows()*input.dem.get_nCols()];  //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
+        DIAG=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];  //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
 
     for(i=0;i<mesh_->NUMNP;i++)    //Initialize x,y, and z
     {
@@ -542,10 +541,10 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dScalarField 
     zScratch=NULL;
     DIAGScratch=NULL;
 
-    xScratch=new double[mesh_->nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-    yScratch=new double[mesh_->nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-    zScratch=new double[mesh_->nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-    DIAGScratch=new double[mesh_->nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+    xScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    yScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    zScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    DIAGScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
 
     for(i=0;i<mesh_->NUMNP;i++)     //Initialize scratch x,y, and z
     {
@@ -641,6 +640,4 @@ void wn_3dScalarField::ComputeGradient(WindNinjaInputs &input, wn_3dScalarField 
         gradientVectorZComponent(i)=gradientVectorZComponent(i)/DIAG[i];
     }
     }   //end parallel section
-
-    //cout << "gradient_vector = " << (*gradient_vector.vectorData_x)(0,0,0) << endl;
 }

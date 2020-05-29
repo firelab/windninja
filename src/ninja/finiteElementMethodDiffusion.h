@@ -36,13 +36,16 @@ class FiniteElementMethodDiffusion : public FiniteElementMethod
 {
     public:
 
-        FiniteElementMethodDiffusion();
+        FiniteElementMethodDiffusion(const Mesh &mesh, wn_3dVectorField &U0);
         virtual ~FiniteElementMethodDiffusion();
 
         virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        virtual void CalculateRcoefficients(const Mesh &mesh, wn_3dVectorField &U0);
+        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem);
         virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i);
     private:
+        wn_3dScalarField heightAboveGround;
+        wn_3dScalarField windSpeed;
+        wn_3dVectorField windSpeedGradient;
 
 };
 

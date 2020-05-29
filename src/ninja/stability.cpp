@@ -129,7 +129,7 @@ void Stability::Set3dVariableAlpha(WindNinjaInputs &input,
 
     
     wn_3dVectorField thetaDerivatives;
-    theta.ComputeGradient(input, thetaDerivatives.vectorData_x, thetaDerivatives.vectorData_y, thetaDerivatives.vectorData_z); // calculate dtheta/dz, dx, dy at each node
+    theta.ComputeGradient(thetaDerivatives.vectorData_x, thetaDerivatives.vectorData_y, thetaDerivatives.vectorData_z); // calculate dtheta/dz, dx, dy at each node
     
     hTest = 0.0;
     hMax = mesh.ZORD(0,0,0);
