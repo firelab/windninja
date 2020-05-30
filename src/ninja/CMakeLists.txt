@@ -38,10 +38,6 @@ set(NINJA_SOURCES air.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
                   finiteElementMethod.cpp
-                  finiteElementMethodMassConservation.cpp
-                  finiteElementMethodDiffusion.cpp
-                  finiteElementMethodProjection.cpp
-                  finiteElementMethodFactory.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp

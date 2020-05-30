@@ -185,9 +185,8 @@ bool NinjaSemiLagrangian::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        conservationOfMass.reset(FiniteElementMethodFactory::makeFiniteElementMethod(FiniteElementMethod::conservationOfMassEquation));
-        //conservationOfMass->SetStability(mesh, input, U0, CloudGrid, init);
-        conservationOfMass->Discretize(mesh, input, U0);
+        //conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
+        conservationOfMass.Discretize(mesh, input, U0);
 
         checkCancel();
 
@@ -215,11 +214,11 @@ bool NinjaSemiLagrangian::simulate_wind()
             /*  ----------------------------------------*/
 
             //set boundary conditions
-            conservationOfMass->SetBoundaryConditions(mesh, input);
+            conservationOfMass.SetBoundaryConditions(mesh, input);
 
             //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
-            conservationOfMass->Write_A_and_b(1000);
+            conservationOfMass.Write_A_and_b(1000);
 #endif
 
 #ifdef _OPENMP
@@ -239,8 +238,8 @@ bool NinjaSemiLagrangian::simulate_wind()
 
             //solver
             //if the CG solver diverges, try the minres solver
-            if(conservationOfMass->Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-                if(conservationOfMass->SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+            if(conservationOfMass.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+                if(conservationOfMass.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
                     throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
@@ -254,7 +253,7 @@ bool NinjaSemiLagrangian::simulate_wind()
             /*  ----------------------------------------*/
 
             //compute uvw field from phi field
-            conservationOfMass->ComputeUVWField(mesh, input, U0, U);
+            conservationOfMass.ComputeUVWField(mesh, input, U0, U);
 
         }
     }

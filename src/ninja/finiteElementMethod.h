@@ -39,28 +39,29 @@
 class FiniteElementMethod
 {
     public:
-        FiniteElementMethod();
-        virtual ~FiniteElementMethod();
-
-        FiniteElementMethod(FiniteElementMethod const& A);
-        FiniteElementMethod& operator=(FiniteElementMethod const& A);
-
         enum eEquationType{
                 diffusionEquation,
                 projectionEquation,
                 conservationOfMassEquation};
-        
-        virtual void SetStability(const Mesh &mesh, WindNinjaInputs &input,
+
+        FiniteElementMethod(eEquationType eqType);
+        ~FiniteElementMethod();
+
+        FiniteElementMethod(FiniteElementMethod const& A);
+        FiniteElementMethod& operator=(FiniteElementMethod const& A);
+
+        void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
+        void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
                         AsciiGrid<double> &CloudGrid,
                         boost::shared_ptr<initialize> &init);
-        virtual void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
+        void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
                             wn_3dVectorField &U0,
                             wn_3dVectorField &U);
-        virtual void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
-        virtual void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i);
-        virtual void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
 
+        void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
+        void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i) ;
+        
         void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
                     wn_3dVectorField &U0);
         bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
@@ -69,15 +70,19 @@ class FiniteElementMethod
         void SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input);
         void Deallocate();
 
+        eEquationType equationType;
+
         double *PHI;
         double *DIAG;
 
-    protected:
+        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
+        wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
+
+    private:
         int NUMNP;
         double *RHS, *SK;
         int *row_ptr, *col_ind;
 
-    private:
         void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
         double cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY);
         void cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY);
@@ -87,7 +92,11 @@ class FiniteElementMethod
                         double *beta, double *y);
         void cblas_dscal(const int N, const double alpha, double *X, const int incX);
         void mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra,
-                double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
+        double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
+
+        wn_3dScalarField heightAboveGround;
+        wn_3dScalarField windSpeed;
+        wn_3dVectorField windSpeedGradient;
 
 };
 
