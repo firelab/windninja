@@ -160,7 +160,72 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
                 CalculateHterm(mesh, elem, U0, i);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateRcoefficients(mesh, elem, j);
+                //CalculateRcoefficients(mesh, elem, j);
+
+                if(equationType == GetEquationType("conservationOfMassEquation"))
+                {
+                    //                    1                          1
+                    //    Rx = Ry =  ------------          Rz = ------------
+                    //                2*alphaH^2                 2*alphaV^2
+
+                    double alphaV = 0;
+                    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                    {
+                        alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+                    } //End loop over nodes in the element
+
+                    elem.RX = 1.0/(2.0*alphaH*alphaH);
+                    elem.RY = 1.0/(2.0*alphaH*alphaH);
+                    elem.RZ = 1.0/(2.0*alphaV*alphaV);
+                }
+                else if(equationType == GetEquationType("diffusionEquation"))
+                {
+                    heightAboveGround.allocate(&mesh);
+                    windSpeed.allocate(&mesh);
+                    windSpeedGradient.allocate(&mesh);
+
+                    for(int i = 0; i < mesh.nrows; i++){
+                        for(int j = 0; j < mesh.ncols; j++){
+                            for(int k = 0; k < mesh.nlayers; k++){
+
+                            //find distance to ground at each node in mesh and write to wn_3dScalarField
+                            heightAboveGround(i,j,k) = mesh.ZORD(i,j,k) - mesh.ZORD(i,j,0);
+
+                            //compute and store wind speed at each node
+                            windSpeed(i,j,k) = std::sqrt(U0.vectorData_x(i,j,k) * U0.vectorData_x(i,j,k) +
+                                    U0.vectorData_y(i,j,k) * U0.vectorData_y(i,j,k));
+                            }
+                        }
+                    }
+
+                    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+                    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                                            windSpeedGradient.vectorData_y,
+                                            windSpeedGradient.vectorData_z);
+                    /*
+                     * calculate diffusivities
+                     * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
+                     * Rz = 0.4 * heightAboveGround * du/dz
+                     */
+
+                    //calculate elem.RZ, RX, RY for current element.
+                    double height = 0;
+                    double speed = 0;
+                    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                    {
+                        height=height+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
+                            heightAboveGround(elem.NPK);
+                        speed=speed+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
+                            windSpeedGradient.vectorData_z(elem.NPK);
+                    } //End loop over nodes in the element
+                    elem.RZ = 0.4 * height * speed;
+                    elem.RX = 2 * elem.RZ;
+                    elem.RY = 2 * elem.RZ;
+
+                    heightAboveGround.deallocate();
+                    windSpeed.deallocate();
+                    windSpeedGradient.deallocate();
+                }
 
                 //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
                 elem.DV=elem.DETJ;
@@ -1602,62 +1667,16 @@ void FiniteElementMethod::CalculateHterm(const Mesh &mesh, element &elem, wn_3dV
 
 void FiniteElementMethod::CalculateRcoefficients(const Mesh &mesh, element &elem, int j)
 {
-    //                    1                          1
-    //    Rx = Ry =  ------------          Rz = ------------
-    //                2*alphaH^2                 2*alphaV^2
+}
 
-    double alphaV = 0;
-
-    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
-    {
-        alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-    } //End loop over nodes in the element
-
-    elem.RX = 1.0/(2.0*alphaH*alphaH);
-    elem.RY = 1.0/(2.0*alphaH*alphaH);
-    elem.RZ = 1.0/(2.0*alphaV*alphaV);
-
-
-
-    //TODO:
-    //IF IT"S A DIFFUSION EQUATION:
-//    heightAboveGround.allocate(&mesh);
-//    windSpeed.allocate(&mesh);
-//    windSpeedGradient.allocate(&mesh);
-//
-//    for(int i = 0; i < mesh.nrows; i++){
-//        for(int j = 0; j < mesh.ncols; j++){
-//            for(int k = 0; k < mesh.nlayers; k++){
-//                                                    
-//            //find distance to ground at each node in mesh and write to wn_3dScalarField
-//            heightAboveGround(i,j,k) = mesh.ZORD(i,j,k) - mesh.ZORD(i,j,0);
-//                                
-//            //compute and store wind speed at each node
-//            windSpeed(i,j,k) = std::sqrt(U0.vectorData_x(i,j,k) * U0.vectorData_x(i,j,k) +
-//                    U0.vectorData_y(i,j,k) * U0.vectorData_y(i,j,k));
-//            }
-//        }
-//    }
-//
-//    //calculates and stores dspeed/dx, dspeed/dy, dspeed/dz
-//    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
-//                            windSpeedGradient.vectorData_y,
-//                            windSpeedGradient.vectorData_z);
-//    /*
-//     * calculate diffusivities
-//     * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
-//     * Rz = 0.4 * heightAboveGround * du/dz
-//     */
-//
-//    //TODO:
-//    //elem.RZ, RX, RY need to be calcluated for current element. Need to get mesh info for current
-//    //element to grab correct windSpeedGradient and heightAboveGround.
-//
-//    elem.RZ = 0.4 * heightAboveGround(i,j,k) * windSpeedGradient.vectorData_z(i,j,k);
-//    elem.RX = 2 * elem.RZ;
-//    elem.RY = 2 * elem.RZ;
-//
-//    heightAboveGround.deallocate();
-//    windSpeed.deallocate();
-//    windSpeedGradient.deallocate();
+FiniteElementMethod::eEquationType FiniteElementMethod::GetEquationType(std::string type)
+{
+    if(type == "conservationOfMassEquation")
+            return conservationOfMassEquation;
+    else if(type == "diffusionEquation")
+        return diffusionEquation;
+    else if(type == "projectionEquation")
+        return projectionEquation;
+    else
+        throw std::runtime_error(std::string("Cannot determine equation type in FiniteElementMethod::GetEquationType()."));
 }

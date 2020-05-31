@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Base class for Finite Element Method operations 
+ * Purpose:  Finite Element Method operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -40,9 +40,9 @@ class FiniteElementMethod
 {
     public:
         enum eEquationType{
+                conservationOfMassEquation,
                 diffusionEquation,
-                projectionEquation,
-                conservationOfMassEquation};
+                projectionEquation};
 
         FiniteElementMethod(eEquationType eqType);
         ~FiniteElementMethod();
@@ -50,6 +50,7 @@ class FiniteElementMethod
         FiniteElementMethod(FiniteElementMethod const& A);
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
+        eEquationType GetEquationType(std::string type);
         void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
         void SetStability(const Mesh &mesh, WindNinjaInputs &input,
                         wn_3dVectorField &U0,
