@@ -565,7 +565,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
-#ifdef NOMADS_VRT
+#ifdef NOMADS_INTERNAL_VRT
     hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                         GRA_NearestNeighbour, 1.0,
                                         psWarpOptions );

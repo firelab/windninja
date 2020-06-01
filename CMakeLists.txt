@@ -196,7 +196,7 @@ if(WITH_NOMADS_SUPPORT)
     endif(NOMADS_ENABLE_3D)
     option(NOMADS_INTERNAL_VRT "Use an internal copy of GDALAutoCreateVRT that allows for band subsetting" OFF)
     if(NOMADS_INTERNAL_VRT)
-        add_definitions(-DNOMADS_VRT)
+        add_definitions(-DNOMADS_INTERNAL_VRT)
     endif(NOMADS_INTERNAL_VRT)
 endif(WITH_NOMADS_SUPPORT)
 
