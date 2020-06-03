@@ -122,6 +122,7 @@ bool NinjaSemiLagrangian::simulate_wind()
     //u is positive toward East
     //v is positive toward North
     //w is positive up
+    U.allocate(&mesh);  //REMEMBER TO MODIFY FINITELEMENTMETHOD.COMPUTE_UVW() BECAUSE IT CURRENTLY ALLOCATES U!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1111
     U0.allocate(&mesh);
     if(transport.transportType == TransportSemiLagrangian::settls)
         U00.allocate(&mesh);
@@ -141,6 +142,7 @@ bool NinjaSemiLagrangian::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
     //initialize
+    //----------------------------COULD CHANGE THIS TO INITIALIZE USING REGULAR MASS CONSERVING SIMULATION OUTPUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     init.reset(initializationFactory::makeInitialization(input));
     init->initializeFields(input, mesh, U0, CloudGrid);
     U00 = U0;
@@ -186,6 +188,8 @@ bool NinjaSemiLagrangian::simulate_wind()
 
         //build A arrray
         //conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
+        conservationOfMass.SetupSKCompressedRowStorage(mesh, input);
+        conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
         conservationOfMass.Discretize(mesh, input, U0);
 
         checkCancel();
@@ -210,9 +214,10 @@ bool NinjaSemiLagrangian::simulate_wind()
 
 
             /*  ----------------------------------------*/
-            /*  SET BOUNDARY CONDITIONS                 */
+            /*  REFRESH BOUNDARY CONDITIONS             */
             /*  ----------------------------------------*/
-
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //set boundary conditions
             conservationOfMass.SetBoundaryConditions(mesh, input);
 
@@ -225,20 +230,37 @@ bool NinjaSemiLagrangian::simulate_wind()
             endBuildEq = omp_get_wtime();
 #endif
 
+            /*  ----------------------------------------*/
+            /*  ADD BODY FORCES                         */
+            /*  ----------------------------------------*/
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Add body forces...");
             checkCancel();
 
             /*  ----------------------------------------*/
-            /*  CALL SOLVER                             */
+            /*  TRANSPORT                               */
             /*  ----------------------------------------*/
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
 
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving...");
+            /*  ----------------------------------------*/
+            /*  DIFFUSE                                 */
+            /*  ----------------------------------------*/
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
+
+
+            /*  ----------------------------------------*/
+            /*  PROJECT                                 */
+            /*  ----------------------------------------*/
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
 #ifdef _OPENMP
             startSolve = omp_get_wtime();
 #endif
+            printf("test\n");
 
-            //solver
-            //if the CG solver diverges, try the minres solver
-            if(conservationOfMass.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+            if(conservationOfMass.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
                 if(conservationOfMass.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
                     throw std::runtime_error("Solver returned false.");
 
@@ -255,6 +277,10 @@ bool NinjaSemiLagrangian::simulate_wind()
             //compute uvw field from phi field
             conservationOfMass.ComputeUVWField(mesh, input, U0, U);
 
+            /*  ----------------------------------------*/
+            /*  WRITE OUTPUTS                           */
+            /*  ----------------------------------------*/
+            //input.simulationOutputFrequency
         }
     }
 
