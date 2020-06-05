@@ -32,8 +32,6 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
 {
     equationType = eqType;
 
-    NUMNP=0;
-
     //Pointers to dynamically allocated memory
     DIAG=NULL;
     PHI=NULL;
@@ -58,7 +56,6 @@ FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A )
     alphaVfield=A.alphaVfield;
     equationType=A.equationType;
 
-    NUMNP=A.NUMNP;
     RHS=A.RHS;
     SK=A.SK;
     row_ptr=A.row_ptr;
@@ -80,7 +77,6 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
         alphaVfield=A.alphaVfield;
         equationType=A.equationType;
 
-        NUMNP=A.NUMNP;
         RHS=A.RHS;
         SK=A.SK;
         row_ptr=A.row_ptr;
@@ -94,7 +90,7 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
     Deallocate();
 }
 
-void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0) 
+void FiniteElementMethod::Discretize() 
 {
     //The governing equation to solve is
     //
@@ -123,12 +119,12 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
-        element elem(&mesh);
+        element elem(&mesh_);
         int pos;  
         int ii, jj, kk;
 
 #pragma omp for
-        for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
+        for(i=0;i<mesh_.NUMEL;i++) //Start loop over elements
         {
             /*-----------------------------------------------------*/
             /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
@@ -142,90 +138,25 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
             if(elem.SFV == NULL)
                 elem.initializeQuadPtArrays();
 
-            for(j=0;j<mesh.NNPE;j++)
+            for(j=0;j<mesh_.NNPE;j++)
             {
                 elem.QE[j]=0.0;
-                for(int k=0;k<mesh.NNPE;k++)
-                    elem.S[j*mesh.NNPE+k]=0.0;
+                for(int k=0;k<mesh_.NNPE;k++)
+                    elem.S[j*mesh_.NNPE+k]=0.0;
             }
 
             //Begin quadrature for current element
-            elem.node0=mesh.get_node0(i); //get the global nodal number of local node 0 of element i
+            elem.node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
 
             for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
             {
                 elem.computeJacobianQuadraturePoint(j, i);
 
                 //calculates elem.HVJ
-                CalculateHterm(mesh, elem, U0, i);
+                CalculateHterm(elem, i);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                //CalculateRcoefficients(mesh, elem, j);
-
-                if(equationType == GetEquationType("conservationOfMassEquation"))
-                {
-                    //                    1                          1
-                    //    Rx = Ry =  ------------          Rz = ------------
-                    //                2*alphaH^2                 2*alphaV^2
-
-                    double alphaV = 0;
-                    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
-                    {
-                        alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-                    } //End loop over nodes in the element
-
-                    elem.RX = 1.0/(2.0*alphaH*alphaH);
-                    elem.RY = 1.0/(2.0*alphaH*alphaH);
-                    elem.RZ = 1.0/(2.0*alphaV*alphaV);
-                }
-                else if(equationType == GetEquationType("diffusionEquation"))
-                {
-                    heightAboveGround.allocate(&mesh);
-                    windSpeed.allocate(&mesh);
-                    windSpeedGradient.allocate(&mesh);
-
-                    for(int i = 0; i < mesh.nrows; i++){
-                        for(int j = 0; j < mesh.ncols; j++){
-                            for(int k = 0; k < mesh.nlayers; k++){
-
-                            //find distance to ground at each node in mesh and write to wn_3dScalarField
-                            heightAboveGround(i,j,k) = mesh.ZORD(i,j,k) - mesh.ZORD(i,j,0);
-
-                            //compute and store wind speed at each node
-                            windSpeed(i,j,k) = std::sqrt(U0.vectorData_x(i,j,k) * U0.vectorData_x(i,j,k) +
-                                    U0.vectorData_y(i,j,k) * U0.vectorData_y(i,j,k));
-                            }
-                        }
-                    }
-
-                    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
-                    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
-                                            windSpeedGradient.vectorData_y,
-                                            windSpeedGradient.vectorData_z);
-                    /*
-                     * calculate diffusivities
-                     * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
-                     * Rz = 0.4 * heightAboveGround * du/dz
-                     */
-
-                    //calculate elem.RZ, RX, RY for current element.
-                    double height = 0;
-                    double speed = 0;
-                    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
-                    {
-                        height=height+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
-                            heightAboveGround(elem.NPK);
-                        speed=speed+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
-                            windSpeedGradient.vectorData_z(elem.NPK);
-                    } //End loop over nodes in the element
-                    elem.RZ = 0.4 * height * speed;
-                    elem.RX = 2 * elem.RZ;
-                    elem.RY = 2 * elem.RZ;
-
-                    heightAboveGround.deallocate();
-                    windSpeed.deallocate();
-                    windSpeedGradient.deallocate();
-                }
+                CalculateRcoefficients(elem, j);
 
                 //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
                 elem.DV=elem.DETJ;
@@ -251,29 +182,29 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
                 }
 
                 //Create element stiffness matrix---------------------------------------------
-                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
-                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
-                    for(l=0;l<mesh.NNPE;l++)
+                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+                    for(l=0;l<mesh_.NNPE;l++)
                     {
-                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
+                        elem.S[k*mesh_.NNPE+l]=elem.S[k*mesh_.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
                                 elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
                     }
                 } //End loop over nodes in the element
             } //End loop over quadrature points in the element
 
             //Place completed element matrix in global SK and Q matrices
-            for(j=0;j<mesh.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            for(j=0;j<mesh_.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
             {
                 //elem.NPK is the global row number of the element stiffness matrix
-                elem.NPK=mesh.get_global_node(j, i);
+                elem.NPK=mesh_.get_global_node(j, i);
 
 #pragma omp atomic
                 RHS[elem.NPK] += elem.QE[j];
 
-                for(k=0;k<mesh.NNPE;k++) //k is the local column number in S[]
+                for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                 {
-                    elem.KNP=mesh.get_global_node(k, i);
+                    elem.KNP=mesh_.get_global_node(k, i);
 
                     if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
                     {
@@ -291,7 +222,7 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
                         while(pos<0);
 #pragma omp atomic
                         //Here is the final global stiffness matrix in symmetric storage
-                        SK[pos] += elem.S[j*mesh.NNPE+k];
+                        SK[pos] += elem.S[j*mesh_.NNPE+k];
                     }
                 }
             } //End loop over nodes in the element
@@ -299,7 +230,7 @@ void FiniteElementMethod::Discretize(const Mesh &mesh, WindNinjaInputs &input, w
     } //End parallel region
 }
 
-void FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input)
+void FiniteElementMethod::SetBoundaryConditions()
 {
     //Specify known values of PHI
     //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
@@ -310,32 +241,32 @@ void FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInput
     int NPK, KNP;
     int i, j, k, l;
     bool *isBoundaryNode;
-    isBoundaryNode=new bool[mesh.NUMNP]; //flag to specify if it's a boundary node
+    isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
 
 #pragma omp parallel default(shared) private(i,j,k,l,NPK,KNP)
     {
 #pragma omp for
-    for(k=0;k<mesh.nlayers;k++)
+    for(k=0;k<mesh_.nlayers;k++)
     {
-        for(i=0;i<input.dem.get_nRows();i++)
+        for(i=0;i<input_.dem.get_nRows();i++)
         {
-            for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            for(j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
             {
-                if(j==0||j==(input.dem.get_nCols()-1)||i==0||i==(input.dem.get_nRows()-1)||k==(mesh.nlayers-1))  //Check the node to see if it is a boundary node
-                    isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=true;
+                if(j==0||j==(input_.dem.get_nCols()-1)||i==0||i==(input_.dem.get_nRows()-1)||k==(mesh_.nlayers-1))  //Check the node to see if it is a boundary node
+                    isBoundaryNode[k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j]=true;
                 else
-                    isBoundaryNode[k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j]=false;
+                    isBoundaryNode[k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j]=false;
             }
         }
     }
 #pragma omp for
-    for(k=0;k<mesh.nlayers;k++)
+    for(k=0;k<mesh_.nlayers;k++)
     {
-        for(i=0;i<input.dem.get_nRows();i++)
+        for(i=0;i<input_.dem.get_nRows();i++)
         {
-            for(j=0;j<input.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            for(j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
             {
-                NPK=k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+                NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
                 for(l=row_ptr[NPK];l<row_ptr[NPK+1];l++) //loop through all non-zero elements for row NPK
                 {
                     KNP=col_ind[l]; //KNP is the global column number we're on
@@ -374,13 +305,12 @@ void FiniteElementMethod::SetBoundaryConditions(const Mesh &mesh, WindNinjaInput
  * @param x Vector to store solution in.
  * @param row_ptr Vector used to index to a row in A.
  * @param col_ind Vector storing the column number of corresponding value in A.
- * @param NUMNP Number of nodal points, so also the size of b, x, and row_ptr.
  * @param max_iter Maximum number of iterations to do.
  * @param print_iters How often to print out solver information.
  * @param tol Convergence tolerance to stop at.
  * @return Returns true if solver converges and completes properly.
  */
-bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_iters, double tol)
 {
     double *A = SK;
     double *b = RHS;
@@ -405,10 +335,10 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter,
     residual_percent_complete_old = -1.;
 
     Preconditioner M;
-    if(M.initialize(NUMNP, A, row_ptr, col_ind, M.SSOR, matdescra)==false)
+    if(M.initialize(mesh_.NUMNP, A, row_ptr, col_ind, M.SSOR, matdescra)==false)
     {
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of SSOR preconditioner failed, trying Jacobi preconditioner...");
-        if(M.initialize(NUMNP, A, row_ptr, col_ind, M.Jacobi, matdescra)==false)
+        if(M.initialize(mesh_.NUMNP, A, row_ptr, col_ind, M.Jacobi, matdescra)==false)
             throw std::runtime_error("Initialization of Jacobi preconditioner failed.");
     }
 
@@ -420,32 +350,32 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter,
     fprintf(convergence_history,"\nIteration\tResidual\tResidual_check");
 #endif //NINJA_DEBUG_VERBOSE
 
-    p=new double[NUMNP];
-    z=new double[NUMNP];
-    q=new double[NUMNP];
-    r=new double[NUMNP];
-    //Ax=new double[NUMNP];
-    //Ap=new double[NUMNP];
-    //Anorm=new double[NUMNP];
+    p=new double[mesh_.NUMNP];
+    z=new double[mesh_.NUMNP];
+    q=new double[mesh_.NUMNP];
+    r=new double[mesh_.NUMNP];
+    //Ax=new double[mesh_.NUMNP];
+    //Ap=new double[mesh_.NUMNP];
+    //Anorm=new double[mesh_.NUMNP];
 
 
 
     //matrix vector multiplication A*x=Ax
-    mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
+    mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
 
-    for(i=0;i<NUMNP;i++){
+    for(i=0;i<mesh_.NUMNP;i++){
         r[i]=b[i]-r[i];                  //calculate the initial residual
     }
 
-    normb = cblas_dnrm2(NUMNP, b, 1);		//calculate the 2-norm of b
-    //normb = nrm2(NUMNP, b);
+    normb = cblas_dnrm2(mesh_.NUMNP, b, 1);		//calculate the 2-norm of b
+    //normb = nrm2(mesh_.NUMNP, b);
 
     if (normb == 0.0)
         normb = 1.;
 
     //compute 2 norm of r
-    resid = cblas_dnrm2(NUMNP, r, 1) / normb;
-    //resid = nrm2(NUMNP, r) / normb;
+    resid = cblas_dnrm2(mesh_.NUMNP, r, 1) / normb;
+    //resid = nrm2(mesh_.NUMNP, r) / normb;
 
     if (resid <= tol)
     {
@@ -460,34 +390,34 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter,
 
         M.solve(r, z, row_ptr, col_ind);	//apply preconditioner
 
-        rho = cblas_ddot(NUMNP, z, 1, r, 1);
-        //rho = dot(NUMNP, z, r);
+        rho = cblas_ddot(mesh_.NUMNP, z, 1, r, 1);
+        //rho = dot(mesh_.NUMNP, z, r);
 
         if (i == 1)
         {
-            cblas_dcopy(NUMNP, z, 1, p, 1);
+            cblas_dcopy(mesh_.NUMNP, z, 1, p, 1);
         }else {
             beta = rho / rho_1;
 
 #pragma omp parallel for
-            for(j=0; j<NUMNP; j++)
+            for(j=0; j<mesh_.NUMNP; j++)
                 p[j] = z[j] + beta*p[j];
         }
 
         //matrix vector multiplication!!!		q = A*p;
-        mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
+        mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
 
-        alpha = rho / cblas_ddot(NUMNP, p, 1, q, 1);
-        //alpha = rho / dot(NUMNP, p, q);
+        alpha = rho / cblas_ddot(mesh_.NUMNP, p, 1, q, 1);
+        //alpha = rho / dot(mesh_.NUMNP, p, q);
 
-        cblas_daxpy(NUMNP, alpha, p, 1, x, 1);	//x = x + alpha * p;
-        //axpy(NUMNP, alpha, p, x);
+        cblas_daxpy(mesh_.NUMNP, alpha, p, 1, x, 1);	//x = x + alpha * p;
+        //axpy(mesh_.NUMNP, alpha, p, x);
 
-        cblas_daxpy(NUMNP, -alpha, q, 1, r, 1);	//r = r - alpha * q;
-        //axpy(NUMNP, -alpha, q, r);
+        cblas_daxpy(mesh_.NUMNP, -alpha, q, 1, r, 1);	//r = r - alpha * q;
+        //axpy(mesh_.NUMNP, -alpha, q, r);
 
-        resid = cblas_dnrm2(NUMNP, r, 1) / normb;	//compute resid
-        //resid = nrm2(NUMNP, r) / normb;
+        resid = cblas_dnrm2(mesh_.NUMNP, r, 1) / normb;	//compute resid
+        //resid = nrm2(mesh_.NUMNP, r) / normb;
 
         if(i==1)
             start_resid = resid;
@@ -573,7 +503,7 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int NUMNP, int max_iter,
 //  MINRES from PetSc (found in google code search)
 //    This solver seems to be monotonic in its convergence (residual always goes down)
 //    Could use this if CG diverges, but haven't seen divergence yet...
-bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int max_iter, int print_iters, double tol)
 {
     double *A = SK;
     double *b = RHS;
@@ -587,7 +517,7 @@ bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int NUMNP, int max
   double residual_percent_complete_old, residual_percent_complete, time_percent_complete, start_resid;
   double            *R, *Z, *U, *V, *W, *UOLD, *VOLD, *WOLD, *WOOLD;
 
-  n = NUMNP;
+  n = mesh_.NUMNP;
 
   R = new double[n];
   Z = new double[n];
@@ -625,7 +555,7 @@ bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int NUMNP, int max
   if(precond.initialize(n, A, row_ptr, col_ind, precond.Jacobi, matdescra)==false)
   {
 	  input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of Jacobi preconditioner failed, trying SSOR preconditioner...");
-	  if(precond.initialize(NUMNP, A, row_ptr, col_ind, precond.SSOR, matdescra)==false) // SSOR does not work for full asymmetric matrix !!
+	  if(precond.initialize(mesh_.NUMNP, A, row_ptr, col_ind, precond.SSOR, matdescra)==false) // SSOR does not work for full asymmetric matrix !!
 	  {
 		  input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Initialization of SSOR preconditioner failed, CANNOT SOLVE FOR WINDFLOW!!!");
 		  return false;
@@ -1112,21 +1042,27 @@ void FiniteElementMethod::Deallocate()
         delete[] DIAG;
         DIAG=NULL;
     }
+    if(equationType == GetEquationType("diffusionEquation"))
+    {
+        heightAboveGround.deallocate();
+        windSpeed.deallocate();
+        windSpeedGradient.deallocate();
+    }
 }
 
 /**
  * @brief Sets up compressed row storage for the SK array.
  *
  */
-void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input)
+void FiniteElementMethod::SetupSKCompressedRowStorage()
 {
     //Set array values to zero----------------------------
     if(PHI == NULL)
-        PHI=new double[mesh.NUMNP];
+        PHI=new double[mesh_.NUMNP];
 
-    int interrows=input.dem.get_nRows()-2;
-    int intercols=input.dem.get_nCols()-2;
-    int interlayers=mesh.nlayers-2;
+    int interrows=input_.dem.get_nRows()-2;
+    int intercols=input_.dem.get_nCols()-2;
+    int interlayers=mesh_.nlayers-2;
     int i, ii, j, jj, k, kk, l;
 
     //NZND is the # of nonzero elements in the SK stiffness array that are stored
@@ -1135,7 +1071,7 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
          (intercols*interrows*interlayers)*27;
 
     //this is because we will only store the upper half of the SK matrix since it's symmetric
-    NZND = (NZND - mesh.NUMNP)/2 + mesh.NUMNP;	
+    NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
 
     //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
     SK = new double[NZND];
@@ -1146,15 +1082,15 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
     //This holds the element number in the SK array (CRS) of the first non-zero entry for the
     //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
     //many non-zero elements are in the last node)
-    row_ptr=new int[mesh.NUMNP+1];
+    row_ptr=new int[mesh_.NUMNP+1];
 
-    RHS=new double[mesh.NUMNP]; //This is the final right hand side (RHS) matrix
+    RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
 
     int type; //This is the type of node (corner, edge, side, internal)
     int temp, temp1;
 
 #pragma omp parallel for default(shared) private(i)
-    for(i=0; i<mesh.NUMNP; i++)
+    for(i=0; i<mesh_.NUMNP; i++)
     {
         PHI[i]=0.;
         RHS[i]=0.;
@@ -1174,16 +1110,16 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
     //temp stores the location (in the SK and col_ind arrays) where the first non-zero element
     //for the current row is located
     temp=0;
-    for(k=0;k<mesh.nlayers;k++)
+    for(k=0;k<mesh_.nlayers;k++)
     {
-        for(i=0;i<input.dem.get_nRows();i++)
+        for(i=0;i<input_.dem.get_nRows();i++)
         {
-            for(j=0;j<input.dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
+            for(j=0;j<input_.dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
             {
-                type=mesh.get_node_type(i,j,k);
+                type=mesh_.get_node_type(i,j,k);
                 if(type==0) //internal node
                 {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -1192,8 +1128,8 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
+                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
                                 if(col >= row)	//only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -1206,7 +1142,7 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                 }
                 else if(type==1) //face node
                 {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -1215,15 +1151,15 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
+                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -1236,7 +1172,7 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                 }
                 else if(type==2) //edge node
                 {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -1245,15 +1181,15 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
+                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -1267,7 +1203,7 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                 }
                 else if(type==3) //corner node
                 {
-                    row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
+                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -1276,15 +1212,15 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+
-                                    (i+ii)*input.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
+                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -1300,26 +1236,25 @@ void FiniteElementMethod::SetupSKCompressedRowStorage(const Mesh &mesh, WindNinj
             }
         }
     }
-    row_ptr[mesh.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
+    row_ptr[mesh_.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
 }
 
-void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
-                wn_3dVectorField &U0,
+void FiniteElementMethod::SetStability(WindNinjaInputs &input,
                 AsciiGrid<double> &CloudGrid,
                 boost::shared_ptr<initialize> &init)
 {
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
     Stability stb(input);
-    alphaVfield.allocate(&mesh);
+    alphaVfield.allocate(&mesh_);
 
     if(input.stabilityFlag==0) // if stabilityFlag not set
     {
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows;i++)
+            for(unsigned int i=0; i<mesh_.nrows;i++)
             {
-                for(unsigned int j=0; j<mesh.ncols; j++)
+                for(unsigned int j=0; j<mesh_.ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/1.0;
                 }
@@ -1328,11 +1263,11 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
     }
     else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
     {
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows; i++)
+            for(unsigned int i=0; i<mesh_.nrows; i++)
             {
-                for(unsigned int j=0; j<mesh.ncols; j++)
+                for(unsigned int j=0; j<mesh_.ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/input.alphaStability;
                 }
@@ -1342,10 +1277,10 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) //it's a domain-average run
     {
-        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        stb.SetDomainAverageAlpha(input, mesh_);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows; i++)
+            for(unsigned int i=0; i<mesh_.nrows; i++)
             {
                 for(unsigned int j=0;j<input.dem.get_nCols();j++)
                 {
@@ -1357,12 +1292,12 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
     else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
     {
-        stb.SetPointInitializationAlpha(input, mesh);
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        stb.SetPointInitializationAlpha(input, mesh_);
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows; i++)
+            for(unsigned int i=0; i<mesh_.nrows; i++)
             {
-                for(unsigned int j=0; j<mesh.ncols; j++)
+                for(unsigned int j=0; j<mesh_.ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -1374,13 +1309,13 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
             init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
     {
-        stb.Set2dWxInitializationAlpha(input, mesh, CloudGrid);
+        stb.Set2dWxInitializationAlpha(input, mesh_, CloudGrid);
 
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows; i++)
+            for(unsigned int i=0; i<mesh_.nrows; i++)
             {
-                for(unsigned int j=0; j<mesh.ncols; j++)
+                for(unsigned int j=0; j<mesh_.ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -1395,14 +1330,14 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
 
-        stb.Set3dVariableAlpha(input, mesh, init->air3d, U0);
+        stb.Set3dVariableAlpha(input, mesh_, init->air3d, U0_);
         init->air3d.deallocate();
 
-        for(unsigned int k=0; k<mesh.nlayers; k++)
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh.nrows; i++)
+            for(unsigned int i=0; i<mesh_.nrows; i++)
             {
-                for(unsigned int j=0; j<mesh.ncols; j++)
+                for(unsigned int j=0; j<mesh_.ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -1410,7 +1345,7 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
         }
     }
     else{
-        throw logic_error( string("Can't determine how to set atmophseric stability.") );
+        throw logic_error( string("Can't determine how to set atmospheric stability.") );
     }
 
     CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
@@ -1438,8 +1373,7 @@ void FiniteElementMethod::SetStability(const Mesh &mesh, WindNinjaInputs &input,
  *
  * This is the result of the @f$ A*x=b @f$ calculation.
  */
-void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                    wn_3dVectorField &U0,
+void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
                     wn_3dVectorField &U)
 {
      /*-----------------------------------------------------*/
@@ -1472,15 +1406,15 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
     //u is positive toward East
     //v is positive toward North
     //w is positive up
-    U.allocate(&mesh);
+    U.allocate(&mesh_);
 
     //DIAG is the sum of the weights at each nodal point; eventually,
     //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
     //value of dPHI/dx at each node point
     if(DIAG == NULL)
-        DIAG=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        DIAG=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
 
-    for(i=0;i<mesh.NUMNP;i++) //Initialize u,v, and w
+    for(i=0;i<mesh_.NUMNP;i++) //Initialize u,v, and w
     {
         U.vectorData_x(i)=0.;
         U.vectorData_y(i)=0.;
@@ -1490,7 +1424,7 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
 
 #pragma omp parallel default(shared) private(i,j,k)
     {
-        element elem(&mesh);
+        element elem(&mesh_);
 
         double DPHIDX, DPHIDY, DPHIDZ;
         double XJ, YJ, ZJ;
@@ -1501,12 +1435,12 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
         wScratch=NULL;
         DIAGScratch=NULL;
 
-        uScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-        vScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-        wScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
-        DIAGScratch=new double[mesh.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        uScratch=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        vScratch=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        wScratch=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
+        DIAGScratch=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
 
-        for(i=0;i<mesh.NUMNP;i++)
+        for(i=0;i<mesh_.NUMNP;i++)
         {
             uScratch[i]=0.;
             vScratch[i]=0.;
@@ -1515,9 +1449,9 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
         }
 
 #pragma omp for
-        for(i=0;i<mesh.NUMEL;i++) //Start loop over elements
+        for(i=0;i<mesh_.NUMEL;i++) //Start loop over elements
         {
-            elem.node0 = mesh.get_node0(i); //get the global node number of local node 0 of element i
+            elem.node0 = mesh_.get_node0(i); //get the global node number of local node 0 of element i
             for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
             {
                 DPHIDX=0.0; //Set DPHI/DX, etc. to zero for the new quad point
@@ -1527,9 +1461,9 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
                 elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
 
                 //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
-                for(k=0;k<mesh.NNPE;k++)
+                for(k=0;k<mesh_.NNPE;k++)
                 {
-                    elem.NPK=mesh.get_global_node(k, i); //NPK is the global node number
+                    elem.NPK=mesh_.get_global_node(k, i); //NPK is the global node number
 
                     //Calculate the DPHI/DX, etc. for the quad point we are on
                     DPHIDX=DPHIDX+elem.DNDX[k]*PHI[elem.NPK];
@@ -1540,13 +1474,13 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
                 //Now we know DPHI/DX, etc. for quad point j. 
                 //We will distribute this inverse distance weighted average 
                 //to each nodal point for the cell we're on
-                for(k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+                for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {   //Calculate the Jacobian at the quad point
-                    elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
+                    elem.NPK=mesh_.get_global_node(k, i); //NPK is the global nodal number
 
-                    XK=mesh.XORD(elem.NPK); //Coodinates of the nodal point
-                    YK=mesh.YORD(elem.NPK);
-                    ZK=mesh.ZORD(elem.NPK);
+                    XK=mesh_.XORD(elem.NPK); //Coodinates of the nodal point
+                    YK=mesh_.YORD(elem.NPK);
+                    ZK=mesh_.ZORD(elem.NPK);
 
                     wght=std::pow((XK-XJ),2)+std::pow((YK-YJ),2)+std::pow((ZK-ZJ),2);
                     wght=1.0/(std::sqrt(wght));
@@ -1566,7 +1500,7 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
 
 #pragma omp critical
         {
-            for(i=0;i<mesh.NUMNP;i++)
+            for(i=0;i<mesh_.NUMNP;i++)
             {
                 //Dividing by the DIAG[NPK] gives the value of DPHI/DX,
                 //etc. (still stored in the u,v,w arrays)
@@ -1604,7 +1538,7 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
 
 #pragma omp for
 
-        for(i=0;i<mesh.NUMNP;i++)
+        for(i=0;i<mesh_.NUMNP;i++)
         {
             //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
 
@@ -1615,11 +1549,11 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
             //Finally, calculate u,v,w
             alphaV = alphaVfield(i); //set alphaV for stability
 
-            U.vectorData_x(i)=U0.vectorData_x(i)+
+            U.vectorData_x(i)=U0_.vectorData_x(i)+
             1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i); //Remember, dPHI/dx is stored in u
-            U.vectorData_y(i)=U0.vectorData_y(i)+
+            U.vectorData_y(i)=U0_.vectorData_y(i)+
             1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
-            U.vectorData_z(i)=U0.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
+            U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
         }
     } //end parallel section
 
@@ -1631,9 +1565,9 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
     testGrid.set_headerData(input.dem);
     testGrid.set_noDataValue(-9999.0);
 
-    for(int k = 0; k < mesh.nlayers; k++){
-        for(int i = 0; i <mesh.nrows; i++){
-            for(int j = 0; j < mesh.ncols; j++ ){
+    for(int k = 0; k < mesh_.nlayers; k++){
+        for(int i = 0; i <mesh_.nrows; i++){
+            for(int j = 0; j < mesh_.ncols; j++ ){
                 testGrid(i,j) = u(i,j,k);
                 filename = "u" + boost::lexical_cast<std::string>(k);
             }
@@ -1643,30 +1577,70 @@ void FiniteElementMethod::ComputeUVWField(const Mesh &mesh, WindNinjaInputs &inp
     testGrid.deallocate();*/
 }
 
-void FiniteElementMethod::CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i)
+void FiniteElementMethod::CalculateHterm(element &elem, int i)
 {
-    //Calculate the coefficient H 
-    //
-    //           d u0   d v0   d w0
-    //     H = ( ---- + ---- + ---- )
-    //           d x    d y    d z
-    //
-
-    elem.HVJ=0.0;
-
-    for(int k=0;k<mesh.NNPE;k++) //Start loop over nodes in the element
+    if(equationType == GetEquationType("conservationOfMassEquation"))
     {
-        elem.NPK=mesh.get_global_node(k, i); //NPK is the global nodal number
+        //Calculate the coefficient H 
+        //
+        //           d u0   d v0   d w0
+        //     H = ( ---- + ---- + ---- )
+        //           d x    d y    d z
+        //
 
-        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
-                (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
-                (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
-    } //End loop over nodes in the element
+        elem.HVJ=0.0;
 
+        for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+        {
+            elem.NPK=mesh_.get_global_node(k, i); //NPK is the global nodal number
+
+            elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0_.vectorData_x(elem.NPK))+
+                    (elem.DNDY[k]*U0_.vectorData_y(elem.NPK))+
+                    (elem.DNDZ[k]*U0_.vectorData_z(elem.NPK)));
+        } //End loop over nodes in the element
+    }
 }
 
-void FiniteElementMethod::CalculateRcoefficients(const Mesh &mesh, element &elem, int j)
+void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
 {
+    if(equationType == GetEquationType("conservationOfMassEquation"))
+    {
+        //                    1                          1
+        //    Rx = Ry =  ------------          Rz = ------------
+        //                2*alphaH^2                 2*alphaV^2
+
+        double alphaV = 0;
+        for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+        {
+            alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+        } //End loop over nodes in the element
+
+        elem.RX = 1.0/(2.0*alphaH*alphaH);
+        elem.RY = 1.0/(2.0*alphaH*alphaH);
+        elem.RZ = 1.0/(2.0*alphaV*alphaV);
+    }
+    else if(equationType == GetEquationType("diffusionEquation"))
+    {
+        /*
+         * calculate diffusivities
+         * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
+         * Rz = 0.4 * heightAboveGround * du/dz
+         */
+
+        //calculate elem.RZ, RX, RY for current element.
+        double height = 0;
+        double speed = 0;
+        for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+        {
+            height=height+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
+                heightAboveGround(elem.NPK);
+            speed=speed+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
+                windSpeedGradient.vectorData_z(elem.NPK);
+        } //End loop over nodes in the element
+        elem.RZ = 0.4 * height * speed;
+        elem.RX = 2 * elem.RZ;
+        elem.RY = 2 * elem.RZ;
+    }
 }
 
 FiniteElementMethod::eEquationType FiniteElementMethod::GetEquationType(std::string type)
@@ -1675,8 +1649,39 @@ FiniteElementMethod::eEquationType FiniteElementMethod::GetEquationType(std::str
             return conservationOfMassEquation;
     else if(type == "diffusionEquation")
         return diffusionEquation;
-    else if(type == "projectionEquation")
-        return projectionEquation;
     else
         throw std::runtime_error(std::string("Cannot determine equation type in FiniteElementMethod::GetEquationType()."));
+}
+
+void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0)
+{
+    mesh_ = mesh;
+    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    U0_ = U0;
+
+    if(equationType == GetEquationType("diffusionEquation"))
+    {
+        heightAboveGround.allocate(&mesh_);
+        windSpeed.allocate(&mesh_);
+        windSpeedGradient.allocate(&mesh_);
+
+        for(int i = 0; i < mesh_.nrows; i++){
+            for(int j = 0; j < mesh_.ncols; j++){
+                for(int k = 0; k < mesh_.nlayers; k++){
+
+                //find distance to ground at each node in mesh and write to wn_3dScalarField
+                heightAboveGround(i,j,k) = mesh_.ZORD(i,j,k) - mesh_.ZORD(i,j,0);
+
+                //compute and store wind speed at each node
+                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
+                }
+            }
+        }
+
+        //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+        windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                                windSpeedGradient.vectorData_y,
+                                windSpeedGradient.vectorData_z);
+    }
 }

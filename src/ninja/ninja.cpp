@@ -348,9 +348,10 @@ bool ninja::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        conservationOfMass.SetupSKCompressedRowStorage(mesh, input);
-        conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
-        conservationOfMass.Discretize(mesh, input, U0);
+        conservationOfMass.Initialize(mesh, input, U0);
+        conservationOfMass.SetupSKCompressedRowStorage();
+        conservationOfMass.SetStability(input, CloudGrid, init);
+        conservationOfMass.Discretize();
 
         checkCancel();
 
@@ -359,7 +360,7 @@ bool ninja::simulate_wind()
 /*  ----------------------------------------*/
 
         //set boundary conditions
-        conservationOfMass.SetBoundaryConditions(mesh, input);
+        conservationOfMass.SetBoundaryConditions();
 
 //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
@@ -383,8 +384,8 @@ bool ninja::simulate_wind()
 
         //solver
         //if the CG solver diverges, try the minres solver
-        if(conservationOfMass.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
-            if(conservationOfMass.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+        if(conservationOfMass.Solve(input, MAXITS, print_iters, stop_tol)==false)
+            if(conservationOfMass.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
                 throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
@@ -394,11 +395,11 @@ bool ninja::simulate_wind()
 checkCancel();
 
 /*  ----------------------------------------*/
-/*  COMPUTE UVW WIND FIELD                   */
+/*  COMPUTE UVW WIND FIELD                  */
 /*  ----------------------------------------*/
 
         //compute uvw field from phi field
-        conservationOfMass.ComputeUVWField(mesh, input, U0, U);
+        conservationOfMass.ComputeUVWField(input, U);
 
         checkCancel();
 

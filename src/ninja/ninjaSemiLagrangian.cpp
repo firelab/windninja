@@ -187,10 +187,10 @@ bool NinjaSemiLagrangian::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        //conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
-        conservationOfMass.SetupSKCompressedRowStorage(mesh, input);
-        conservationOfMass.SetStability(mesh, input, U0, CloudGrid, init);
-        conservationOfMass.Discretize(mesh, input, U0);
+        conservationOfMass.Initialize(mesh, input, U0);
+        conservationOfMass.SetupSKCompressedRowStorage();
+        conservationOfMass.SetStability(input, CloudGrid, init);
+        conservationOfMass.Discretize();
 
         checkCancel();
 
@@ -219,7 +219,7 @@ bool NinjaSemiLagrangian::simulate_wind()
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //set boundary conditions
-            conservationOfMass.SetBoundaryConditions(mesh, input);
+            conservationOfMass.SetBoundaryConditions();
 
             //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
@@ -260,8 +260,8 @@ bool NinjaSemiLagrangian::simulate_wind()
 #endif
             printf("test\n");
 
-            if(conservationOfMass.Solve(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
-                if(conservationOfMass.SolveMinres(input, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
+            if(conservationOfMass.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
+                if(conservationOfMass.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
                     throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
@@ -275,7 +275,7 @@ bool NinjaSemiLagrangian::simulate_wind()
             /*  ----------------------------------------*/
 
             //compute uvw field from phi field
-            conservationOfMass.ComputeUVWField(mesh, input, U0, U);
+            conservationOfMass.ComputeUVWField(input, U);
 
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */

@@ -41,8 +41,7 @@ class FiniteElementMethod
     public:
         enum eEquationType{
                 conservationOfMassEquation,
-                diffusionEquation,
-                projectionEquation};
+                diffusionEquation};
 
         FiniteElementMethod(eEquationType eqType);
         ~FiniteElementMethod();
@@ -51,24 +50,18 @@ class FiniteElementMethod
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
         eEquationType GetEquationType(std::string type);
-        void SetBoundaryConditions(const Mesh &mesh, WindNinjaInputs &input);
-        void SetStability(const Mesh &mesh, WindNinjaInputs &input,
-                        wn_3dVectorField &U0,
+        void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
+        void SetBoundaryConditions();
+        void SetStability(WindNinjaInputs &input,
                         AsciiGrid<double> &CloudGrid,
                         boost::shared_ptr<initialize> &init);
-        void ComputeUVWField(const Mesh &mesh, WindNinjaInputs &input,
-                            wn_3dVectorField &U0,
+        void ComputeUVWField(WindNinjaInputs &input,
                             wn_3dVectorField &U);
-
-        void CalculateRcoefficients(const Mesh &mesh, element &elem, int j);
-        void CalculateHterm(const Mesh &mesh, element &elem, wn_3dVectorField &U0, int i) ;
-        
-        void Discretize(const Mesh &mesh, WindNinjaInputs &input, 
-                    wn_3dVectorField &U0);
-        bool Solve(WindNinjaInputs &input, int NUMNP, int MAXITS, int print_iters, double stop_tol);
-        bool SolveMinres(WindNinjaInputs &input, int NUMNP, int max_iter, int print_iters, double tol);
+        void Discretize();
+        bool Solve(WindNinjaInputs &input, int MAXITS, int print_iters, double stop_tol);
+        bool SolveMinres(WindNinjaInputs &input, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
-        void SetupSKCompressedRowStorage(const Mesh &mesh, WindNinjaInputs &input);
+        void SetupSKCompressedRowStorage();
         void Deallocate();
 
         eEquationType equationType;
@@ -80,10 +73,14 @@ class FiniteElementMethod
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     private:
-        int NUMNP;
+        Mesh const mesh_; //reference to the mesh
+        WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        wn_3dVectorField U0_;
         double *RHS, *SK;
         int *row_ptr, *col_ind;
 
+        void CalculateRcoefficients(element &elem, int j);
+        void CalculateHterm(element &elem, int i) ;
         void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
         double cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY);
         void cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY);
