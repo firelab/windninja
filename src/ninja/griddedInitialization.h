@@ -45,6 +45,10 @@ class griddedInitialization : public initialize
 		        wn_3dScalarField& v0,
 		        wn_3dScalarField& w0,
 		        AsciiGrid<double>& cloud);
+#ifdef NINJAFOAM
+        virtual void ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud);
+#endif
 
     private:
         void setInitializationGrids(WindNinjaInputs &input);

@@ -143,6 +143,15 @@ bool NinjaFoam::simulate_wind()
         init.reset(initializationFactory::makeInitialization(input));
         init->ninjaFoamInitializeFields(input, CloudGrid);
     }
+    /* 
+     * if it's a griddedInitialization, get the average speed and
+     * direction from the input grids 
+     */
+    if(input.initializationMethod == WindNinjaInputs::griddedInitializationFlag)
+    {
+        init.reset(initializationFactory::makeInitialization(input));
+        init->ninjaFoamInitializeFields(input, CloudGrid);
+    }
 
     if(!input.ninjaTime.is_not_a_date_time())
     {
