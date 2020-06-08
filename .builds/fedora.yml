@@ -3,9 +3,12 @@ image: fedora/30
 packages:
   - cmake
   - boost-devel
-  - epel-release
   - fontconfig-devel
+  - gcc
+  - gcc-c++
+  - kernel-devel
   - gdal-devel
+  - make
   - libcurl-devel
   - netcdf-devel
 
