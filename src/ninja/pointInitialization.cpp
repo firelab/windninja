@@ -1008,6 +1008,17 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         iss.imbue(std::locale(std::locale::classic(),fig));
         iss>>abs_time;
         oStation.datetime=abs_time;
+
+        boost::posix_time::ptime noTime;
+        if(oStation.datetime==noTime){
+            oErrorString = "Invalid datetime format: ";
+            oErrorString += poFeature->GetFieldAsString( 15 );
+            oErrorString += " at station: ";
+            oErrorString += oStationName;
+            error_msg = oErrorString;
+            throw( std::domain_error( oErrorString ) );
+        }
+
         oStations.push_back(oStation);
         OGRFeature::DestroyFeature( poFeature );
     }
