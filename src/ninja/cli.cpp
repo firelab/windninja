@@ -1016,11 +1016,11 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "fetch_station", "start_day");
                     option_dependency(vm, "fetch_station", "start_hour");
                     option_dependency(vm, "fetch_station", "start_minute");
-                    option_dependency(vm, "fetch_station", "end_year");
-                    option_dependency(vm, "fetch_station", "end_month");
-                    option_dependency(vm, "fetch_station", "end_day");
-                    option_dependency(vm, "fetch_station", "end_hour");
-                    option_dependency(vm, "fetch_station", "end_minute");
+                    option_dependency(vm, "fetch_station", "stop_year");
+                    option_dependency(vm, "fetch_station", "stop_month");
+                    option_dependency(vm, "fetch_station", "stop_day");
+                    option_dependency(vm, "fetch_station", "stop_hour");
+                    option_dependency(vm, "fetch_station", "stop_minute");
                     option_dependency(vm, "fetch_station", "number_time_steps");
 
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -1028,11 +1028,11 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["start_day"].as<int>(),
                                                          vm["start_hour"].as<int>(),
                                                          vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
 
@@ -1155,11 +1155,11 @@ int windNinjaCLI(int argc, char* argv[])
                         option_dependency(vm, "wx_station_filename", "start_day");
                         option_dependency(vm, "wx_station_filename", "start_hour");
                         option_dependency(vm, "wx_station_filename", "start_minute");
-                        option_dependency(vm, "wx_station_filename", "end_year");
-                        option_dependency(vm, "wx_station_filename", "end_month");
-                        option_dependency(vm, "wx_station_filename", "end_day");
-                        option_dependency(vm, "wx_station_filename", "end_hour");
-                        option_dependency(vm, "wx_station_filename", "end_minute");
+                        option_dependency(vm, "wx_station_filename", "stop_year");
+                        option_dependency(vm, "wx_station_filename", "stop_month");
+                        option_dependency(vm, "wx_station_filename", "stop_day");
+                        option_dependency(vm, "wx_station_filename", "stop_hour");
+                        option_dependency(vm, "wx_station_filename", "stop_minute");
                         option_dependency(vm, "wx_station_filename", "number_time_steps");
 
                         timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -1167,11 +1167,11 @@ int windNinjaCLI(int argc, char* argv[])
                                                              vm["start_day"].as<int>(),
                                                              vm["start_hour"].as<int>(),
                                                              vm["start_minute"].as<int>(),
-                                                             vm["end_year"].as<int>(),
-                                                             vm["end_month"].as<int>(),
-                                                             vm["end_day"].as<int>(),
-                                                             vm["end_hour"].as<int>(),
-                                                             vm["end_minute"].as<int>(),
+                                                             vm["stop_year"].as<int>(),
+                                                             vm["stop_month"].as<int>(),
+                                                             vm["stop_day"].as<int>(),
+                                                             vm["stop_hour"].as<int>(),
+                                                             vm["stop_minute"].as<int>(),
                                                              vm["number_time_steps"].as<int>(),
                                                              osTimeZone );
                         std::vector<std::string> sFiles;
@@ -1209,22 +1209,22 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "wx_station_filename", "start_day");
                     option_dependency(vm, "wx_station_filename", "start_hour");
                     option_dependency(vm, "wx_station_filename", "start_minute");
-                    option_dependency(vm, "wx_station_filename", "end_year");
-                    option_dependency(vm, "wx_station_filename", "end_month");
-                    option_dependency(vm, "wx_station_filename", "end_day");
-                    option_dependency(vm, "wx_station_filename", "end_hour");
-                    option_dependency(vm, "wx_station_filename", "end_minute");
+                    option_dependency(vm, "wx_station_filename", "stop_year");
+                    option_dependency(vm, "wx_station_filename", "stop_month");
+                    option_dependency(vm, "wx_station_filename", "stop_day");
+                    option_dependency(vm, "wx_station_filename", "stop_hour");
+                    option_dependency(vm, "wx_station_filename", "stop_minute");
                     option_dependency(vm, "wx_station_filename", "number_time_steps");
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
                                                          vm["start_month"].as<int>(),
                                                          vm["start_day"].as<int>(),
                                                          vm["start_hour"].as<int>(),
                                                          vm["start_minute"].as<int>(),
-                                                         vm["end_year"].as<int>(),
-                                                         vm["end_month"].as<int>(),
-                                                         vm["end_day"].as<int>(),
-                                                         vm["end_hour"].as<int>(),
-                                                         vm["end_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
                     std::vector<std::string> sFiles;
