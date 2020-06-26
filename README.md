@@ -1,4 +1,4 @@
-[WindNinja](http://firelab.org/project/windninja) 
+WindNinja
 =========
 [![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
 [![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
