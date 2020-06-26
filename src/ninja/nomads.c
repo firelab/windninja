@@ -998,18 +998,14 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
         int hasNoDataValue;
         double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
 
-        /*
-        ** XXX: Ignore this check so we can be GDAL 1.11 complient for CentOS 7
-        ** TODO(kyle): sub this out with code
-        */
         if( hasNoDataValue )
         {
-            /*
             // Check if the nodata value is out of range
             int bClamped = FALSE;
             int bRounded = FALSE;
             GDALAdjustValueToDataType(GDALGetRasterDataType(band),
                                       noDataValue, &bClamped, &bRounded );
+            /*
             if( !bClamped )
             {
                 GDALWarpInitNoDataReal(psWO, -1e10);

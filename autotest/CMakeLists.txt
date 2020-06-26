@@ -130,6 +130,7 @@ if(NOT NINJA_QTGUI)
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=input_points/mackay )
 endif(NOT NINJA_QTGUI)
 
+if(NINJA_GDAL_OUTPUT)
 add_test(test_gdal_output_shapefile
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/shapefile)
 
@@ -147,6 +148,7 @@ add_test(test_gdal_output_kmz
 
 add_test(test_gdal_output_kmz_color
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz_color)
+endif(NINJA_GDAL_OUTPUT)
 
 add_test(test_utm_boise
     ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/boise)
