@@ -25,8 +25,11 @@
  *
  *****************************************************************************/
 
+#ifdef NINJA_GDAL_OUTPUT
+
 #ifndef NINJA_GDAL_OUTPUT_H_
 #define NINJA_GDAL_OUTPUT_H_
+
 
 #include "gdal.h"
 #include "ogr_api.h"
@@ -49,3 +52,4 @@ int NinjaGDALVectorOutput(const char *pszDriver,
                           AsciiGrid<double> &dir,
                           char **papszOptions);
 #endif /* NINJA_GDAL_OUTPUT_H_ */
+#endif /* NINJA_GDAL_OUTPUT */

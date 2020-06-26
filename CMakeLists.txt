@@ -315,6 +315,12 @@ option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz f
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
 
+option(NINJA_GDAL_OUTPUT "allow experimental output formats from GDAL" OFF)
+mark_as_advanced(NINJA_GDAL_OUTPUT)
+if(NINJA_GDAL_OUTPUT)
+  add_definitions(-DNINJA_GDAL_OUTPUT)
+endif()
+
 # Recurse into subdirectories
 add_subdirectory(src)
 

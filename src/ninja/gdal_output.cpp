@@ -25,6 +25,8 @@
  *
  *****************************************************************************/
 
+#ifdef NINJA_GDAL_OUTPUT
+
 #include "gdal_output.h"
 
 /*
@@ -451,3 +453,6 @@ int NinjaGDALVectorOutput(const char *pszDriver, // GDAL vector driver name
   }
   return 0;
 }
+
+#endif /* NINJA_GDAL_OUTPUT */
+
