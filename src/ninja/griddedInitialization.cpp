@@ -39,6 +39,7 @@ griddedInitialization::~griddedInitialization()
     CPLDebug("NINJA", "Starting a griddedInitialization run.");
 	
 }
+
 /**
  * This function initializes the 3d mesh wind field with initial velocity values
  * based on surface (2D) output from a NinjaFOAM soluation.
@@ -75,6 +76,39 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 
     cloud = cloudCoverGrid;
 }
+
+#ifdef NINJAFOAM
+/**
+ * Sets input speed and direction from input grids.
+ * @param input WindNinjaInputs object storing necessary input information.
+ */
+void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud)
+{
+    setGridHeaderData(input, cloud);
+
+    setInitializationGrids(input);
+
+    //set average speed
+    input.inputSpeed = speedInitializationGrid.get_meanValue();
+
+    //average u and v components
+    double meanU;
+    double meanV;
+    meanU = uInitializationGrid.get_meanValue();
+    meanV = vInitializationGrid.get_meanValue();
+
+    double meanSpd;
+    double meanDir;
+
+    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
+
+    //set average direction
+    input.inputDirection = meanDir;
+
+    cloud = cloudCoverGrid;
+}
+#endif //NINJAFOAM
 
 void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 {

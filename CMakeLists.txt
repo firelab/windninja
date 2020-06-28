@@ -194,7 +194,7 @@ if(WITH_NOMADS_SUPPORT)
     endif(NOMADS_ENABLE_3D)
     option(NOMADS_INTERNAL_VRT "Use an internal copy of GDALAutoCreateVRT that allows for band subsetting" OFF)
     if(NOMADS_INTERNAL_VRT)
-        add_definitions(-DNOMADS_VRT)
+        add_definitions(-DNOMADS_INTERNAL_VRT)
     endif(NOMADS_INTERNAL_VRT)
 endif(WITH_NOMADS_SUPPORT)
 
@@ -312,6 +312,12 @@ option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL fi
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
+
+option(NINJA_GDAL_OUTPUT "allow experimental output formats from GDAL" OFF)
+mark_as_advanced(NINJA_GDAL_OUTPUT)
+if(NINJA_GDAL_OUTPUT)
+  add_definitions(-DNINJA_GDAL_OUTPUT)
+endif()
 
 # Recurse into subdirectories
 add_subdirectory(src)

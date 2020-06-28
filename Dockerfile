@@ -6,8 +6,11 @@ MAINTAINER Kyle Shannon <kyle@pobox.com>
 
 USER root
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-    apt-get install -y -qq software-properties-common && \
+RUN apt-get update
+RUN apt-get install -y wget
+RUN sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+RUN apt-get install -y apt-transport-https ca-certificates
+RUN apt-get install -y -qq software-properties-common && \
     add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable && \
     add-apt-repository http://dl.openfoam.org/ubuntu && \
     apt-get update && \
@@ -20,8 +23,7 @@ RUN apt-get update && \
         libboost-program-options-dev \
         libboost-date-time-dev \
         libboost-test-dev \
-        openfoam4 && \
-
+        openfoam4
 
 RUN mkdir /opt/src
 WORKDIR /opt/src
@@ -33,7 +35,7 @@ RUN cmake -D SUPRESS_WARNINGS=ON ..
 RUN make -j4
 RUN make install
 
-RUN useradd -m -s /bin/bash -N -u 1000 ziggy
-USER ziggy
-WORKDIR /home/ziggy
-RUN source /opt/openfoam4/etc/bashrc
+#RUN useradd -m -s /bin/bash -N -u 1000 ziggy
+#USER ziggy
+#WORKDIR /home/ziggy
+#RUN source /opt/openfoam4/etc/bashrc
