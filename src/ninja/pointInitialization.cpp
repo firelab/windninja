@@ -1009,8 +1009,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         iss>>abs_time;
         oStation.datetime=abs_time;
 
+        //if it's not a "WindNinja NOW" type simulation and we can't detect the datetime
         boost::posix_time::ptime noTime;
-        if(oStation.datetime==noTime){
+        if(datetime != "" && oStation.datetime==noTime){
             oErrorString = "Invalid datetime format: ";
             oErrorString += poFeature->GetFieldAsString( 15 );
             oErrorString += " at station: ";
