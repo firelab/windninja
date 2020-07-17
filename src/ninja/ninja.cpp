@@ -4517,7 +4517,7 @@ void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
     VSIStatL( path.c_str(), &sStat );
-    const char *pszTestPath = CPLFormFilename(path.c_str(), "NINJA_TEST", "");
+    const char *pszTestPath = CPLGenerateTempFilename(path.c_str());
     int nRet;
     
     if( VSI_ISDIR( sStat.st_mode ) ){
