@@ -77,6 +77,7 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * 'func' is located inside a try-catch statement block so upon a thrown exception
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
+#ifdef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -91,6 +92,15 @@ extern boost::local_time::tz_database globalTimeZoneDB;
         return NINJA_SUCCESS;                  \
     }                                          \
     return NINJA_E_INVALID;
+#else
+#define IF_VALID_INDEX_TRY( i, iterable, func ) \
+    if( i >= 0 && i < iterable.size() )        \
+    {                                          \
+       func;                                   \
+       return NINJA_SUCCESS;                  \
+    }                                          \
+    return NINJA_E_INVALID;
+#endif
 
 //#include "ninjaCom.h"
 /**

@@ -43,6 +43,10 @@ class griddedInitialization : public initialize
 		        Mesh const& mesh,
                         wn_3dVectorField& U0,
 		        AsciiGrid<double>& cloud);
+#ifdef NINJAFOAM
+        virtual void ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud);
+#endif
 
     private:
         void setInitializationGrids(WindNinjaInputs &input);

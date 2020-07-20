@@ -1,8 +1,10 @@
 /******************************************************************************
  *
+ * $Id$
+ *
  * Project:  WindNinja
- * Purpose:  Arbitrary output writer for any GDAL driver
- * Author:   Kyle Shannon <kyle@pobox.com>
+ * Purpose:  Conservation of mass solver
+ * Author:   Natalie Wagenbrenner
  *
  ******************************************************************************
  *
@@ -25,31 +27,41 @@
  *
  *****************************************************************************/
 
-#ifdef NINJA_GDAL_OUTPUT
+#ifndef NINJA_CONSERVATION_OF_MASS_INCLUDED_
+#define NINJA_CONSERVATION_OF_MASS_INCLUDED_
 
-#ifndef NINJA_GDAL_OUTPUT_H_
-#define NINJA_GDAL_OUTPUT_H_
+#include "ninja.h"
 
+#include "assert.h"
 
-#include "gdal.h"
-#include "ogr_api.h"
-#include "ogr_srs_api.h"
+#include "stl_create.h"
+#include "ninja_conv.h"
+#include "ninja_errors.h"
+#include "wn_3dVectorField.h"
 
-#include "ascii_grid.h"
+#include "gdal_alg.h"
+#include "cpl_spawn.h"
 
-#define NINJA_OUTPUT_VECTOR 1 << 0
-#define NINJA_OUTPUT_ARROWS 1 << 1
-#define NINJA_OUTPUT_STYLED 1 << 2
-#define NINJA_OUTPUT_PALLET 1 << 3
+/**
+ * \brief Main interface to conservation of mass solver simulations.
+ *
+ */
+class NinjaConservationOfMass : public ninja
+{
+public:
+    NinjaConservationOfMass();
+    virtual ~NinjaConservationOfMass();
 
-/*
-** NinjaGDALOutput writes wind ninja output to an arbitrary driver.
-*/
-int NinjaGDALVectorOutput(const char *pszDriver,
-                          const char *pszFilename,
-                          int nFlags,
-                          AsciiGrid<double> &spd,
-                          AsciiGrid<double> &dir,
-                          char **papszOptions);
-#endif /* NINJA_GDAL_OUTPUT_H_ */
-#endif /* NINJA_GDAL_OUTPUT */
+    NinjaConservationOfMass( NinjaConservationOfMass const& A );
+    NinjaConservationOfMass& operator= ( NinjaConservationOfMass const& A );
+
+    virtual bool simulate_wind();
+    inline virtual std::string identify() {return std::string("ninjaConservationOfMass");}
+
+private:
+    virtual void deleteDynamicMemory();
+    FiniteElementMethod conservationOfMassEquation;
+};
+
+#endif /* NINJA_CONSERVATION_OF_MASS_INCLUDED_ */
+

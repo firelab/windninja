@@ -1005,7 +1005,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
             int bRounded = FALSE;
             GDALAdjustValueToDataType(GDALGetRasterDataType(band),
                                       noDataValue, &bClamped, &bRounded );
-            /* 
+            /*
             if( !bClamped )
             {
                 GDALWarpInitNoDataReal(psWO, -1e10);

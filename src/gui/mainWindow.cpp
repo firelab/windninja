@@ -863,6 +863,7 @@ void mainWindow::openInputFile()
 
       inputFileName = fileName;
       inputFileDir = QFileInfo(fileName).absolutePath();
+      tree->solve->setOutputDir( inputFileDir.absolutePath() );
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
@@ -1401,26 +1402,41 @@ double mainWindow::computeCellSize(int index)
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
 
-    double XLength = (GDALXSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01); //buffer for MDM
-    double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     double dz = GDALMaxValue - GDALMinValue;
     double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
 
     double volume;
     double cellCount;
     double cellVolume;
 
-    volume = XLength * YLength * ZLength; //volume of blockMesh
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
-    meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
-    meshResolution /= 4.0; //assume 2 rounds of refinement at surface
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
+        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+        nRoundsRefinement += 1;
+    }
+    meshResolution = side/(nRoundsRefinement*2.0);
   }
   else{
     /* native windninja mesh */
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
     double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
     double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1431,8 +1447,8 @@ double mainWindow::computeCellSize(int index)
   
   }
 #else 
-  double XLength = (GDALXSize + 1) * GDALCellSize;
-  double YLength = (GDALYSize + 1) * GDALCellSize;
+  double XLength = GDALXSize * GDALCellSize;
+  double YLength = GDALYSize * GDALCellSize;
   double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
   double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1596,8 +1612,8 @@ int mainWindow::checkInputFile(QString fileName)
 
     GDALClose( (GDALDatasetH)poInputDS );
 
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
 
@@ -1691,6 +1707,14 @@ int mainWindow::solve()
             ninjafoamMeshChoice = WindNinjaInputs::medium;
         else if (meshIndex == 2)
             ninjafoamMeshChoice = WindNinjaInputs::fine;
+        else {
+        meshRes = tree->surface->meshResDoubleSpinBox->value();
+        customMesh = true;
+        if( tree->surface->meshFeetRadioButton->isChecked() )
+            meshUnits = lengthUnits::feet;
+        else
+            meshUnits = lengthUnits::meters;
+        }
     }
 #endif
 
@@ -2240,6 +2264,12 @@ int mainWindow::solve()
     progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
     runProgress = new int[nRuns]; //I don't think this is needed anymore
 
+    std::string outputDir = tree->solve->outputDirectory().toStdString();
+    if( outputDir == "" ) {
+      // This should never happen, so if it does, fix it.
+      throw( "no output directory specified in solve page" );
+    }
+
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
     {
@@ -2289,6 +2319,8 @@ int mainWindow::solve()
 
         //set clipping
         army->setOutputBufferClipping( i, (double) clip );
+
+        army->setOutputPath( i, outputDir.c_str() );
 
         //diurnal, if needed
         army->setDiurnalWinds( i, useDiurnal );
@@ -2522,7 +2554,7 @@ int mainWindow::solve()
 
     //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
-    outputPath = QString::fromStdString( army->getOutputPath( 0 ) );
+    outputPath = QString::fromStdString( outputDir );
 
     //clear the army
     army->reset();
@@ -3521,11 +3553,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
-        tree->surface->meshResComboBox->removeItem(4);
-        tree->surface->meshResComboBox->setCurrentIndex(0);
-        //if the index isn't set when we change solvers,
-        //the index gets set to 4 which does not exist in
-        //the cfg solver, set to Coarse by default
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );

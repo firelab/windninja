@@ -951,9 +951,19 @@ void ninja::writeOutputFiles()
                 tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                 //ensure grids cover original DEM extents for FARSITE
-                tempCloud.BufferGridInPlace();
-                angTempGrid->BufferGridInPlace();
-                velTempGrid->BufferGridInPlace();
+                AsciiGrid<double> demGrid;
+                GDALDatasetH hDS;
+                hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                if( hDS == NULL )
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                            "Problem reading DEM during output writing." );
+                }
+
+                GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                tempCloud.BufferToOverlapGrid(demGrid);
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
 
                 tempCloud.write_Grid(input.cldFile.c_str(), 1);
                 angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -2283,7 +2293,6 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
  */
 void ninja::set_stationFetchFlag(bool flag)
 {
-//    cout<<"ninja: set_stationFetch=="<<flag<<endl;
     input.stationFetch=flag;   
 }
 
@@ -2364,6 +2373,7 @@ void ninja::set_meshResChoice( const Mesh::eMeshChoice choice )
 {
     mesh.set_meshResChoice( choice );
 }
+
 void ninja::set_meshResolution( double resolution, lengthUnits::eLengthUnits units )
 {
     mesh.set_meshResolution( resolution, units );
@@ -2730,7 +2740,13 @@ void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
     VSIStatL( path.c_str(), &sStat );
-    const char *pszTestPath = CPLFormFilename(path.c_str(), "NINJA_TEST", "");
+    /*
+    ** We just need a unique stub here, and instead of generating a random
+    ** stub, we are using GenerateTempFile to be cross platform.  We are just
+    ** using the stub/basename instead of the whole path.
+    */
+    const char *pszTmpName = CPLGetBasename(CPLGenerateTempFilename(0));
+    const char *pszTestPath = CPLFormFilename(path.c_str(), pszTmpName, 0);
     int nRet;
     
     if( VSI_ISDIR( sStat.st_mode ) ){

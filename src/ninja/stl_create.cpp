@@ -209,6 +209,7 @@ CPLErr NinjaElevationToStl( const char *pszInput,
         for( j = 0; j < nOutXSize - 1; j++ )
         {
             a.x = adfGeoTransform[0] + j * dfXRes + fXOffset;
+            //should the yoffset be subtracted??
             a.y = adfGeoTransform[3] + i * dfYRes + fYOffset;
             a.z = pafScanline[j+i*nOutXSize] + dfOffset;
 
@@ -317,6 +318,191 @@ CPLErr NinjaElevationToStl( const char *pszInput,
 
     VSIFree( pafScanline );
     GDALClose( hDS );
+    fclose( fout );
+
+    return eErr;
+}
+
+/**
+ * \brief Create an STL representation of an in-memory elevation ascii grid.
+ *
+ * \param elevationGrid AsciiGrid to read and convert
+ * \param pszOutput file to write (stl)
+ * \param eType type of stl file to create, ascii or binary.  Currently only
+ *              binary is supported
+ * \param dfOffset the offset for the z value, useful for translating to the
+ *                 input wind height.
+ * \return zero on success, non-zero otherwise
+ */
+CPLErr NinjaElevationToStl( Elevation &elevationGrid,
+                            const char *pszOutput,
+                            NinjaStlType eType,
+                            double dfOffset)
+{
+    CPLErr eErr = CE_None;
+    int nXSize, nYSize;
+    unsigned int nTriCount;
+    unsigned short nAttrCount;
+
+    FILE *fout;
+
+    nXSize = elevationGrid.get_nCols();
+    nYSize = elevationGrid.get_nRows();
+
+    if( eType == NinjaStlBinary )
+    {
+        fout = fopen( pszOutput, "wb" );
+    }
+    else
+    {
+        fout = fopen( pszOutput, "w" );
+    }
+    if( fout == NULL )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Failed to open output file" );
+        return CE_Failure;
+    }
+
+    float fXOffset, fYOffset;
+    fXOffset = elevationGrid.get_cellSize() * 0.5;
+    fYOffset = elevationGrid.get_cellSize() * 0.5;
+
+    char nil[80];
+    memset( nil, '\0', 80 );
+
+    nTriCount = (nXSize-1) * (nYSize-1) * 2; //cell centers are vertices
+    nAttrCount = 0;
+
+    int i, j;
+    StlPosition a, b, c, d;
+    StlPosition v1, v2, norm;
+    if( eType == NinjaStlBinary )
+    {
+        fwrite( nil, 1, 80, fout );
+        fwrite( &nTriCount, sizeof( unsigned int ), 1, fout );
+    }
+    else
+    {
+        fprintf( fout, "solid NAME\n" );
+    }
+    for( i = 0 ; i < nYSize - 1; i++ )
+    {
+        for( j = 0; j < nXSize - 1; j++ )
+        {
+
+            //  a               b
+            //   ---------------
+            //   |            /|
+            //   |          /  |
+            //   |        /    |
+            //   |      /      |
+            //   |    /        |
+            //   |  /          |
+            //   |/            |
+            //   ---------------
+            //  c               d
+            //
+
+            a.x = elevationGrid.get_xllCorner() + j * elevationGrid.get_cellSize() + fXOffset;
+            a.y = elevationGrid.get_yllCorner() + (i+1) * elevationGrid.get_cellSize() + fYOffset;
+            a.z = elevationGrid.get_cellValue(i+1, j) + dfOffset;
+
+            b.x = elevationGrid.get_xllCorner() + (j+1) * elevationGrid.get_cellSize() + fXOffset;
+            b.y = a.y;
+            b.z = elevationGrid.get_cellValue(i+1, j+1) + dfOffset;
+
+            c.x = a.x;
+            c.y = elevationGrid.get_yllCorner() + i * elevationGrid.get_cellSize() + fYOffset;
+            c.z = elevationGrid.get_cellValue(i, j) + dfOffset;
+
+            d.x = b.x;
+            d.y = c.y;
+            d.z = elevationGrid.get_cellValue(i, j+1) + dfOffset;
+
+            v1.x = c.x - a.x;
+            v1.y = c.y - a.y;
+            v1.z = c.z - a.z;
+
+            v2.x = b.x - a.x;
+            v2.y = b.y - a.y;
+            v2.z = b.z - a.z;
+
+            norm = StlComputeNormal( &v1, &v2 );
+
+            if( eType == NinjaStlBinary )
+            {
+                fwrite( &norm.x, sizeof( float ), 1, fout );
+                fwrite( &norm.y, sizeof( float ), 1, fout );
+                fwrite( &norm.z, sizeof( float ), 1, fout );
+                fwrite( &b.x, sizeof( float ), 1, fout );
+                fwrite( &b.y, sizeof( float ), 1, fout );
+                fwrite( &b.z, sizeof( float ), 1, fout );
+                fwrite( &a.x, sizeof( float ), 1, fout );
+                fwrite( &a.y, sizeof( float ), 1, fout );
+                fwrite( &a.z, sizeof( float ), 1, fout );
+                fwrite( &c.x, sizeof( float ), 1, fout );
+                fwrite( &c.y, sizeof( float ), 1, fout );
+                fwrite( &c.z, sizeof( float ), 1, fout );
+                fwrite( &nAttrCount, sizeof( unsigned short ), 1, fout );
+            }
+            else
+            {
+                fprintf( fout, "facet normal %e %e %e\n",
+                             norm.x, norm.y, norm.z );
+
+                fprintf( fout, "    outer loop\n" );
+                fprintf( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
+                fprintf( fout, "        vertex %e %e %e\n", a.x, a.y, a.z );
+                fprintf( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
+                fprintf( fout, "    endloop\n" );
+                fprintf( fout, "endfacet\n" );
+            }
+
+            v1.x = b.x - d.x;
+            v1.y = b.y - d.y;
+            v1.z = b.z - d.z;
+
+            v2.x = c.x - d.x;
+            v2.y = c.y - d.y;
+            v2.z = c.z - d.z;
+
+            norm = StlComputeNormal( &v1, &v2 );
+            if( eType == NinjaStlBinary )
+            {
+                fwrite( &norm.x, sizeof( float ), 1, fout );
+                fwrite( &norm.y, sizeof( float ), 1, fout );
+                fwrite( &norm.z, sizeof( float ), 1, fout );
+                fwrite( &d.x, sizeof( float ), 1, fout );
+                fwrite( &d.y, sizeof( float ), 1, fout );
+                fwrite( &d.z, sizeof( float ), 1, fout );
+                fwrite( &b.x, sizeof( float ), 1, fout );
+                fwrite( &b.y, sizeof( float ), 1, fout );
+                fwrite( &b.z, sizeof( float ), 1, fout );
+                fwrite( &c.x, sizeof( float ), 1, fout );
+                fwrite( &c.y, sizeof( float ), 1, fout );
+                fwrite( &c.z, sizeof( float ), 1, fout );
+                fwrite( &nAttrCount, sizeof( unsigned short ), 1, fout );
+            }
+            else
+            {
+                fprintf( fout, "facet normal %e %e %e\n",
+                            norm.x, norm.y, norm.z );
+
+                fprintf( fout, "    outer loop\n" );
+                fprintf( fout, "        vertex %e %e %e\n", d.x, d.y, d.z );
+                fprintf( fout, "        vertex %e %e %e\n", b.x, b.y, b.z );
+                fprintf( fout, "        vertex %e %e %e\n", c.x, c.y, c.z );
+                fprintf( fout, "    endloop\n" );
+                fprintf( fout, "endfacet\n" );
+            }
+        }
+    }
+    if( eType == NinjaStlAscii )
+    {
+        fprintf( fout, "endsolid %s\n", CPLGetBasename( elevationGrid.fileName.c_str() ) );
+    }
+
     fclose( fout );
 
     return eErr;
