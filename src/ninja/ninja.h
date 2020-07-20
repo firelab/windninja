@@ -137,7 +137,7 @@ public:
     ninja(const ninja &rhs);
     ninja &operator=(const ninja &rhs);
 
-    virtual bool simulate_wind();
+    virtual bool simulate_wind(){};
     inline virtual std::string identify() {return std::string("ninja");}
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
@@ -390,7 +390,6 @@ protected:
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
-    FiniteElementMethod conservationOfMass;
 
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;

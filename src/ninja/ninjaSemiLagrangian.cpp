@@ -31,6 +31,7 @@
 
 NinjaSemiLagrangian::NinjaSemiLagrangian() : ninja()
 , currentTime(boost::local_time::not_a_date_time)
+, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
 }
@@ -42,6 +43,7 @@ NinjaSemiLagrangian::NinjaSemiLagrangian() : ninja()
 
 NinjaSemiLagrangian::NinjaSemiLagrangian(NinjaSemiLagrangian const& A ) : ninja(A), U00(A.U00), transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
+, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
 }
@@ -58,6 +60,7 @@ NinjaSemiLagrangian& NinjaSemiLagrangian::operator= (NinjaSemiLagrangian const& 
         ninja::operator=(A);
         U00 = A.U00;
         transport = A.transport;
+        conservationOfMassEquation = A.conservationOfMassEquation;
     }
     return *this;
 }
@@ -187,10 +190,10 @@ bool NinjaSemiLagrangian::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        conservationOfMass.Initialize(mesh, input, U0);
-        conservationOfMass.SetupSKCompressedRowStorage();
-        conservationOfMass.SetStability(input, CloudGrid, init);
-        conservationOfMass.Discretize();
+        conservationOfMassEquation.Initialize(mesh, input, U0);
+        conservationOfMassEquation.SetupSKCompressedRowStorage();
+        conservationOfMassEquation.SetStability(input, CloudGrid, init);
+        conservationOfMassEquation.Discretize();
 
         checkCancel();
 
@@ -219,11 +222,11 @@ bool NinjaSemiLagrangian::simulate_wind()
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //set boundary conditions
-            conservationOfMass.SetBoundaryConditions();
+            conservationOfMassEquation.SetBoundaryConditions();
 
             //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
-            conservationOfMass.Write_A_and_b(1000);
+            conservationOfMassEquation.Write_A_and_b(1000);
 #endif
 
 #ifdef _OPENMP
@@ -260,8 +263,8 @@ bool NinjaSemiLagrangian::simulate_wind()
 #endif
             printf("test\n");
 
-            if(conservationOfMass.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
-                if(conservationOfMass.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
+            if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
+                if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
                     throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
@@ -275,7 +278,7 @@ bool NinjaSemiLagrangian::simulate_wind()
             /*  ----------------------------------------*/
 
             //compute uvw field from phi field
-            conservationOfMass.ComputeUVWField(input, U);
+            conservationOfMassEquation.ComputeUVWField(input, U);
 
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */

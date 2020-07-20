@@ -70,6 +70,7 @@ private:
     virtual void deleteDynamicMemory();
     void stepForwardOneTimestep();
 
+    FiniteElementMethod conservationOfMassEquation;
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
 

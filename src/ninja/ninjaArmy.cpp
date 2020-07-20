@@ -36,7 +36,7 @@
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
-    ninjas.push_back(new ninja());
+    ninjas.push_back(new NinjaConservationOfMass());
     initLocalData();
 }
 
@@ -109,7 +109,7 @@ void ninjaArmy::makeDomainAverageInitializationArmy(int numNinjas, eSolverType s
     {
 #ifdef NINJAFOAM
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  ninjas[i] = new NinjaFoam();
@@ -125,7 +125,7 @@ void ninjaArmy::makeDomainAverageInitializationArmy(int numNinjas, eSolverType s
             }
 #else
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
@@ -189,7 +189,7 @@ void ninjaArmy::makePointInitializationArmy( std::vector<boost::posix_time::ptim
 
         for(unsigned int i=0; i<timeList.size(); i++)
         {
-            ninjas[i] = new ninja();
+            ninjas[i] = new NinjaConservationOfMass();
         }
 
         boost::local_time::tz_database tz_db;
@@ -325,7 +325,7 @@ void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename,
         {
 #ifdef NINJAFOAM
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  ninjas[i] = new NinjaFoam();
@@ -335,7 +335,7 @@ void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename,
             }
 #else
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
@@ -393,7 +393,7 @@ void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename,
         {
 #ifdef NINJAFOAM
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  ninjas[i] = new NinjaFoam();
@@ -403,7 +403,7 @@ void ninjaArmy::makeWeatherModelInitializationArmy(std::string forecastFilename,
             }
 #else
             if(solverType == massConservingSteadyState){
-                ninjas[i] = new ninja();
+                ninjas[i] = new NinjaConservationOfMass();
             }
             else if(solverType == cfdSteadyState){
                  throw std::runtime_error(std::string("The cfdSteadyState solverType is not available in ninjaArmy::makeWeatherModelInitializationArmy().  This may be because windninja was not compiled with OpenFOAM."));
@@ -622,10 +622,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                printf("Return of false from simulate_wind()");
 #ifdef NINJAFOAM
             //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
-            //a ninja run to add diurnal flow after the cfd solution is computed
+            //a ninjaConservationOfMass run to add diurnal flow after the cfd solution is computed
             if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
-                ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                ninja* diurnal_ninja = new NinjaConservationOfMass();
+                *diurnal_ninja = *(ninjas[0]);
                 //Set the diurnal ninja to have the same com object,
                 //so that it can update the progress of the original ninja
                 diurnal_ninja->input.Com = ninjas[0]->input.Com;
@@ -653,6 +654,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
                 ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
+
+                delete diurnal_ninja;
             } 
 #endif //NINJAFOAM            
 
@@ -709,7 +712,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //a ninja run to add diurnal flow after the cfd solution is computed
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
-                    ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    ninja* diurnal_ninja = new NinjaConservationOfMass();
+                    *diurnal_ninja = *(ninjas[i]);
                     //Set the diurnal ninja to have the same com object,
                     //so that it can update the progress of the original ninja
                     diurnal_ninja->input.Com = ninjas[i]->input.Com;
@@ -737,6 +741,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
                     ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
+
+                    delete diurnal_ninja;
                 } 
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)

@@ -39,6 +39,7 @@
 #endif
 
 #include "ninjaSemiLagrangian.h"
+#include "ninjaConservationOfMass.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
