@@ -111,7 +111,6 @@ ninja::ninja(const ninja &rhs)
     strcpy( input.lastComString, rhs.get_lastComString() );
     input.Com->fpLog = rhs.get_ComLogFp();
 
-
     cancel = rhs.cancel;
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
@@ -160,12 +159,12 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
-        #ifdef EMISSIONS
+#ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
-        #endif
-        #ifdef FRICTION_VELOCITY
+#endif
+#ifdef FRICTION_VELOCITY
         UstarGrid = rhs.UstarGrid;
-        #endif
+#endif
         U = rhs.U;
         U0 = rhs.U0;
 
@@ -239,11 +238,8 @@ void ninja::interp_uvw()
         int i,j,k;
         double h2, h1=0.0, slopeu, slopev, slopew, uu, vv, ww, intermedval;
         windProfile profile;
+        //make sure rough_h is set to zero if profile switch is 0 or 2
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
-
-                                                                        //make sure rough_h is set to zero if profile switch is 0 or 2
-
-
 
         //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //            JUST TESTING!!!!!!     DELETE!!!!!
@@ -251,7 +247,7 @@ void ninja::interp_uvw()
         //Add a blob of stronger wind using a multiplier of existing wind speed
 //        double blobWindSpeedMultiplier = 3.0;
 //        double blobWindSpeed = 30.0;
-
+//
 //        for(int k=0; k<U.vectorData_x.mesh_->nlayers; k++)
 //        {
 //            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
@@ -269,7 +265,7 @@ void ninja::interp_uvw()
 //                }
 //            }
 //        }
-
+//
 //        double dt = 10.0;
 //        wn_3dVectorField U1(U);
 //        TransportSemiLagrangian transport;

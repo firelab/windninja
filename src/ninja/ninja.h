@@ -72,7 +72,6 @@
 #include "WindNinjaInputs.h"
 #include "KmlVector.h"
 #include "ShapeVector.h"
-#include "preconditioner.h"
 #include "volVTK.h"
 #include "ninjaCom.h"
 #include "ninjaException.h"
@@ -80,33 +79,21 @@
 #include "wn_3dArray.h"
 #include "wn_3dScalarField.h"
 #include "wn_3dVectorField.h"
-#include "initialize.h"
-#include "domainAverageInitialization.h"
-#include "wxModelInitializationFactory.h"
 #include "initializationFactory.h"
 #include "pointInitialization.h"
-#include "griddedInitialization.h"
 #include "transportSemiLagrangian.h"
 #include "finiteElementMethod.h"
-
-#ifdef NINJAFOAM
-#include "foamDomainAverageInitialization.h"
-#include "foamWxModelInitialization.h"
-#endif
-
 #include "wxStation.h"
 #include "ninjaUnits.h"
-#include "element.h"
 #include "farsiteAtm.h"
 #include "OutputWriter.h"
+#include "stability.h"
 
 #ifndef Q_MOC_RUN
 #include <boost/shared_ptr.hpp>
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
 #endif
-
-#include "stability.h"
 
 #ifdef FRICTION_VELOCITY
 #include "frictionVelocity.h"
@@ -137,9 +124,11 @@ public:
     ninja(const ninja &rhs);
     ninja &operator=(const ninja &rhs);
 
-    virtual bool simulate_wind(){};
+    virtual bool simulate_wind()=0;
     inline virtual std::string identify() {return std::string("ninja");}
-    bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
+    bool cancel; //if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
+
+    WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
     Mesh mesh;
 
     //output grids to access the final wind grids (typically used by other programs running the windninja API such as WFDSS, FlamMap, etc.
@@ -147,13 +136,13 @@ public:
     AsciiGrid<double>VelocityGrid;
     AsciiGrid<double>CloudGrid;
 
-    #ifdef FRICTION_VELOCITY
+#ifdef FRICTION_VELOCITY
     AsciiGrid<double>UstarGrid;
-    #endif
+#endif
 
-    #ifdef EMISSIONS
+#ifdef EMISSIONS
     AsciiGrid<double>DustGrid;
-    #endif
+#endif
 
     /*-----------------------------------------------------------------------------
      *
@@ -190,13 +179,13 @@ public:
 
     void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
     void setArmySize(int n);
-    void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
-    void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false);	//input wind initialization method
+    void set_DEM(std::string dem_file_name); //Sets elevation filename (Should be in units of meters!)
+    void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false); //input wind initialization method
     WindNinjaInputs::eInitializationMethod get_initializationMethod(); //returns the initializationMethod
 
-    void set_uniVegetation(WindNinjaInputs::eVegetation vegetation_);			//set all uniform surface parameters based on a vegetation type (grass, brush, trees)
+    void set_uniVegetation(WindNinjaInputs::eVegetation vegetation_); //set all uniform surface parameters based on a vegetation type (grass, brush, trees)
     void set_uniVegetation();
-    static WindNinjaInputs::eVegetation get_eVegetationType(std::string veg);       //gets an eVegetation type from a string
+    static WindNinjaInputs::eVegetation get_eVegetationType(std::string veg); //gets an eVegetation type from a string
 
     /*-----------------------------------------------------------------------------
      *  Stability Specific Functions
@@ -246,20 +235,24 @@ public:
     void set_uniAirTemp(double temp, temperatureUnits::eTempUnits units);
     void set_uniCloudCover(double cloud_cover, coverUnits::eCoverUnits units);	//set cloud cover (fraction or percent of sky cover)
     void set_wxModelFilename(const std::string& forecast_initialization_filename);	//sets the surface wind field initialization file (such as NDFD, etc.)
-    void set_wxStationFilename(std::string station_filename);	//sets the weather station(s) filename (for use in point initialization)
+
+    /*-----------------------------------------------------------------------------
+     *  Wx Station Fetching
+     *-----------------------------------------------------------------------------*/
+    void set_wxStationFilename(std::string station_filename); //sets the weather station(s) filename (for use in point initialization)
     void set_wxStations(std::vector<wxStation> &wxStations);
-//stationFetch
     void set_stationFetchFlag( bool flag );
-//    std::vector<std::vector<wxStationList> >get_wxStatList();
-
-
-//stationFetch
     std::vector<wxStation> get_wxStations();
+
+    /*-----------------------------------------------------------------------------
+     *  Mesh
+     *-----------------------------------------------------------------------------*/
     void set_meshResChoice( std::string choice );
     void set_meshResChoice( const Mesh::eMeshChoice );
     virtual void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
     virtual double get_meshResolution();
     void set_numVertLayers( const int nLayers );
+
 #ifdef NINJA_SPEED_TESTING
     void set_speedDampeningRatio(double r);
     void set_downDragCoeff(double coeff);
@@ -267,12 +260,14 @@ public:
     void set_upDragCoeff(double coeff);
     void set_upEntrainmentCoeff(double coeff);
 #endif
+
 #ifdef FRICTION_VELOCITY
     void set_frictionVelocityFlag(bool flag);
     void set_frictionVelocityCalculationMethod(std::string calcMethod);
     void computeFrictionVelocity();
     const std::string get_UstarFileName() const; //returns the name of the ustar file name
 #endif
+
 #ifdef EMISSIONS
     void set_dustFilename(std::string filename);    //set the dust emissions input fire perimeter filename
     void set_dustFileOut(std::string filename); //set the dust file out filename
@@ -283,6 +278,7 @@ public:
     void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
     void set_geotiffOutFlag(bool flag);
 #endif
+
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
@@ -313,12 +309,14 @@ public:
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
     void set_numberCPUs(int CPUs);
+
+    /*-----------------------------------------------------------------------------
+     *  Output
+     *-----------------------------------------------------------------------------*/
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
-
     void set_googColor(std::string scheme,bool scaling);
-
     void set_wxModelGoogOutFlag(bool flag);
     void set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling);	//sets the desired method of speed scaling in the Google Earth legend (equal_color=>equal numbers of arrows for each color,  equal_interval=>equal speed intervals over the speed range)
     void set_googLineWidth(double width);								//sets the line width for the vectors in the Google Earth kmz file
@@ -345,14 +343,10 @@ public:
     void set_outputPath(std::string path);
 
     void set_PrjString(std::string prj);
-
     double getFuelBedDepth(int fuelModel);
-
     void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void checkInputs();
     void dumpMemory();
-
-    WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
 
 protected:
     void checkCancel();
@@ -372,12 +366,12 @@ protected:
     double startBuildEq, endBuildEq;
     double startSolve, endSolve;
     double startWriteOut, endWriteOut;
-    #ifdef FRICTION_VELOCITY
+#ifdef FRICTION_VELOCITY
     double startComputeFrictionVelocity, endComputeFrictionVelocity;
-    #endif
-    #ifdef EMISSIONS
+#endif
+#ifdef EMISSIONS
     double startDustEmissions, endDustEmissions;
-    #endif
+#endif
 
     double getSmallestRadiusOfInfluence();
     bool isNullRun; //flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
@@ -390,7 +384,6 @@ protected:
     std::vector<int> num_outer_iter_tries_v;   //used in outer iterations calcs
     std::vector<int> num_outer_iter_tries_w;   //used in outer iterations calcs
 
-
     AsciiGrid<double> *uDiurnal, *vDiurnal, *wDiurnal, *height;
     Aspect *aspect;
     Slope *slope;
@@ -399,31 +392,8 @@ protected:
 
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
 
-    void get_rootname(const char *NAME,char *shortname);
-
     void interp_uvw();
 
-    double get_aspect_ratio(int NUMEL, int NUMNP, double *XORD, double *YORD, double *ZORD,
-                            int nrows, int ncols, int nlayers);
-
-    double get_equiangle_skew(int NUMEL, int NUMNP, double *XORD, double *YORD, double *ZORD,
-                              int nrows, int ncols, int nlayers);
-
-    void get_cell_angles(double xa, double ya, double za,
-                         double xb, double yb, double zb,
-                         double xc, double yc, double zc,
-                         double xd, double yd, double zd,
-                         double &cell_max_angle, double &cell_min_angle);
-
-    double get_angle(double x1, double y1, double z1,
-                     double x2, double y2, double z2,
-                     double x3, double y3, double z3);
-
-    double maxj(double value1, double value2);
-    //double compute_cellsize(Elevation *dem, double target_num_horiz_cells);
-    //double compute_domain_height(Elevation *dem, double max_desired_aspect_ratio, int num_vert_layers, double vert_growth, double CellSize, AsciiGrid<double> *Roughness);
-    //double monin_obukov(double z, double U1, double z1, double z0, double L, double u_star);
-    //double stability_function(double z_over_L, double L_switch);
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
     void prepareOutput();
@@ -434,5 +404,3 @@ private:
 };
 
 #endif	//NINJA_HEADER
-
-
