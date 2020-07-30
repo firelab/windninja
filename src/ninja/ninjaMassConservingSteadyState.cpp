@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Conservation of mass solver
+ * Purpose:  Steady state mass conserving solver
  * Author:   Natalie Wagenbrenner
  *
  ******************************************************************************
@@ -27,9 +27,9 @@
  *
  *****************************************************************************/
 
-#include "ninjaConservationOfMass.h"
+#include "ninjaMassConservingSteadyState.h"
 
-NinjaConservationOfMass::NinjaConservationOfMass() : ninja()
+NinjaMassConservingSteadyState::NinjaMassConservingSteadyState() : ninja()
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
@@ -40,7 +40,7 @@ NinjaConservationOfMass::NinjaConservationOfMass() : ninja()
  * @param A Copied value.
  */
 
-NinjaConservationOfMass::NinjaConservationOfMass(NinjaConservationOfMass const& A ) : ninja(A)
+NinjaMassConservingSteadyState::NinjaMassConservingSteadyState(NinjaMassConservingSteadyState const& A ) : ninja(A)
 , conservationOfMassEquation(A.conservationOfMassEquation)
 {
 
@@ -52,7 +52,7 @@ NinjaConservationOfMass::NinjaConservationOfMass(NinjaConservationOfMass const& 
  * @return a copy of an object
  */
 
-NinjaConservationOfMass& NinjaConservationOfMass::operator=(NinjaConservationOfMass const& A)
+NinjaMassConservingSteadyState& NinjaMassConservingSteadyState::operator=(NinjaMassConservingSteadyState const& A)
 {
     if(&A != this) {
         ninja::operator=(A);
@@ -62,7 +62,7 @@ NinjaConservationOfMass& NinjaConservationOfMass::operator=(NinjaConservationOfM
     return *this;
 }
 
-NinjaConservationOfMass::~NinjaConservationOfMass()
+NinjaMassConservingSteadyState::~NinjaMassConservingSteadyState()
 {
     deleteDynamicMemory();
 }
@@ -72,7 +72,7 @@ NinjaConservationOfMass::~NinjaConservationOfMass()
  * WindNinjaInputs should be completely filled in before running this method.
  * @return Returns true if simulation completes without error.
  */
-bool NinjaConservationOfMass::simulate_wind()
+bool NinjaMassConservingSteadyState::simulate_wind()
 {
     checkCancel();
 
@@ -405,7 +405,7 @@ checkCancel();
 /**Deletes allocated dynamic memory.
  *
  */
-void NinjaConservationOfMass::deleteDynamicMemory()
+void NinjaMassConservingSteadyState::deleteDynamicMemory()
 {
     ninja::deleteDynamicMemory();
 }

@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Semi lagrangian solver
+ * Purpose:  Transient semi-lagrangian solver
  * Author:   Jason Forthofer
  *
  ******************************************************************************
@@ -27,9 +27,9 @@
  *
  *****************************************************************************/
 
-#include "ninjaSemiLagrangian.h"
+#include "ninjaSemiLagrangianTransient.h"
 
-NinjaSemiLagrangian::NinjaSemiLagrangian() : ninja()
+NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient() : ninja()
 , currentTime(boost::local_time::not_a_date_time)
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
@@ -41,7 +41,7 @@ NinjaSemiLagrangian::NinjaSemiLagrangian() : ninja()
  * @param A Copied value.
  */
 
-NinjaSemiLagrangian::NinjaSemiLagrangian(NinjaSemiLagrangian const& A ) : ninja(A), U00(A.U00), transport(A.transport)
+NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient(NinjaSemiLagrangianTransient const& A ) : ninja(A), U00(A.U00), transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
@@ -54,7 +54,7 @@ NinjaSemiLagrangian::NinjaSemiLagrangian(NinjaSemiLagrangian const& A ) : ninja(
  * @return a copy of an object
  */
 
-NinjaSemiLagrangian& NinjaSemiLagrangian::operator= (NinjaSemiLagrangian const& A)
+NinjaSemiLagrangianTransient& NinjaSemiLagrangianTransient::operator= (NinjaSemiLagrangianTransient const& A)
 {
     if(&A != this) {
         ninja::operator=(A);
@@ -65,7 +65,7 @@ NinjaSemiLagrangian& NinjaSemiLagrangian::operator= (NinjaSemiLagrangian const& 
     return *this;
 }
 
-NinjaSemiLagrangian::~NinjaSemiLagrangian()
+NinjaSemiLagrangianTransient::~NinjaSemiLagrangianTransient()
 {
     deleteDynamicMemory();
 }
@@ -75,7 +75,7 @@ NinjaSemiLagrangian::~NinjaSemiLagrangian()
  * WindNinjaInputs should be completely filled in before running this method.
  * @return Returns true if simulation completes without error.
  */
-bool NinjaSemiLagrangian::simulate_wind()
+bool NinjaSemiLagrangianTransient::simulate_wind()
 {
     checkCancel();
 
@@ -252,7 +252,6 @@ bool NinjaSemiLagrangian::simulate_wind()
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
 
-
             /*  ----------------------------------------*/
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
@@ -356,7 +355,7 @@ bool NinjaSemiLagrangian::simulate_wind()
 /**Deletes allocated dynamic memory.
  *
  */
-void NinjaSemiLagrangian::deleteDynamicMemory()
+void NinjaSemiLagrangianTransient::deleteDynamicMemory()
 {
     ninja::deleteDynamicMemory();
 

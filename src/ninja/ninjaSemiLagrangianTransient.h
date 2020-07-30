@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Semi lagrangian solver
+ * Purpose:  Transient semi-lagrangian solver
  * Author:   Jason Forthofer
  *
  ******************************************************************************
@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#ifndef NINJA_SEMI_LAGRANGIAN_INCLUDED_
-#define NINJA_SEMI_LAGRANGIAN_INCLUDED_
+#ifndef NINJA_SEMI_LAGRANGIAN_TRANSIENT_INCLUDED_
+#define NINJA_SEMI_LAGRANGIAN_TRANSIENT_INCLUDED_
 
 #include "ninja.h"
 
@@ -47,14 +47,14 @@
  * \brief Main interface to semi lagrangian solver simulations.
  *
  */
-class NinjaSemiLagrangian : public ninja
+class NinjaSemiLagrangianTransient : public ninja
 {
 public:
-    NinjaSemiLagrangian();
-    virtual ~NinjaSemiLagrangian();
+    NinjaSemiLagrangianTransient();
+    virtual ~NinjaSemiLagrangianTransient();
 
-    NinjaSemiLagrangian( NinjaSemiLagrangian const& A );
-    NinjaSemiLagrangian& operator= ( NinjaSemiLagrangian const& A );
+    NinjaSemiLagrangianTransient( NinjaSemiLagrangianTransient const& A );
+    NinjaSemiLagrangianTransient& operator= ( NinjaSemiLagrangianTransient const& A );
 
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjaSemiLagrangian");}
@@ -74,5 +74,5 @@ private:
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
 
-#endif /* NINJA_SEMI_LAGRANGIAN_INCLUDED_ */
+#endif /* NINJA_SEMI_LAGRANGIAN_TRANSIENT_INCLUDED_ */
 

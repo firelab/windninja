@@ -38,8 +38,9 @@
 #include "ninjafoam.h"
 #endif
 
-#include "ninjaSemiLagrangian.h"
-#include "ninjaConservationOfMass.h"
+#include "ninjaSemiLagrangianSteadyState.h"
+#include "ninjaSemiLagrangianTransient.h"
+#include "ninjaMassConservingSteadyState.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"

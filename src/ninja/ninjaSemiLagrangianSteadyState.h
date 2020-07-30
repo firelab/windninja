@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Conservation of mass solver
- * Author:   Natalie Wagenbrenner
+ * Purpose:  Steady state semi-lagrangian solver
+ * Author:   Jason Forthofer
  *
  ******************************************************************************
  *
@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#ifndef NINJA_CONSERVATION_OF_MASS_INCLUDED_
-#define NINJA_CONSERVATION_OF_MASS_INCLUDED_
+#ifndef NINJA_SEMI_LAGRANGIAN_STEADY_STATE_INCLUDED_
+#define NINJA_SEMI_LAGRANGIAN_STEADY_STATE_INCLUDED_
 
 #include "ninja.h"
 
@@ -37,31 +37,44 @@
 #include "stl_create.h"
 #include "ninja_conv.h"
 #include "ninja_errors.h"
+#include "transportSemiLagrangian.h"
 #include "wn_3dVectorField.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
 
 /**
- * \brief Main interface to conservation of mass solver simulations.
+ * \brief Main interface to semi lagrangian solver simulations.
  *
  */
-class NinjaConservationOfMass : public ninja
+class NinjaSemiLagrangianSteadyState: public ninja
 {
 public:
-    NinjaConservationOfMass();
-    virtual ~NinjaConservationOfMass();
+    NinjaSemiLagrangianSteadyState();
+    virtual ~NinjaSemiLagrangianSteadyState();
 
-    NinjaConservationOfMass( NinjaConservationOfMass const& A );
-    NinjaConservationOfMass& operator= ( NinjaConservationOfMass const& A );
+    NinjaSemiLagrangianSteadyState( NinjaSemiLagrangianSteadyState const& A );
+    NinjaSemiLagrangianSteadyState& operator= ( NinjaSemiLagrangianSteadyState const& A );
 
     virtual bool simulate_wind();
-    inline virtual std::string identify() {return std::string("ninjaConservationOfMass");}
+    inline virtual std::string identify() {return std::string("ninjaSemiLagrangianSteadyState");}
+
+    TransportSemiLagrangian transport;
+
+    int currentTime; //tracks current time (iteration)
+
+    //boost::local_time::local_date_time currentTime;//tracks current time as simulation progresses
+    //boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
+    //boost::posix_time::time_duration currentDt0;//current old time step size in seconds (from last time step)
 
 private:
+    /* Output */
     virtual void deleteDynamicMemory();
+    void stepForwardOneTimestep();
+
     FiniteElementMethod conservationOfMassEquation;
+    wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
 
-#endif /* NINJA_CONSERVATION_OF_MASS_INCLUDED_ */
+#endif /* NINJA_SEMI_LAGRANGIAN_STEADY_STATE_INCLUDED_ */
 
