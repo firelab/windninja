@@ -1048,6 +1048,8 @@ void FiniteElementMethod::Deallocate()
         windSpeed.deallocate();
         windSpeedGradient.deallocate();
     }
+
+    alphaVfield.deallocate();
 }
 
 /**
@@ -1556,8 +1558,6 @@ void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
             U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
         }
     } //end parallel section
-
-    alphaVfield.deallocate();
 
     // testing
     /*std::string filename;
