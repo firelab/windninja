@@ -261,7 +261,10 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
             double dt = 10.0;
             transport.transportVector(U, U1, dt);
-            U = U1;
+            U0 = U1;
+            conservationOfMassEquation.Initialize(mesh, input, U0);
+            conservationOfMassEquation.Discretize();
+            conservationOfMassEquation.SetBoundaryConditions();
 
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */
