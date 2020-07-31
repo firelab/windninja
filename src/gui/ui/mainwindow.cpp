@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+static void panic(std::string msg) throw() {
+  throw std::runtime_error(msg);
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow) {
@@ -72,31 +76,41 @@ void MainWindow::OGRFormats() {
 }
 
 void MainWindow::openElevation() {
-    //ui->elevEdit->clear();
-    //ui->vegCombo->setEnabled(true);
-    QString file = QFileDialog::getOpenFileName(this,
-     tr("Open Elevation Input File"),
-     "./",
-     tr("Elevation Input Files (*.asc *.lcp *.tif *.img)"));
-    if(file == "") {
+  ui->elevEdit->clear();
+  ui->vegCombo->setEnabled(true);
+  QString file = QFileDialog::getOpenFileName(this,
+   tr("Open Elevation Input File"),
+   "./",
+   tr("Elevation Input Files (*.asc *.lcp *.tif *.img)"));
+  if(file == "") {
+    return;
+  }
+  /* TODO(kyle): factor out, needs to happen in windninja */
+  GDALDatasetH hDS = GDALOpen(file.toLocal8Bit().data(), GA_ReadOnly);
+  if(hDS == nullptr) {
+      panic("failed to open " + file.toStdString());
       return;
-    }
-    // Check file via API
-    QFileInfo info = QFileInfo(file);
-    GDALDatasetH hDS = GDALOpen(file.toLocal8Bit().data(), GA_ReadOnly);
-    if(hDS == NULL) {
-        return;
-    }
-    GDALDriverH hDrv = GDALGetDatasetDriver(hDS);
-    if(hDrv == NULL) {
-        GDALClose(hDS);
-        return;
-    }
-    if(EQUAL(GDALGetDriverShortName(hDrv), "LCP")) {
-        ui->vegCombo->setDisabled(true);
-    }
-    ui->elevEdit->setText(info.fileName());
-    GDALClose(hDS);
+  }
+  GDALDriverH hDrv = GDALGetDatasetDriver(hDS);
+  if(hDrv == nullptr) {
+      panic("failed to get driver for: " + file.toStdString());
+      GDALClose(hDS);
+      return;
+  }
+  QString fmt = GDALGetDriverShortName(hDrv);
+  if(fmt == "") {
+    // TODO(kyle): relay info to user about invalid input
+    return;
+  }
+  if(fmt != "GTiff" && fmt != "HFA" && fmt != "LCP" && fmt != "VRT") {
+    panic("invalid format: " + fmt.toStdString());
+  }
+  if(fmt == "LCP") {
+    ui->vegCombo->setDisabled(true);
+  }
+  // Check file via API
+  QFileInfo info = QFileInfo(file);
+  ui->elevEdit->setText(info.fileName());
 }
 
 void MainWindow::updateMesh(int index) {

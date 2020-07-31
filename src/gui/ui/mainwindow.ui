@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -90,19 +90,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="sitePage">
@@ -115,19 +102,6 @@
              <string>Elevation Data</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QLineEdit" name="elevEdit">
@@ -151,6 +125,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="downloadElevButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Download...</string>
             </property>
@@ -169,19 +146,6 @@
              <string>Time Zone</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QComboBox" name="tzCombo"/>
@@ -203,19 +167,6 @@
              <string>Vegetation</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QComboBox" name="vegCombo">
@@ -241,24 +192,11 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
-           <widget class="QLabel" name="label_3">
+           <widget class="QLabel" name="meshResLabel">
             <property name="text">
              <string>Mesh Resolution</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QComboBox" name="meshChoiceCombo">
@@ -310,19 +248,6 @@
           </item>
          </layout>
         </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>257</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="initPage">
@@ -330,24 +255,11 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_13">
           <item>
-           <widget class="QLabel" name="label_11">
+           <widget class="QLabel" name="initMethodLabel">
             <property name="text">
              <string>Initialization Method</string>
             </property>
            </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_11">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item>
            <widget class="QComboBox" name="initCombo">
@@ -373,14 +285,14 @@
         <item>
          <widget class="QStackedWidget" name="initStack">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
-          <widget class="QWidget" name="page_2">
+          <widget class="QWidget" name="domainInitPage">
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
-               <widget class="QLabel" name="label_4">
+               <widget class="QLabel" name="windHeighLabel">
                 <property name="text">
                  <string>Wind Height</string>
                 </property>
@@ -415,7 +327,7 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLabel" name="label">
+               <widget class="QLabel" name="windSpeedLabel">
                 <property name="text">
                  <string>Wind Speed Units</string>
                 </property>
@@ -445,14 +357,14 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <item>
-               <widget class="QLabel" name="label_2">
+               <widget class="QLabel" name="tempUnitsLabel">
                 <property name="text">
                  <string>Temperature Units</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_2">
+               <widget class="QComboBox" name="tempCombo">
                 <item>
                  <property name="text">
                   <string>Fahrenheit</string>
@@ -470,7 +382,7 @@
             <item>
              <layout class="QGridLayout" name="gridLayout">
               <item row="0" column="0">
-               <widget class="QLabel" name="label_5">
+               <widget class="QLabel" name="speedLabel">
                 <property name="text">
                  <string>Speed</string>
                 </property>
@@ -478,49 +390,52 @@
               </item>
               <item row="1" column="6">
                <widget class="QToolButton" name="addDomainRunButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>+</string>
                 </property>
                </widget>
               </item>
               <item row="1" column="5">
-               <widget class="QSpinBox" name="spinBox_3"/>
+               <widget class="QSpinBox" name="tempSpinBox"/>
               </item>
               <item row="1" column="0">
-               <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+               <widget class="QDoubleSpinBox" name="speedSpinBox"/>
               </item>
               <item row="1" column="2">
-               <widget class="QDateTimeEdit" name="dateTimeEdit"/>
+               <widget class="QDateTimeEdit" name="timeEdit"/>
               </item>
               <item row="1" column="4">
-               <widget class="QSpinBox" name="spinBox_2"/>
+               <widget class="QSpinBox" name="cloudSpinBox"/>
               </item>
               <item row="0" column="4">
-               <widget class="QLabel" name="label_8">
+               <widget class="QLabel" name="cloudLabel">
                 <property name="text">
                  <string>Cloud Cover</string>
                 </property>
                </widget>
               </item>
               <item row="0" column="5">
-               <widget class="QLabel" name="label_9">
+               <widget class="QLabel" name="tempLabel">
                 <property name="text">
                  <string>Air Temp.</string>
                 </property>
                </widget>
               </item>
               <item row="0" column="2">
-               <widget class="QLabel" name="label_6">
+               <widget class="QLabel" name="timeLabel">
                 <property name="text">
                  <string>Time</string>
                 </property>
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="spinBox"/>
+               <widget class="QSpinBox" name="dirSpinBox"/>
               </item>
               <item row="0" column="1">
-               <widget class="QLabel" name="label_7">
+               <widget class="QLabel" name="dirLabel">
                 <property name="text">
                  <string>Direction</string>
                 </property>
@@ -529,7 +444,11 @@
              </layout>
             </item>
             <item>
-             <widget class="QTableView" name="domainTableView"/>
+             <widget class="QTableView" name="domainTableView">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -627,7 +546,100 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="page_11">
+      <widget class="QWidget" name="outputPage">
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QCheckBox" name="googleOutCheckbox">
+          <property name="text">
+           <string>Google Earth</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="fbOutCheckbox">
+          <property name="text">
+           <string>Fire Behavior</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="shapeOutCheckbox">
+          <property name="text">
+           <string>Shapefiles</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="runPage">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="availCoreLabel">
+          <property name="text">
+           <string>Available Processors: 1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Number of Processors</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="availCoreSpinBox">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Open Output Directory</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="hiddenOutputPage">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout_19">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_25">
@@ -733,58 +745,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="page_3">
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="QLabel" name="availCoreLabel">
-          <property name="text">
-           <string>Available Processors: 1</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_5">
-          <item>
-           <widget class="QLabel" name="label_12">
-            <property name="text">
-             <string>Number of Processors</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="availCoreSpinBox">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Open Output Directory</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -798,26 +758,32 @@
      <height>24</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="fileMenu">
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>&amp;Tools</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuHelp">
+   <widget class="QMenu" name="helpMenu">
     <property name="title">
      <string>&amp;Help</string>
     </property>
    </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuTools"/>
-   <addaction name="menuHelp"/>
+   <addaction name="fileMenu"/>
+   <addaction name="toolsMenu"/>
+   <addaction name="helpMenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
@@ -850,6 +816,22 @@
     <hint type="destinationlabel">
      <x>281</x>
      <y>402</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>281</x>
+     <y>320</y>
     </hint>
    </hints>
   </connection>
