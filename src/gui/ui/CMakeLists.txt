@@ -23,6 +23,16 @@ add_definitions(${Qt5Widgets_DEFINITIONS})
 
 qt5_add_resources(NINJA_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/windninja.qrc)
 
+set(LINK_LIBS Qt5::Core
+              Qt5::Gui
+              #Qt5::WebKit
+              #Qt5::WebKitWidgets
+              Qt5::Widgets
+              ${Boost_LIBRARIES}
+              ${CURL_LIBRARIES}
+              ${GDAL_LIBRARY}
+              ${NETCDF_LIBRARIES_C})
+
 # Populate a CMake variable with the sources
 set(NINJA_GUI_SRCSXXX
     mainwindow.ui
@@ -32,9 +42,4 @@ set(NINJA_GUI_SRCSXXX
 # Tell CMake to create the helloworld executable
 add_executable(windninja5 ${NINJA_GUI_SRCSXXX} ${NINJA_RESOURCES})
 # Use the Widgets module from Qt 5
-target_link_libraries(windninja5
-    ${Qt5Core_LIBRARIES}
-    ${Qt5Widgets_LIBRARIES}
-    ${Qt5Gui_LIBRARIES}
-    ${GDAL_LIBRARIES}
-    )
+target_link_libraries(windninja5 ${LINK_LIBS})

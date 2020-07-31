@@ -17,6 +17,10 @@
 
 cmake_minimum_required(VERSION 2.6)
 
+if(NINJA_QT5GUI)
+  add_subdirectory(ui)
+endif()
+
 QT5_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
                         setconfigdialog.ui
                         stationFetchWidget.ui)
