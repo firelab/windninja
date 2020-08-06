@@ -27,6 +27,14 @@ void MainWindow::init() {
     int cores = QThread::idealThreadCount();
     ui->availCoreLabel->setText("Available Processors: " + QString::number(cores));
     ui->availCoreSpinBox->setMaximum(cores);
+
+    // Set up the progress bar in the status bar (insertPermanentWidget
+    // re-parents progress
+    progressLabel = new QLabel(this);
+    statusBar()->addPermanentWidget(progressLabel, 1);
+    progress = new QProgressBar(this);
+    progress->setRange(0, 100);
+    statusBar()->addPermanentWidget(progress, 1);
 }
 
 void MainWindow::setIcons() {
@@ -45,6 +53,7 @@ void MainWindow::setConnections() {
         this, SLOT(updateMesh(int)));
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
         this, SLOT(updateStack(QTreeWidgetItem*, QTreeWidgetItem*)));
+    connect(ui->solveButton, SIGNAL(clicked()), this, SLOT(solve()));
 }
 
 void MainWindow::OGRFormats() {
@@ -133,6 +142,32 @@ void MainWindow::updateStack(QTreeWidgetItem *current, QTreeWidgetItem *previous
     } else {
         assert(0);
     }
+}
+
+void MainWindow::setProgress(int done, QString text, int timeout) {
+    if(done < 0) {
+        progress->reset();
+        return;
+    }
+    progress->setValue(done);
+    progressLabel->setText(text);
+    int current = progress->value();
+    // TODO(kyle): async clear the text
+    if(timeout > 0) {
+        QtConcurrent::run([=]() {
+            QThread::sleep(timeout);
+            progressLabel->setText("");
+        });
+    }
+}
+
+void MainWindow::solve() {
+    setProgress(-1);
+    for(int i = 0; i < 100; i++) {
+        setProgress(i, "solving...");
+        QThread::msleep(20);
+    }
+    setProgress(100, "done", 2);
 }
 
 

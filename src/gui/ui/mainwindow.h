@@ -5,9 +5,13 @@
 
 #include <QMainWindow>
 
+#include <qtconcurrentrun.h>
+
 #include <QDebug>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QLabel>
+#include <QProgressBar>
 #include <QString>
 #include <QThread>
 #include <QTreeWidgetItem>
@@ -34,6 +38,9 @@ private:
 
     QStringList ogrFormats;
 
+    QProgressBar *progress;
+    QLabel *progressLabel;
+
     void init();
 
     void setIcons();
@@ -44,6 +51,8 @@ public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
     void openElevation();
     void updateMesh(int index);
+    void setProgress(int done, QString text="", int timeout=0);
+    void solve();
 };
 
 #endif // MAINWINDOW_H

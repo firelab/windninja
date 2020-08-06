@@ -9,13 +9,15 @@ set(CMAKE_AUTOUIC ON)
 
 # Find the QtWidgets library
 find_package(Qt5Core CONFIG REQUIRED)
-find_package(Qt5Widgets CONFIG REQUIRED)
+find_package(Qt5Concurrent CONFIG REQUIRED)
 find_package(Qt5Gui CONFIG REQUIRED)
+find_package(Qt5Widgets CONFIG REQUIRED)
 
 include_directories(
     ${Qt5Core_INCLUDE_DIRS}
-    ${Qt5Widgets_INCLUDE_DIRS}
+    ${Qt5Concurrent_INCLUDE_DIRS}
     ${Qt5Gui_INCLUDE_DIRS}
+    ${Qt5Widgets_INCLUDE_DIRS}
     ${GDAL_INCLUDE_DIR}
     )
 
