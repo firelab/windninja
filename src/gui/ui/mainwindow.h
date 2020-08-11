@@ -19,6 +19,8 @@
 #include <cpl_string.h>
 #include <gdal.h>
 
+#include <windninja.h>
+
 namespace Ui {
 class MainWindow;
 }
@@ -46,6 +48,8 @@ private:
     void setIcons();
     void setConnections();
     void OGRFormats();
+
+    int countRuns();
 
 public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);

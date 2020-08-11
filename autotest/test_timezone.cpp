@@ -28,7 +28,6 @@
  *****************************************************************************/
  
 #include "gdal_util.h"
-#include "omp_guard.h"
 
 #include <boost/test/unit_test.hpp>
 

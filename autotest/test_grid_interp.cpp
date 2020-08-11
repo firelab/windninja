@@ -31,7 +31,6 @@
 
 #include "ascii_grid.h"
 #include "ninja_conv.h"
-#include "omp_guard.h"
 
 #include <boost/test/unit_test.hpp>
 

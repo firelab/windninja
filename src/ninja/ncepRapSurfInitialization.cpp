@@ -160,105 +160,99 @@ void ncepRapSurfInitialization::checkForValidData()
     std::vector<std::string> varList = getVariableList();
 
 
-    {//Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-        omp_guard netCDF_guard(netCDF_lock);
-#endif
+      for( unsigned int i = 0;i < varList.size();i++ ) {
 
-        for( unsigned int i = 0;i < varList.size();i++ ) {
+          temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
 
-            temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
+          srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
+          if( srcDS == NULL )
+              throw badForecastFile("Cannot open forecast file.");
 
-            srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
-            if( srcDS == NULL )
-                throw badForecastFile("Cannot open forecast file.");
+          srcWkt = srcDS->GetProjectionRef();
 
-            srcWkt = srcDS->GetProjectionRef();
+          if( srcWkt.empty() )
+              throw badForecastFile("Forecast file doesn't have projection information.");
 
-            if( srcWkt.empty() )
-                throw badForecastFile("Forecast file doesn't have projection information.");
+          //Get total bands (time steps)
+          nBands = srcDS->GetRasterCount();
+          int nXSize, nYSize;
+          GDALRasterBand *poBand;
+          int pbSuccess;
+          double dfNoData;
+          double *padfScanline;
 
-            //Get total bands (time steps)
-            nBands = srcDS->GetRasterCount();
-            int nXSize, nYSize;
-            GDALRasterBand *poBand;
-            int pbSuccess;
-            double dfNoData;
-            double *padfScanline;
+          nXSize = srcDS->GetRasterXSize();
+          nYSize = srcDS->GetRasterYSize();
 
-            nXSize = srcDS->GetRasterXSize();
-            nYSize = srcDS->GetRasterYSize();
+          //loop over all bands for this variable (bands are time steps)
+          for(int j = 1; j <= nBands; j++)
+          {
+              poBand = srcDS->GetRasterBand( j );
 
-            //loop over all bands for this variable (bands are time steps)
-            for(int j = 1; j <= nBands; j++)
-            {
-                poBand = srcDS->GetRasterBand( j );
+              pbSuccess = 0;
+              dfNoData = poBand->GetNoDataValue( &pbSuccess );
+              if( pbSuccess == false )
+                  noDataValueExists = false;
+              else
+              {
+                  noDataValueExists = true;
+                  noDataIsNan = CPLIsNan(dfNoData);
+              }
 
-                pbSuccess = 0;
-                dfNoData = poBand->GetNoDataValue( &pbSuccess );
-                if( pbSuccess == false )
-                    noDataValueExists = false;
-                else
-                {
-                    noDataValueExists = true;
-                    noDataIsNan = CPLIsNan(dfNoData);
-                }
+              //set the data
+              padfScanline = new double[nXSize*nYSize];
+              poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize,
+                      GDT_Float64, 0, 0);
+              for(int k = 0;k < nXSize*nYSize; k++)
+              {
+                  //Check if value is no data (if no data value was defined in file)
+                  /* Since geopotential cloud tops is treated a little
+                   * different, don't check for no data.  No data  just
+                   * means no clouds.  The stats for the US report no value
+                   * under 0, so we are assuming nan=no cloud now.
+                   */
+                  if(noDataValueExists && varList[i] != "Geopotential_height_cloud_tops")
+                  {
+                      if(noDataIsNan)
+                      {
+                          if(CPLIsNan(padfScanline[k]))
+                              throw badForecastFile("Forecast file contains no_data values.");
+                      }else
+                      {
+                          if(padfScanline[k] == dfNoData)
+                              throw badForecastFile("Forecast file contains no_data values.");
+                      }
+                  }
+                  if( varList[i] == "Temperature_height_above_ground" )   //units are Kelvin
+                  {
+                      if(padfScanline[k] < 180.0 || padfScanline[k] > 340.0)  //these are near the most extreme temperatures ever recored on earth
+                          throw badForecastFile("Temperature is out of range in forecast file.");
+                  }
+                  else if( varList[i] == "v-component_of_wind_height_above_ground" )  //units are m/s
+                  {
+                      if(std::abs(padfScanline[k]) > 220.0)
+                          throw badForecastFile("V-velocity is out of range in forecast file.");
+                  }
+                  else if( varList[i] == "u-component_of_wind_height_above_ground" )  //units are m/s
+                  {
+                      if(std::abs(padfScanline[k]) > 220.0)
+                          throw badForecastFile("U-velocity is out of range in forecast file.");
+                  }
+                  else if( varList[i] == "Geopotential_height_cloud_tops" )  //units are meters
+                  {
+                      if(padfScanline[k] != -99999.0) //means there are clouds
+                      {
+                          if(padfScanline[k] < -500.0 || padfScanline[k] > 30000.0)
+                              throw badForecastFile("Geopotential_height_cloud_tops is out of range in forecast file.");
+                      }
+                  }
+              }
 
-                //set the data
-                padfScanline = new double[nXSize*nYSize];
-                poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize,
-                        GDT_Float64, 0, 0);
-                for(int k = 0;k < nXSize*nYSize; k++)
-                {
-                    //Check if value is no data (if no data value was defined in file)
-                    /* Since geopotential cloud tops is treated a little
-                     * different, don't check for no data.  No data  just
-                     * means no clouds.  The stats for the US report no value
-                     * under 0, so we are assuming nan=no cloud now.
-                     */
-                    if(noDataValueExists && varList[i] != "Geopotential_height_cloud_tops")
-                    {
-                        if(noDataIsNan)
-                        {
-                            if(CPLIsNan(padfScanline[k]))
-                                throw badForecastFile("Forecast file contains no_data values.");
-                        }else
-                        {
-                            if(padfScanline[k] == dfNoData)
-                                throw badForecastFile("Forecast file contains no_data values.");
-                        }
-                    }
-                    if( varList[i] == "Temperature_height_above_ground" )   //units are Kelvin
-                    {
-                        if(padfScanline[k] < 180.0 || padfScanline[k] > 340.0)  //these are near the most extreme temperatures ever recored on earth
-                            throw badForecastFile("Temperature is out of range in forecast file.");
-                    }
-                    else if( varList[i] == "v-component_of_wind_height_above_ground" )  //units are m/s
-                    {
-                        if(std::abs(padfScanline[k]) > 220.0)
-                            throw badForecastFile("V-velocity is out of range in forecast file.");
-                    }
-                    else if( varList[i] == "u-component_of_wind_height_above_ground" )  //units are m/s
-                    {
-                        if(std::abs(padfScanline[k]) > 220.0)
-                            throw badForecastFile("U-velocity is out of range in forecast file.");
-                    }
-                    else if( varList[i] == "Geopotential_height_cloud_tops" )  //units are meters
-                    {
-                        if(padfScanline[k] != -99999.0) //means there are clouds
-                        {
-                            if(padfScanline[k] < -500.0 || padfScanline[k] > 30000.0)
-                                throw badForecastFile("Geopotential_height_cloud_tops is out of range in forecast file.");
-                        }
-                    }
-                }
+              delete [] padfScanline;
+          }
 
-                delete [] padfScanline;
-            }
-
-            GDALClose((GDALDatasetH) srcDS );
-        }
-    }   //netCDF_guard
+          GDALClose((GDALDatasetH) srcDS );
+      }
 }
 
 /**
@@ -272,11 +266,6 @@ void ncepRapSurfInitialization::checkForValidData()
 bool ncepRapSurfInitialization::identify( std::string fileName )
 {
     bool identified = true;
-
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
 
     int status, ncid, ndims, nvars, ngatts, unlimdimid;
 
@@ -368,152 +357,146 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
     //get some info from the nam file in input
 
-    {//Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-        omp_guard netCDF_guard(netCDF_lock);
-#endif
+    GDALDataset* poDS;
 
-        GDALDataset* poDS;
-
-        //attempt to grab the projection from the dem?
-        //check for member prjString first
-        std::string dstWkt;
-        dstWkt = input.dem.prjString;
-        if ( dstWkt.empty() ) {
-            //try to open original
-            poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-            if( poDS == NULL ) {
-                CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
-                        "Bad projection reference" );
-                //throw();
-            }
-            dstWkt = poDS->GetProjectionRef();
-            if( dstWkt.empty() ) {
-                CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
-                        "Bad projection reference" );
-                //throw()
-            }
-            GDALClose((GDALDatasetH) poDS );
-        }
-
-        poDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
-
+    //attempt to grab the projection from the dem?
+    //check for member prjString first
+    std::string dstWkt;
+    dstWkt = input.dem.prjString;
+    if ( dstWkt.empty() ) {
+        //try to open original
+        poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
+            CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
+                    "Bad projection reference" );
+            //throw();
+        }
+        dstWkt = poDS->GetProjectionRef();
+        if( dstWkt.empty() ) {
+            CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
+                    "Bad projection reference" );
+            //throw()
+        }
+        GDALClose((GDALDatasetH) poDS );
+    }
+
+    poDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
+
+    if( poDS == NULL ) {
+        CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
+                "Bad forecast file" );
+    }
+    else
+        GDALClose((GDALDatasetH) poDS );
+
+    // open ds one by one and warp, then write to grid
+    GDALDataset *srcDS, *wrpDS;
+    std::string temp;
+    std::string srcWkt;
+
+    std::vector<std::string> varList = getVariableList();
+
+    /*
+     * Set the initial values in the warped dataset to no data
+     */
+    GDALWarpOptions* psWarpOptions;
+
+    for( unsigned int i = 0;i < varList.size();i++ ) {
+
+        temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
+
+        srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
+        if( srcDS == NULL ) {
             CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
                     "Bad forecast file" );
         }
-        else
-            GDALClose((GDALDatasetH) poDS );
 
-        // open ds one by one and warp, then write to grid
-        GDALDataset *srcDS, *wrpDS;
-        std::string temp;
-        std::string srcWkt;
+        srcWkt = srcDS->GetProjectionRef();
 
-        std::vector<std::string> varList = getVariableList();
-
-        /*
-         * Set the initial values in the warped dataset to no data
-         */
-        GDALWarpOptions* psWarpOptions;
-
-        for( unsigned int i = 0;i < varList.size();i++ ) {
-
-            temp = "NETCDF:" + wxModelFileName + ":" + varList[i];
-
-            srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
-            if( srcDS == NULL ) {
-                CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
-                        "Bad forecast file" );
-            }
-
-            srcWkt = srcDS->GetProjectionRef();
-
-            if( srcWkt.empty() ) {
-                CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
-                        "Bad forecast file" );
-                //throw
-            }
-
-        /*
-         * Grab the first band to get the nodata value for the variable,
-         * assume all bands have the same ndv
-         */
-        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
-        int pbSuccess;
-        double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-
-        psWarpOptions = GDALCreateWarpOptions();
-
-        int nBandCount = srcDS->GetRasterCount();
-
-        psWarpOptions->panSrcBands =
-            (int*) CPLMalloc( sizeof( int ) * nBandCount );
-        psWarpOptions->panDstBands =
-            (int*) CPLMalloc( sizeof( int ) * nBandCount );
-        psWarpOptions->padfDstNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-        psWarpOptions->padfDstNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-        for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-            psWarpOptions->panSrcBands[b] = b + 1;
-            psWarpOptions->panDstBands[b] = b + 1;
+        if( srcWkt.empty() ) {
+            CPLDebug( "ncepRAPSurfInitialization::setSurfaceGrids()",
+                    "Bad forecast file" );
+            //throw
         }
 
-        if( pbSuccess == false )
-            dfNoData = -9999.0;
+    /*
+     * Grab the first band to get the nodata value for the variable,
+     * assume all bands have the same ndv
+     */
+    GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
+    int pbSuccess;
+    double dfNoData = poBand->GetNoDataValue( &pbSuccess );
 
-        psWarpOptions->papszWarpOptions =
-        CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                 "INIT_DEST", "NO_DATA" );
+    psWarpOptions = GDALCreateWarpOptions();
 
-        wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
-                                                        dstWkt.c_str(),
-                                                        GRA_NearestNeighbour,
-                                                        1.0, psWarpOptions );
-        if(wrpDS == NULL)
-        {
-            throw badForecastFile("Could not warp the forecast file, "
-                                  "possibly non-uniform grid.");
-        }
+    int nBandCount = srcDS->GetRasterCount();
 
-        if( varList[i] == "Temperature_height_above_ground" ) {
-        GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            airGrid.set_noDataValue(-9999.0);
-            airGrid.replaceNan( -9999.0 );
-        }
-        }
-            else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
-        GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            vGrid.set_noDataValue(-9999.0);
-            vGrid.replaceNan( -9999.0 );
-        }
-        }
-            else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
-                GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            uGrid.set_noDataValue(-9999.0);
-            uGrid.replaceNan( -9999.0 );
-        }
-        }
-            else if( varList[i] == "Geopotential_height_cloud_tops" ) {
-                GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            cloudGrid.set_noDataValue(-9999.0);
-            cloudGrid.replaceNan( -99999.0 );
-        }
-        }
+    psWarpOptions->panSrcBands =
+        (int*) CPLMalloc( sizeof( int ) * nBandCount );
+    psWarpOptions->panDstBands =
+        (int*) CPLMalloc( sizeof( int ) * nBandCount );
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
 
-        GDALDestroyWarpOptions( psWarpOptions );
-        GDALClose((GDALDatasetH) srcDS );
-        GDALClose((GDALDatasetH) wrpDS );
-        }
-    }   //netCDF_guard
+    for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+    }
+
+    if( pbSuccess == false )
+        dfNoData = -9999.0;
+
+    psWarpOptions->papszWarpOptions =
+    CSLSetNameValue( psWarpOptions->papszWarpOptions,
+             "INIT_DEST", "NO_DATA" );
+
+    wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
+                                                    dstWkt.c_str(),
+                                                    GRA_NearestNeighbour,
+                                                    1.0, psWarpOptions );
+    if(wrpDS == NULL)
+    {
+        throw badForecastFile("Could not warp the forecast file, "
+                              "possibly non-uniform grid.");
+    }
+
+    if( varList[i] == "Temperature_height_above_ground" ) {
+    GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
+    if( CPLIsNan( dfNoData ) ) {
+        airGrid.set_noDataValue(-9999.0);
+        airGrid.replaceNan( -9999.0 );
+    }
+    }
+        else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
+    GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
+    if( CPLIsNan( dfNoData ) ) {
+        vGrid.set_noDataValue(-9999.0);
+        vGrid.replaceNan( -9999.0 );
+    }
+    }
+        else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
+            GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
+    if( CPLIsNan( dfNoData ) ) {
+        uGrid.set_noDataValue(-9999.0);
+        uGrid.replaceNan( -9999.0 );
+    }
+    }
+        else if( varList[i] == "Geopotential_height_cloud_tops" ) {
+            GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
+    if( CPLIsNan( dfNoData ) ) {
+        cloudGrid.set_noDataValue(-9999.0);
+        cloudGrid.replaceNan( -99999.0 );
+    }
+    }
+
+    GDALDestroyWarpOptions( psWarpOptions );
+    GDALClose((GDALDatasetH) srcDS );
+    GDALClose((GDALDatasetH) wrpDS );
+    }
 
     //Set cloud fraction, either 0 or 1 nothing in between for RUC...
     for(int i=0; i<cloudGrid.get_nRows(); i++)

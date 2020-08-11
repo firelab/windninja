@@ -447,12 +447,6 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
      * See if curl actually downloaded a netcdf file, if not delete the
      * temp file and leave
      */
-    //Acquire a lock to protect the non-thread safe netCDF library
-    {
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
-
     int status, ncid;
     status = nc_open( tempFileName.c_str(), 0, &ncid );
     if ( status != NC_NOERR ) {
@@ -463,7 +457,6 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
         throw ( badForecastFile( "Failed to download forecast. File is not an *.nc file" ) );
     }
     nc_close( ncid );
-    }
 
     /*
      * Check the file to see if it contains "good" values
@@ -677,12 +670,6 @@ wxModelInitialization::getTimeList(const char *pszVariable,
 
     }
     //===========End if NAM-GRIB=============================================================================
-
-
-    //Acquire a lock to protect the non-thread safe netCDF library
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
 
     int status, ncid, ndims, nvars, ngatts, unlimdimid;
     nc_type vartype;
@@ -1599,9 +1586,6 @@ double wxModelInitialization::GetWindHeight(std::string varName)
     char *units;
 
     static size_t var_index[] = {0};
-#ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
-#endif
     status = nc_open(wxModelFileName.c_str(), 0, &ncid);
     status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
 

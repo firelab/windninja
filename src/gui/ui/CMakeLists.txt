@@ -19,6 +19,7 @@ include_directories(
     ${Qt5Gui_INCLUDE_DIRS}
     ${Qt5Widgets_INCLUDE_DIRS}
     ${GDAL_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/src/ninja
     )
 
 add_definitions(${Qt5Widgets_DEFINITIONS})
@@ -33,7 +34,8 @@ set(LINK_LIBS Qt5::Core
               ${Boost_LIBRARIES}
               ${CURL_LIBRARIES}
               ${GDAL_LIBRARY}
-              ${NETCDF_LIBRARIES_C})
+              ${NETCDF_LIBRARIES_C}
+              ${CMAKE_BINARY_DIR}/src/ninja/libninja.so)
 
 # Populate a CMake variable with the sources
 set(NINJA_GUI_SRCSXXX
@@ -45,3 +47,5 @@ set(NINJA_GUI_SRCSXXX
 add_executable(windninja5 ${NINJA_GUI_SRCSXXX} ${NINJA_RESOURCES})
 # Use the Widgets module from Qt 5
 target_link_libraries(windninja5 ${LINK_LIBS})
+
+add_dependencies(windninja5 ninja)

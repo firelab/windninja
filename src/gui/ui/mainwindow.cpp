@@ -151,7 +151,6 @@ void MainWindow::setProgress(int done, QString text, int timeout) {
     }
     progress->setValue(done);
     progressLabel->setText(text);
-    int current = progress->value();
     // TODO(kyle): async clear the text
     if(timeout > 0) {
         QtConcurrent::run([=]() {
@@ -161,13 +160,40 @@ void MainWindow::setProgress(int done, QString text, int timeout) {
     }
 }
 
+int MainWindow::countRuns() {
+    // For domain averaged runs, count runs (currently 1 now)
+    // For weather model runs, count the selected time steps
+    // For point runs, get the number of timesteps (??)
+    return 1;
+}
+
 void MainWindow::solve() {
+    ui->solveButton->setDisabled(true);
+
     setProgress(-1);
+
+    // Start with the initialization method, this governs how we create the set
+    // of ninjas.
+    NinjaH *ninja = 0;
+
+    int nr = countRuns();
+
+    // Start from the first set of inputs, then work our way down.
+#ifdef NINJAFOAM
+    ninja = NinjaCreateArmy(nr, ui->momentumRadio->isChecked(), nullptr);
+#else
+    ninja = NinjaCreateArmy(nr, nullptr);
+#endif
+
+    QThread::sleep(2);
     for(int i = 0; i < 100; i++) {
         setProgress(i, "solving...");
         QThread::msleep(20);
     }
     setProgress(100, "done", 2);
+
+    NinjaDestroyArmy(ninja);
+    ui->solveButton->setEnabled(true);
 }
 
 

@@ -68,7 +68,6 @@ set(NINJA_SOURCES air.cpp
                   ninjaMathUtility.cpp
                   ninjaUnits.cpp
                   ninja_threaded_exception.cpp
-                  omp_guard.cpp
                   OutputWriter.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
