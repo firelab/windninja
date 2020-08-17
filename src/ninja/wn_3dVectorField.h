@@ -34,17 +34,25 @@
 class wn_3dVectorField
 {
 	public:
-		wn_3dVectorField();			//Default constructor
-		~wn_3dVectorField();        // Destructor
-		wn_3dVectorField(wn_3dScalarField const& x, wn_3dScalarField const& y, wn_3dScalarField const& z);     //constructor
-		wn_3dVectorField(wn_3dVectorField const& f);           // Copy constructor
-		wn_3dVectorField& operator= (wn_3dVectorField const& f);
+        wn_3dVectorField(); //Default constructor
+        ~wn_3dVectorField(); // Destructor
+        wn_3dVectorField(wn_3dScalarField const& x,
+                wn_3dScalarField const& y,
+                wn_3dScalarField const& z); //constructor
+        wn_3dVectorField(wn_3dVectorField const& f); // Copy constructor
+        wn_3dVectorField& operator= (wn_3dVectorField const& f);
+        wn_3dVectorField& operator= (double value);// Sets x, y, and z components to value
 
         void allocate(Mesh const* m);
         void deallocate();
 
         bool isInlet(const int &i, const int &j, const int &k);
+        bool isOutlet(const int &i, const int &j, const int &k);
         bool isOnGround(const int &i, const int &j, const int &k);
+        void copyInletNodes(wn_3dVectorField &f);
+        double getMaxValue(); //returns the magnitude of the largest wind vector
+        double getMinValue(); //returns the magnitude of the smallest wind vector
+        double getMagnitude(const int &i, const int &j, const int &k); //returns magnitude of vector at i,j,k
 
         wn_3dScalarField vectorData_x;
         wn_3dScalarField vectorData_y;

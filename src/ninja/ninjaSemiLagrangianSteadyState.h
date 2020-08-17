@@ -61,11 +61,11 @@ public:
 
     TransportSemiLagrangian transport;
 
-    int currentTime; //tracks current time (iteration)
+    int iteration;
 
-    //boost::local_time::local_date_time currentTime;//tracks current time as simulation progresses
-    //boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
-    //boost::posix_time::time_duration currentDt0;//current old time step size in seconds (from last time step)
+    boost::local_time::local_date_time currentTime;//tracks current time as simulation progresses
+    boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
+    boost::posix_time::time_duration currentDt0;//current old time step size in seconds (from last time step)
 
 private:
     /* Output */

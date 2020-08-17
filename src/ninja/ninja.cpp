@@ -232,6 +232,14 @@ double ninja::getSmallestRadiusOfInfluence()
  */
 void ninja::interp_uvw()
 {
+    interp_uvw(&U);
+}
+
+/**Interpolates the 3d volume wind field to the output wind height surface.
+ *
+ */
+void ninja::interp_uvw(wn_3dVectorField* uField)
+{
 #pragma omp parallel default(shared)
     {
 
@@ -240,39 +248,6 @@ void ninja::interp_uvw()
         windProfile profile;
         //make sure rough_h is set to zero if profile switch is 0 or 2
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
-
-        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        //            JUST TESTING!!!!!!     DELETE!!!!!
-
-        //Add a blob of stronger wind using a multiplier of existing wind speed
-//        double blobWindSpeedMultiplier = 3.0;
-//        double blobWindSpeed = 30.0;
-//
-//        for(int k=0; k<U.vectorData_x.mesh_->nlayers; k++)
-//        {
-//            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
-//            {
-//                for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
-//                {
-//                    if(j>5 && j<10)
-//                    {
-//                        if(k>5 && k<10)
-//                        {
-//                            //U.vectorData_x(i,j,k) = blobWindSpeedMultiplier * U.vectorData_x(i,j,k);
-//                            U.vectorData_x(i,j,k) = blobWindSpeed;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        double dt = 10.0;
-//        wn_3dVectorField U1(U);
-//        TransportSemiLagrangian transport;
-//        transport.transportVector(U, U1, dt);
-//        U = U1;
-        //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 #pragma omp for
         for(i=0;i<VelocityGrid.get_nRows();i++)
@@ -302,27 +277,27 @@ void ninja::interp_uvw()
 
                     profile.AGL=input.outputWindHeight + input.surface.Rough_h(i,j);			//this is height above THE GROUND!! (not "z=0" for the log profile)
 
-                    profile.inputWindSpeed = U.vectorData_x(i, j, k);
+                    profile.inputWindSpeed = uField->vectorData_x(i, j, k);
                     uu = profile.getWindSpeed();
 
-                    profile.inputWindSpeed = U.vectorData_y(i, j, k);
+                    profile.inputWindSpeed = uField->vectorData_y(i, j, k);
                     vv = profile.getWindSpeed();
 
-                    profile.inputWindSpeed = U.vectorData_z(i, j, k);
+                    profile.inputWindSpeed = uField->vectorData_z(i, j, k);
                     ww = profile.getWindSpeed();
 
                     VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
 
                 }else{  //else use linear interpolation
-                    slopeu=(U.vectorData_x(i, j, k)-U.vectorData_x(i, j, k-1))/(h2-h1);
-                    slopev=(U.vectorData_y(i, j, k)-U.vectorData_y(i, j, k-1))/(h2-h1);
-                    slopew=(U.vectorData_z(i, j, k)-U.vectorData_z(i, j, k-1))/(h2-h1);
+                    slopeu=(uField->vectorData_x(i, j, k)-uField->vectorData_x(i, j, k-1))/(h2-h1);
+                    slopev=(uField->vectorData_y(i, j, k)-uField->vectorData_y(i, j, k-1))/(h2-h1);
+                    slopew=(uField->vectorData_z(i, j, k)-uField->vectorData_z(i, j, k-1))/(h2-h1);
                     uu=slopeu*(input.outputWindHeight + input.surface.Rough_h(i,j))+
-                        U.vectorData_x(i, j, k-1)-slopeu*h1;
+                        uField->vectorData_x(i, j, k-1)-slopeu*h1;
                     vv=slopev*(input.outputWindHeight + input.surface.Rough_h(i,j))+
-                        U.vectorData_y(i, j, k-1)-slopev*h1;
+                        uField->vectorData_y(i, j, k-1)-slopev*h1;
                     ww=slopew*(input.outputWindHeight + input.surface.Rough_h(i,j))+
-                        U.vectorData_z(i, j, k-1)-slopew*h1;
+                        uField->vectorData_z(i, j, k-1)-slopew*h1;
                     VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
                 }
 
@@ -407,11 +382,20 @@ bool ninja::checkForNullRun()
  */
 void ninja::prepareOutput()
 {
+    prepareOutput(&U);
+}
+
+/**Prepares for writing output files.
+ * Builds 2d surfaces and calls interp_uvw() to interpolate volume data to output surface at output height.
+ *
+ */
+void ninja::prepareOutput(wn_3dVectorField* uField)
+{
     VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	
 	if(!isNullRun)
-		interp_uvw();
+		interp_uvw(uField);
  
         if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag){
             //Set cloud grid

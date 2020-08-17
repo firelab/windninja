@@ -641,3 +641,13 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
     }
     }   //end parallel section
 }
+
+double wn_3dScalarField::getMaxValue()
+{
+    return scalarData_.getMaxValue();
+}
+
+double wn_3dScalarField::getMinValue()
+{
+    return scalarData_.getMinValue();
+}

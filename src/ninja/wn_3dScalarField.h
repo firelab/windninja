@@ -59,6 +59,8 @@ public:
     double interpolate(double const& x,double const& y, double const& z);
     double interpolate(element &elem, const int &cell_i, const int &cell_j, const int &cell_k, const double &u, const double &v, const double &w);
     void ComputeGradient(wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent);
+    double getMaxValue();
+    double getMinValue();
 
     double& operator() (int row, int col, int layer);
     double  operator() (int row, int col, int layer) const;

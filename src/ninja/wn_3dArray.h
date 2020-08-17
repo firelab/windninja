@@ -44,6 +44,9 @@ class wn_3dArray
 
 		void allocate(int rows, int cols, int layers);	//make 3d array of this size, re-allocate if necessary
 		void deallocate();			//kills memory (data_ array)
+
+                double getMaxValue();
+                double getMinValue();
 		
 		double& operator() (int row, int col, int layer);
 		double  operator() (int row, int col, int layer) const;

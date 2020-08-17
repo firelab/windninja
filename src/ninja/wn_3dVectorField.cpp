@@ -64,6 +64,22 @@ wn_3dVectorField& wn_3dVectorField::operator= (const wn_3dVectorField& f)	// Ass
     return *this;
 }
 
+wn_3dVectorField& wn_3dVectorField::operator= (double value)// Assignment operator
+{
+    for(int k=0;k<vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<vectorData_x.mesh_->ncols;j++)
+            {
+                vectorData_x(i,j,k) = value;
+                vectorData_y(i,j,k) = value;
+                vectorData_z(i,j,k) = value;
+            }
+        }
+    }
+}
+
 void wn_3dVectorField::allocate(Mesh const* m)
 {
     vectorData_x.allocate(m);
@@ -76,6 +92,148 @@ void wn_3dVectorField::deallocate()
     vectorData_x.deallocate();
     vectorData_y.deallocate();
     vectorData_z.deallocate();
+}
+
+/**
+ * \brief Copies inlet nodes.
+ *
+ * Copies inlet nodes from one wn_3dVectorField to another.
+ *
+ * \param f wn_3dVectorField to copy nodes to.
+ *
+ * \return Void.
+ */
+void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
+{
+    for(int k=0;k<f.vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<f.vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<f.vectorData_x.mesh_->ncols;j++)
+            {
+                // FOR TESTING to top boundary to initial values-------------------------------
+                //if(k == (vectorData_x.mesh_->nlayers-1))
+                //{
+                //    f.vectorData_x(i,j,k) = vectorData_x(i,j,k);
+                //    f.vectorData_y(i,j,k) = vectorData_y(i,j,k);
+                //    f.vectorData_z(i,j,k) = vectorData_z(i,j,k);
+                //}
+                if(isInlet(i,j,k))
+                {
+                    f.vectorData_x(i,j,k) = vectorData_x(i,j,k);
+                    f.vectorData_y(i,j,k) = vectorData_y(i,j,k);
+                    f.vectorData_z(i,j,k) = vectorData_z(i,j,k);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * \brief Returns maximum value in a wn_3dVectorField.
+ *
+ * Returns the maximum value in a wn_3dVectorField.
+ *
+ * \return Maximum value.
+ */
+double wn_3dVectorField::getMaxValue()
+{
+    double magnitude;
+    double largestMagnitude;
+    largestMagnitude = getMagnitude(0,0,0);
+
+    for(int k=0;k<vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<vectorData_x.mesh_->ncols;j++)
+            {
+                magnitude = getMagnitude(i,j,k);
+                if(magnitude > largestMagnitude)
+                {
+                    largestMagnitude = magnitude;
+                }
+            }
+        }
+    }
+
+    return largestMagnitude;
+}
+
+/**
+ * \brief Returns minimum value in a wn_3dVectorField.
+ *
+ * Returns the minimum value in a wn_3dVectorField.
+ *
+ * \return Minimum value.
+ */
+double wn_3dVectorField::getMinValue()
+{
+    double magnitude;
+    double smallestMagnitude;
+    smallestMagnitude = getMagnitude(0,0,0);
+
+    for(int k=0;k<vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<vectorData_x.mesh_->ncols;j++)
+            {
+                magnitude = getMagnitude(i,j,k);
+                if(magnitude < smallestMagnitude)
+                {
+                    smallestMagnitude = magnitude;
+                }
+            }
+        }
+    }
+
+    return smallestMagnitude;
+}
+
+/**
+ * \brief Returns the magnitude of a vector in a wn_3dVectorField.
+ *
+ * \param i Node index in row (y) direction
+ *        j Node index in row (x) direction
+ *        k Node index in row (z) direction
+ *
+ * Returns magnitude of the vector at cell i,j,k in a wn_3dVectorField.
+ *
+ * \return Vector magnitude.
+ */
+double wn_3dVectorField::getMagnitude(const int &i, const int &j, const int &k)
+{
+    return sqrt(vectorData_x(i,j,k)*vectorData_x(i,j,k) +
+            vectorData_y(i,j,k)*vectorData_y(i,j,k) +
+            vectorData_z(i,j,k)*vectorData_z(i,j,k));
+}
+   
+/**
+ * \brief Checks if a node is an outlet node.
+ *
+ * Checks if a node is an outlet node, which means it is on the outer surface of the mesh and the normal component of the flow goes out of the mesh.
+ *
+ * \param i Node index in row (y) direction
+ *        j Node index in row (x) direction
+ *        k Node index in row (z) direction
+ *
+ * \return True if node is an inlet, false if not.
+ */
+bool wn_3dVectorField::isOutlet(const int &i, const int &j, const int &k)
+{
+    if(i==0 && vectorData_y(i,j,k)<0.0)
+        return true;
+    else if(i==vectorData_y.mesh_->nrows-1 && vectorData_y(i,j,k)>0.0)
+        return true;
+    else if(j==0 && vectorData_x(i,j,k)<0.0)
+        return true;
+    else if(j==vectorData_x.mesh_->ncols-1 && vectorData_x(i,j,k)>0.0)
+        return true;
+    else if(k==vectorData_z.mesh_->nlayers-1 && vectorData_z(i,j,k)>0.0)
+        return true;
+    else
+        return false;
 }
 
 /**

@@ -30,7 +30,7 @@
 #include "ninjaSemiLagrangianSteadyState.h"
 
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
-, currentTime(boost::local_time::not_a_date_time)
+, currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
@@ -173,6 +173,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
     checkCancel();
 
+    wn_3dVectorField Uaverage(U);
+    Uaverage = 0.0;
+
     /*  ----------------------------------------*/
     /*  CHECK FOR "NULL" RUN                    */
     /*  ----------------------------------------*/
@@ -208,18 +211,23 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         //compute uvw field from phi field
         conservationOfMassEquation.ComputeUVWField(input, U);
 
-        currentTime = 1;
         wn_3dVectorField U1(U);
+        wn_3dVectorField Uoriginal(U);
+        Uoriginal = U0;
+
         /*  ----------------------------------------*/
         /*  START TIME STEPPING LOOP                */
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
-        while(currentTime <= 10)
+        iteration = 0;
+        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+        while(iteration <= 1000)
         {
-            //currentDt0 = currentDt;
-            //currentDt = currentDt;  //Update time step size
-            //currentTime += currentDt;
-            currentTime += 1;
+            iteration += 1;
+            cout<<"Iteration: "<<iteration<<endl;
+            currentDt0 = currentDt;
+            currentTime += currentDt;
+
 
             // Do semi-lagrangian steps of:
             //  1. Refresh boundary conditions (?)
@@ -235,7 +243,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //set boundary conditions
-            conservationOfMassEquation.SetBoundaryConditions();
+            //conservationOfMassEquation.SetBoundaryConditions();
+            Uoriginal.copyInletNodes(U);
 
             //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
@@ -258,9 +267,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
-
-            double dt = 10.0;
-            transport.transportVector(U, U1, dt);
+            cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
+            transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
+            cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
             U0 = U1;
             conservationOfMassEquation.Initialize(mesh, input, U0);
             conservationOfMassEquation.Discretize();
@@ -303,7 +312,44 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  WRITE OUTPUTS                           */
             /*  ----------------------------------------*/
             //input.simulationOutputFrequency
+
+            for(int k=0;k<U.vectorData_x.mesh_->nlayers;k++)
+            {
+                for(int i=0;i<U.vectorData_x.mesh_->nrows;i++)
+                {
+                    for(int j=0;j<U.vectorData_x.mesh_->ncols;j++)
+                    {
+                        Uaverage.vectorData_x(i,j,k) += U.vectorData_x(i,j,k);
+                        Uaverage.vectorData_y(i,j,k) += U.vectorData_y(i,j,k);
+                        Uaverage.vectorData_z(i,j,k) += U.vectorData_z(i,j,k);
+                    }
+                }
+            }
+
+            int mod = 50;
+            std::ostringstream filename;
+            if(iteration % mod == 0)
+            {
+                filename << "vtk_" << iteration << ".vtk";
+                volVTK VTK(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, filename.str());
+            }
         }
+
+        for(int k=0;k<U.vectorData_x.mesh_->nlayers;k++)
+        {
+            for(int i=0;i<U.vectorData_x.mesh_->nrows;i++)
+            {
+                for(int j=0;j<U.vectorData_x.mesh_->ncols;j++)
+                {
+                    Uaverage.vectorData_x(i,j,k) /= iteration;
+                    Uaverage.vectorData_y(i,j,k) /= iteration;
+                    Uaverage.vectorData_z(i,j,k) /= iteration;
+                }
+            }
+        }
+        volVTK VTK(Uaverage, mesh.XORD, mesh.YORD, mesh.ZORD, 
+        input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "Uaverage.vtk");
     }
 
     checkCancel();
@@ -317,7 +363,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
     //prepare output arrays
-    prepareOutput();
+    prepareOutput(&Uaverage);
 
     checkCancel();
 

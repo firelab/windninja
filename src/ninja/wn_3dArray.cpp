@@ -103,6 +103,38 @@ void wn_3dArray::deallocate()
 	layers_ = 0;
 }
 
+double wn_3dArray::getMaxValue()
+{
+    double maxValue;
+    maxValue = data_[0];
+
+    for(int i=1; i<rows_*cols_*layers_; i++)
+    {
+        if(data_[i] > maxValue)
+        {
+            maxValue = data_[i];
+        }
+    }
+
+    return maxValue;
+}
+
+double wn_3dArray::getMinValue()
+{
+    double minValue;
+    minValue = data_[0];
+
+    for(int i=1; i<rows_*cols_*layers_; i++)
+    {
+        if(data_[i] < minValue)
+        {
+            minValue = data_[i];
+        }
+    }
+
+    return minValue;
+}
+
 double& wn_3dArray::operator() (int row, int col, int layer)
 {
 #ifdef NINJA_DEBUG
