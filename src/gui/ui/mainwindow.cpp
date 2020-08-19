@@ -160,13 +160,6 @@ void MainWindow::setProgress(int done, QString text, int timeout) {
     }
 }
 
-int MainWindow::countRuns() {
-    // For domain averaged runs, count runs (currently 1 now)
-    // For weather model runs, count the selected time steps
-    // For point runs, get the number of timesteps (??)
-    return 1;
-}
-
 void MainWindow::solve() {
     ui->solveButton->setDisabled(true);
 
@@ -176,7 +169,7 @@ void MainWindow::solve() {
     // of ninjas.
     NinjaH *ninja = 0;
 
-    int nr = countRuns();
+    int nr = 1;
 
     // Start from the first set of inputs, then work our way down.
 #ifdef NINJAFOAM
@@ -185,31 +178,40 @@ void MainWindow::solve() {
     ninja = NinjaCreateArmy(nr, nullptr);
 #endif
 
-    QThread::sleep(2);
-    for(int i = 0; i < 100; i++) {
-        setProgress(i, "solving...");
-        QThread::msleep(20);
-    }
-    setProgress(100, "done", 2);
+#define check(x, fx) if(x!=0) { \
+  printf("FAIL(%s): %d\n", fx, x); \
+  NinjaDestroyArmy(ninja); \
+  ui->solveButton->setEnabled(true); \
+  return; \
+}
 
+    NinjaErr rc = 0;
+    rc = NinjaSetElevationFile(ninja, 0, ui->elevEdit->text().toLocal8Bit());
+    check(rc, "NinjaSetElevationFile");
+    rc = NinjaSetNumVertLayers(ninja, 0, 20);
+    rc = NinjaSetInitializationMethod(ninja, 0, "domain_average");
+    check(rc, "NinjaSetInitializationMethod");
+    rc = NinjaSetInputSpeed(ninja, 0, ui->speedSpinBox->value(), "mph");
+    check(rc, "NinjaSetInputSpeed");
+    rc = NinjaSetInputDirection(ninja, 0, ui->dirSpinBox->value());
+    check(rc, "NinjaSetInputDirection");
+    rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(), "m");
+    check(rc, "NinjaSetInputWindHeight");
+    rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
+    check(rc, "NinjaSetOutputWindHeight");
+    rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
+    check(rc, "NinjaSetOutputSpeedUnits");
+    rc = NinjaSetDiurnalWinds(ninja, 0, 0);
+    check(rc, "NinjaSetDiurnalWinds");
+    rc = NinjaSetUniVegetation( ninja, 0, "grass");
+    check(rc, "NinjaSetUniVegetation");
+    rc = NinjaSetMeshResolutionChoice(ninja, 0, "coarse");
+    check(rc, "NinjaSetMeshResolutionChoice");
+    rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
+    check(rc, "NinjaSetAsciiOutFlag");
+    rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
+    check(rc, "NinjaStartRuns");
     NinjaDestroyArmy(ninja);
     ui->solveButton->setEnabled(true);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

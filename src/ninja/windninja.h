@@ -141,6 +141,10 @@ typedef int   NinjaErr;
           const char * timeZoneString );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
         ( NinjaH * ninja, const int nIndex, const char * station_filename );
+
+    NinjaErr WINDNINJADLL_EXPORT NinjaSetElevationFile
+        ( NinjaH * ninja, const int nIndex, const char *elevation_filename );
+
     NinjaErr WINDNINJADLL_EXPORT NinjaSetUniVegetation
         ( NinjaH * ninja, const int nIndex, const char * vegetation );
     NinjaErr WINDNINJADLL_EXPORT NinjaSetNumVertLayers

@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -285,7 +285,7 @@
         <item>
          <widget class="QStackedWidget" name="initStack">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="domainInitPage">
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -299,7 +299,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+               <widget class="QDoubleSpinBox" name="inHeightSpinBox">
                 <property name="maximum">
                  <double>500.000000000000000</double>
                 </property>
@@ -402,7 +402,17 @@
                <widget class="QSpinBox" name="tempSpinBox"/>
               </item>
               <item row="1" column="0">
-               <widget class="QDoubleSpinBox" name="speedSpinBox"/>
+               <widget class="QDoubleSpinBox" name="speedSpinBox">
+                <property name="accelerated">
+                 <bool>true</bool>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <double>500.000000000000000</double>
+                </property>
+               </widget>
               </item>
               <item row="1" column="2">
                <widget class="QDateTimeEdit" name="timeEdit"/>
@@ -432,7 +442,14 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QSpinBox" name="dirSpinBox"/>
+               <widget class="QSpinBox" name="dirSpinBox">
+                <property name="accelerated">
+                 <bool>true</bool>
+                </property>
+                <property name="maximum">
+                 <number>359</number>
+                </property>
+               </widget>
               </item>
               <item row="0" column="1">
                <widget class="QLabel" name="dirLabel">

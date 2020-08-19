@@ -58,6 +58,7 @@ ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
         }
         else{
              ninjas[i] = new ninja();
+             ninjas[i]->set_ninjaCommunication(i, ninjaComClass::ninjaCLICom );
         }
     }
     initLocalData();
@@ -77,6 +78,7 @@ ninjaArmy::ninjaArmy(int numNinjas)
     for(unsigned int i = 0; i < ninjas.size(); i++)
     {
         ninjas[i] = new ninja();
+        ninjas[i]->set_ninjaCommunication(i, ninjaComClass::ninjaCLICom );
     }
     initLocalData();
 }

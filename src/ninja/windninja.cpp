@@ -434,6 +434,19 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetWxStationFilename
     }
 }
 
+NinjaErr WINDNINJADLL_EXPORT NinjaSetElevationFile
+    ( NinjaH * ninja, const int nIndex, const char * elevation_filename )
+{
+    if( NULL != ninja && NULL != elevation_filename ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->readInputFile
+            ( nIndex, std::string( elevation_filename ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 NinjaErr WINDNINJADLL_EXPORT NinjaSetUniVegetation
     ( NinjaH * ninja, const int nIndex, const char * vegetation )
 {
