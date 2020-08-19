@@ -29,6 +29,7 @@ branches:
   - "para-nomads"
   - "gh-pages"
   - "gh"
+  - "qt5-ui"
 
 notifications:
   email:
