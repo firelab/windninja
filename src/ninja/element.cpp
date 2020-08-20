@@ -969,6 +969,8 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     int cell_j = -1;
     int cell_k = -1;
 
+    if(y < mesh_->YORD(0, 0, 0))
+        return false;
     //compute cell i value
     for(node_i=1; node_i<mesh_->nrows; node_i++)
     {
@@ -981,6 +983,8 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     if(cell_i<0)
         return false;
 
+    if(x < mesh_->XORD(0, 0, 0))
+        return false;
     //compute cell j value
     for(node_j=1; node_j<mesh_->ncols; node_j++)
     {
@@ -993,6 +997,8 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     if(cell_j<0)
         return false;
 
+    if(z > mesh_->ZORD(0, 0, mesh_->nlayers-1))
+        return false;
     //compute cell k value (estimate using average of 4 points surrounding)
     for(node_k=1; node_k<mesh_->nlayers; node_k++)
     {
@@ -1007,8 +1013,8 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
             break;
         }
     }
-    if(cell_k<0)
-        cell_k = 0;
+    //if(cell_k<0)
+        //cell_k = 0;
 
     interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
 
