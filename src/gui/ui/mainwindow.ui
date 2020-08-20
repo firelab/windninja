@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -148,7 +148,13 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="tzCombo"/>
+           <widget class="QComboBox" name="tzCombo">
+            <item>
+             <property name="text">
+              <string>America/Boise</string>
+             </property>
+            </item>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="showZonesBox">
@@ -309,7 +315,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_4">
+               <widget class="QComboBox" name="inHeightUnitCombo">
                 <item>
                  <property name="text">
                   <string>Feet</string>
@@ -334,20 +340,20 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox">
+               <widget class="QComboBox" name="inSpeedUnitCombo">
                 <item>
                  <property name="text">
-                  <string>Miles/Hour</string>
+                  <string>mph</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Kilometers/Hour</string>
+                  <string>kph</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Meters/Second</string>
+                  <string>m/s</string>
                  </property>
                 </item>
                </widget>
@@ -418,7 +424,11 @@
                <widget class="QDateTimeEdit" name="timeEdit"/>
               </item>
               <item row="1" column="4">
-               <widget class="QSpinBox" name="cloudSpinBox"/>
+               <widget class="QSpinBox" name="cloudSpinBox">
+                <property name="suffix">
+                 <string>%</string>
+                </property>
+               </widget>
               </item>
               <item row="0" column="4">
                <widget class="QLabel" name="cloudLabel">
@@ -629,7 +639,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="outputButton">
           <property name="enabled">
            <bool>false</bool>
           </property>

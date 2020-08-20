@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow) {
     ui->setupUi(this);
 
+    assert(NinjaInit() == 0);
+
     init();
 }
 
@@ -27,6 +29,8 @@ void MainWindow::init() {
     int cores = QThread::idealThreadCount();
     ui->availCoreLabel->setText("Available Processors: " + QString::number(cores));
     ui->availCoreSpinBox->setMaximum(cores);
+
+    ui->timeEdit->setDateTime(QDateTime::currentDateTime());
 
     // Set up the progress bar in the status bar (insertPermanentWidget
     // re-parents progress
@@ -54,6 +58,7 @@ void MainWindow::setConnections() {
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
         this, SLOT(updateStack(QTreeWidgetItem*, QTreeWidgetItem*)));
     connect(ui->solveButton, SIGNAL(clicked()), this, SLOT(solve()));
+    connect(ui->outputButton, SIGNAL(clicked()), this, SLOT(openOutputPath()));
 }
 
 void MainWindow::OGRFormats() {
@@ -160,6 +165,28 @@ void MainWindow::setProgress(int done, QString text, int timeout) {
     }
 }
 
+static const char * unitKey(QString txt) {
+    txt = txt.toLower();
+    if(txt == "celsius") {
+        return "C";
+    } else if(txt == "fahrenheit") {
+      return "F";
+    } else if(txt == "feet") {
+        return "ft";
+    } else if(txt == "meters") {
+        return "m";
+    }
+    qDebug() << txt;
+    assert(0);
+}
+
+void MainWindow::openOutputPath() {
+    if(outputPath == "") {
+        return;
+    }
+    QDesktopServices::openUrl( QUrl ( "file:///" + outputPath, QUrl::TolerantMode ) );
+}
+
 void MainWindow::solve() {
     ui->solveButton->setDisabled(true);
 
@@ -186,32 +213,92 @@ void MainWindow::solve() {
 }
 
     NinjaErr rc = 0;
+
+    // Suface information, needed for all runs
     rc = NinjaSetElevationFile(ninja, 0, ui->elevEdit->text().toLocal8Bit());
     check(rc, "NinjaSetElevationFile");
+
     rc = NinjaSetNumVertLayers(ninja, 0, 20);
+    check(rc, "NinjaSetNumVertLayers");
+
+    if(ui->meshSpinBox->isEnabled()) {
+        const char *u = 0;
+        QString txt = ui->meshUnitCombo->currentText();
+        if(txt == "meters") {
+            u = "m";
+        } else if(txt == "feet") {
+            u = "ft";
+        } else {
+            assert(0);
+        }
+        rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(), u);
+    } else {
+        QString mc = ui->meshChoiceCombo->currentText();
+        rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
+    }
+    check(rc, "NinjaSetMeshResolution*");
+
+    if(ui->vegCombo->isEnabled()) {
+        rc = NinjaSetUniVegetation(ninja, 0,
+            ui->vegCombo->currentText().toLower().toLocal8Bit());
+        check(rc, "NinjaSetUniVegetation");
+    }
+
     rc = NinjaSetInitializationMethod(ninja, 0, "domain_average");
     check(rc, "NinjaSetInitializationMethod");
-    rc = NinjaSetInputSpeed(ninja, 0, ui->speedSpinBox->value(), "mph");
+
+    // domain average information
+    // input wind height and units
+    rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(),
+        unitKey(ui->inHeightUnitCombo->currentText()));
+    check(rc, "NinjaSetInputWindHeight");
+
+    // input speed and direction
+    rc = NinjaSetInputSpeed(ninja, 0, ui->speedSpinBox->value(),
+        ui->inSpeedUnitCombo->currentText().toLocal8Bit());
     check(rc, "NinjaSetInputSpeed");
+
     rc = NinjaSetInputDirection(ninja, 0, ui->dirSpinBox->value());
     check(rc, "NinjaSetInputDirection");
-    rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(), "m");
-    check(rc, "NinjaSetInputWindHeight");
+
+    // diurnal info, if needed
+    if(ui->diurnalCheck->isChecked()) {
+        qDebug() << "setting diurnal...";
+        rc = NinjaSetDiurnalWinds(ninja, 0, 1);
+        check(rc, "NinjaSetDiurnalWinds");
+        rc = NinjaSetUniAirTemp(ninja, 0, ui->tempSpinBox->value(),
+            unitKey(ui->tempCombo->currentText()));
+        check(rc, "NinjaSetUniAirTemp");
+        rc = NinjaSetUniCloudCover(ninja, 0, ui->cloudSpinBox->value(), "percent");
+        check(rc, "NinjaSetUniCloudCover");
+        QDate d = ui->timeEdit->date();
+        QTime t = ui->timeEdit->time();
+        rc = NinjaSetDateTime(ninja, 0, d.year(), d.month(), d.day(),
+            t.hour(), t.minute(), t.second(),
+            ui->tzCombo->currentText().toLocal8Bit());
+    }
+
     rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
     check(rc, "NinjaSetOutputWindHeight");
+
     rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
     check(rc, "NinjaSetOutputSpeedUnits");
-    rc = NinjaSetDiurnalWinds(ninja, 0, 0);
-    check(rc, "NinjaSetDiurnalWinds");
-    rc = NinjaSetUniVegetation( ninja, 0, "grass");
-    check(rc, "NinjaSetUniVegetation");
-    rc = NinjaSetMeshResolutionChoice(ninja, 0, "coarse");
-    check(rc, "NinjaSetMeshResolutionChoice");
+
     rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
     check(rc, "NinjaSetAsciiOutFlag");
-    rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
-    check(rc, "NinjaStartRuns");
-    NinjaDestroyArmy(ninja);
-    ui->solveButton->setEnabled(true);
+
+    ui->solveButton->setEnabled(false);
+    QtConcurrent::run([=]() {
+        NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
+        //check(rc, "NinjaStartRuns");
+        // This isn't working
+        outputPath = NinjaGetOutputPath(ninja, 0);
+        if(outputPath == "") {
+            qDebug() << "BUG: output path should be set";
+        }
+        NinjaDestroyArmy(ninja);
+        ui->solveButton->setEnabled(true);
+        ui->outputButton->setEnabled(true);
+    });
 }
 

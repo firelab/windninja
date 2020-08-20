@@ -65,6 +65,9 @@ NinjaErr handleException()
 
 extern "C"
 {
+NinjaErr WINDNINJADLL_EXPORT NinjaInit() {
+    return NinjaInitialize();
+}
 /**
  * \brief Create a new suite of windninja runs.
  *

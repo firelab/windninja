@@ -8,6 +8,7 @@
 #include <qtconcurrentrun.h>
 
 #include <QDebug>
+#include <QDesktopServices>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QLabel>
@@ -43,6 +44,8 @@ private:
     QProgressBar *progress;
     QLabel *progressLabel;
 
+    QString outputPath;
+
     void init();
 
     void setIcons();
@@ -56,7 +59,9 @@ public slots:
     void openElevation();
     void updateMesh(int index);
     void setProgress(int done, QString text="", int timeout=0);
+    void openOutputPath();
     void solve();
+
 };
 
 #endif // MAINWINDOW_H

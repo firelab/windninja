@@ -71,6 +71,7 @@ struct NinjaH;
 typedef struct NinjaH NinjaH;
 typedef int   NinjaErr;
 
+    NinjaErr WINDNINJADLL_EXPORT NinjaInit();
 
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
