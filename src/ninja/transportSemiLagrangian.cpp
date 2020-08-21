@@ -78,7 +78,6 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
         {
             for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
             {
-                //cout<<"test"<<i<<"_"<<j<<"_"<<k<<"......"<<endl;
                 if(U0.isOnGround(i,j,k))  //If this node is on the ground, set to zero velocity for no-slip boundary
                 {
                     U1.vectorData_x(i, j, k) = 0.0;
@@ -91,21 +90,13 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                     U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
                 }else   //Else we're on an interior node and should back-trace a particle
                 {
-                    //cout<<"test"<<i<<"_"<<j<<"_"<<k<<"......"<<endl;
                     element elem(U0.vectorData_x.mesh_);
                     reducedDt = dt;
                     do {
                         traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
                         reducedDt /= 2.0;
-                        cout<<" reducedDt = "<<reducedDt<<", "<<"ncols = "<<U0.vectorData_x.mesh_->ncols<<endl;
-                        cout<<"ux,uy,uz = "<<U0.vectorData_x(i,j,k)<<", "<<U0.vectorData_y(i,j,k)<<", "<<U0.vectorData_z(i,j,k)<<endl;
-                        cout<<"i,j,k = "<<i<<"_"<<j<<"_"<<k<<"......"<<endl;
-                        if(reducedDt == 0.0){
-                            exit(0);
-                        }
                     }
-                    while(!elem.isInMesh(xEnd, yEnd, zEnd) || reducedDt == 0.0);
-                    //cout<<"test"<<i<<"_"<<j<<"_"<<k<<"......"<<endl;
+                    while(!elem.isInMesh(xEnd, yEnd, zEnd));
 
                     U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xEnd, yEnd, zEnd);
                     U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xEnd, yEnd, zEnd);
@@ -114,7 +105,6 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
             }
         }
     }
-    cout<<"Done.............."<<endl;
 }
 
 /**
@@ -200,7 +190,6 @@ void TransportSemiLagrangian::traceParticle(const wn_3dVectorField &U0, const do
         endX = U0.vectorData_x.mesh_->XORD(startI,startJ,startK) + directionCosineX*travelDistance;
         endY = U0.vectorData_x.mesh_->YORD(startI,startJ,startK) + directionCosineY*travelDistance;
         endZ = U0.vectorData_x.mesh_->ZORD(startI,startJ,startK) + directionCosineZ*travelDistance;
-        cout<<"endX, endY, endZ = "<<endX<<", "<<endY<<", "<<endZ;
     }else if(transportType==secondOrderRungeKutta)
     {
 

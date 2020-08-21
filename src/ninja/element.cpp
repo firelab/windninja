@@ -860,7 +860,7 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	                                                //    functions such as wn_3dScalarField::interpolate().
 {
 	int node_i, node_j, node_k;
-	double zAverage, zAverage_ground;
+    double zAverage;
 
 	//initialize cell values
 	cell_i = -1;
@@ -897,11 +897,8 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	for(node_k=1; node_k<mesh_->nlayers; node_k++)
 	{	    
 		zAverage = (mesh_->ZORD(node_i-1, node_j-1, node_k) + mesh_->ZORD(node_i-1, node_j, node_k) + mesh_->ZORD(node_i, node_j-1, node_k) + mesh_->ZORD(node_i, node_j, node_k)) / 4.0; 
-		//zAverage_ground = (mesh_->ZORD(node_i-1, node_j-1, 0) + mesh_->ZORD(node_i-1, node_j, 0) + mesh_->ZORD(node_i, node_j-1, 0) + mesh_->ZORD(node_i, node_j, 0)) / 4.0; 
 
-		
 		if(z <= zAverage)
-		//if(z < zAverage)
 		{
 			cell_k = node_k - 1;
 			break;
@@ -915,16 +912,34 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
 	
     if(u > 1.0)
-	{
+    {
         do{
-		    cell_j++;
-		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+            cell_j++;
+            if(cell_j>mesh_->ncolsElem-1){
+                if(u > 1.0+epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_j--;
+                    u = 1.0;
+                    break;
+                }
+            }
+            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(u > 1.0);
 	}
 	if(v > 1.0)
 	{
         do{
 		    cell_i++;
+            if(cell_i>mesh_->nrowsElem-1){
+                if(v > 1.0+epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_i--;
+                    v = 1.0;
+                    break;
+                }
+            }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(v > 1.0);
 	}
@@ -932,6 +947,15 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	{
         do{
 		    cell_k++;
+            if(cell_k>mesh_->nlayersElem-1){
+                if(w > 1.0+epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_k--;
+                    w = 1.0;
+                    break;
+                }
+            }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(w > 1.0);
 	}
@@ -939,6 +963,15 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	{
         do{
 		    cell_j--;
+            if(cell_j<0){
+                if(u < -1.0-epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_j++;
+                    u = -1.0;
+                    break;
+                }
+            }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(u < -1.0);
 	}
@@ -946,6 +979,15 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	{
         do{
 		    cell_i--;
+            if(cell_i<0){
+                if(v < -1.0-epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_i++;
+                    v = -1.0;
+                    break;
+                }
+            }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(v < -1.0);
 	}
@@ -953,6 +995,15 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 	{
         do{
             cell_k--;
+            if(cell_k<0){
+                if(w < -1.0-epsilon){
+                    throw std::range_error("Range error in element::get_uvw()");
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_k++;
+                    w = -1.0;
+                    break;
+                }
+            }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(w < -1.0);
 	}
@@ -961,7 +1012,7 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 bool element::isInMesh(double const& x,double const& y, double const& z)	//Determines if a (x,y,z) point is in the mesh
 {
     int node_i, node_j, node_k;
-    double zAverage, zAverage_ground;
+    double zAverage;
     double u, v, w;
 
     //initialize cell values
@@ -1003,18 +1054,13 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     for(node_k=1; node_k<mesh_->nlayers; node_k++)
     {
         zAverage = (mesh_->ZORD(node_i-1, node_j-1, node_k) + mesh_->ZORD(node_i-1, node_j, node_k) + mesh_->ZORD(node_i, node_j-1, node_k) + mesh_->ZORD(node_i, node_j, node_k)) / 4.0;
-        //zAverage_ground = (mesh_->ZORD(node_i-1, node_j-1, 0) + mesh_->ZORD(node_i-1, node_j, 0) + mesh_->ZORD(node_i, node_j-1, 0) + mesh_->ZORD(node_i, node_j, 0)) / 4.0;
-
 
         if(z <= zAverage)
-        //if(z < zAverage)
         {
             cell_k = node_k - 1;
             break;
         }
     }
-    //if(cell_k<0)
-        //cell_k = 0;
 
     interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
 
@@ -1022,17 +1068,31 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     {
         do{
             cell_j++;
-            if(cell_j>mesh_->ncolsElem-1)
-                return false;
-            interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+            if(cell_j>mesh_->ncolsElem-1){
+                if(u > 1.0+epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_j--;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
+                interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(u > 1.0);
     }
     if(v > 1.0)
     {
         do{
             cell_i++;
-            if(cell_i>mesh_->nrowsElem-1)
-                return false;
+            if(cell_i>mesh_->nrowsElem-1){
+                if(v > 1.0+epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_i--;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(v > 1.0);
     }
@@ -1040,8 +1100,15 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     {
         do{
             cell_k++;
-            if(cell_k>mesh_->nlayersElem-1)
-                return false;
+            if(cell_k>mesh_->nlayersElem-1){
+                if(w > 1.0+epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_k--;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(w > 1.0);
     }
@@ -1049,8 +1116,15 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     {
         do{
             cell_j--;
-            if(cell_j<0)
-                return false;
+            if(cell_j<0){
+                if(u < -1.0-epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_j++;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(u < -1.0);
     }
@@ -1058,8 +1132,15 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     {
         do{
             cell_i--;
-            if(cell_i<0)
-                return false;
+            if(cell_i<0){
+                if(v < -1.0-epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_i++;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(v < -1.0);
     }
@@ -1067,8 +1148,15 @@ bool element::isInMesh(double const& x,double const& y, double const& z)	//Deter
     {
         do{
             cell_k--;
-            if(cell_k<0)
-                return false;
+            if(cell_k<0){
+                if(w < -1.0-epsilon){
+                    return false;
+                }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
+                    cell_k++;
+                    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+                    break;
+                }
+            }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
         }while(w < -1.0);
     }
@@ -1230,7 +1318,11 @@ void element::interpLocalCoords(const double &x,const double &y, const double &z
 	double x_test, y_test, z_test;
     double u_new, v_new, w_new;
 	
+    if(cell_i==0 && cell_j==0 && cell_k==19)
+        cout<<"this sucks"<<endl;
 	int elemNum = mesh_->get_elemNum(cell_i, cell_j, cell_k);
+    if(elemNum == 72865)
+        cout<<"this sucks"<<endl;
 
 	//node0 = get_node0(cell_i, cell_j, cell_k);
 

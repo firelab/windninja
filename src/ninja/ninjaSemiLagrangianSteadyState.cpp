@@ -221,7 +221,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
         currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        while(iteration <= 1000)
+        while(iteration <= 50)
         {
             iteration += 1;
             cout<<"Iteration: "<<iteration<<endl;
@@ -267,7 +267,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
-            cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
             transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
             cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
             U0 = U1;
@@ -326,7 +325,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 }
             }
 
-            int mod = 50;
+            int mod = 1;
             std::ostringstream filename;
             if(iteration % mod == 0)
             {

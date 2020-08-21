@@ -100,6 +100,7 @@ class element
 	private:
 
 		double iterativeInterpTol;
+        static const double epsilon = 1.0E-6;
 
 	    double SFNVu(const double &u, const double &v, const double &w, const int &n);
 	    double SFNVv(const double &u, const double &v, const double &w, const int &n);
