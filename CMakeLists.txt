@@ -137,9 +137,10 @@ endif(WIN32)
 option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
-    find_package(Qt5 COMPONENTS Core Gui WebKit WebKitWidgets Widgets REQUIRED)
+    find_package(Qt5 COMPONENTS Core Gui Network WebKit WebKitWidgets Widgets REQUIRED)
     set(QT_INCLUDES ${Qt5Core_INCLUDE_DIRS}
                     ${Qt5Gui_INCLUDE_DIRS}
+                    ${Qt5Network_INCLUDE_DIRS}
                     ${Qt5WebKit_INCLUDE_DIRS}
                     ${Qt5WebKitWidgets_INCLUDE_DIRS}
                     ${Qt5Widgets_INCLUDE_DIRS})

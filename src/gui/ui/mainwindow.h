@@ -9,13 +9,22 @@
 
 #include <QDebug>
 #include <QDesktopServices>
+#include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QLabel>
+#include <QList>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QPair>
 #include <QProgressBar>
 #include <QString>
+#include <QStringList>
 #include <QThread>
 #include <QTreeWidgetItem>
+#include <QUrl>
+#include <QUrlQuery>
 
 #include <cpl_string.h>
 #include <gdal.h>
@@ -54,12 +63,15 @@ private:
 
     int countRuns();
 
+    int downloadUCAR(QString model, int hours, QString filename);
+
 public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
     void openElevation();
     void updateMesh(int index);
     void setProgress(int done, QString text="", int timeout=0);
     void openOutputPath();
+    void downloadWx();
     void solve();
 
 };

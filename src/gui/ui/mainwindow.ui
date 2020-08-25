@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>4</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -291,7 +291,7 @@
         <item>
          <widget class="QStackedWidget" name="initStack">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="domainInitPage">
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -487,22 +487,22 @@
               <item>
                <widget class="QLabel" name="label_18">
                 <property name="text">
-                 <string>Start Time</string>
+                 <string>Forecast Duration</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QDateTimeEdit" name="wxStartDate_2"/>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_19">
-                <property name="text">
-                 <string>End Time</string>
+               <widget class="QSpinBox" name="wxDurSpinBox">
+                <property name="suffix">
+                 <string> hours</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>368</number>
                 </property>
                </widget>
-              </item>
-              <item>
-               <widget class="QDateTimeEdit" name="wxEndDate_2"/>
               </item>
              </layout>
             </item>
@@ -516,7 +516,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="comboBox_3"/>
+               <widget class="QComboBox" name="wxComboBox"/>
               </item>
               <item>
                <widget class="QToolButton" name="downloadForecastButton">

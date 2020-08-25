@@ -32,6 +32,41 @@ void MainWindow::init() {
 
     ui->timeEdit->setDateTime(QDateTime::currentDateTime());
 
+    // Set up the wx model keys.  There is no way to programmatically get the
+    // UCAR models, so these are hard coded.  The NOMADS keys are also hard
+    // coded, even though there is a way to get them programmatically.  We
+    // should add some sort of check to make sure the lists are in sync.
+
+    // UCAR models
+    ui->wxComboBox->addItem("UCAR-NAM-CONUS-12-KM");
+    ui->wxComboBox->addItem("UCAR-NDFD-CONUS-2.5-KM");
+    ui->wxComboBox->addItem("UCAR-RAP-CONUS-13-KM");
+    ui->wxComboBox->addItem("UCAR-GFS-GLOBAL-1.0-DEG");
+
+    // NOMADS models
+#if defined(NOMADS_GFS_0P5DEG)
+    ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.5-DEG");
+#elif defined(NOMADS_GFS_1P0DEG)
+    ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-1.0-DEG");
+#else
+    ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.25-DEG");
+#endif
+    ui->wxComboBox->addItem("NOMADS-HIRES-ARW-ALASKA-5-KM");
+    ui->wxComboBox->addItem("NOMADS-HIRES-NMM-ALASKA-5-KM");
+    ui->wxComboBox->addItem("NOMADS-HIRES-ARW-CONUS-5-KM");
+    ui->wxComboBox->addItem("NOMADS-HIRES-NMM-CONUS-5-KM");
+    ui->wxComboBox->addItem("NOMADS-NAM-ALASKA-11.25-KM");
+    ui->wxComboBox->addItem("NOMADS-NAM-CONUS-12-KM");
+    ui->wxComboBox->addItem("NOMADS-NAM-NORTH-AMERICA-32-KM");
+    ui->wxComboBox->addItem("NOMADS-NAM-NEST-ALASKA-3-KM");
+    ui->wxComboBox->addItem("NOMADS-NAM-NEST-CONUS-3-KM");
+    ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-3-KM");
+    ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-3-KM");
+    ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-SUBHOURLY-3-KM");
+    ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM");
+    ui->wxComboBox->addItem("NOMADS-RAP-CONUS-13-KM");
+    ui->wxComboBox->addItem("NOMADS-RAP-NORTH-AMERICA-32-KM");
+
     // Set up the progress bar in the status bar (insertPermanentWidget
     // re-parents progress
     progressLabel = new QLabel(this);
@@ -57,6 +92,7 @@ void MainWindow::setConnections() {
         this, SLOT(updateMesh(int)));
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
         this, SLOT(updateStack(QTreeWidgetItem*, QTreeWidgetItem*)));
+    connect(ui->downloadForecastButton, SIGNAL(clicked()), this, SLOT(downloadWx()));
     connect(ui->solveButton, SIGNAL(clicked()), this, SLOT(solve()));
     connect(ui->outputButton, SIGNAL(clicked()), this, SLOT(openOutputPath()));
 }
@@ -89,8 +125,112 @@ void MainWindow::OGRFormats() {
     }
 }
 
+int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
+    QUrl url;
+    url.setScheme("https");
+    url.setHost("thredds.ucar.edu");
+    QMap<QString, QString>paths;
+    paths["UCAR-GFS-GLOBAL-1.0-DEG"] = "/thredds/ncss/grib/NCEP/GFS/Global_0p5deg/Best";
+    paths["UCAR-NAM-CONUS-12-KM"] = "/thredds/ncss/grib/NCEP/NAM/CONUS_12km/best";
+    paths["UCAR-NAM-ALASKA-11-KM"] = "/thredds/ncss/grib/NCEP/NAM/Alaska_11km/best";
+    paths["UCAR-NDFD-CONUS-2.5-KM"] = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best/LambertConformal_1377X2145-38p22N-95p43W";
+    paths["UCAR-RAP-CONUS-13-KM"] = "/thredds/ncss/grib/NCEP/RAP/CONUS_13km/best";
+
+    QList<QPair<QString, QString>> qItems;
+    qItems.append(QPair<QString, QString>("north", "44.0312153"));
+    qItems.append(QPair<QString, QString>("west", "-113.7496934"));
+    qItems.append(QPair<QString, QString>("east", "-113.4634461"));
+    qItems.append(QPair<QString, QString>("south", "43.7769564"));
+    qItems.append(QPair<QString, QString>("time_start", "present"));
+    qItems.append(QPair<QString, QString>("time_duration", "PT" +
+          QString::number(ui->wxDurSpinBox->value()) + "H"));
+    qItems.append(QPair<QString, QString>("accept", "netcdf"));
+
+    QStringList vars;
+    if(model.contains("NDFD")) {
+        vars.append("Maximum_temperature_height_above_ground_12_Hour_Maximum");
+        vars.append("Minimum_temperature_height_above_ground_12_Hour_Minimum");
+        vars.append("Total_cloud_cover_entire_atmosphere_single_layer_layer");
+        vars.append("Wind_direction_from_which_blowing_height_above_ground");
+        vars.append("Wind_speed_height_above_ground");
+    } else {
+        vars.append("v-component_of_wind_height_above_ground");
+        vars.append("u-component_of_wind_height_above_ground");
+        vars.append("Temperature_height_above_ground");
+    }
+    if(model.contains("GFS")) {
+        vars.append("Total_cloud_cover_convective_cloud");
+    } else {
+        vars.append("Total_cloud_cover_entire_atmosphere_single_layer");
+    }
+
+    qItems.append(QPair<QString, QString>("var", vars.join(",")));
+
+    QUrlQuery query;
+    query.setQueryItems(qItems);
+
+    url.setPath(paths[model]);
+    url.setQuery(query.toString());
+
+    /*
+    QFile fout(filename);
+    if(!fout.open(QIODevice::WriteOnly)) {
+        qDebug() << "failed to open " << filename;
+        return 1;
+    }
+
+    QNetworkRequest req;
+    qDebug() << url;
+    req.setUrl(url);
+
+    QNetworkAccessManager manager;
+    QNetworkReply *reply = manager.get(req);
+    qDebug() << reply->isRunning();
+    qDebug() << reply->isFinished();
+
+    int i = 0;
+    while(reply->isRunning()) {
+        if(reply->error()) {
+            qDebug() << reply->error();
+            return 1;
+        }
+        setProgress(i, "downloading wx file...", -1);
+        i++;
+        qDebug() << "downloading...";
+        QThread::sleep(1);
+    }
+
+    fout.write(reply->readAll());
+    fout.flush();
+    fout.close();
+    delete reply;
+    */
+
+    QString cmd = "curl -L -o " + filename + " \"" + url.toString() + "\"";
+    qDebug() << cmd;
+    system(cmd.toLocal8Bit());
+
+    return 0;
+}
+
+void MainWindow::downloadWx() {
+    QString file = QFileDialog::getSaveFileName(this,
+        tr("Open Elevation Input File"), "./",
+        tr("netCDF file (*.nc)"));
+    if(file == "") {
+        return;
+    }
+
+    QString model = ui->wxComboBox->currentText();
+    if(model.startsWith("UCAR")) {
+        int rc = downloadUCAR(model, ui->wxDurSpinBox->value(), file);
+        qDebug() << rc;
+    }
+}
+
 void MainWindow::openElevation() {
   ui->elevEdit->clear();
+  ui->elevEdit->setToolTip("");
   ui->vegCombo->setEnabled(true);
   QString file = QFileDialog::getOpenFileName(this,
    tr("Open Elevation Input File"),
@@ -125,6 +265,7 @@ void MainWindow::openElevation() {
   // Check file via API
   QFileInfo info = QFileInfo(file);
   ui->elevEdit->setText(info.fileName());
+  ui->elevEdit->setToolTip(info.absoluteFilePath());
 }
 
 void MainWindow::updateMesh(int index) {

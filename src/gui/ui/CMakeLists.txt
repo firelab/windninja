@@ -11,12 +11,14 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt5Core CONFIG REQUIRED)
 find_package(Qt5Concurrent CONFIG REQUIRED)
 find_package(Qt5Gui CONFIG REQUIRED)
+find_package(Qt5Network CONFIG REQUIRED)
 find_package(Qt5Widgets CONFIG REQUIRED)
 
 include_directories(
     ${Qt5Core_INCLUDE_DIRS}
     ${Qt5Concurrent_INCLUDE_DIRS}
     ${Qt5Gui_INCLUDE_DIRS}
+    ${Qt5Network_INCLUDE_DIRS}
     ${Qt5Widgets_INCLUDE_DIRS}
     ${GDAL_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -28,6 +30,7 @@ qt5_add_resources(NINJA_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/windninja.qrc)
 
 set(LINK_LIBS Qt5::Core
               Qt5::Gui
+              Qt5::Network
               #Qt5::WebKit
               #Qt5::WebKitWidgets
               Qt5::Widgets
