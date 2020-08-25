@@ -1316,13 +1316,9 @@ void element::interpLocalCoords(const double &x,const double &y, const double &z
 	//int node0;
 	double cellsize = mesh_->ZORD(cell_i, cell_j, cell_k+1) - mesh_->ZORD(cell_i, cell_j, cell_k);
 	double x_test, y_test, z_test;
-    double u_new, v_new, w_new;
+        double u_new, v_new, w_new;
 	
-    if(cell_i==0 && cell_j==0 && cell_k==19)
-        cout<<"this sucks"<<endl;
 	int elemNum = mesh_->get_elemNum(cell_i, cell_j, cell_k);
-    if(elemNum == 72865)
-        cout<<"this sucks"<<endl;
 
 	//node0 = get_node0(cell_i, cell_j, cell_k);
 
