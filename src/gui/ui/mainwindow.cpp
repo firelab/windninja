@@ -379,56 +379,91 @@ void MainWindow::solve() {
 
     // Start with the init method that is simplest
     if(ui->initCombo->currentIndex() == 2) {
-      ninja = NinjaCreateArmy(nr, ui->momentumRadio->isChecked(), nullptr);
+      ninja = NinjaCreateArmy(1, ui->momentumRadio->isChecked(), nullptr);
+      rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
+      check(rc, "NinjaSetElevationFile");
+
+      rc = NinjaSetNumVertLayers(ninja, 0, 20);
+      check(rc, "NinjaSetNumVertLayers");
+
+      if(ui->meshSpinBox->isEnabled()) {
+          rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
+                 unitKey(ui->meshUnitCombo->currentText()));
+      } else {
+          QString mc = ui->meshChoiceCombo->currentText();
+          rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
+      }
+      check(rc, "NinjaSetMeshResolution*");
+
+      if(ui->vegCombo->isEnabled()) {
+          rc = NinjaSetUniVegetation(ninja, 0,
+              ui->vegCombo->currentText().toLower().toLocal8Bit());
+          check(rc, "NinjaSetUniVegetation");
+      }
+
+      rc = NinjaSetInitializationMethod(ninja, 0, "wxmodel");
+      check(rc, "NinjaSetInitializationMethod");
+
+      if(ui->diurnalCheck->isChecked()) {
+          qDebug() << "setting diurnal...";
+          rc = NinjaSetDiurnalWinds(ninja, 0, 1);
+          check(rc, "NinjaSetDiurnalWinds");
+      }
+      rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
+      check(rc, "NinjaSetOutputWindHeight");
+
+      rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
+      check(rc, "NinjaSetOutputSpeedUnits");
+
+      rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
+      check(rc, "NinjaSetAsciiOutFlag");
       nr = NinjaMakeArmy(ninja, forecastPath.toLocal8Bit(), "America/Boise", 0);
       if(nr <= 0) {
           qDebug() << "INVALID FORECAST";
           return;
       }
-      qDebug() << "Number of runs: " << nr;
       for(int i = 0; i < nr; i++) {
-          qDebug() << elevPath;
-          rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
+          rc = NinjaSetElevationFile(ninja, i, elevPath.toLocal8Bit());
           check(rc, "NinjaSetElevationFile");
 
-          rc = NinjaSetNumVertLayers(ninja, 0, 20);
+          rc = NinjaSetNumVertLayers(ninja, i, 20);
           check(rc, "NinjaSetNumVertLayers");
 
           if(ui->meshSpinBox->isEnabled()) {
-              rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
+              rc = NinjaSetMeshResolution(ninja, i, ui->meshSpinBox->value(),
                      unitKey(ui->meshUnitCombo->currentText()));
           } else {
               QString mc = ui->meshChoiceCombo->currentText();
-              rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
+              rc = NinjaSetMeshResolutionChoice(ninja, i, mc.toLower().toLocal8Bit());
           }
           check(rc, "NinjaSetMeshResolution*");
 
           if(ui->vegCombo->isEnabled()) {
-              rc = NinjaSetUniVegetation(ninja, 0,
+              rc = NinjaSetUniVegetation(ninja, i,
                   ui->vegCombo->currentText().toLower().toLocal8Bit());
               check(rc, "NinjaSetUniVegetation");
           }
 
-          rc = NinjaSetInitializationMethod(ninja, 0, "wxmodel");
+          rc = NinjaSetInitializationMethod(ninja, i, "wxmodel");
           check(rc, "NinjaSetInitializationMethod");
 
           if(ui->diurnalCheck->isChecked()) {
               qDebug() << "setting diurnal...";
-              rc = NinjaSetDiurnalWinds(ninja, 0, 1);
+              rc = NinjaSetDiurnalWinds(ninja, i, 1);
               check(rc, "NinjaSetDiurnalWinds");
           }
-          rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
+          rc = NinjaSetOutputWindHeight(ninja, i, 10.0, "m");
           check(rc, "NinjaSetOutputWindHeight");
 
-          rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
+          rc = NinjaSetOutputSpeedUnits(ninja, i, "mph");
           check(rc, "NinjaSetOutputSpeedUnits");
 
-          rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
+          rc = NinjaSetAsciiOutFlag(ninja, i, 1);
           check(rc, "NinjaSetAsciiOutFlag");
 
       }
       ui->solveButton->setEnabled(false);
-      QtConcurrent::run([=]() {
+      //QtConcurrent::run([=]() {
           NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
           //check(rc, "NinjaStartRuns");
           // This isn't working
@@ -439,7 +474,7 @@ void MainWindow::solve() {
           NinjaDestroyArmy(ninja);
           ui->solveButton->setEnabled(true);
           ui->outputButton->setEnabled(true);
-      });
+      //});
       return;
     }
 

@@ -290,6 +290,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
 #else
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
+            ninjas[i]->set_ninjaCommunication(i, ninjaComClass::ninjaCLICom );
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -336,6 +337,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
 #else
             ninjas[i] = new ninja();
 #endif
+            ninjas[i]->set_ninjaCommunication(i, ninjaComClass::ninjaCLICom );
         }
 
 
