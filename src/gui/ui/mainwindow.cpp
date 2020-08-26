@@ -386,7 +386,7 @@ void MainWindow::solve() {
           return;
       }
       qDebug() << "Number of runs: " << nr;
-      for(int i = 1; i <= nr; i++) {
+      for(int i = 0; i < nr; i++) {
           qDebug() << elevPath;
           rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
           check(rc, "NinjaSetElevationFile");
@@ -409,14 +409,9 @@ void MainWindow::solve() {
               check(rc, "NinjaSetUniVegetation");
           }
 
-          rc = NinjaSetInitializationMethod(ninja, 0, "domain_average");
+          rc = NinjaSetInitializationMethod(ninja, 0, "wxmodel");
           check(rc, "NinjaSetInitializationMethod");
 
-          // domain average information
-          // input wind height and units
-          rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(),
-              unitKey(ui->inHeightUnitCombo->currentText()));
-          check(rc, "NinjaSetInputWindHeight");
           if(ui->diurnalCheck->isChecked()) {
               qDebug() << "setting diurnal...";
               rc = NinjaSetDiurnalWinds(ninja, 0, 1);
