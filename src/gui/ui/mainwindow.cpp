@@ -95,6 +95,7 @@ void MainWindow::setConnections() {
     connect(ui->downloadForecastButton, SIGNAL(clicked()), this, SLOT(downloadWx()));
     connect(ui->solveButton, SIGNAL(clicked()), this, SLOT(solve()));
     connect(ui->outputButton, SIGNAL(clicked()), this, SLOT(openOutputPath()));
+    connect(ui->openForecastButton, SIGNAL(clicked()), this, SLOT(openForecast()));
 }
 
 void MainWindow::OGRFormats() {
@@ -137,6 +138,7 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
     paths["UCAR-RAP-CONUS-13-KM"] = "/thredds/ncss/grib/NCEP/RAP/CONUS_13km/best";
 
     QList<QPair<QString, QString>> qItems;
+    // TODO(kyle): need an API call for domain extents.
     qItems.append(QPair<QString, QString>("north", "44.0312153"));
     qItems.append(QPair<QString, QString>("west", "-113.7496934"));
     qItems.append(QPair<QString, QString>("east", "-113.4634461"));
@@ -214,6 +216,9 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
 }
 
 void MainWindow::downloadWx() {
+    ui->forecastLineEdit->clear();
+    ui->forecastLineEdit->setToolTip("");
+
     QString file = QFileDialog::getSaveFileName(this,
         tr("Open Elevation Input File"), "./",
         tr("netCDF file (*.nc)"));
@@ -224,14 +229,37 @@ void MainWindow::downloadWx() {
     QString model = ui->wxComboBox->currentText();
     if(model.startsWith("UCAR")) {
         int rc = downloadUCAR(model, ui->wxDurSpinBox->value(), file);
-        qDebug() << rc;
+        if(rc == 0) {
+            QFileInfo info(file);
+            ui->forecastLineEdit->setText(info.fileName());
+            ui->forecastLineEdit->setToolTip(info.absoluteFilePath());
+        }
     }
+}
+
+void MainWindow::openForecast() {
+  ui->forecastLineEdit->clear();
+  ui->forecastLineEdit->setToolTip("");
+  forecastPath = "";
+  QString file = QFileDialog::getOpenFileName(this,
+   tr("Open Forecast File"),
+   "./",
+   tr("Forecast Files (*.nc *.zip)"));
+  if(file == "") {
+    return;
+  }
+  QFileInfo info = QFileInfo(file);
+  ui->forecastLineEdit->setText(info.fileName());
+  forecastPath = info.absoluteFilePath();
+  ui->forecastLineEdit->setToolTip(elevPath);
+
 }
 
 void MainWindow::openElevation() {
   ui->elevEdit->clear();
   ui->elevEdit->setToolTip("");
   ui->vegCombo->setEnabled(true);
+  elevPath = "";
   QString file = QFileDialog::getOpenFileName(this,
    tr("Open Elevation Input File"),
    "./",
@@ -265,7 +293,8 @@ void MainWindow::openElevation() {
   // Check file via API
   QFileInfo info = QFileInfo(file);
   ui->elevEdit->setText(info.fileName());
-  ui->elevEdit->setToolTip(info.absoluteFilePath());
+  elevPath = info.absoluteFilePath();
+  ui->elevEdit->setToolTip(elevPath);
 }
 
 void MainWindow::updateMesh(int index) {
@@ -328,6 +357,13 @@ void MainWindow::openOutputPath() {
     QDesktopServices::openUrl( QUrl ( "file:///" + outputPath, QUrl::TolerantMode ) );
 }
 
+#define check(x, fx) if(x!=0) { \
+  printf("FAIL(%s): %d\n", fx, x); \
+  NinjaDestroyArmy(ninja); \
+  ui->solveButton->setEnabled(true); \
+  return; \
+}
+
 void MainWindow::solve() {
     ui->solveButton->setDisabled(true);
 
@@ -337,42 +373,96 @@ void MainWindow::solve() {
     // of ninjas.
     NinjaH *ninja = 0;
 
+    NinjaErr rc = 0;
+
     int nr = 1;
 
-    // Start from the first set of inputs, then work our way down.
+    // Start with the init method that is simplest
+    if(ui->initCombo->currentIndex() == 2) {
+      ninja = NinjaCreateArmy(nr, ui->momentumRadio->isChecked(), nullptr);
+      nr = NinjaMakeArmy(ninja, forecastPath.toLocal8Bit(), "America/Boise", 0);
+      if(nr <= 0) {
+          qDebug() << "INVALID FORECAST";
+          return;
+      }
+      qDebug() << "Number of runs: " << nr;
+      for(int i = 1; i <= nr; i++) {
+          qDebug() << elevPath;
+          rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
+          check(rc, "NinjaSetElevationFile");
+
+          rc = NinjaSetNumVertLayers(ninja, 0, 20);
+          check(rc, "NinjaSetNumVertLayers");
+
+          if(ui->meshSpinBox->isEnabled()) {
+              rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
+                     unitKey(ui->meshUnitCombo->currentText()));
+          } else {
+              QString mc = ui->meshChoiceCombo->currentText();
+              rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
+          }
+          check(rc, "NinjaSetMeshResolution*");
+
+          if(ui->vegCombo->isEnabled()) {
+              rc = NinjaSetUniVegetation(ninja, 0,
+                  ui->vegCombo->currentText().toLower().toLocal8Bit());
+              check(rc, "NinjaSetUniVegetation");
+          }
+
+          rc = NinjaSetInitializationMethod(ninja, 0, "domain_average");
+          check(rc, "NinjaSetInitializationMethod");
+
+          // domain average information
+          // input wind height and units
+          rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(),
+              unitKey(ui->inHeightUnitCombo->currentText()));
+          check(rc, "NinjaSetInputWindHeight");
+          if(ui->diurnalCheck->isChecked()) {
+              qDebug() << "setting diurnal...";
+              rc = NinjaSetDiurnalWinds(ninja, 0, 1);
+              check(rc, "NinjaSetDiurnalWinds");
+          }
+          rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
+          check(rc, "NinjaSetOutputWindHeight");
+
+          rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
+          check(rc, "NinjaSetOutputSpeedUnits");
+
+          rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
+          check(rc, "NinjaSetAsciiOutFlag");
+
+      }
+      ui->solveButton->setEnabled(false);
+      QtConcurrent::run([=]() {
+          NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
+          //check(rc, "NinjaStartRuns");
+          // This isn't working
+          outputPath = NinjaGetOutputPath(ninja, 0);
+          if(outputPath == "") {
+              qDebug() << "BUG: output path should be set";
+          }
+          NinjaDestroyArmy(ninja);
+          ui->solveButton->setEnabled(true);
+          ui->outputButton->setEnabled(true);
+      });
+      return;
+    }
+
 #ifdef NINJAFOAM
     ninja = NinjaCreateArmy(nr, ui->momentumRadio->isChecked(), nullptr);
 #else
     ninja = NinjaCreateArmy(nr, nullptr);
 #endif
-
-#define check(x, fx) if(x!=0) { \
-  printf("FAIL(%s): %d\n", fx, x); \
-  NinjaDestroyArmy(ninja); \
-  ui->solveButton->setEnabled(true); \
-  return; \
-}
-
-    NinjaErr rc = 0;
-
     // Suface information, needed for all runs
-    rc = NinjaSetElevationFile(ninja, 0, ui->elevEdit->text().toLocal8Bit());
+    rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
     check(rc, "NinjaSetElevationFile");
 
     rc = NinjaSetNumVertLayers(ninja, 0, 20);
     check(rc, "NinjaSetNumVertLayers");
 
     if(ui->meshSpinBox->isEnabled()) {
-        const char *u = 0;
-        QString txt = ui->meshUnitCombo->currentText();
-        if(txt == "meters") {
-            u = "m";
-        } else if(txt == "feet") {
-            u = "ft";
-        } else {
-            assert(0);
-        }
-        rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(), u);
+        rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
+               unitKey(ui->meshUnitCombo->currentText()));
     } else {
         QString mc = ui->meshChoiceCombo->currentText();
         rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());

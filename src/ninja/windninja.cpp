@@ -155,9 +155,9 @@ NinjaErr WINDNINJADLL_EXPORT NinjaDestroyArmy
  *                 America/Boise.
  *                 See WINDNINJA_DATA/date_time_zonespec.csv
  *
- * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
+ * \return the number of runs in the Army
  */
-NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
+int WINDNINJADLL_EXPORT NinjaMakeArmy
     ( NinjaH * ninja, const char * forecastFilename,
       const char * timezone,
       bool momentumFlag )
@@ -172,7 +172,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
                  std::string( timezone ),
                  momentumFlag );
 
-           retval = NINJA_SUCCESS;
+           retval = reinterpret_cast<ninjaArmy*>( ninja )->getSize();
        }
        catch( armyException & e )
        {

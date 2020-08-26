@@ -93,11 +93,10 @@ typedef int   NinjaErr;
     NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
 
-    NinjaErr WINDNINJADLL_EXPORT NinjaMakeArmy
+    int WINDNINJADLL_EXPORT NinjaMakeArmy
         ( NinjaH * ninja, const char * forecastFilename,
           const char * timezone,
           bool momentumFlag );
-
 
     /*-----------------------------------------------------------------------------
      *  Various Simulation Parameters

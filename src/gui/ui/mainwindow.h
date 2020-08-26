@@ -31,8 +31,7 @@
 
 #include <windninja.h>
 
-namespace Ui {
-class MainWindow;
+namespace Ui { class MainWindow;
 }
 
 const int defaultMsgLength = 2500;
@@ -54,6 +53,8 @@ private:
     QLabel *progressLabel;
 
     QString outputPath;
+    QString elevPath;
+    QString forecastPath;
 
     void init();
 
@@ -68,6 +69,7 @@ private:
 public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
     void openElevation();
+    void openForecast();
     void updateMesh(int index);
     void setProgress(int done, QString text="", int timeout=0);
     void openOutputPath();
