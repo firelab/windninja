@@ -208,10 +208,7 @@ NinjaErr WINDNINJADLL_EXPORT NinjaStartRuns
             handleException();
         }
     }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
+    return NINJA_E_NULL_PTR;
 }
 
 /**
@@ -511,13 +508,12 @@ const char * WINDNINJADLL_EXPORT NinjaGetInitializationMethod
 {
     if( NULL != ninja )
     {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getInitializationMethodString
-            ( nIndex ).c_str();
+        std::string s = reinterpret_cast<ninjaArmy*>( ninja )->getInitializationMethodString( nIndex );
+        char *p = (char*)malloc(s.size() + 1);
+        strcpy(p, s.c_str());
+        return (const char*)p;
     }
-    else
-    {
-        return NULL;
-    }
+    return NULL;
 }
 
 /*-----------------------------------------------------------------------------
@@ -843,18 +839,17 @@ NinjaErr WINDNINJADLL_EXPORT NinjaSetTxtOutFlag
     }
 
 }
-
 const char * WINDNINJADLL_EXPORT NinjaGetOutputPath
     ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja )
     {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputPath( nIndex ).c_str();
+        std::string s = reinterpret_cast<ninjaArmy*>( ninja )->getOutputPath( nIndex );
+        char *p = (char*)malloc(s.size() + 1);
+        strcpy(p, s.c_str());
+        return (const char*)p;
     }
-    else
-    {
-        return NULL;
-    }
+    return NULL;
 }
 
 /*-----------------------------------------------------------------------------

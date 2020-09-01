@@ -463,18 +463,17 @@ void MainWindow::solve() {
 
       }
       ui->solveButton->setEnabled(false);
-      //QtConcurrent::run([=]() {
-          NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
-          //check(rc, "NinjaStartRuns");
-          // This isn't working
-          outputPath = NinjaGetOutputPath(ninja, 0);
-          if(outputPath == "") {
-              qDebug() << "BUG: output path should be set";
-          }
-          NinjaDestroyArmy(ninja);
-          ui->solveButton->setEnabled(true);
-          ui->outputButton->setEnabled(true);
-      //});
+      NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
+      //check(rc, "NinjaStartRuns");
+      // This isn't working
+      const char *p = NinjaGetOutputPath(ninja, 0);
+      outputPath = QString(p);
+      free((void*)p);
+
+      assert(outputPath != "");
+      NinjaDestroyArmy(ninja);
+      ui->solveButton->setEnabled(true);
+      ui->outputButton->setEnabled(true);
       return;
     }
 
@@ -549,17 +548,15 @@ void MainWindow::solve() {
     check(rc, "NinjaSetAsciiOutFlag");
 
     ui->solveButton->setEnabled(false);
-    QtConcurrent::run([=]() {
-        NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
-        //check(rc, "NinjaStartRuns");
-        // This isn't working
-        outputPath = NinjaGetOutputPath(ninja, 0);
-        if(outputPath == "") {
-            qDebug() << "BUG: output path should be set";
-        }
-        NinjaDestroyArmy(ninja);
-        ui->solveButton->setEnabled(true);
-        ui->outputButton->setEnabled(true);
-    });
+    rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
+    //check(rc, "NinjaStartRuns");
+    const char *p = NinjaGetOutputPath(ninja, 0);
+    outputPath = QString(p);
+    free((void*)p);
+
+    assert(outputPath != "");
+    NinjaDestroyArmy(ninja);
+    ui->solveButton->setEnabled(true);
+    ui->outputButton->setEnabled(true);
 }
 
