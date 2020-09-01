@@ -92,6 +92,8 @@ void MainWindow::setConnections() {
         this, SLOT(updateMesh(int)));
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
         this, SLOT(updateStack(QTreeWidgetItem*, QTreeWidgetItem*)));
+    connect(ui->initCombo, SIGNAL(currentIndexChanged(int)),
+        ui->initStack, SLOT(setCurrentIndex(int)));
     connect(ui->downloadForecastButton, SIGNAL(clicked()), this, SLOT(downloadWx()));
     connect(ui->solveButton, SIGNAL(clicked()), this, SLOT(solve()));
     connect(ui->outputButton, SIGNAL(clicked()), this, SLOT(openOutputPath()));
@@ -233,6 +235,7 @@ void MainWindow::downloadWx() {
             QFileInfo info(file);
             ui->forecastLineEdit->setText(info.fileName());
             ui->forecastLineEdit->setToolTip(info.absoluteFilePath());
+            forecastPath = info.absoluteFilePath();
         }
     }
 }
@@ -465,7 +468,6 @@ void MainWindow::solve() {
       ui->solveButton->setEnabled(false);
       NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
       //check(rc, "NinjaStartRuns");
-      // This isn't working
       const char *p = NinjaGetOutputPath(ninja, 0);
       outputPath = QString(p);
       free((void*)p);
