@@ -43,6 +43,7 @@ set(LINK_LIBS Qt5::Core
 # Populate a CMake variable with the sources
 set(NINJA_GUI_SRCSXXX
     mainwindow.ui
+    domain.ui
     mainwindow.cpp
     main.cpp
 )

@@ -31,6 +31,8 @@
 
 #include <windninja.h>
 
+#include "ui_domain.h"
+
 namespace Ui { class MainWindow;
 }
 
@@ -55,6 +57,8 @@ private:
     QString outputPath;
     QString elevPath;
     QString forecastPath;
+
+    QList<Ui::DomainForm*> domainForms;
 
     void init();
 
