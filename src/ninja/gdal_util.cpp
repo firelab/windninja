@@ -96,6 +96,11 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if( poCT == NULL )
@@ -109,6 +114,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 
     lat = adfGeoTransform[3] + adfGeoTransform[4] * xCenter
 	+ adfGeoTransform[5] * yCenter;
+
 
     if( !poCT->Transform( 1, &lon, &lat ) ) {
 	OGRCoordinateTransformation::DestroyCT( poCT );
@@ -152,6 +158,11 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if( poCT == NULL )
@@ -202,6 +213,11 @@ bool GDALTestSRS( GDALDataset *poDS )
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
 
@@ -629,6 +645,7 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
 
+        // TODO(kyle): check on GDAL 3.x axis ordering here.
         oSourceSRS.SetWellKnownGeogCS( "WGS84" );
         oTargetSRS.importFromWkt( (char**)&pszWkt );
 
