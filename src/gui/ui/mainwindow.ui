@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -79,16 +79,29 @@
         <item>
          <widget class="QCheckBox" name="diurnalCheck">
           <property name="text">
-           <string>Diurnal</string>
+           <string>Simulate Diurnal Wind</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QCheckBox" name="stabilityCheck">
           <property name="text">
-           <string>Stability</string>
+           <string>Simulate Stability Flow</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>
@@ -126,7 +139,7 @@
           <item>
            <widget class="QToolButton" name="downloadElevButton">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>Download...</string>
@@ -148,13 +161,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="tzCombo">
-            <item>
-             <property name="text">
-              <string>America/Boise</string>
-             </property>
-            </item>
-           </widget>
+           <widget class="QComboBox" name="tzCombo"/>
           </item>
           <item>
            <widget class="QCheckBox" name="showZonesBox">
@@ -254,6 +261,19 @@
           </item>
          </layout>
         </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="initPage">
@@ -294,7 +314,7 @@
            <number>0</number>
           </property>
           <widget class="QWidget" name="domainInitPage">
-           <layout class="QVBoxLayout" name="verticalLayout_3">
+           <layout class="QVBoxLayout" name="layout_32">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_8">
               <item>
@@ -394,18 +414,15 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="6">
-               <widget class="QToolButton" name="addDomainRunButton">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>+</string>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="5">
                <widget class="QSpinBox" name="tempSpinBox"/>
+              </item>
+              <item row="1" column="4">
+               <widget class="QSpinBox" name="cloudSpinBox">
+                <property name="suffix">
+                 <string>%</string>
+                </property>
+               </widget>
               </item>
               <item row="1" column="0">
                <widget class="QDoubleSpinBox" name="speedSpinBox">
@@ -420,16 +437,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="2">
-               <widget class="QDateTimeEdit" name="timeEdit"/>
-              </item>
-              <item row="1" column="4">
-               <widget class="QSpinBox" name="cloudSpinBox">
-                <property name="suffix">
-                 <string>%</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="4">
                <widget class="QLabel" name="cloudLabel">
                 <property name="text">
@@ -437,17 +444,17 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="5">
-               <widget class="QLabel" name="tempLabel">
-                <property name="text">
-                 <string>Air Temp.</string>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2">
                <widget class="QLabel" name="timeLabel">
                 <property name="text">
                  <string>Time</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="dirLabel">
+                <property name="text">
+                 <string>Direction</string>
                 </property>
                </widget>
               </item>
@@ -461,21 +468,27 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="dirLabel">
+              <item row="1" column="2">
+               <widget class="QDateTimeEdit" name="timeEdit"/>
+              </item>
+              <item row="0" column="5">
+               <widget class="QLabel" name="tempLabel">
                 <property name="text">
-                 <string>Direction</string>
+                 <string>Air Temp.</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="6">
+               <widget class="QToolButton" name="addDomainRunButton">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>+</string>
                 </property>
                </widget>
               </item>
              </layout>
-            </item>
-            <item>
-             <widget class="QTableView" name="domainTableView">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>

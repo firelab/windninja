@@ -67,6 +67,13 @@ void MainWindow::init() {
     ui->wxComboBox->addItem("NOMADS-RAP-CONUS-13-KM");
     ui->wxComboBox->addItem("NOMADS-RAP-NORTH-AMERICA-32-KM");
 
+    // Use QT time zones to fill in the dialog.
+    // XXX(kyle): this won't match boost::timezone
+    QList<QByteArray> ids = QTimeZone::availableTimeZoneIds();
+    for(int i = 0; i < ids.size(); i++) {
+        ui->tzCombo->addItem(ids[i]);
+    }
+
     // Set up the progress bar in the status bar (insertPermanentWidget
     // re-parents progress
     progressLabel = new QLabel(this);
@@ -88,6 +95,7 @@ void MainWindow::setIcons() {
 
 void MainWindow::setConnections() {
     connect(ui->openElevButton, SIGNAL(clicked()), this, SLOT(openElevation()));
+    connect(ui->downloadElevButton, SIGNAL(clicked()), this, SLOT(downloadElev()));
     connect(ui->meshChoiceCombo, SIGNAL(currentIndexChanged(int)),
         this, SLOT(updateMesh(int)));
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
@@ -222,7 +230,7 @@ void MainWindow::downloadWx() {
     ui->forecastLineEdit->setToolTip("");
 
     QString file = QFileDialog::getSaveFileName(this,
-        tr("Open Elevation Input File"), "./",
+        tr("Save Weather Forecast File"), "./",
         tr("netCDF file (*.nc)"));
     if(file == "") {
         return;
@@ -256,6 +264,10 @@ void MainWindow::openForecast() {
   forecastPath = info.absoluteFilePath();
   ui->forecastLineEdit->setToolTip(elevPath);
 
+}
+
+void MainWindow::downloadElev() {
+  qDebug() << "download elevation...";
 }
 
 void MainWindow::openElevation() {

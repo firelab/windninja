@@ -7,6 +7,7 @@
 
 #include <qtconcurrentrun.h>
 
+#include <QByteArray>
 #include <QDebug>
 #include <QDesktopServices>
 #include <QFile>
@@ -22,6 +23,7 @@
 #include <QString>
 #include <QStringList>
 #include <QThread>
+#include <QTimeZone>
 #include <QTreeWidgetItem>
 #include <QUrl>
 #include <QUrlQuery>
@@ -31,9 +33,8 @@
 
 #include <windninja.h>
 
-#include "ui_domain.h"
-
-namespace Ui { class MainWindow;
+namespace Ui {
+  class MainWindow;
 }
 
 const int defaultMsgLength = 2500;
@@ -58,8 +59,6 @@ private:
     QString elevPath;
     QString forecastPath;
 
-    QList<Ui::DomainForm*> domainForms;
-
     void init();
 
     void setIcons();
@@ -73,13 +72,13 @@ private:
 public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
     void openElevation();
+    void downloadElev();
     void openForecast();
     void updateMesh(int index);
     void setProgress(int done, QString text="", int timeout=0);
     void openOutputPath();
     void downloadWx();
     void solve();
-
 };
 
 #endif // MAINWINDOW_H
