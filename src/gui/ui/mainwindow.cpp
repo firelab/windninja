@@ -454,6 +454,17 @@ void MainWindow::openOutputPath() {
   return; \
 }
 
+static NinjaH* mallocNinja(int n, bool momentum) {
+  NinjaH *ninja;
+#ifdef NINJAFOAM
+  ninja = NinjaCreateArmy(n, momentum, nullptr);
+#else
+  ninja = NinjaCreateArmy(n, nullptr);
+#endif
+  return ninja;
+}
+
+
 void MainWindow::solve() {
     ui->solveButton->setDisabled(true);
 
@@ -466,193 +477,96 @@ void MainWindow::solve() {
     NinjaErr rc = 0;
 
     int nr = 1;
-
-    // Start with the first run, fill in the common data values
+    const char *init = "domain_average";
 
     // Start with the init method that is simplest
     if(ui->initCombo->currentIndex() == 2) {
-#ifdef NINJAFOAM
-        ninja = NinjaCreateArmy(1, ui->momentumRadio->isChecked(), nullptr);
-#else
-        ninja = NinjaCreateArmy(1, nullptr);
-#endif
-      qDebug() << elevPath;
-      rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
-      check(rc, "NinjaSetElevationFile");
-
-      rc = NinjaSetNumVertLayers(ninja, 0, 20);
-      check(rc, "NinjaSetNumVertLayers");
-
-      if(ui->meshSpinBox->isEnabled()) {
-          rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
-                 unitKey(ui->meshUnitCombo->currentText()));
-      } else {
-          QString mc = ui->meshChoiceCombo->currentText();
-          rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
-      }
-      check(rc, "NinjaSetMeshResolution");
-
-      if(ui->vegCombo->isEnabled()) {
-          rc = NinjaSetUniVegetation(ninja, 0,
-              ui->vegCombo->currentText().toLower().toLocal8Bit());
-          check(rc, "NinjaSetUniVegetation");
-      }
-
-      rc = NinjaSetInitializationMethod(ninja, 0, "wxmodel");
-      check(rc, "NinjaSetInitializationMethod");
-
-      if(ui->diurnalCheck->isChecked()) {
-          qDebug() << "setting diurnal...";
-          rc = NinjaSetDiurnalWinds(ninja, 0, 1);
-          check(rc, "NinjaSetDiurnalWinds");
-      }
-      rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
-      check(rc, "NinjaSetOutputWindHeight");
-
-      rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
-      check(rc, "NinjaSetOutputSpeedUnits");
-
-      rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
-      check(rc, "NinjaSetAsciiOutFlag");
+      // for whatever reason, we need a malloc'ed ninja as the first ninja.
+      ninja = mallocNinja(1, ui->momentumRadio->isChecked());
       nr = NinjaMakeArmy(ninja, forecastPath.toLocal8Bit(),
           ui->tzCombo->currentText().toLocal8Bit(), 0);
       if(nr <= 0) {
           qDebug() << "INVALID FORECAST";
           return;
       }
-      // Set the rest of the values?
-      for(int i = 0; i < nr; i++) {
-          rc = NinjaSetElevationFile(ninja, i, elevPath.toLocal8Bit());
-          check(rc, "NinjaSetElevationFile");
-
-          rc = NinjaSetNumVertLayers(ninja, i, 20);
-          check(rc, "NinjaSetNumVertLayers");
-
-          if(ui->meshSpinBox->isEnabled()) {
-              rc = NinjaSetMeshResolution(ninja, i, ui->meshSpinBox->value(),
-                     unitKey(ui->meshUnitCombo->currentText()));
-          } else {
-              QString mc = ui->meshChoiceCombo->currentText();
-              rc = NinjaSetMeshResolutionChoice(ninja, i, mc.toLower().toLocal8Bit());
-          }
-          check(rc, "NinjaSetMeshResolution*");
-
-          if(ui->vegCombo->isEnabled()) {
-              rc = NinjaSetUniVegetation(ninja, i,
-                  ui->vegCombo->currentText().toLower().toLocal8Bit());
-              check(rc, "NinjaSetUniVegetation");
-          }
-
-          rc = NinjaSetInitializationMethod(ninja, i, "wxmodel");
-          check(rc, "NinjaSetInitializationMethod");
-
-          if(ui->diurnalCheck->isChecked()) {
-              qDebug() << "setting diurnal...";
-              rc = NinjaSetDiurnalWinds(ninja, i, 1);
-              check(rc, "NinjaSetDiurnalWinds");
-          }
-          rc = NinjaSetOutputWindHeight(ninja, i, 10.0, "m");
-          check(rc, "NinjaSetOutputWindHeight");
-
-          rc = NinjaSetOutputSpeedUnits(ninja, i, "mph");
-          check(rc, "NinjaSetOutputSpeedUnits");
-
-          rc = NinjaSetAsciiOutFlag(ninja, i, 1);
-          check(rc, "NinjaSetAsciiOutFlag");
-
-      }
-      ui->solveButton->setEnabled(false);
-      NinjaErr rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
-      //check(rc, "NinjaStartRuns");
-      const char *p = NinjaGetOutputPath(ninja, 0);
-      outputPath = QString(p);
-      free((void*)p);
-
-      assert(outputPath != "");
-      NinjaDestroyArmy(ninja);
-      ui->solveButton->setEnabled(true);
-      ui->outputButton->setEnabled(true);
-      return;
-    }
-
-#ifdef NINJAFOAM
-    ninja = NinjaCreateArmy(nr, ui->momentumRadio->isChecked(), nullptr);
-#else
-    ninja = NinjaCreateArmy(nr, nullptr);
-#endif
-    // Suface information, needed for all runs
-    rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
-    check(rc, "NinjaSetElevationFile");
-
-    rc = NinjaSetNumVertLayers(ninja, 0, 20);
-    check(rc, "NinjaSetNumVertLayers");
-
-    if(ui->meshSpinBox->isEnabled()) {
-        rc = NinjaSetMeshResolution(ninja, 0, ui->meshSpinBox->value(),
-               unitKey(ui->meshUnitCombo->currentText()));
+      init = "wxmodel";
     } else {
-        QString mc = ui->meshChoiceCombo->currentText();
-        rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
+      ninja = mallocNinja(nr, ui->momentumRadio->isChecked());
     }
-    check(rc, "NinjaSetMeshResolution*");
+    for(int i = 0; i < nr; i++) {
+      rc = NinjaSetElevationFile(ninja, i, elevPath.toLocal8Bit());
+      check(rc, "NinjaSetElevationFile");
 
-    if(ui->vegCombo->isEnabled()) {
-        rc = NinjaSetUniVegetation(ninja, 0,
-            ui->vegCombo->currentText().toLower().toLocal8Bit());
-        check(rc, "NinjaSetUniVegetation");
-    }
+      rc = NinjaSetNumVertLayers(ninja, i, 20);
+      check(rc, "NinjaSetNumVertLayers");
 
-    rc = NinjaSetInitializationMethod(ninja, 0, "domain_average");
-    check(rc, "NinjaSetInitializationMethod");
+      if(ui->meshSpinBox->isEnabled()) {
+          rc = NinjaSetMeshResolution(ninja, i, ui->meshSpinBox->value(),
+                 unitKey(ui->meshUnitCombo->currentText()));
+      } else {
+          QString mc = ui->meshChoiceCombo->currentText();
+          rc = NinjaSetMeshResolutionChoice(ninja, i, mc.toLower().toLocal8Bit());
+      }
+      check(rc, "NinjaSetMeshResolution");
 
-    // domain average information
-    // input wind height and units
-    rc = NinjaSetInputWindHeight(ninja, 0, ui->inHeightSpinBox->value(),
-        unitKey(ui->inHeightUnitCombo->currentText()));
-    check(rc, "NinjaSetInputWindHeight");
+      if(ui->vegCombo->isEnabled()) {
+          rc = NinjaSetUniVegetation(ninja, i,
+              ui->vegCombo->currentText().toLower().toLocal8Bit());
+          check(rc, "NinjaSetUniVegetation");
+      }
 
-    // input speed and direction
-    rc = NinjaSetInputSpeed(ninja, 0, ui->speedSpinBox->value(),
-        ui->inSpeedUnitCombo->currentText().toLocal8Bit());
-    check(rc, "NinjaSetInputSpeed");
+      rc = NinjaSetInitializationMethod(ninja, i, init);
+      check(rc, "NinjaSetInitializationMethod");
 
-    rc = NinjaSetInputDirection(ninja, 0, ui->dirSpinBox->value());
-    check(rc, "NinjaSetInputDirection");
+      // domain average information
+      // input wind height and units
+      rc = NinjaSetInputWindHeight(ninja, i, ui->inHeightSpinBox->value(),
+          unitKey(ui->inHeightUnitCombo->currentText()));
+      check(rc, "NinjaSetInputWindHeight");
 
-    // diurnal info, if needed
-    if(ui->diurnalCheck->isChecked()) {
-        qDebug() << "setting diurnal...";
-        rc = NinjaSetDiurnalWinds(ninja, 0, 1);
-        check(rc, "NinjaSetDiurnalWinds");
-        rc = NinjaSetUniAirTemp(ninja, 0, ui->tempSpinBox->value(),
-            unitKey(ui->tempCombo->currentText()));
-        check(rc, "NinjaSetUniAirTemp");
-        rc = NinjaSetUniCloudCover(ninja, 0, ui->cloudSpinBox->value(), "percent");
-        check(rc, "NinjaSetUniCloudCover");
-        QDate d = ui->timeEdit->date();
-        QTime t = ui->timeEdit->time();
-        rc = NinjaSetDateTime(ninja, 0, d.year(), d.month(), d.day(),
-            t.hour(), t.minute(), t.second(),
-            ui->tzCombo->currentText().toLocal8Bit());
-    }
+      // input speed and direction
+      rc = NinjaSetInputSpeed(ninja, i, ui->speedSpinBox->value(),
+          ui->inSpeedUnitCombo->currentText().toLocal8Bit());
+      check(rc, "NinjaSetInputSpeed");
 
-    rc = NinjaSetOutputWindHeight(ninja, 0, 10.0, "m");
-    check(rc, "NinjaSetOutputWindHeight");
+      rc = NinjaSetInputDirection(ninja, i, ui->dirSpinBox->value());
+      check(rc, "NinjaSetInputDirection");
 
-    rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
-    check(rc, "NinjaSetOutputSpeedUnits");
+      // diurnal info, if needed
+      if(ui->diurnalCheck->isChecked()) {
+          qDebug() << "setting diurnal...";
+          rc = NinjaSetDiurnalWinds(ninja, i, 1);
+          check(rc, "NinjaSetDiurnalWinds");
+          rc = NinjaSetUniAirTemp(ninja, i, ui->tempSpinBox->value(),
+              unitKey(ui->tempCombo->currentText()));
+          check(rc, "NinjaSetUniAirTemp");
+          rc = NinjaSetUniCloudCover(ninja, i, ui->cloudSpinBox->value(), "percent");
+          check(rc, "NinjaSetUniCloudCover");
+          QDate d = ui->timeEdit->date();
+          QTime t = ui->timeEdit->time();
+          rc = NinjaSetDateTime(ninja, i, d.year(), d.month(), d.day(),
+              t.hour(), t.minute(), t.second(),
+              ui->tzCombo->currentText().toLocal8Bit());
+      }
 
-    if(ui->fbOutCheckbox->isChecked()) {
-      rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
-      check(rc, "NinjaSetAsciiOutFlag");
-    }
-    if(ui->googleOutCheckbox->isChecked()) {
-      rc = NinjaSetGoogOutFlag(ninja, 0, 1);
-      check(rc, "NinjaSetGoogOutFlag");
-    }
-    if(ui->shapeOutCheckbox->isChecked()) {
-      rc = NinjaSetShpOutFlag(ninja, 0, 1);
-      check(rc, "NinjaSetShpOutFlag");
+      rc = NinjaSetOutputWindHeight(ninja, i, 10.0, "m");
+      check(rc, "NinjaSetOutputWindHeight");
+
+      rc = NinjaSetOutputSpeedUnits(ninja, i, "mph");
+      check(rc, "NinjaSetOutputSpeedUnits");
+
+      if(ui->fbOutCheckbox->isChecked()) {
+        rc = NinjaSetAsciiOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetAsciiOutFlag");
+      }
+      if(ui->googleOutCheckbox->isChecked()) {
+        rc = NinjaSetGoogOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetGoogOutFlag");
+      }
+      if(ui->shapeOutCheckbox->isChecked()) {
+        rc = NinjaSetShpOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetShpOutFlag");
+      }
     }
 
     ui->solveButton->setEnabled(false);
