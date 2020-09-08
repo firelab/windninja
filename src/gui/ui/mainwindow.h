@@ -30,6 +30,7 @@
 
 #include <cpl_string.h>
 #include <gdal.h>
+#include <ogr_srs_api.h>
 
 #include <windninja.h>
 
@@ -38,6 +39,13 @@ namespace Ui {
 }
 
 const int defaultMsgLength = 2500;
+
+typedef struct {
+  double minX;
+  double maxX;
+  double minY;
+  double maxY;
+} spatialInfo;
 
 class MainWindow : public QMainWindow
 {
@@ -56,6 +64,7 @@ private:
     QLabel *progressLabel;
 
     QString outputPath;
+    spatialInfo elevInfo;
     QString elevPath;
     QString forecastPath;
 

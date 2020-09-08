@@ -74,6 +74,9 @@ void MainWindow::init() {
         ui->tzCombo->addItem(ids[i]);
     }
 
+    // TODO(kyle): remove
+    ui->tzCombo->setCurrentText("America/Boise");
+
     // Set up the progress bar in the status bar (insertPermanentWidget
     // re-parents progress
     progressLabel = new QLabel(this);
@@ -149,10 +152,10 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
 
     QList<QPair<QString, QString>> qItems;
     // TODO(kyle): need an API call for domain extents.
-    qItems.append(QPair<QString, QString>("north", "44.0312153"));
-    qItems.append(QPair<QString, QString>("west", "-113.7496934"));
-    qItems.append(QPair<QString, QString>("east", "-113.4634461"));
-    qItems.append(QPair<QString, QString>("south", "43.7769564"));
+    qItems.append(QPair<QString, QString>("north", QString::number(elevInfo.maxY)));
+    qItems.append(QPair<QString, QString>("west", QString::number(elevInfo.minX)));
+    qItems.append(QPair<QString, QString>("east", QString::number(elevInfo.maxX)));
+    qItems.append(QPair<QString, QString>("south", QString::number(elevInfo.minY)));
     qItems.append(QPair<QString, QString>("time_start", "present"));
     qItems.append(QPair<QString, QString>("time_duration", "PT" +
           QString::number(ui->wxDurSpinBox->value()) + "H"));
@@ -305,6 +308,78 @@ void MainWindow::openElevation() {
   if(fmt == "LCP") {
     ui->vegCombo->setDisabled(true);
   }
+  // Inspect the file to get some metadata.
+  OGRSpatialReferenceH hFrom = OSRNewSpatialReference(GDALGetProjectionRef(hDS));
+  OGRSpatialReferenceH hTo = OSRNewSpatialReference(nullptr);
+  OSRImportFromEPSG(hTo, 4326);
+  if(!hFrom || !hTo) {
+    panic("failed to create spatial reference");
+  }
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+  OSRSetAxisMappingStrategy(hTo, OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+  OGRCoordinateTransformationH hCT = OCTNewCoordinateTransformation(hFrom, hTo);
+  // Start at the origin, grab the x and y coordinates
+  double adfGT[6];
+  GDALGetGeoTransform(hDS, adfGT);
+  int nX = GDALGetRasterXSize(hDS);
+  int nY = GDALGetRasterYSize(hDS);
+  double *x = (double*)malloc(4 * sizeof(double));
+  double *y = (double*)malloc(4 * sizeof(double));
+  if(!x || !y) {
+    panic("failed a tiny malloc");
+  }
+  // upper left
+  x[0] = adfGT[0];
+  y[0] = adfGT[3];
+  // upper right
+  x[1] = adfGT[0] + (adfGT[1] * nX);
+  y[1] = adfGT[3];
+  // lower right
+  x[2] = adfGT[0] + (adfGT[1] * nX);
+  y[2] = adfGT[3] + (adfGT[5] * nY);
+  // lower left
+  x[3] = adfGT[0];
+  y[3] = adfGT[3] + (adfGT[5] * nY);
+
+  int rc = OCTTransform(hCT, 4, x, y, nullptr);
+  if(rc != 1) {
+    panic("failed to transform point in openElevation");
+  }
+
+  elevInfo.minX = 361.0;
+  elevInfo.maxX = -361.0;
+  elevInfo.minY = 91.0;
+  elevInfo.maxY = -91.0;
+
+  for(int i = 0; i < 4; i++) {
+    if(x[i] < elevInfo.minX) {
+      elevInfo.minX = x[i];
+    }
+    if(x[i] > elevInfo.maxX) {
+      elevInfo.maxX = x[i];
+    }
+    if(y[i] < elevInfo.minY) {
+      elevInfo.minY = y[i];
+    }
+    if(y[i] > elevInfo.maxY) {
+      elevInfo.maxY = y[i];
+    }
+  }
+
+  qDebug() << "minX: " <<  elevInfo.minX;
+  qDebug() << "maxX: " <<  elevInfo.maxX;
+  qDebug() << "minY: " <<  elevInfo.minY;
+  qDebug() << "maxY: " <<  elevInfo.maxY;
+
+  free((void*)x);
+  free((void*)y);
+
+  // Set the current domain information.
+
   // Check file via API
   QFileInfo info = QFileInfo(file);
   ui->elevEdit->setText(info.fileName());
@@ -392,9 +467,16 @@ void MainWindow::solve() {
 
     int nr = 1;
 
+    // Start with the first run, fill in the common data values
+
     // Start with the init method that is simplest
     if(ui->initCombo->currentIndex() == 2) {
-      ninja = NinjaCreateArmy(1, ui->momentumRadio->isChecked(), nullptr);
+#ifdef NINJAFOAM
+        ninja = NinjaCreateArmy(1, ui->momentumRadio->isChecked(), nullptr);
+#else
+        ninja = NinjaCreateArmy(1, nullptr);
+#endif
+      qDebug() << elevPath;
       rc = NinjaSetElevationFile(ninja, 0, elevPath.toLocal8Bit());
       check(rc, "NinjaSetElevationFile");
 
@@ -408,7 +490,7 @@ void MainWindow::solve() {
           QString mc = ui->meshChoiceCombo->currentText();
           rc = NinjaSetMeshResolutionChoice(ninja, 0, mc.toLower().toLocal8Bit());
       }
-      check(rc, "NinjaSetMeshResolution*");
+      check(rc, "NinjaSetMeshResolution");
 
       if(ui->vegCombo->isEnabled()) {
           rc = NinjaSetUniVegetation(ninja, 0,
@@ -432,11 +514,13 @@ void MainWindow::solve() {
 
       rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
       check(rc, "NinjaSetAsciiOutFlag");
-      nr = NinjaMakeArmy(ninja, forecastPath.toLocal8Bit(), "America/Boise", 0);
+      nr = NinjaMakeArmy(ninja, forecastPath.toLocal8Bit(),
+          ui->tzCombo->currentText().toLocal8Bit(), 0);
       if(nr <= 0) {
           qDebug() << "INVALID FORECAST";
           return;
       }
+      // Set the rest of the values?
       for(int i = 0; i < nr; i++) {
           rc = NinjaSetElevationFile(ninja, i, elevPath.toLocal8Bit());
           check(rc, "NinjaSetElevationFile");
@@ -558,8 +642,18 @@ void MainWindow::solve() {
     rc = NinjaSetOutputSpeedUnits(ninja, 0, "mph");
     check(rc, "NinjaSetOutputSpeedUnits");
 
-    rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
-    check(rc, "NinjaSetAsciiOutFlag");
+    if(ui->fbOutCheckbox->isChecked()) {
+      rc = NinjaSetAsciiOutFlag(ninja, 0, 1);
+      check(rc, "NinjaSetAsciiOutFlag");
+    }
+    if(ui->googleOutCheckbox->isChecked()) {
+      rc = NinjaSetGoogOutFlag(ninja, 0, 1);
+      check(rc, "NinjaSetGoogOutFlag");
+    }
+    if(ui->shapeOutCheckbox->isChecked()) {
+      rc = NinjaSetShpOutFlag(ninja, 0, 1);
+      check(rc, "NinjaSetShpOutFlag");
+    }
 
     ui->solveButton->setEnabled(false);
     rc = NinjaStartRuns(ninja, ui->availCoreSpinBox->value());
