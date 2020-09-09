@@ -38,13 +38,19 @@ namespace Ui {
   class MainWindow;
 }
 
-const int defaultMsgLength = 2500;
-
 typedef struct {
   double minX;
   double maxX;
   double minY;
   double maxY;
+
+  double dx;
+  int nx;
+  int ny;
+
+  double coarseRes;
+  double mediumRes;
+  double fineRes;
 } spatialInfo;
 
 class MainWindow : public QMainWindow

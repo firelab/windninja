@@ -273,6 +273,32 @@ void MainWindow::downloadElev() {
   qDebug() << "download elevation...";
 }
 
+static double targetMeshRes(int idx, double dX, int nX, int nY) {
+  int target = dX;
+  switch(idx) {
+    case 0:
+      target = 4000;
+      break;
+    case 1:
+      target = 10000;
+      break;
+    case 2:
+      target = 20000;
+      break;
+    default:
+      assert(0);
+  }
+
+  double xl = nX * dX;
+  double yl = nY * dX;
+  double nx = 2 * std::sqrt((double)target) * (xl / (xl + yl));
+  double ny = 2 * std::sqrt((double)target) * (yl / (xl + yl));
+
+  double dx = xl / nx;
+  double dy = yl / ny;
+  return (dx + dy) / 2;
+}
+
 void MainWindow::openElevation() {
   ui->elevEdit->clear();
   ui->elevEdit->setToolTip("");
@@ -355,6 +381,10 @@ void MainWindow::openElevation() {
   elevInfo.minY = 91.0;
   elevInfo.maxY = -91.0;
 
+  elevInfo.dx = adfGT[1];
+  elevInfo.nx = nX;
+  elevInfo.ny = nY;
+
   for(int i = 0; i < 4; i++) {
     if(x[i] < elevInfo.minX) {
       elevInfo.minX = x[i];
@@ -370,15 +400,14 @@ void MainWindow::openElevation() {
     }
   }
 
-  qDebug() << "minX: " <<  elevInfo.minX;
-  qDebug() << "maxX: " <<  elevInfo.maxX;
-  qDebug() << "minY: " <<  elevInfo.minY;
-  qDebug() << "maxY: " <<  elevInfo.maxY;
+  elevInfo.coarseRes = targetMeshRes(0, elevInfo.dx, nX, nY);
+  elevInfo.mediumRes = targetMeshRes(1, elevInfo.dx, nX, nY);
+  elevInfo.fineRes = targetMeshRes(2, elevInfo.dx, nX, nY);
 
   free((void*)x);
   free((void*)y);
 
-  // Set the current domain information.
+  updateMesh(ui->meshChoiceCombo->currentIndex());
 
   // Check file via API
   QFileInfo info = QFileInfo(file);
@@ -388,8 +417,17 @@ void MainWindow::openElevation() {
 }
 
 void MainWindow::updateMesh(int index) {
-    ui->meshSpinBox->setEnabled(index == 3);
-    ui->meshUnitCombo->setEnabled(index == 3);
+  double m = targetMeshRes(index, elevInfo.dx, elevInfo.nx, elevInfo.ny);
+  ui->meshSpinBox->setEnabled(index == 3);
+  ui->meshUnitCombo->setEnabled(index == 3);
+  if(index != 3) {
+    double m = targetMeshRes(index, elevInfo.dx, elevInfo.nx, elevInfo.ny);
+    ui->meshSpinBox->setValue(m);
+  }
+  // TODO(kyle): we need to allow handle use mesh res or custom
+  ui->asciiOutMeshSpinBox->setValue(m);
+  ui->shapeOutMeshSpinBox->setValue(m);
+  ui->googleOutMeshSpinBox->setValue(m);
 }
 
 void MainWindow::updateStack(QTreeWidgetItem *current, QTreeWidgetItem *previous) {
@@ -555,17 +593,29 @@ void MainWindow::solve() {
       rc = NinjaSetOutputSpeedUnits(ninja, i, "mph");
       check(rc, "NinjaSetOutputSpeedUnits");
 
-      if(ui->fbOutCheckbox->isChecked()) {
+      if(ui->asciiOutGroupBox->isChecked()) {
         rc = NinjaSetAsciiOutFlag(ninja, i, 1);
         check(rc, "NinjaSetAsciiOutFlag");
+        rc = NinjaSetAsciiResolution(ninja, i,
+            ui->asciiOutMeshSpinBox->value(),
+            unitKey(ui->asciiOutMeshComboBox->currentText()));
+        check(rc, "NinjaSetAsciiResolution");
       }
-      if(ui->googleOutCheckbox->isChecked()) {
-        rc = NinjaSetGoogOutFlag(ninja, i, 1);
-        check(rc, "NinjaSetGoogOutFlag");
-      }
-      if(ui->shapeOutCheckbox->isChecked()) {
+      if(ui->shapeOutGroupBox->isChecked()) {
         rc = NinjaSetShpOutFlag(ninja, i, 1);
         check(rc, "NinjaSetShpOutFlag");
+        rc = NinjaSetShpResolution(ninja, i,
+            ui->shapeOutMeshSpinBox->value(),
+            unitKey(ui->shapeOutMeshComboBox->currentText()));
+        check(rc, "NinjaSetShpResolution");
+      }
+      if(ui->googleOutGroupBox->isChecked()) {
+        rc = NinjaSetGoogOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetGoogOutFlag");
+        rc = NinjaSetGoogResolution(ninja, i,
+            ui->googleOutMeshSpinBox->value(),
+            unitKey(ui->googleOutMeshComboBox->currentText()));
+        check(rc, "NinjaSetGoogResolution");
       }
     }
 

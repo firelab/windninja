@@ -233,6 +233,12 @@
             <property name="enabled">
              <bool>false</bool>
             </property>
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <double>100000.000000000000000</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -595,24 +601,156 @@
       <widget class="QWidget" name="outputPage">
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QCheckBox" name="googleOutCheckbox">
-          <property name="text">
-           <string>Google Earth</string>
+         <widget class="QGroupBox" name="asciiOutGroupBox">
+          <property name="title">
+           <string>ASCII Grids (fire behavior)</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_9">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Resolution</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="asciiOutMeshSpinBox">
+             <property name="accelerated">
+              <bool>true</bool>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>10000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>300.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="asciiOutMeshComboBox">
+             <item>
+              <property name="text">
+               <string>meters</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>feet</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="fbOutCheckbox">
-          <property name="text">
-           <string>Fire Behavior</string>
+         <widget class="QGroupBox" name="shapeOutGroupBox">
+          <property name="title">
+           <string>Shapefile</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <item>
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Resolution</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="shapeOutMeshSpinBox">
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>10000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>300.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="shapeOutMeshComboBox">
+             <item>
+              <property name="text">
+               <string>meters</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>feet</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="shapeOutCheckbox">
-          <property name="text">
-           <string>Shapefiles</string>
+         <widget class="QGroupBox" name="googleOutGroupBox">
+          <property name="title">
+           <string>Google KMZ</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Resolution</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="googleOutMeshSpinBox">
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>10000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>300.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="googleOutMeshComboBox">
+             <item>
+              <property name="text">
+               <string>meters</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>feet</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
