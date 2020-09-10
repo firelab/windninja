@@ -95,11 +95,11 @@ void wn_3dVectorField::deallocate()
 }
 
 /**
- * \brief Copies inlet nodes.
+ * \brief Copies inlet nodes from another wn_3dVectorField.
  *
  * Copies inlet nodes from one wn_3dVectorField to another.
  *
- * \param f wn_3dVectorField to copy nodes to.
+ * \param f wn_3dVectorField to copy nodes from.
  *
  * \return Void.
  */
@@ -111,18 +111,11 @@ void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
         {
             for(int j=0;j<f.vectorData_x.mesh_->ncols;j++)
             {
-                // FOR TESTING to top boundary to initial values-------------------------------
-                //if(k == (vectorData_x.mesh_->nlayers-1))
-                //{
-                //    f.vectorData_x(i,j,k) = vectorData_x(i,j,k);
-                //    f.vectorData_y(i,j,k) = vectorData_y(i,j,k);
-                //    f.vectorData_z(i,j,k) = vectorData_z(i,j,k);
-                //}
                 if(isInlet(i,j,k))
                 {
-                    f.vectorData_x(i,j,k) = vectorData_x(i,j,k);
-                    f.vectorData_y(i,j,k) = vectorData_y(i,j,k);
-                    f.vectorData_z(i,j,k) = vectorData_z(i,j,k);
+                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
+                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
+                    vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
                 }
             }
         }

@@ -39,6 +39,7 @@ element::element(Mesh const* m)
 	SFV=NULL;
 	QPTV=NULL;
 	QE=NULL;
+	C=NULL;
 	S=NULL;
 	DNDX=NULL;
 	DNDY=NULL;
@@ -57,6 +58,7 @@ void element::initializeQuadPtArrays()
 	SFV=new double[4*mesh_->NNPE*NUMQPTV];   //SF array for the volume quadrature (either(0=N,1=dN/du,2=dN/dv,3=dN/dw),local nodal point,quadrature point)
 	QPTV=new double[NUMQPTV*3];        //QPTV stores the u, v, and w coordinates of the quadrature points
 	QE=new double[mesh_->NNPE];
+	C=new double[mesh_->NNPE];
 	S=new double[mesh_->NNPE*mesh_->NNPE];
 	DNDX=new double[mesh_->NNPE];
 	DNDY=new double[mesh_->NNPE];
@@ -236,6 +238,9 @@ void element::deallocate()
 
 	delete[] QE;
 	QE=NULL;
+
+	delete[] C;
+	C=NULL;
 
 	delete[] S;
 	S=NULL;

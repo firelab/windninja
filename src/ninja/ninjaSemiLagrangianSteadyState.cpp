@@ -32,6 +32,7 @@
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 , currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
+, diffusionEquation(FiniteElementMethod::diffusionEquation)
 {
 
 }
@@ -44,6 +45,7 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState(NinjaSemiLagrangianSteadyState const& A ) : ninja(A), U00(A.U00), transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
 , conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
+, diffusionEquation(FiniteElementMethod::diffusionEquation)
 {
 
 }
@@ -61,6 +63,7 @@ NinjaSemiLagrangianSteadyState& NinjaSemiLagrangianSteadyState::operator= (Ninja
         U00 = A.U00;
         transport = A.transport;
         conservationOfMassEquation = A.conservationOfMassEquation;
+        diffusionEquation = A.diffusionEquation;
     }
     return *this;
 }
@@ -179,9 +182,10 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
     /*  ----------------------------------------*/
     /*  CHECK FOR "NULL" RUN                    */
     /*  ----------------------------------------*/
-    if(!checkForNullRun())	//Don't do actual simulation if it's a run with all zero velocity. We check the whole field for all zeros, but for this solver probably only need to check boundary conditions.
+    //Don't do actual simulation if it's a run with all zero velocity.
+    //We check the whole field for all zeros, but for this solver probably only need to check boundary conditions.
+    if(!checkForNullRun())    
     {
-
         /*  ----------------------------------------------------*/
         /*  BUILD INITIAL FEM ARRAYS, ALLOCATE MEMORY, ETC.     */
         /*  ----------------------------------------------------*/
@@ -197,37 +201,41 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         conservationOfMassEquation.SetupSKCompressedRowStorage();
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
         conservationOfMassEquation.Discretize();
-
-        checkCancel();
-
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Setting boundary conditions...");
         conservationOfMassEquation.SetBoundaryConditions();
 
+        checkCancel();
+
+        /*  -------------------------------------------------------------*/
+        /*  DO ONE CONSERVATION OF MASS RUN BEFORE TIME STEPPING LOOP    */
+        /*  -------------------------------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "First project...");
-        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
+        //if the CG solver diverges, try the minres solver
+        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)
             if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
                 throw std::runtime_error("Solver returned false.");
  
         //compute uvw field from phi field
         conservationOfMassEquation.ComputeUVWField(input, U);
+        //use output from first projection step for copying inlet nodes later on
+        U0=U;
 
+        //copy U field to new U1 field which will store the new velocity from the advection step
         wn_3dVectorField U1(U);
-        wn_3dVectorField Uoriginal(U);
-        Uoriginal = U0;
 
         /*  ----------------------------------------*/
         /*  START TIME STEPPING LOOP                */
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
-        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        while(iteration <= 50)
+        //currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+        currentDt = boost::posix_time::seconds(1);
+        while(iteration <= 1000)
         {
             iteration += 1;
             cout<<"Iteration: "<<iteration<<endl;
             currentDt0 = currentDt;
             currentTime += currentDt;
-
 
             // Do semi-lagrangian steps of:
             //  1. Refresh boundary conditions (?)
@@ -236,20 +244,13 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             //  4. Diffuse
             //  5. Project
 
-
             /*  ----------------------------------------*/
             /*  REFRESH BOUNDARY CONDITIONS             */
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
-            //set boundary conditions
-            //conservationOfMassEquation.SetBoundaryConditions();
-            Uoriginal.copyInletNodes(U);
-
-            //#define WRITE_A_B
-#ifdef WRITE_A_B	//used for debugging...
-            conservationOfMassEquation.Write_A_and_b(1000);
-#endif
+            //copy inlet values from initial field U0 to U
+            U.copyInletNodes(U0);
 
 #ifdef _OPENMP
             endBuildEq = omp_get_wtime();
@@ -269,27 +270,31 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
             transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
             cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
-            U0 = U1;
-            conservationOfMassEquation.Initialize(mesh, input, U0);
-            conservationOfMassEquation.Discretize();
-            conservationOfMassEquation.SetBoundaryConditions();
 
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
+            //resets mesh, input, and U0_ in finiteElementMethod
+            diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
+            //diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
+            diffusionEquation.SetCurrentDt(currentDt);
+            diffusionEquation.DiscretizeDiffusion();
+            diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
 
             /*  ----------------------------------------*/
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
+            //resets mesh, input, and U0 in finiteElementMethod
+            conservationOfMassEquation.Initialize(mesh, input, U);
+            conservationOfMassEquation.Discretize();
+            conservationOfMassEquation.SetBoundaryConditions();
 #ifdef _OPENMP
             startSolve = omp_get_wtime();
 #endif
-            printf("test\n");
-
             if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
                 if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
                     throw std::runtime_error("Solver returned false.");
@@ -300,10 +305,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
             checkCancel();
 
-            /*  ----------------------------------------*/
-            /*  COMPUTE UVW WIND FIELD                   */
-            /*  ----------------------------------------*/
-
             //compute uvw field from phi field
             conservationOfMassEquation.ComputeUVWField(input, U);
 
@@ -312,6 +313,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             //input.simulationOutputFrequency
 
+            //update the aveage velocity field
             for(int k=0;k<U.vectorData_x.mesh_->nlayers;k++)
             {
                 for(int i=0;i<U.vectorData_x.mesh_->nrows;i++)
@@ -335,6 +337,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             }
         }
 
+        //compute the final average velocity field
         for(int k=0;k<U.vectorData_x.mesh_->nlayers;k++)
         {
             for(int i=0;i<U.vectorData_x.mesh_->nrows;i++)

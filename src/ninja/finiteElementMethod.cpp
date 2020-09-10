@@ -36,10 +36,18 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
     DIAG=NULL;
     PHI=NULL;
     RHS=NULL;
+    xRHS=NULL;
+    yRHS=NULL;
+    zRHS=NULL;
     SK=NULL;
+    C=NULL;
+    dUxdt=NULL;
+    dUydt=NULL;
+    dUzdt=NULL;
     row_ptr=NULL;
     col_ind=NULL;
 
+    currentDt = boost::posix_time::seconds(0);
     alphaH=1.0;
 }
 
@@ -57,9 +65,17 @@ FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A )
     equationType=A.equationType;
 
     RHS=A.RHS;
+    xRHS=A.xRHS;
+    yRHS=A.yRHS;
+    zRHS=A.zRHS;
     SK=A.SK;
+    C=A.C;
+    dUxdt=A.dUxdt;
+    dUydt=A.dUydt;
+    dUzdt=A.dUzdt;
     row_ptr=A.row_ptr;
     col_ind=A.col_ind;
+    currentDt = A.currentDt;
 }
 
 /**
@@ -78,9 +94,17 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
         equationType=A.equationType;
 
         RHS=A.RHS;
+        xRHS=A.xRHS;
+        yRHS=A.yRHS;
+        zRHS=A.zRHS;
         SK=A.SK;
+        C=A.C;
+        dUxdt=A.dUxdt;
+        dUydt=A.dUydt;
+        dUzdt=A.dUzdt;
         row_ptr=A.row_ptr;
         col_ind=A.col_ind;
+        currentDt = A.currentDt;
     }
     return *this;
 }
@@ -88,6 +112,132 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
 FiniteElementMethod::~FiniteElementMethod()      //destructor
 {
     Deallocate();
+}
+
+void FiniteElementMethod::DiscretizeDiffusion() 
+{
+    //The governing equation to solve is
+    //
+    //    d        dPhi      d        dPhi      d        dPhi            dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
+    //    dx        dx       dy        dy       dz        dz              dt
+    //
+    //    where:
+    //
+    //    Phi = Ux, Uy, Uz --> the current velocity field
+    //    
+    //    Rz = 0.4 * heightAboveGround * du/dz
+    //              
+    //    Rx = Ry = 2 * Rz
+    //             
+    //    H = source term, 0 for now
+    //
+    //    Rc = 1
+    //        
+
+    int i, j, k, l;
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        element elem(&mesh_);
+        int ii, jj, kk;
+
+        C = new double[mesh_.NUMNP]; //Global matrix for the transient term in the discretized diffusion equation
+        for(int i=0; i<mesh_.NUMNP; i++)
+        {
+            C[i]=0.;
+        }
+
+#pragma omp for
+        for(i=0;i<mesh_.NUMEL;i++) //Start loop over elements
+        {
+            //Given the above parameters, function computes the element stiffness matrix
+            if(elem.SFV == NULL)
+                elem.initializeQuadPtArrays();
+
+            for(j=0;j<mesh_.NNPE;j++)
+            {
+                elem.QE[j]=0.0;
+                elem.C[j]=0.0;
+                for(int k=0;k<mesh_.NNPE;k++)
+                    elem.S[j*mesh_.NNPE+k]=0.0;
+            }
+
+            //Begin quadrature for current element
+            elem.node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
+
+            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                elem.computeJacobianQuadraturePoint(j, i);
+
+                //calculates elem.HVJ
+                CalculateHterm(elem, i);
+
+                //calculates elem.RX, elem.RY, elem.RZ
+                CalculateRcoefficients(elem, j);
+
+                //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
+                elem.DV=elem.DETJ;
+
+                if(elem.NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elem.WT=elem.WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elem.WT=elem.WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elem.WT=elem.WT3;
+                    }
+                    else
+                    {
+                        elem.WT=elem.WT4;
+                    }
+                }
+
+                //Create element stiffness matrix---------------------------------------------
+                for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+                {
+                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+                    elem.C[k]=elem.C[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.RC*elem.DV;
+                    for(l=0;l<mesh_.NNPE;l++)
+                    {
+                        elem.S[k*mesh_.NNPE+l]=elem.S[k*mesh_.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
+                                elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+
+            //Place completed element matrix in global matrices
+            for(j=0;j<mesh_.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            {
+                //elem.NPK is the global row number of the element stiffness matrix
+                elem.NPK=mesh_.get_global_node(j, i);
+
+#pragma omp atomic
+                xRHS[elem.NPK] += elem.QE[j];
+                yRHS[elem.NPK] += elem.QE[j];
+                zRHS[elem.NPK] += elem.QE[j];
+                C[elem.NPK] += elem.C[j];
+
+                for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
+                {
+                    elem.KNP=mesh_.get_global_node(k, i);
+#pragma omp atomic
+                    xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
+                    yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
+                    zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
+                    //cout<<"elem.S[j*mesh_.NNPE+k] = "<<elem.S[j*mesh_.NNPE+k]<<endl;
+                    //cout<<"U0_.vectorData_x(elem.KNP) = "<<U0_.vectorData_x(elem.KNP)<<endl;
+                    //cout<<"xRHS[elem.NPK] = "<<xRHS[elem.NPK]<<endl;
+                }
+            } //End loop over nodes in the element
+        } //End loop over elements
+    } //End parallel region
 }
 
 void FiniteElementMethod::Discretize() 
@@ -108,12 +258,6 @@ void FiniteElementMethod::Discretize()
     //    H = ----- + ----- + -----
     //         dx      dy      dz
     //
-    //
-    //    and for diffusion: 
-    //
-    //    Rx, Ry, Rz = 
-    //
-    //    H = 
 
     int i, j, k, l;
 
@@ -1022,6 +1166,11 @@ void FiniteElementMethod::Deallocate()
         delete[] SK;
         SK=NULL;
     }
+    if(C)
+    {	
+        delete[] C;
+        C=NULL;
+    }
     if(col_ind)
     {	
         delete[] col_ind;
@@ -1036,6 +1185,21 @@ void FiniteElementMethod::Deallocate()
     {	
         delete[] RHS;
         RHS=NULL;
+    }
+    if(xRHS)
+    {	
+        delete[] xRHS;
+        xRHS=NULL;
+    }
+    if(yRHS)
+    {	
+        delete[] yRHS;
+        yRHS=NULL;
+    }
+    if(zRHS)
+    {	
+        delete[] zRHS;
+        zRHS=NULL;
     }
     if(DIAG)
     {	
@@ -1599,6 +1763,10 @@ void FiniteElementMethod::CalculateHterm(element &elem, int i)
                     (elem.DNDZ[k]*U0_.vectorData_z(elem.NPK)));
         } //End loop over nodes in the element
     }
+    else if(equationType == GetEquationType("diffusionEquation"))
+    {
+        elem.HVJ=0.0;
+    }
 }
 
 void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
@@ -1609,7 +1777,7 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
         //    Rx = Ry =  ------------          Rz = ------------
         //                2*alphaH^2                 2*alphaV^2
 
-        double alphaV = 0;
+        double alphaV = 0.;
         for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
         {
             alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
@@ -1628,18 +1796,20 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
          */
 
         //calculate elem.RZ, RX, RY for current element.
-        double height = 0;
-        double speed = 0;
+        double height = 0.;
+        double speed = 0.;
         for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
         {
             height=height+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
                 heightAboveGround(elem.NPK);
             speed=speed+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*
                 windSpeedGradient.vectorData_z(elem.NPK);
-        } //End loop over nodes in the element
-        elem.RZ = 0.4 * height * speed;
-        elem.RX = 2 * elem.RZ;
-        elem.RY = 2 * elem.RZ;
+        }
+        //0.41 is the von Karman constant
+        elem.RZ = .5; //0.41 * height * speed;
+        elem.RX = .5; //2 * elem.RZ;
+        elem.RY = .5; //2 * elem.RZ;
+        elem.RC = 1.;
     }
 }
 
@@ -1661,6 +1831,17 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
 
     if(equationType == GetEquationType("diffusionEquation"))
     {
+        xRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        yRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        zRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+
+        for(int i=0; i<mesh_.NUMNP; i++)
+        {
+            xRHS[i]=0.;
+            yRHS[i]=0.;
+            zRHS[i]=0.;
+        }
+
         heightAboveGround.allocate(&mesh_);
         windSpeed.allocate(&mesh_);
         windSpeedGradient.allocate(&mesh_);
@@ -1668,13 +1849,12 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
         for(int i = 0; i < mesh_.nrows; i++){
             for(int j = 0; j < mesh_.ncols; j++){
                 for(int k = 0; k < mesh_.nlayers; k++){
+                    //find distance to ground at each node in mesh and write to wn_3dScalarField
+                    heightAboveGround(i,j,k) = mesh_.ZORD(i,j,k) - mesh_.ZORD(i,j,0);
 
-                //find distance to ground at each node in mesh and write to wn_3dScalarField
-                heightAboveGround(i,j,k) = mesh_.ZORD(i,j,k) - mesh_.ZORD(i,j,0);
-
-                //compute and store wind speed at each node
-                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
-                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
+                    //compute and store wind speed at each node
+                    windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                            U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
                 }
             }
         }
@@ -1683,5 +1863,58 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
         windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
                                 windSpeedGradient.vectorData_y,
                                 windSpeedGradient.vectorData_z);
+    }
+}
+
+void FiniteElementMethod::SetCurrentDt(boost::posix_time::time_duration dt)
+{
+    currentDt = dt;
+}
+
+void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
+{
+    dUxdt = new double[mesh_.NUMNP];
+    dUydt = new double[mesh_.NUMNP];
+    dUzdt = new double[mesh_.NUMNP];
+
+    int NPK;
+
+    for(int k=0;k<mesh_.nlayers;k++)
+    {
+        for(int i=0;i<input_.dem.get_nRows();i++)
+        {
+            for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            {
+                //get the node point number
+                NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+
+                dUxdt[NPK] = 0.;
+                dUydt[NPK] = 0.;
+                dUzdt[NPK] = 0.;
+
+                //if it's an inlet or the ground, don't diffuse
+                if(U0_.isInlet(i,j,k) || U0_.isOnGround(i,j,k)){
+                    U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
+                    U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
+                    U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
+                }
+                else{
+                    dUxdt[NPK] = xRHS[NPK]/C[NPK];
+                    dUydt[NPK] = yRHS[NPK]/C[NPK];
+                    dUzdt[NPK] = zRHS[NPK]/C[NPK];
+
+                    //U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    //U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    //U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    U0_.vectorData_x(NPK) += dUxdt[NPK]*0.1;
+                    U0_.vectorData_y(NPK) += dUydt[NPK]*0.1;
+                    U0_.vectorData_z(NPK) += dUzdt[NPK]*0.1;
+
+                    U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
+                    U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
+                    U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
+                }
+            }
+        }
     }
 }

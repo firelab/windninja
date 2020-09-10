@@ -73,6 +73,7 @@ private:
     void stepForwardOneTimestep();
 
     FiniteElementMethod conservationOfMassEquation;
+    FiniteElementMethod diffusionEquation;
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
 
