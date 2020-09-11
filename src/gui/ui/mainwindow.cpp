@@ -101,6 +101,14 @@ void MainWindow::setConnections() {
     connect(ui->downloadElevButton, SIGNAL(clicked()), this, SLOT(downloadElev()));
     connect(ui->meshChoiceCombo, SIGNAL(currentIndexChanged(int)),
         this, SLOT(updateMesh(int)));
+
+    connect(ui->asciiOutResCheckBox, SIGNAL(toggled(bool)),
+        this, SLOT(updateAsciiOutput(bool)));
+    connect(ui->shapeOutResCheckBox, SIGNAL(toggled(bool)),
+        this, SLOT(updateShapeOutput(bool)));
+    connect(ui->googleOutResCheckBox, SIGNAL(toggled(bool)),
+        this, SLOT(updateGoogleOutput(bool)));
+
     connect(ui->treeWidget, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
         this, SLOT(updateStack(QTreeWidgetItem*, QTreeWidgetItem*)));
     connect(ui->initCombo, SIGNAL(currentIndexChanged(int)),
@@ -425,9 +433,32 @@ void MainWindow::updateMesh(int index) {
     ui->meshSpinBox->setValue(m);
   }
   // TODO(kyle): we need to allow handle use mesh res or custom
-  ui->asciiOutMeshSpinBox->setValue(m);
-  ui->shapeOutMeshSpinBox->setValue(m);
-  ui->googleOutMeshSpinBox->setValue(m);
+  updateAsciiOutput(ui->asciiOutResCheckBox->isChecked());
+  updateShapeOutput(ui->shapeOutResCheckBox->isChecked());
+  updateGoogleOutput(ui->googleOutResCheckBox->isChecked());
+  //ui->asciiOutMeshSpinBox->setValue(m);
+  //ui->shapeOutMeshSpinBox->setValue(m);
+  //ui->googleOutMeshSpinBox->setValue(m);
+}
+
+void MainWindow::updateAnyOutput(QDoubleSpinBox *spin, QComboBox *combo, bool enabled) {
+  spin->setEnabled(enabled);
+  combo->setEnabled(enabled);
+  if(!enabled) {
+    spin->setValue(ui->meshSpinBox->value());
+  }
+}
+
+void MainWindow::updateAsciiOutput(bool enabled) {
+  updateAnyOutput(ui->asciiOutMeshSpinBox, ui->asciiOutMeshComboBox, enabled);
+}
+
+void MainWindow::updateShapeOutput(bool enabled) {
+  updateAnyOutput(ui->shapeOutMeshSpinBox, ui->shapeOutMeshComboBox, enabled);
+}
+
+void MainWindow::updateGoogleOutput(bool enabled) {
+  updateAnyOutput(ui->googleOutMeshSpinBox, ui->googleOutMeshComboBox, enabled);
 }
 
 void MainWindow::updateStack(QTreeWidgetItem *current, QTreeWidgetItem *previous) {

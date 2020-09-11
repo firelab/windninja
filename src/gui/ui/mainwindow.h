@@ -8,8 +8,10 @@
 #include <qtconcurrentrun.h>
 
 #include <QByteArray>
+#include <QComboBox>
 #include <QDebug>
 #include <QDesktopServices>
+#include <QDoubleSpinBox>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -42,9 +44,7 @@ typedef struct {
   double minX;
   double maxX;
   double minY;
-  double maxY;
-
-  double dx;
+  double maxY; double dx;
   int nx;
   int ny;
 
@@ -90,6 +90,10 @@ public slots:
     void downloadElev();
     void openForecast();
     void updateMesh(int index);
+    void updateAnyOutput(QDoubleSpinBox *spin, QComboBox *combo, bool enabled);
+    void updateAsciiOutput(bool);
+    void updateShapeOutput(bool);
+    void updateGoogleOutput(bool);
     void setProgress(int done, QString text="", int timeout=0);
     void openOutputPath();
     void downloadWx();

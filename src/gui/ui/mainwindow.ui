@@ -613,9 +613,9 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_9">
            <item>
-            <widget class="QLabel" name="label">
+            <widget class="QCheckBox" name="asciiOutResCheckBox">
              <property name="text">
-              <string>Resolution</string>
+              <string>Custom Resolution</string>
              </property>
             </widget>
            </item>
@@ -668,9 +668,9 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_10">
            <item>
-            <widget class="QLabel" name="label_2">
+            <widget class="QCheckBox" name="shapeOutResCheckBox">
              <property name="text">
-              <string>Resolution</string>
+              <string>Custom Resolution</string>
              </property>
             </widget>
            </item>
@@ -715,56 +715,137 @@
           <property name="checked">
            <bool>false</bool>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QLabel" name="label_3">
+            <layout class="QHBoxLayout" name="horizontalLayout_11">
+             <item>
+              <widget class="QCheckBox" name="googleOutResCheckBox">
+               <property name="text">
+                <string>Custom Resolution</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="googleOutMeshSpinBox">
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>10000.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>300.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="googleOutMeshComboBox">
+               <item>
+                <property name="text">
+                 <string>meters</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>feet</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkBox">
              <property name="text">
-              <string>Resolution</string>
+              <string>Scale vector width</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="googleOutMeshSpinBox">
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>10000.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>300.000000000000000</double>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_12">
+             <item>
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Legend</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_2">
+               <property name="text">
+                <string>Unform Range</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton">
+               <property name="text">
+                <string>Equal Count</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
-            <widget class="QComboBox" name="googleOutMeshComboBox">
+            <layout class="QHBoxLayout" name="horizontalLayout_14">
              <item>
-              <property name="text">
-               <string>meters</string>
-              </property>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Color Scheme</string>
+               </property>
+              </widget>
              </item>
              <item>
-              <property name="text">
-               <string>feet</string>
-              </property>
+              <widget class="QComboBox" name="comboBox">
+               <item>
+                <property name="text">
+                 <string>Default</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>ROPGW (Red, Orange, Pink, Green, White)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Oranges</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Blues</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Pinks</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Greens</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Magic Beans</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Pink to Green</string>
+                </property>
+               </item>
+              </widget>
              </item>
-            </widget>
+            </layout>
            </item>
           </layout>
          </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>
