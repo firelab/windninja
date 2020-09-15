@@ -204,7 +204,9 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
 bool KmlVector::setOGR() {
   int rc = OGRERR_NONE;
   if(spd.prjString != "") {
-    rc = oSourceSRS.importFromWkt(spd.prjString.c_str());
+    char *p = strdup(spd.prjString.c_str());
+    rc = oSourceSRS.importFromWkt(&p);
+    free((void*)p);
     if(rc != OGRERR_NONE) {
       throw std::logic_error("cannot create SRS from DEM, kmz creation failed");
     }
