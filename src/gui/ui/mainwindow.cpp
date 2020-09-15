@@ -639,6 +639,10 @@ void MainWindow::solve() {
             ui->asciiOutMeshSpinBox->value(),
             unitKey(ui->asciiOutMeshComboBox->currentText()));
         check(rc, "NinjaSetAsciiResolution");
+        if(ui->wxOutputCheckBox->isChecked()) {
+          rc = NinjaSetWxModelAsciiOutFlag(ninja, i, 1);
+          check(rc, "NinjaSetWxModelAsciiOutFlag");
+        }
       }
       if(ui->shapeOutGroupBox->isChecked()) {
         rc = NinjaSetShpOutFlag(ninja, i, 1);
@@ -647,6 +651,10 @@ void MainWindow::solve() {
             ui->shapeOutMeshSpinBox->value(),
             unitKey(ui->shapeOutMeshComboBox->currentText()));
         check(rc, "NinjaSetShpResolution");
+        if(ui->wxOutputCheckBox->isChecked()) {
+          rc = NinjaSetWxModelShpOutFlag(ninja, i, 1);
+          check(rc, "NinjaSetWxModelShapeOutFlag");
+        }
       }
       if(ui->googleOutGroupBox->isChecked()) {
         rc = NinjaSetGoogOutFlag(ninja, i, 1);
@@ -664,14 +672,10 @@ void MainWindow::solve() {
         check(rc, "NinjaSetGoogSpeedScaling");
         rc = NinjaSetGoogLineWidth(ninja, i, ui->googLineWidthSpinBox->value());
         check(rc, "NinjaSetGoogLineWidth");
-      }
-      if(ui->wxOutputCheckBox->isChecked()) {
-        rc = NinjaSetWxModelAsciiOutFlag(ninja, i, 1);
-        check(rc, "NinjaSetWxModelAsciiOutFlag");
-        rc = NinjaSetWxModelShpOutFlag(ninja, i, 1);
-        check(rc, "NinjaSetWxModelShapeOutFlag");
-        rc = NinjaSetWxModelGoogOutFlag(ninja, i, 1);
-        check(rc, "NinjaSetWxModelGoogOutFlag");
+        if(ui->wxOutputCheckBox->isChecked()) {
+          rc = NinjaSetWxModelGoogOutFlag(ninja, i, 1);
+          check(rc, "NinjaSetWxModelGoogOutFlag");
+        }
       }
     }
 
