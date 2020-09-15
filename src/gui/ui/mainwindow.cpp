@@ -618,6 +618,14 @@ void MainWindow::solve() {
               ui->tzCombo->currentText().toLocal8Bit());
       }
 
+      if(ui->stabilityCheck->isChecked()) {
+        rc = NinjaSetStabilityFlag(ninja, i, 1);
+        check(rc, "NinjaSetStabilityFlag");
+        const double defaultAlpha = 1.0;
+        rc = NinjaSetAlphaStability(ninja, i, defaultAlpha);
+        check(rc, "NinjaSetAlphaStability");
+      }
+
       rc = NinjaSetOutputWindHeight(ninja, i, 10.0, "m");
       check(rc, "NinjaSetOutputWindHeight");
 
