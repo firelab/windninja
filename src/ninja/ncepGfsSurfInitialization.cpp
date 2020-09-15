@@ -86,7 +86,7 @@ double ncepGfsSurfInitialization::Get_Wind_Height()
 */
 double ncepGfsSurfInitialization::getGridResolution()
 {
-    return 0.5;
+    return 0.25;
 }
 
 
@@ -122,7 +122,7 @@ std::vector<std::string> ncepGfsSurfInitialization::getVariableList()
 */
 std::string ncepGfsSurfInitialization::getForecastIdentifier()
 {
-    return std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
+    return std::string( "UCAR-GFS-GLOBAL-0.25-DEG" );
 }
 
 int ncepGfsSurfInitialization::getStartHour()
@@ -330,7 +330,7 @@ bool ncepGfsSurfInitialization::identify( std::string fileName )
         status = nc_get_att_text( ncid, NC_GLOBAL, "History", model );
         model[len] = '\0';
         std::string s( model );
-        if( s.find( "GFS-Global_0p5deg" ) == s.npos ) {
+        if( s.find( "GFS-Global_0p25deg" ) == s.npos ) {
             identified = false;
         }
         delete [] model;
