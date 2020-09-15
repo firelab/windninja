@@ -55,7 +55,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="solverPage">
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -310,7 +310,7 @@
         <item>
          <widget class="QStackedWidget" name="initStack">
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="domainInitPage">
            <layout class="QVBoxLayout" name="layout_32">
@@ -578,6 +578,13 @@
                </widget>
               </item>
              </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="wxOutputCheckBox">
+              <property name="text">
+               <string>Write WX model output files</string>
+              </property>
+             </widget>
             </item>
             <item>
              <spacer name="verticalSpacer_3">

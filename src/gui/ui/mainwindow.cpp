@@ -665,6 +665,14 @@ void MainWindow::solve() {
         rc = NinjaSetGoogLineWidth(ninja, i, ui->googLineWidthSpinBox->value());
         check(rc, "NinjaSetGoogLineWidth");
       }
+      if(ui->wxOutputCheckBox->isChecked()) {
+        rc = NinjaSetWxModelAsciiOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetWxModelAsciiOutFlag");
+        rc = NinjaSetWxModelShpOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetWxModelShapeOutFlag");
+        rc = NinjaSetWxModelGoogOutFlag(ninja, i, 1);
+        check(rc, "NinjaSetWxModelGoogOutFlag");
+      }
     }
 
     ui->solveButton->setEnabled(false);
