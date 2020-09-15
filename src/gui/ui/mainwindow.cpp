@@ -41,7 +41,7 @@ void MainWindow::init() {
   ui->wxComboBox->addItem("UCAR-NAM-CONUS-12-KM");
   ui->wxComboBox->addItem("UCAR-NDFD-CONUS-2.5-KM");
   ui->wxComboBox->addItem("UCAR-RAP-CONUS-13-KM");
-  ui->wxComboBox->addItem("UCAR-GFS-GLOBAL-1.0-DEG");
+  ui->wxComboBox->addItem("UCAR-GFS-GLOBAL-0.25-DEG");
 
   // NOMADS models
 #if defined(NOMADS_GFS_0P5DEG)
@@ -152,18 +152,24 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
   url.setScheme("https");
   url.setHost("thredds.ucar.edu");
   QMap<QString, QString>paths;
-  paths["UCAR-GFS-GLOBAL-1.0-DEG"] = "/thredds/ncss/grib/NCEP/GFS/Global_0p5deg/Best";
+  paths["UCAR-GFS-GLOBAL-0.25-DEG"] = "/thredds/ncss/grib/NCEP/GFS/Global_0p25deg/Best";
   paths["UCAR-NAM-CONUS-12-KM"] = "/thredds/ncss/grib/NCEP/NAM/CONUS_12km/best";
   paths["UCAR-NAM-ALASKA-11-KM"] = "/thredds/ncss/grib/NCEP/NAM/Alaska_11km/best";
   paths["UCAR-NDFD-CONUS-2.5-KM"] = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best/LambertConformal_1377X2145-38p22N-95p43W";
   paths["UCAR-RAP-CONUS-13-KM"] = "/thredds/ncss/grib/NCEP/RAP/CONUS_13km/best";
 
+  spatialInfo buffered = elevInfo;
+  buffered.maxX += 0.5;
+  buffered.minX -= 0.5;
+  buffered.maxY += 0.5;
+  buffered.minY -= 0.5;
+
   QList<QPair<QString, QString>> qItems;
   // TODO(kyle): need an API call for domain extents.
-  qItems.append(QPair<QString, QString>("north", QString::number(elevInfo.maxY)));
-  qItems.append(QPair<QString, QString>("west", QString::number(elevInfo.minX)));
-  qItems.append(QPair<QString, QString>("east", QString::number(elevInfo.maxX)));
-  qItems.append(QPair<QString, QString>("south", QString::number(elevInfo.minY)));
+  qItems.append(QPair<QString, QString>("north", QString::number(buffered.maxY)));
+  qItems.append(QPair<QString, QString>("west", QString::number(buffered.minX)));
+  qItems.append(QPair<QString, QString>("east", QString::number(buffered.maxX)));
+  qItems.append(QPair<QString, QString>("south", QString::number(buffered.minY)));
   qItems.append(QPair<QString, QString>("time_start", "present"));
   qItems.append(QPair<QString, QString>("time_duration", "PT" +
         QString::number(ui->wxDurSpinBox->value()) + "H"));
@@ -183,6 +189,8 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
   }
   if(model.contains("GFS")) {
     vars.append("Total_cloud_cover_convective_cloud");
+  } else if(model.contains("RAP")) {
+    vars.append( "Geopotential_height_cloud_tops");
   } else {
     vars.append("Total_cloud_cover_entire_atmosphere_single_layer");
   }
