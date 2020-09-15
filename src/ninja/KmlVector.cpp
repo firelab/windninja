@@ -44,95 +44,6 @@ KmlVector::KmlVector()
         coordTransform = NULL;
 }
 
-//KmlVector::KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string demFileName, std::string kmzFileName, double res)
-//{
-//	spd = *s;
-//	dir = *d;
-//
-//	if(spd.get_cellSize() == dir.get_cellSize())
-//        resolution = spd.get_cellSize();
-//	else
-//		resolution = 0.0;
-//
-//	colors = 0;
-//	splitValue = 0;
-//	makeDefaultStyles();
-//	lineWidth = 1.0;
-//
-//	setDemFile(demFileName);
-//}
-//
-//KmlVector::KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFileName)
-//{
-//	spd = *s;
-//	dir = *d;
-//
-//	if(spd.get_cellSize() == dir.get_cellSize())
-//        resolution = spd.get_cellSize();
-//	else
-//		resolution = 0.0;
-//
-//	colors = 0;
-//	splitValue = 0;
-//	makeDefaultStyles();
-//
-//	lineWidth = 1.0;
-//}
-//
-//KmlVector::KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFile, double res)
-//{
-//	spd = *s;
-//	dir = *d;
-//	if(spd.get_cellSize() == dir.get_cellSize())
-//	{
-//        resolution = res;
-//		spd = s->resample_Grid(res, 1);
-//		dir = d->resample_Grid(res, 1);
-//	}
-//	else
-//		resolution = 0.0;
-//
-//	colors = 0;
-//	splitValue = 0;
-//	makeDefaultStyles();
-//	lineWidth = 1.0;
-//}
-//KmlVector::KmlVector(std::string sFile, std::string dFile, std::string kFile)
-//{
-//	spd.read_Grid(sFile);
-//	dir.read_Grid(dFile);
-//	kmzFile = kFile;
-//	if(spd.get_cellSize() == dir.get_cellSize())
-//        resolution = spd.get_cellSize();
-//	else
-//		resolution = 0.0;
-//
-//	colors = 0;
-//	splitValue = 0;
-//	makeDefaultStyles();
-//	lineWidth = 1.0;
-//}
-//
-//KmlVector::KmlVector(std::string sFile, std::string dFile, std::string kFile, double res)
-//{
-//	spd.read_Grid(sFile);
-//	dir.read_Grid(dFile);
-//	kmzFile = kFile;
-//	if(spd.get_cellSize() == dir.get_cellSize())
-//    {
-//        resolution = res;
-//		spd = spd.resample_Grid(res, 1);
-//		dir = dir.resample_Grid(res, 1);
-//	}
-//	else
-//		resolution = 0.0;
-//
-//	colors = 0;
-//	splitValue = 0;
-//	makeDefaultStyles();
-//	lineWidth = 1.0;
-//}
-
 KmlVector::~KmlVector()
 {
     if(colors) {
@@ -290,33 +201,30 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
     return true;
 }
 
-bool KmlVector::setOGR()
-{
-    char** papszPrj;
-    int errorVal = 1;
-
-    if(spd.prjString != "")
-	{
-	    //try to read the prj std::string locally
-	    papszPrj = CSLTokenizeString(spd.prjString.c_str());
-	    errorVal = oSourceSRS.importFromESRI(papszPrj);
-	    if(errorVal != OGRERR_NONE)
-		throw std::logic_error("Cannot complete coordinate transformation, no kmz will be written");
-
-	    errorVal = oTargetSRS.SetWellKnownGeogCS("WGS84");
-
-	    coordTransform = OGRCreateCoordinateTransformation(&oSourceSRS, &oTargetSRS);
-
-	    CSLDestroy(papszPrj);
-	    if(coordTransform == NULL)
-		throw std::logic_error("Cannot complete coordinate transformation, no kmz will be written");
-
-	    return true;
-	}
-
-    throw std::logic_error("Cannot complete coordinate transformation, no kmz will be written");
-
-    return false;
+bool KmlVector::setOGR() {
+  int rc = OGRERR_NONE;
+  if(spd.prjString != "") {
+    rc = oSourceSRS.importFromWkt(spd.prjString.c_str());
+    if(rc != OGRERR_NONE) {
+      throw std::logic_error("cannot create SRS from DEM, kmz creation failed");
+    }
+    rc = oTargetSRS.importFromEPSG(4326);
+    if(rc != OGRERR_NONE) {
+      throw std::logic_error("cannot create SRS for EPSG:4326, kmz creation failed");
+    }
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+    coordTransform = OGRCreateCoordinateTransformation(&oSourceSRS, &oTargetSRS);
+    if(coordTransform == nullptr) {
+      throw std::logic_error("failed to create coordinate transform, kmz creation failed");
+    }
+    return true;
+  }
+  throw std::logic_error("failed to setup coordinate transform, kmz creation failed");
+  return false;
 }
 
 
