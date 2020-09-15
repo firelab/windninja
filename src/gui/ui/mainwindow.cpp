@@ -655,6 +655,15 @@ void MainWindow::solve() {
             ui->googleOutMeshSpinBox->value(),
             unitKey(ui->googleOutMeshComboBox->currentText()));
         check(rc, "NinjaSetGoogResolution");
+
+        const char *scaling = "equal_color";
+        if(ui->googEqualIntervalRadio->isChecked()) {
+          scaling = "equal_interval";
+        }
+        rc = NinjaSetGoogSpeedScaling(ninja, i, scaling);
+        check(rc, "NinjaSetGoogSpeedScaling");
+        rc = NinjaSetGoogLineWidth(ninja, i, ui->googLineWidthSpinBox->value());
+        check(rc, "NinjaSetGoogLineWidth");
       }
     }
 
