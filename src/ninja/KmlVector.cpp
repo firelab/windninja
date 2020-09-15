@@ -220,7 +220,7 @@ bool KmlVector::setOGR() {
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
     coordTransform = OGRCreateCoordinateTransformation(&oSourceSRS, &oTargetSRS);
-    if(coordTransform == nullptr) {
+    if(coordTransform == NULL) {
       throw std::logic_error("failed to create coordinate transform, kmz creation failed");
     }
     return true;
