@@ -70,62 +70,66 @@ double GDALGetMin( GDALDataset *poDS )
  */
 bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 {
-    char* pszPrj;
-    double adfGeoTransform[6];
-    int xSize, ySize;
-    double xCenter, yCenter;
-    double lon, lat;
-
-    assert(poDS);
+    GDALDatasetH hDS = (GDALDatasetH)poDS;
+    assert(hDS);
     assert(longitude);
     assert(latitude);
+    bool rc = true;
 
-    OGRSpatialReference oSourceSRS, oTargetSRS;
-    OGRCoordinateTransformation *poCT;
+    const char *pszPrj = GDALGetProjectionRef(hDS);
+    if(pszPrj == NULL) {
+        return false;
+    }
 
-    xSize = poDS->GetRasterXSize( );
-    ySize = poDS->GetRasterYSize( );
+    OGRSpatialReferenceH hSrcSRS, hTargetSRS;
+    hSrcSRS = OSRNewSpatialReference(pszPrj);
+    hTargetSRS = OSRNewSpatialReference(NULL);
+    if(hSrcSRS == NULL || hTargetSRS == NULL) {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+    OSRImportFromEPSG(hTargetSRS, 4326);
 
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None )
-	return false;
-
-    if( poDS->GetProjectionRef(  ) == NULL )
-	return false;
-    else
-	pszPrj = (char*)poDS->GetProjectionRef();
-
-    oSourceSRS.importFromWkt( &pszPrj );
-    oTargetSRS.SetWellKnownGeogCS( "WGS84" );
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
-    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
-    poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
-    if( poCT == NULL )
-	return false;
-
-    xCenter = xSize / 2;
-    yCenter = ySize / 2;
-
-    lon = adfGeoTransform[0] + adfGeoTransform[1] * xCenter
-	+ adfGeoTransform[2] * yCenter;
-
-    lat = adfGeoTransform[3] + adfGeoTransform[4] * xCenter
-	+ adfGeoTransform[5] * yCenter;
-
-
-    if( !poCT->Transform( 1, &lon, &lat ) ) {
-	OGRCoordinateTransformation::DestroyCT( poCT );
-	return false;
+    OGRCoordinateTransformationH hCT;
+    hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
+    if(hCT == NULL) {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
     }
 
-    *longitude = lon;
-    *latitude = lat;
+    int nX = GDALGetRasterXSize(hDS);
+    int nY = GDALGetRasterYSize(hDS);
 
-    OGRCoordinateTransformation::DestroyCT( poCT );
-    return true;
+    double adfGeoTransform[6];
+    if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None) {
+        OCTDestroyCoordinateTransformation(hCT);
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+    double x = adfGeoTransform[0] + adfGeoTransform[1] * (nX / 2) +
+      adfGeoTransform[2] * (nY / 2);
+    double y = adfGeoTransform[3] + adfGeoTransform[4] * (nX / 2) +
+      adfGeoTransform[5] * (nY / 2);
+
+    rc = OCTTransform(hCT, 1, &x, &y, 0);
+    if(rc) {
+        *longitude = x;
+        *latitude = y;
+    }
+    OCTDestroyCoordinateTransformation(hCT);
+    OSRDestroySpatialReference(hSrcSRS);
+    OSRDestroySpatialReference(hTargetSRS);
+    return rc;
 }
 
 /** Fetch the longitude/latitude bounds of an image
