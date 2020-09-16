@@ -42,6 +42,7 @@ set(TEST_SOURCES test_main.cpp
                  test_srtm.cpp
                  test_gdal_fetch.cpp
                  test_gdal_output.cpp
+                 test_gdal_util.cpp
                  test_grid_interp.cpp
                  test_array2d.cpp
                  test_timezone.cpp
@@ -116,6 +117,10 @@ add_test(test_init_gdal
 # buffer_grid Test Suite
 add_test(test_buffer_grid_init
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=buffer_grid/init_and_set)
+
+# gdal_util
+add_test(test_gdal_util_center
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_util/center)
 
 # landfireclient Test Suite - still experimental
 if(WITH_LCP_CLIENT)
