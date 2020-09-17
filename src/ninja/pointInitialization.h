@@ -37,6 +37,11 @@
 #include <limits>	//for large number
 #include <math.h>
 
+// shorten boost namespaces
+namespace blt = boost::local_time;
+namespace bpt = boost::posix_time;
+namespace bg = boost::gregorian;
+
 class pointInitialization : public initialize
 {
     public:

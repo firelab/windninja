@@ -44,12 +44,12 @@ std::string pointInitialization::rawStationFilename = ""; //make the station nam
 double pointInitialization::stationBuffer; //Buffer
 std::vector<std::string> pointInitialization::stationFiles; //Where the files are stored
 std::string pointInitialization::tzAbbrev; //Abbreviation of the time zone
-vector<boost::local_time::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
+vector<blt::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
 bool pointInitialization::enforce_limits = true; //Enfore limitations on the API ->set to false if the user provides a custom key
 std::string pointInitialization::error_msg = "An Error Occured, Possibly no Data Exists for request"; //generic error message
 //Set to whether or not we enforce the limits of 1 year and buffer range
-extern boost::local_time::tz_database globalTimeZoneDB;
+extern blt::tz_database globalTimeZoneDB;
 
 pointInitialization::pointInitialization() : initialize()
 {
@@ -361,16 +361,16 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
  * Check to see if the station data is within the range of user desired times
  * If not, throw a tantrum...
  */
-bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<boost::posix_time::ptime> timeList)
+bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<bpt::ptime> timeList)
 {
-    vector<boost::posix_time::ptime> stationStarts;
-    vector<boost::posix_time::ptime> stationStops;
+    vector<bpt::ptime> stationStarts;
+    vector<bpt::ptime> stationStops;
     vector<std::string> stationNames; //Just for organization purposes, probably not necessary after initial debugging
 
     for (int i=0; i<wxStationData.size();i++) //loop over all the stations
     {
-        boost::posix_time::ptime SD_start;
-        boost::posix_time::ptime SD_stop;
+        bpt::ptime SD_start;
+        bpt::ptime SD_stop;
 
         SD_start = wxStationData[i][0].datetime;
         SD_stop = wxStationData[i][wxStationData[i].size()-1].datetime;
@@ -378,8 +378,8 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
         stationStops.push_back(SD_stop);
         stationNames.push_back(wxStationData[i][0].stationName);
     }
-    boost::posix_time::ptime start_TL = timeList[0];
-    boost::posix_time::ptime end_TL = timeList[timeList.size()-1];
+    bpt::ptime start_TL = timeList[0];
+    bpt::ptime end_TL = timeList[timeList.size()-1];
 
     vector<bool> startChecks; //Check all weather stations against timelist, if at least one station has data, we can run a simulation, if no station are available, throw an exception
     vector<bool> endChecks;
@@ -436,7 +436,7 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
  * @return
  */
 std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
-                                                        std::vector<boost::posix_time::ptime> timeList,bool latest)
+                                                        std::vector<bpt::ptime> timeList,bool latest)
 {
     std::string subDem;
     std::string xDem;
@@ -449,13 +449,13 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 
     //NEW WAY
     stringstream timeStream,timeStream2;
-    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d-%H%M");
+    bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d-%H%M");
     timeStream.imbue(locale(timeStream.getloc(),facet));               
     std::string timeComponent;    
     
     if(latest==true) // if it is a "now" type sim, we name the directory with the current time
     {
-        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+        bpt::ptime writeTime =bpt::second_clock::local_time();
         timeStream<<writeTime;
         timeComponent = timeStream.str();
     }
@@ -518,13 +518,13 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     subDem = std::string(CPLGetBasename(demFileName.c_str())); //Use cross platform stuff to avoid weird errors
 
     stringstream timeStream,timeStream2;
-    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+    bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d_%H%M");
     timeStream.imbue(locale(timeStream.getloc(),facet));
     std::string timeComponent;
 
     if(latest==true) // if it is a "now" type sim, we name the directory with the current time
     {
-        boost::posix_time::ptime writeTime =boost::posix_time::second_clock::local_time();
+        bpt::ptime writeTime =bpt::second_clock::local_time();
         timeStream<<writeTime;
         timeComponent = timeStream.str();
     }
@@ -558,9 +558,9 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
 
         for(int udx=0;udx<curVec.heightList.size();udx++)
         {
-            boost::posix_time::ptime abs_time;
+            bpt::ptime abs_time;
             abs_time = curVec.datetimeList[udx];
-            std::string strTime = boost::posix_time::to_iso_extended_string(abs_time)+"Z";
+            std::string strTime = bpt::to_iso_extended_string(abs_time)+"Z";
             outFile<<curVec.stationName<<","<<"GEOGCS"<<","<<"WGS84"<<","<<curVec.lat<<","<<curVec.lon<<",";
             outFile<<curVec.heightList[udx]<<",meters,"<<curVec.speedList[udx]<<","<<"mps"<<","<<curVec.directionList[udx];
             outFile<<","<<curVec.temperatureList[udx]<<",K,"<<curVec.cloudCoverList[udx]*100<<","<<curVec.influenceRadiusList[udx];
@@ -641,7 +641,7 @@ vector<wxStation> pointInitialization::readWxStations(string demFileName, string
  * @return
  */
 vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
-                                                      std::vector<boost::posix_time::ptime> timeList,
+                                                      std::vector<bpt::ptime> timeList,
                                                       std::string timeZone)
 {
     vector<preInterpolate> diskData;
@@ -668,8 +668,8 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
 //        diskData.insert(diskData.end(),singleStationData.begin(),singleStationData.end());
         wxVector.push_back(singleStationData);
     }
-    vector<boost::posix_time::ptime> outaTime;
-    boost::posix_time::ptime noTime;
+    vector<bpt::ptime> outaTime;
+    bpt::ptime noTime;
     outaTime.push_back(noTime);
     vector<vector<preInterpolate> > interpolatedDataSet;
     vector<wxStation> readyToGo;   
@@ -1000,9 +1000,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         datetime=poFeature->GetFieldAsString(15);
         std::string trunk=datetime.substr(0,datetime.size()-1);
 
-        boost::posix_time::ptime abs_time;
+        bpt::ptime abs_time;
 
-        boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+        bpt::time_input_facet *fig=new bpt::time_input_facet;
         fig->set_iso_extended_format();
         std::istringstream iss(trunk);
         iss.imbue(std::locale(std::locale::classic(),fig));
@@ -1010,7 +1010,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oStation.datetime=abs_time;
 
         //if it's not a "WindNinja NOW" type simulation and we can't detect the datetime
-        boost::posix_time::ptime noTime;
+        bpt::ptime noTime;
         if(datetime != "" && oStation.datetime==noTime){
             oErrorString = "Invalid datetime format: ";
             oErrorString += poFeature->GetFieldAsString( 15 );
@@ -1268,9 +1268,9 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
     vector<wxStation> refinedDat;
     refinedDat=makeWxStation(vecStations,demFileName);
     //fixes time!
-    boost::local_time::time_zone_ptr timeZonePtr;
+    blt::time_zone_ptr timeZonePtr;
     timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
-    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
+    bpt::ptime standard = bpt::second_clock::universal_time();
     for (int i=0;i<refinedDat.size();i++)
     {
         refinedDat[i].datetimeList.assign(1,standard);
@@ -1289,19 +1289,19 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
  */
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,
                         vector<vector<pointInitialization::preInterpolate> > vecStations,
-                        std::vector<boost::posix_time::ptime> timeList)
+                        std::vector<bpt::ptime> timeList)
 {
     CPLDebug("STATION_FETCH", "Interpolating time data");
 
-//    boost::posix_time::ptime tempq;
-//    boost::posix_time::ptime init;
+//    bpt::ptime tempq;
+//    bpt::ptime init;
 
 //    vector<vector<preInterpolate> > Selectify;
 
-    boost::posix_time::time_duration zero(0, 0, 0, 0);
-//    boost::posix_time::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
-//    boost::posix_time::time_duration one(0, 1, 0, 0);
-    boost::posix_time::time_duration null(boost::posix_time::not_a_date_time);
+    bpt::time_duration zero(0, 0, 0, 0);
+//    bpt::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
+//    bpt::time_duration one(0, 1, 0, 0);
+    bpt::time_duration null(bpt::not_a_date_time);
 
     int totalsize=vecStations.size(); //Total Number of Stations
 
@@ -1320,8 +1320,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
      * POSITIVE == PAST!
      *
      */
-    vector<vector<boost::posix_time::time_duration> > posMasterTime;
-    vector<vector<boost::posix_time::time_duration> > negMasterTime;
+    vector<vector<bpt::time_duration> > posMasterTime;
+    vector<vector<bpt::time_duration> > negMasterTime;
     vector<vector<int> > posMasterIdx;
     vector<vector<int> >negMasterIdx;
 
@@ -1331,22 +1331,22 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         int numObserve=vecStations[k].size(); //Number of observations
         int numSteps=timeList.size();
 
-        vector<boost::posix_time::time_duration> posStepTime; //Master lists of times and indecies for 1 station
-        vector<boost::posix_time::time_duration> negStepTime;
+        vector<bpt::time_duration> posStepTime; //Master lists of times and indecies for 1 station
+        vector<bpt::time_duration> negStepTime;
         vector<int> posStepIdx;
         vector<int> negStepIdx;
 
         for (int j=0;j<numSteps;j++)//Do this for all time steps
         {
             int counter=0;
-            boost::posix_time::ptime comparator = timeList[j]; //Get the Baseline
-            vector<boost::posix_time::time_duration> posTimeDeltas; //Positive List of time deltas
+            bpt::ptime comparator = timeList[j]; //Get the Baseline
+            vector<bpt::time_duration> posTimeDeltas; //Positive List of time deltas
             vector<int>posTimeIndecies;
-            vector<boost::posix_time::time_duration> negTimeDeltas; // Negative List of time deltas
+            vector<bpt::time_duration> negTimeDeltas; // Negative List of time deltas
             vector<int>negTimeIndecies;
             for (int i = 0; i<numObserve;i++)
             {
-                boost::posix_time::time_duration difference;
+                bpt::time_duration difference;
                 difference = comparator - vecStations[k][i].datetime; //Calculate differences for each time step and obs
                 if (difference>zero) //If difference is greater than zero, put in one vect
                 {
@@ -1361,7 +1361,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             }
             if (posTimeDeltas.size()>0) //If there are any positive ones, put them into master list
             {
-                boost::posix_time::time_duration minPos=*std::min_element(posTimeDeltas.begin(),posTimeDeltas.end());
+                bpt::time_duration minPos=*std::min_element(posTimeDeltas.begin(),posTimeDeltas.end());
                 int posIdx=std::min_element(posTimeDeltas.begin(),posTimeDeltas.end())-posTimeDeltas.begin();
                 posStepTime.push_back(minPos);
                 posStepIdx.push_back(posTimeIndecies[posIdx]);
@@ -1374,7 +1374,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             }
             if (negTimeDeltas.size()>0) //Same thing, for negative times
             {
-                boost::posix_time::time_duration minNeg=*std::max_element(negTimeDeltas.begin(),negTimeDeltas.end());
+                bpt::time_duration minNeg=*std::max_element(negTimeDeltas.begin(),negTimeDeltas.end());
                 int negIdx=std::max_element(negTimeDeltas.begin(),negTimeDeltas.end())-negTimeDeltas.begin();
                 negStepTime.push_back(minNeg);
                 negStepIdx.push_back(negTimeIndecies[negIdx]);
@@ -1464,9 +1464,9 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
                  * Positive is past (low)
                  */
                 //Get the Time of the past and future station and set the interpolate time to the timeList
-                boost::posix_time::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
-                boost::posix_time::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
-                boost::posix_time::ptime pInter = timeList[i];
+                bpt::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
+                bpt::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
+                bpt::ptime pInter = timeList[i];
                 //Convert time to time since epoch
                 double low = unixTime(pLow); //Times
                 double high = unixTime(pHigh);
@@ -1577,10 +1577,10 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
  * @param time
  * @return
  */
-double pointInitialization::unixTime(boost::posix_time::ptime time)
+double pointInitialization::unixTime(bpt::ptime time)
 {
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    boost::posix_time::time_duration::sec_type  dNew= (time - epoch).total_seconds();
+    bpt::ptime epoch(bg::date(1970,1,1));
+    bpt::time_duration::sec_type  dNew= (time - epoch).total_seconds();
     double stepDuration;
     stepDuration = dNew;
 
@@ -1673,13 +1673,13 @@ std::string pointInitialization::BuildTime(std::string year_0, std::string month
  * @param timeList
  * @return
  */
-vector<std::string> pointInitialization::UnifyTime(vector<boost::posix_time::ptime> timeList)
+vector<std::string> pointInitialization::UnifyTime(vector<bpt::ptime> timeList)
 {
     vector<std::string> buildTimes;
     stringstream startstream;
     stringstream endstream;
-    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y%m%d%H%M");
-    boost::posix_time::time_duration buffer(1, 0, 0, 0); //add a 1 hour pad to each side
+    bpt::time_facet *facet = new bpt::time_facet("%Y%m%d%H%M");
+    bpt::time_duration buffer(1, 0, 0, 0); //add a 1 hour pad to each side
 
     startstream.imbue(locale(startstream.getloc(), facet));
     timeList[0] = timeList[0] - buffer;
@@ -2403,20 +2403,18 @@ vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, st
         Solar sol;
         bool solar_opt;
 
-        boost::posix_time::ptime abs_time;
+        bpt::ptime abs_time;
 
-        boost::posix_time::time_input_facet *fig=new boost::posix_time::time_input_facet;
+        bpt::time_input_facet *fig=new bpt::time_input_facet;
         fig->set_iso_extended_format();
         std::istringstream iss(trunk);
         iss.imbue(std::locale(std::locale::classic(),fig));
         iss>>abs_time;
 
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
+        blt::time_zone_ptr timeZonePtr;
+        timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
 
-        boost::local_time::local_date_time startLocal(abs_time,timeZonePtr);
+        blt::local_date_time startLocal(abs_time,timeZonePtr);
 
         double zero=0.000000;
         double one=1.0000000;
@@ -2503,16 +2501,14 @@ vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  * @return Vector of datetimes in UTC.
  */
-std::vector<boost::posix_time::ptime>
+std::vector<bpt::ptime>
 pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
                                     int startHour, int startMinute, int endYear,
                                     int endMonth, int endDay, int endHour, int endMinute,
                                     int nTimeSteps, std::string timeZone)
 {
-    boost::local_time::tz_database tz_db; //Generate Time Zone Database
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") ); //Load in stored TimeZoneDatabase
-    boost::local_time::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);//Get Time Zone from Databse
+    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
     endHour=endHour;//Not Really sure why this is necssary
     startHour=startHour;
     
@@ -2521,27 +2517,27 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     /*
     Correct for daylight savings time...
     */
-    boost::gregorian::date dStart(startYear,startMonth,startDay);//Generate Date Object from str for start time
-    boost::gregorian::date dEnd(endYear,endMonth,endDay); //Generate Date Obj from str for end time
+    bg::date dStart(startYear,startMonth,startDay);//Generate Date Object from str for start time
+    bg::date dEnd(endYear,endMonth,endDay); //Generate Date Obj from str for end time
 
-    boost::posix_time::time_duration dStartTime(startHour,startMinute,0,0); //Generate Time obj for start
-    boost::posix_time::time_duration dEndTime(endHour,endMinute,0,0); // Same for stop
+    bpt::time_duration dStartTime(startHour,startMinute,0,0); //Generate Time obj for start
+    bpt::time_duration dEndTime(endHour,endMinute,0,0); // Same for stop
 
-    boost::posix_time::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); //Get When DST Starts from TZ
-    boost::posix_time::ptime end_dst = timeZonePtr->dst_local_end_time(dEnd.year()); //Get When DST ends from TZ
+    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); //Get When DST Starts from TZ
+    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dEnd.year()); //Get When DST ends from TZ
 
     /*
      * Here we put the time and date objs into a time zone native obj for comparison
      */
-    boost::posix_time::ptime utcStart(dStart,dStartTime);
-    boost::posix_time::ptime utcEnd(dEnd,dEndTime);
+    bpt::ptime utcStart(dStart,dStartTime);
+    bpt::ptime utcEnd(dEnd,dEndTime);
     /*
      * Initialize the start and end times as local objects with the current time on the computer
      * This time doesn't really matter, but we need the objects initialized so that we can put the
      * time zone aware time object into it. Boost won't let you initilize a blank local time object
      */
-    boost::local_time::local_date_time startLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
-    boost::local_time::local_date_time endLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
+    blt::local_date_time startLocal = blt::local_sec_clock::local_time(timeZonePtr);
+    blt::local_date_time endLocal = blt::local_sec_clock::local_time(timeZonePtr);
 
     /*
      * Here we check to see if the user provided time is within daylight savings time
@@ -2554,13 +2550,13 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     if (utcStart > start_dst && utcStart < end_dst)
     {
         CPLDebug("STATION_FETCH", "Start time is within DST!");
-        startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,true);
+        startLocal = blt::local_date_time(dStart,dStartTime,timeZonePtr,true);
         storeTZAbbrev(timeZonePtr->dst_zone_abbrev()); //Stores the tz Abbreviation so that we can name the files coorectly in the time series
     }
     else
     {
         CPLDebug("STATION_FETCH", "Start time is outside DST!");
-        startLocal = boost::local_time::local_date_time(dStart,dStartTime,timeZonePtr,false);
+        startLocal = blt::local_date_time(dStart,dStartTime,timeZonePtr,false);
         storeTZAbbrev(timeZonePtr->std_zone_abbrev()); //Stores the tz Abbreviation sot
 
     }
@@ -2568,12 +2564,12 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     if (utcEnd > start_dst && utcEnd < end_dst)
     {
         CPLDebug("STATION_FETCH", "Stop Time is within DST!");
-        endLocal = boost::local_time::local_date_time(dEnd,dEndTime,timeZonePtr,true);
+        endLocal = blt::local_date_time(dEnd,dEndTime,timeZonePtr,true);
     }
     else
     {
         CPLDebug("STATION_FETCH", "Stop Time is outside DST!");
-        endLocal = boost::local_time::local_date_time(dEnd,dEndTime,timeZonePtr,false);
+        endLocal = blt::local_date_time(dEnd,dEndTime,timeZonePtr,false);
     }
     //Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(startLocal,endLocal);
@@ -2581,31 +2577,31 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     /*
     Now that we have figured out the local time, convert it to UTC time for all other time purposes
     */
-    boost::posix_time::ptime startUtc=startLocal.utc_time();
-    boost::posix_time::ptime endUtc=endLocal.utc_time();
+    bpt::ptime startUtc=startLocal.utc_time();
+    bpt::ptime endUtc=endLocal.utc_time();
 
 
 //This is all old stuff that I am leaving in until I am sure the above stuff works. Good for debugging if we get time zone issues
-//    boost::posix_time::ptime utcStart(dStart,dStartTime);
-//    boost::local_time::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    boost::local_time::local_date_time startLocal(utcStart,timeZoneUtc);
-//    boost::local_time::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    boost::local_time::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
+//    bpt::ptime utcStart(dStart,dStartTime);
+//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
+//    blt::local_date_time startLocal(utcStart,timeZoneUtc);
+//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
+//    blt::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
 
-//    boost::local_time::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
-//    boost::local_time::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,timeZonePtr->has_dst());
+//    blt::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
+//    blt::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,timeZonePtr->has_dst());
     /**Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
     //Update (5/9/18)-> The fix that was implemented was doing this backwards, making it no good,
     //new fix is to have boost check if daylight savings time exists (timeZonePtr->has_dst()), and then
     tell that to the Local_date_time constructor, this hopefully will fix time offset issues...
     **/
-//    boost::posix_time::ptime startUtc=startLocal.utc_time();
-//    boost::posix_time::ptime endUtc=endLocal.utc_time();
+//    bpt::ptime startUtc=startLocal.utc_time();
+//    bpt::ptime endUtc=endLocal.utc_time();
 //    printf("\n");
 
     //Get Total Time duration of simulation and divide it into time steps
-    boost::posix_time::time_duration diffTime=endUtc-startUtc;
-    boost::posix_time::time_duration stepTime;
+    bpt::time_duration diffTime=endUtc-startUtc;
+    bpt::time_duration stepTime;
     if(nTimeSteps > 1){
         stepTime=diffTime/(nTimeSteps-1);
     }
@@ -2613,10 +2609,10 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         stepTime=diffTime/nTimeSteps;
     }
 
-    std::vector<boost::posix_time::ptime> timeOut;
-    std::vector<boost::posix_time::ptime> timeConstruct;
-    std::vector<boost::posix_time::ptime> timeList;
-    std::vector<boost::posix_time::time_duration> timeStorage;
+    std::vector<bpt::ptime> timeOut;
+    std::vector<bpt::ptime> timeConstruct;
+    std::vector<bpt::ptime> timeList;
+    std::vector<bpt::time_duration> timeStorage;
 
     //Create Time Steps by multiplying steps by durations
     //Sets first step to be start time
@@ -2625,7 +2621,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         timeOut.push_back(startUtc);
         for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
         {
-            boost::posix_time::time_duration specTime;
+            bpt::time_duration specTime;
             specTime=stepTime*i;
             timeOut.push_back(startUtc+specTime);
         }
@@ -2651,37 +2647,35 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
  * @param timeZone
  * @return
  */
-boost::posix_time::ptime pointInitialization::generateSingleTimeObject(int year, int month, int day,
+bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, int day,
                                                                        int hour, int minute,
                                                                        string timeZone)
 {
-    boost::posix_time::ptime noTime;
-    boost::local_time::tz_database tz_db; //Generate Time Zone Database
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") ); //Load in stored TimeZoneDatabase
-    boost::local_time::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);//Get Time Zone from Databse
+    bpt::ptime noTime;
+    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
 
-    boost::gregorian::date xDate(year,month,day);
-    boost::posix_time::time_duration xTime(hour,minute,0,0);
-    boost::posix_time::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
-    boost::posix_time::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
+    bg::date xDate(year,month,day);
+    bpt::time_duration xTime(hour,minute,0,0);
+    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
+    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
 
-    boost::posix_time::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
+    bpt::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
 
-    boost::local_time::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
+    blt::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
     //like in get time list, check to see where we are WRT daylight savings time!
     if(xUTC>start_dst && xUTC<end_dst)
     {
         CPLDebug("STATION_FETCH", "Time is within DST!");
-        xLocal = boost::local_time::local_date_time(xDate,xTime,timeZonePtr,true);
+        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,true);
     }
     else
     {
         CPLDebug("STATION_FETCH", "Time is outside DST!");
-        xLocal = boost::local_time::local_date_time(xDate,xTime,timeZonePtr,false);
+        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,false);
     }
 
-    boost::posix_time::ptime xxUTC=xLocal.utc_time(); //now that we know where we are, go back to utc as a corrected time object
+    bpt::ptime xxUTC=xLocal.utc_time(); //now that we know where we are, go back to utc as a corrected time object
 
     return xxUTC;
 }
@@ -2695,11 +2689,11 @@ boost::posix_time::ptime pointInitialization::generateSingleTimeObject(int year,
  * @param timeList
  * @return
  */
-int pointInitialization::checkFetchTimeDuration(std::vector<boost::posix_time::ptime> timeList)
+int pointInitialization::checkFetchTimeDuration(std::vector<bpt::ptime> timeList)
 {
     if(enforce_limits==true)
     {
-        boost::posix_time::time_duration diffTime = timeList.back() - timeList.front();
+        bpt::time_duration diffTime = timeList.back() - timeList.front();
 
         int tSec = diffTime.total_seconds();
         int max_download_time = 31556926; //One year in seconds
@@ -2760,7 +2754,7 @@ void pointInitialization::setCustomAPIKey(string api_token)
  * @param timeList Vector of datetimes in UTC for the simulation.
  */
 bool pointInitialization::fetchStationFromBbox(std::string demFile,
-                                               std::vector<boost::posix_time::ptime> timeList,
+                                               std::vector<bpt::ptime> timeList,
                                                std::string timeZone, bool latest)
 {
     GDALDataset  *poDS;
@@ -2854,7 +2848,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
  */
 
 bool pointInitialization::fetchStationByName(std::string stationList,
-                                             std::vector<boost::posix_time::ptime> timeList,
+                                             std::vector<bpt::ptime> timeList,
                                              std::string timeZone, bool latest)
 {
     std::string URL;
@@ -2907,7 +2901,7 @@ void pointInitialization::storeTZAbbrev(string tzAbbr)
  * @param start
  * @param stop
  */
-void pointInitialization::setLocalStartAndStopTimes(boost::local_time::local_date_time start, boost::local_time::local_date_time stop)
+void pointInitialization::setLocalStartAndStopTimes(blt::local_date_time start, boost::local_time::local_date_time stop)
 {
     start_and_stop_times.push_back(start);
     start_and_stop_times.push_back(stop);
@@ -3079,7 +3073,7 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
  * @param timeList
  */
 
-bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList)
+bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest, std::vector<bpt::ptime> timeList)
 {
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
@@ -3143,7 +3137,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         std::string tName;
         stringstream idStream;
         stringstream ss;
-        boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H%M");
+        bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d_%H%M");
         timeStream.imbue(locale(timeStream.getloc(),facet));
         std::string timeComponent;
 
@@ -3152,7 +3146,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
 
         if (latest==true)
         {
-            boost::posix_time::ptime writeTime = boost::posix_time::second_clock::local_time();
+            bpt::ptime writeTime = bpt::second_clock::local_time();
             timeStream<<writeTime;
             timeComponent = timeStream.str();
         }
