@@ -20,7 +20,6 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::init() {
-  GDALAllRegister();
   setIcons();
   setConnections();
   OGRFormats();
@@ -45,27 +44,27 @@ void MainWindow::init() {
 
   // NOMADS models
 #if defined(NOMADS_GFS_0P5DEG)
-  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.5-DEG");
+  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.5-DEG", "gfs_global");
 #elif defined(NOMADS_GFS_1P0DEG)
-  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-1.0-DEG");
+  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-1.0-DEG", "gfs_global");
 #else
-  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.25-DEG");
+  ui->wxComboBox->addItem("NOMADS-GFS-GLOBAL-0.25-DEG", "gfs_global");
 #endif
-  ui->wxComboBox->addItem("NOMADS-HIRES-ARW-ALASKA-5-KM");
-  ui->wxComboBox->addItem("NOMADS-HIRES-NMM-ALASKA-5-KM");
-  ui->wxComboBox->addItem("NOMADS-HIRES-ARW-CONUS-5-KM");
-  ui->wxComboBox->addItem("NOMADS-HIRES-NMM-CONUS-5-KM");
-  ui->wxComboBox->addItem("NOMADS-NAM-ALASKA-11.25-KM");
-  ui->wxComboBox->addItem("NOMADS-NAM-CONUS-12-KM");
-  ui->wxComboBox->addItem("NOMADS-NAM-NORTH-AMERICA-32-KM");
-  ui->wxComboBox->addItem("NOMADS-NAM-NEST-ALASKA-3-KM");
-  ui->wxComboBox->addItem("NOMADS-NAM-NEST-CONUS-3-KM");
-  ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-3-KM");
-  ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-3-KM");
-  ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-SUBHOURLY-3-KM");
-  ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM");
-  ui->wxComboBox->addItem("NOMADS-RAP-CONUS-13-KM");
-  ui->wxComboBox->addItem("NOMADS-RAP-NORTH-AMERICA-32-KM");
+  ui->wxComboBox->addItem("NOMADS-HIRES-ARW-ALASKA-5-KM", "hires_arw_alaska");
+  ui->wxComboBox->addItem("NOMADS-HIRES-NMM-ALASKA-5-KM", "hires_nmm_alaska");
+  ui->wxComboBox->addItem("NOMADS-HIRES-ARW-CONUS-5-KM", "hires_arw_conus");
+  ui->wxComboBox->addItem("NOMADS-HIRES-NMM-CONUS-5-KM", "hires_nmm_conus");
+  ui->wxComboBox->addItem("NOMADS-NAM-ALASKA-11.25-KM", "nam_alaska");
+  ui->wxComboBox->addItem("NOMADS-NAM-CONUS-12-KM", "nam_conus");
+  ui->wxComboBox->addItem("NOMADS-NAM-NORTH-AMERICA-32-KM", "nam_north_america");
+  ui->wxComboBox->addItem("NOMADS-NAM-NEST-ALASKA-3-KM", "nam_nest_alaska");
+  ui->wxComboBox->addItem("NOMADS-NAM-NEST-CONUS-3-KM", "nam_nest_conus");
+  ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-3-KM", "hrrr_alaska");
+  ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-3-KM", "hrrr_conus");
+  ui->wxComboBox->addItem("NOMADS-HRRR-CONUS-SUBHOURLY-3-KM", "hrrr_conus_sub");
+  ui->wxComboBox->addItem("NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM", "hrrr_ak_sub");
+  ui->wxComboBox->addItem("NOMADS-RAP-CONUS-13-KM", "rap_conus");
+  ui->wxComboBox->addItem("NOMADS-RAP-NORTH-AMERICA-32-KM", "rap_north_america");
 
   // Use QT time zones to fill in the dialog.
   // XXX(kyle): this won't match boost::timezone
@@ -210,25 +209,52 @@ int MainWindow::downloadUCAR(QString model, int hours, QString filename) {
   return 0;
 }
 
+int MainWindow::downloadNomads(QString model, int hours, QString filename) {
+  QDateTime now =  QDateTime::currentDateTime();
+
+  double bbox[4] = {elevInfo.minX, elevInfo.maxX, elevInfo.maxY, elevInfo.minY};
+
+#include <cpl_progress.h>
+  return NomadsFetch(model.toLocal8Bit(),
+      now.toString(Qt::ISODate).toLocal8Bit(), hours, 1, bbox,
+      filename.toLocal8Bit(), 0, GDALTermProgress);
+}
+
 void MainWindow::downloadWx() {
   ui->forecastLineEdit->clear();
   ui->forecastLineEdit->setToolTip("");
 
+  QString model = ui->wxComboBox->currentText();
+  QString ext = "";
+  if(model.startsWith("UCAR")) {
+    ext = "netCDF file (*.nc)";
+  } else if(model.startsWith("NOMADS")) {
+    ext = "WindNinja NOMADS forecast (*.zip)";
+  }
+
   QString file = QFileDialog::getSaveFileName(this,
-      tr("Save Weather Forecast File"), "./",
-      tr("netCDF file (*.nc)"));
+      tr("Save Weather Forecast File"), "./", ext);
   if(file == "") {
     return;
   }
-
-  QString model = ui->wxComboBox->currentText();
+  int rc = 0;
   if(model.startsWith("UCAR")) {
-    int rc = downloadUCAR(model, ui->wxDurSpinBox->value(), file);
+    rc = downloadUCAR(model, ui->wxDurSpinBox->value(), file);
     if(rc == 0) {
         QFileInfo info(file);
         ui->forecastLineEdit->setText(info.fileName());
         ui->forecastLineEdit->setToolTip(info.absoluteFilePath());
         forecastPath = info.absoluteFilePath();
+    }
+  } else if(model.startsWith("NOMADS")) {
+    model = ui->wxComboBox->currentData().toString();
+    qDebug() << model;
+    rc = downloadNomads(model, ui->wxDurSpinBox->value(), file);
+    if(rc == 0) {
+      QFileInfo info(file);
+      ui->forecastLineEdit->setText(info.fileName());
+      ui->forecastLineEdit->setToolTip(info.absoluteFilePath());
+      forecastPath = info.absoluteFilePath();
     }
   }
 }

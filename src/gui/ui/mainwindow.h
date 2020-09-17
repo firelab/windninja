@@ -36,6 +36,9 @@
 
 #include <windninja.h>
 
+// No API access
+#include <nomads.h>
+
 namespace Ui {
   class MainWindow;
 }
@@ -83,6 +86,7 @@ private:
     int countRuns();
 
     int downloadUCAR(QString model, int hours, QString filename);
+    int downloadNomads(QString model, int hours, QString filename);
 
 public slots:
     void updateStack(QTreeWidgetItem *, QTreeWidgetItem *);
