@@ -228,14 +228,10 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     if ( dstWkt.empty() ) {
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            CPLDebug( "wrf3dInitialization::set3dGrids()",
-                    "Bad projection reference" );
             throw("Cannot open dem file in wrf3dInitialization::set3dGrids()");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            CPLDebug( "wrf3dInitialization::set3dGrids()",
-                    "Bad projection reference" );
             throw("Cannot open dem file in wrfedInitialization::set3dGrids()");
         }
         GDALClose((GDALDatasetH) poDS );
@@ -249,8 +245,6 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        CPLDebug( "wrf3dInitialization::set3dGrids()",
-                 "Bad forecast file");
         throw badForecastFile("Cannot open forecast file in wrf3dInitialization::set3dGrids()");
     }
     else {
@@ -273,16 +267,13 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
     for( unsigned int i = 0;i < var3dList.size();i++ ) {
         
-        //cout<<"var3dList.size() = "<<var3dList.size()<<endl;
-        
         temp = "NETCDF:\"" + input.forecastFilename + "\":" + var3dList[i];
         
         CPLPushErrorHandler(CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            CPLDebug( "wrf3dInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            throw badForecastFile("Cannot open forecast file in wrf3dInitialization::set3dGrids()");
         }
 
         //cout<<"var3dList[i] = " <<var3dList[i]<<endl;
@@ -399,37 +390,16 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
          */
         GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
         int pbSuccess;
-        //double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-        dfNoData = poBand->GetNoDataValue( &pbSuccess );
-
-        psWarpOptions = GDALCreateWarpOptions();
+        double dfNoData = poBand->GetNoDataValue( &pbSuccess );
 
         int nBandCount = srcDS->GetRasterCount();
-        
-        psWarpOptions->nBandCount = nBandCount;
 
-        psWarpOptions->padfDstNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-        psWarpOptions->padfDstNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-        for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-        }
-
-        if( pbSuccess == false )
-            dfNoData = -9999.0;
-
-        psWarpOptions->papszWarpOptions =
-            CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                            "INIT_DEST", "NO_DATA" );
-
+        CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
 
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWKT,
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
-                                                        1.0, psWarpOptions );
+                                                        1.0, NULL );
 
 
         //=======for testing==================================//
@@ -681,7 +651,6 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
         CPLFree(srcWKT);
         delete poCT;
-        GDALDestroyWarpOptions( psWarpOptions );
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
         
