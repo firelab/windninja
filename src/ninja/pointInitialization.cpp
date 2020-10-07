@@ -2531,46 +2531,28 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
      */
     bpt::ptime utcStart(dStart,dStartTime);
     bpt::ptime utcEnd(dEnd,dEndTime);
-    /*
-     * Initialize the start and end times as local objects with the current time on the computer
-     * This time doesn't really matter, but we need the objects initialized so that we can put the
-     * time zone aware time object into it. Boost won't let you initilize a blank local time object
-     */
-    blt::local_date_time startLocal = blt::local_sec_clock::local_time(timeZonePtr);
-    blt::local_date_time endLocal = blt::local_sec_clock::local_time(timeZonePtr);
-
+    
     /*
      * Here we check to see if the user provided time is within daylight savings time
      * If it is, we set the bool to true, if not, false.
      * For places without daylight savings time, this sets the DST bool to false
      * This also allows for simulations to be run in between time changes as the
      * start and stop times are checked independently of eachother
+     * 
+     * Update 10/6/2020: the old comparison method for figuring out whether start 
+     * and stop time are in DST don't work for time zones in the southern hemisphere,
+     * and it was crude anyway. The below two lines handle all the time zone checking by boost 
+     * internally.
+     * 
+     * See https://github.com/firelab/windninja/issues/386 for more details.
      */
-    //Check the start time
-    if (utcStart > start_dst && utcStart < end_dst)
-    {
-        CPLDebug("STATION_FETCH", "Start time is within DST!");
-        startLocal = blt::local_date_time(dStart,dStartTime,timeZonePtr,true);
-        storeTZAbbrev(timeZonePtr->dst_zone_abbrev()); //Stores the tz Abbreviation so that we can name the files coorectly in the time series
-    }
-    else
-    {
-        CPLDebug("STATION_FETCH", "Start time is outside DST!");
-        startLocal = blt::local_date_time(dStart,dStartTime,timeZonePtr,false);
-        storeTZAbbrev(timeZonePtr->std_zone_abbrev()); //Stores the tz Abbreviation sot
+    
+    blt::local_date_time startLocal =  blt::local_date_time(utcStart,timeZonePtr);
+    blt::local_date_time endLocal =  blt::local_date_time(utcEnd,timeZonePtr);
+    
+    CPLDebug("STATION_FETCH", "Start Time is DST?: %i",startLocal.is_dst());
+    CPLDebug("STATION_FETCH", "End Time is DST?: %i",endLocal.is_dst());
 
-    }
-    //check the end/stop times
-    if (utcEnd > start_dst && utcEnd < end_dst)
-    {
-        CPLDebug("STATION_FETCH", "Stop Time is within DST!");
-        endLocal = blt::local_date_time(dEnd,dEndTime,timeZonePtr,true);
-    }
-    else
-    {
-        CPLDebug("STATION_FETCH", "Stop Time is outside DST!");
-        endLocal = blt::local_date_time(dEnd,dEndTime,timeZonePtr,false);
-    }
     //Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(startLocal,endLocal);
 
