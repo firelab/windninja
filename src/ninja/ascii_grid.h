@@ -210,6 +210,7 @@ public:
     AsciiGrid<T> BufferAroundGrid( int nAddCols=1, int nAddRows=1 );
     void BufferAroundGridInPlace( int nAddCols=1, int nAddRows=1 );
     void BufferToOverlapGrid(AsciiGrid &A);
+    bool CheckForGridOverlap(AsciiGrid &A);
 
     /* @todo
      * Ideally this would not be a public variable that other classes have access to, instead
@@ -1019,13 +1020,12 @@ AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
  * Add cells to overlap an ascii grid.
  *
  * \param A grid to buffer
- * \return a new grid buffered to overlap another grid
  */
 template<class T>
 void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
 {
     double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
-    double biggest, biggestX, biggestY;
+    double biggestX, biggestY;
     int nColsBuffer, nRowsBuffer;
     xMinOverlap = get_xllCorner() - A.get_xllCorner();
     xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
@@ -1064,6 +1064,33 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
             BufferAroundGridInPlace(nColsBuffer, nRowsBuffer);
         }
     }
+}
+
+/**
+ * \brief Check if one grid overlaps another 
+ *
+ * Check if one grid completely overlaps another grid.
+ *
+ * \param A grid to check overlap against
+ * \return true if there is complete overalap, otherwise false
+ */
+template<class T>
+bool AsciiGrid<T>::CheckForGridOverlap( AsciiGrid &A )
+{
+    double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
+    xMinOverlap = get_xllCorner() - A.get_xllCorner();
+    xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
+        (A.get_xllCorner() + A.get_nCols()*A.get_cellSize());
+    yMinOverlap = get_yllCorner() - A.get_yllCorner();
+    yMaxOverlap = (get_yllCorner() + get_nRows()*get_cellSize()) -
+        (A.get_yllCorner() + A.get_nRows()*A.get_cellSize());
+
+    if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
+    {
+        return true;
+    }
+    else
+        return false;
 }
 
 template<class T>
