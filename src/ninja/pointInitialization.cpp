@@ -30,8 +30,8 @@
 
 #include "pointInitialization.h"
 
-std::string pointInitialization::dtoken = "33e3c8ee12dc499c86de1f2076a9e9d4"; //This is the base token for fetching
-const std::string pointInitialization::backup_token = "33e3c8ee12dc499c86de1f2076a9e9d4"; //the same token repeated just in case
+std::string pointInitialization::dtoken = "dffccaceb4ee4bc69f1fe42f0577f8a7"; //This is the base token for fetching
+const std::string pointInitialization::backup_token = "dffccaceb4ee4bc69f1fe42f0577f8a7"; //the same token repeated just in case
 const std::string pointInitialization::dvar = "wind_speed,wind_direction,air_temp," //variables we want
                                              "solar_radiation,cloud_layer_1_code"; //from the API
 
