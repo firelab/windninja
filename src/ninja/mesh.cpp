@@ -974,8 +974,8 @@ Mesh::eMeshBoundary Mesh::getMeshBoundary(std::string boundary)
     }
 }
 
-Mesh::eMeshBoundary Mesh::getTraceIntersectionOnBoundary(double xStart, double yStart, double zStart,
-       double xEnd, double yEnd, double zEnd, eMeshBoundary boundary)
+void Mesh::getTraceIntersectionOnBoundary(double &xDeparture, double &yDeparture, double &zDeparture,
+                                                         double &xArrival, double &yArrival, double &zArrival, Mesh::eMeshBoundary boundary);
 {
 
 }

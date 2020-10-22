@@ -70,8 +70,10 @@ TransportSemiLagrangian::~TransportSemiLagrangian()      //destructor
  */
 void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double dt)
 {
-    double xEnd, yEnd, zEnd, reducedDt;
+    double xDeparture, yDeparture, zDeparture, reducedDt;
     dt = -dt;   //Set to negative to back trace
+    element elem(U0.vectorData_x.mesh_);
+    Mesh::eMeshBoundary boundary;
     for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
     {
         for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
@@ -90,27 +92,22 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                     U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
                 }else   //Else we're on an interior node and should back-trace a particle
                 {
-                    element elem(U0.vectorData_x.mesh_);
                     //reducedDt = dt;
                     //do {
-                    //    traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
+                    //    traceParticle(U0, reducedDt, i, j, k, xDeparture, yDeparture, zDeparture);
                     //    reducedDt /= 2.0;
                     //}
-                    //while(!elem.isInMesh(xEnd, yEnd, zEnd));
-                    if(elem.isInMesh(xEnd, yEnd, zEnd))
+                    //while(!elem.isInMesh(xDeparture, yDeparture, zDeparture));
+                    traceParticle(U0, reducedDt, i, j, k, xDeparture, yDeparture, zDeparture);
+                    if(!elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
                     {
-                        traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
-                    }else
-                    {
-                        Mesh::eMeshBoundary boundary;
-                        boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xEnd, yEnd, zEnd);
-                        //U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xStart, yStart, zStart,
-                        //                                                    xEnd, yEnd, zEnd, boundary);
+                        boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
+                        U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xDeparture, yDeparture, zDeparture,
+                                                                            U0.vectorData_x.mesh_->XORD(i,j,k), U0.vectorData_x.mesh_->YORD(i,j,k), U0.vectorData_x.mesh_->ZORD(i,j,k), boundary);
                     }
-
-                    U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xEnd, yEnd, zEnd);
-                    U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xEnd, yEnd, zEnd);
-                    U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xEnd, yEnd, zEnd);
+                    U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
+                    U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
+                    U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
                 }
             }
         }
