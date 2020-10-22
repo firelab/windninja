@@ -35,7 +35,19 @@
 
 class Vector3D {
 public:
+        Vector3D();
+
         Vector3D(double x, double y, double z) {
+                this->x = x;
+                this->y = y;
+                this->z = z;
+        }
+
+        double get_x() {return x;}
+        double get_y() {return y;}
+        double get_z() {return z;}
+
+        void setValues(double x, double y, double z) { {
                 this->x = x;
                 this->y = y;
                 this->z = z;
@@ -52,6 +64,8 @@ public:
         Vector3D operator*(double rhs) const {
                 return Vector3D(rhs*x, rhs*y, rhs*z);
         }
+
+        intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint);
 
 private:
         double x, y, z;

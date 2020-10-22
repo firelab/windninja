@@ -973,9 +973,3 @@ Mesh::eMeshBoundary Mesh::getMeshBoundary(std::string boundary)
         throw std::runtime_error(std::string("Cannot determine boundary in Mesh::getMeshBoundary()."));
     }
 }
-
-void Mesh::getTraceIntersectionOnBoundary(double &xDeparture, double &yDeparture, double &zDeparture,
-                                                         double &xArrival, double &yArrival, double &zArrival, Mesh::eMeshBoundary boundary);
-{
-
-}

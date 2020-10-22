@@ -102,8 +102,48 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                     if(!elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
                     {
                         boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
-                        U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xDeparture, yDeparture, zDeparture,
-                                                                            U0.vectorData_x.mesh_->XORD(i,j,k), U0.vectorData_x.mesh_->YORD(i,j,k), U0.vectorData_x.mesh_->ZORD(i,j,k), boundary);
+                        //U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xDeparture, yDeparture, zDeparture,
+                        //                                                    U0.vectorData_x.mesh_->XORD(i,j,k), U0.vectorData_x.mesh_->YORD(i,j,k), U0.vectorData_x.mesh_->ZORD(i,j,k), boundary);
+
+
+                        //departure = Vector3D::intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint);
+                        Vector3D pn;    //Plane normal vector
+                        Vector3D pp;    //Point on the plane
+                        if(boundary == Mesh::north)
+                        {
+                            pn.setValues(0.0, 1.0, 0.0);
+                            pp.setValues(0.0, U0.vectorData_x.mesh_->get_maxY(), 0.0);
+                        }else if(boundary == Mesh::east)
+                        {
+                            pn.setValues(1.0, 0.0, 0.0);
+                            pp.setValues(U0.vectorData_x.mesh_->get_maxX(), 0.0, 0.0);
+                        }else if(boundary == Mesh::south)
+                        {
+                            pn.setValues(0.0, -1.0, 0.0);
+                            pp.setValues(0.0, U0.vectorData_x.mesh_->get_minY(), 0.0);
+                        }else if(boundary == Mesh::west)
+                        {
+                            pn.setValues(-1.0, 0.0, 0.0);
+                            pp.setValues(U0.vectorData_x.mesh_->get_minX(), 0.0, 0.0);
+                        }else if(boundary == Mesh::top)
+                        {
+                            pn.setValues(0.0, 0.0, 1.0);
+                            pp.setValues(0.0, 0.0, U0.vectorData_x.mesh_->domainHeight);
+                        }else if(boundary == Mesh::ground)
+                        {
+                            throw std::runtime_error("Boundary cannot be ground in transportSemiLagrangian::transportVector().");
+                        }else
+                        {
+                            throw std::runtime_error("Cannot determine boundary in transportSemiLagrangian::transportVector().");
+                        }
+
+                        Vector3D rv = Vector3D(U0.vectorData_x.mesh_->XORD(i,j,k)-xDeparture, U0.vectorData_x.mesh_->YORD(i,j,k)-yDeparture, U0.vectorData_x.mesh_->ZORD(i,j,k)-zDeparture);    //Ray (line) direction vector
+                        Vector3D rp = Vector3D(xDeparture, yDeparture, zDeparture);     //Point along the ray (line)
+
+                        Vector3D departure = intersectPoint(rv, rp, pn, pp);
+                        xDeparture = departure.get_x();
+                        yDeparture = departure.get_y();
+                        zDeparture = departure.get_z();
                     }
                     U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
                     U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);

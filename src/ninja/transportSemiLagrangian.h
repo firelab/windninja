@@ -35,6 +35,7 @@
 #include <iostream>
 #include "ninjaException.h"
 #include "wn_3dVectorField.h"
+#include "vector3D.h"
 
 #include "mesh.h"
 

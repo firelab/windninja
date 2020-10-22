@@ -92,6 +92,7 @@ set(NINJA_SOURCES air.cpp
                   surfaceVectorField.cpp
                   SurfProperties.cpp
                   transportSemiLagrangian.cpp
+                  vector3D.cpp
                   volVTK.cpp
                   WindNinjaInputs.cpp
                   windProfile.cpp
