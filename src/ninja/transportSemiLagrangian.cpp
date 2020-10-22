@@ -91,12 +91,22 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                 }else   //Else we're on an interior node and should back-trace a particle
                 {
                     element elem(U0.vectorData_x.mesh_);
-                    reducedDt = dt;
-                    do {
+                    //reducedDt = dt;
+                    //do {
+                    //    traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
+                    //    reducedDt /= 2.0;
+                    //}
+                    //while(!elem.isInMesh(xEnd, yEnd, zEnd));
+                    if(elem.isInMesh(xEnd, yEnd, zEnd))
+                    {
                         traceParticle(U0, reducedDt, i, j, k, xEnd, yEnd, zEnd);
-                        reducedDt /= 2.0;
+                    }else
+                    {
+                        Mesh::eMeshBoundary boundary;
+                        boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xEnd, yEnd, zEnd);
+                        //U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xStart, yStart, zStart,
+                        //                                                    xEnd, yEnd, zEnd, boundary);
                     }
-                    while(!elem.isInMesh(xEnd, yEnd, zEnd));
 
                     U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xEnd, yEnd, zEnd);
                     U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xEnd, yEnd, zEnd);

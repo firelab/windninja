@@ -58,25 +58,32 @@ class FiniteElementMethod
         void ComputeUVWField(WindNinjaInputs &input,
                             wn_3dVectorField &U);
         void Discretize();
+        void DiscretizeDiffusion();
         bool Solve(WindNinjaInputs &input, int MAXITS, int print_iters, double stop_tol);
         bool SolveMinres(WindNinjaInputs &input, int max_iter, int print_iters, double tol);
         void Write_A_and_b(int NUMNP);
         void SetupSKCompressedRowStorage();
         void Deallocate();
+        void SetCurrentDt(boost::posix_time::time_duration dt);
+        void SolveDiffusion(wn_3dVectorField &U);
 
         eEquationType equationType;
 
-        double *PHI;
+        double *PHI, *UxPHI, *UyPHI, *UzPHI;
         double *DIAG;
 
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
+        boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
 
     private:
         Mesh const mesh_; //reference to the mesh
         WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;
         double *RHS, *SK;
+        double *xRHS, *yRHS, *zRHS;
+        double *C; //transient term in discretized diffusion equation
+        double *dUxdt, *dUydt, *dUzdt; //dPHI/dt for diffusion equation
         int *row_ptr, *col_ind;
 
         void CalculateRcoefficients(element &elem, int j);

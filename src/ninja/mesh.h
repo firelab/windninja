@@ -53,6 +53,15 @@ public:
 	    fine
 	};
 
+	enum eMeshBoundary{
+	    north,
+	    east,
+	    south,
+            west,
+            top,
+            ground
+	};
+
 	int		NUMNP;	//number of nodal points
 	int		NUMEL;  //number of elements
 					//hexahedral elements are being used
@@ -99,23 +108,24 @@ public:
     void set_numVertLayers(long layers);
     void set_vertGrowth(double growth);
 
-	void buildFrom3dWeatherModel(const WindNinjaInputs &input,
+    void buildFrom3dWeatherModel(const WindNinjaInputs &input,
                                  const wn_3dArray &elevationArray,
                                  double dxWX, int nrowsWX, 
                                  int ncolsWX, int nlayersWX,
                                  double xOffset, double yOffset);		//build a mesh from a 3d weather model file
-	void buildStandardMesh(WindNinjaInputs& input);				//build the "standard" WindNinja mesh using domain top, numbers of cells, grow, etc...
+    void buildStandardMesh(WindNinjaInputs& input);				//build the "standard" WindNinja mesh using domain top, numbers of cells, grow, etc...
 
     bool checkInBounds(const Mesh &wnMesh, const int &i, const int &j);  // checks if WX mesh point is within WN x-y extent
+    eMeshBoundary getMeshBoundary(std::string boundary); 
+    eMeshBoundary getNearestMeshBoundaryFromOutsidePoint(double x, double y, double z);
 
 private:
-
-	double get_z(const int& i, const int& j, const int& k, const double& elev);
-	double get_aspect_ratio(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers);
-	double get_equiangle_skew(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers);
-	void get_cell_angles(double xa, double ya, double za, double xb, double yb, double zb, double xc, double yc, double zc, double xd, double yd, double zd, double &cell_max_angle, double &cell_min_angle);
-	double get_angle(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3);
-	double maxj(double value1, double value2);
+    double get_z(const int& i, const int& j, const int& k, const double& elev);
+    double get_aspect_ratio(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers);
+    double get_equiangle_skew(int NUMEL, int NUMNP, wn_3dArray& XORD, wn_3dArray& YORD, wn_3dArray& ZORD, int nrows, int ncols, int nlayers);
+    void get_cell_angles(double xa, double ya, double za, double xb, double yb, double zb, double xc, double yc, double zc, double xd, double yd, double zd, double &cell_max_angle, double &cell_min_angle);
+    double get_angle(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3);
+    double maxj(double value1, double value2);
 };
 
 #endif /* MESH_H */

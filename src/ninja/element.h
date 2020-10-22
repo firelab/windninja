@@ -81,6 +81,7 @@ class element
 		double *RJACV, *RJACVI;	//Jacobian matrix and its inverse
 		int node0, NPK, KNP;
 		double *QE, *S;
+                double *C; //transient term in the discretized diffusion equation 
 		double *DNDX, *DNDY, *DNDZ;
 		double *SFV;
 		double *QPTV;
@@ -91,7 +92,7 @@ class element
 		double WT2;
 		double WT3;
 		double WT4;
-		double HVJ, RX, RY, RZ, DV;
+		double HVJ, RX, RY, RZ, RC, DV;
 
 		#ifdef SCALAR
 		double BX, BY, BZ;    //coefficients for advection terms in scalar transport govering equation

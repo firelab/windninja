@@ -39,6 +39,7 @@ element::element(Mesh const* m)
 	SFV=NULL;
 	QPTV=NULL;
 	QE=NULL;
+	C=NULL;
 	S=NULL;
 	DNDX=NULL;
 	DNDY=NULL;
@@ -57,6 +58,7 @@ void element::initializeQuadPtArrays()
 	SFV=new double[4*mesh_->NNPE*NUMQPTV];   //SF array for the volume quadrature (either(0=N,1=dN/du,2=dN/dv,3=dN/dw),local nodal point,quadrature point)
 	QPTV=new double[NUMQPTV*3];        //QPTV stores the u, v, and w coordinates of the quadrature points
 	QE=new double[mesh_->NNPE];
+	C=new double[mesh_->NNPE];
 	S=new double[mesh_->NNPE*mesh_->NNPE];
 	DNDX=new double[mesh_->NNPE];
 	DNDY=new double[mesh_->NNPE];
@@ -236,6 +238,9 @@ void element::deallocate()
 
 	delete[] QE;
 	QE=NULL;
+
+	delete[] C;
+	C=NULL;
 
 	delete[] S;
 	S=NULL;
@@ -1305,54 +1310,55 @@ void element::interpLocalCoords_xy(const double &x,const double &y,
 	}while((dist/cellsize) > iterativeInterpTol);
 }
 
+//Given (x,y,z) and cell (i,j,k), this function returns the internal
+//"parent" local cell coordinates (u,v,w).
+//Iteration is used to accomplish this.
 void element::interpLocalCoords(const double &x,const double &y, const double &z,
 		         const int& cell_i, const int& cell_j, const int& cell_k,
-				 double& u, double &v, double& w)	//Given (x,y,z) and cell (i,j,k), this function returns the internal
-	                                                //    "parent" local cell coordinates (u,v,w).
-													//    Iteration is used to accomplish this.
+                         double& u, double &v, double& w)		                                                
 {
-	double dist, xDist, yDist, zDist, total;
-	//double zAverageBottom, zAverageTop;
-	//int node0;
-	double cellsize = mesh_->ZORD(cell_i, cell_j, cell_k+1) - mesh_->ZORD(cell_i, cell_j, cell_k);
-	double x_test, y_test, z_test;
+    double dist, xDist, yDist, zDist, total;
+    //double zAverageBottom, zAverageTop;
+    //int node0;
+    double cellsize = mesh_->ZORD(cell_i, cell_j, cell_k+1) - mesh_->ZORD(cell_i, cell_j, cell_k);
+    double x_test, y_test, z_test;
     double u_new, v_new, w_new;
-	
-	int elemNum = mesh_->get_elemNum(cell_i, cell_j, cell_k);
 
-	//node0 = get_node0(cell_i, cell_j, cell_k);
+    int elemNum = mesh_->get_elemNum(cell_i, cell_j, cell_k);
+
+    //node0 = get_node0(cell_i, cell_j, cell_k);
 
     //start with a "good" guess for u
-	dist = x - mesh_->XORD(cell_i, cell_j, cell_k);
-	total = mesh_->XORD(cell_i, cell_j+1, cell_k) - mesh_->XORD(cell_i, cell_j, cell_k);
-	u = 2.0*(dist/total) - 1.0;
+    dist = x - mesh_->XORD(cell_i, cell_j, cell_k);
+    total = mesh_->XORD(cell_i, cell_j+1, cell_k) - mesh_->XORD(cell_i, cell_j, cell_k);
+    u = 2.0*(dist/total) - 1.0;
 
     //start with a "good" guess for v
-	dist = y - mesh_->YORD(cell_i, cell_j, cell_k);
-	total = mesh_->YORD(cell_i+1, cell_j, cell_k) - mesh_->YORD(cell_i, cell_j, cell_k);
-	v = 2.0*(dist/total) - 1.0;	
+    dist = y - mesh_->YORD(cell_i, cell_j, cell_k);
+    total = mesh_->YORD(cell_i+1, cell_j, cell_k) - mesh_->YORD(cell_i, cell_j, cell_k);
+    v = 2.0*(dist/total) - 1.0;	
 
     //start with a "good" guess for w, which is just in the middle here
-	//zAverageBottom = (mesh_->ZORD(cell_i-1, cell_j-1, cell_k) + mesh_->ZORD(cell_i-1, cell_j, cell_k) + mesh_->ZORD(cell_i, cell_j-1, cell_k) + mesh_->ZORD(cell_i, cell_j, cell_k)) / 4.0;
-	//zAverageTop = (mesh_->ZORD(cell_i-1, cell_j-1, cell_k+1) + mesh_->ZORD(cell_i-1, cell_j, cell_k+1) + mesh_->ZORD(cell_i, cell_j-1, cell_k+1) + mesh_->ZORD(cell_i, cell_j, cell_k+1)) / 4.0; 
-	//dist = z - zAverageBottom;
-	//if(dist < 0.0)
-	//	dist = 0.01;
-	//total = zAverageTop - zAverageBottom;
-	//w = 2.0*(dist/total) - 1.0;
+    //zAverageBottom = (mesh_->ZORD(cell_i-1, cell_j-1, cell_k) + mesh_->ZORD(cell_i-1, cell_j, cell_k) + mesh_->ZORD(cell_i, cell_j-1, cell_k) + mesh_->ZORD(cell_i, cell_j, cell_k)) / 4.0;
+    //zAverageTop = (mesh_->ZORD(cell_i-1, cell_j-1, cell_k+1) + mesh_->ZORD(cell_i-1, cell_j, cell_k+1) + mesh_->ZORD(cell_i, cell_j-1, cell_k+1) + mesh_->ZORD(cell_i, cell_j, cell_k+1)) / 4.0; 
+    //dist = z - zAverageBottom;
+    //if(dist < 0.0)
+    //	dist = 0.01;
+    //total = zAverageTop - zAverageBottom;
+    //w = 2.0*(dist/total) - 1.0;
     w = 0.0;
 
     u_new = u;
     v_new = v;
     w_new = w;
 
-	do{
+    do{
         u = u_new;
         v = v_new;
         w = w_new;
 
         //compute test x,y,z based on current u,v,w
-		computeJacobianEtc(elemNum, u, v, w, x_test, y_test, z_test);
+        computeJacobianEtc(elemNum, u, v, w, x_test, y_test, z_test);
         
         //compute new u,v,w which may be needed for the next iteration if we're not close enough yet
         u_new = u - (RJACVI[0*3+0]*(x_test-x) + RJACVI[0*3+1]*(y_test-y) + RJACVI[0*3+2]*(z_test-z));
@@ -1363,10 +1369,9 @@ void element::interpLocalCoords(const double &x,const double &y, const double &z
         xDist = x-x_test;
         yDist = y-y_test;
         zDist = z-z_test;
-		dist = std::sqrt((xDist)*(xDist) + (yDist)*(yDist) + (zDist)*(zDist));
+        dist = std::sqrt((xDist)*(xDist) + (yDist)*(yDist) + (zDist)*(zDist));
 
-	}while((dist/cellsize) > iterativeInterpTol);
-	
+    }while((dist/cellsize) > iterativeInterpTol);
 }
 
 void element::get_xyz(const int &elementNum, const double &u, const double &v, const double &w, double &x, double &y, double &z)
