@@ -880,3 +880,102 @@ bool Mesh::checkInBounds(const Mesh &wnMesh, const int &i, const int &j)
         return false;
     }
 }
+
+/**
+* @brief Finds nearest mesh boundary to a point outside of the mesh.
+* Right now, this function only checks the north, east, south, west, and top boundaries.
+* The ground boundary is not checked.
+* @param x x position of point.
+* @param y y position of point.
+* @param z z position of point.
+* @return eMeshBoundary.
+*
+*/
+Mesh::eMeshBoundary Mesh::getNearestMeshBoundaryFromOutsidePoint(double x, double y, double z)
+{
+    double xDiffWest, xDiffEast, yDiffNorth, yDiffSouth, zDiff;
+    xDiffWest = -9999.;
+    xDiffEast = -9999.;
+    yDiffNorth = -9999.;
+    yDiffSouth = -9999.;
+    zDiff= -9999.;
+    double minDiff = -9999.;
+
+    //figure out which difference is the smallest and return that boundary
+    if(x < get_minX()){ //outside west boundary
+        xDiffWest = x - get_minX();
+        minDiff = abs(xDiffWest);
+    }
+    else if(x > get_maxX()){ //outside east boundary
+        xDiffEast = get_maxX() - x;
+        minDiff = abs(xDiffWest);
+    }
+    if(y > get_maxY()){ //outside north boundary
+        yDiffNorth = y - get_maxY();
+        if(abs(yDiffNorth) < minDiff){
+            minDiff = abs(yDiffNorth);
+        }
+    }
+    else if(y < get_minY()){ //outside south boundary
+        yDiffSouth = get_minY() - y;
+        if(abs(yDiffSouth) < minDiff){
+            minDiff = abs(yDiffSouth);
+        }
+    }
+    if(z < domainHeight){ //outside top boundary
+        zDiff = domainHeight - z;
+        if(abs(zDiff) < minDiff){
+                minDiff = abs(zDiff);
+        }
+    }
+    else{
+        throw std::logic_error("Error in \"getNearestMeshBoundaryFromOutside()\". Point is not outside of the mesh.");
+    }
+
+    if(minDiff == abs(xDiffEast)){
+        return east;
+    }
+    else if(minDiff == abs(xDiffWest)){
+        return west;
+    }    
+    else if(minDiff == abs(yDiffNorth)){
+        return north;
+    }
+    else if(minDiff == abs(yDiffSouth)){
+        return south;
+    }
+    else if(minDiff == abs(zDiff)){
+        return top;
+    }
+}
+
+Mesh::eMeshBoundary Mesh::getMeshBoundary(std::string boundary)
+{
+    if(boundary == "west"){
+        return west;
+    }
+    else if(boundary == "east"){
+        return east;
+    }
+    else if(boundary == "north"){
+        return north;
+    }
+    else if(boundary == "south"){
+        return south;
+    }
+    else if(boundary == "top"){
+        return top;
+    }
+    else if(boundary == "ground"){
+        return ground;
+    }
+    else{
+        throw std::runtime_error(std::string("Cannot determine boundary in Mesh::getMeshBoundary()."));
+    }
+}
+
+Mesh::eMeshBoundary Mesh::getTraceIntersectionOnBoundary(double xStart, double yStart, double zStart,
+       double xEnd, double yEnd, double zEnd, eMeshBoundary boundary)
+{
+
+}

@@ -228,8 +228,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
-        //currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        currentDt = boost::posix_time::seconds(1);
+        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+        //currentDt = boost::posix_time::seconds(1);
         while(iteration <= 1000)
         {
             iteration += 1;
@@ -274,14 +274,17 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */
             /*  ----------------------------------------*/
-            checkCancel();
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
-            //resets mesh, input, and U0_ in finiteElementMethod
-            diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
-            //diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
-            diffusionEquation.SetCurrentDt(currentDt);
-            diffusionEquation.DiscretizeDiffusion();
-            diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
+            //checkCancel();
+            //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
+            ////resets mesh, input, and U0_ in finiteElementMethod
+            //diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
+            ////diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
+            //diffusionEquation.SetCurrentDt(currentDt);
+            //diffusionEquation.DiscretizeDiffusion();
+            //diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
+           
+            //FOR TESTING WITHOUT DIFFUSION ONLY, REMOVE WHEN DIFFUSION IS TURNED ON 
+            U=U1;
 
             /*  ----------------------------------------*/
             /*  PROJECT                                 */

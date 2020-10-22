@@ -1903,12 +1903,12 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
                     dUydt[NPK] = yRHS[NPK]/C[NPK];
                     dUzdt[NPK] = zRHS[NPK]/C[NPK];
 
-                    //U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    //U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    //U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    U0_.vectorData_x(NPK) += dUxdt[NPK]*0.1;
-                    U0_.vectorData_y(NPK) += dUydt[NPK]*0.1;
-                    U0_.vectorData_z(NPK) += dUzdt[NPK]*0.1;
+                    U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                    //U0_.vectorData_x(NPK) += dUxdt[NPK]*0.1;
+                    //U0_.vectorData_y(NPK) += dUydt[NPK]*0.1;
+                    //U0_.vectorData_z(NPK) += dUzdt[NPK]*0.1;
 
                     U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
                     U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
