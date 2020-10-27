@@ -28,6 +28,8 @@
  *****************************************************************************/
 #include "vector3D.h"
 
+
+
 /**
  * \brief Function used to compute intersection point of a plane and a line.
  *
@@ -40,10 +42,13 @@
  *
  * \return A Vector3D containing the x,y,z location of the intersection point.
  */
-Vector3D Vector3D::intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint) {
+void Vector3D::intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint) {
     Vector3D diff = rayPoint - planePoint;
     double prod1 = diff.dot(planeNormal);
     double prod2 = rayVector.dot(planeNormal);
     double prod3 = prod1 / prod2;
-    return rayPoint - rayVector * prod3;
+    diff = rayPoint - rayVector * prod3;    //reuse diff
+    x = diff.get_x();
+    y = diff.get_y();
+    z = diff.get_z();
 }

@@ -140,7 +140,8 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                         Vector3D rv = Vector3D(U0.vectorData_x.mesh_->XORD(i,j,k)-xDeparture, U0.vectorData_x.mesh_->YORD(i,j,k)-yDeparture, U0.vectorData_x.mesh_->ZORD(i,j,k)-zDeparture);    //Ray (line) direction vector
                         Vector3D rp = Vector3D(xDeparture, yDeparture, zDeparture);     //Point along the ray (line)
 
-                        Vector3D departure = intersectPoint(rv, rp, pn, pp);
+                        Vector3D departure;
+                        departure.intersectPoint(rv, rp, pn, pp);
                         xDeparture = departure.get_x();
                         yDeparture = departure.get_y();
                         zDeparture = departure.get_z();
