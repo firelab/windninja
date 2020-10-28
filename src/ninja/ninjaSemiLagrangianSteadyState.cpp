@@ -268,8 +268,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
-            transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
             cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
+            transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
 
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */

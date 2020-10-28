@@ -70,8 +70,9 @@ TransportSemiLagrangian::~TransportSemiLagrangian()      //destructor
  */
 void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dVectorField &U1, double dt)
 {
-    double xDeparture, yDeparture, zDeparture, reducedDt;
+    double xDeparture, yDeparture, zDeparture;
     dt = -dt;   //Set to negative to back trace
+    cout<<"dt = "<<dt<<endl;
     element elem(U0.vectorData_x.mesh_);
     Mesh::eMeshBoundary boundary;
     for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
@@ -92,16 +93,11 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                     U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
                 }else   //Else we're on an interior node and should back-trace a particle
                 {
-                    //reducedDt = dt;
-                    //do {
-                    //    traceParticle(U0, reducedDt, i, j, k, xDeparture, yDeparture, zDeparture);
-                    //    reducedDt /= 2.0;
-                    //}
-                    //while(!elem.isInMesh(xDeparture, yDeparture, zDeparture));
-                    traceParticle(U0, reducedDt, i, j, k, xDeparture, yDeparture, zDeparture);
+                    traceParticle(U0, dt, i, j, k, xDeparture, yDeparture, zDeparture);
                     if(!elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
                     {
                         boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
+                        cout<<"xDeparture, yDeparture, zDeparture = "<<xDeparture<<", "<<yDeparture<<", "<<zDeparture<<endl;
                         //U0.vectorData_x.mesh_->getTraceIntersectionOnBoundary(xDeparture, yDeparture, zDeparture,
                         //                                                    U0.vectorData_x.mesh_->XORD(i,j,k), U0.vectorData_x.mesh_->YORD(i,j,k), U0.vectorData_x.mesh_->ZORD(i,j,k), boundary);
 

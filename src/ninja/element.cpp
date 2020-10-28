@@ -915,8 +915,11 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 		throw std::range_error("Range error in element::get_uvw()");
 	
 	interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
+        cout<<"x, y, z = "<<x<<", "<<y<<", "<<z<<endl;
+        cout<<"u, v, w = "<<u<<", "<<v<<", "<<w<<endl;
+        cout<<"cell_i, j, k = "<<cell_i<<", "<<cell_j<<", "<<cell_k<<endl;
 	
-    if(u > 1.0)
+    if(u >= 1.0+epsilon)
     {
         do{
             cell_j++;
@@ -930,9 +933,9 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
             interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(u > 1.0);
+        }while(u >= 1.0+epsilon);
 	}
-	if(v > 1.0)
+	if(v > 1.0+epsilon)
 	{
         do{
 		    cell_i++;
@@ -946,9 +949,9 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(v > 1.0);
+        }while(v > 1.0+epsilon);
 	}
-	if(w > 1.0)
+	if(w > 1.0+epsilon)
 	{
         do{
 		    cell_k++;
@@ -962,14 +965,16 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(w > 1.0);
+        }while(w > 1.0+epsilon);
 	}
-	if(u < -1.0)
+	if(u < -1.0-epsilon)
 	{
         do{
 		    cell_j--;
             if(cell_j<0){
                 if(u < -1.0-epsilon){
+                    cout<<"u = "<<u<<endl;
+                    cout<<"HERE......"<<endl;
                     throw std::range_error("Range error in element::get_uvw()");
                 }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
                     cell_j++;
@@ -978,9 +983,9 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(u < -1.0);
+        }while(u < -1.0-epsilon);
 	}
-	if(v < -1.0)
+	if(v < -1.0-epsilon)
 	{
         do{
 		    cell_i--;
@@ -994,7 +999,7 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(v < -1.0);
+        }while(v < -1.0-epsilon);
 	}
 	if(w < -1.0)
 	{
@@ -1010,7 +1015,7 @@ void element::get_uvw(double const& x,double const& y, double const& z,
                 }
             }
 		    interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        }while(w < -1.0);
+        }while(w < -1.0-epsilon);
 	}
 }
 
