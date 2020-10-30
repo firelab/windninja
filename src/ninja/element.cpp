@@ -300,7 +300,6 @@ void element::computeJacobianEtc(int &elementNum, const double &u, const double 
 
 	//Calculate the determinant of the 3x3 Jacobian.
 	DETJ=RJACV[0*3+0]*(RJACV[1*3+1]*RJACV[2*3+2]-RJACV[1*3+2]*RJACV[2*3+1])-RJACV[0*3+1]*(RJACV[1*3+0]*RJACV[2*3+2]-RJACV[1*3+2]*RJACV[2*3+0])+RJACV[0*3+2]*(RJACV[1*3+0]*RJACV[2*3+1]-RJACV[1*3+1]*RJACV[2*3+0]);
-	//cout<<"DETJ = " <<DETJ<<endl;
 	if(DETJ<=0)
 		throw std::runtime_error("Volume Jacobian 1 is zero or negative.");
 
@@ -915,9 +914,6 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 		throw std::range_error("Range error in element::get_uvw()");
 	
 	interpLocalCoords(x, y, z, cell_i, cell_j, cell_k, u, v, w);
-        cout<<"x, y, z = "<<x<<", "<<y<<", "<<z<<endl;
-        cout<<"u, v, w = "<<u<<", "<<v<<", "<<w<<endl;
-        cout<<"cell_i, j, k = "<<cell_i<<", "<<cell_j<<", "<<cell_k<<endl;
 	
     if(u >= 1.0+epsilon)
     {
@@ -973,8 +969,6 @@ void element::get_uvw(double const& x,double const& y, double const& z,
 		    cell_j--;
             if(cell_j<0){
                 if(u < -1.0-epsilon){
-                    cout<<"u = "<<u<<endl;
-                    cout<<"HERE......"<<endl;
                     throw std::range_error("Range error in element::get_uvw()");
                 }else{  //handle case where we are outside the domain ( -1.0 < (u,v, or w) < 1.0 ) but very close.  It can happen that we should actually be in the domain (or exactly on the boundary), but since u,v,w are approximated, they incorrectly indicate we are out.
                     cell_j++;

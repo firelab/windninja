@@ -1723,22 +1723,44 @@ void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
         }
     } //end parallel section
 
-    // testing
-    /*std::string filename;
-    AsciiGrid<double> testGrid;
-    testGrid.set_headerData(input.dem);
-    testGrid.set_noDataValue(-9999.0);
+    //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+//    std::string filename = "test_ground.asc";
+//    AsciiGrid<double> testGrid;
+//    testGrid.set_headerData(input.dem);
+//    testGrid.set_noDataValue(-9999.0);
 
-    for(int k = 0; k < mesh_.nlayers; k++){
-        for(int i = 0; i <mesh_.nrows; i++){
-            for(int j = 0; j < mesh_.ncols; j++ ){
-                testGrid(i,j) = u(i,j,k);
-                filename = "u" + boost::lexical_cast<std::string>(k);
-            }
+//    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+//    {
+//        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+//        {
+//            testGrid(i,j) = U.vectorData_x(i,j,0);
+//        }
+//    }
+//    testGrid.write_Grid(filename.c_str(), 2);
+//    testGrid.deallocate();
+
+
+//    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+//    {
+//        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+//        {
+//            if(U.vectorData_x(i,j,0)>1.0 || U.vectorData_y(i,j,0)>1.0 || U.vectorData_z(i,j,0)>1.0)
+//            {
+//                cout << "(" << i << ", " << j << ")\t=\t" << "(" << U.vectorData_x(i,j,0) << ", " <<  U.vectorData_y(i,j,0) << ", " << U.vectorData_z(i,j,0) << std::endl;
+//            }
+//        }
+//    }
+
+    //set ground to zero
+    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+    {
+        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+        {
+            U.vectorData_x(i,j,0) = 0.0;
+            U.vectorData_y(i,j,0) = 0.0;
+            U.vectorData_z(i,j,0) = 0.0;
         }
-        testGrid.write_Grid(filename.c_str(), 2);
     }
-    testGrid.deallocate();*/
 }
 
 void FiniteElementMethod::CalculateHterm(element &elem, int i)

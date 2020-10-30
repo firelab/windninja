@@ -111,11 +111,14 @@ void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
         {
             for(int j=0;j<f.vectorData_x.mesh_->ncols;j++)
             {
-                if(isInlet(i,j,k))
+                if(f.isInlet(i,j,k))
                 {
-                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
-                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
-                    vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
+//                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
+//                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
+//                    vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
+                    vectorData_x(i,j,k) = 5.*k;
+                    vectorData_y(i,j,k) = 0.0;
+                    vectorData_z(i,j,k) = 0.0;
                 }
             }
         }

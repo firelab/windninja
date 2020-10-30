@@ -884,7 +884,9 @@ bool Mesh::checkInBounds(const Mesh &wnMesh, const int &i, const int &j)
 /**
 * @brief Finds nearest mesh boundary to a point outside of the mesh.
 * Right now, this function only checks the north, east, south, west, and top boundaries.
-* The ground boundary is not checked.
+* The ground boundary is not checked explicitly. It is assumed that this function is only called
+* for points outside the domain, so by process of elimination we determine it is outside the ground.
+* If the point is outside the ground boundary and another boundary, the other boundary is always returned.
 * @param x x position of point.
 * @param y y position of point.
 * @param z z position of point.
@@ -894,21 +896,23 @@ bool Mesh::checkInBounds(const Mesh &wnMesh, const int &i, const int &j)
 Mesh::eMeshBoundary Mesh::getNearestMeshBoundaryFromOutsidePoint(double x, double y, double z)
 {
     double xDiffWest, xDiffEast, yDiffNorth, yDiffSouth, zDiff;
-    xDiffWest = -9999.;
-    xDiffEast = -9999.;
-    yDiffNorth = -9999.;
-    yDiffSouth = -9999.;
-    zDiff= -9999.;
-    double minDiff = -9999.;
+    xDiffWest = -1.;    //Initialize all to negative number as a flag to determine the number has been set below (or not).
+    xDiffEast = -1.;    //   All valid numbers set below are positive distances.
+    yDiffNorth = -1.;
+    yDiffSouth = -1.;
+    zDiff= -1.;
+    double minDiff = -1.;
 
     //figure out which difference is the smallest and return that boundary
     if(x < get_minX()){ //outside west boundary
-        xDiffWest = x - get_minX();
+        xDiffWest = get_minX() - x;
         minDiff = abs(xDiffWest);
     }
-    else if(x > get_maxX()){ //outside east boundary
-        xDiffEast = get_maxX() - x;
-        minDiff = abs(xDiffWest);
+    if(x > get_maxX()){ //outside east boundary
+        xDiffEast = x - get_maxX();
+        if(abs(xDiffEast) < minDiff){
+            minDiff = abs(xDiffEast);
+        }
     }
     if(y > get_maxY()){ //outside north boundary
         yDiffNorth = y - get_maxY();
@@ -916,21 +920,19 @@ Mesh::eMeshBoundary Mesh::getNearestMeshBoundaryFromOutsidePoint(double x, doubl
             minDiff = abs(yDiffNorth);
         }
     }
-    else if(y < get_minY()){ //outside south boundary
+    if(y < get_minY()){ //outside south boundary
         yDiffSouth = get_minY() - y;
         if(abs(yDiffSouth) < minDiff){
             minDiff = abs(yDiffSouth);
         }
     }
-    if(z < domainHeight){ //outside top boundary
-        zDiff = domainHeight - z;
+    if(z > domainHeight){ //outside top boundary
+        zDiff = z - domainHeight;
         if(abs(zDiff) < minDiff){
-                minDiff = abs(zDiff);
+            minDiff = abs(zDiff);
         }
     }
-    else{
-        throw std::logic_error("Error in \"getNearestMeshBoundaryFromOutside()\". Point is not outside of the mesh.");
-    }
+
 
     if(minDiff == abs(xDiffEast)){
         return east;
@@ -946,6 +948,8 @@ Mesh::eMeshBoundary Mesh::getNearestMeshBoundaryFromOutsidePoint(double x, doubl
     }
     else if(minDiff == abs(zDiff)){
         return top;
+    }else{  //By process of elimination, it must be the ground.
+        return ground;
     }
 }
 
