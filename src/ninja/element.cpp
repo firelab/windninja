@@ -29,6 +29,25 @@
 
 #include "element.h"
 
+element::element()
+{
+    mesh_ = NULL;
+
+    NUMQPTV=1;               //number of quadrature points used in the volume quadrature (can be 1, 8, or 27)
+    iterativeInterpTol = 1E-6;
+
+    SFV=NULL;
+    QPTV=NULL;
+    QE=NULL;
+    C=NULL;
+    S=NULL;
+    DNDX=NULL;
+    DNDY=NULL;
+    DNDZ=NULL;
+    RJACV=NULL;
+    RJACVI=NULL;
+}
+
 element::element(Mesh const* m)
 {
 	mesh_ = m;
@@ -259,6 +278,11 @@ void element::deallocate()
 
 	delete[] RJACVI;
 	RJACVI=NULL;
+}
+
+void element::setMeshPointer(Mesh const* m)
+{
+    mesh_ = m;
 }
 
 void element::computeJacobianEtc(int &elementNum, const double &u, const double &v, const double &w, double &x, double &y, double &z)

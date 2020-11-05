@@ -291,8 +291,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
-//            if(iteration >= 999)   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//            {
+            if(iteration > 0)   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            {
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
             //resets mesh, input, and U0 in finiteElementMethod
@@ -314,7 +314,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
             //compute uvw field from phi field
             conservationOfMassEquation.ComputeUVWField(input, U);
-//            }   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            }   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */
             /*  ----------------------------------------*/

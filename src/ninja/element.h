@@ -37,7 +37,8 @@ class Mesh;
 class element
 {
 	public:
-		element(Mesh const* m);						 //Default constructor
+        element();
+        element(Mesh const* m);						 //constructor
 		~element();                              // Destructor
 
 
@@ -46,6 +47,7 @@ class element
 
 		void deallocate();
 
+        void setMeshPointer(Mesh const* m);
 		void initializeQuadPtArrays();
 
 		void get_xyz(const int &elementNum, const double &u, const double &v, const double &w, double &x, double &y, double &z);
