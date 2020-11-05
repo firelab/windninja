@@ -219,6 +219,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         conservationOfMassEquation.ComputeUVWField(input, U);
         //use output from first projection step for copying inlet nodes later on
         U0=U;
+        volVTK VTK2(U0, mesh.XORD, mesh.YORD, mesh.ZORD, 
+        input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "U0.vtk");
 
         //copy U field to new U1 field which will store the new velocity from the advection step
         wn_3dVectorField U1(U);
@@ -289,8 +291,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
-            if(iteration<0)   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            {
+//            if(iteration >= 999)   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//            {
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
             //resets mesh, input, and U0 in finiteElementMethod
@@ -312,7 +314,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
             //compute uvw field from phi field
             conservationOfMassEquation.ComputeUVWField(input, U);
-            }   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//            }   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */
             /*  ----------------------------------------*/

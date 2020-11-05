@@ -113,12 +113,15 @@ void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
             {
                 if(f.isInlet(i,j,k))
                 {
-//                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
-//                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
-//                    vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
-                    vectorData_x(i,j,k) = 5.*k;
-                    vectorData_y(i,j,k) = 0.0;
+                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
+                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
+                    //vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
                     vectorData_z(i,j,k) = 0.0;
+
+                    //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+                    //vectorData_x(i,j,k) = 5.*k;
+                    //vectorData_y(i,j,k) = 0.0;
+                    //vectorData_z(i,j,k) = 0.0;
                 }
             }
         }

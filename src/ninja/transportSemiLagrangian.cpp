@@ -75,7 +75,7 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
     element elem(U0.vectorData_x.mesh_);
     Mesh::eMeshBoundary boundary;
 
-#pragma omp parallel for private(xDeparture, yDeparture, zDeparture, elem, boundary)
+//#pragma omp parallel for private(xDeparture, yDeparture, zDeparture, elem, boundary)
     for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
     {
         for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
