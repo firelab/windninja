@@ -73,87 +73,89 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
     dt = -dt;   //Set to negative to back trace
 
 #pragma omp parallel
-    double xDeparture, yDeparture, zDeparture;
-    element elem(U0.vectorData_x.mesh_);
-    Mesh::eMeshBoundary boundary;
+    {
+        double xDeparture, yDeparture, zDeparture;
+        element elem(U0.vectorData_x.mesh_);
+        Mesh::eMeshBoundary boundary;
 
 #pragma omp for
-    for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
-    {
-        for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
+        for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
         {
-            for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
+            for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
             {
-                if(U0.isOnGround(i,j,k))  //If this node is on the ground, set to zero velocity for no-slip boundary
+                for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
                 {
-                    U1.vectorData_x(i, j, k) = 0.0;
-                    U1.vectorData_y(i, j, k) = 0.0;
-                    U1.vectorData_z(i, j, k) = 0.0;
-                }else if(U0.isInlet(i,j,k))   //If this is an inlet boundary node, don't traceParticle, just set to boundary value
-                {
-                    U1.vectorData_x(i, j, k) = U0.vectorData_x(i,j,k);
-                    U1.vectorData_y(i, j, k) = U0.vectorData_y(i,j,k);
-                    U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
-                }else   //Else we're on an interior node and should back-trace a particle
-                {
-                    traceParticle(U0, dt, i, j, k, xDeparture, yDeparture, zDeparture);
-                    if(elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
+                    if(U0.isOnGround(i,j,k))  //If this node is on the ground, set to zero velocity for no-slip boundary
                     {
-                        U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
-                        U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
-                        U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
-                    }else{  //Else we have tracked out of the domain.
-                        boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
-
-                        if(boundary == Mesh::ground)    //If we backtracked out the ground, set the velocity to zero
+                        U1.vectorData_x(i, j, k) = 0.0;
+                        U1.vectorData_y(i, j, k) = 0.0;
+                        U1.vectorData_z(i, j, k) = 0.0;
+                    }else if(U0.isInlet(i,j,k))   //If this is an inlet boundary node, don't traceParticle, just set to boundary value
+                    {
+                        U1.vectorData_x(i, j, k) = U0.vectorData_x(i,j,k);
+                        U1.vectorData_y(i, j, k) = U0.vectorData_y(i,j,k);
+                        U1.vectorData_z(i, j, k) = U0.vectorData_z(i,j,k);
+                    }else   //Else we're on an interior node and should back-trace a particle
+                    {
+                        traceParticle(U0, dt, i, j, k, xDeparture, yDeparture, zDeparture);
+                        if(elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
                         {
-                            U1.vectorData_x(i, j, k) = 0.0;
-                            U1.vectorData_y(i, j, k) = 0.0;
-                            U1.vectorData_z(i, j, k) = 0.0;
-                        }else{   //Else we backtracked out a side or top boundary, need to determine which one and reset backtracked location to a point on the boundary plane for interpolation.
-                            //departure = Vector3D::intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint);
-                            Vector3D pn;    //Plane normal vector
-                            Vector3D pp;    //Point on the plane
-                            if(boundary == Mesh::north)
-                            {
-                                pn.setValues(0.0, 1.0, 0.0);
-                                pp.setValues(0.0, U0.vectorData_x.mesh_->get_maxY(), 0.0);
-                            }else if(boundary == Mesh::east)
-                            {
-                                pn.setValues(1.0, 0.0, 0.0);
-                                pp.setValues(U0.vectorData_x.mesh_->get_maxX(), 0.0, 0.0);
-                            }else if(boundary == Mesh::south)
-                            {
-                                pn.setValues(0.0, -1.0, 0.0);
-                                pp.setValues(0.0, U0.vectorData_x.mesh_->get_minY(), 0.0);
-                            }else if(boundary == Mesh::west)
-                            {
-                                pn.setValues(-1.0, 0.0, 0.0);
-                                pp.setValues(U0.vectorData_x.mesh_->get_minX(), 0.0, 0.0);
-                            }else if(boundary == Mesh::top)
-                            {
-                                pn.setValues(0.0, 0.0, 1.0);
-                                pp.setValues(0.0, 0.0, U0.vectorData_x.mesh_->domainHeight);
-                            }else if(boundary == Mesh::ground)
-                            {
-                                throw std::runtime_error("Boundary cannot be ground in transportSemiLagrangian::transportVector().");
-                            }else
-                            {
-                                throw std::runtime_error("Cannot determine boundary in transportSemiLagrangian::transportVector().");
-                            }
-
-                            Vector3D rv = Vector3D(U0.vectorData_x.mesh_->XORD(i,j,k)-xDeparture, U0.vectorData_x.mesh_->YORD(i,j,k)-yDeparture, U0.vectorData_x.mesh_->ZORD(i,j,k)-zDeparture);    //Ray (line) direction vector
-                            Vector3D rp = Vector3D(xDeparture, yDeparture, zDeparture);     //Point along the ray (line)
-
-                            Vector3D departure;
-                            departure.intersectPoint(rv, rp, pn, pp);
-                            xDeparture = departure.get_x();
-                            yDeparture = departure.get_y();
-                            zDeparture = departure.get_z();
-
                             U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
                             U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
                             U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                        }else{  //Else we have tracked out of the domain.
+                            boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
+
+                            if(boundary == Mesh::ground)    //If we backtracked out the ground, set the velocity to zero
+                            {
+                                U1.vectorData_x(i, j, k) = 0.0;
+                                U1.vectorData_y(i, j, k) = 0.0;
+                                U1.vectorData_z(i, j, k) = 0.0;
+                            }else{   //Else we backtracked out a side or top boundary, need to determine which one and reset backtracked location to a point on the boundary plane for interpolation.
+                                //departure = Vector3D::intersectPoint(Vector3D rayVector, Vector3D rayPoint, Vector3D planeNormal, Vector3D planePoint);
+                                Vector3D pn;    //Plane normal vector
+                                Vector3D pp;    //Point on the plane
+                                if(boundary == Mesh::north)
+                                {
+                                    pn.setValues(0.0, 1.0, 0.0);
+                                    pp.setValues(0.0, U0.vectorData_x.mesh_->get_maxY(), 0.0);
+                                }else if(boundary == Mesh::east)
+                                {
+                                    pn.setValues(1.0, 0.0, 0.0);
+                                    pp.setValues(U0.vectorData_x.mesh_->get_maxX(), 0.0, 0.0);
+                                }else if(boundary == Mesh::south)
+                                {
+                                    pn.setValues(0.0, -1.0, 0.0);
+                                    pp.setValues(0.0, U0.vectorData_x.mesh_->get_minY(), 0.0);
+                                }else if(boundary == Mesh::west)
+                                {
+                                    pn.setValues(-1.0, 0.0, 0.0);
+                                    pp.setValues(U0.vectorData_x.mesh_->get_minX(), 0.0, 0.0);
+                                }else if(boundary == Mesh::top)
+                                {
+                                    pn.setValues(0.0, 0.0, 1.0);
+                                    pp.setValues(0.0, 0.0, U0.vectorData_x.mesh_->domainHeight);
+                                }else if(boundary == Mesh::ground)
+                                {
+                                    throw std::runtime_error("Boundary cannot be ground in transportSemiLagrangian::transportVector().");
+                                }else
+                                {
+                                    throw std::runtime_error("Cannot determine boundary in transportSemiLagrangian::transportVector().");
+                                }
+
+                                Vector3D rv = Vector3D(U0.vectorData_x.mesh_->XORD(i,j,k)-xDeparture, U0.vectorData_x.mesh_->YORD(i,j,k)-yDeparture, U0.vectorData_x.mesh_->ZORD(i,j,k)-zDeparture);    //Ray (line) direction vector
+                                Vector3D rp = Vector3D(xDeparture, yDeparture, zDeparture);     //Point along the ray (line)
+
+                                Vector3D departure;
+                                departure.intersectPoint(rv, rp, pn, pp);
+                                xDeparture = departure.get_x();
+                                yDeparture = departure.get_y();
+                                zDeparture = departure.get_z();
+
+                                U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
+                                U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
+                                U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                            }
                         }
                     }
                 }

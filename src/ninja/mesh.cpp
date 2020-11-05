@@ -829,6 +829,9 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
         domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + input.dem.get_maxValue();
+
+    //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
+    domainHeight *= 3.0;
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)
