@@ -102,6 +102,20 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
 
                 profile.inputWindSpeed = 0.0;
                 U0.vectorData_z(i, j, k) += profile.getWindSpeed();
+
+//                //The testing code below was used on flat.tif for testing the semilagrangian steady state solver.
+                  //    This adds a blob of high velocity in the middle of the domain.
+
+//                if(i>20 && i<30 && j>20 && j<30 && k<10)
+//                {
+//                    U0.vectorData_x(i, j, k) += 100.0;
+//                }else
+//                {
+//                    U0.vectorData_x(i, j, k) += 5.0;
+//                }
+
+//                U0.vectorData_y(i, j, k) += 0.0;
+//                U0.vectorData_z(i, j, k) += 0.0;
             }
         }
     }

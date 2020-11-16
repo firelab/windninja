@@ -47,11 +47,11 @@ Mesh::Mesh()
     domainHeightUnits = lengthUnits::meters;
     domainHeight = -1.0;
     numVertLayers = -1;
-    vertGrowth = 1.3;
+    vertGrowth = 1.001;
 
     meshResChoice = coarse;
     targetNumHorizCells = -1;
-    maxAspectRatio = 400;
+    maxAspectRatio = 2;
 
     coarseTargetCells=4000; //IF THESE ARE CHANGED, make sure to change the ones in the windninja GUI
     mediumTargetCells=10000;
@@ -829,9 +829,6 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
         domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + input.dem.get_maxValue();
-
-    //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-    domainHeight *= 3.0;
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)
