@@ -168,6 +168,7 @@ private:
     void WriteOutputFiles();
     void SetOutputResolution();
     void SetOutputFilenames();
+    bool CheckIfOutputWindHeightIsResolved();
 
     const char *pszVrtMem;
     const char *pszGridFilename;

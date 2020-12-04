@@ -106,6 +106,8 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     //set average direction
     input.inputDirection = meanDir;
 
+    initializeBoundaryLayer(input);
+
     cloud = cloudCoverGrid;
 }
 #endif //NINJAFOAM

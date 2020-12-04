@@ -135,6 +135,17 @@ bool NinjaFoam::simulate_wind()
     checkInputs();
 
     /* 
+     * if it's a domainAverageInitialization, set the boundary layer information
+     * which is needed for interpolation of the output wind to the user-requested
+     * output height
+     */
+    if(input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag)
+    {
+        init.reset(initializationFactory::makeInitialization(input));
+        init->ninjaFoamInitializeFields(input, CloudGrid);
+    }
+
+    /* 
      * if it's a wxModelInitialization, get the average speed,
      * direction, T, cloud cover from the wx model
      */
@@ -2140,6 +2151,33 @@ void NinjaFoam::SampleRawOutput()
     AngleGrid = foamU;
     VelocityGrid = foamU;
 
+    if(!CheckIfOutputWindHeightIsResolved()){
+        //if the output wind height is not resolved, interpolate to output height using a log profile
+        windProfile profile;
+        profile.profile_switch = windProfile::monin_obukov_similarity;
+
+        for(int i=0; i<foamU.get_nRows(); i++)
+        {
+            for(int j=0; j<foamU.get_nCols(); j++)
+            {
+                profile.ObukovLength = init->L(i,j);
+                profile.ABL_height = init->bl_height(i,j);
+                profile.Roughness = input.surface.Roughness(i,j);
+                profile.Rough_h = input.surface.Rough_h(i,j);
+                profile.Rough_d = input.surface.Rough_d(i,j);
+                profile.inputWindHeight = finalFirstCellHeight - input.surface.Rough_h(i,j);
+ 
+                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                profile.AGL=input.outputWindHeight + input.surface.Rough_h(i,j);
+
+                profile.inputWindSpeed = foamU(i,j);
+                foamU(i,j) = profile.getWindSpeed();
+                profile.inputWindSpeed = foamV(i,j);
+                foamV(i,j) = profile.getWindSpeed();
+            }
+        }
+    }
+
     for(int i=0; i<foamU.get_nRows(); i++)
     {
         for(int j=0; j<foamU.get_nCols(); j++)
@@ -2882,5 +2920,15 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution,
                 AsciiGrid<double>::order0); //coarsen the grids
+    }
+}
+
+bool NinjaFoam::CheckIfOutputWindHeightIsResolved()
+{
+    if(finalFirstCellHeight < input.outputWindHeight){
+        return true;
+    }
+    else{
+        return false;
     }
 }
