@@ -49,7 +49,7 @@ formatOptions
 // 1] vertex values determined from neighbouring cell-centre values
 // 2] face values determined using the current face interpolation scheme
 //    for the field (linear, gamma, etc.)
-interpolationScheme cell;
+interpolationScheme $interpolationScheme$;
 
 // Fields to sample.
 fields
