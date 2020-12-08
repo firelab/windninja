@@ -1672,7 +1672,7 @@ int windNinjaCLI(int argc, char* argv[])
                 return -1;
             }
             OGRSpatialReference oSRS;
-            oSRS.importFromWkt(&pszWkt);
+            oSRS.importFromWkt((char**)&pszWkt);
             if(oSRS.IsGeographic())
             {
                 cerr << "Invalid DEM spatial reference, it is Geographic.\n";
