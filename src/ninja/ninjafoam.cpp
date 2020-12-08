@@ -2163,9 +2163,6 @@ void NinjaFoam::SampleRawOutput()
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
 
-    AngleGrid = foamU;
-    VelocityGrid = foamU;
-
     if(!CheckIfOutputWindHeightIsResolved()){
         //if the output wind height is not resolved, interpolate to output height using a log profile
         windProfile profile;
@@ -2180,7 +2177,8 @@ void NinjaFoam::SampleRawOutput()
                 profile.Roughness = input.surface.Roughness(i,j);
                 profile.Rough_h = input.surface.Rough_h(i,j);
                 profile.Rough_d = input.surface.Rough_d(i,j);
-                profile.inputWindHeight = finalFirstCellHeight - input.surface.Rough_h(i,j);
+                //this is height above the vegetation
+                profile.inputWindHeight = finalFirstCellHeight/2.0 + input.surface.Rough_d(i,j) - input.surface.Rough_h(i,j);
  
                 //this is height above THE GROUND!! (not "z=0" for the log profile)
                 profile.AGL=input.outputWindHeight + input.surface.Rough_h(i,j);
@@ -2192,6 +2190,9 @@ void NinjaFoam::SampleRawOutput()
             }
         }
     }
+
+    AngleGrid = foamU;
+    VelocityGrid = foamU;
 
     for(int i=0; i<foamU.get_nRows(); i++)
     {
