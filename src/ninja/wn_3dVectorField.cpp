@@ -115,13 +115,7 @@ void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
                 {
                     vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
                     vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
-                    //vectorData_z(i,j,k) = f.vectorData_z(i,j,k);
                     vectorData_z(i,j,k) = 0.0;
-
-                    //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-                    //vectorData_x(i,j,k) = 5.*k;
-                    //vectorData_y(i,j,k) = 0.0;
-                    //vectorData_z(i,j,k) = 0.0;
                 }
             }
         }
@@ -250,15 +244,15 @@ bool wn_3dVectorField::isOutlet(const int &i, const int &j, const int &k)
  */
 bool wn_3dVectorField::isInlet(const int &i, const int &j, const int &k)
 {
-    if(i==0 && vectorData_y(i,j,k)>0.0)
+    if(i==0 && vectorData_y(i,j,k)>=0.0)
         return true;
     else if(i==vectorData_y.mesh_->nrows-1 && vectorData_y(i,j,k)<0.0)
         return true;
-    else if(j==0 && vectorData_x(i,j,k)>0.0)
+    else if(j==0 && vectorData_x(i,j,k)>=0.0)
         return true;
-    else if(j==vectorData_x.mesh_->ncols-1 && vectorData_x(i,j,k)<0.0)
+    else if(j==vectorData_x.mesh_->ncols-1 && vectorData_x(i,j,k)<=0.0)
         return true;
-    else if(k==vectorData_z.mesh_->nlayers-1 && vectorData_z(i,j,k)<0.0)
+    else if(k==vectorData_z.mesh_->nlayers-1 && vectorData_z(i,j,k)<=0.0)
         return true;
     else
         return false;

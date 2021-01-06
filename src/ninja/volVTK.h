@@ -41,11 +41,15 @@ class volVTK
 {
     public:
         volVTK();
-        volVTK(wn_3dVectorField const& U, wn_3dArray& x, wn_3dArray& y,
-                wn_3dArray& z, int i, int j, int k, std::string filename);
+        volVTK(wn_3dVectorField const& U, wn_3dArray const& x, wn_3dArray const& y,
+                wn_3dArray const& z, int i, int j, int k, std::string filename);
+        volVTK(wn_3dScalarField const& scalar, wn_3dArray const& x, wn_3dArray const& y,
+                wn_3dArray const& z, int i, int j, int k, std::string filename);
         ~volVTK();
-        bool writeVolVTK(wn_3dVectorField const& U, wn_3dArray& x,
-                wn_3dArray& y, wn_3dArray& z, int i, int j, int k, std::string filename);
+        bool writeVolVTK(wn_3dVectorField const& U, wn_3dArray const& x,
+                wn_3dArray const& y, wn_3dArray const& z, int i, int j, int k, std::string filename);
+        bool writeVolVTK(wn_3dScalarField const& scalar, wn_3dArray const& x,
+                wn_3dArray const& y, wn_3dArray const& z, int i, int j, int k, std::string filename);
         bool writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
                          int i, int j, int k,
                          std::string filename);

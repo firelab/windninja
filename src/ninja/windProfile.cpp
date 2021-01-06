@@ -31,7 +31,7 @@
 
 windProfile::windProfile()
 {
-	profile_switch = uniform;
+	profile_switch = monin_obukov_similarity;
 	inputWindSpeed = 0.0;
 	inputWindHeight = 0.0;			//AGL!		
 	Roughness = 0.0;

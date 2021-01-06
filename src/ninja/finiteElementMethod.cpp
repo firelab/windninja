@@ -46,6 +46,9 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
     dUzdt=NULL;
     row_ptr=NULL;
     col_ind=NULL;
+    writePHIandRHS=false;
+    phiOutFilename="!set";
+    rhsOutFilename="!set";
 
     currentDt = boost::posix_time::seconds(0);
     alphaH=1.0;
@@ -76,6 +79,9 @@ FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A )
     row_ptr=A.row_ptr;
     col_ind=A.col_ind;
     currentDt = A.currentDt;
+    writePHIandRHS=A.writePHIandRHS;
+    phiOutFilename=A.phiOutFilename;
+    rhsOutFilename=A.rhsOutFilename;
 }
 
 /**
@@ -105,6 +111,9 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
         row_ptr=A.row_ptr;
         col_ind=A.col_ind;
         currentDt = A.currentDt;
+        writePHIandRHS=A.writePHIandRHS;
+        phiOutFilename=A.phiOutFilename;
+        rhsOutFilename=A.rhsOutFilename;
     }
     return *this;
 }
@@ -261,11 +270,34 @@ void FiniteElementMethod::Discretize()
 
     int i, j, k, l;
 
+    int interrows=input_.dem.get_nRows()-2;
+    int intercols=input_.dem.get_nCols()-2;
+    int interlayers=mesh_.nlayers-2;
+    //NZND is the # of nonzero elements in the SK stiffness array that are stored
+    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
+         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
+         (intercols*interrows*interlayers)*27;
+
+    //this is because we will only store the upper half of the SK matrix since it's symmetric
+    NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
+
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         element elem(&mesh_);
         int pos;  
         int ii, jj, kk;
+
+#pragma omp for
+        for(i=0; i<mesh_.NUMNP; i++)
+        {
+            RHS[i]=0.;
+        }
+
+#pragma omp for 
+    for(i=0; i<NZND; i++)
+    {
+        SK[i]=0.;
+    }
 
 #pragma omp for
         for(i=0;i<mesh_.NUMEL;i++) //Start loop over elements
@@ -1567,6 +1599,34 @@ void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
      /*     of the surrounding cells.                       */
      /*-----------------------------------------------------*/
 
+    if(writePHIandRHS){
+        wn_3dScalarField phiField;
+        wn_3dScalarField rhsField;
+        phiField.allocate(&mesh_);
+        rhsField.allocate(&mesh_);
+        int _NPK;
+        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh_.nrows;i++)
+            {
+                for(unsigned int j=0; j<mesh_.ncols; j++)
+                {
+                    _NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+                    phiField(i,j,k) = PHI[_NPK];
+                    rhsField(i,j,k) = RHS[_NPK];
+                }
+            }
+        }
+        volVTK VTKphi(phiField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
+        input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, phiOutFilename);
+        volVTK VTKrhs(rhsField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
+        input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, rhsOutFilename);
+
+        phiField.deallocate();
+        rhsField.deallocate();
+    }
+
+
     int i, j, k;
 
     //u is positive toward East
@@ -1768,6 +1828,8 @@ void FiniteElementMethod::CalculateHterm(element &elem, int i)
     if(equationType == GetEquationType("conservationOfMassEquation"))
     {
         //Calculate the coefficient H 
+        //This is what drives the flow, this is the source term
+        //for PHI
         //
         //           d u0   d v0   d w0
         //     H = ( ---- + ---- + ---- )
@@ -1791,6 +1853,13 @@ void FiniteElementMethod::CalculateHterm(element &elem, int i)
     }
 }
 
+/**
+ * @brief Computes the R coefficients in the governing equations.
+ *
+ * @param elem A reference to the element which R is to be calculated in
+ * @param j The quadrature point index
+ *
+ */
 void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
 {
     if(equationType == GetEquationType("conservationOfMassEquation"))
@@ -1803,6 +1872,7 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
         for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
         {
             alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+
         } //End loop over nodes in the element
 
         elem.RX = 1.0/(2.0*alphaH*alphaH);
@@ -1828,9 +1898,9 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
                 windSpeedGradient.vectorData_z(elem.NPK);
         }
         //0.41 is the von Karman constant
-        elem.RZ = .5; //0.41 * height * speed;
-        elem.RX = .5; //2 * elem.RZ;
-        elem.RY = .5; //2 * elem.RZ;
+        elem.RZ = 0.41*0.41 * height*height * fabs(speed);
+        elem.RX = elem.RZ;
+        elem.RY = elem.RZ;
         elem.RC = 1.;
     }
 }
@@ -1914,8 +1984,8 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
                 dUydt[NPK] = 0.;
                 dUzdt[NPK] = 0.;
 
-                //if it's an inlet or the ground, don't diffuse
-                if(U0_.isInlet(i,j,k) || U0_.isOnGround(i,j,k)){
+                //don't diffuse if it's an inlet
+                if(U0_.isOnGround(i,j,k)){
                     U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
                     U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
                     U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
@@ -1928,9 +1998,6 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
                     U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
                     U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
                     U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    //U0_.vectorData_x(NPK) += dUxdt[NPK]*0.1;
-                    //U0_.vectorData_y(NPK) += dUydt[NPK]*0.1;
-                    //U0_.vectorData_z(NPK) += dUzdt[NPK]*0.1;
 
                     U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
                     U.vectorData_y(NPK) = U0_.vectorData_y(NPK);

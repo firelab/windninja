@@ -34,11 +34,18 @@ volVTK::volVTK()
 
 }
 
-volVTK::volVTK(wn_3dVectorField const& U, wn_3dArray& x, 
-	       wn_3dArray& y, wn_3dArray& z, int ncols, int nrows, int nlayers,
+volVTK::volVTK(wn_3dVectorField const& U, wn_3dArray const& x, 
+	       wn_3dArray const& y, wn_3dArray const& z, int ncols, int nrows, int nlayers,
 	       std::string filename)
 {
   writeVolVTK(U, x, y, z, ncols, nrows, nlayers, filename);
+}
+
+volVTK::volVTK(wn_3dScalarField const& scalar, wn_3dArray const& x, 
+	       wn_3dArray const& y, wn_3dArray const& z, int ncols, int nrows, int nlayers,
+	       std::string filename)
+{
+  writeVolVTK(scalar, x, y, z, ncols, nrows, nlayers, filename);
 }
 
 volVTK::~volVTK()
@@ -46,7 +53,7 @@ volVTK::~volVTK()
 
 }
 
-bool volVTK::writeVolVTK(wn_3dVectorField const& U, wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+bool volVTK::writeVolVTK(wn_3dVectorField const& U, wn_3dArray const& x, wn_3dArray const& y, wn_3dArray const& z, 
 			 int ncols, int nrows, int nlayers, std::string filename)
 {
   FILE *fout;
@@ -122,6 +129,89 @@ bool volVTK::writeVolVTK(wn_3dVectorField const& U, wn_3dArray& x, wn_3dArray& y
 	      fprintf(fout, "%lf %lf %lf\n", U.vectorData_x(kk*ncols*nrows + ii*nrows + jj), 
 		      U.vectorData_y(kk*ncols*nrows + ii*nrows + jj),
                       U.vectorData_z(kk*ncols*nrows + ii*nrows + jj));
+	    }
+	}
+    }
+  
+  fclose(fout); 
+  return true;
+}
+
+bool volVTK::writeVolVTK(wn_3dScalarField const& scalar, wn_3dArray const& x, wn_3dArray const& y, wn_3dArray const& z, 
+			 int ncols, int nrows, int nlayers, std::string filename)
+{
+  FILE *fout;
+  std::string surface_filename;
+  surface_filename=filename;
+  int pos;
+  pos = surface_filename.find_last_of(".");
+  surface_filename.erase(pos, surface_filename.size());
+  surface_filename.append("_surf.vtk");
+  
+  //Write surface grid
+  fout = fopen(surface_filename.c_str(), "w");
+  if(fout == NULL)
+	  throw std::runtime_error("VTK file cannot be opened for writing.");
+  
+  //Write header stuff
+  fprintf(fout, "# vtk DataFile Version 3.0\n");
+  fprintf(fout, "This is a ground surface written by WindNinja.  It is on a structured grid.\n");
+  fprintf(fout, "ASCII\n");
+  
+  fprintf(fout, "DATASET STRUCTURED_GRID\n");
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, 1);
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*1);
+  
+  for(int ii=0; ii<ncols; ii++)
+  {
+      for(int jj=0; jj<nrows; jj++)
+	  {
+		fprintf(fout, "%lf %lf %lf\n", x(1*ncols*nrows + ii*nrows + jj), 
+		  y(1*ncols*nrows + ii*nrows + jj), z(1*ncols*nrows + ii*nrows + jj));
+	  }
+  }
+  
+  fclose(fout);
+  
+  //Write volume grid and scalar data
+  fout = fopen(filename.c_str(), "w");
+  if(fout == NULL)
+	  throw std::runtime_error("VTK file cannot be opened for writing.");
+  
+  //Write header stuff
+  fprintf(fout, "# vtk DataFile Version 3.0\n");
+  fprintf(fout, "This is a 3D scalar field written by WindNinja.  It is on a structured grid.\n");
+  fprintf(fout, "ASCII\n");
+  
+  //Write volume grid
+  fprintf(fout, "\nDATASET STRUCTURED_GRID\n");
+  fprintf(fout, "DIMENSIONS %i %i %i\n", ncols, nrows, nlayers);
+  
+  fprintf(fout, "POINTS %i double\n", ncols*nrows*nlayers);
+  for(int kk=0; kk<nlayers; kk++)
+    {
+      for(int ii=0; ii<ncols; ii++)
+	{
+	  for(int jj=0; jj<nrows; jj++)
+	    {
+	      fprintf(fout, "%lf %lf %lf\n", x(kk*ncols*nrows + ii*nrows + jj), 
+		      y(kk*ncols*nrows + ii*nrows + jj), z(kk*ncols*nrows + ii*nrows + jj));
+	    }
+	}
+    }
+  
+  //Write data
+  fprintf(fout, "\nPOINT_DATA %i\n", ncols*nrows*nlayers);
+  fprintf(fout, "SCALARS scalar_data double 1\n");
+  fprintf(fout, "LOOKUP_TABLE default\n");
+  
+  for(int kk=0; kk<nlayers; kk++)
+    {
+      for(int ii=0; ii<ncols; ii++)
+	{
+	  for(int jj=0; jj<nrows; jj++)
+	    {
+	      fprintf(fout, "%lf\n", scalar(kk*ncols*nrows + ii*nrows + jj)); 
 	    }
 	}
     }

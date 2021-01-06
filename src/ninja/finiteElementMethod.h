@@ -33,6 +33,7 @@
 #include "stability.h"
 #include "initialize.h"
 #include "preconditioner.h"
+#include "volVTK.h"
 
 #define OFFSET(N, incX) ((incX) > 0 ?  0 : ((N) - 1) * (-(incX))) //for cblas_dscal
 
@@ -75,6 +76,9 @@ class FiniteElementMethod
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
         wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
         boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
+        bool writePHIandRHS;
+        std::string phiOutFilename;
+        std::string rhsOutFilename;
 
     private:
         Mesh const mesh_; //reference to the mesh

@@ -232,7 +232,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         iteration = 0;
         currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
         //currentDt = boost::posix_time::seconds(5);
-        while(iteration <= 5000)
+        while(iteration <= 1000)
         {
             iteration += 1;
             cout<<"Iteration: "<<iteration<<endl;
@@ -276,25 +276,52 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */
             /*  ----------------------------------------*/
-            checkCancel();
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
-            //resets mesh, input, and U0_ in finiteElementMethod
-            diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
-            //diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
-            diffusionEquation.SetCurrentDt(currentDt);
-            diffusionEquation.DiscretizeDiffusion();
-            diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
+            //checkCancel();
+            //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
+            ////resets mesh, input, and U0_ in finiteElementMethod
+            //diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
+            ////diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
+            //diffusionEquation.SetCurrentDt(currentDt);
+            //diffusionEquation.DiscretizeDiffusion();
+            //diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
+
+            //int mod_ = 1;
+            //std::ostringstream diff_fname;
+            //if(iteration % mod_ == 0)
+            //{
+            //    diff_fname << "vtk_diffusion" << iteration << ".vtk";
+            //    volVTK VTK_diff(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
+            //    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, diff_fname.str());
+            //}
            
             //FOR TESTING WITHOUT DIFFUSION ONLY, REMOVE WHEN DIFFUSION IS TURNED ON 
-            //U=U1;
+            U=U1;
 
             /*  ----------------------------------------*/
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
-            if(iteration > 0)   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            {
+
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
+            //write PHI and RHS for debugging
+            conservationOfMassEquation.writePHIandRHS = true;
+            std::ostringstream phi_fname;
+            phi_fname << "PHI_" << iteration << ".vtk";
+            conservationOfMassEquation.phiOutFilename = phi_fname.str();
+            std::ostringstream rhs_fname;
+            rhs_fname << "RHS_" << iteration << ".vtk";
+            conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
+
+            //set ground to zero
+            for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+            {
+                for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+                {
+                    U.vectorData_x(i,j,0) = 0.0;
+                    U.vectorData_y(i,j,0) = 0.0;
+                    U.vectorData_z(i,j,0) = 0.0;
+                }
+            }
             //resets mesh, input, and U0 in finiteElementMethod
             conservationOfMassEquation.Initialize(mesh, input, U);
             conservationOfMassEquation.Discretize();
@@ -309,12 +336,11 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #ifdef _OPENMP
             endSolve = omp_get_wtime();
 #endif
+            //compute uvw field from phi field
+            conservationOfMassEquation.ComputeUVWField(input, U);
 
             checkCancel();
 
-            //compute uvw field from phi field
-            conservationOfMassEquation.ComputeUVWField(input, U);
-            }   //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */
             /*  ----------------------------------------*/
