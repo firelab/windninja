@@ -153,22 +153,11 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
     init->initializeFields(input, mesh, U0, CloudGrid);
     U00 = U0;
 
-
     /////////////Test/////////////////////////////////--------------------------------------------------------------
     volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
                     input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "test.vtk");
-    printf("here\n");
-
-
 
     //////////////////////////////////////////////////---------------------------------------------------------------
-
-
-
-
-
-
-
 
 #ifdef _OPENMP
     endInit = omp_get_wtime();
@@ -195,8 +184,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
-
-        //build A arrray
         conservationOfMassEquation.Initialize(mesh, input, U0);
         conservationOfMassEquation.SetupSKCompressedRowStorage();
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
@@ -304,13 +291,13 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
             //write PHI and RHS for debugging
-            conservationOfMassEquation.writePHIandRHS = true;
-            std::ostringstream phi_fname;
-            phi_fname << "PHI_" << iteration << ".vtk";
-            conservationOfMassEquation.phiOutFilename = phi_fname.str();
-            std::ostringstream rhs_fname;
-            rhs_fname << "RHS_" << iteration << ".vtk";
-            conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
+            //conservationOfMassEquation.writePHIandRHS = true;
+            //std::ostringstream phi_fname;
+            //phi_fname << "PHI_" << iteration << ".vtk";
+            //conservationOfMassEquation.phiOutFilename = phi_fname.str();
+            //std::ostringstream rhs_fname;
+            //rhs_fname << "RHS_" << iteration << ".vtk";
+            //conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
 
             //set ground to zero
             for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
