@@ -219,12 +219,14 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         iteration = 0;
         currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
         //currentDt = boost::posix_time::seconds(5);
-        while(iteration <= 1000)
+        while(iteration <= 5000)
         {
             iteration += 1;
-            cout<<"Iteration: "<<iteration<<endl;
             currentDt0 = currentDt;
             currentTime += currentDt;
+
+            cout<<"Iteration: "<<iteration<<endl;
+            cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
 
             // Do semi-lagrangian steps of:
             //  1. Refresh boundary conditions (?)
@@ -240,6 +242,23 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //copy inlet values from initial field U0 to U
             U.copyInletNodes(U0);
+
+            //TESTING------------------------------------------
+            for(int i=0;i<input.dem.get_nRows();i++)
+            {
+                for(int j=0;j<input.dem.get_nCols();j++)
+                {
+                    for(int k=0;k<mesh.nlayers;k++)
+                    {
+                        //if(iteration < 20){
+                            if(i>20 && i<30 && j>20 && j<30 && k<5 && k>2)
+                            {
+                                U.vectorData_z(i, j, k) += 8.0;
+                            }
+                       // }
+                    }
+                }
+            }
 
 #ifdef _OPENMP
             endBuildEq = omp_get_wtime();
@@ -257,17 +276,15 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
-            cout<<"currentDt = "<<currentDt.total_microseconds()/1000000.0<<endl;
             transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
 
             /*  ----------------------------------------*/
             /*  DIFFUSE                                 */
             /*  ----------------------------------------*/
-            //checkCancel();
-            //input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
-            ////resets mesh, input, and U0_ in finiteElementMethod
+            checkCancel();
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
+            //resets mesh, input, and U0_ in finiteElementMethod
             //diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
-            ////diffusionEquation.SetCurrentDt(boost::posix_time::seconds(6));
             //diffusionEquation.SetCurrentDt(currentDt);
             //diffusionEquation.DiscretizeDiffusion();
             //diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
