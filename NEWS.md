@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+WindNinja 3.7.1
+---------------
+- Update DEM viewer for mapbox API migration to Static Tiles API (#394)
+
 WindNinja 3.7.0
 ---------------
 - Add ability to set a custom output path in the GUI (#369)
