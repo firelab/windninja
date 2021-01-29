@@ -33,8 +33,8 @@ initialize::initialize()
 {
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
-    //profile.profile_switch = windProfile::monin_obukov_similarity;
-    profile.profile_switch = windProfile::uniform;
+    profile.profile_switch = windProfile::monin_obukov_similarity;
+    //profile.profile_switch = windProfile::uniform;
 }
 
 initialize::~initialize()
@@ -107,16 +107,16 @@ void initialize::initializeWindFromProfile(WindNinjaInputs &input,
 //                //The testing code below was used on flat.tif for testing the semilagrangian steady state solver.
                   //    This adds a blob of high velocity in the middle of the domain.
 
-//                if(i>20 && i<30 && j>20 && j<30 && k<10 && k>2)
-//                {
-//                    U0.vectorData_z(i, j, k) -= 100.0;
-//                }else
-//                {
-//                    //U0.vectorData_x(i, j, k) += 5.0;
-//                }
-//
-//                U0.vectorData_y(i, j, k) += 0.0;
-//                U0.vectorData_z(i, j, k) += 0.0;
+                //if(i>20 && i<30 && j>20 && j<30 && k<5 && k>2)
+                //{
+                //    U0.vectorData_z(i, j, k) += 8.0;
+                //}//else
+                //{
+                //    //U0.vectorData_x(i, j, k) += 5.0;
+                //}
+
+                //U0.vectorData_y(i, j, k) += 0.0;
+                //U0.vectorData_z(i, j, k) += 0.0;
             }
         }
     }

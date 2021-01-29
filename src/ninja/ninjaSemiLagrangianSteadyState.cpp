@@ -154,8 +154,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
     U00 = U0;
 
     /////////////Test/////////////////////////////////--------------------------------------------------------------
-    volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
-                    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "test.vtk");
+    //volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
+    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "test.vtk");
 
     //////////////////////////////////////////////////---------------------------------------------------------------
 
@@ -223,7 +223,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         bool with_diffusion = true;
         bool with_projection = true;
 
-        while(iteration <= 5000)
+        while(iteration <= 500)
         {
             iteration += 1;
             currentDt0 = currentDt;

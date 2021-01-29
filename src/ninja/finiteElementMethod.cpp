@@ -240,9 +240,6 @@ void FiniteElementMethod::DiscretizeDiffusion()
                     xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
                     yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
                     zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
-                    //cout<<"elem.S[j*mesh_.NNPE+k] = "<<elem.S[j*mesh_.NNPE+k]<<endl;
-                    //cout<<"U0_.vectorData_x(elem.KNP) = "<<U0_.vectorData_x(elem.KNP)<<endl;
-                    //cout<<"xRHS[elem.NPK] = "<<xRHS[elem.NPK]<<endl;
                 }
             } //End loop over nodes in the element
         } //End loop over elements
@@ -1885,6 +1882,12 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
          * calculate diffusivities
          * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
          * Rz = 0.4 * heightAboveGround * du/dz
+         * 
+         * TODO: Investigate other parameterizations for Rz.
+         * See Stull p. 209 for several options used in the 
+         * literature. Based on limited testing, the one commented out below
+         * with the von Karman constant and height squared seems to 
+         * produce too much diffusion.
          */
 
         //calculate elem.RZ, RX, RY for current element.
@@ -1898,7 +1901,8 @@ void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
                 windSpeedGradient.vectorData_z(elem.NPK);
         }
         //0.41 is the von Karman constant
-        elem.RZ = 0.41*0.41 * height*height * fabs(speed);
+        //elem.RZ = 0.41*0.41 * height*height * fabs(speed);
+        elem.RZ = 0.41 * height * fabs(speed);
         elem.RX = elem.RZ;
         elem.RY = elem.RZ;
         elem.RC = 1.;

@@ -52,6 +52,7 @@ Mesh::Mesh()
     meshResChoice = coarse;
     targetNumHorizCells = -1;
     maxAspectRatio = 1.1;
+    //maxAspectRatio = 5.;
 
     coarseTargetCells=4000; //IF THESE ARE CHANGED, make sure to change the ones in the windninja GUI
     mediumTargetCells=10000;
