@@ -32,6 +32,8 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
 {
     equationType = eqType;
 
+    diffusionDiscretizationType = FiniteElementMethod::lumpedCapacitance;
+
     //Pointers to dynamically allocated memory
     DIAG=NULL;
     PHI=NULL;
@@ -137,7 +139,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
     //    
     //    Rz = 0.4 * heightAboveGround * du/dz
     //              
-    //    Rx = Ry = 2 * Rz
+    //    Rx = Ry = Rz
     //             
     //    H = source term, 0 for now
     //
@@ -209,6 +211,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 }
 
                 //Create element stiffness matrix---------------------------------------------
+                //I think S, QE, and C are computed the same regardless of discretization type
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
                     elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
@@ -227,19 +230,26 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 //elem.NPK is the global row number of the element stiffness matrix
                 elem.NPK=mesh_.get_global_node(j, i);
 
-#pragma omp atomic
-                xRHS[elem.NPK] += elem.QE[j];
-                yRHS[elem.NPK] += elem.QE[j];
-                zRHS[elem.NPK] += elem.QE[j];
-                C[elem.NPK] += elem.C[j];
-
-                for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
+                if(discretizationType == GetDiscretizationType("lumpedCapacitance"))
                 {
-                    elem.KNP=mesh_.get_global_node(k, i);
 #pragma omp atomic
-                    xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
-                    yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
-                    zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
+                    xRHS[elem.NPK] += elem.QE[j];
+                    yRHS[elem.NPK] += elem.QE[j];
+                    zRHS[elem.NPK] += elem.QE[j];
+                    C[elem.NPK] += elem.C[j];
+
+                    for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
+                    {
+                        elem.KNP=mesh_.get_global_node(k, i);
+#pragma omp atomic
+                        xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
+                        yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
+                        zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
+                    }
+                }
+                else if(discretizationType == GetDiscretizationType("centralDifference"))
+                {
+
                 }
             } //End loop over nodes in the element
         } //End loop over elements
@@ -1917,6 +1927,16 @@ FiniteElementMethod::eEquationType FiniteElementMethod::GetEquationType(std::str
         return diffusionEquation;
     else
         throw std::runtime_error(std::string("Cannot determine equation type in FiniteElementMethod::GetEquationType()."));
+}
+
+FiniteElementMethod::eDiscretizationType FiniteElementMethod::GetDiscretizationType(std::string type)
+{
+    if(type == "centralDifference")
+            return centralDifference;
+    else if(type == "lumpedCapacitance")
+        return lumpedCapacitance;
+    else
+        throw std::runtime_error(std::string("Cannot determine type in FiniteElementMethod::GetDiscretizationType()."));
 }
 
 void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0)

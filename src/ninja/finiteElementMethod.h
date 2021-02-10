@@ -44,6 +44,10 @@ class FiniteElementMethod
                 conservationOfMassEquation,
                 diffusionEquation};
 
+        enum eDiscretizationType{
+                centralDifference,
+                lumpedCapacitance};
+
         FiniteElementMethod(eEquationType eqType);
         ~FiniteElementMethod();
 
@@ -51,6 +55,7 @@ class FiniteElementMethod
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
         eEquationType GetEquationType(std::string type);
+        eDiscretizationType GetDiscretizationType(std::string type);
         void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
         void SetBoundaryConditions();
         void SetStability(WindNinjaInputs &input,
@@ -69,6 +74,7 @@ class FiniteElementMethod
         void SolveDiffusion(wn_3dVectorField &U);
 
         eEquationType equationType;
+        eDiscretizationType diffusionDiscretizationType;
 
         double *PHI, *UxPHI, *UyPHI, *UzPHI;
         double *DIAG;
