@@ -76,7 +76,7 @@ class FiniteElementMethod
         eEquationType equationType;
         eDiscretizationType diffusionDiscretizationType;
 
-        double *PHI, *UxPHI, *UyPHI, *UzPHI;
+        double *PHI, *PHI_u, *PHI_v, *PHI_w;
         double *DIAG;
 
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds

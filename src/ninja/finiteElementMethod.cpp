@@ -230,7 +230,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 //elem.NPK is the global row number of the element stiffness matrix
                 elem.NPK=mesh_.get_global_node(j, i);
 
-                if(discretizationType == GetDiscretizationType("lumpedCapacitance"))
+                if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
                 {
 #pragma omp atomic
                     xRHS[elem.NPK] += elem.QE[j];
@@ -247,7 +247,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
                         zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
                     }
                 }
-                else if(discretizationType == GetDiscretizationType("centralDifference"))
+                else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
                 {
 
                 }
