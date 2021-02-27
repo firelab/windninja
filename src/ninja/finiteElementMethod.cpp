@@ -61,7 +61,7 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
  * @param A Copied value.
  */
 
-FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A )
+FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A)
 {
     PHI=A.PHI;
     DIAG=A.DIAG;
@@ -127,7 +127,7 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 
 void FiniteElementMethod::DiscretizeDiffusion() 
 {
-    //The governing equation to solve is
+    //The governing equation to solve for diffusion of the velocity field is:
     //
     //    d        dPhi      d        dPhi      d        dPhi            dPhi
     //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
@@ -136,14 +136,14 @@ void FiniteElementMethod::DiscretizeDiffusion()
     //    where:
     //
     //    Phi = Ux, Uy, Uz --> the current velocity field
-    //    
     //    Rz = 0.4 * heightAboveGround * du/dz
-    //              
     //    Rx = Ry = Rz
-    //             
     //    H = source term, 0 for now
-    //
     //    Rc = 1
+    //
+    //    There are two discretization schemes available for diffusion: lumped-capacitance (see p. 195
+    //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
+    //    Thompson book).
     //        
 
     int i, j, k, l;
@@ -152,6 +152,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
     {
         element elem(&mesh_);
         int ii, jj, kk;
+        int pos;  
 
         C = new double[mesh_.NUMNP]; //Global matrix for the transient term in the discretized diffusion equation
         for(int i=0; i<mesh_.NUMNP; i++)
@@ -214,6 +215,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 //I think S, QE, and C are computed the same regardless of discretization type
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
+                    //elem.QE is currently just 0 since elem.HVJ is 0 (no source term)
                     elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
                     elem.C[k]=elem.C[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.RC*elem.DV;
                     for(l=0;l<mesh_.NNPE;l++)
@@ -249,7 +251,56 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 }
                 else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
                 {
+                    //    For central difference, the equation to solve is (p. 194 in Thompson book):
+                    //    
+                    //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
+                    //
+                    //    where:
+                    //    [CPK] = [C] + dt/2[K]
+                    //    [CMK] = [C] - dt/2[K]
+                    //    {dQ} = dt{Q}sub(t+dt/2)
+                    //    
+                    //    [C] and [K] are evalucated at t+dt/2.
+                    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
+                    //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
+                    //    now since Q is 0.
+#pragma omp atomic
+                    //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
+                    xRHS[elem.NPK] += elem.C[j] - 
+                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] + 
+                                    U0_.vectorData_x(elem.KNP);
+                    yRHS[elem.NPK] += elem.C[j] -
+                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] +
+                                    U0_.vectorData_y(elem.KNP);
+                    zRHS[elem.NPK] += elem.C[j] - 
+                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] +
+                                    U0_.vectorData_z(elem.KNP);
 
+                    for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
+                    {
+                        elem.KNP=mesh_.get_global_node(k, i);
+
+                        if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
+                        {
+                            pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                            //l increments through col_ind[] starting from where row_ptr[] says until
+                            //we find the column number we're looking for
+                            l=0;
+                            do
+                            {
+                                if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
+                                     pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
+                                l++;
+                            }
+                            while(pos<0);
+#pragma omp atomic
+                            //Here is the final global stiffness matrix in symmetric storage
+                            //SK=[CPK]
+                            SK[pos] += elem.C[j*mesh_.NNPE+k] +
+                                       (currentDt.total_microseconds()/1000000.0)/2*elem.S[j*mesh_.NNPE+k];
+                        }
+                    }
                 }
             } //End loop over nodes in the element
         } //End loop over elements
@@ -1989,45 +2040,53 @@ void FiniteElementMethod::SetCurrentDt(boost::posix_time::time_duration dt)
 
 void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
 {
-    dUxdt = new double[mesh_.NUMNP];
-    dUydt = new double[mesh_.NUMNP];
-    dUzdt = new double[mesh_.NUMNP];
-
-    int NPK;
-
-    for(int k=0;k<mesh_.nlayers;k++)
+    if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
     {
-        for(int i=0;i<input_.dem.get_nRows();i++)
+        dUxdt = new double[mesh_.NUMNP];
+        dUydt = new double[mesh_.NUMNP];
+        dUzdt = new double[mesh_.NUMNP];
+
+        int NPK;
+
+        for(int k=0;k<mesh_.nlayers;k++)
         {
-            for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            for(int i=0;i<input_.dem.get_nRows();i++)
             {
-                //get the node point number
-                NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                {
+                    //get the node point number
+                    NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
 
-                dUxdt[NPK] = 0.;
-                dUydt[NPK] = 0.;
-                dUzdt[NPK] = 0.;
+                    dUxdt[NPK] = 0.;
+                    dUydt[NPK] = 0.;
+                    dUzdt[NPK] = 0.;
 
-                //don't diffuse if it's an inlet
-                if(U0_.isOnGround(i,j,k)){
-                    U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
-                    U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
-                    U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
-                }
-                else{
-                    dUxdt[NPK] = xRHS[NPK]/C[NPK];
-                    dUydt[NPK] = yRHS[NPK]/C[NPK];
-                    dUzdt[NPK] = zRHS[NPK]/C[NPK];
+                    //don't diffuse if it's an inlet
+                    if(U0_.isOnGround(i,j,k)){
+                        U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
+                        U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
+                        U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
+                    }
+                    else{
+                        dUxdt[NPK] = xRHS[NPK]/C[NPK];
+                        dUydt[NPK] = yRHS[NPK]/C[NPK];
+                        dUzdt[NPK] = zRHS[NPK]/C[NPK];
 
-                    U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                    U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
 
-                    U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
-                    U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
-                    U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
+                        U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
+                        U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
+                        U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
+                    }
                 }
             }
         }
+    }
+    else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
+    {
+        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)
+            throw std::runtime_error("Solver returned false.");
     }
 }
