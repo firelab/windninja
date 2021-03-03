@@ -1329,69 +1329,16 @@ void FiniteElementMethod::SetupSKCompressedRowStorage()
     //this is because we will only store the upper half of the SK matrix since it's symmetric
     NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
 
-    if(!(equationType == GetEquationType("diffusionEquation") && diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance")))
-    {
-        //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
-        SK = new double[NZND];
+    //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
+    SK = new double[NZND];
 
-        //This holds the global column number of the corresponding element in the CRS storage
-        col_ind=new int[NZND];
+    //This holds the global column number of the corresponding element in the CRS storage
+    col_ind=new int[NZND];
 
-        //This holds the element number in the SK array (CRS) of the first non-zero entry for the
-        //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
-        //many non-zero elements are in the last node)
-        row_ptr=new int[mesh_.NUMNP+1];
-    }
-
-    //Set array values to zero----------------------------
-    if(PHI == NULL)
-        PHI=new double[mesh_.NUMNP];
-    else
-        throw std::runtime_error("Error allocating PHI field.");
-    if(isBoundaryNode == NULL)
-        isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
-    else
-        throw std::runtime_error("Error allocating isBoundaryNode field.");
-
-    //DIAG is the sum of the weights at each nodal point; eventually,
-    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
-    //value of dPHI/dx at each node point
-    if(DIAG == NULL)
-        DIAG=new double[mesh_.nlayers*input_.dem.get_nRows()*input_.dem.get_nCols()];
-    else
-        throw std::runtime_error("Error allocating DIAG field.");
-
-    if(equationType == GetEquationType("diffusionEquation"))
-    {
-        if(CL == NULL)
-        {
-            CL = new double[mesh_.NUMNP]; //lumped capacitence matrix for transient term in discretized diffusion equation
-        }
-        else
-            throw std::runtime_error("Error allocating C field.");
-        if(xRHS == NULL)
-            xRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-        else
-            throw std::runtime_error("Error allocating xRHS field.");
-        if(yRHS == NULL)
-            yRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-        else
-            throw std::runtime_error("Error allocating yRHS field.");
-        if(zRHS == NULL)
-            zRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-        else
-            throw std::runtime_error("Error allocating zRHS field.");
-
-        heightAboveGround.allocate(&mesh_);
-        windSpeed.allocate(&mesh_);
-        windSpeedGradient.allocate(&mesh_);
-    }
-    else //else it's a conservation of mass run
-    {
-        RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-    }
-
-
+    //This holds the element number in the SK array (CRS) of the first non-zero entry for the
+    //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
+    //many non-zero elements are in the last node)
+    row_ptr=new int[mesh_.NUMNP+1];
 
     int type; //This is the type of node (corner, edge, side, internal)
     int temp, temp1;
@@ -2037,6 +1984,53 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
     U0_ = U0;
 
+    if(PHI == NULL)
+        PHI=new double[mesh_.NUMNP];
+    else
+        throw std::runtime_error("Error allocating PHI field.");
+    if(isBoundaryNode == NULL)
+        isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
+    else
+        throw std::runtime_error("Error allocating isBoundaryNode field.");
+
+    //DIAG is the sum of the weights at each nodal point; eventually,
+    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
+    //value of dPHI/dx at each node point
+    if(DIAG == NULL)
+        DIAG=new double[mesh_.nlayers*input_.dem.get_nRows()*input_.dem.get_nCols()];
+    else
+        throw std::runtime_error("Error allocating DIAG field.");
+
+    if(equationType == GetEquationType("diffusionEquation"))
+    {
+        if(CL == NULL)
+        {
+            CL = new double[mesh_.NUMNP]; //lumped capacitence matrix for transient term in discretized diffusion equation
+        }
+        else
+            throw std::runtime_error("Error allocating C field.");
+        if(xRHS == NULL)
+            xRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating xRHS field.");
+        if(yRHS == NULL)
+            yRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating yRHS field.");
+        if(zRHS == NULL)
+            zRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating zRHS field.");
+
+        heightAboveGround.allocate(&mesh_);
+        windSpeed.allocate(&mesh_);
+        windSpeedGradient.allocate(&mesh_);
+    }
+    else //else it's a conservation of mass run
+    {
+        RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+    }
+
     if(equationType == GetEquationType("diffusionEquation"))
     {
         for(int i = 0; i < mesh_.nrows; i++){
@@ -2047,6 +2041,12 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
                 }
             }
         }
+    }
+    //The lumped-capacitance solver does not solve an Ax=b equation, so the SK matrix is not needed 
+    if(!(equationType == GetEquationType("diffusionEquation") &&
+         diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance")))
+    {
+        SetupSKCompressedRowStorage();
     }
 }
 
