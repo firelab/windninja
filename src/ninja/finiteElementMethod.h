@@ -65,18 +65,18 @@ class FiniteElementMethod
                             wn_3dVectorField &U);
         void Discretize();
         void DiscretizeDiffusion();
-        bool Solve(WindNinjaInputs &input, int MAXITS, int print_iters, double stop_tol);
-        bool SolveMinres(WindNinjaInputs &input, int max_iter, int print_iters, double tol);
+        bool Solve(WindNinjaInputs &input);
+        bool SolveMinres(WindNinjaInputs &input);
         void Write_A_and_b(int NUMNP);
         void SetupSKCompressedRowStorage();
         void Deallocate();
-        void SetCurrentDt(boost::posix_time::time_duration dt);
-        void SolveDiffusion(wn_3dVectorField &U);
+        void UpdateTimeVaryingValues(boost::posix_time::time_duration dt, wn_3dVectorField &U0);
+        void SolveDiffusion(wn_3dVectorField &U, WindNinjaInputs &input);
 
         eEquationType equationType;
         eDiscretizationType diffusionDiscretizationType;
 
-        double *PHI, *PHI_u, *PHI_v, *PHI_w;
+        double *PHI;
         double *DIAG;
 
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
@@ -85,6 +85,7 @@ class FiniteElementMethod
         bool writePHIandRHS;
         std::string phiOutFilename;
         std::string rhsOutFilename;
+        bool stabilityUsingAlphasFlag;
 
     private:
         Mesh const mesh_; //reference to the mesh
@@ -92,9 +93,9 @@ class FiniteElementMethod
         wn_3dVectorField U0_;
         double *RHS, *SK;
         double *xRHS, *yRHS, *zRHS;
-        double *C; //transient term in discretized diffusion equation
-        double *dUxdt, *dUydt, *dUzdt; //dPHI/dt for diffusion equation
+        double *CL; //lumped capcitence matrix for transient term in discretized diffusion equation
         int *row_ptr, *col_ind;
+        bool *isBoundaryNode;
 
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
@@ -112,7 +113,6 @@ class FiniteElementMethod
         wn_3dScalarField heightAboveGround;
         wn_3dScalarField windSpeed;
         wn_3dVectorField windSpeedGradient;
-
 };
 
 #endif	//FINITE_ELEMENT_METHOD_H

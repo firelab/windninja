@@ -77,7 +77,7 @@ void element::initializeQuadPtArrays()
 	SFV=new double[4*mesh_->NNPE*NUMQPTV];   //SF array for the volume quadrature (either(0=N,1=dN/du,2=dN/dv,3=dN/dw),local nodal point,quadrature point)
 	QPTV=new double[NUMQPTV*3];        //QPTV stores the u, v, and w coordinates of the quadrature points
 	QE=new double[mesh_->NNPE];
-	C=new double[mesh_->NNPE];
+	C=new double[mesh_->NNPE*mesh_->NNPE];
 	S=new double[mesh_->NNPE*mesh_->NNPE];
 	DNDX=new double[mesh_->NNPE];
 	DNDY=new double[mesh_->NNPE];
@@ -214,7 +214,7 @@ void element::initializeQuadPtArrays()
     }
 
 	//Get shape function quadrature data-------------------
-     //SFquad function in Thompson's book Introduction to the Finite Element Method
+     //SFquad function in p. 169 in Thompson's book Introduction to the Finite Element Method
      //The SF array is split into two seperate arrays, one for the volume quadrature (SFV) and one for the surface quadrature (SFS)(NOTE: SURFACE QUADRATURE NOT NEEDED BECAUSE OF PARTICULAR BCs!!!)
 	for(int j=0;j<NUMQPTV;j++)
      {

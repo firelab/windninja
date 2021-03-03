@@ -107,13 +107,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
 /*  ----------------------------------------*/
-/*  USER INPUTS                             */
-/*  ----------------------------------------*/
-    int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-    double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-    int print_iters = 10;          //Iterations to print out
-
-/*  ----------------------------------------*/
 /*  MESH GENERATION                         */
 /*  ----------------------------------------*/
 
@@ -186,10 +179,15 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
         conservationOfMassEquation.Initialize(mesh, input, U0);
         conservationOfMassEquation.SetupSKCompressedRowStorage();
+        //this sets alphas to 1 for initialization run and projection runs below
+        conservationOfMassEquation.stabilityUsingAlphasFlag = 0;
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
         conservationOfMassEquation.Discretize();
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Setting boundary conditions...");
         conservationOfMassEquation.SetBoundaryConditions();
+
+        diffusionEquation.Initialize(mesh, input, U0);
+        diffusionEquation.SetupSKCompressedRowStorage();
 
         checkCancel();
 
@@ -198,8 +196,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  -------------------------------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "First project...");
         //if the CG solver diverges, try the minres solver
-        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)
-            if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
+        if(conservationOfMassEquation.Solve(input)==false)
+            if(conservationOfMassEquation.SolveMinres(input)==false)
                 throw std::runtime_error("Solver returned false.");
  
         //compute uvw field from phi field
@@ -291,10 +289,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
                 //resets mesh, input, and U0_ in finiteElementMethod
-                diffusionEquation.Initialize(mesh, input, U1); //U1 is output from advection step
-                diffusionEquation.SetCurrentDt(currentDt);
+                diffusionEquation.UpdateTimeVaryingValues(currentDt, U1); //U1 is output from advection step
                 diffusionEquation.DiscretizeDiffusion();
-                diffusionEquation.SolveDiffusion(U); //dump diffusion results into U
+                diffusionEquation.SolveDiffusion(U, input); //dump diffusion results into U
 
                 int mod_ = 1;
                 std::ostringstream diff_fname;
@@ -339,14 +336,14 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                     }
                 }
                 //resets mesh, input, and U0 in finiteElementMethod
-                conservationOfMassEquation.Initialize(mesh, input, U);
+                conservationOfMassEquation.UpdateTimeVaryingValues(currentDt, U);
                 conservationOfMassEquation.Discretize();
                 conservationOfMassEquation.SetBoundaryConditions();
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)   //if the CG solver diverges, try the minres solver
-                    if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
+                if(conservationOfMassEquation.Solve(input)==false)   //if the CG solver diverges, try the minres solver
+                    if(conservationOfMassEquation.SolveMinres(input)==false)
                         throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP

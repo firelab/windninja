@@ -100,13 +100,6 @@ bool NinjaMassConservingSteadyState::simulate_wind()
     startTotal = omp_get_wtime();
 #endif
 
-/*  ----------------------------------------*/
-/*  USER INPUTS                             */
-/*  ----------------------------------------*/
-    int MAXITS = 100000;             //MAXITS is the maximum number of iterations in the solver
-    double stop_tol = 1E-1;          //stopping criteria for iterations (2-norm of residual)
-    int print_iters = 10;          //Iterations to print out
-
     /*
     ** Set matching its from config options, default to 150.
     ** See constructor to set default.
@@ -206,6 +199,8 @@ bool NinjaMassConservingSteadyState::simulate_wind()
         //build A arrray
         conservationOfMassEquation.Initialize(mesh, input, U0);
         conservationOfMassEquation.SetupSKCompressedRowStorage();
+        //this sets stability based on alphas if stability is turned on
+        conservationOfMassEquation.stabilityUsingAlphasFlag = input.stabilityFlag;
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
         conservationOfMassEquation.Discretize();
 
@@ -240,8 +235,8 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 
         //solver
         //if the CG solver diverges, try the minres solver
-        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)
-            if(conservationOfMassEquation.SolveMinres(input, MAXITS, print_iters, stop_tol)==false)
+        if(conservationOfMassEquation.Solve(input)==false)
+            if(conservationOfMassEquation.SolveMinres(input)==false)
                 throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP

@@ -33,6 +33,7 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
     equationType = eqType;
 
     diffusionDiscretizationType = FiniteElementMethod::lumpedCapacitance;
+    //diffusionDiscretizationType = FiniteElementMethod::centralDifference;
 
     //Pointers to dynamically allocated memory
     DIAG=NULL;
@@ -42,15 +43,14 @@ FiniteElementMethod::FiniteElementMethod(eEquationType eqType)
     yRHS=NULL;
     zRHS=NULL;
     SK=NULL;
-    C=NULL;
-    dUxdt=NULL;
-    dUydt=NULL;
-    dUzdt=NULL;
+    CL=NULL;
     row_ptr=NULL;
     col_ind=NULL;
+    isBoundaryNode=NULL;
     writePHIandRHS=false;
     phiOutFilename="!set";
     rhsOutFilename="!set";
+    stabilityUsingAlphasFlag=0;
 
     currentDt = boost::posix_time::seconds(0);
     alphaH=1.0;
@@ -74,16 +74,15 @@ FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A)
     yRHS=A.yRHS;
     zRHS=A.zRHS;
     SK=A.SK;
-    C=A.C;
-    dUxdt=A.dUxdt;
-    dUydt=A.dUydt;
-    dUzdt=A.dUzdt;
+    CL=A.CL;
     row_ptr=A.row_ptr;
     col_ind=A.col_ind;
+    isBoundaryNode=A.isBoundaryNode;
     currentDt = A.currentDt;
     writePHIandRHS=A.writePHIandRHS;
     phiOutFilename=A.phiOutFilename;
     rhsOutFilename=A.rhsOutFilename;
+    stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
 }
 
 /**
@@ -106,16 +105,15 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
         yRHS=A.yRHS;
         zRHS=A.zRHS;
         SK=A.SK;
-        C=A.C;
-        dUxdt=A.dUxdt;
-        dUydt=A.dUydt;
-        dUzdt=A.dUzdt;
+        CL=A.CL;
         row_ptr=A.row_ptr;
         col_ind=A.col_ind;
+        isBoundaryNode=A.isBoundaryNode;
         currentDt = A.currentDt;
         writePHIandRHS=A.writePHIandRHS;
         phiOutFilename=A.phiOutFilename;
         rhsOutFilename=A.rhsOutFilename;
+        stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
     }
     return *this;
 }
@@ -154,10 +152,13 @@ void FiniteElementMethod::DiscretizeDiffusion()
         int ii, jj, kk;
         int pos;  
 
-        C = new double[mesh_.NUMNP]; //Global matrix for the transient term in the discretized diffusion equation
-        for(int i=0; i<mesh_.NUMNP; i++)
+#pragma omp for
+        for(i=0; i<mesh_.NUMNP; i++)
         {
-            C[i]=0.;
+            CL[i]=0.;
+            xRHS[i]=0.;
+            yRHS[i]=0.;
+            zRHS[i]=0.;
         }
 
 #pragma omp for
@@ -170,9 +171,11 @@ void FiniteElementMethod::DiscretizeDiffusion()
             for(j=0;j<mesh_.NNPE;j++)
             {
                 elem.QE[j]=0.0;
-                elem.C[j]=0.0;
                 for(int k=0;k<mesh_.NNPE;k++)
+                {
                     elem.S[j*mesh_.NNPE+k]=0.0;
+                    elem.C[j*mesh_.NNPE+k]=0.0;
+                }
             }
 
             //Begin quadrature for current element
@@ -212,14 +215,15 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 }
 
                 //Create element stiffness matrix---------------------------------------------
-                //I think S, QE, and C are computed the same regardless of discretization type
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
                     //elem.QE is currently just 0 since elem.HVJ is 0 (no source term)
                     elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
-                    elem.C[k]=elem.C[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.RC*elem.DV;
                     for(l=0;l<mesh_.NNPE;l++)
                     {
+                        elem.C[k*mesh_.NNPE+l]=elem.C[k*mesh_.NNPE+l]+
+                            elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.RC*
+                            elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+l*elem.NUMQPTV+j]*elem.DV;
                         elem.S[k*mesh_.NNPE+l]=elem.S[k*mesh_.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
                                 elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
                     }
@@ -238,12 +242,12 @@ void FiniteElementMethod::DiscretizeDiffusion()
                     xRHS[elem.NPK] += elem.QE[j];
                     yRHS[elem.NPK] += elem.QE[j];
                     zRHS[elem.NPK] += elem.QE[j];
-                    C[elem.NPK] += elem.C[j];
 
                     for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                     {
                         elem.KNP=mesh_.get_global_node(k, i);
 #pragma omp atomic
+                        CL[elem.NPK] += elem.C[j*mesh_.NNPE+k];
                         xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
                         yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
                         zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
@@ -256,25 +260,35 @@ void FiniteElementMethod::DiscretizeDiffusion()
                     //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
                     //
                     //    where:
-                    //    [CPK] = [C] + dt/2[K]
-                    //    [CMK] = [C] - dt/2[K]
+                    //    [CPK] = [C] + (dt/2)[K]
+                    //    [CMK] = [C] - (dt/2)[K]
                     //    {dQ} = dt{Q}sub(t+dt/2)
                     //    
-                    //    [C] and [K] are evalucated at t+dt/2.
+                    //    TODO:
+                    //    [C] and [K] are evaluated at t+dt/2.
+                    //
                     //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
                     //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
                     //    now since Q is 0.
 #pragma omp atomic
                     //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
-                    xRHS[elem.NPK] += elem.C[j] - 
-                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] + 
-                                    U0_.vectorData_x(elem.KNP);
-                    yRHS[elem.NPK] += elem.C[j] -
-                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] +
-                                    U0_.vectorData_y(elem.KNP);
-                    zRHS[elem.NPK] += elem.C[j] - 
-                                    (currentDt.total_microseconds()/1000000.0)/2*elem.S[j] +
-                                    U0_.vectorData_z(elem.KNP);
+                    xRHS[elem.NPK] += elem.C[j];  
+                    yRHS[elem.NPK] += elem.C[j];
+                    zRHS[elem.NPK] += elem.C[j];  
+
+                    for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
+                    {
+                        elem.KNP=mesh_.get_global_node(k, i);
+                        xRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elem.S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_x(elem.KNP);
+                        yRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elem.S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_y(elem.KNP);
+                        zRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elem.S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_z(elem.KNP);
+                    }
 
                     for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                     {
@@ -474,8 +488,6 @@ void FiniteElementMethod::SetBoundaryConditions()
 
     int NPK, KNP;
     int i, j, k, l;
-    bool *isBoundaryNode;
-    isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
 
 #pragma omp parallel default(shared) private(i,j,k,l,NPK,KNP)
     {
@@ -530,25 +542,26 @@ void FiniteElementMethod::SetBoundaryConditions()
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
 //    If this solver diverges, try MINRES from PetSc below...
-/**Method called in ninja::simulate_wind() to solve the matrix equations.
+/**
  * This is a congugate gradient solver.
  * It seems to be the fastest, but is not monotonic convergence (residual oscillates a bit up and down).
  * If this solver diverges, try the MINRES from PetSc which is commented out below...
- * @param A Stiffness matrix in Ax=b matrix equation.  Storage is symmetric compressed sparse row storage.
- * @param b Right hand side of matrix equations.
- * @param x Vector to store solution in.
- * @param row_ptr Vector used to index to a row in A.
- * @param col_ind Vector storing the column number of corresponding value in A.
- * @param max_iter Maximum number of iterations to do.
- * @param print_iters How often to print out solver information.
- * @param tol Convergence tolerance to stop at.
+ * SK is the stiffness matrix in Ax=b matrix equation (A in Ax=b).
+ * Storage is symmetric compressed sparse row storage.
+ * RHS is the Right hand side of matrix equations (b in Ax=b).
+ * PHI is the vector to store solution in (x in Ax=b).
+ * row_ptr is a vector used to index to a row in SK.
+ * col_ind is a vector storing the column number of corresponding value in SK.
+ *
+ * @param input Reference to WindNinjaInputs
  * @return Returns true if solver converges and completes properly.
  */
-bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::Solve(WindNinjaInputs &input)
 {
-    double *A = SK;
-    double *b = RHS;
-    double *x = PHI;
+    //note these values can get altered in the loop below
+    int max_iter = 100000;    //maximum number of iterations in the solver
+    double tol = 1E-1; //stopping criteria for iterations (2-norm of residual)
+    int print_iters = 10;   //Iterations to print out
 
     //stuff for sparse BLAS MV multiplication
     char transa='n';
@@ -565,14 +578,13 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
     double alpha, beta, rho, rho_1, normb, resid;
     double residual_percent_complete, residual_percent_complete_old, time_percent_complete, start_resid;
     residual_percent_complete = 0.0;
-
     residual_percent_complete_old = -1.;
 
     Preconditioner M;
-    if(M.initialize(mesh_.NUMNP, A, row_ptr, col_ind, M.SSOR, matdescra)==false)
+    if(M.initialize(mesh_.NUMNP, SK, row_ptr, col_ind, M.SSOR, matdescra)==false)
     {
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of SSOR preconditioner failed, trying Jacobi preconditioner...");
-        if(M.initialize(mesh_.NUMNP, A, row_ptr, col_ind, M.Jacobi, matdescra)==false)
+        if(M.initialize(mesh_.NUMNP, SK, row_ptr, col_ind, M.Jacobi, matdescra)==false)
             throw std::runtime_error("Initialization of Jacobi preconditioner failed.");
     }
 
@@ -588,28 +600,21 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
     z=new double[mesh_.NUMNP];
     q=new double[mesh_.NUMNP];
     r=new double[mesh_.NUMNP];
-    //Ax=new double[mesh_.NUMNP];
-    //Ap=new double[mesh_.NUMNP];
-    //Anorm=new double[mesh_.NUMNP];
-
-
 
     //matrix vector multiplication A*x=Ax
-    mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
+    mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], PHI, &zero, r);
 
     for(i=0;i<mesh_.NUMNP;i++){
-        r[i]=b[i]-r[i];                  //calculate the initial residual
+        r[i]=RHS[i]-r[i]; //calculate the initial residual
     }
 
-    normb = cblas_dnrm2(mesh_.NUMNP, b, 1);		//calculate the 2-norm of b
-    //normb = nrm2(mesh_.NUMNP, b);
+    normb = cblas_dnrm2(mesh_.NUMNP, RHS, 1); //calculate the 2-norm of RHS
 
     if (normb == 0.0)
         normb = 1.;
 
     //compute 2 norm of r
     resid = cblas_dnrm2(mesh_.NUMNP, r, 1) / normb;
-    //resid = nrm2(mesh_.NUMNP, r) / normb;
 
     if (resid <= tol)
     {
@@ -621,11 +626,8 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
     //start iterating---------------------------------------------------------------------------------------
     for (int i = 1; i <= max_iter; i++)
     {
-
         M.solve(r, z, row_ptr, col_ind);	//apply preconditioner
-
         rho = cblas_ddot(mesh_.NUMNP, z, 1, r, 1);
-        //rho = dot(mesh_.NUMNP, z, r);
 
         if (i == 1)
         {
@@ -639,19 +641,12 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
         }
 
         //matrix vector multiplication!!!		q = A*p;
-        mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
+        mkl_dcsrmv(&transa, &mesh_.NUMNP, &mesh_.NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
 
         alpha = rho / cblas_ddot(mesh_.NUMNP, p, 1, q, 1);
-        //alpha = rho / dot(mesh_.NUMNP, p, q);
-
-        cblas_daxpy(mesh_.NUMNP, alpha, p, 1, x, 1);	//x = x + alpha * p;
-        //axpy(mesh_.NUMNP, alpha, p, x);
-
+        cblas_daxpy(mesh_.NUMNP, alpha, p, 1, PHI, 1);	//PHI = PHI + alpha * p;
         cblas_daxpy(mesh_.NUMNP, -alpha, q, 1, r, 1);	//r = r - alpha * q;
-        //axpy(mesh_.NUMNP, -alpha, q, r);
-
         resid = cblas_dnrm2(mesh_.NUMNP, r, 1) / normb;	//compute resid
-        //resid = nrm2(mesh_.NUMNP, r) / normb;
 
         if(i==1)
             start_resid = resid;
@@ -682,22 +677,21 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
             //diurnal time_percent_complete
             if(input.Com->progressWeight!=1.0)
             {
-                time_percent_complete = (input.Com->progressWeight*100)+(1.0-input.Com->progressWeight)*time_percent_complete;
+                time_percent_complete = (input.Com->progressWeight*100)+
+                    (1.0-input.Com->progressWeight)*time_percent_complete;
             }
 #endif //NINJAFOAM
-            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5)); //Tell the GUI what the percentage to complete for the ninja is
-        }
+            //Tell the GUI what the percentage to complete for the ninja is
+            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));        }
 
         if (resid <= tol)	//check residual against tolerance
         {
             break;
         }
 
-        //cout<<"resid = "<<resid<<endl;
-
         rho_1 = rho;
 
-    }	//end iterations--------------------------------------------------------------------------------------------
+    }//end iterations---------------------------------------------------------------------------------------
 
     if(p)
     {
@@ -737,8 +731,13 @@ bool FiniteElementMethod::Solve(WindNinjaInputs &input, int max_iter, int print_
 //  MINRES from PetSc (found in google code search)
 //    This solver seems to be monotonic in its convergence (residual always goes down)
 //    Could use this if CG diverges, but haven't seen divergence yet...
-bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input, int max_iter, int print_iters, double tol)
+bool FiniteElementMethod::SolveMinres(WindNinjaInputs &input)
 {
+    //note these values can get altered in the loop below
+    int max_iter = 100000;    //maximum number of iterations in the solver
+    double tol = 1E-1; //stopping criteria for iterations (2-norm of residual)
+    int print_iters = 10;   //Iterations to print out
+
     double *A = SK;
     double *b = RHS;
     double *x = PHI;
@@ -1256,10 +1255,10 @@ void FiniteElementMethod::Deallocate()
         delete[] SK;
         SK=NULL;
     }
-    if(C)
+    if(CL)
     {	
-        delete[] C;
-        C=NULL;
+        delete[] CL;
+        CL=NULL;
     }
     if(col_ind)
     {	
@@ -1270,6 +1269,11 @@ void FiniteElementMethod::Deallocate()
     {
         delete[] row_ptr;
         row_ptr=NULL;
+    }
+    if(isBoundaryNode)
+    {
+        delete[] isBoundaryNode;
+        isBoundaryNode=NULL;
     }
     if(RHS)
     {	
@@ -1312,10 +1316,6 @@ void FiniteElementMethod::Deallocate()
  */
 void FiniteElementMethod::SetupSKCompressedRowStorage()
 {
-    //Set array values to zero----------------------------
-    if(PHI == NULL)
-        PHI=new double[mesh_.NUMNP];
-
     int interrows=input_.dem.get_nRows()-2;
     int intercols=input_.dem.get_nCols()-2;
     int interlayers=mesh_.nlayers-2;
@@ -1329,18 +1329,69 @@ void FiniteElementMethod::SetupSKCompressedRowStorage()
     //this is because we will only store the upper half of the SK matrix since it's symmetric
     NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
 
-    //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
-    SK = new double[NZND];
+    if(!(equationType == GetEquationType("diffusionEquation") && diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance")))
+    {
+        //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
+        SK = new double[NZND];
 
-    //This holds the global column number of the corresponding element in the CRS storage
-    col_ind=new int[NZND];
+        //This holds the global column number of the corresponding element in the CRS storage
+        col_ind=new int[NZND];
 
-    //This holds the element number in the SK array (CRS) of the first non-zero entry for the
-    //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
-    //many non-zero elements are in the last node)
-    row_ptr=new int[mesh_.NUMNP+1];
+        //This holds the element number in the SK array (CRS) of the first non-zero entry for the
+        //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
+        //many non-zero elements are in the last node)
+        row_ptr=new int[mesh_.NUMNP+1];
+    }
 
-    RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+    //Set array values to zero----------------------------
+    if(PHI == NULL)
+        PHI=new double[mesh_.NUMNP];
+    else
+        throw std::runtime_error("Error allocating PHI field.");
+    if(isBoundaryNode == NULL)
+        isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
+    else
+        throw std::runtime_error("Error allocating isBoundaryNode field.");
+
+    //DIAG is the sum of the weights at each nodal point; eventually,
+    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
+    //value of dPHI/dx at each node point
+    if(DIAG == NULL)
+        DIAG=new double[mesh_.nlayers*input_.dem.get_nRows()*input_.dem.get_nCols()];
+    else
+        throw std::runtime_error("Error allocating DIAG field.");
+
+    if(equationType == GetEquationType("diffusionEquation"))
+    {
+        if(CL == NULL)
+        {
+            CL = new double[mesh_.NUMNP]; //lumped capacitence matrix for transient term in discretized diffusion equation
+        }
+        else
+            throw std::runtime_error("Error allocating C field.");
+        if(xRHS == NULL)
+            xRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating xRHS field.");
+        if(yRHS == NULL)
+            yRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating yRHS field.");
+        if(zRHS == NULL)
+            zRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+        else
+            throw std::runtime_error("Error allocating zRHS field.");
+
+        heightAboveGround.allocate(&mesh_);
+        windSpeed.allocate(&mesh_);
+        windSpeedGradient.allocate(&mesh_);
+    }
+    else //else it's a conservation of mass run
+    {
+        RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+    }
+
+
 
     int type; //This is the type of node (corner, edge, side, internal)
     int temp, temp1;
@@ -1504,7 +1555,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
     Stability stb(input);
     alphaVfield.allocate(&mesh_);
 
-    if(input.stabilityFlag==0) // if stabilityFlag not set
+    if(stabilityUsingAlphasFlag==0) // if stabilityFlag not set
     {
         for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
@@ -1517,7 +1568,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
             }
         }
     }
-    else if(input.stabilityFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
+    else if(stabilityUsingAlphasFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
     {
         for(unsigned int k=0; k<mesh_.nlayers; k++)
         {
@@ -1530,7 +1581,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
             }
         }
     }
-    else if(input.stabilityFlag==1 &&
+    else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) //it's a domain-average run
     {
         stb.SetDomainAverageAlpha(input, mesh_);  //sets alpha based on incident solar radiation
@@ -1545,7 +1596,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
             }
         }
     }
-    else if(input.stabilityFlag==1 &&
+    else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
     {
         stb.SetPointInitializationAlpha(input, mesh_);
@@ -1561,7 +1612,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
         }
     }
     //If the run is a 2D WX model run
-    else if(input.stabilityFlag==1 &&
+    else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
             init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
     {
@@ -1580,7 +1631,7 @@ void FiniteElementMethod::SetStability(WindNinjaInputs &input,
     }
     //If the run is a WX model run where the full WX vertical profile is used and
     //the potential temp (theta) is available, then use the method below
-    else if(input.stabilityFlag==1 &&
+    else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
             init->getForecastIdentifier()=="WRF-3D") //it's a 3D wx model run
     {
@@ -1684,19 +1735,7 @@ void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
         rhsField.deallocate();
     }
 
-
     int i, j, k;
-
-    //u is positive toward East
-    //v is positive toward North
-    //w is positive up
-    U.allocate(&mesh_);
-
-    //DIAG is the sum of the weights at each nodal point; eventually,
-    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
-    //value of dPHI/dx at each node point
-    if(DIAG == NULL)
-        DIAG=new double[mesh_.nlayers*input.dem.get_nRows()*input.dem.get_nCols()];
 
     for(i=0;i<mesh_.NUMNP;i++) //Initialize u,v, and w
     {
@@ -1788,6 +1827,8 @@ void FiniteElementMethod::ComputeUVWField(WindNinjaInputs &input,
             {
                 //Dividing by the DIAG[NPK] gives the value of DPHI/DX,
                 //etc. (still stored in the u,v,w arrays)
+                //Remember each thread is storing its full copy of *Scratch
+                //and adding the thread's amount to each node
                 U.vectorData_x(i) += uScratch[i];
                 U.vectorData_y(i) += vScratch[i];
                 U.vectorData_z(i) += wScratch[i];
@@ -1998,27 +2039,28 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
 
     if(equationType == GetEquationType("diffusionEquation"))
     {
-        xRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-        yRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-        zRHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-
-        for(int i=0; i<mesh_.NUMNP; i++)
-        {
-            xRHS[i]=0.;
-            yRHS[i]=0.;
-            zRHS[i]=0.;
-        }
-
-        heightAboveGround.allocate(&mesh_);
-        windSpeed.allocate(&mesh_);
-        windSpeedGradient.allocate(&mesh_);
-
         for(int i = 0; i < mesh_.nrows; i++){
             for(int j = 0; j < mesh_.ncols; j++){
                 for(int k = 0; k < mesh_.nlayers; k++){
                     //find distance to ground at each node in mesh and write to wn_3dScalarField
                     heightAboveGround(i,j,k) = mesh_.ZORD(i,j,k) - mesh_.ZORD(i,j,0);
+                }
+            }
+        }
+    }
+}
 
+void FiniteElementMethod::UpdateTimeVaryingValues(boost::posix_time::time_duration dt,
+        wn_3dVectorField &U0)
+{
+    U0_ = U0;
+    currentDt = dt;
+
+    if(equationType == GetEquationType("diffusionEquation"))
+    {
+        for(int i = 0; i < mesh_.nrows; i++){
+            for(int j = 0; j < mesh_.ncols; j++){
+                for(int k = 0; k < mesh_.nlayers; k++){
                     //compute and store wind speed at each node
                     windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
                             U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
@@ -2033,21 +2075,18 @@ void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, w
     }
 }
 
-void FiniteElementMethod::SetCurrentDt(boost::posix_time::time_duration dt)
+/**
+ * @brief Solver for diffusion 
+ *
+ * @param U Field to dump diffusion results into
+ * @param input Reference to WindNinjaInputs
+ */
+void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U, WindNinjaInputs &input)
 {
-    currentDt = dt;
-}
+    int NPK;
 
-void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
-{
     if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
     {
-        dUxdt = new double[mesh_.NUMNP];
-        dUydt = new double[mesh_.NUMNP];
-        dUzdt = new double[mesh_.NUMNP];
-
-        int NPK;
-
         for(int k=0;k<mesh_.nlayers;k++)
         {
             for(int i=0;i<input_.dem.get_nRows();i++)
@@ -2057,10 +2096,6 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
                     //get the node point number
                     NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
 
-                    dUxdt[NPK] = 0.;
-                    dUydt[NPK] = 0.;
-                    dUzdt[NPK] = 0.;
-
                     //don't diffuse if it's an inlet
                     if(U0_.isOnGround(i,j,k)){
                         U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
@@ -2068,13 +2103,9 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
                         U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
                     }
                     else{
-                        dUxdt[NPK] = xRHS[NPK]/C[NPK];
-                        dUydt[NPK] = yRHS[NPK]/C[NPK];
-                        dUzdt[NPK] = zRHS[NPK]/C[NPK];
-
-                        U0_.vectorData_x(NPK) += dUxdt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                        U0_.vectorData_y(NPK) += dUydt[NPK]*(currentDt.total_microseconds()/1000000.0);
-                        U0_.vectorData_z(NPK) += dUzdt[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_x(NPK) += xRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_y(NPK) += yRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_z(NPK) += zRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
 
                         U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
                         U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
@@ -2086,7 +2117,54 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U)
     }
     else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
     {
-        if(conservationOfMassEquation.Solve(input, MAXITS, print_iters, stop_tol)==false)
+        RHS = xRHS;
+        if(Solve(input)==false)
             throw std::runtime_error("Solver returned false.");
+        for(int k=0;k<mesh_.nlayers;k++)
+        {
+            for(int i=0;i<input_.dem.get_nRows();i++)
+            {
+                for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                {
+                    //get the node point number
+                    NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    U.vectorData_x(NPK) = PHI[NPK];
+                }
+            }
+        }
+
+        RHS = yRHS;
+        if(Solve(input)==false)
+            throw std::runtime_error("Solver returned false.");
+        for(int k=0;k<mesh_.nlayers;k++)
+        {
+            for(int i=0;i<input_.dem.get_nRows();i++)
+            {
+                for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                {
+                    //get the node point number
+                    NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    U.vectorData_y(NPK) = PHI[NPK];
+                }
+            }
+        }
+
+        RHS = zRHS;
+        if(Solve(input)==false)
+            throw std::runtime_error("Solver returned false.");
+        for(int k=0;k<mesh_.nlayers;k++)
+        {
+            for(int i=0;i<input_.dem.get_nRows();i++)
+            {
+                for(int j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+                {
+                    //get the node point number
+                    NPK = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    U.vectorData_z(NPK) = PHI[NPK];
+                }
+            }
+        }
+
+        RHS = NULL;
     }
 }
