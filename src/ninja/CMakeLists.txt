@@ -49,6 +49,7 @@ set(NINJA_SOURCES air.cpp
                   initializationFactory.cpp
                   KmlVector.cpp
                   LineStyle.cpp
+                  linearAlgebra.cpp
                   mesh.cpp
                   landfireclient.cpp
                   ncepGfsSurfInitialization.cpp

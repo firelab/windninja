@@ -65,9 +65,6 @@ class FiniteElementMethod
                             wn_3dVectorField &U);
         void Discretize();
         void DiscretizeDiffusion();
-        bool Solve(WindNinjaInputs &input);
-        bool SolveMinres(WindNinjaInputs &input);
-        void Write_A_and_b(int NUMNP);
         void SetupSKCompressedRowStorage();
         void Deallocate();
         void UpdateTimeVaryingValues(boost::posix_time::time_duration dt, wn_3dVectorField &U0);
@@ -88,6 +85,9 @@ class FiniteElementMethod
         bool stabilityUsingAlphasFlag;
 
     private:
+        void CalculateRcoefficients(element &elem, int j);
+        void CalculateHterm(element &elem, int i) ;
+
         Mesh const mesh_; //reference to the mesh
         WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;
@@ -96,20 +96,6 @@ class FiniteElementMethod
         double *CL; //lumped capcitence matrix for transient term in discretized diffusion equation
         int *row_ptr, *col_ind;
         bool *isBoundaryNode;
-
-        void CalculateRcoefficients(element &elem, int j);
-        void CalculateHterm(element &elem, int i) ;
-        void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
-        double cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY);
-        void cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY);
-        double cblas_dnrm2(const int N, const double *X, const int incX);
-        void mkl_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra,
-                        double *val, int *indx, int *pntrb, int *pntre, double *x,
-                        double *beta, double *y);
-        void cblas_dscal(const int N, const double alpha, double *X, const int incX);
-        void mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra,
-        double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
-
         wn_3dScalarField heightAboveGround;
         wn_3dScalarField windSpeed;
         wn_3dVectorField windSpeedGradient;
