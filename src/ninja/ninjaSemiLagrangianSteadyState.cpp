@@ -196,9 +196,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  -------------------------------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "First project...");
         //if the CG solver diverges, try the minres solver
-        if(conservationOfMassEquation.Solve(input)==false)
-            if(conservationOfMassEquation.SolveMinres(input)==false)
-                throw std::runtime_error("Solver returned false.");
+        //if(conservationOfMassEquation.Solve(input)==false)
+        //    if(conservationOfMassEquation.SolveMinres(input)==false)
+        //        throw std::runtime_error("Solver returned false.");
  
         //compute uvw field from phi field
         conservationOfMassEquation.ComputeUVWField(input, U);
@@ -291,7 +291,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 //resets mesh, input, and U0_ in finiteElementMethod
                 diffusionEquation.UpdateTimeVaryingValues(currentDt, U1); //U1 is output from advection step
                 diffusionEquation.DiscretizeDiffusion();
-                diffusionEquation.SolveDiffusion(U, input); //dump diffusion results into U
+                //diffusionEquation.SolveDiffusion(U, input); //dump diffusion results into U
 
                 int mod_ = 1;
                 std::ostringstream diff_fname;
@@ -342,9 +342,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                if(conservationOfMassEquation.Solve(input)==false)   //if the CG solver diverges, try the minres solver
-                    if(conservationOfMassEquation.SolveMinres(input)==false)
-                        throw std::runtime_error("Solver returned false.");
+                //if(conservationOfMassEquation.Solve(input)==false)   //if the CG solver diverges, try the minres solver
+                //    if(conservationOfMassEquation.SolveMinres(input)==false)
+                //        throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
                 endSolve = omp_get_wtime();

@@ -85,6 +85,8 @@ class FiniteElementMethod
         bool stabilityUsingAlphasFlag;
 
     private:
+        std::vector<element*> elementArray;
+        void InitializeElements();
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
 

@@ -148,7 +148,6 @@ void FiniteElementMethod::DiscretizeDiffusion()
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
-        element elem(&mesh_);
         int ii, jj, kk;
         int pos;  
 
@@ -164,68 +163,33 @@ void FiniteElementMethod::DiscretizeDiffusion()
 #pragma omp for
         for(i=0;i<mesh_.NUMEL;i++) //Start loop over elements
         {
-            //Given the above parameters, function computes the element stiffness matrix
-            if(elem.SFV == NULL)
-                elem.initializeQuadPtArrays();
-
-            for(j=0;j<mesh_.NNPE;j++)
-            {
-                elem.QE[j]=0.0;
-                for(int k=0;k<mesh_.NNPE;k++)
-                {
-                    elem.S[j*mesh_.NNPE+k]=0.0;
-                    elem.C[j*mesh_.NNPE+k]=0.0;
-                }
-            }
 
             //Begin quadrature for current element
-            elem.node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
+            elementArray[i]->node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
 
-            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
+            for(j=0;j<elementArray[i]->NUMQPTV;j++) //Start loop over quadrature points in the element
             {
-                elem.computeJacobianQuadraturePoint(j, i);
-
                 //calculates elem.HVJ
-                CalculateHterm(elem, i);
+                CalculateHterm(elementArray[i], i);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateRcoefficients(elem, j);
-
-                //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-                elem.DV=elem.DETJ;
-
-                if(elem.NUMQPTV==27)
-                {
-                    if(j<=7)
-                    {
-                        elem.WT=elem.WT1;
-                    }
-                    else if(j<=19)
-                    {
-                        elem.WT=elem.WT2;
-                    }
-                    else if(j<=25)
-                    {
-                        elem.WT=elem.WT3;
-                    }
-                    else
-                    {
-                        elem.WT=elem.WT4;
-                    }
-                }
+                CalculateRcoefficients(elementArray[i], j);
 
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
                     //elem.QE is currently just 0 since elem.HVJ is 0 (no source term)
-                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+                    elementArray[i]->QE[k]=elementArray[i]->QE[k]+elementArray[i]->WT*
+                        elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+k*elementArray[i]->NUMQPTV+j]*
+                        elementArray[i]->HVJ*elementArray[i]->DV;
                     for(l=0;l<mesh_.NNPE;l++)
                     {
-                        elem.C[k*mesh_.NNPE+l]=elem.C[k*mesh_.NNPE+l]+
-                            elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.RC*
-                            elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+l*elem.NUMQPTV+j]*elem.DV;
-                        elem.S[k*mesh_.NNPE+l]=elem.S[k*mesh_.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
-                                elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                        elementArray[i]->C[k*mesh_.NNPE+l]=elementArray[i]->C[k*mesh_.NNPE+l]+
+                            elementArray[i]->WT*elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+k*elementArray[i]->NUMQPTV+j]*elementArray[i]->RC*
+                            elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+l*elementArray[i]->NUMQPTV+j]*elementArray[i]->DV;
+
+                        elementArray[i]->S[k*mesh_.NNPE+l]=elementArray[i]->S[k*mesh_.NNPE+l]+elementArray[i]->WT*(elementArray[i]->DNDX[k]*elementArray[i]->.RX*elementArray[i]->.DNDX[l]+
+                                elementArray[i]->DNDY[k]*elementArray[i]->RY*elementArray[i]->DNDY[l]+elementArray[i]->DNDZ[k]*elementArray[i]->RZ*elementArray[i]->DNDZ[l])*elementArray[i]->DV;
                     }
                 } //End loop over nodes in the element
             } //End loop over quadrature points in the element
@@ -541,6 +505,14 @@ void FiniteElementMethod::SetBoundaryConditions()
 
 void FiniteElementMethod::Deallocate()
 {
+    for(int i=0; i<elementArray.size(); i++)
+    {
+        if(elementArray[i])
+        {
+            delete elementArray[i];
+            elementArray[i]=NULL;
+        }
+    }
     if(PHI)
     {	
         delete[] PHI;
@@ -1274,11 +1246,66 @@ FiniteElementMethod::eDiscretizationType FiniteElementMethod::GetDiscretizationT
         throw std::runtime_error(std::string("Cannot determine type in FiniteElementMethod::GetDiscretizationType()."));
 }
 
+void FiniteElementMethod::InitializeElements()
+{
+    elementArray.resize(mesh_.NUMEL);
+    for(int i=0; i<elementArray.size(); i++)
+    {
+        elementArray[i] = new element(&mesh_);
+    }
+
+    for(int i=0; i<mesh_.NUMEL; i++) //Start loop over elements
+    {
+        if(elementArray[i]->SFV == NULL)
+            elementArray[i]->initializeQuadPtArrays();
+
+        for(int j=0; j<mesh_.NNPE; j++)
+        {
+            elementArray[i]->QE[j]=0.0;
+            for(int k=0; k<mesh_.NNPE; k++)
+            {
+                elementArray[i]->S[j*mesh_.NNPE+k]=0.0;
+                elementArray[i]->C[j*mesh_.NNPE+k]=0.0;
+            }
+        }
+
+        for(int j=0; j<elementArray[i]->NUMQPTV; j++) //Start loop over quadrature points in the element
+        {
+            elementArray[i]->computeJacobianQuadraturePoint(j, i);
+
+            //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
+            elementArray[i]->DV=elementArray[i]->DETJ;
+
+            if(elementArray[i]->NUMQPTV==27)
+            {
+                if(j<=7)
+                {
+                    elementArray[i]->WT=elementArray[i]->WT1;
+                }
+                else if(j<=19)
+                {
+                    elementArray[i]->WT=elementArray[i]->WT2;
+                }
+                else if(j<=25)
+                {
+                    elementArray[i]->WT=elementArray[i]->WT3;
+                }
+                else
+                {
+                    elementArray[i]->WT=elementArray[i]->WT4;
+                }
+            }
+        }
+    }
+}
+
 void FiniteElementMethod::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0)
 {
     mesh_ = mesh;
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
     U0_ = U0;
+
+    InitializeElements();
 
     if(PHI == NULL)
         PHI=new double[mesh_.NUMNP];
@@ -1414,8 +1441,8 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U, WindNinjaInputs &i
     else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
     {
         RHS = xRHS;
-        if(Solve(input)==false)
-            throw std::runtime_error("Solver returned false.");
+        //if(Solve(input)==false)
+        //    throw std::runtime_error("Solver returned false.");
         for(int k=0;k<mesh_.nlayers;k++)
         {
             for(int i=0;i<input_.dem.get_nRows();i++)
@@ -1430,8 +1457,8 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U, WindNinjaInputs &i
         }
 
         RHS = yRHS;
-        if(Solve(input)==false)
-            throw std::runtime_error("Solver returned false.");
+        //if(Solve(input)==false)
+        //    throw std::runtime_error("Solver returned false.");
         for(int k=0;k<mesh_.nlayers;k++)
         {
             for(int i=0;i<input_.dem.get_nRows();i++)
@@ -1446,8 +1473,8 @@ void FiniteElementMethod::SolveDiffusion(wn_3dVectorField &U, WindNinjaInputs &i
         }
 
         RHS = zRHS;
-        if(Solve(input)==false)
-            throw std::runtime_error("Solver returned false.");
+        //if(Solve(input)==false)
+        //    throw std::runtime_error("Solver returned false.");
         for(int k=0;k<mesh_.nlayers;k++)
         {
             for(int i=0;i<input_.dem.get_nRows();i++)

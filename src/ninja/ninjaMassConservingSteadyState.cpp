@@ -235,9 +235,9 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 
         //solver
         //if the CG solver diverges, try the minres solver
-        if(conservationOfMassEquation.Solve(input)==false)
-            if(conservationOfMassEquation.SolveMinres(input)==false)
-                throw std::runtime_error("Solver returned false.");
+        //if(conservationOfMassEquation.Solve(input)==false)
+        //    if(conservationOfMassEquation.SolveMinres(input)==false)
+        //        throw std::runtime_error("Solver returned false.");
 
 #ifdef _OPENMP
         endSolve = omp_get_wtime();
