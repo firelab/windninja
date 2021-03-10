@@ -188,7 +188,7 @@ void FiniteElementMethod::DiscretizeDiffusion()
                             elementArray[i]->WT*elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+k*elementArray[i]->NUMQPTV+j]*elementArray[i]->RC*
                             elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+l*elementArray[i]->NUMQPTV+j]*elementArray[i]->DV;
 
-                        elementArray[i]->S[k*mesh_.NNPE+l]=elementArray[i]->S[k*mesh_.NNPE+l]+elementArray[i]->WT*(elementArray[i]->DNDX[k]*elementArray[i]->.RX*elementArray[i]->.DNDX[l]+
+                        elementArray[i]->S[k*mesh_.NNPE+l]=elementArray[i]->S[k*mesh_.NNPE+l]+elementArray[i]->WT*(elementArray[i]->DNDX[k]*elementArray[i]->RX*elementArray[i]->DNDX[l]+
                                 elementArray[i]->DNDY[k]*elementArray[i]->RY*elementArray[i]->DNDY[l]+elementArray[i]->DNDZ[k]*elementArray[i]->RZ*elementArray[i]->DNDZ[l])*elementArray[i]->DV;
                     }
                 } //End loop over nodes in the element
