@@ -165,9 +165,9 @@ void FiniteElementMethod::DiscretizeDiffusion()
         {
 
             //Begin quadrature for current element
-            elementArray[i]->node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
+            elementArray[i].node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
 
-            for(j=0;j<elementArray[i]->NUMQPTV;j++) //Start loop over quadrature points in the element
+            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
             {
                 //calculates elem.HVJ
                 CalculateHterm(elementArray[i], i);
@@ -178,18 +178,18 @@ void FiniteElementMethod::DiscretizeDiffusion()
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
-                    //elem.QE is currently just 0 since elem.HVJ is 0 (no source term)
-                    elementArray[i]->QE[k]=elementArray[i]->QE[k]+elementArray[i]->WT*
-                        elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+k*elementArray[i]->NUMQPTV+j]*
-                        elementArray[i]->HVJ*elementArray[i]->DV;
+                    //elementArray[i].QE is currently just 0 since elementArray[i].HVJ is 0 (no source term)
+                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*
+                        elementArray[i].SFV[0*mesh_.NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
+                        elementArray[i].HVJ*elementArray[i].DV;
                     for(l=0;l<mesh_.NNPE;l++)
                     {
-                        elementArray[i]->C[k*mesh_.NNPE+l]=elementArray[i]->C[k*mesh_.NNPE+l]+
-                            elementArray[i]->WT*elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+k*elementArray[i]->NUMQPTV+j]*elementArray[i]->RC*
-                            elementArray[i]->SFV[0*mesh_.NNPE*elementArray[i]->NUMQPTV+l*elementArray[i]->NUMQPTV+j]*elementArray[i]->DV;
+                        elementArray[i].C[k*mesh_.NNPE+l]=elementArray[i].C[k*mesh_.NNPE+l]+
+                            elementArray[i].WT*elementArray[i].SFV[0*mesh_.NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].RC*
+                            elementArray[i].SFV[0*mesh_.NNPE*elementArray[i].NUMQPTV+l*elementArray[i].NUMQPTV+j]*elementArray[i].DV;
 
-                        elementArray[i]->S[k*mesh_.NNPE+l]=elementArray[i]->S[k*mesh_.NNPE+l]+elementArray[i]->WT*(elementArray[i]->DNDX[k]*elementArray[i]->RX*elementArray[i]->DNDX[l]+
-                                elementArray[i]->DNDY[k]*elementArray[i]->RY*elementArray[i]->DNDY[l]+elementArray[i]->DNDZ[k]*elementArray[i]->RZ*elementArray[i]->DNDZ[l])*elementArray[i]->DV;
+                        elementArray[i].S[k*mesh_.NNPE+l]=elementArray[i].S[k*mesh_.NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
+                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
                     }
                 } //End loop over nodes in the element
             } //End loop over quadrature points in the element
@@ -197,24 +197,27 @@ void FiniteElementMethod::DiscretizeDiffusion()
             //Place completed element matrix in global matrices
             for(j=0;j<mesh_.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
             {
-                //elem.NPK is the global row number of the element stiffness matrix
-                elem.NPK=mesh_.get_global_node(j, i);
+                //elementArray[i].NPK is the global row number of the element stiffness matrix
+                elementArray[i].NPK=mesh_.get_global_node(j, i);
 
                 if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
                 {
 #pragma omp atomic
-                    xRHS[elem.NPK] += elem.QE[j];
-                    yRHS[elem.NPK] += elem.QE[j];
-                    zRHS[elem.NPK] += elem.QE[j];
+                    xRHS[elementArray[i].NPK] += elementArray[i].QE[j];
+                    yRHS[elementArray[i].NPK] += elementArray[i].QE[j];
+                    zRHS[elementArray[i].NPK] += elementArray[i].QE[j];
 
                     for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                     {
-                        elem.KNP=mesh_.get_global_node(k, i);
+                        elementArray[i].KNP=mesh_.get_global_node(k, i);
 #pragma omp atomic
-                        CL[elem.NPK] += elem.C[j*mesh_.NNPE+k];
-                        xRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_x(elem.KNP);
-                        yRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_y(elem.KNP);
-                        zRHS[elem.NPK] -= elem.S[j*mesh_.NNPE+k]*U0_.vectorData_z(elem.KNP);
+                        CL[elementArray[i].NPK] += elementArray[i].C[j*mesh_.NNPE+k];
+                        xRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_.NNPE+k]*
+                            U0_.vectorData_x(elementArray[i].KNP);
+                        yRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_.NNPE+k]*
+                            U0_.vectorData_y(elementArray[i].KNP);
+                        zRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_.NNPE+k]*
+                            U0_.vectorData_z(elementArray[i].KNP);
                     }
                 }
                 else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
@@ -236,29 +239,29 @@ void FiniteElementMethod::DiscretizeDiffusion()
                     //    now since Q is 0.
 #pragma omp atomic
                     //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
-                    xRHS[elem.NPK] += elem.C[j];  
-                    yRHS[elem.NPK] += elem.C[j];
-                    zRHS[elem.NPK] += elem.C[j];  
+                    xRHS[elementArray[i].NPK] += elementArray[i].C[j];  
+                    yRHS[elementArray[i].NPK] += elementArray[i].C[j];
+                    zRHS[elementArray[i].NPK] += elementArray[i].C[j];  
 
                     for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                     {
-                        elem.KNP=mesh_.get_global_node(k, i);
-                        xRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-                                        elem.S[j*mesh_.NNPE+k]*
-                                        U0_.vectorData_x(elem.KNP);
-                        yRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-                                        elem.S[j*mesh_.NNPE+k]*
-                                        U0_.vectorData_y(elem.KNP);
-                        zRHS[elem.NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-                                        elem.S[j*mesh_.NNPE+k]*
-                                        U0_.vectorData_z(elem.KNP);
+                        elementArray[i].KNP=mesh_.get_global_node(k, i);
+                        xRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elementArray[i].S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_x(elementArray[i].KNP);
+                        yRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elementArray[i].S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_y(elementArray[i].KNP);
+                        zRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                                        elementArray[i].S[j*mesh_.NNPE+k]*
+                                        U0_.vectorData_z(elementArray[i].KNP);
                     }
 
                     for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                     {
-                        elem.KNP=mesh_.get_global_node(k, i);
+                        elementArray[i].KNP=mesh_.get_global_node(k, i);
 
-                        if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
+                        if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
                         {
                             pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
 
@@ -267,16 +270,16 @@ void FiniteElementMethod::DiscretizeDiffusion()
                             l=0;
                             do
                             {
-                                if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
-                                     pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
+                                if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+                                     pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
                                 l++;
                             }
                             while(pos<0);
 #pragma omp atomic
                             //Here is the final global stiffness matrix in symmetric storage
                             //SK=[CPK]
-                            SK[pos] += elem.C[j*mesh_.NNPE+k] +
-                                       (currentDt.total_microseconds()/1000000.0)/2*elem.S[j*mesh_.NNPE+k];
+                            SK[pos] += elementArray[i].C[j*mesh_.NNPE+k] +
+                                       (currentDt.total_microseconds()/1000000.0)/2*elementArray[i].S[j*mesh_.NNPE+k];
                         }
                     }
                 }
@@ -319,7 +322,6 @@ void FiniteElementMethod::Discretize()
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
-        element elem(&mesh_);
         int pos;  
         int ii, jj, kk;
 
@@ -346,61 +348,25 @@ void FiniteElementMethod::Discretize()
             /*      Ground       =>  normal flux = 0               */
             /*-----------------------------------------------------*/
 
-            //Given the above parameters, function computes the element stiffness matrix
-            if(elem.SFV == NULL)
-                elem.initializeQuadPtArrays();
-
-            for(j=0;j<mesh_.NNPE;j++)
-            {
-                elem.QE[j]=0.0;
-                for(int k=0;k<mesh_.NNPE;k++)
-                    elem.S[j*mesh_.NNPE+k]=0.0;
-            }
-
             //Begin quadrature for current element
-            elem.node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
+            elementArray[i].node0=mesh_.get_node0(i); //get the global nodal number of local node 0 of element i
 
-            for(j=0;j<elem.NUMQPTV;j++) //Start loop over quadrature points in the element
+            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
             {
-                elem.computeJacobianQuadraturePoint(j, i);
-
                 //calculates elem.HVJ
-                CalculateHterm(elem, i);
+                CalculateHterm(elementArray[i], i);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateRcoefficients(elem, j);
-
-                //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-                elem.DV=elem.DETJ;
-
-                if(elem.NUMQPTV==27)
-                {
-                    if(j<=7)
-                    {
-                        elem.WT=elem.WT1;
-                    }
-                    else if(j<=19)
-                    {
-                        elem.WT=elem.WT2;
-                    }
-                    else if(j<=25)
-                    {
-                        elem.WT=elem.WT3;
-                    }
-                    else
-                    {
-                        elem.WT=elem.WT4;
-                    }
-                }
+                CalculateRcoefficients(elementArray[i], j);
 
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
                 {
-                    elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*elementArray[i].SFV[0*mesh_.NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].HVJ*elementArray[i].DV;
                     for(l=0;l<mesh_.NNPE;l++)
                     {
-                        elem.S[k*mesh_.NNPE+l]=elem.S[k*mesh_.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l]+
-                                elem.DNDY[k]*elem.RY*elem.DNDY[l]+elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                        elementArray[i].S[k*mesh_.NNPE+l]=elementArray[i].S[k*mesh_.NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
+                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
                     }
                 } //End loop over nodes in the element
             } //End loop over quadrature points in the element
@@ -409,16 +375,16 @@ void FiniteElementMethod::Discretize()
             for(j=0;j<mesh_.NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
             {
                 //elem.NPK is the global row number of the element stiffness matrix
-                elem.NPK=mesh_.get_global_node(j, i);
+                elementArray[i].NPK=mesh_.get_global_node(j, i);
 
 #pragma omp atomic
-                RHS[elem.NPK] += elem.QE[j];
+                RHS[elementArray[i].NPK] += elementArray[i].QE[j];
 
                 for(k=0;k<mesh_.NNPE;k++) //k is the local column number in S[]
                 {
-                    elem.KNP=mesh_.get_global_node(k, i);
+                    elementArray[i].KNP=mesh_.get_global_node(k, i);
 
-                    if(elem.KNP >= elem.NPK) //do only if we're on the upper triangular region of SK[]
+                    if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
                     {
                         pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
 
@@ -427,14 +393,14 @@ void FiniteElementMethod::Discretize()
                         l=0;
                         do
                         {
-                            if(col_ind[row_ptr[elem.NPK]+l]==elem.KNP) //Check if we're at the correct position
-                                 pos=row_ptr[elem.NPK]+l; //If so, save that position in pos
+                            if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+                                 pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
                             l++;
                         }
                         while(pos<0);
 #pragma omp atomic
                         //Here is the final global stiffness matrix in symmetric storage
-                        SK[pos] += elem.S[j*mesh_.NNPE+k];
+                        SK[pos] += elementArray[i].S[j*mesh_.NNPE+k];
                     }
                 }
             } //End loop over nodes in the element
@@ -505,14 +471,6 @@ void FiniteElementMethod::SetBoundaryConditions()
 
 void FiniteElementMethod::Deallocate()
 {
-    for(int i=0; i<elementArray.size(); i++)
-    {
-        if(elementArray[i])
-        {
-            delete elementArray[i];
-            elementArray[i]=NULL;
-        }
-    }
     if(PHI)
     {	
         delete[] PHI;
@@ -1251,48 +1209,48 @@ void FiniteElementMethod::InitializeElements()
     elementArray.resize(mesh_.NUMEL);
     for(int i=0; i<elementArray.size(); i++)
     {
-        elementArray[i] = new element(&mesh_);
+        elementArray[i] = element(&mesh_);
     }
 
     for(int i=0; i<mesh_.NUMEL; i++) //Start loop over elements
     {
-        if(elementArray[i]->SFV == NULL)
-            elementArray[i]->initializeQuadPtArrays();
+        if(elementArray[i].SFV == NULL)
+            elementArray[i].initializeQuadPtArrays();
 
         for(int j=0; j<mesh_.NNPE; j++)
         {
-            elementArray[i]->QE[j]=0.0;
+            elementArray[i].QE[j]=0.0;
             for(int k=0; k<mesh_.NNPE; k++)
             {
-                elementArray[i]->S[j*mesh_.NNPE+k]=0.0;
-                elementArray[i]->C[j*mesh_.NNPE+k]=0.0;
+                elementArray[i].S[j*mesh_.NNPE+k]=0.0;
+                elementArray[i].C[j*mesh_.NNPE+k]=0.0;
             }
         }
 
-        for(int j=0; j<elementArray[i]->NUMQPTV; j++) //Start loop over quadrature points in the element
+        for(int j=0; j<elementArray[i].NUMQPTV; j++) //Start loop over quadrature points in the element
         {
-            elementArray[i]->computeJacobianQuadraturePoint(j, i);
+            elementArray[i].computeJacobianQuadraturePoint(j, i);
 
             //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
-            elementArray[i]->DV=elementArray[i]->DETJ;
+            elementArray[i].DV=elementArray[i].DETJ;
 
-            if(elementArray[i]->NUMQPTV==27)
+            if(elementArray[i].NUMQPTV==27)
             {
                 if(j<=7)
                 {
-                    elementArray[i]->WT=elementArray[i]->WT1;
+                    elementArray[i].WT=elementArray[i].WT1;
                 }
                 else if(j<=19)
                 {
-                    elementArray[i]->WT=elementArray[i]->WT2;
+                    elementArray[i].WT=elementArray[i].WT2;
                 }
                 else if(j<=25)
                 {
-                    elementArray[i]->WT=elementArray[i]->WT3;
+                    elementArray[i].WT=elementArray[i].WT3;
                 }
                 else
                 {
-                    elementArray[i]->WT=elementArray[i]->WT4;
+                    elementArray[i].WT=elementArray[i].WT4;
                 }
             }
         }
