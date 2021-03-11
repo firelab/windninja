@@ -145,6 +145,18 @@ void FiniteElementMethod::DiscretizeDiffusion()
     //        
 
     int i, j, k, l;
+    for(int i=0; i<mesh_.NUMEL; i++) //Start loop over elements
+    {
+        for(int j=0; j<mesh_.NNPE; j++)
+        {
+            elementArray[i].QE[j]=0.0;
+            for(int k=0; k<mesh_.NNPE; k++)
+            {
+                elementArray[i].S[j*mesh_.NNPE+k]=0.0;
+                elementArray[i].C[j*mesh_.NNPE+k]=0.0;
+            }
+        }
+    }
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
@@ -169,6 +181,26 @@ void FiniteElementMethod::DiscretizeDiffusion()
 
             for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
             {
+                if(elementArray[i].NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elementArray[i].WT=elementArray[i].WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elementArray[i].WT=elementArray[i].WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elementArray[i].WT=elementArray[i].WT3;
+                    }
+                    else
+                    {
+                        elementArray[i].WT=elementArray[i].WT4;
+                    }
+                }
+
                 //calculates elem.HVJ
                 CalculateHterm(elementArray[i], i);
 
@@ -320,6 +352,18 @@ void FiniteElementMethod::Discretize()
     //this is because we will only store the upper half of the SK matrix since it's symmetric
     NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
 
+    for(int i=0; i<mesh_.NUMEL; i++) //Start loop over elements
+    {
+        for(int j=0; j<mesh_.NNPE; j++)
+        {
+            elementArray[i].QE[j]=0.0;
+            for(int k=0; k<mesh_.NNPE; k++)
+            {
+                elementArray[i].S[j*mesh_.NNPE+k]=0.0;
+            }
+        }
+    }
+
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         int pos;  
@@ -353,6 +397,26 @@ void FiniteElementMethod::Discretize()
 
             for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
             {
+                if(elementArray[i].NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elementArray[i].WT=elementArray[i].WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elementArray[i].WT=elementArray[i].WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elementArray[i].WT=elementArray[i].WT3;
+                    }
+                    else
+                    {
+                        elementArray[i].WT=elementArray[i].WT4;
+                    }
+                }
+
                 //calculates elem.HVJ
                 CalculateHterm(elementArray[i], i);
 
@@ -1217,42 +1281,12 @@ void FiniteElementMethod::InitializeElements()
         if(elementArray[i].SFV == NULL)
             elementArray[i].initializeQuadPtArrays();
 
-        for(int j=0; j<mesh_.NNPE; j++)
-        {
-            elementArray[i].QE[j]=0.0;
-            for(int k=0; k<mesh_.NNPE; k++)
-            {
-                elementArray[i].S[j*mesh_.NNPE+k]=0.0;
-                elementArray[i].C[j*mesh_.NNPE+k]=0.0;
-            }
-        }
-
         for(int j=0; j<elementArray[i].NUMQPTV; j++) //Start loop over quadrature points in the element
         {
             elementArray[i].computeJacobianQuadraturePoint(j, i);
 
             //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
             elementArray[i].DV=elementArray[i].DETJ;
-
-            if(elementArray[i].NUMQPTV==27)
-            {
-                if(j<=7)
-                {
-                    elementArray[i].WT=elementArray[i].WT1;
-                }
-                else if(j<=19)
-                {
-                    elementArray[i].WT=elementArray[i].WT2;
-                }
-                else if(j<=25)
-                {
-                    elementArray[i].WT=elementArray[i].WT3;
-                }
-                else
-                {
-                    elementArray[i].WT=elementArray[i].WT4;
-                }
-            }
         }
     }
 }
