@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Finite Element Method operations 
+ * Purpose:  Diffusion equation operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,37 +27,42 @@
  *
  *****************************************************************************/
 
-#ifndef FINITE_ELEMENT_METHOD_H
-#define FINITE_ELEMENT_METHOD_H
+#ifndef DIFFUSION_EQUATION_H
+#define DIFFUSION_EQUATION_H
 
-#include "stability.h"
 #include "initialize.h"
-#include "preconditioner.h"
-#include "volVTK.h"
 
-class FiniteElementMethod
+class DiffusionEquation
 {
     public:
-        FiniteElementMethod(eEquationType eqType);
-        ~FiniteElementMethod();
+        DiffusionEquation(eDiscretizationType discretizationType);
+        ~DiffusionEquation();
 
-        FiniteElementMethod(FiniteElementMethod const& A);
-        FiniteElementMethod& operator=(FiniteElementMethod const& A);
+        DiffusionEquation(DiffusionEquation const& A);
+        DiffusionEquation& operator=(DiffusionEquation const& A);
+
+        enum eDiscretizationType{
+                        centralDifference,
+                        lumpedCapacitance};
 
         void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
-        void SetupSKCompressedRowStorage();
-        void DiscretizeTransientTerm();
-        void DiscretizeDiffusionTerm();
-        void ComputeGradientField(double *scalar, int NUMNP, wn_3dVectorField &U);
+        void Discretize();
         void Deallocate();
+        eDiscretizationType GetDiscretizationType(std::string type);
 
     private:
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
-        std::vector<element> elementArray;
-
+        eDiscretizationType discretizationType;
         Mesh const mesh_; //reference to the mesh
         WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        double *PHI;
+        double *RHS, *SK;
+        double *CL; //lumped capcitence matrix for transient term in discretized diffusion equation
+        double *xRHS, *yRHS, *zRHS;
+        wn_3dScalarField heightAboveGround;
+        wn_3dScalarField windSpeed;
+        wn_3dVectorField windSpeedGradient;
 };
 
-#endif	//FINITE_ELEMENT_METHOD_H
+#endif	//DIFFUSION_EQUATION_H

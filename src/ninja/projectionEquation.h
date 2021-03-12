@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Finite Element Method operations 
+ * Purpose:  Projection equation operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,37 +27,51 @@
  *
  *****************************************************************************/
 
-#ifndef FINITE_ELEMENT_METHOD_H
-#define FINITE_ELEMENT_METHOD_H
+#ifndef PROJECTION_EQUATION_H
+#define PROJECTION_EQUATION_H
 
 #include "stability.h"
 #include "initialize.h"
-#include "preconditioner.h"
 #include "volVTK.h"
 
-class FiniteElementMethod
+class ProjectionEquation
 {
     public:
-        FiniteElementMethod(eEquationType eqType);
-        ~FiniteElementMethod();
+        ProjectionEquation(eEquationType eqType);
+        ~ProjectionEquation();
 
-        FiniteElementMethod(FiniteElementMethod const& A);
-        FiniteElementMethod& operator=(FiniteElementMethod const& A);
+        ProjectionEquation(ProjectionEquation const& A);
+        ProjectionEquation& operator=(ProjectionEquation const& A);
 
         void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
-        void SetupSKCompressedRowStorage();
-        void DiscretizeTransientTerm();
-        void DiscretizeDiffusionTerm();
-        void ComputeGradientField(double *scalar, int NUMNP, wn_3dVectorField &U);
+        void SetBoundaryConditions();
+        void SetStability(WindNinjaInputs &input,
+                        AsciiGrid<double> &CloudGrid,
+                        boost::shared_ptr<initialize> &init);
+        void ComputeUVWField(WindNinjaInputs &input,
+                            wn_3dVectorField &U);
+        void Discretize();
         void Deallocate();
+
+        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
+        bool stabilityUsingAlphasFlag;
+        wn_3dScalarField alphaVfield; //stores spatially varying alphaV variable
+        bool writePHIandRHS;
+        std::string phiOutFilename;
+        std::string rhsOutFilename;
 
     private:
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
-        std::vector<element> elementArray;
-
-        Mesh const mesh_; //reference to the mesh
+        Mesh const mesh_;
         WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        wn_3dVectorField U0_;
+        wn_3dVectorField U;
+        double *PHI;
+        double *DIAG;
+        double *RHS, *SK;
+        int *row_ptr, *col_ind;
+        bool *isBoundaryNode;
 };
 
-#endif	//FINITE_ELEMENT_METHOD_H
+#endif	//PROJECTION_EQUATION_H
