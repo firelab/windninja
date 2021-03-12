@@ -28,25 +28,67 @@
  *****************************************************************************/
 #include "linearAlgebra.h"
 
-LinearAlgebra::LinearAlgebra(int NUMNP, int nLayers, int nRows, int nCols) 
+LinearAlgebra::LinearAlgebra()
 {
-    NUMNP = NUMNP;
-    nLayers = nLayers;
-    nRows = nRows;
-    nCols = nCols;
+    numRows = 0;
+    p = NULL;
+    z = NULL;
+    q = NULL;
+    r = NULL;
+    R = NULL;
+    Z = NULL;
+    U = NULL;
+    V = NULL;
+    W = NULL;
+    UOLD = NULL;
+    VOLD = NULL;
+    WOLD = NULL;
+    WOOLD = NULL;
+    alpha = 0.0;
+    beta = 0.0;
+    rho = 0.0;
+    rho_1 = 0.0;
+    normb = 0.0;
+    resid = 0.0;
+    residual_percent_complete = 0.0;
+    residual_percent_complete_old = 0.0;
+    time_percent_complete = 0.0;
+    start_resid = 0.0;
 }
-
 /**
  * Copy constructor.
  * @param A Copied value.
  */
 
-LinearAlgebra::LinearAlgebra(LinearAlgebra const& A)
+LinearAlgebra::LinearAlgebra(LinearAlgebra const& RHS)
 {
-    NUMNP = A.NUMNP;
-    nLayers = A.nLayers;
-    nRows = A.nRows;
-    nCols = A.nCols;
+    numRows = RHS.numRows;
+
+    deepCopyDoubleArray(p, RHS.p, RHS.numRows);
+    deepCopyDoubleArray(z, RHS.z, RHS.numRows);
+    deepCopyDoubleArray(q, RHS.q, RHS.numRows);
+    deepCopyDoubleArray(r, RHS.r, RHS.numRows);
+
+    deepCopyDoubleArray(R, RHS.R, RHS.numRows);
+    deepCopyDoubleArray(Z, RHS.Z, RHS.numRows);
+    deepCopyDoubleArray(U, RHS.U, RHS.numRows);
+    deepCopyDoubleArray(V, RHS.V, RHS.numRows);
+    deepCopyDoubleArray(W, RHS.W, RHS.numRows);
+    deepCopyDoubleArray(UOLD, RHS.UOLD, RHS.numRows);
+    deepCopyDoubleArray(VOLD, RHS.VOLD, RHS.numRows);
+    deepCopyDoubleArray(WOLD, RHS.WOLD, RHS.numRows);
+    deepCopyDoubleArray(WOOLD, RHS.WOOLD, RHS.numRows);
+
+    alpha = RHS.alpha;
+    beta = RHS.beta;
+    rho = RHS.rho;
+    rho_1 = RHS.rho_1;
+    normb = RHS.normb;
+    resid = RHS.resid;
+    residual_percent_complete = RHS.residual_percent_complete;
+    residual_percent_complete_old = RHS.residual_percent_complete_old;
+    time_percent_complete = RHS.time_percent_complete;
+    start_resid = RHS.start_resid;
 }
 
 /**
@@ -55,40 +97,168 @@ LinearAlgebra::LinearAlgebra(LinearAlgebra const& A)
  * @return a copy of an object
  */
 
-LinearAlgebra& LinearAlgebra::operator=(LinearAlgebra const& A)
+LinearAlgebra& LinearAlgebra::operator=(LinearAlgebra const& RHS)
 {
-    if(&A != this){
-        NUMNP = A.NUMNP;
-        nLayers = A.nLayers;
-        nRows = A.nRows;
-        nCols = A.nCols;
+    if(&RHS != this){
+        numRows = RHS.numRows;
+
+        deepCopyDoubleArray(p, RHS.p, RHS.numRows);
+        deepCopyDoubleArray(z, RHS.z, RHS.numRows);
+        deepCopyDoubleArray(q, RHS.q, RHS.numRows);
+        deepCopyDoubleArray(r, RHS.r, RHS.numRows);
+
+        deepCopyDoubleArray(R, RHS.R, RHS.numRows);
+        deepCopyDoubleArray(Z, RHS.Z, RHS.numRows);
+        deepCopyDoubleArray(U, RHS.U, RHS.numRows);
+        deepCopyDoubleArray(V, RHS.V, RHS.numRows);
+        deepCopyDoubleArray(W, RHS.W, RHS.numRows);
+        deepCopyDoubleArray(UOLD, RHS.UOLD, RHS.numRows);
+        deepCopyDoubleArray(VOLD, RHS.VOLD, RHS.numRows);
+        deepCopyDoubleArray(WOLD, RHS.WOLD, RHS.numRows);
+        deepCopyDoubleArray(WOOLD, RHS.WOOLD, RHS.numRows);
+
+        alpha = RHS.alpha;
+        beta = RHS.beta;
+        rho = RHS.rho;
+        rho_1 = RHS.rho_1;
+        normb = RHS.normb;
+        resid = RHS.resid;
+        residual_percent_complete = RHS.residual_percent_complete;
+        residual_percent_complete_old = RHS.residual_percent_complete_old;
+        time_percent_complete = RHS.time_percent_complete;
+        start_resid = RHS.start_resid;
     }
     return *this;
 }
 
 LinearAlgebra::~LinearAlgebra()
 {
+    deallocate();
+}
 
+/**
+ * Function to initialize the LinearAlgebra class.  Mostly allocates memory.
+ * @param numberOfRows Number of rows in the A matrix.
+ * @return Nothing.
+ */
+void LinearAlgebra::initializeConjugateGradient(int numberOfRows)
+{
+    deallocate();
+    numRows = numberOfRows;
+    p=new double[numRows];
+    z=new double[numRows];
+    q=new double[numRows];
+    r=new double[numRows];
+}
+
+
+/**
+ * Function to initialize the LinearAlgebra class.  Mostly allocates memory.
+ * @param numberOfRows Number of rows in the A matrix.
+ * @return Nothing.
+ */
+void LinearAlgebra::initializeMinres(int numberOfRows)
+{
+    deallocate();
+    numRows = numberOfRows;
+    R=new double[numRows];
+    Z=new double[numRows];
+    U=new double[numRows];
+    V=new double[numRows];
+    W=new double[numRows];
+    UOLD=new double[numRows];
+    VOLD=new double[numRows];
+    WOLD=new double[numRows];
+    WOOLD=new double[numRows];
+}
+
+/**
+ * Function to deallocate memory held by the LinearAlgebra class.
+ * @return Nothing.
+ */
+void LinearAlgebra::deallocate()
+{
+    //Conjugate Gradient arrays-----------
+    if(p!=NULL){
+        delete[] p;
+        p = NULL;
+    }
+    if(z!=NULL){
+        delete[] z;
+        z = NULL;
+    }
+    if(q!=NULL){
+        delete[] q;
+        q = NULL;
+    }
+    if(r!=NULL){
+        delete[] r;
+        r = NULL;
+    }
+
+    //Minres arrays------------------------
+    if(R!=NULL){
+        delete[] R;
+        R = NULL;
+    }
+    if(Z!=NULL){
+        delete[] Z;
+        Z = NULL;
+    }
+    if(U!=NULL){
+        delete[] U;
+        U = NULL;
+    }
+    if(V!=NULL){
+        delete[] V;
+        V = NULL;
+    }
+    if(W!=NULL){
+        delete[] W;
+        W = NULL;
+    }
+    if(UOLD!=NULL){
+        delete[] UOLD;
+        UOLD = NULL;
+    }
+    if(VOLD!=NULL){
+        delete[] VOLD;
+        VOLD = NULL;
+    }
+    if(WOLD!=NULL){
+        delete[] WOLD;
+        WOLD = NULL;
+    }
+    if(WOOLD!=NULL){
+        delete[] WOOLD;
+        WOOLD = NULL;
+    }
 }
 
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
 //    If this solver diverges, try MINRES from PetSc below...
 /**
- * This is a congugate gradient solver.
+ * This is a congugate gradient solver to solve the matrix equation Ax=b.  It requires all the matrices/vectors
+ * to have memory properly allocated and owned by some outside caller.
  * It seems to be the fastest, but is not monotonic convergence (residual oscillates a bit up and down).
- * If this solver diverges, try the MINRES from PetSc which is commented out below...
- * SK is the stiffness matrix in Ax=b matrix equation (A in Ax=b).
+ * If this solver diverges, try the MINRES from PetSc, a version is included below...
+ * A is the stiffness matrix in Ax=b matrix equation.
  * Storage is symmetric compressed sparse row storage.
- * RHS is the Right hand side of matrix equations (b in Ax=b).
- * PHI is the vector to store solution in (x in Ax=b).
- * row_ptr is a vector used to index to a row in SK.
- * col_ind is a vector storing the column number of corresponding value in SK.
+ * b is the right hand side of matrix equation.
+ * x is the vector to store solution in.
+ * row_ptr is a vector used to index to a row in A.
+ * col_ind is a vector storing the column number of corresponding value in A.
  *
- * @param input Reference to WindNinjaInputs
+ * @param input Reference to WindNinjaInputs (used for ninjaCom)
+ * @param A The "A" matrix in Ax=b matrix equation.  Must be stored in symmetric compressed sparse row storage.
+ * @param x The vector where the solution to Ax=b is to be stored.
+ * @param b The right-hand-side vector for the Ax=b matrix equation.
+ * @param row_ptr A vector used to index to a row in A.
+ * @param col_ind A vector storing the column number of the corresponding value in A.
  * @return Returns true if solver converges and completes properly.
  */
-bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
+bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input, double* A, double* x, double* b, int *row_ptr, int *col_ind)
 {
     //note these values can get altered in the loop below
     int max_iter = 100000;    //maximum number of iterations in the solver
@@ -104,19 +274,14 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
     matdescra[2]='n';	//non-unit diagonal
     matdescra[3]='c';	//c-style array (ie 0 is index of first element, not 1 like in Fortran)
 
-    FILE *convergence_history;
-    int i, j;
-    double *p, *z, *q, *r;
-    double alpha, beta, rho, rho_1, normb, resid;
-    double residual_percent_complete, residual_percent_complete_old, time_percent_complete, start_resid;
     residual_percent_complete = 0.0;
     residual_percent_complete_old = -1.;
 
     Preconditioner M;
-    if(M.initialize(NUMNP, SK, row_ptr, col_ind, M.SSOR, matdescra)==false)
+    if(M.initialize(numRows, A, row_ptr, col_ind, M.SSOR, matdescra)==false)
     {
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of SSOR preconditioner failed, trying Jacobi preconditioner...");
-        if(M.initialize(NUMNP, SK, row_ptr, col_ind, M.Jacobi, matdescra)==false)
+        if(M.initialize(numRows, A, row_ptr, col_ind, M.Jacobi, matdescra)==false)
             throw std::runtime_error("Initialization of Jacobi preconditioner failed.");
     }
 
@@ -128,25 +293,20 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
     fprintf(convergence_history,"\nIteration\tResidual\tResidual_check");
 #endif //NINJA_DEBUG_VERBOSE
 
-    p=new double[NUMNP];
-    z=new double[NUMNP];
-    q=new double[NUMNP];
-    r=new double[NUMNP];
-
     //matrix vector multiplication A*x=Ax
-    mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], PHI, &zero, r);
+    mkl_dcsrmv(&transa, &numRows, &numRows, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
 
-    for(i=0;i<NUMNP;i++){
-        r[i]=RHS[i]-r[i]; //calculate the initial residual
+    for(int i=0;i<numRows;i++){
+        r[i]=b[i]-r[i]; //calculate the initial residual
     }
 
-    normb = cblas_dnrm2(NUMNP, RHS, 1); //calculate the 2-norm of RHS
+    normb = cblas_dnrm2(numRows, b, 1); //calculate the 2-norm of RHS
 
     if (normb == 0.0)
         normb = 1.;
 
     //compute 2 norm of r
-    resid = cblas_dnrm2(NUMNP, r, 1) / normb;
+    resid = cblas_dnrm2(numRows, r, 1) / normb;
 
     if (resid <= tol)
     {
@@ -159,26 +319,26 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
     for (int i = 1; i <= max_iter; i++)
     {
         M.solve(r, z, row_ptr, col_ind);	//apply preconditioner
-        rho = cblas_ddot(NUMNP, z, 1, r, 1);
+        rho = cblas_ddot(numRows, z, 1, r, 1);
 
         if (i == 1)
         {
-            cblas_dcopy(NUMNP, z, 1, p, 1);
+            cblas_dcopy(numRows, z, 1, p, 1);
         }else {
             beta = rho / rho_1;
 
 #pragma omp parallel for
-            for(j=0; j<NUMNP; j++)
+            for(int j=0; j<numRows; j++)
                 p[j] = z[j] + beta*p[j];
         }
 
         //matrix vector multiplication!!!		q = A*p;
-        mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, SK, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
+        mkl_dcsrmv(&transa, &numRows, &numRows, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], p, &zero, q);
 
-        alpha = rho / cblas_ddot(NUMNP, p, 1, q, 1);
-        cblas_daxpy(NUMNP, alpha, p, 1, PHI, 1);	//PHI = PHI + alpha * p;
-        cblas_daxpy(NUMNP, -alpha, q, 1, r, 1);	//r = r - alpha * q;
-        resid = cblas_dnrm2(NUMNP, r, 1) / normb;	//compute resid
+        alpha = rho / cblas_ddot(numRows, p, 1, q, 1);
+        cblas_daxpy(numRows, alpha, p, 1, x, 1);	//PHI = PHI + alpha * p;
+        cblas_daxpy(numRows, -alpha, q, 1, r, 1);	//r = r - alpha * q;
+        resid = cblas_dnrm2(numRows, r, 1) / normb;	//compute resid
 
         if(i==1)
             start_resid = resid;
@@ -225,27 +385,6 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
 
     }//end iterations---------------------------------------------------------------------------------------
 
-    if(p)
-    {
-        delete[] p;
-        p=NULL;
-    }
-    if(z)
-    {
-        delete[] z;
-        z=NULL;
-    }
-    if(q)
-    {
-        delete[] q;
-        q=NULL;
-    }
-    if(r)
-    {
-        delete[] r;
-        r=NULL;
-    }
-
 #ifdef NINJA_DEBUG_VERBOSE
     fclose(convergence_history);
 #endif //NINJA_DEBUG_VERBOSE
@@ -260,19 +399,36 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input)
     }
 }
 
-//  MINRES from PetSc (found in google code search)
-//    This solver seems to be monotonic in its convergence (residual always goes down)
+//
+//    This solver seems to be monotonic in its convergence (residual always goes down), but slower than congugate gradient method
 //    Could use this if CG diverges, but haven't seen divergence yet...
-bool LinearAlgebra::SolveMinres(WindNinjaInputs &input)
+/**
+ * This is the MINRES solver to solve the matrix equation Ax=b.  It requires all the matrices/vectors
+ * to have memory properly allocated and owned by some outside caller.
+ * It was obtained from PetSc (found in google code search).
+ * This solver seems to be monotonic in its convergence (residual always goes down), but slower than congugate gradient method
+ * At this point, use MINRES if CG diverges.
+ * A is the stiffness matrix in Ax=b matrix equation.
+ * Storage is symmetric compressed sparse row storage.
+ * b is the right hand side of matrix equation.
+ * x is the vector to store solution in.
+ * row_ptr is a vector used to index to a row in A.
+ * col_ind is a vector storing the column number of corresponding value in A.
+ *
+ * @param input Reference to WindNinjaInputs (used for ninjaCom)
+ * @param A The "A" matrix in Ax=b matrix equation.  Must be stored in symmetric compressed sparse row storage.
+ * @param x The vector where the solution to Ax=b is to be stored.
+ * @param b The right-hand-side vector for the Ax=b matrix equation.
+ * @param row_ptr A vector used to index to a row in A.
+ * @param col_ind A vector storing the column number of the corresponding value in A.
+ * @return Returns true if solver converges and completes properly.
+ */
+bool LinearAlgebra::SolveMinres(WindNinjaInputs &input, double* A, double* x, double* b, int *row_ptr, int *col_ind)
 {
     //note these values can get altered in the loop below
     int max_iter = 100000;    //maximum number of iterations in the solver
     double tol = 1E-1; //stopping criteria for iterations (2-norm of residual)
     int print_iters = 10;   //Iterations to print out
-
-    double *A = SK;
-    double *b = RHS;
-    double *x = PHI;
 
   int i,j, n;
   double alpha,malpha,beta,mbeta,ibeta,betaold,eta,c=1.0,ceta,cold=1.0,coold,s=0.0,sold=0.0,soold;
@@ -280,19 +436,8 @@ bool LinearAlgebra::SolveMinres(WindNinjaInputs &input)
   double rnorm, bnorm;
   double np;	//this is the residual
   double residual_percent_complete_old, residual_percent_complete, time_percent_complete, start_resid;
-  double            *R, *Z, *U, *V, *W, *UOLD, *VOLD, *WOLD, *WOOLD;
 
-  n = NUMNP;
-
-  R = new double[n];
-  Z = new double[n];
-  U = new double[n];
-  V = new double[n];
-  W = new double[n];
-  UOLD = new double[n];
-  VOLD = new double[n];
-  WOLD = new double[n];
-  WOOLD = new double[n];
+  n = numRows;
 
   //stuff for sparse BLAS MV multiplication
   char transa='n';
@@ -320,7 +465,7 @@ bool LinearAlgebra::SolveMinres(WindNinjaInputs &input)
   if(precond.initialize(n, A, row_ptr, col_ind, precond.Jacobi, matdescra)==false)
   {
 	  input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Initialization of Jacobi preconditioner failed, trying SSOR preconditioner...");
-	  if(precond.initialize(NUMNP, A, row_ptr, col_ind, precond.SSOR, matdescra)==false) // SSOR does not work for full asymmetric matrix !!
+      if(precond.initialize(numRows, A, row_ptr, col_ind, precond.SSOR, matdescra)==false) // SSOR does not work for full asymmetric matrix !!
 	  {
 		  input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Initialization of SSOR preconditioner failed, CANNOT SOLVE FOR WINDFLOW!!!");
 		  return false;
@@ -329,14 +474,14 @@ bool LinearAlgebra::SolveMinres(WindNinjaInputs &input)
 
   //ksp->its = 0;
 
-  for(j=0;j<n;j++)	UOLD[j] = 0.0;	//  u_old  <-   0
+  for(int j=0;j<n;j++)	UOLD[j] = 0.0;	//  u_old  <-   0
   cblas_dcopy(n, UOLD, 1, VOLD, 1);	//	v_old  <-   0
   cblas_dcopy(n, UOLD, 1, W, 1);	//	w      <-   0
   cblas_dcopy(n, UOLD, 1, WOLD, 1);	//	w_old  <-   0
 
   mkl_dcsrmv(&transa, &n, &n, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, R); // r <- b - A*x
 
-  for(j=0;j<n;j++)	R[j] = b[j] - R[j];
+  for(int j=0;j<n;j++)	R[j] = b[j] - R[j];
 
   bnorm = cblas_dnrm2(n, b, 1);
 
@@ -488,27 +633,7 @@ bool LinearAlgebra::SolveMinres(WindNinjaInputs &input)
 
 	fclose(convergence_history);
 
-  if(R)
-	delete[] R;
-  if(Z)
-	delete[] Z;
-  if(U)
-	delete[] U;
-  if(V)
-	delete[] V;
-  if(W)
-	delete[] W;
-  if(UOLD)
-	delete[] UOLD;
-  if(VOLD)
-	delete[] VOLD;
-  if(WOLD)
-	delete[] WOLD;
-  if(WOOLD)
-	delete[] WOOLD;
-
   return true;
-
 }
 
 /**@brief Performs the calculation X = alpha * X.
@@ -559,10 +684,9 @@ void LinearAlgebra::cblas_dcopy(const int N, const double *X, const int incX, do
 double LinearAlgebra::cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY)
 {
 	double val=0.0;
-	int i;
 
 	#pragma omp parallel for reduction(+:val)
-	for(i=0;i<N;i++)
+    for(int i=0;i<N;i++)
 		val += X[i]*Y[i];
 
 	return val;
@@ -579,10 +703,8 @@ double LinearAlgebra::cblas_ddot(const int N, const double *X, const int incX, c
  */
 void LinearAlgebra::cblas_daxpy(const int N, const double alpha, const double *X, const int incX, double *Y, const int incY)
 {
-	int i;
-
-	#pragma omp parallel for
-	for(i=0; i<N; i++)
+    #pragma omp parallel for
+    for(int i=0; i<N; i++)
 		Y[i] += alpha*X[i];
 }
 
@@ -596,10 +718,9 @@ void LinearAlgebra::cblas_daxpy(const int N, const double alpha, const double *X
 double LinearAlgebra::cblas_dnrm2(const int N, const double *X, const int incX)
 {
 	double val=0.0;
-	int i;
 
 	//#pragma omp parallel for reduction(+:val)
-	for(i=0;i<N;i++)
+    for(int i=0;i<N;i++)
 		val += X[i]*X[i];
 	val = std::sqrt(val);
 
@@ -745,32 +866,44 @@ void LinearAlgebra::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha
 
 /**Function used to write the A matrix and b vector to a file.
  * Used for debugging purposes.
- * @param NUMNP Number of node points.
  * @param A "A" matrix in A*x=b computation. Stored in compressed row storage format.
  * @param col_ind Column index vector for compressed row stored matrix A.
  * @param row_ptr Row pointer vector for compressed row stored matrix A.
- * @param b "b" vector in A*x=b computation.  Size is NUMNP.
+ * @param b "b" vector in A*x=b computation.  Size is numRows.
  */
-void LinearAlgebra::Write_A_and_b()
+void LinearAlgebra::Write_A_and_b(double* A, double* b, int *row_ptr, int *col_ind)
 {
-    double *A = SK;
-    double *b = RHS;
-
     FILE *A_file;
     FILE *b_file;
 
     A_file = fopen("A.txt", "w");
 	b_file = fopen("b.txt", "w");
 
-	int i,j;
-
-	for(i=0;i<NUMNP;i++)
+    for(int i=0;i<numRows;i++)
 	{
-		for(j=row_ptr[i];j<row_ptr[i+1];j++)
+        for(int j=row_ptr[i];j<row_ptr[i+1];j++)
 			fprintf(A_file,"%d = %lf , %d\n", j, A[j], col_ind[j]);
 		fprintf(b_file,"%d = %lf\n", i, b[i]);
 	}
 
 	fclose(A_file);
 	fclose(b_file);
+}
+
+/**
+ * @brief Deep copies a c-style array.
+ *
+ * The function does a deep copy of a c-style array.  This means it deallocates and then
+ * allocates the proper memory, then copies the contents.
+ *
+ * @param destination Destination double pointer.
+ * @param source Pointer to c-style array that already exists.
+ * @param numValues Number of values to copy to the destination.
+ */
+void LinearAlgebra::deepCopyDoubleArray(double* destination, double* source, const int& numValues)
+{
+    if(destination!=NULL)
+        delete[] destination;
+    destination = new double[numValues];
+    std::memcpy(destination, source, numValues*sizeof(double));
 }

@@ -39,19 +39,26 @@ class LinearAlgebra
 {
     public:
 
-        LinearAlgebra(int NUMNP, int nLayers, int nRows, int nCols);
+        LinearAlgebra();
         ~LinearAlgebra();
-        LinearAlgebra(LinearAlgebra const& A);
-        LinearAlgebra& operator=(LinearAlgebra const& A);
+        LinearAlgebra(LinearAlgebra const& RHS);
+        LinearAlgebra& operator=(LinearAlgebra const& RHS);
 
-        bool SolveConjugateGradient(WindNinjaInputs &input);
-        bool SolveMinres(WindNinjaInputs &input);
-        void Write_A_and_b();
+        void initializeConjugateGradient(int numberOfRows);
+        void initializeMinres(int numberOfRows);
+        void deallocate();
+        bool SolveConjugateGradient(WindNinjaInputs &input, double* A, double* X, double* B, int *row_ptr, int *col_ind);
+        bool SolveMinres(WindNinjaInputs &input, double* A, double* X, double* B, int *row_ptr, int *col_ind);
+        void Write_A_and_b(double* A, double* b, int *row_ptr, int *col_ind);
 
     private:
-        int *row_ptr, *col_ind;
-        int NUMNP, nLayers, nRows, nCols;
-        double *RHS, *PHI, *SK;
+
+        int numRows;
+        double *p, *z, *q, *r;
+        double alpha, beta, rho, rho_1, normb, resid;
+        double *R, *Z, *U, *V, *W, *UOLD, *VOLD, *WOLD, *WOOLD;
+        double residual_percent_complete, residual_percent_complete_old, time_percent_complete, start_resid;
+
         void cblas_dcopy(const int N, const double *X, const int incX, double *Y, const int incY);
         double cblas_ddot(const int N, const double *X, const int incX, const double *Y, const int incY);
         void cblas_daxpy(const int N, const double alpha, const double *X, const int incX,
@@ -63,6 +70,7 @@ class LinearAlgebra
         void cblas_dscal(const int N, const double alpha, double *X, const int incX);
         void mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *matdescra,
                         double *val, int *indx, int *pntrb, int *pntre, double *x, double *beta, double *y);
+        void deepCopyDoubleArray(double* destination, double* source, const int &numValues);
 };
 
-#endif	//FINITE_ELEMENT_METHOD_H
+#endif	//LINEAR_ALGEBRA_H

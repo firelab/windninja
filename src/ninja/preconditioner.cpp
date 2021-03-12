@@ -91,8 +91,10 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 		preConditionerType = preconditionerType;
 		NUMNP = numnp;
 		
-		
+        if(D)
+            delete[] D;
 		D = new double[NUMNP];
+
         if(matdescra[0] == 's'){  //if A is symmetric
 		for(int i=0; i<NUMNP; i++)
 			D[i] = 1./A[row_ptr[i]];	//D is really stored as M^(-1)
