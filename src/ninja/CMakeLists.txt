@@ -28,6 +28,7 @@ set(NINJA_SOURCES air.cpp
                   cellDiurnal.cpp
                   cli.cpp
                   dbfopen.cpp
+                  diffusionEquation.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
                   EasyBMP.cpp
@@ -77,6 +78,7 @@ set(NINJA_SOURCES air.cpp
                   OutputWriter.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
+                  projectionEquation.cpp
                   readInputFile.cpp
                   relief_fetch.cpp
                   Shade.cpp

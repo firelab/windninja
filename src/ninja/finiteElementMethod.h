@@ -38,26 +38,27 @@
 class FiniteElementMethod
 {
     public:
-        FiniteElementMethod(eEquationType eqType);
+        FiniteElementMethod();
         ~FiniteElementMethod();
 
         FiniteElementMethod(FiniteElementMethod const& A);
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
-        void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
-        void SetupSKCompressedRowStorage();
-        void DiscretizeTransientTerm();
-        void DiscretizeDiffusionTerm();
-        void ComputeGradientField(double *scalar, int NUMNP, wn_3dVectorField &U);
+        void Initialize(const Mesh &mesh, const WindNinjaInputs &input);
+        void SetupSKCompressedRowStorage(double *SK, int *col_ind, int *row_ptr);
+        void DiscretizeTransientTerms();
+        void DiscretizeDiffusionTerms();
+        void ComputeGradientField(double *scalar, wn_3dVectorField &U);
         void Deallocate();
 
     private:
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
-        std::vector<element> elementArray;
 
-        Mesh const mesh_; //reference to the mesh
-        WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        std::vector<element> elementArray;
+        const Mesh *mesh_; //reference to the mesh
+        const WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        double *DIAG;
 };
 
 #endif	//FINITE_ELEMENT_METHOD_H

@@ -28,7 +28,7 @@
  *****************************************************************************/
 #include "diffusionEquation.h"
 
-DiffusionEquation::DiffusionEquation(eEquationType eqType)
+DiffusionEquation::DiffusionEquation()
 {
 
     discretizationType = DiffusionEquation::lumpedCapacitance;
@@ -238,23 +238,20 @@ void DiffusionEquation::UpdateTimeVaryingValues(boost::posix_time::time_duration
     U0_ = U0;
     currentDt = dt;
 
-    if(equationType == GetEquationType("diffusionEquation"))
-    {
-        for(int i = 0; i < mesh_.nrows; i++){
-            for(int j = 0; j < mesh_.ncols; j++){
-                for(int k = 0; k < mesh_.nlayers; k++){
-                    //compute and store wind speed at each node
-                    windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
-                            U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
-                }
+    for(int i = 0; i < mesh_.nrows; i++){
+        for(int j = 0; j < mesh_.ncols; j++){
+            for(int k = 0; k < mesh_.nlayers; k++){
+                //compute and store wind speed at each node
+                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
             }
         }
-
-        //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
-        windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
-                                windSpeedGradient.vectorData_y,
-                                windSpeedGradient.vectorData_z);
     }
+
+    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                            windSpeedGradient.vectorData_y,
+                            windSpeedGradient.vectorData_z);
 }
 
 /**

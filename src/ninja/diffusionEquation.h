@@ -35,7 +35,7 @@
 class DiffusionEquation
 {
     public:
-        DiffusionEquation(eDiscretizationType discretizationType);
+        DiffusionEquation();
         ~DiffusionEquation();
 
         DiffusionEquation(DiffusionEquation const& A);
@@ -46,9 +46,13 @@ class DiffusionEquation
                         lumpedCapacitance};
 
         void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
+        void UpdateTimeVaryingValues(boost::posix_time::time_duration dt, wn_3dVectorField &U0);
         void Discretize();
         void Deallocate();
         eDiscretizationType GetDiscretizationType(std::string type);
+        bool writePHIandRHS;
+        std::string phiOutFilename;
+        std::string rhsOutFilename;
 
     private:
         void CalculateRcoefficients(element &elem, int j);

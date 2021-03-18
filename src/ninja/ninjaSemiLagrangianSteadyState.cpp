@@ -31,8 +31,6 @@
 
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 , currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
-, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
-, diffusionEquation(FiniteElementMethod::diffusionEquation)
 {
 
 }
@@ -44,8 +42,6 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState(NinjaSemiLagrangianSteadyState const& A ) : ninja(A), U00(A.U00), transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
-, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
-, diffusionEquation(FiniteElementMethod::diffusionEquation)
 {
 
 }
@@ -178,7 +174,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
         conservationOfMassEquation.Initialize(mesh, input, U0);
-        conservationOfMassEquation.SetupSKCompressedRowStorage();
+        //conservationOfMassEquation.SetupSKCompressedRowStorage();
         //this sets alphas to 1 for initialization run and projection runs below
         conservationOfMassEquation.stabilityUsingAlphasFlag = 0;
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
@@ -187,7 +183,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         conservationOfMassEquation.SetBoundaryConditions();
 
         diffusionEquation.Initialize(mesh, input, U0);
-        diffusionEquation.SetupSKCompressedRowStorage();
+        //diffusionEquation.SetupSKCompressedRowStorage();
 
         checkCancel();
 
@@ -289,8 +285,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
                 //resets mesh, input, and U0_ in finiteElementMethod
-                diffusionEquation.UpdateTimeVaryingValues(currentDt, U1); //U1 is output from advection step
-                diffusionEquation.DiscretizeDiffusion();
+                //diffusionEquation.UpdateTimeVaryingValues(currentDt, U1); //U1 is output from advection step
+                diffusionEquation.Discretize();
                 //diffusionEquation.SolveDiffusion(U, input); //dump diffusion results into U
 
                 int mod_ = 1;
@@ -336,7 +332,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                     }
                 }
                 //resets mesh, input, and U0 in finiteElementMethod
-                conservationOfMassEquation.UpdateTimeVaryingValues(currentDt, U);
+                //conservationOfMassEquation.UpdateTimeVaryingValues(currentDt, U);
                 conservationOfMassEquation.Discretize();
                 conservationOfMassEquation.SetBoundaryConditions();
 #ifdef _OPENMP

@@ -37,13 +37,13 @@
 class ProjectionEquation
 {
     public:
-        ProjectionEquation(eEquationType eqType);
+        ProjectionEquation();
         ~ProjectionEquation();
 
         ProjectionEquation(ProjectionEquation const& A);
         ProjectionEquation& operator=(ProjectionEquation const& A);
 
-        void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
+        void Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0);
         void SetBoundaryConditions();
         void SetStability(WindNinjaInputs &input,
                         AsciiGrid<double> &CloudGrid,
@@ -63,12 +63,11 @@ class ProjectionEquation
     private:
         void CalculateRcoefficients(element &elem, int j);
         void CalculateHterm(element &elem, int i) ;
-        Mesh const mesh_;
-        WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        const Mesh* mesh_;
+        const WindNinjaInputs* input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;
         wn_3dVectorField U;
         double *PHI;
-        double *DIAG;
         double *RHS, *SK;
         int *row_ptr, *col_ind;
         bool *isBoundaryNode;

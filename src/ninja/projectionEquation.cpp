@@ -28,11 +28,10 @@
  *****************************************************************************/
 #include "projectionEquation.h"
 
-ProjectionEquation::ProjectionEquation(eEquationType eqType)
+ProjectionEquation::ProjectionEquation()
 {
     //Pointers to dynamically allocated memory
     PHI=NULL;
-    DIAG=NULL;
     RHS=NULL;
     SK=NULL;
     row_ptr=NULL;
@@ -53,7 +52,6 @@ ProjectionEquation::ProjectionEquation(eEquationType eqType)
 ProjectionEquation::ProjectionEquation(ProjectionEquation const& A)
 {
     PHI=A.PHI;
-    DIAG=A.DIAG;
     RHS=A.RHS;
     SK=A.SK;
     row_ptr=A.row_ptr;
@@ -77,7 +75,6 @@ ProjectionEquation& ProjectionEquation::operator=(ProjectionEquation const& A)
 {
     if(&A != this) {
         PHI=A.PHI;
-        DIAG=A.DIAG;
         RHS=A.RHS;
         SK=A.SK;
         row_ptr=A.row_ptr;
@@ -212,11 +209,6 @@ void ProjectionEquation::Deallocate()
     {	
         delete[] RHS;
         RHS=NULL;
-    }
-    if(DIAG)
-    {	
-        delete[] DIAG;
-        DIAG=NULL;
     }
 
     alphaVfield.deallocate();
@@ -689,13 +681,6 @@ void ProjectionEquation::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn
     else
         throw std::runtime_error("Error allocating isBoundaryNode field.");
 
-    //DIAG is the sum of the weights at each nodal point; eventually,
-    //dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged)
-    //value of dPHI/dx at each node point
-    if(DIAG == NULL)
-        DIAG=new double[mesh_.nlayers*input_.dem.get_nRows()*input_.dem.get_nCols()];
-    else
-        throw std::runtime_error("Error allocating DIAG field.");
     else //else it's a conservation of mass run
     {
         RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix

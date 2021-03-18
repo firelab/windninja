@@ -39,6 +39,8 @@
 #include "ninja_errors.h"
 #include "transportSemiLagrangian.h"
 #include "wn_3dVectorField.h"
+#include "projectionEquation.h"
+#include "diffusionEquation.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
@@ -70,7 +72,7 @@ private:
     virtual void deleteDynamicMemory();
     void stepForwardOneTimestep();
 
-    FiniteElementMethod conservationOfMassEquation;
+    ProjectionEquation conservationOfMassEquation;
     wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
 };
 

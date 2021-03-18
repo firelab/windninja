@@ -30,7 +30,6 @@
 #include "ninjaMassConservingSteadyState.h"
 
 NinjaMassConservingSteadyState::NinjaMassConservingSteadyState() : ninja()
-, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
 }
@@ -41,7 +40,6 @@ NinjaMassConservingSteadyState::NinjaMassConservingSteadyState() : ninja()
  */
 
 NinjaMassConservingSteadyState::NinjaMassConservingSteadyState(NinjaMassConservingSteadyState const& A ) : ninja(A)
-, conservationOfMassEquation(A.conservationOfMassEquation)
 {
 
 }
@@ -198,7 +196,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 
         //build A arrray
         conservationOfMassEquation.Initialize(mesh, input, U0);
-        conservationOfMassEquation.SetupSKCompressedRowStorage();
+        //conservationOfMassEquation.SetupSKCompressedRowStorage();
         //this sets stability based on alphas if stability is turned on
         conservationOfMassEquation.stabilityUsingAlphasFlag = input.stabilityFlag;
         conservationOfMassEquation.SetStability(input, CloudGrid, init);

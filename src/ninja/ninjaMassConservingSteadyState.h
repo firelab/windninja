@@ -38,6 +38,7 @@
 #include "ninja_conv.h"
 #include "ninja_errors.h"
 #include "wn_3dVectorField.h"
+#include "projectionEquation.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
@@ -60,7 +61,7 @@ public:
 
 private:
     virtual void deleteDynamicMemory();
-    FiniteElementMethod conservationOfMassEquation;
+    ProjectionEquation conservationOfMassEquation;
 };
 
 #endif /* NINJA_MASS_CONSERVING_STEADY_STATE_INCLUDED_ */

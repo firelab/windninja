@@ -31,7 +31,6 @@
 
 NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient() : ninja()
 , currentTime(boost::local_time::not_a_date_time)
-, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
 }
@@ -43,7 +42,6 @@ NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient() : ninja()
 
 NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient(NinjaSemiLagrangianTransient const& A ) : ninja(A), U00(A.U00), transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
-, conservationOfMassEquation(FiniteElementMethod::conservationOfMassEquation)
 {
 
 }
@@ -184,7 +182,7 @@ bool NinjaSemiLagrangianTransient::simulate_wind()
 
         //build A arrray
         conservationOfMassEquation.Initialize(mesh, input, U0);
-        conservationOfMassEquation.SetupSKCompressedRowStorage();
+        //conservationOfMassEquation.SetupSKCompressedRowStorage();
         //this sets alphas to 1 for initialization run and projection runs below
         conservationOfMassEquation.stabilityUsingAlphasFlag = 0;
         conservationOfMassEquation.SetStability(input, CloudGrid, init);
