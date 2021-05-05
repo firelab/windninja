@@ -291,7 +291,7 @@ void ninja::importLCP(GDALDataset *poDataset)
             {
                 nHeight = 15;
             }
-            computeSurfPropForCell(i, j, nHeight,
+            computeSurfPropForCell(nR - 1 - i, j, nHeight,
                                    cHeightUnits,
                                    (double) (panScanlineCanopyC[j]),
                                    cCoverUnits,
