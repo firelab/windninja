@@ -252,6 +252,7 @@ void WidgetDownloadDEM::saveDEM()
     else
     {
         QFileDialog saveDialog(this, tr("Save File"), demFileDir.absolutePath(), currentSaveAsDesc);
+        //saveDialog.setFileMode(QFileDialog::AnyFile);
         saveDialog.setDefaultSuffix(currentSuffix);
         saveDialog.setAcceptMode(QFileDialog::AcceptSave);
         if(saveDialog.exec())
@@ -361,7 +362,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         southDEMBound = us_srtm_southBound;
         currentResolution = (fetcher->GetXRes() * 111325);
         currentSuffix = "tif";
-        currentSaveAsDesc = "Elevation files (.tif)";
+        currentSaveAsDesc = "Elevation files (*.tif)";
         break;
     case 1:
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_SRTM, FindDataPath("/data"));
@@ -369,7 +370,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         southDEMBound = world_srtm_southBound;
         currentResolution = (fetcher->GetXRes() * 111325);
         currentSuffix = "tif";
-        currentSaveAsDesc = "Elevation files (.tif)";
+        currentSaveAsDesc = "Elevation files (*.tif)";
         break;
 #ifdef HAVE_GMTED
     case 2:
@@ -378,7 +379,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         southDEMBound = world_gmted_southBound;
         currentResolution = (fetcher->GetXRes() * 111325);
         currentSuffix = "tif";
-        currentSaveAsDesc = "Elevation files (.tif)";
+        currentSaveAsDesc = "Elevation files (*.tif)";
         break;
 #endif
 #ifdef WITH_LCP_CLIENT
@@ -389,7 +390,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         /* this is in meters */
         currentResolution = fetcher->GetXRes();
         currentSuffix = "lcp";
-        currentSaveAsDesc = "Landscape files (.lcp)";
+        currentSaveAsDesc = "Landscape files (*.lcp)";
         break;
 #endif
     }
