@@ -252,7 +252,6 @@ void WidgetDownloadDEM::saveDEM()
     else
     {
         QFileDialog saveDialog(this, tr("Save File"), demFileDir.absolutePath(), currentSaveAsDesc);
-        //saveDialog.setFileMode(QFileDialog::AnyFile);
         saveDialog.setDefaultSuffix(currentSuffix);
         saveDialog.setAcceptMode(QFileDialog::AcceptSave);
         if(saveDialog.exec())
