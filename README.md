@@ -41,7 +41,7 @@ Dependencies (versions are versions we build against):
     * PROJ.4 support
     * GEOS support
     * CURL support
- * Qt 4.7.4
+ * Qt 4.8.5
     * QtGui
     * QtCore
     * QtNetwork/Phonon
