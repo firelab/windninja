@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+WindNinja 3.7.2
+---------------
+- Fix bug related to how roughness grids are set from LCP files (#398)
+
+- Upgrade LCP data to 2016 for CONUS and 2014 for AK and HI (#189)
+
+- Display files with appropriate extensions in the save dialog box of the DEM downloader (#406)
+
+- Ensure resampled output grids cover the original DEM extents (#399)
+
+- Fix bug causeing the GUI to crash when the output directory is not populated in the Solve tab (#405)
+
 WindNinja 3.7.1
 ---------------
 - Update DEM viewer for mapbox API migration to Static Tiles API (#394)
