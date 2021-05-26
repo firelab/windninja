@@ -11,7 +11,7 @@ WindNinja 3.7.2
 
 - Ensure resampled output grids cover the original DEM extents (#399)
 
-- Fix bug causeing the GUI to crash when the output directory is not populated in the Solve tab (#405)
+- Fix bug causing the GUI to crash when the output directory is not populated in the Solve tab (#405)
 
 WindNinja 3.7.1
 ---------------
