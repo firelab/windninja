@@ -2548,19 +2548,19 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
      */
     
     blt::local_date_time startLocal =  blt::local_date_time(dStart,dStartTime,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
-	blt::local_date_time endLocal =  blt::local_date_time(dEnd,dEndTime,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
-	
-	// store tz abreviation. First need to know whether is dst or no
-	bool isDst = timeZonePtr->has_dst();	// Returns true if this time zone does NOT make a daylight savings shift.
-	if ( isDst == true )
-	{
-		storeTZAbbrev(timeZonePtr->std_zone_abbrev());	// no it is not daylight savings time
-	} else
-	{
-		storeTZAbbrev(timeZonePtr->dst_zone_abbrev());	// yes it is daylight savings time
-	}
-	
-	CPLDebug("STATION_FETCH", "Start Time is DST?: %i",startLocal.is_dst());
+    blt::local_date_time endLocal =  blt::local_date_time(dEnd,dEndTime,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+
+    // store tz abreviation. First need to know whether is dst or no
+    bool isDst = timeZonePtr->has_dst();    // Returns true if this time zone does NOT make a daylight savings shift.
+    if ( isDst == true )
+    {
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());  // no it is not daylight savings time
+    } else
+    {
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());  // yes it is daylight savings time
+    }
+
+    CPLDebug("STATION_FETCH", "Start Time is DST?: %i",startLocal.is_dst());
     CPLDebug("STATION_FETCH", "End Time is DST?: %i",endLocal.is_dst());
 
     //Sets these for use in the fetch-station functions
@@ -2654,18 +2654,18 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
 
     bpt::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
-	
-	
-	// store tz abreviation. First need to know whether is dst or no
-	bool isDst = timeZonePtr->has_dst();	// Returns true if this time zone does NOT make a daylight savings shift.
-	if ( isDst == true )
-	{
-		storeTZAbbrev(timeZonePtr->std_zone_abbrev());	// no it is not daylight savings time
-	} else
-	{
-		storeTZAbbrev(timeZonePtr->dst_zone_abbrev());	// yes it is daylight savings time
-	}
-	
+
+
+    // store tz abreviation. First need to know whether is dst or no
+    bool isDst = timeZonePtr->has_dst();    // Returns true if this time zone does NOT make a daylight savings shift.
+    if ( isDst == true )
+    {
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());  // no it is not daylight savings time
+    } else
+    {
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());  // yes it is daylight savings time
+    }
+
 
     blt::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
     //like in get time list, check to see where we are WRT daylight savings time!
