@@ -36,9 +36,18 @@ volVTK::volVTK()
 
 volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, 
 	       wn_3dArray& y, wn_3dArray& z, int i, int j, int k, 
-	       std::string filename)
+	       std::string filename, std::string vtkWriteFormat)
 {
-  writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
+    if ( vtkWriteFormat == "ascii" )
+    {
+        writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
+    } else if (vtkWriteFormat == "binary" )
+    {
+        writeVolVTK_binary(u, v, w, x, y, z, i, j, k, filename);
+    } else
+    {
+        throw std::runtime_error("vtkWriteFormat must be \"ascii\" or \"binary\".");
+    }
 }
 
 volVTK::~volVTK()
@@ -196,3 +205,203 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
   fclose(fout); 
   return true;
 }
+
+
+// found this here, they found it elsewhere: https://stackoverflow.com/questions/10913666/error-writing-binary-vtk-files
+// turns out to be necessary to convert the output binary format from little endian to big endian, because paraview only handles big endian format.
+template <typename T>
+void volVTK::SwapEnd(T& var)
+{
+    char* varArray = reinterpret_cast<char*>(&var);
+    for(long i = 0; i < static_cast<long>(sizeof(var)/2); i++)
+        std::swap(varArray[sizeof(var) - 1 - i],varArray[i]);
+}
+
+
+bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
+			                    wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+			                    int i, int j, int k, std::string filename)
+{
+    FILE *fout;
+    std::string surface_filename;
+    surface_filename = filename;
+    int pos;
+    pos = surface_filename.find_last_of(".");
+    surface_filename.erase(pos, surface_filename.size());
+    surface_filename.append("_surf.vtk");
+    
+    //Write surface grid
+    fout = fopen(surface_filename.c_str(), "wb");
+    if( fout == NULL )
+        throw std::runtime_error("VTK file cannot be opened for writing.");
+    
+    //Write header stuff
+    fprintf(fout, "# vtk DataFile Version 3.0\n");
+    fprintf(fout, "This is a ground surface written by WindNinja.  It is on a structured grid.\n");
+    fprintf(fout, "BINARY\n");
+    
+    fprintf(fout, "DATASET STRUCTURED_GRID\n");
+    fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, 1);
+    fprintf(fout, "POINTS %i double\n", i*j*1);
+    
+    for(int ii=0; ii<i; ii++)
+    {
+        for(int jj=0; jj<j; jj++)
+        {
+            double x_tmp = x(1*i*j + ii*j + jj);
+            double y_tmp = y(1*i*j + ii*j + jj);
+            double z_tmp = z(1*i*j + ii*j + jj);
+            SwapEnd(x_tmp);
+            SwapEnd(y_tmp);
+            SwapEnd(z_tmp);
+            fwrite( &x_tmp, sizeof( double ), 1, fout );
+            fwrite( &y_tmp, sizeof( double ), 1, fout );
+            fwrite( &z_tmp, sizeof( double ), 1, fout );
+        }
+    }
+    
+    fclose(fout);
+    
+    //Write volume grid and u,v,w data
+    fout = fopen(filename.c_str(), "wb");
+    if( fout == NULL )
+        throw std::runtime_error("VTK file cannot be opened for writing.");
+    
+    //Write header stuff
+    fprintf(fout, "# vtk DataFile Version 3.0\n");
+    fprintf(fout, "This is a 3D wind field written by WindNinja.  It is on a structured grid, with u, v, w wind components.\n");
+    fprintf(fout, "BINARY\n");
+    
+    //Write volume grid
+    fprintf(fout, "\nDATASET STRUCTURED_GRID\n");
+    fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, k);
+    
+    fprintf(fout, "POINTS %i double\n", i*j*k);
+    for(int kk=0; kk<k; kk++)
+    {
+        for(int ii=0; ii<i; ii++)
+        {
+            for(int jj=0; jj<j; jj++)
+            {
+                double x_tmp = x(kk*i*j + ii*j + jj);
+                double y_tmp = y(kk*i*j + ii*j + jj);
+                double z_tmp = z(kk*i*j + ii*j + jj);
+                SwapEnd(x_tmp);
+                SwapEnd(y_tmp);
+                SwapEnd(z_tmp);
+                fwrite( &x_tmp, sizeof( double ), 1, fout );
+                fwrite( &y_tmp, sizeof( double ), 1, fout );
+                fwrite( &z_tmp, sizeof( double ), 1, fout );
+            }
+        }
+    }
+    
+    //Write data
+    fprintf(fout, "\nPOINT_DATA %i\n", i*j*k);
+    fprintf(fout, "VECTORS wind_vectors double\n");
+    
+    for(int kk=0; kk<k; kk++)
+    {
+        for(int ii=0; ii<i; ii++)
+        {
+            for(int jj=0; jj<j; jj++)
+            {
+                double u_tmp = u(kk*i*j + ii*j + jj);
+                double v_tmp = v(kk*i*j + ii*j + jj);
+                double w_tmp = w(kk*i*j + ii*j + jj);
+                SwapEnd(u_tmp);
+                SwapEnd(v_tmp);
+                SwapEnd(w_tmp);
+                fwrite( &u_tmp, sizeof( double ), 1, fout );
+                fwrite( &v_tmp, sizeof( double ), 1, fout );
+                fwrite( &w_tmp, sizeof( double ), 1, fout );
+            }
+        }
+    }
+    
+    fclose(fout); 
+    return true;
+}
+
+bool volVTK::writeMeshVolVTK_binary(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+                                    int i, int j, int k, std::string filename)
+{
+    FILE *fout;
+    std::string surface_filename;
+    surface_filename = filename;
+    int pos;
+    pos = surface_filename.find_last_of(".");
+    surface_filename.erase(pos, surface_filename.size());
+    surface_filename.append("_surf.vtk");
+    
+    //Write surface grid
+    fout = fopen(surface_filename.c_str(), "wb");
+    if( fout == NULL )
+        throw std::runtime_error("VTK file cannot be opened for writing.");
+    
+    //Write header stuff
+    fprintf(fout, "# vtk DataFile Version 3.0\n");
+    fprintf(fout, "This is a ground surface written by WindNinja.  It is on a structured grid.\n");
+    fprintf(fout, "BINARY\n");
+    
+    fprintf(fout, "DATASET STRUCTURED_GRID\n");
+    fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, 1);
+    fprintf(fout, "POINTS %i double\n", i*j*1);
+    
+    for(int ii=0; ii<i; ii++)
+    {
+        for(int jj=0; jj<j; jj++)
+        {
+            double x_tmp = x(1*i*j + ii*j + jj);
+            double y_tmp = y(1*i*j + ii*j + jj);
+            double z_tmp = z(1*i*j + ii*j + jj);
+            SwapEnd(x_tmp);
+            SwapEnd(y_tmp);
+            SwapEnd(z_tmp);
+            fwrite( &x_tmp, sizeof( double ), 1, fout );
+            fwrite( &y_tmp, sizeof( double ), 1, fout );
+            fwrite( &z_tmp, sizeof( double ), 1, fout );
+        }
+    }
+    
+    fclose(fout);
+    
+    //Write volume grid
+    fout = fopen(filename.c_str(), "wb");
+    if( fout == NULL )
+        throw std::runtime_error("VTK file cannot be opened for writing.");
+    
+    //Write header stuff
+    fprintf(fout, "# vtk DataFile Version 3.0\n");
+    fprintf(fout, "This is a 3D volume mesh written by WindNinja.  It is on a structured grid.\n");
+    fprintf(fout, "BINARY\n");
+    
+    //Write volume grid
+    fprintf(fout, "\nDATASET STRUCTURED_GRID\n");
+    fprintf(fout, "DIMENSIONS %i %i %i\n", i, j, k);
+    
+    fprintf(fout, "POINTS %i double\n", i*j*k);
+    for(int kk=0; kk<k; kk++)
+    {
+        for(int ii=0; ii<i; ii++)
+        {
+            for(int jj=0; jj<j; jj++)
+            {
+                double x_tmp = x(kk*i*j + ii*j + jj);
+                double y_tmp = y(kk*i*j + ii*j + jj);
+                double z_tmp = z(kk*i*j + ii*j + jj);
+                SwapEnd(x_tmp);
+                SwapEnd(y_tmp);
+                SwapEnd(z_tmp);
+                fwrite( &x_tmp, sizeof( double ), 1, fout );
+                fwrite( &y_tmp, sizeof( double ), 1, fout );
+                fwrite( &z_tmp, sizeof( double ), 1, fout );
+            }
+        }
+    }
+    
+    fclose(fout); 
+    return true;
+}
+
+
