@@ -1315,24 +1315,18 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             bpt::time_duration delta1 = bpt::time_duration(+99999, 0, 0, 0);;;
             bpt::time_duration zero(0, 0, 0, 0);
 
-            //  Find closest item in the past (idx0) and future (idx1) to timeList[i]
+            //  Find closest measurement to timeList[i] in the past (idx0) and future (idx1) . If there are none assign the first or last of the existing data respectively.
             //-----------------------------------------------------------------------
-            int idx0 = -1;
-            int idx1 = -1;
+            int idx0 = minIdx;
+            int idx1 = maxIdx;
             for (int mm = 0; mm < sts[k].size(); mm++)
             {
                 bpt::time_duration delta = sts[k][mm].datetime - timeList[i];
                 if (delta >= zero && delta <= delta1) { idx1 = mm; delta1 = delta; }
                 if (delta <= zero && delta >= delta0) { idx0 = mm; delta0 = delta; }
-
             }
-
-            //if the point is outside the range assign the closest
-            //--------------------------------------------
-            if (idx0 == -1) { idx0 = minIdx; }
-            if (idx1 == -1) { idx1 = maxIdx; }
-
-            //Interpolation weight w0
+          
+            //Interpolation weight w0 (if timeList[i] is outside range idx0=idx1 and w0=1)
             //------------------------
             double t0 = unixTime(sts[k][idx0].datetime);
             double t1 = unixTime(sts[k][idx1].datetime);
