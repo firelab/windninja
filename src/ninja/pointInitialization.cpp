@@ -1350,10 +1350,11 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
            //----------------------------
             preInterpolate interpol;
             interpol.datetime = timeList[i];
-            interpol.speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed;
-            interpol.temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
-            interpol.cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
+            interpol.speed = speed;
+            interpol.temperature = temperature;
+            interpol.cloudCover = cloudCover;
             interpol.direction = angle;
+			
             interpol.lat = sts[k][0].lat;
             interpol.lon = sts[k][0].lon;
             interpol.datumType = sts[k][0].datumType;
