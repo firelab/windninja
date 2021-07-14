@@ -1291,6 +1291,7 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     vector<vector<pointInitialization::preInterpolate> > sts,
     std::vector<bpt::ptime> timeList)
 {
+	
     CPLDebug("STATION_FETCH", "Interpolating Weather Data...");
 
     vector<vector<preInterpolate> > interpolatedWxData;
@@ -1309,10 +1310,11 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             if (sts[k][mm].datetime > sts[k][maxIdx].datetime) { maxIdx = mm; }
         }
 
+
         for (int i = 0; i < timeList.size(); i++)
         {
-            bpt::time_duration delta0 = bpt::time_duration(-99999, 0, 0, 0);;
-            bpt::time_duration delta1 = bpt::time_duration(+99999, 0, 0, 0);;;
+            bpt::time_duration delta0 = bpt::time_duration(bpt::neg_infin);
+            bpt::time_duration delta1 = bpt::time_duration(bpt::pos_infin);
             bpt::time_duration zero(0, 0, 0, 0);
 
             //  Find closest measurement to timeList[i] in the past (idx0) and future (idx1) . If there are none assign the first or last of the existing data respectively.
@@ -1335,19 +1337,23 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 
             //Interpolate
             //---------------------
+            double speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed ;
+            double temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
+            double cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
+            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0) ;
+            double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
+            double angle = atan2(xx, yy) * 180.0 / PI;
+            if (angle < 0.0) { angle += 360.0; }
+
+
+           // Create interpolated data
+           //----------------------------
             preInterpolate interpol;
             interpol.datetime = timeList[i];
             interpol.speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed;
             interpol.temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
             interpol.cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
-            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0);
-            double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
-            double angle = atan2(xx, yy) * 180.0 / PI;
-            if (angle < 0.0) { angle += 360.0; }
             interpol.direction = angle;
-
-            // Static data
-            //----------------------------
             interpol.lat = sts[k][0].lat;
             interpol.lon = sts[k][0].lon;
             interpol.datumType = sts[k][0].datumType;
