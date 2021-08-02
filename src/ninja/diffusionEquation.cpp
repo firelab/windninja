@@ -45,8 +45,6 @@ DiffusionEquation::DiffusionEquation()
     writePHIandRHS=false;
     phiOutFilename="!set";
     rhsOutFilename="!set";
-    stabilityUsingAlphasFlag=0;
-    currentDt = boost::posix_time::seconds(0);
 }
 
 /**
@@ -56,6 +54,7 @@ DiffusionEquation::DiffusionEquation()
 
 DiffusionEquation::DiffusionEquation(DiffusionEquation const& A)
 {
+    discretizationType = A.discretizationType;
     PHI=A.PHI;
     RHS=A.RHS;
     xRHS=A.xRHS;
@@ -63,7 +62,6 @@ DiffusionEquation::DiffusionEquation(DiffusionEquation const& A)
     zRHS=A.zRHS;
     SK=A.SK;
     CL=A.CL;
-    currentDt = A.currentDt;
     writePHIandRHS=A.writePHIandRHS;
     phiOutFilename=A.phiOutFilename;
     rhsOutFilename=A.rhsOutFilename;
@@ -78,6 +76,7 @@ DiffusionEquation::DiffusionEquation(DiffusionEquation const& A)
 DiffusionEquation& DiffusionEquation::operator=(DiffusionEquation const& A)
 {
     if(&A != this) {
+        discretizationType = A.discretizationType;
         PHI=A.PHI;
         RHS=A.RHS;
         xRHS=A.xRHS;
@@ -85,7 +84,6 @@ DiffusionEquation& DiffusionEquation::operator=(DiffusionEquation const& A)
         zRHS=A.zRHS;
         SK=A.SK;
         CL=A.CL;
-        currentDt = A.currentDt;
         writePHIandRHS=A.writePHIandRHS;
         phiOutFilename=A.phiOutFilename;
         rhsOutFilename=A.rhsOutFilename;
@@ -98,7 +96,7 @@ DiffusionEquation::~DiffusionEquation()      //destructor
     Deallocate();
 }
 
-void DiffusionEquation::Diffusion() 
+void DiffusionEquation::Discretize() 
 {
     //The governing equation to solve for diffusion of the velocity field is:
     //
@@ -226,17 +224,15 @@ void DiffusionEquation::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_
         }
     }
     //The lumped-capacitance solver does not solve an Ax=b equation, so the SK matrix is not needed 
-    if(!(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance")))
+    if(!(discretizationType == GetDiscretizationType("lumpedCapacitance")))
     {
-        SetupSKCompressedRowStorage();
+        //SetupSKCompressedRowStorage();
     }
 }
 
-void DiffusionEquation::UpdateTimeVaryingValues(boost::posix_time::time_duration dt,
-        wn_3dVectorField &U0)
+void DiffusionEquation::UpdateTimeVaryingValues(wn_3dVectorField &U0)
 {
     U0_ = U0;
-    currentDt = dt;
 
     for(int i = 0; i < mesh_.nrows; i++){
         for(int j = 0; j < mesh_.ncols; j++){
@@ -260,11 +256,12 @@ void DiffusionEquation::UpdateTimeVaryingValues(boost::posix_time::time_duration
  * @param U Field to dump diffusion results into
  * @param input Reference to WindNinjaInputs
  */
-void DiffusionEquation::Solve(wn_3dVectorField &U, WindNinjaInputs &input)
+void DiffusionEquation::Solve(wn_3dVectorField &U, WindNinjaInputs &input,
+                              boost::posix_time::time_duration dt)
 {
     int NPK;
 
-    if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
+    if(discretizationType == GetDiscretizationType("lumpedCapacitance"))
     {
         for(int k=0;k<mesh_.nlayers;k++)
         {
@@ -282,9 +279,9 @@ void DiffusionEquation::Solve(wn_3dVectorField &U, WindNinjaInputs &input)
                         U.vectorData_z(NPK) = U0_.vectorData_z(NPK);
                     }
                     else{
-                        U0_.vectorData_x(NPK) += xRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
-                        U0_.vectorData_y(NPK) += yRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
-                        U0_.vectorData_z(NPK) += zRHS[NPK]/CL[NPK]*(currentDt.total_microseconds()/1000000.0);
+                        U0_.vectorData_x(NPK) += xRHS[NPK]/CL[NPK]*(dt.total_microseconds()/1000000.0);
+                        U0_.vectorData_y(NPK) += yRHS[NPK]/CL[NPK]*(dt.total_microseconds()/1000000.0);
+                        U0_.vectorData_z(NPK) += zRHS[NPK]/CL[NPK]*(dt.total_microseconds()/1000000.0);
 
                         U.vectorData_x(NPK) = U0_.vectorData_x(NPK);
                         U.vectorData_y(NPK) = U0_.vectorData_y(NPK);
@@ -294,7 +291,7 @@ void DiffusionEquation::Solve(wn_3dVectorField &U, WindNinjaInputs &input)
             }
         }
     }
-    else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
+    else if(discretizationType == GetDiscretizationType("centralDifference"))
     {
         RHS = xRHS;
         //if(Solve(input)==false)
@@ -347,3 +344,23 @@ void DiffusionEquation::Solve(wn_3dVectorField &U, WindNinjaInputs &input)
         RHS = NULL;
     }
 }
+
+void DiffusionEquation::Deallocate()
+{
+    if(PHI)
+    {	
+        delete[] PHI;
+        PHI=NULL;
+    }
+    if(SK)
+    {	
+        delete[] SK;
+        SK=NULL;
+    }
+    if(RHS)
+    {	
+        delete[] RHS;
+        RHS=NULL;
+    }
+}
+

@@ -666,7 +666,7 @@ void ProjectionEquation::CalculateRcoefficients(element &elem, int j)
     elem.RZ = 1.0/(2.0*alphaV*alphaV);
 }
 
-void ProjectionEquation::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0)
+void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0)
 {
     mesh_ = mesh;
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
@@ -681,10 +681,7 @@ void ProjectionEquation::Initialize(const Mesh &mesh, WindNinjaInputs &input, wn
     else
         throw std::runtime_error("Error allocating isBoundaryNode field.");
 
-    else //else it's a conservation of mass run
-    {
-        RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
-    }
+    RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
 
     SetupSKCompressedRowStorage();
 }

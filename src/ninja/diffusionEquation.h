@@ -46,8 +46,10 @@ class DiffusionEquation
                         lumpedCapacitance};
 
         void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
-        void UpdateTimeVaryingValues(boost::posix_time::time_duration dt, wn_3dVectorField &U0);
+        void UpdateTimeVaryingValues(wn_3dVectorField &U0);
+        void SetBoundaryConditions();
         void Discretize();
+        void Solve(wn_3dVectorField &U, WindNinjaInputs &input, boost::posix_time::time_duration dt);
         void Deallocate();
         eDiscretizationType GetDiscretizationType(std::string type);
         bool writePHIandRHS;
@@ -60,6 +62,7 @@ class DiffusionEquation
         eDiscretizationType discretizationType;
         Mesh const mesh_; //reference to the mesh
         WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
         double *PHI;
         double *RHS, *SK;
         double *CL; //lumped capcitence matrix for transient term in discretized diffusion equation
@@ -67,6 +70,7 @@ class DiffusionEquation
         wn_3dScalarField heightAboveGround;
         wn_3dScalarField windSpeed;
         wn_3dVectorField windSpeedGradient;
+        wn_3dVectorField U0_; //incoming wind field to diffuse
 };
 
 #endif	//DIFFUSION_EQUATION_H
