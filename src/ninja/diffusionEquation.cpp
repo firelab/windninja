@@ -363,4 +363,3 @@ void DiffusionEquation::Deallocate()
         RHS=NULL;
     }
 }
-
