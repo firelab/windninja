@@ -2780,9 +2780,13 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     double projyL=bounds[3];
     double projxR=bounds[0];
     double projyR=bounds[1];
+    cout<<"projyL, projxL = "<<projyL<<", "<<projxL<<endl;
+    cout<<"projyR, projxR = "<<projyR<<", "<<projxR<<endl;
 
     GDALPointFromLatLon(projyL,projxL,poDS,"WGS84"); //LowerLeft
     GDALPointFromLatLon(projyR,projxR,poDS,"WGS84"); //Upper Right
+    cout<<"projyL, projxL = "<<projyL<<", "<<projxL<<endl;
+    cout<<"projyR, projxR = "<<projyR<<", "<<projxR<<endl;
     projxL=projxL-buffer;
     projyL=projyL-buffer;
     projxR=projxR+buffer;
