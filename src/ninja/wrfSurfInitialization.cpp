@@ -657,6 +657,12 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         xCenter = (double)cenLon;
         yCenter = (double)cenLat;
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
         delete poLatLong;
 
