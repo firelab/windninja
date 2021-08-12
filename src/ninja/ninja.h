@@ -393,12 +393,12 @@ protected:
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
 
     void interp_uvw();
-    void interp_uvw(wn_3dVectorField* uField);
+    void interp_uvw(wn_3dVectorField& uField);
 
     bool writePrjFile(std::string inPrjString, std::string outFileName);
     bool checkForNullRun();
     void prepareOutput();
-    void prepareOutput(wn_3dVectorField* uField);
+    void prepareOutput(wn_3dVectorField& uField);
     void writeOutputFiles(); 
 
 private:

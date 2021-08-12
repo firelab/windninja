@@ -47,13 +47,14 @@ class FiniteElementMethod
         void Initialize(const Mesh &mesh, const WindNinjaInputs &input);
         void SetupSKCompressedRowStorage(double *SK, int *col_ind, int *row_ptr);
         void DiscretizeTransientTerms();
-        void DiscretizeDiffusionTerms();
+        void DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
+                wn_3dVectorField& U0, double alphaH, wn_3dScalarField alphaVfield);
         void ComputeGradientField(double *scalar, wn_3dVectorField &U);
         void Deallocate();
 
     private:
-        void CalculateRcoefficients(element &elem, int j);
-        void CalculateHterm(element &elem, int i) ;
+        void CalculateDiffusionRcoefficients(element &elem, int j, double alphaH, wn_3dScalarField alphaVfield);
+        void CalculateDiffusionHterm(element &elem, int i, wn_3dVectorField& U0) ;
 
         std::vector<element> elementArray;
         const Mesh *mesh_; //reference to the mesh

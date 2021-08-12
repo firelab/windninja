@@ -197,7 +197,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         //        throw std::runtime_error("Solver returned false.");
  
         //compute uvw field from phi field
-        conservationOfMassEquation.ComputeUVWField(input, U);
+        conservationOfMassEquation.ComputeUVWField();
         //use output from first projection step for copying inlet nodes later on
         U0=U;
         volVTK VTK2(U0, mesh.XORD, mesh.YORD, mesh.ZORD, 
@@ -346,7 +346,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 endSolve = omp_get_wtime();
 #endif
                 //compute uvw field from phi field
-                conservationOfMassEquation.ComputeUVWField(input, U);
+                conservationOfMassEquation.ComputeUVWField();
 
                 checkCancel();
             }
@@ -408,7 +408,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
     //prepare output arrays
-    prepareOutput(&Uaverage);
+    prepareOutput(Uaverage);
 
     checkCancel();
 

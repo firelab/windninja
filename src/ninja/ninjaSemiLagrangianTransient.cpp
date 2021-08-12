@@ -270,7 +270,7 @@ bool NinjaSemiLagrangianTransient::simulate_wind()
             /*  ----------------------------------------*/
 
             //compute uvw field from phi field
-            conservationOfMassEquation.ComputeUVWField(input, U);
+            conservationOfMassEquation.ComputeUVWField();
 
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */

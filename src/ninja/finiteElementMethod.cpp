@@ -261,7 +261,8 @@ void FiniteElementMethod::DiscretizeTransientTerms()
 //    } //End parallel region
 }
 
-void FiniteElementMethod::DiscretizeDiffusionTerms() 
+void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
+        wn_3dVectorField& U0, double alphaH, wn_3dScalarField alphaVfield) 
 {
 //    //The governing equation to solve is
 //    //
@@ -278,139 +279,138 @@ void FiniteElementMethod::DiscretizeDiffusionTerms()
 //    //         du0     dv0     dz0
 //    //    H = ----- + ----- + -----
 //    //         dx      dy      dz
-//    //
-//
-//    int i, j, k, l;
-//
-//    int interrows=input_->dem.get_nRows()-2;
-//    int intercols=input_->dem.get_nCols()-2;
-//    int interlayers=mesh_->nlayers-2;
-//    //NZND is the # of nonzero elements in the SK stiffness array that are stored
-//    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
-//         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
-//         (intercols*interrows*interlayers)*27;
-//
-//    //this is because we will only store the upper half of the SK matrix since it's symmetric
-//    NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
-//
-//    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
-//    {
-//        for(int j=0; j<mesh_->NNPE; j++)
-//        {
-//            elementArray[i].QE[j]=0.0;
-//            for(int k=0; k<mesh_->NNPE; k++)
-//            {
-//                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-//            }
-//        }
-//    }
-//
-//#pragma omp parallel default(shared) private(i,j,k,l)
-//    {
-//        int pos;  
-//        int ii, jj, kk;
-//
-//#pragma omp for
-//        for(i=0; i<mesh_->NUMNP; i++)
-//        {
-//            RHS[i]=0.;
-//        }
-//
-//#pragma omp for 
-//    for(i=0; i<NZND; i++)
-//    {
-//        SK[i]=0.;
-//    }
-//
-//#pragma omp for
-//        for(i=0;i<mesh_->NUMEL;i++) //Start loop over elements
-//        {
-//            /*-----------------------------------------------------*/
-//            /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
-//            /*      THE BOUNDARY CONDITIONS HAVE A NON-ZERO FLUX   */
-//            /*      SPECIFICATION:                                 */
-//            /*      Flow through =>  Phi = 0                       */
-//            /*      Ground       =>  normal flux = 0               */
-//            /*-----------------------------------------------------*/
-//
-//            //Begin quadrature for current element
-//            elementArray[i].node0=mesh_->get_node0(i); //get the global nodal number of local node 0 of element i
-//
-//            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
-//            {
-//                if(elementArray[i].NUMQPTV==27)
-//                {
-//                    if(j<=7)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT1;
-//                    }
-//                    else if(j<=19)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT2;
-//                    }
-//                    else if(j<=25)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT3;
-//                    }
-//                    else
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT4;
-//                    }
-//                }
-//
-//                //calculates elem.HVJ
-//                CalculateHterm(elementArray[i], i);
-//
-//                //calculates elem.RX, elem.RY, elem.RZ
-//                CalculateRcoefficients(elementArray[i], j);
-//
-//                //Create element stiffness matrix---------------------------------------------
-//                for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
-//                {
-//                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].HVJ*elementArray[i].DV;
-//                    for(l=0;l<mesh_->NNPE;l++)
-//                    {
-//                        elementArray[i].S[k*mesh_->NNPE+l]=elementArray[i].S[k*mesh_->NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
-//                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
-//                    }
-//                } //End loop over nodes in the element
-//            } //End loop over quadrature points in the element
-//
-//            //Place completed element matrix in global SK and Q matrices
-//            for(j=0;j<mesh_->NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
-//            {
-//                //elem.NPK is the global row number of the element stiffness matrix
-//                elementArray[i].NPK=mesh_->get_global_node(j, i);
-//
-//#pragma omp atomic
-//                RHS[elementArray[i].NPK] += elementArray[i].QE[j];
-//
-//                for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//                {
-//                    elementArray[i].KNP=mesh_->get_global_node(k, i);
-//
-//                    if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
-//                    {
-//                        pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-//
-//                        //l increments through col_ind[] starting from where row_ptr[] says until
-//                        //we find the column number we're looking for
-//                        l=0;
-//                        do
-//                        {
-//                            if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
-//                                 pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
-//                            l++;
-//                        }
-//                        while(pos<0);
-//#pragma omp atomic
-//                        //Here is the final global stiffness matrix in symmetric storage
-//                        SK[pos] += elementArray[i].S[j*mesh_->NNPE+k];
-//                    }
-//                }
-//            } //End loop over nodes in the element
-//        } //End loop over elements
-//    } //End parallel region
+
+    int i, j, k, l;
+
+    int interrows=input_->dem.get_nRows()-2;
+    int intercols=input_->dem.get_nCols()-2;
+    int interlayers=mesh_->nlayers-2;
+    //NZND is the # of nonzero elements in the SK stiffness array that are stored
+    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
+         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
+         (intercols*interrows*interlayers)*27;
+
+    //this is because we will only store the upper half of the SK matrix since it's symmetric
+    NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
+
+    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+    {
+        for(int j=0; j<mesh_->NNPE; j++)
+        {
+            elementArray[i].QE[j]=0.0;
+            for(int k=0; k<mesh_->NNPE; k++)
+            {
+                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+            }
+        }
+    }
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        int pos;  
+        int ii, jj, kk;
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMNP; i++)
+        {
+            RHS[i]=0.;
+        }
+
+#pragma omp for 
+    for(i=0; i<NZND; i++)
+    {
+        SK[i]=0.;
+    }
+
+#pragma omp for
+        for(i=0;i<mesh_->NUMEL;i++) //Start loop over elements
+        {
+            /*-----------------------------------------------------*/
+            /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
+            /*      THE BOUNDARY CONDITIONS HAVE A NON-ZERO FLUX   */
+            /*      SPECIFICATION:                                 */
+            /*      Flow through =>  Phi = 0                       */
+            /*      Ground       =>  normal flux = 0               */
+            /*-----------------------------------------------------*/
+
+            //Begin quadrature for current element
+            elementArray[i].node0=mesh_->get_node0(i); //get the global nodal number of local node 0 of element i
+
+            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                if(elementArray[i].NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elementArray[i].WT=elementArray[i].WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elementArray[i].WT=elementArray[i].WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elementArray[i].WT=elementArray[i].WT3;
+                    }
+                    else
+                    {
+                        elementArray[i].WT=elementArray[i].WT4;
+                    }
+                }
+
+                //calculates elem.HVJ
+                CalculateDiffusionHterm(elementArray[i], i, U0);
+
+                //calculates elem.RX, elem.RY, elem.RZ
+                CalculateDiffusionRcoefficients(elementArray[i], j, alphaH, alphaVfield);
+
+                //Create element stiffness matrix---------------------------------------------
+                for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+                {
+                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].HVJ*elementArray[i].DV;
+                    for(l=0;l<mesh_->NNPE;l++)
+                    {
+                        elementArray[i].S[k*mesh_->NNPE+l]=elementArray[i].S[k*mesh_->NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
+                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+
+            //Place completed element matrix in global SK and Q matrices
+            for(j=0;j<mesh_->NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            {
+                //elem.NPK is the global row number of the element stiffness matrix
+                elementArray[i].NPK=mesh_->get_global_node(j, i);
+
+#pragma omp atomic
+                RHS[elementArray[i].NPK] += elementArray[i].QE[j];
+
+                for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
+                {
+                    elementArray[i].KNP=mesh_->get_global_node(k, i);
+
+                    if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
+                    {
+                        pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                        //l increments through col_ind[] starting from where row_ptr[] says until
+                        //we find the column number we're looking for
+                        l=0;
+                        do
+                        {
+                            if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+                                 pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
+                            l++;
+                        }
+                        while(pos<0);
+#pragma omp atomic
+                        //Here is the final global stiffness matrix in symmetric storage
+                        SK[pos] += elementArray[i].S[j*mesh_->NNPE+k];
+                    }
+                }
+            } //End loop over nodes in the element
+        } //End loop over elements
+    } //End parallel region
 }
 
 void FiniteElementMethod::Deallocate()
@@ -757,22 +757,38 @@ void FiniteElementMethod::ComputeGradientField(double *scalar, wn_3dVectorField 
 #pragma omp barrier
 
 #pragma omp for
-
         for(i=0;i<mesh_->NUMNP;i++)
         {
             //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc. (still stored in the u,v,w arrays)
-
             U.vectorData_x(i)=U.vectorData_x(i)/DIAG[i];
             U.vectorData_y(i)=U.vectorData_y(i)/DIAG[i];
             U.vectorData_z(i)=U.vectorData_z(i)/DIAG[i];
-
         }
-    } //end parallel section
+    }//end parallel section
 }
 
-void FiniteElementMethod::CalculateHterm(element &elem, int i)
+void FiniteElementMethod::CalculateDiffusionHterm(element &elem, int i,
+        wn_3dVectorField& U0)
 {
+    //Calculate the coefficient H 
+    //This is what drives the flow, this is the source term
+    //for PHI
+    //
+    //           d u0   d v0   d w0
+    //     H = ( ---- + ---- + ---- )
+    //           d x    d y    d z
+    //
 
+    elem.HVJ=0.0;
+
+    for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+    {
+        elem.NPK=mesh_->get_global_node(k, i); //NPK is the global nodal number
+
+        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
+                (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
+                (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
+    } //End loop over nodes in the element
 }
 
 /**
@@ -782,9 +798,23 @@ void FiniteElementMethod::CalculateHterm(element &elem, int i)
  * @param j The quadrature point index
  *
  */
-void FiniteElementMethod::CalculateRcoefficients(element &elem, int j)
+void FiniteElementMethod::CalculateDiffusionRcoefficients(element &elem, int j, double alphaH,
+        wn_3dScalarField alphaVfield)
 {
+    //                    1                          1
+    //    Rx = Ry =  ------------          Rz = ------------
+    //                2*alphaH^2                 2*alphaV^2
 
+    double alphaV = 0.;
+    for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+    {
+        alphaV=alphaV+elem.SFV[0*mesh_->NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+
+    } //End loop over nodes in the element
+
+    elem.RX = 1.0/(2.0*alphaH*alphaH);
+    elem.RY = 1.0/(2.0*alphaH*alphaH);
+    elem.RZ = 1.0/(2.0*alphaV*alphaV);
 }
 
 void FiniteElementMethod::Initialize(const Mesh &mesh, const WindNinjaInputs &input)

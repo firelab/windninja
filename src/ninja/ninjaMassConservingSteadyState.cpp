@@ -232,10 +232,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 #endif
 
         //solver
-        //if the CG solver diverges, try the minres solver
-        //if(conservationOfMassEquation.Solve(input)==false)
-        //    if(conservationOfMassEquation.SolveMinres(input)==false)
-        //        throw std::runtime_error("Solver returned false.");
+        conservationOfMassEquation.Solve(input);
 
 #ifdef _OPENMP
         endSolve = omp_get_wtime();
@@ -248,7 +245,7 @@ checkCancel();
 /*  ----------------------------------------*/
 
         //compute uvw field from phi field
-        conservationOfMassEquation.ComputeUVWField(input, U);
+        conservationOfMassEquation.ComputeUVWField();
 
 
         //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
@@ -333,7 +330,7 @@ checkCancel();
 #endif
 
     //prepare output arrays
-    prepareOutput();
+    prepareOutput(conservationOfMassEquation.U);
 
     checkCancel();
 

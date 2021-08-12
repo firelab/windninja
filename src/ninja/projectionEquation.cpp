@@ -114,7 +114,8 @@ void ProjectionEquation::Discretize()
     //         dx      dy      dz
     //
 
-
+    fem.Initialize(mesh_, input_);
+    fem.DiscretizeDiffusionTerms(SK, RHS, col_ind, row_ptr, U0_, alphaH, alphaVfield);
 }
 
 void ProjectionEquation::SetBoundaryConditions()
@@ -531,91 +532,9 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
  *
  * This is the result of the @f$ A*x=b @f$ calculation.
  */
-void ProjectionEquation::ComputeUVWField(WindNinjaInputs &input,
-                    wn_3dVectorField &U)
+void ProjectionEquation::ComputeUVWField()
 {
-     /*-----------------------------------------------------*/
-     /*      Calculate u,v, and w from derivatives of PHI   */
-     /*                     1         d PHI                 */
-     /*     u =  u  +  -----------  * ----                  */
-     /*           0     2*alphaH^2     dx                   */
-     /*                                                     */
-     /*                     1         d PHI                 */
-     /*     v =  v  +  -----------  * ----                  */
-     /*           0     2*alphaH^2     dy                   */
-     /*                                                     */
-     /*                     1         d PHI                 */
-     /*     w =  w  +  -----------  * ----                  */
-     /*           0     2*alphaV^2     dz                   */
-     /*                                                     */
-     /*     Since the derivatives cannot be directly        */
-     /*     calculated because they are located at the      */
-     /*     nodal points(the derivatives across element     */
-     /*     boundaries are discontinuous), another method   */
-     /*     must be used.  The method used here is that     */
-     /*     used in Thompson's book on page 228 called      */
-     /*     "stress smoothing".  It is basically an inverse-*/
-     /*     distance weighted average from the gauss points */
-     /*     of the surrounding cells.                       */
-     /*-----------------------------------------------------*/
-
-    if(writePHIandRHS){
-        wn_3dScalarField phiField;
-        wn_3dScalarField rhsField;
-        phiField.allocate(&mesh_);
-        rhsField.allocate(&mesh_);
-        int _NPK;
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
-        {
-            for(unsigned int i=0; i<mesh_.nrows;i++)
-            {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
-                {
-                    _NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
-                    phiField(i,j,k) = PHI[_NPK];
-                    rhsField(i,j,k) = RHS[_NPK];
-                }
-            }
-        }
-        volVTK VTKphi(phiField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
-        input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, phiOutFilename);
-        volVTK VTKrhs(rhsField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
-        input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, rhsOutFilename);
-
-        phiField.deallocate();
-        rhsField.deallocate();
-    }
-
-    for(int i=0;i<mesh_.NUMNP;i++) //Initialize u,v, and w
-    {
-        U.vectorData_x(i)=0.;
-        U.vectorData_y(i)=0.;
-        U.vectorData_z(i)=0.;
-    }
-
-    double alphaV = 1.0;
-
-    for(int i=0;i<mesh_.NUMNP;i++)
-    {
-        //calculate u,v,w
-        alphaV = alphaVfield(i); //set alphaV for stability
-
-        //Remember, dPHI/dx is stored in u
-        U.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i);
-        U.vectorData_y(i)=U0_.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
-        U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
-    }
-
-    //set ground to zero
-    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
-    {
-        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
-        {
-            U.vectorData_x(i,j,0) = 0.0;
-            U.vectorData_y(i,j,0) = 0.0;
-            U.vectorData_z(i,j,0) = 0.0;
-        }
-    }
+    fem.ComputeGradientField(PHI, U);
 }
 
 void ProjectionEquation::CalculateHterm(element &elem, int i)
@@ -629,16 +548,16 @@ void ProjectionEquation::CalculateHterm(element &elem, int i)
     //           d x    d y    d z
     //
 
-    elem.HVJ=0.0;
-
-    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
-    {
-        elem.NPK=mesh_.get_global_node(k, i); //NPK is the global nodal number
-
-        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0_.vectorData_x(elem.NPK))+
-                (elem.DNDY[k]*U0_.vectorData_y(elem.NPK))+
-                (elem.DNDZ[k]*U0_.vectorData_z(elem.NPK)));
-    } //End loop over nodes in the element
+//    elem.HVJ=0.0;
+//
+//    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+//    {
+//        elem.NPK=mesh_.get_global_node(k, i); //NPK is the global nodal number
+//
+//        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0_.vectorData_x(elem.NPK))+
+//                (elem.DNDY[k]*U0_.vectorData_y(elem.NPK))+
+//                (elem.DNDZ[k]*U0_.vectorData_z(elem.NPK)));
+//    } //End loop over nodes in the element
 }
 
 /**
@@ -654,16 +573,16 @@ void ProjectionEquation::CalculateRcoefficients(element &elem, int j)
     //    Rx = Ry =  ------------          Rz = ------------
     //                2*alphaH^2                 2*alphaV^2
 
-    double alphaV = 0.;
-    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
-    {
-        alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-
-    } //End loop over nodes in the element
-
-    elem.RX = 1.0/(2.0*alphaH*alphaH);
-    elem.RY = 1.0/(2.0*alphaH*alphaH);
-    elem.RZ = 1.0/(2.0*alphaV*alphaV);
+//    double alphaV = 0.;
+//    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
+//    {
+//        alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+//
+//    } //End loop over nodes in the element
+//
+//    elem.RX = 1.0/(2.0*alphaH*alphaH);
+//    elem.RY = 1.0/(2.0*alphaH*alphaH);
+//    elem.RZ = 1.0/(2.0*alphaV*alphaV);
 }
 
 void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0)
@@ -671,6 +590,7 @@ void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &inp
     mesh_ = mesh;
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
     U0_ = U0;
+    U = U0; //just set U to U0 for now, will be computed later
 
     if(PHI == NULL)
         PHI=new double[mesh_.NUMNP];
@@ -684,4 +604,18 @@ void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &inp
     RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
 
     SetupSKCompressedRowStorage();
+}
+
+void ProjectionEquation::Solve(WindNinjaInputs &input)
+{
+    //if the CG solver diverges, try the minres solver
+    matrixEquation.initializeConjugateGradient(mesh_.NUMNP);
+    if(matrixEquation.SolveConjugateGradient(input, SK, PHI, RHS, row_ptr, col_ind)==false)
+    {
+        matrixEquation.initializeMinres(mesh_.NUMNP);
+        if(matrixEquation.SolveMinres(input, SK, PHI, RHS, row_ptr, col_ind)==false)
+        {
+            throw std::runtime_error("Solver returned false.");
+        }
+    }
 }

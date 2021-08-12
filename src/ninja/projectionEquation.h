@@ -33,6 +33,8 @@
 #include "stability.h"
 #include "initialize.h"
 #include "volVTK.h"
+#include "linearAlgebra.h"
+#include "finiteElementMethod.h"
 
 class ProjectionEquation
 {
@@ -49,8 +51,8 @@ class ProjectionEquation
         void SetStability(WindNinjaInputs &input,
                         AsciiGrid<double> &CloudGrid,
                         boost::shared_ptr<initialize> &init);
-        void ComputeUVWField(WindNinjaInputs &input,
-                            wn_3dVectorField &U);
+        void Solve(WindNinjaInputs &input);
+        void ComputeUVWField();
         void Discretize();
         void Deallocate();
 
@@ -60,6 +62,7 @@ class ProjectionEquation
         bool writePHIandRHS;
         std::string phiOutFilename;
         std::string rhsOutFilename;
+        wn_3dVectorField U;
 
     private:
         void CalculateRcoefficients(element &elem, int j);
@@ -67,7 +70,8 @@ class ProjectionEquation
         const Mesh mesh_;
         const WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;
-        wn_3dVectorField U;
+        FiniteElementMethod fem; //finite element method operations
+        LinearAlgebra matrixEquation; //linear algebra operations
         double *PHI;
         double *RHS, *SK;
         int *row_ptr, *col_ind;
