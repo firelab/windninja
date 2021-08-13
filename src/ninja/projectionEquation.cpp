@@ -603,9 +603,9 @@ void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &inp
 
     RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
 
-    stabilityUsingAlphasFlag = input.stabilityFlag;
-
     SetupSKCompressedRowStorage();
+
+    stabilityUsingAlphasFlag = input.stabilityFlag;
 }
 
 void ProjectionEquation::Solve(WindNinjaInputs &input)
