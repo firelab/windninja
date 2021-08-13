@@ -1003,8 +1003,12 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
             // Check if the nodata value is out of range
             int bClamped = FALSE;
             int bRounded = FALSE;
-            GDALAdjustValueToDataType(GDALGetRasterDataType(band),
-                                      noDataValue, &bClamped, &bRounded );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0)
+             GDALAdjustValueToDataType(GDALGetRasterDataType(band),
+                                       noDataValue, &bClamped, &bRounded );
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0) */
+#endif /* GDAL_COMPUTE_VERSION */
             /*
             if( !bClamped )
             {

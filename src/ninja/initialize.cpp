@@ -168,6 +168,7 @@ void initialize::initializeBoundaryLayer(WindNinjaInputs& input)
         {
             for(j=0;j<input.dem.get_nCols();j++)
             {
+                L.set_cellValue(i, j, 9999.);//for a neutral atmosphere, L->infinity
                 u_star(i,j) = speedInitializationGrid(i,j)*0.4/
                             (log((input.inputWindHeight+input.surface.Rough_h(i,j)-
                                   input.surface.Rough_d(i,j))/input.surface.Roughness(i,j)));

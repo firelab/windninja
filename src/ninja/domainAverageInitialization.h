@@ -45,6 +45,11 @@ class domainAverageInitialization : public initialize
                 wn_3dVectorField& U0,
                 AsciiGrid<double>& cloud);
 
+#ifdef NINJAFOAM
+        virtual void ninjaFoamInitializeFields( WindNinjaInputs &input,
+                                            AsciiGrid<double> &cloud );
+#endif //NINJAFOAM
+
     private:
 
         virtual void initializeBoundaryLayer(WindNinjaInputs& input);

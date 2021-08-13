@@ -1,5 +1,3 @@
-/******************************************************************************
- *
  * $Id$
  *
  * Project:  WindNinja
@@ -42,26 +40,44 @@ domainAverageInitialization::~domainAverageInitialization()
 
 void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
                 Mesh const& mesh,
-                wn_3dVectorField& U0,
+                wn_3dScalarField& u0,
+                wn_3dScalarField& v0,
+                wn_3dScalarField& w0,
                 AsciiGrid<double>& cloud)
 {
     setGridHeaderData(input, cloud);
 
     setInitializationGrids(input);
 
-    initializeWindToZero(mesh, U0);
+    initializeWindToZero(mesh, u0, v0, w0);
 
     initializeBoundaryLayer(input);
 
-    initializeWindFromProfile(input, mesh, U0);
+    initializeWindFromProfile(input, mesh, u0, v0, w0);
 
     if((input.diurnalWinds==true) && (profile.profile_switch==windProfile::monin_obukov_similarity))
     {
-        addDiurnalComponent(input, mesh, U0);
+        addDiurnalComponent(input, mesh, u0, v0, w0);
     }
 
     cloud = cloudCoverGrid;
 }
+
+#ifdef NINJAFOAM
+/**
+ * Sets boundary layer information needed for log interpolation of the output wind.
+ * @param input WindNinjaInputs object storing necessary input information.
+ */
+void domainAverageInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
+                                                    AsciiGrid<double> &cloud)
+{
+    setGridHeaderData(input, cloud);
+
+    setInitializationGrids(input);
+
+    initializeBoundaryLayer(input);
+}
+#endif //NINJAFOAM
 
 void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
@@ -147,6 +163,7 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
             {
                 for(j=0;j<input.dem.get_nCols();j++)
                 {
+                    L.set_cellValue(i, j, 9999.);//for a neutral atmosphere, L->infinity
                     u_star(i,j) = velocity*0.4/(log((input.inputWindHeight+
                                                     input.surface.Rough_h(i,j)-
                                                     input.surface.Rough_d(i,j))/

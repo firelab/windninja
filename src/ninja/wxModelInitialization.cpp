@@ -1064,6 +1064,8 @@ void wxModelInitialization::deallocateTemp()
 #ifdef NINJAFOAM
 /**
  * Sets input speed, direction, temperature, and cloud from a surface wx model.
+ * Also sets the boundary layer variables which are needed for log interpolation
+ * of the output wind to the user-specified output height.
  * @param input WindNinjaInputs object storing necessary input information.
  */
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
@@ -1098,6 +1100,8 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
     //write wx model grids
     writeWxModelGrids(input);
+
+    initializeBoundaryLayer(input);
 
     /*
      * if diurnal is on, set required inputs from grids.

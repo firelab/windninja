@@ -105,6 +105,8 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     //set average direction
     input.inputDirection = meanDir;
 
+    initializeBoundaryLayer(input);
+
     cloud = cloudCoverGrid;
 }
 #endif //NINJAFOAM
@@ -139,14 +141,11 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         
     GDALClose(hSpeedDS);
     GDALClose(hDirDS);
-        
-    //Check that the upper right corner covered by the input grids and buffer if needed
-    //NOTE: Right now this is only for input grids with same prj and llcorner as DEM
-    double corner2_x = input.dem.get_xllCorner() + input.dem.get_nCols() * input.dem.get_cellSize(); //corner 2
-    double corner2_y = input.dem.get_yllCorner() + input.dem.get_nRows() * input.dem.get_cellSize();
-    while( !inputVelocityGrid.check_inBounds(corner2_x, corner2_y) ){
-        inputVelocityGrid.BufferGridInPlace();
-        inputAngleGrid.BufferGridInPlace();
+
+    //Check that the initialization grids completely overlap the DEM
+    if(!inputVelocityGrid.CheckForGridOverlap(input.dem) || !inputAngleGrid.CheckForGridOverlap(input.dem))
+    {
+        throw std::runtime_error("The input speed and direction grids do not completely overlap the DEM.");
     }
 
     //convert to base units

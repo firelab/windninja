@@ -1,6 +1,46 @@
 Release Notes
 =============
 
+WindNinja 3.7.2
+---------------
+- Fix bug related to how roughness grids are set from LCP files (#398)
+
+- Upgrade LCP data to 2016 for CONUS and 2014 for AK and HI (#189)
+
+- Display files with appropriate extensions in the save dialog box of the DEM downloader (#406)
+
+- Ensure resampled output grids cover the original DEM extents (#399)
+
+- Fix bug causing the GUI to crash when the output directory is not populated in the Solve tab (#405)
+
+WindNinja 3.7.1
+---------------
+- Update DEM viewer for mapbox API migration to Static Tiles API (#394)
+
+WindNinja 3.7.0
+---------------
+- Add ability to set a custom output path in the GUI (#369)
+
+- Write correct units in weather station kml output (#325)
+
+- Use gridded roughness properly in initializations with LCP files (#366)
+
+- Allow users to set a custom mesh resolution in the CFD solver (#357)
+
+- Write outputs at the mesh resolution as default for CFD runs (#339)
+
+- Correctly report meshing time for CFD runs with weather model initializations (#371)
+
+- Handle how exceptions are passed through to the user via the API vs. the GUI/CLI (#373)
+
+- Properly set diurnal wind indices when stations outside the DEM are used in point initializations (#362)
+
+- Do not use internal VRT warping for band mapping for WRF NetCDF files (#375)
+
+- Properly set Monin-Obukhov length for neutral stability runs (#391)
+
+- Use log interpolation to the output wind height for CFD runs if the output height is not resolved (#76, #392)
+
 WindNinja 3.6.0
 ---------------
 - Fix issue related to time interpolation in point initialization (\#352)

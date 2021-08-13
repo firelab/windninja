@@ -976,6 +976,7 @@ void mainWindow::updateFileInput(const char* file)
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
+      tree->solve->setOutputDir(QFileInfo(fileName).absolutePath());
     }
 }
 

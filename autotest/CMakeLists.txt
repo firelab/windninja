@@ -42,6 +42,7 @@ set(TEST_SOURCES test_main.cpp
                  test_srtm.cpp
                  test_gdal_fetch.cpp
                  test_gdal_output.cpp
+                 test_gdal_util.cpp
                  test_grid_interp.cpp
                  test_array2d.cpp
                  test_timezone.cpp
@@ -116,6 +117,10 @@ add_test(test_init_gdal
 # buffer_grid Test Suite
 add_test(test_buffer_grid_init
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=buffer_grid/init_and_set)
+
+# gdal_util
+add_test(test_gdal_util_center
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_util/center)
 
 # landfireclient Test Suite - still experimental
 if(WITH_LCP_CLIENT)
@@ -221,12 +226,12 @@ if(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska nam_alaska 1 2 0 zip)
     add_test(nomads_hires_arw_conus_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_conus 1 2 0 zip)
-    add_test(nomads_hires_nmm_conus_1_hour_zip
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_nmm_conus 1 2 0 zip)
+    add_test(nomads_hires_fv3_conus_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_fv3_conus 1 2 0 zip)
     add_test(nomads_hires_arw_ak_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_alaska 1 2 0 zip)
-    add_test(nomads_hires_nmm_ak_1_hour_zip
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_nmm_alaska 1 2 0 zip)
+    add_test(nomads_hires_fv3_ak_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_fv3_alaska 1 2 0 zip)
     add_test(nomads_hrrr_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 1 2 0 zip)
     add_test(nomads_hrrr_ak_1_hour_zip
