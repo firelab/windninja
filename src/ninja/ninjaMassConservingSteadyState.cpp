@@ -188,18 +188,14 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 /*  ----------------------------------------*/
 /*  BUILD "A" ARRAY OF AX=B                 */
 /*  ----------------------------------------*/
+        conservationOfMassEquation.Initialize(mesh, input, U0);
+        conservationOfMassEquation.SetStability(input, CloudGrid, init);
+
 #ifdef _OPENMP
         startBuildEq = omp_get_wtime();
 #endif
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
-
-        //build A arrray
-        conservationOfMassEquation.Initialize(mesh, input, U0);
-        //conservationOfMassEquation.SetupSKCompressedRowStorage();
-        //this sets stability based on alphas if stability is turned on
-        conservationOfMassEquation.stabilityUsingAlphasFlag = input.stabilityFlag;
-        conservationOfMassEquation.SetStability(input, CloudGrid, init);
         conservationOfMassEquation.Discretize();
 
         checkCancel();
@@ -207,8 +203,6 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 /*  ----------------------------------------*/
 /*  SET BOUNDARY CONDITIONS                 */
 /*  ----------------------------------------*/
-
-        //set boundary conditions
         conservationOfMassEquation.SetBoundaryConditions();
 
 //#define WRITE_A_B
@@ -231,7 +225,6 @@ bool NinjaMassConservingSteadyState::simulate_wind()
         startSolve = omp_get_wtime();
 #endif
 
-        //solver
         conservationOfMassEquation.Solve(input);
 
 #ifdef _OPENMP
