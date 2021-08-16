@@ -534,7 +534,89 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
  */
 void ProjectionEquation::ComputeUVWField()
 {
+    /*-----------------------------------------------------*/
+    /*      Calculate u,v, and w from derivatives of PHI   */
+    /*                     1         d PHI                 */
+    /*     u =  u  +  -----------  * ----                  */
+    /*           0     2*alphaH^2     dx                   */
+    /*                                                     */
+    /*                     1         d PHI                 */
+    /*     v =  v  +  -----------  * ----                  */
+    /*           0     2*alphaH^2     dy                   */
+    /*                                                     */
+    /*                     1         d PHI                 */
+    /*     w =  w  +  -----------  * ----                  */
+    /*           0     2*alphaV^2     dz                   */
+    /*                                                     */
+    /*     Since the derivatives cannot be directly        */
+    /*     calculated because they are located at the      */
+    /*     nodal points(the derivatives across element     */
+    /*     boundaries are discontinuous), another method   */
+    /*     must be used.  The method used here is that     */
+    /*     used in Thompson's book on page 228 called      */
+    /*     "stress smoothing".  It is basically an inverse-*/
+    /*     distance weighted average from the gauss points */
+    /*     of the surrounding cells.                       */
+    /*-----------------------------------------------------*/
+
+    for(int i=0;i<mesh_.NUMNP;i++) //Initialize u,v, and w
+    {
+        U.vectorData_x(i)=0.;
+        U.vectorData_y(i)=0.;
+        U.vectorData_z(i)=0.;
+    }
+
     fem.ComputeGradientField(PHI, U);
+
+    //if(writePHIandRHS){
+    //    wn_3dScalarField phiField;
+    //    wn_3dScalarField rhsField;
+    //    phiField.allocate(&mesh_);
+    //    rhsField.allocate(&mesh_);
+    //    int _NPK;
+    //    for(unsigned int k=0; k<mesh_.nlayers; k++)
+    //    {
+    //        for(unsigned int i=0; i<mesh_.nrows;i++)
+    //        {
+    //            for(unsigned int j=0; j<mesh_.ncols; j++)
+    //            {
+    //                _NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+    //                phiField(i,j,k) = PHI[_NPK];
+    //                rhsField(i,j,k) = RHS[_NPK];
+    //            }
+    //        }
+    //    }
+    //    volVTK VTKphi(phiField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
+    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, phiOutFilename);
+    //    volVTK VTKrhs(rhsField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
+    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, rhsOutFilename);
+    //    phiField.deallocate();
+    //    rhsField.deallocate();
+    //}
+
+    double alphaV = 1.0;
+
+    for(int i=0;i<mesh_.NUMNP;i++)
+    {
+        //calculate u,v,w
+        alphaV = alphaVfield(i); //set alphaV for stability
+        
+        //Remember, dPHI/dx is stored in u
+        U.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i);
+        U.vectorData_y(i)=U0_.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
+        U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
+    }
+
+    //set ground to zero
+    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+    {
+        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+        {
+            U.vectorData_x(i,j,0) = 0.0;
+            U.vectorData_y(i,j,0) = 0.0;
+            U.vectorData_z(i,j,0) = 0.0;
+        }
+    }
 }
 
 void ProjectionEquation::CalculateHterm(element &elem, int i)
