@@ -231,7 +231,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
         endSolve = omp_get_wtime();
 #endif
 
-checkCancel();
+        checkCancel();
 
 /*  ----------------------------------------*/
 /*  COMPUTE UVW WIND FIELD                  */
@@ -239,19 +239,6 @@ checkCancel();
 
         //compute uvw field from phi field
         conservationOfMassEquation.ComputeUVWField();
-
-
-        //TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-//        for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
-//        {
-//            for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
-//            {
-//                if(U.vectorData_x(i,j,0)>1.0 || U.vectorData_y(i,j,0)>1.0 || U.vectorData_z(i,j,0)>1.0)
-//                {
-//                    cout << "(" << i << ", " << j << ")\t=\t" << "(" << U.vectorData_x(i,j,0) << ", " <<  U.vectorData_y(i,j,0) << ", " << U.vectorData_z(i,j,0) << std::endl;
-//                }
-//            }
-//        }
 
         checkCancel();
 

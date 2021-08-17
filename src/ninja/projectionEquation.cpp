@@ -601,7 +601,7 @@ void ProjectionEquation::ComputeUVWField()
         //calculate u,v,w
         alphaV = alphaVfield(i); //set alphaV for stability
         
-        //Remember, dPHI/dx is stored in u
+        //Remember, dPHI/dx is stored in U
         U.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i);
         U.vectorData_y(i)=U0_.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
         U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
