@@ -346,6 +346,12 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         //double xCenterArray[2] = {-113, -112.3552}; //1st value is MOAD, 2nd is current domain center
         //double yCenterArray[2] = {43.6, 43.78432}; //1st value is MOAD, 2nd is current domain center
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
         delete poLatLong;
 

@@ -250,12 +250,12 @@ static const char *apszNomadsKeys[][11] =
       "5 km",
       "HIRES ARW Alaska" },
     /*
-    ** HIRES Alaska NMM
+    ** HIRES Alaska FV3
     */
     {
-      "hires_nmm_alaska",
+      "hires_fv3_alaska",
       "filter_hiresak.pl",
-      "hiresw.t%02dz.nmmb_5km.f%02d.ak.grib2",
+      "hiresw.t%02dz.fv3_5km.f%02d.ak.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "6:6:0",
@@ -263,7 +263,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES NMM Alaska" },
+      "HIRES FV3 Alaska" },
     /*
     ** HIRES CONUS
     */
@@ -280,12 +280,12 @@ static const char *apszNomadsKeys[][11] =
       "5 km",
       "HIRES ARW CONUS" },
     /*
-    ** HIRES CONUS NMM
+    ** HIRES CONUS FV3
     */
     {
-      "hires_nmm_conus",
+      "hires_fv3_conus",
       "filter_hiresconus.pl",
-      "hiresw.t%02dz.nmmb_5km.f%02d.conus.grib2",
+      "hiresw.t%02dz.fv3_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "0:12:12",
@@ -293,7 +293,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES NMM CONUS" },
+      "HIRES FV3 CONUS" },
     /* XXX: HIRES Guam */
     /* XXX: HIRES Hawaii */
     /* XXX: HIRES Puerto Rico */
