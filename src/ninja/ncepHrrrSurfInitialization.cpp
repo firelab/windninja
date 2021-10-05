@@ -258,6 +258,9 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                         bandList.push_back( j );  // 2t 
                         break;
                     }
+                    if( bandName.find( "Temperature [C]" ) != bandName.npos){ 
+                        airGrid += 273.15;
+                    }
                 }
             }
             for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
@@ -418,7 +421,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
-    airGrid += 273.15;
 
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );
