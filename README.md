@@ -1,6 +1,6 @@
 WindNinja
 =========
-[![Build Status](https://travis-ci.com/firelab/windninja.svg?branch=master)](https://travis-ci.com/firelab/windninja)
+[![Build Status](https://travis-ci.com/firelab/windninja.svg?branch=master)](https://app.travis-ci.com/github/firelab/windninja)
 [![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
