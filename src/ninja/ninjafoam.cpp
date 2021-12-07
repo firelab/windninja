@@ -1669,25 +1669,29 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-    pszMem = CPLSPrintf( "%s/output.raw", pszFoamPath );
+    pszMem = CPLSPrintf("%s/output.raw", pszFoamPath);
     /* This is a member, hold on to it so we can read it later */
-    pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszFoamPath ) );
+    pszVrtMem = CPLStrdup(CPLSPrintf("%s/output.vrt", pszFoamPath));
 
     char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath) );
+    const char *pszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpen(CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
-                            pszFoamPath, 
-                            papszOutputSurfacePath[i]), "r");
+            //hold on to this so we can delete later
+            pszOutputSurfacePath = CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/%s", 
+                    pszFoamPath, papszOutputSurfacePath[i]));
+            fin = VSIFOpen(CPLSPrintf("%s/U_triSurfaceSampling.raw", pszOutputSurfacePath), "r"); 
             break;
         }
         else{
             continue;
         }
     }
+
+    CPLDebug("NINJAFOAM", "NinjaFoam output surface path = %s", pszOutputSurfacePath);
 
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -1745,6 +1749,10 @@ int NinjaFoam::SanitizeOutput()
     }
     VSIFClose( fin );
     VSIFCloseL( fout );
+
+    //unlink the sampled output directory in case we sample again for a later timestep
+    NinjaUnlinkTree(pszOutputSurfacePath);
+    CPLFree((void*)pszOutputSurfacePath);
 
     return 0;
 }
