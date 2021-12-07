@@ -336,9 +336,9 @@ void ninja::importSingleBand(GDALDataset *poDataset)
 	yL = adfGeoTransform[3] + (adfGeoTransform[5] * nR);
 
     //get cell size
-    if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 100000))
-	    cS = abs(adfGeoTransform[1]);
-	else
+    if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 1000000000))
+            cS = abs(adfGeoTransform[1]);
+        else
             throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
                                  "square cells (dx=dy) in the DEM.");
     }
