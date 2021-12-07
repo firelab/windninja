@@ -1674,24 +1674,20 @@ int NinjaFoam::SanitizeOutput()
     pszVrtMem = CPLStrdup(CPLSPrintf("%s/output.vrt", pszFoamPath));
 
     char **papszOutputSurfacePath;
-    const char *pszOutputSurfacePath;
     papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            //hold on to this so we can delete later
-            pszOutputSurfacePath = CPLStrdup(CPLSPrintf("%s/postProcessing/surfaces/%s", 
-                    pszFoamPath, papszOutputSurfacePath[i]));
-            fin = VSIFOpen(CPLSPrintf("%s/U_triSurfaceSampling.raw", pszOutputSurfacePath), "r"); 
+            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+                        pszFoamPath, 
+                        papszOutputSurfacePath[i]), "r");
             break;
         }
         else{
             continue;
         }
     }
-
-    CPLDebug("NINJAFOAM", "NinjaFoam output surface path = %s", pszOutputSurfacePath);
 
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
@@ -1749,10 +1745,6 @@ int NinjaFoam::SanitizeOutput()
     }
     VSIFClose( fin );
     VSIFCloseL( fout );
-
-    //unlink the sampled output directory in case we sample again for a later timestep
-    NinjaUnlinkTree(pszOutputSurfacePath);
-    CPLFree((void*)pszOutputSurfacePath);
 
     return 0;
 }
@@ -2472,6 +2464,22 @@ void NinjaFoam::UpdateExistingCase()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
+
+    //find and delete the old sampled output directory
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
+
+    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
+        if(std::string(papszOutputSurfacePath[i]) != "." &&
+           std::string(papszOutputSurfacePath[i]) != "..") {
+            NinjaUnlinkTree(CPLSPrintf("%s/postProcessing/surfaces/%s", 
+                    pszFoamPath, papszOutputSurfacePath[i]));
+            break;
+        }
+        else{
+            continue;
+        }
+    }
 
     //set meshResolution from log.ninja
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
