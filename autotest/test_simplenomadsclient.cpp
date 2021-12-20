@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );
         else if EQUAL( pszKey, "gfs_global" )
-            BOOST_CHECK_EQUAL( rc, 3 );
+            BOOST_CHECK_EQUAL( rc, 5 );
         else
             /* Sometimes we get double variables */
             BOOST_CHECK( rc >= 4 );

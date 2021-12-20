@@ -3,7 +3,7 @@ env:
 
 language: cpp
 
-dist: xenial
+dist: bionic
 
 compiler:
   - gcc
@@ -21,7 +21,7 @@ install:
   - make -j3
 
 script:
-    - ctest -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point'
+    - ctest -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
 
 # branches to skip
 branches:
@@ -34,12 +34,6 @@ branches:
 notifications:
   email:
     recipients:
-      - kyle@pobox.com
       - nwagenbrenner@gmail.com
       - jforthofer@gmail.com
       - levi@third.consulting
-
-  irc:
-    channels:
-      - "irc.freenode.org#windninja"
-    use_notice: true

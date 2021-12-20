@@ -243,18 +243,23 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     {
         if(input.ninjaTime == timeList[i])
         {
+            cout<<"input.ninjaTime = "<<input.ninjaTime<<endl;
             for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
                 std::string bandName( gc );
 
-                if( bandName.find( "Temperature [K]" ) != bandName.npos ){
+                if( bandName.find( "Temperature [K]" ) != bandName.npos ||
+                    bandName.find( "Temperature [C]" ) != bandName.npos){
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "2-HTGL" ) != bandName.npos ){
                         bandList.push_back( j );  // 2t 
                         break;
+                    }
+                    if( bandName.find( "Temperature [C]" ) != bandName.npos){ 
+                        airGrid += 273.15;
                     }
                 }
             }
@@ -297,7 +302,8 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
-                    if( bandName.find( "0-RESERVED" ) != bandName.npos ){
+                    if( bandName.find( "0-RESERVED" ) != bandName.npos ||
+                        bandName.find( "0-EATM" ) != bandName.npos){
                         bandList.push_back( j );  // Total cloud cover in % 
                         break;
                     }
@@ -415,7 +421,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
-    airGrid += 273.15;
 
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );

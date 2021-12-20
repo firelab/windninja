@@ -1028,11 +1028,11 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
     double biggestX, biggestY;
     int nColsBuffer, nRowsBuffer;
     xMinOverlap = get_xllCorner() - A.get_xllCorner();
-    xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
-        (A.get_xllCorner() + A.get_nCols()*A.get_cellSize());
+    xMaxOverlap = (A.get_xllCorner() + A.get_nCols()*A.get_cellSize()) -
+        (get_xllCorner() + get_nCols()*get_cellSize());
     yMinOverlap = get_yllCorner() - A.get_yllCorner();
-    yMaxOverlap = (get_yllCorner() + get_nRows()*get_cellSize()) -
-        (A.get_yllCorner() + A.get_nRows()*A.get_cellSize());
+    yMaxOverlap = (A.get_yllCorner() + A.get_nRows()*A.get_cellSize()) -
+        (get_yllCorner() + get_nRows()*get_cellSize());
 
     if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
     {

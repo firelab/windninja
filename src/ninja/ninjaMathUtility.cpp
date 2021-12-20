@@ -40,5 +40,5 @@
  */
 bool areEqual(double a, double b, double epsilonMultiplier)
 {
-	return std::fabs(a - b) < epsilonMultiplier*std::numeric_limits<double>::epsilon();
+    return std::fabs(a - b) < epsilonMultiplier*std::numeric_limits<double>::epsilon();
 }
