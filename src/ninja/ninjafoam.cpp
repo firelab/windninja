@@ -2465,6 +2465,15 @@ void NinjaFoam::UpdateExistingCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
+
+    /*
+    ** Copy and save OpenFOAM files for this timestep if NINJAFOAM_KEEP_ALL_TIMESTEPS is TRUE.
+    */
+    if(CSLTestBoolean(CPLGetConfigOption("NINJAFOAM_KEEP_ALL_TIMESTEPS", "FALSE")))
+    {
+        cout<<"keeping all timesteps!!!!!!!!!!"<<endl;
+    }
+
     //find and delete the old sampled output directory
     char **papszOutputSurfacePath;
     papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
