@@ -2471,7 +2471,34 @@ void NinjaFoam::UpdateExistingCase()
     */
     if(CSLTestBoolean(CPLGetConfigOption("NINJAFOAM_KEEP_ALL_TIMESTEPS", "FALSE")))
     {
-        cout<<"keeping all timesteps!!!!!!!!!!"<<endl;
+        CPLDebug("NINJAFOAM", "Keeping all timesteps for simulation.");
+
+        char *pszPath;
+        char *pszFoamTimePath = CPLStrdup(CPLSPrintf("%s_run%d", pszFoamPath, input.inputsRunNumber-1));
+        VSIMkdir(pszFoamTimePath, 0777);
+        
+        CPLDebug("NINJAFOAM", "Writing files for the previous timestep to %s", pszFoamTimePath);
+
+        const char *pszInput;
+        const char *pszOutput;
+        char **papszFileList;
+        const char *pszFilename;
+        std::string osFullPath;
+        papszFileList = NinjaVSIReadDirRecursive(pszFoamPath);
+        for(int i = 0; i < CSLCount( papszFileList ); i++){
+            pszFilename = CPLGetFilename(papszFileList[i]);
+            osFullPath = papszFileList[i];
+            if(std::string(pszFilename) == ""){
+                VSIMkdir(CPLFormFilename(pszFoamTimePath, osFullPath.c_str(), ""), 0777);
+            }
+            else{
+                pszInput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
+                pszOutput = CPLFormFilename(pszFoamTimePath, osFullPath.c_str(), "");
+                CopyFile(pszInput, pszOutput);
+            }
+        }
+
+        CSLDestroy(papszFileList);
     }
 
     //find and delete the old sampled output directory
