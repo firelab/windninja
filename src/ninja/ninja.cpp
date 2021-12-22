@@ -4775,117 +4775,119 @@ void ninja::keepOutputGridsInMemory(bool flag)
 }
 
 double ninja::getFuelBedDepth(int fuelModel)
-{	//at this point must be in meters...  could change...
-
-    //TODO: add units info, turn into table so there arent >200 branches
+{	
+    double depthInFeet;
     if(fuelModel == 1)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 2)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 3)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 4)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 5)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 6)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 7)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 8)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 9)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 10)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 11)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 12)
-        return 2.300000;
+        depthInFeet = 2.3;
     else if(fuelModel == 13)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 101)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 102)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 103)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 104)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 105)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 106)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 107)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 108)
-        return 4.000000;
+        depthInFeet = 4.0;
     else if(fuelModel == 109)
-        return 5.000000;
+        depthInFeet = 5.0;
     else if(fuelModel == 121)
-        return 0.900000;
+        depthInFeet = 0.9;
     else if(fuelModel == 122)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 123)
-        return 1.800000;
+        depthInFeet = 1.8;
     else if(fuelModel == 124)
-        return 2.100000;
+        depthInFeet = 2.1;
     else if(fuelModel == 141)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 142)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 143)
-        return 2.400000;
+        depthInFeet = 2.4;
     else if(fuelModel == 144)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 145)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 146)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 147)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 148)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 149)
-        return 4.400000;
+        depthInFeet = 4.4;
     else if(fuelModel == 161)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 162)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 163)
-        return 1.300000;
+        depthInFeet = 1.3;
     else if(fuelModel == 164)
-        return 0.500000;
+        depthInFeet = 0.5;
     else if(fuelModel == 165)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 181)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 182)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 183)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 184)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 185)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 186)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 187)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 188)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 189)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 201)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 202)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 203)
-        return 1.200000;
+        depthInFeet = 1.2;
     else if(fuelModel == 204)
-        return 2.700000;
+        depthInFeet = 2.7;
     else
         return -1.0;
+
+    //multiply by 0.3048 to convert from feet to meters
+    return (depthInFeet * 0.3048);
 }
 
 void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)

@@ -1288,286 +1288,90 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
  *
  */
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,
-                        vector<vector<pointInitialization::preInterpolate> > vecStations,
-                        std::vector<bpt::ptime> timeList)
+    vector<vector<pointInitialization::preInterpolate> > sts,
+    std::vector<bpt::ptime> timeList)
 {
-    CPLDebug("STATION_FETCH", "Interpolating time data");
+	
+    CPLDebug("STATION_FETCH", "Interpolating Weather Data...");
 
-//    bpt::ptime tempq;
-//    bpt::ptime init;
-
-//    vector<vector<preInterpolate> > Selectify;
-
-    bpt::time_duration zero(0, 0, 0, 0);
-//    bpt::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
-//    bpt::time_duration one(0, 1, 0, 0);
-    bpt::time_duration null(bpt::not_a_date_time);
-
-    int totalsize=vecStations.size(); //Total Number of Stations
-
-    /* This is the new interpolation and sorting function, its much better and doesn't leak memory
-     * Start with 1 station and 1 step
-     *
-     * Get time distance of all steps to the stations
-     *
-     * pick 1 in the future and 1 in the past if possible
-     *
-     * if not,
-     *
-     * get closest and call it good
-     *
-     * NEGATIVE == FUTURE!
-     * POSITIVE == PAST!
-     *
-     */
-    vector<vector<bpt::time_duration> > posMasterTime;
-    vector<vector<bpt::time_duration> > negMasterTime;
-    vector<vector<int> > posMasterIdx;
-    vector<vector<int> >negMasterIdx;
-
-    for (int k=0; k<totalsize; k++) //Do this for all the stations
-    {
-        CPLDebug("STATION_FETCH","STATION ID: %i, %s",k,vecStations[k][0].stationName.c_str());
-        int numObserve=vecStations[k].size(); //Number of observations
-        int numSteps=timeList.size();
-
-        vector<bpt::time_duration> posStepTime; //Master lists of times and indecies for 1 station
-        vector<bpt::time_duration> negStepTime;
-        vector<int> posStepIdx;
-        vector<int> negStepIdx;
-
-        for (int j=0;j<numSteps;j++)//Do this for all time steps
-        {
-            int counter=0;
-            bpt::ptime comparator = timeList[j]; //Get the Baseline
-            vector<bpt::time_duration> posTimeDeltas; //Positive List of time deltas
-            vector<int>posTimeIndecies;
-            vector<bpt::time_duration> negTimeDeltas; // Negative List of time deltas
-            vector<int>negTimeIndecies;
-            for (int i = 0; i<numObserve;i++)
-            {
-                bpt::time_duration difference;
-                difference = comparator - vecStations[k][i].datetime; //Calculate differences for each time step and obs
-                if (difference>zero) //If difference is greater than zero, put in one vect
-                {
-                    posTimeDeltas.push_back(difference);
-                    posTimeIndecies.push_back(i);
-                }
-                if(difference<zero) // if less than zero, put in other vect
-                {
-                    negTimeDeltas.push_back(difference);
-                    negTimeIndecies.push_back(i);
-                }
-            }
-            if (posTimeDeltas.size()>0) //If there are any positive ones, put them into master list
-            {
-                bpt::time_duration minPos=*std::min_element(posTimeDeltas.begin(),posTimeDeltas.end());
-                int posIdx=std::min_element(posTimeDeltas.begin(),posTimeDeltas.end())-posTimeDeltas.begin();
-                posStepTime.push_back(minPos);
-                posStepIdx.push_back(posTimeIndecies[posIdx]);
-
-            }
-            if(posTimeDeltas.size()==0) // If there aren't any, give it a not-a-date-time obj and set the idx to -1
-            {
-                posStepTime.push_back(null);
-                posStepIdx.push_back(-1);
-            }
-            if (negTimeDeltas.size()>0) //Same thing, for negative times
-            {
-                bpt::time_duration minNeg=*std::max_element(negTimeDeltas.begin(),negTimeDeltas.end());
-                int negIdx=std::max_element(negTimeDeltas.begin(),negTimeDeltas.end())-negTimeDeltas.begin();
-                negStepTime.push_back(minNeg);
-                negStepIdx.push_back(negTimeIndecies[negIdx]);
-            }
-            if(negTimeDeltas.size()==0) //if none, give it a -1 and not-a-date-time
-            {
-                negStepTime.push_back(null);
-                negStepIdx.push_back(-1);
-            }
-        }
-        for (int i = 0; i<numSteps;i++)
-        {
-            CPLDebug("STATION_FETCH","Positive IDX %i",posStepIdx[i]);
-            CPLDebug("STATION_FETCH","Negative IDX %i \n",negStepIdx[i]);
-        }
-        posMasterTime.push_back(posStepTime);
-        negMasterTime.push_back(negStepTime);
-        posMasterIdx.push_back(posStepIdx);
-        negMasterIdx.push_back(negStepIdx);
-    }
-    CPLDebug("STATION_FETCH", "Weather times sorted...");
-    CPLDebug("STATION_FETCH","Sizing weather station Vector...");
-    /*
-     * Now for Interpolation...
-     * Take the data out the vecStations and put it into a new struct, for interpolation
-     * Metadata, ie lat lon etc, doesn't need interpolation
-     */
     vector<vector<preInterpolate> > interpolatedWxData;
-    for (int k=0; k<totalsize; k++) //Initialize interpolatedWxData with the right dimensions
+
+    for (int k = 0; k < sts.size(); k++)
     {
         vector<preInterpolate> subInter;
-        for(int ex=0; ex<timeList.size(); ex++)
+
+        //Data may be unordered so we search for the first (minIdx) and last (maxIdx) measurements in time
+        //----------------------------------------------------
+        int minIdx = 0;
+        int maxIdx = 0;
+        for (int mm = 0; mm < sts[k].size(); mm++)
         {
-            preInterpolate timeStorage;
-            timeStorage.datetime = timeList[ex];
-            subInter.push_back(timeStorage);
+            if (sts[k][mm].datetime < sts[k][minIdx].datetime) { minIdx = mm; }
+            if (sts[k][mm].datetime > sts[k][maxIdx].datetime) { maxIdx = mm; }
         }
+
+
+        for (int i = 0; i < timeList.size(); i++)
+        {
+            bpt::time_duration delta0 = bpt::time_duration(bpt::neg_infin);
+            bpt::time_duration delta1 = bpt::time_duration(bpt::pos_infin);
+            bpt::time_duration zero(0, 0, 0, 0);
+
+            //  Find closest measurement to timeList[i] in the past (idx0) and future (idx1) . If there are none assign the first or last of the existing data respectively.
+            //-----------------------------------------------------------------------
+            int idx0 = minIdx;
+            int idx1 = maxIdx;
+            for (int mm = 0; mm < sts[k].size(); mm++)
+            {
+                bpt::time_duration delta = sts[k][mm].datetime - timeList[i];
+                if (delta >= zero && delta <= delta1) { idx1 = mm; delta1 = delta; }
+                if (delta <= zero && delta >= delta0) { idx0 = mm; delta0 = delta; }
+            }
+          
+            //Interpolation weight w0 (if timeList[i] is outside range idx0=idx1 and w0=1)
+            //------------------------
+            double t0 = unixTime(sts[k][idx0].datetime);
+            double t1 = unixTime(sts[k][idx1].datetime);
+            double w0 = 1;
+            if (t1 > t0) { w0 = (t1 - unixTime(timeList[i])) / (t1 - t0); }
+
+            //Interpolate
+            //---------------------
+            double speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed ;
+            double temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
+            double cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
+            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0) ;
+            double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
+            double angle = atan2(xx, yy) * 180.0 / PI;
+            if (angle < 0.0) { angle += 360.0; }
+
+
+           // Create interpolated data
+           //----------------------------
+            preInterpolate interpol;
+            interpol.datetime = timeList[i];
+            interpol.speed = speed;
+            interpol.temperature = temperature;
+            interpol.cloudCover = cloudCover;
+            interpol.direction = angle;
+			
+            interpol.lat = sts[k][0].lat;
+            interpol.lon = sts[k][0].lon;
+            interpol.datumType = sts[k][0].datumType;
+            interpol.coordType = sts[k][0].coordType;
+            interpol.height = sts[k][0].height;
+            interpol.heightUnits = sts[k][0].heightUnits;
+            interpol.influenceRadius = sts[k][0].influenceRadius;
+            interpol.influenceRadiusUnits = sts[k][0].influenceRadiusUnits;
+            interpol.stationName = sts[k][0].stationName;
+            interpol.inputSpeedUnits = sts[k][0].inputSpeedUnits;
+            interpol.tempUnits = sts[k][0].tempUnits;
+            interpol.cloudCoverUnits = sts[k][0].cloudCoverUnits;
+
+            subInter.push_back(interpol);
+        }
+
         interpolatedWxData.push_back(subInter);
-    }
-    CPLDebug("STATION_FETCH","Interpolating Weather Data...");
-    for (int k=0; k<totalsize; k++) //Set the Metadata for each station
-    {
-        double latitude;
-        double longitude;
-        double height;
-        double radiusInfluence;
-        std::string datum;
-        std::string coord;
-        std::string stationName;
-
-        latitude = vecStations[k][0].lat;
-        longitude = vecStations[k][0].lon;
-        height = vecStations[k][0].height;
-        radiusInfluence = vecStations[k][0].influenceRadius;
-        datum = vecStations[k][0].datumType;
-        coord = vecStations[k][0].coordType;
-        const char* newdatum = "WGS84";
-        stationName = vecStations[k][0].stationName;
-
-        std::string demfile = demFileName;
-
-        for(int i=0; i<timeList.size(); i++)
-        {
-            interpolatedWxData[k][i].lat = latitude;
-            interpolatedWxData[k][i].lon = longitude;
-            interpolatedWxData[k][i].datumType = datum;
-            interpolatedWxData[k][i].coordType = coord;
-            interpolatedWxData[k][i].height = height;
-            interpolatedWxData[k][i].heightUnits = lengthUnits::meters;
-            interpolatedWxData[k][i].influenceRadius = radiusInfluence;
-            interpolatedWxData[k][i].influenceRadiusUnits = lengthUnits::meters;
-            interpolatedWxData[k][i].stationName = stationName;
-        }
-
-    }
-
-    for(int k=0; k<totalsize; k++)
-    {
-        for(int i=0; i<timeList.size(); i++)
-        {
-            //Tells us whether we need to interpolate or not for each step
-            int direction = directTemporalInterpolation(posMasterIdx[k][i],negMasterIdx[k][i]);
-            if(direction==0)
-            {
-                /*
-                 * Remember that Negative is future (high)
-                 * Positive is past (low)
-                 */
-                //Get the Time of the past and future station and set the interpolate time to the timeList
-                bpt::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
-                bpt::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
-                bpt::ptime pInter = timeList[i];
-                //Convert time to time since epoch
-                double low = unixTime(pLow); //Times
-                double high = unixTime(pHigh);
-                double inter = unixTime(pInter);
-
-                //Get Low and High for each data Type
-                //Wind Speed
-                double speed_L = vecStations[k][posMasterIdx[k][i]].speed;
-                double speed_H = vecStations[k][negMasterIdx[k][i]].speed;
-
-                double speed_I = interpolator(inter,low,high,speed_L,speed_H);
-                if(speed_I > 113.000) //this is too fast, probably a bad interpolation
-                {
-                    speed_I = speed_L;
-
-                }
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Wind Direction
-                double dir_L = vecStations[k][posMasterIdx[k][i]].direction;
-                double dir_H = vecStations[k][negMasterIdx[k][i]].direction;
-
-                double dir_I = interpolateDirection(dir_L,dir_H);
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_L = vecStations[k][posMasterIdx[k][i]].temperature;
-                double temp_H = vecStations[k][negMasterIdx[k][i]].temperature;
-
-                double temp_I  = interpolator(inter,low,high,temp_L,temp_H);
-                if(temp_I > 57.0) //this is very hot, probably a bad interpolation
-                {
-                    temp_I = temp_H;
-                    if(temp_I > 57.0)
-                    {
-                        temp_I = temp_L;
-                    }
-                    if(temp_I > 57.0)
-                    {
-                        temp_I = 25; //if something is really bad, just let it be 25degC
-                    }
-                }
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_L = vecStations[k][posMasterIdx[k][i]].cloudCover;
-                double cloud_H = vecStations[k][negMasterIdx[k][i]].cloudCover;
-
-                double cloud_I = interpolator(inter,low,high,cloud_L,cloud_H);
-
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-            if (direction==1) //No interpolation, use closest positive step (past)
-            {
-                //Speed
-                double speed_I = vecStations[k][posMasterIdx[k][i]].speed;
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Direction
-                double dir_I = vecStations[k][posMasterIdx[k][i]].direction;
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_I = vecStations[k][posMasterIdx[k][i]].temperature;
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_I =vecStations[k][posMasterIdx[k][i]].cloudCover;
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-            if (direction==2) //No interpolation, use closest negative step (future)
-            {
-                //Speed
-                double speed_I = vecStations[k][negMasterIdx[k][i]].speed;
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Direction
-                double dir_I = vecStations[k][negMasterIdx[k][i]].direction;
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_I = vecStations[k][negMasterIdx[k][i]].temperature;
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_I =vecStations[k][negMasterIdx[k][i]].cloudCover;
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-        }
     }
     return interpolatedWxData;
 }

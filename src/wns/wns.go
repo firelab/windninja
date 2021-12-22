@@ -189,36 +189,38 @@ func visitHandler(w http.ResponseWriter, r *http.Request) {
 			Host:   "api.ipstack.com",
 			Path:   ip,
 		}
-		q := url.Values{}
-		q.Set("format", "1")
-		q.Set("access_key", ipstackToken)
-		u.RawQuery = q.Encode()
-		log.Print(u.String())
-		resp, err := http.Get(u.String())
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("response from geoip: %s", http.StatusText(resp.StatusCode))
-			return
-		}
-		var ips ipStackResp
-		if err := json.NewDecoder(resp.Body).Decode(&ips); err != nil {
-			log.Println(err)
-			return
-		}
-		stmt = db.Prep("INSERT INTO ip VALUES(?,?,?,?,?,?)")
-		stmt.BindText(1, ips.IP)
-		stmt.BindText(2, ips.CountryCode)
-		stmt.BindText(3, ips.RegionName)
-		stmt.BindText(4, ips.City)
-		stmt.BindFloat(5, ips.Longitude)
-		stmt.BindFloat(6, ips.Longitude)
-		_, err = stmt.Step()
-		if err != nil {
-			log.Print(err)
+		if ipstackToken != "" {
+			q := url.Values{}
+			q.Set("format", "1")
+			q.Set("access_key", ipstackToken)
+			u.RawQuery = q.Encode()
+			log.Print(u.String())
+			resp, err := http.Get(u.String())
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("response from geoip: %s", http.StatusText(resp.StatusCode))
+				return
+			}
+			var ips ipStackResp
+			if err := json.NewDecoder(resp.Body).Decode(&ips); err != nil {
+				log.Println(err)
+				return
+			}
+			stmt = db.Prep("INSERT INTO ip VALUES(?,?,?,?,?,?)")
+			stmt.BindText(1, ips.IP)
+			stmt.BindText(2, ips.CountryCode)
+			stmt.BindText(3, ips.RegionName)
+			stmt.BindText(4, ips.City)
+			stmt.BindFloat(5, ips.Longitude)
+			stmt.BindFloat(6, ips.Longitude)
+			_, err = stmt.Step()
+			if err != nil {
+				log.Print(err)
+			}
 		}
 	}()
 }
@@ -260,6 +262,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flagAddr := flag.String("addr", ":https", "address to listen on (:8888)")
 	flagDB := flag.String("db", "", "database file")
+	flagDisableIPLookup := flag.Bool("iplookup", false, "lookup ip region")
 	flag.Parse()
 
 	var err error
@@ -287,6 +290,9 @@ func main() {
 	}
 	ipstackToken = strings.TrimSpace(string(buf))
 	log.Printf("ipstack token: %s", ipstackToken)
+	if *flagDisableIPLookup {
+		ipstackToken = ""
+	}
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/cgi-bin/ninjavisit", visitHandler)
