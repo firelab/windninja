@@ -2304,131 +2304,103 @@ vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::
  * @param nTimeSteps Number of time steps for the simulation.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  * @return Vector of datetimes in UTC.
+ * notice that the input simulation time is in local time, the output timeList/datetimes is in utc time.
  */
 std::vector<bpt::ptime>
 pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
-                                    int startHour, int startMinute, int endYear,
-                                    int endMonth, int endDay, int endHour, int endMinute,
-                                    int nTimeSteps, std::string timeZone)
+                                 int startHour, int startMinute, int endYear,
+                                 int endMonth, int endDay, int endHour, int endMinute,
+                                 int nTimeSteps, std::string timeZone)
 {
-    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
-    endHour=endHour;//Not Really sure why this is necssary
-    startHour=startHour;
+    blt::time_zone_ptr timeZonePtr; // Initialize time zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
     
-//    CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
-
-    /*
-    Correct for daylight savings time...
-    */
-    bg::date dStart(startYear,startMonth,startDay);//Generate Date Object from str for start time
-    bg::date dEnd(endYear,endMonth,endDay); //Generate Date Obj from str for end time
-
-    bpt::time_duration dStartTime(startHour,startMinute,0,0); //Generate Time obj for start
-    bpt::time_duration dEndTime(endHour,endMinute,0,0); // Same for stop
-
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); //Get When DST Starts from TZ
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dEnd.year()); //Get When DST ends from TZ
-
-    /*
-     * Here we put the time and date objs into a time zone native obj for comparison
-     */
-    bpt::ptime utcStart(dStart,dStartTime);
-    bpt::ptime utcEnd(dEnd,dEndTime);
+    bg::date dStart(startYear,startMonth,startDay); // Generate date object from input time for start time
+    bg::date dEnd(endYear,endMonth,endDay);         // Generate date object from input time for end time
+    bpt::time_duration dStartDuration(startHour,startMinute,0,0);   // Generate time past the date object from input time for start time
+    bpt::time_duration dEndDuration(endHour,endMinute,0,0);         // Generate time past the date object from input time for end time
     
-    /*
-     * Here we check to see if the user provided time is within daylight savings time
-     * If it is, we set the bool to true, if not, false.
-     * For places without daylight savings time, this sets the DST bool to false
-     * This also allows for simulations to be run in between time changes as the
-     * start and stop times are checked independently of eachother
-     * 
-     * Update 10/6/2020: the old comparison method for figuring out whether start 
-     * and stop time are in DST don't work for time zones in the southern hemisphere,
-     * and it was crude anyway. The below two lines handle all the time zone checking by boost 
-     * internally.
-     * 
-     * See https://github.com/firelab/windninja/issues/386 for more details.
-     */
+    // use the time zone pointer to setup the start and end full local_date_time objects
+    blt::local_date_time startLocal = blt::local_date_time(dStart,dStartDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    blt::local_date_time endLocal = blt::local_date_time(dEnd,dEndDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
     
-    blt::local_date_time startLocal =  blt::local_date_time(dStart,dStartTime,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    blt::local_date_time endLocal =  blt::local_date_time(dEnd,dEndTime,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
-
-    // store tz abreviation. First need to know whether is dst or no
-    bool isDst = timeZonePtr->has_dst();    // Returns true if this time zone does NOT make a daylight savings shift.
-    if ( isDst == true )
+    //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
+    //// only use the start time for these dst time zone comparisons, treat the rest of the times as if they are in the same timezone as the start time
+    //bpt::ptime startPtime(dStart,dStartDuration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
+    //bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
+    //bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dStart.year()); // Get when DST ends from TZ
+    //std::cout << "startPtime: " << startPtime << std::endl;
+    //std::cout << "start_dst: " << start_dst << std::endl;
+    //std::cout << "end_dst: " << end_dst << std::endl;
+    
+    // determine if isDST to determine which timezone abbreviation to store
+    bool isDST = startLocal.is_dst();
+    if ( isDST == true )
     {
-        storeTZAbbrev(timeZonePtr->std_zone_abbrev());  // no it is not daylight savings time
+        //std::cout << "Time is within DST" << std::endl;
+        CPLDebug("STATION_FETCH", "Time is within DST!");
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
-        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());  // yes it is daylight savings time
+        //std::cout << "Time is outside DST" << std::endl;
+        CPLDebug("STATION_FETCH", "Time is outside DST!");
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
-
-    CPLDebug("STATION_FETCH", "Start Time is DST?: %i",startLocal.is_dst());
-    CPLDebug("STATION_FETCH", "End Time is DST?: %i",endLocal.is_dst());
-
-    //Sets these for use in the fetch-station functions
+    
+    // now convert the found local date time (which is now correct properly for dst) to utc time for output
+    bpt::ptime startUTC = startLocal.utc_time();
+    bpt::ptime endUTC = endLocal.utc_time();
+    
+    //// do debug output
+    //std::cout << "startLocal: " << startLocal << std::endl;
+    //std::cout << "endLocal: " << endLocal << std::endl;
+    //std::cout << "tzAbbrev: " << tzAbbrev << std::endl;
+    //std::cout << "startUTC: " << startUTC << std::endl;
+    //std::cout << "endUTC: " << endUTC << std::endl;
+    
+    
+    // Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(startLocal,endLocal);
-
-    /*
-    Now that we have figured out the local time, convert it to UTC time for all other time purposes
-    */
-    bpt::ptime startUtc=startLocal.utc_time();
-    bpt::ptime endUtc=endLocal.utc_time();
-	
-	
-
-//This is all old stuff that I am leaving in until I am sure the above stuff works. Good for debugging if we get time zone issues
-//    bpt::ptime utcStart(dStart,dStartTime);
-//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    blt::local_date_time startLocal(utcStart,timeZoneUtc);
-//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    blt::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
-
-//    blt::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
-//    blt::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,timeZonePtr->has_dst());
-    /**Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
-    //Update (5/9/18)-> The fix that was implemented was doing this backwards, making it no good,
-    //new fix is to have boost check if daylight savings time exists (timeZonePtr->has_dst()), and then
-    tell that to the Local_date_time constructor, this hopefully will fix time offset issues...
-    **/
-//    bpt::ptime startUtc=startLocal.utc_time();
-//    bpt::ptime endUtc=endLocal.utc_time();
-//    printf("\n");
-
-    //Get Total Time duration of simulation and divide it into time steps
-    bpt::time_duration diffTime=endUtc-startUtc;
+    
+    
+    
+    // Get Total Time duration of simulation and divide it into time steps
+    bpt::time_duration diffTime = endUTC - startUTC;
     bpt::time_duration stepTime;
-    if(nTimeSteps > 1){
-        stepTime=diffTime/(nTimeSteps-1);
+    if ( nTimeSteps > 1 )
+    {
+        stepTime = diffTime/(nTimeSteps-1);
+    } else
+    {
+        stepTime = diffTime/nTimeSteps;
     }
-    else{
-        stepTime=diffTime/nTimeSteps;
-    }
-
+    
     std::vector<bpt::ptime> timeOut;
     std::vector<bpt::ptime> timeConstruct;
     std::vector<bpt::ptime> timeList;
     std::vector<bpt::time_duration> timeStorage;
-
-    //Create Time Steps by multiplying steps by durations
-    //Sets first step to be start time
-    //Sets last step to be stop time
-    if(nTimeSteps > 1){ //If there is only one timestep, just use startUtc
-        timeOut.push_back(startUtc);
-        for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
+    
+    // Create Time Steps by multiplying steps by durations
+    // Sets first step to be start time
+    // Sets last step to be stop time
+    if (nTimeSteps > 1)
+    {
+        //If there is only one timestep, just use startUTC
+        timeOut.push_back(startUTC);
+        for (int i = 1; i < nTimeSteps-1; i++) //Subtract one to account for indexing beginning early && appending stop/start times
         {
             bpt::time_duration specTime;
-            specTime=stepTime*i;
-            timeOut.push_back(startUtc+specTime);
+            specTime = stepTime*i;
+            timeOut.push_back(startUTC+specTime);
         }
-        timeOut.push_back(endUtc);
+        timeOut.push_back(endUTC);
+    } else
+    {
+        //if it's a single timestep, run the midpoint of start/end
+        timeOut.push_back(startUTC+diffTime/2);
     }
-    else{
-        timeOut.push_back(startUtc+diffTime/2); //if it's a single timestep, run the midpoint of start/end
-    }
-    timeList=timeOut;
-
+    timeList = timeOut;
+    
     return timeList;
 }
 /**
@@ -2442,51 +2414,53 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
  * @param hour
  * @param minute
  * @param timeZone
- * @return
+ * @return Single datetime in UTC.
+ * notice that the input simulation time is in local time, the output time is in utc time.
  */
 bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, int day,
-                                                                       int hour, int minute,
-                                                                       string timeZone)
+                                                         int hour, int minute,
+                                                         string timeZone)
 {
-    bpt::ptime noTime;
-    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
-
-    bg::date xDate(year,month,day);
-    bpt::time_duration xTime(hour,minute,0,0);
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
-
-    bpt::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
-
-
-    // store tz abreviation. First need to know whether is dst or no
-    bool isDst = timeZonePtr->has_dst();    // Returns true if this time zone does NOT make a daylight savings shift.
-    if ( isDst == true )
+    blt::time_zone_ptr timeZonePtr; // Initialize time zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
+    
+    bg::date xDate(year,month,day); // Generate date object from input time
+    bpt::time_duration xDuration(hour,minute,0,0);  // Generate time past the date object from input time
+    
+    // use the time zone pointer to setup the full local_date_time object
+    blt::local_date_time xLocal = blt::local_date_time(xDate,xDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    
+    //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
+    //bpt::ptime xPtime(xDate,xDuration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
+    //bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
+    //bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); // Get when DST ends from TZ
+    //std::cout << "xPtime: " << xPtime << std::endl;
+    //std::cout << "start_dst: " << start_dst << std::endl;
+    //std::cout << "end_dst: " << end_dst << std::endl;
+    
+    // determine if isDST to determine which timezone abbreviation to store
+    bool isDST = xLocal.is_dst();
+    if ( isDST == true )
     {
-        storeTZAbbrev(timeZonePtr->std_zone_abbrev());  // no it is not daylight savings time
+        //std::cout << "Time is within DST" << std::endl;
+        CPLDebug("STATION_FETCH", "Time is within DST!");
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
-        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());  // yes it is daylight savings time
-    }
-
-
-    blt::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
-    //like in get time list, check to see where we are WRT daylight savings time!
-    if(xUTC>start_dst && xUTC<end_dst)
-    {
-        CPLDebug("STATION_FETCH", "Time is within DST!");
-        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,true);
-    }
-    else
-    {
+        //std::cout << "Time is outside DST" << std::endl;
         CPLDebug("STATION_FETCH", "Time is outside DST!");
-        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,false);
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
-
-    bpt::ptime xxUTC=xLocal.utc_time(); //now that we know where we are, go back to utc as a corrected time object
-
-    return xxUTC;
+    
+    // now convert the found local date time (which is now correct properly for dst) to utc time for output
+    bpt::ptime xUTC = xLocal.utc_time();
+    
+    //// do debug output
+    //std::cout << "xLocal: " << xLocal << std::endl;
+    //std::cout << "tzAbbrev: " << tzAbbrev << std::endl;
+    //std::cout << "xUTC: " << xUTC << std::endl;
+    
+    return xUTC;
 }
 /**
  * @brief pointInitialization::checkFetchTimeDuration
