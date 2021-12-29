@@ -1052,12 +1052,12 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm.count("output_path")){
                     stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
                                                                                 vm["output_path"].as<std::string>(),
-                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                                                                                vm["fetch_current_station_data"].as<bool>());
                 }
                 else{ //if the user doesn't specify an output path
                     stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
                                                                                 "",
-                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                                                                                vm["fetch_current_station_data"].as<bool>());
                 }
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching

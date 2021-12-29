@@ -136,8 +136,7 @@ class pointInitialization : public initialize
         static void storeTZAbbrev(std::string tzAbbr);
         static void setLocalStartAndStopTimes(boost::local_time::local_date_time start,
                                               boost::local_time::local_date_time stop);
-        static std::string generatePointDirectory(std::string demFile,std::string outPath,
-                                                  std::vector<boost::posix_time::ptime> timeList,bool latest);
+        static std::string generatePointDirectory(std::string demFile,std::string outPath, bool latest);
         static bool removeBadDirectory(std::string badStationPath);
         static void writeStationOutFile(std::vector<wxStation> stationVect,
                                         std::string basePathName,
@@ -207,7 +206,7 @@ class pointInitialization : public initialize
         static double parseStationHeight(const char *name_list);
         static std::vector<std::string> outputToVec(const double* dataArray,int data_idx,int dataCount,std::string data_name);
         static std::vector<std::string> fixEmptySensor(std::vector<std::string> data_vec,std::string data_name,std::vector<std::string> valid_vec);
-        static bool fetchStationData(std::string URL, std::string timeZone, bool latest, std::vector<boost::posix_time::ptime> timeList);
+        static bool fetchStationData(std::string URL, std::string timeZone, bool latest);
 
         static std::string dtoken;
         static const std::string backup_token;

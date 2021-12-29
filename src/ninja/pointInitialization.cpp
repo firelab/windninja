@@ -431,12 +431,10 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
  * Creates a directory to store the downloaded weather stations
  * @param demFile
  * @param outPath
- * @param timeList
  * @param latest
  * @return
  */
-std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
-                                                        std::vector<bpt::ptime> timeList,bool latest)
+std::string pointInitialization::generatePointDirectory(string demFile, string outPath, bool latest)
 {
     std::string subDem;
     std::string xDem;
@@ -462,10 +460,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
         timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
-//        timeStream<<timeList[0];
-//        timeStream2<<timeList.back();
-//        timeComponent = timeStream.str()+"-"+timeStream2.str();
-
+        
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
@@ -531,10 +526,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
         timeStream2.imbue(locale(timeStream2.getloc(),facet));
-//        timeStream<<timeList[0];
-//        timeStream2<<timeList.back();
-//        timeComponent = timeStream.str()+"-"+timeStream2.str();
-
+        
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
@@ -2615,7 +2607,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     }
     CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
 
-    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest);
 
     return fetchGood;
 }
@@ -2651,7 +2643,7 @@ bool pointInitialization::fetchStationByName(std::string stationList,
         CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
 
-    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest);
 
     return fetchGood;
 }
@@ -2853,10 +2845,9 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
  * @param URL
  * @param timeZone
  * @param latest
- * @param timeList
  */
 
-bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest, std::vector<bpt::ptime> timeList)
+bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest)
 {
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
@@ -2936,8 +2927,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         if (latest==false) //If it is a time series we name the file with both the start and stop time
         {
             timeStream2.imbue(locale(timeStream2.getloc(),facet));
-//            timeStream<<timeList[0]; //Old Way with cryptic UTC times
-//            timeStream2<<timeList.back();
+            
             timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
             timeStream2<<start_and_stop_times[1].local_time();
             timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
