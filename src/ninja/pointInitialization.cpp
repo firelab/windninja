@@ -2318,24 +2318,22 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     
     //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
     //// only use the start time for these dst time zone comparisons, treat the rest of the times as if they are in the same timezone as the start time
-    //bpt::ptime startPtime(dStart,dStartDuration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
-    //bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
-    //bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dStart.year()); // Get when DST ends from TZ
-    //std::cout << "startPtime: " << startPtime << std::endl;
-    //std::cout << "start_dst: " << start_dst << std::endl;
-    //std::cout << "end_dst: " << end_dst << std::endl;
+    bpt::ptime startPtime(dStart,dStartDuration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
+    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dStart.year()); // Get when DST ends from TZ
+    CPLDebug("STATION_FETCH","startPtime: %s",boost::posix_time::to_simple_string(startPtime).c_str());
+    CPLDebug("STATION_FETCH","start_dst: %s",boost::posix_time::to_simple_string(start_dst).c_str());
+    CPLDebug("STATION_FETCH","end_dst: %s",boost::posix_time::to_simple_string(end_dst).c_str());
     
     // determine if isDST to determine which timezone abbreviation to store
     bool isDST = startLocal.is_dst();
     if ( isDST == true )
     {
-        //std::cout << "Time is within DST" << std::endl;
-        CPLDebug("STATION_FETCH", "Time is within DST!");
+        CPLDebug("STATION_FETCH", "Time is within DST");
         storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
-        //std::cout << "Time is outside DST" << std::endl;
-        CPLDebug("STATION_FETCH", "Time is outside DST!");
+        CPLDebug("STATION_FETCH", "Time is outside DST");
         storeTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
     
@@ -2344,11 +2342,11 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     bpt::ptime endUTC = endLocal.utc_time();
     
     //// do debug output
-    //std::cout << "startLocal: " << startLocal << std::endl;
-    //std::cout << "endLocal: " << endLocal << std::endl;
-    //std::cout << "tzAbbrev: " << tzAbbrev << std::endl;
-    //std::cout << "startUTC: " << startUTC << std::endl;
-    //std::cout << "endUTC: " << endUTC << std::endl;
+    CPLDebug("STATION_FETCH","startLocal: %s",startLocal.to_string().c_str());
+    CPLDebug("STATION_FETCH","endLocal: %s",endLocal.to_string().c_str());
+    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","startUTC: %s",boost::posix_time::to_simple_string(startUTC).c_str());
+    CPLDebug("STATION_FETCH","endUTC: %s",boost::posix_time::to_simple_string(endUTC).c_str());
     
     
     // Sets these for use in the fetch-station functions
@@ -2423,24 +2421,22 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     blt::local_date_time xLocal = blt::local_date_time(xDate,xDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
     
     //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
-    //bpt::ptime xPtime(xDate,xDuration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
-    //bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
-    //bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); // Get when DST ends from TZ
-    //std::cout << "xPtime: " << xPtime << std::endl;
-    //std::cout << "start_dst: " << start_dst << std::endl;
-    //std::cout << "end_dst: " << end_dst << std::endl;
+    bpt::ptime xPtime(xDate,xDuration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
+    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); // Get when DST ends from TZ
+    CPLDebug("STATION_FETCH","xPtime: %s",boost::posix_time::to_simple_string(xPtime).c_str());
+    CPLDebug("STATION_FETCH","start_dst: %s",boost::posix_time::to_simple_string(start_dst).c_str());
+    CPLDebug("STATION_FETCH","end_dst: %s",boost::posix_time::to_simple_string(end_dst).c_str());
     
     // determine if isDST to determine which timezone abbreviation to store
     bool isDST = xLocal.is_dst();
     if ( isDST == true )
     {
-        //std::cout << "Time is within DST" << std::endl;
-        CPLDebug("STATION_FETCH", "Time is within DST!");
+        CPLDebug("STATION_FETCH", "Time is within DST");
         storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
-        //std::cout << "Time is outside DST" << std::endl;
-        CPLDebug("STATION_FETCH", "Time is outside DST!");
+        CPLDebug("STATION_FETCH", "Time is outside DST");
         storeTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
     
@@ -2448,9 +2444,9 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     bpt::ptime xUTC = xLocal.utc_time();
     
     //// do debug output
-    //std::cout << "xLocal: " << xLocal << std::endl;
-    //std::cout << "tzAbbrev: " << tzAbbrev << std::endl;
-    //std::cout << "xUTC: " << xUTC << std::endl;
+    CPLDebug("STATION_FETCH","xLocal: %s",xLocal.to_string().c_str());
+    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","xUTC: %s",boost::posix_time::to_simple_string(xUTC).c_str());
     
     return xUTC;
 }
