@@ -38,6 +38,10 @@ volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalar
                wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                int i, int j, int k, std::string filename, std::string vtkWriteFormat)
 {
+    // determine byte order of this machine only once
+    // sets value of isBigEndian for binary output
+    determineEndianness();
+    
     if ( vtkWriteFormat == "ascii" )
     {
         writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
@@ -207,10 +211,28 @@ bool volVTK::writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
 }
 
 
+// found ideas for this within the code in EasyBMP.cpp and shpopen.cpp, here: https://github.com/firelab/windninja/blob/04b548e2af52cbaf2a1df930bfee466b3e2e3c4a/src/ninja/EasyBMP_DataStructures.h#L43
+// and here: https://github.com/firelab/windninja/blob/04b548e2af52cbaf2a1df930bfee466b3e2e3c4a/src/ninja/shpopen.cpp#L363
+// and here: https://github.com/firelab/windninja/blob/04b548e2af52cbaf2a1df930bfee466b3e2e3c4a/src/ninja/shpopen.cpp#L628
+void volVTK::determineEndianness()
+{
+    short word = 0x0001;
+    if( (*(char *)& word) != 0x01 )
+    {
+        isBigEndian = true;
+    } else
+    {
+        isBigEndian = false;
+    }
+}
+
 // found this here, they found it elsewhere: https://stackoverflow.com/questions/10913666/error-writing-binary-vtk-files
-// turns out to be necessary to convert the output binary format from little endian to big endian, because paraview only handles big endian format.
+// later I found other examples for doing this in the code here: https://github.com/firelab/windninja/blob/04b548e2af52cbaf2a1df930bfee466b3e2e3c4a/src/ninja/EasyBMP.cpp#L52
+//  and here: https://github.com/firelab/windninja/blob/04b548e2af52cbaf2a1df930bfee466b3e2e3c4a/src/ninja/shpopen.cpp#L200
+// turns out to be necessary to convert the output binary format from little endian to big endian on little endian systems, 
+//  because paraview only handles big endian format.
 template <typename T>
-void volVTK::SwapEnd(T& var)
+void volVTK::swapEnd(T& var)
 {
     char* varArray = reinterpret_cast<char*>(&var);
     for(long i = 0; i < static_cast<long>(sizeof(var)/2); i++)
@@ -218,6 +240,8 @@ void volVTK::SwapEnd(T& var)
 }
 
 
+// "legacy" VTK format always has to be written in BigEndian not in LittleEndian, paraview only accepts BigEndian format
+//  this is described here: https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python#.22legacy.22
 bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
 			                    wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
 			                    int i, int j, int k, std::string filename)
@@ -251,9 +275,12 @@ bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField cons
             double x_tmp = x(1*i*j + ii*j + jj);
             double y_tmp = y(1*i*j + ii*j + jj);
             double z_tmp = z(1*i*j + ii*j + jj);
-            SwapEnd(x_tmp);
-            SwapEnd(y_tmp);
-            SwapEnd(z_tmp);
+            if( isBigEndian == false )
+            {
+                swapEnd(x_tmp);
+                swapEnd(y_tmp);
+                swapEnd(z_tmp);
+            }
             fwrite( &x_tmp, sizeof( double ), 1, fout );
             fwrite( &y_tmp, sizeof( double ), 1, fout );
             fwrite( &z_tmp, sizeof( double ), 1, fout );
@@ -286,9 +313,12 @@ bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField cons
                 double x_tmp = x(kk*i*j + ii*j + jj);
                 double y_tmp = y(kk*i*j + ii*j + jj);
                 double z_tmp = z(kk*i*j + ii*j + jj);
-                SwapEnd(x_tmp);
-                SwapEnd(y_tmp);
-                SwapEnd(z_tmp);
+                if( isBigEndian == false )
+                {
+                    swapEnd(x_tmp);
+                    swapEnd(y_tmp);
+                    swapEnd(z_tmp);
+                }
                 fwrite( &x_tmp, sizeof( double ), 1, fout );
                 fwrite( &y_tmp, sizeof( double ), 1, fout );
                 fwrite( &z_tmp, sizeof( double ), 1, fout );
@@ -309,9 +339,12 @@ bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField cons
                 double u_tmp = u(kk*i*j + ii*j + jj);
                 double v_tmp = v(kk*i*j + ii*j + jj);
                 double w_tmp = w(kk*i*j + ii*j + jj);
-                SwapEnd(u_tmp);
-                SwapEnd(v_tmp);
-                SwapEnd(w_tmp);
+                if( isBigEndian == false )
+                {
+                    swapEnd(u_tmp);
+                    swapEnd(v_tmp);
+                    swapEnd(w_tmp);
+                }
                 fwrite( &u_tmp, sizeof( double ), 1, fout );
                 fwrite( &v_tmp, sizeof( double ), 1, fout );
                 fwrite( &w_tmp, sizeof( double ), 1, fout );
@@ -323,6 +356,8 @@ bool volVTK::writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField cons
     return true;
 }
 
+// "legacy" VTK format always has to be written in BigEndian not in LittleEndian, paraview only accepts BigEndian format
+//  this is described here: https://vtk.org/Wiki/VTK/Writing_VTK_files_using_python#.22legacy.22
 bool volVTK::writeMeshVolVTK_binary(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                                     int i, int j, int k, std::string filename)
 {
@@ -355,9 +390,12 @@ bool volVTK::writeMeshVolVTK_binary(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
             double x_tmp = x(1*i*j + ii*j + jj);
             double y_tmp = y(1*i*j + ii*j + jj);
             double z_tmp = z(1*i*j + ii*j + jj);
-            SwapEnd(x_tmp);
-            SwapEnd(y_tmp);
-            SwapEnd(z_tmp);
+            if( isBigEndian == false )
+            {
+                swapEnd(x_tmp);
+                swapEnd(y_tmp);
+                swapEnd(z_tmp);
+            }
             fwrite( &x_tmp, sizeof( double ), 1, fout );
             fwrite( &y_tmp, sizeof( double ), 1, fout );
             fwrite( &z_tmp, sizeof( double ), 1, fout );
@@ -390,9 +428,12 @@ bool volVTK::writeMeshVolVTK_binary(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
                 double x_tmp = x(kk*i*j + ii*j + jj);
                 double y_tmp = y(kk*i*j + ii*j + jj);
                 double z_tmp = z(kk*i*j + ii*j + jj);
-                SwapEnd(x_tmp);
-                SwapEnd(y_tmp);
-                SwapEnd(z_tmp);
+                if( isBigEndian == false )
+                {
+                    swapEnd(x_tmp);
+                    swapEnd(y_tmp);
+                    swapEnd(z_tmp);
+                }
                 fwrite( &x_tmp, sizeof( double ), 1, fout );
                 fwrite( &y_tmp, sizeof( double ), 1, fout );
                 fwrite( &z_tmp, sizeof( double ), 1, fout );

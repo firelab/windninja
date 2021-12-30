@@ -54,8 +54,12 @@ public:
     bool writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
                          int i, int j, int k, std::string filename);
     
+    
+    bool isBigEndian;
+    void determineEndianness();
+    
     template <typename T>
-    void SwapEnd(T& var);
+    void swapEnd(T& var);
     
     bool writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                             wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
