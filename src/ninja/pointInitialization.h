@@ -133,7 +133,8 @@ class pointInitialization : public initialize
         static void SetRawStationFilename(std::string filename);
         static void setStationBuffer(double buffer, std::string units);
         static void storeFileNames(vector<std::string> statLoc);
-        static void storeTZAbbrev(std::string tzAbbr);
+        static void storeStartTZAbbrev(std::string start_tzAbbr);
+        static void storeEndTZAbbrev(std::string end_tzAbbr);
         static void setLocalStartAndStopTimes(boost::local_time::local_date_time start,
                                               boost::local_time::local_date_time stop);
         static std::string generatePointDirectory(std::string demFile,std::string outPath, bool latest);
@@ -216,7 +217,8 @@ class pointInitialization : public initialize
         static double stationBuffer;
         double dfInvDistWeight;
         static std::vector<std::string> stationFiles;
-        static std::string tzAbbrev; //Time Zone Abbreviation
+        static std::string start_tzAbbrev; // Time Zone Abbreviation for start time and single times
+        static std::string end_tzAbbrev; // Time Zone Abbreviation for end time
 
         friend class wxStation;
 

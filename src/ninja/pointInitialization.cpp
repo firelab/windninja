@@ -43,7 +43,8 @@ const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/sta
 std::string pointInitialization::rawStationFilename = ""; //make the station name blank at first
 double pointInitialization::stationBuffer; //Buffer
 std::vector<std::string> pointInitialization::stationFiles; //Where the files are stored
-std::string pointInitialization::tzAbbrev; //Abbreviation of the time zone
+std::string pointInitialization::start_tzAbbrev; // Abbreviation of the time zone for start time and single times
+std::string pointInitialization::end_tzAbbrev; // Abbreviation of the time zone for end time
 vector<blt::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
 bool pointInitialization::enforce_limits = true; //Enfore limitations on the API ->set to false if the user provides a custom key
@@ -455,7 +456,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     {
         bpt::ptime writeTime =bpt::second_clock::local_time();
         timeStream<<writeTime;
-        timeComponent = timeStream.str();
+        timeComponent = timeStream.str()+"-"+start_tzAbbrev; //because its local time, add the time zone
     }
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
@@ -467,7 +468,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 //        cout<<start_and_stop_times[0].local_time()<<endl;
 //        cout<<start_and_stop_times[1].local_time()<<endl;
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+        timeComponent = timeStream.str()+"-"+start_tzAbbrev+"-"+timeStream2.str()+"-"+end_tzAbbrev; //because its local time, add the time zone
 
     }
     
@@ -521,7 +522,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     {
         bpt::ptime writeTime =bpt::second_clock::local_time();
         timeStream<<writeTime;
-        timeComponent = timeStream.str();
+        timeComponent = timeStream.str()+"-"+start_tzAbbrev; //because its local time, add the time zone
     }
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
@@ -530,7 +531,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+        timeComponent = timeStream.str()+"-"+start_tzAbbrev+"-"+timeStream2.str()+"-"+end_tzAbbrev; //because its local time, add the time zone
 
     }
     std::string fileComponent = subDem+"_interpolate_"+timeComponent+"-";
@@ -2307,55 +2308,71 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     blt::time_zone_ptr timeZonePtr; // Initialize time zone
     timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
     
-    bg::date dStart(startYear,startMonth,startDay); // Generate date object from input time for start time
-    bg::date dEnd(endYear,endMonth,endDay);         // Generate date object from input time for end time
-    bpt::time_duration dStartDuration(startHour,startMinute,0,0);   // Generate time past the date object from input time for start time
-    bpt::time_duration dEndDuration(endHour,endMinute,0,0);         // Generate time past the date object from input time for end time
+    bg::date start_date(startYear,startMonth,startDay); // Generate date object from input time for start time
+    bg::date end_date(endYear,endMonth,endDay);         // Generate date object from input time for end time
+    bpt::time_duration start_duration(startHour,startMinute,0,0);   // Generate time past the date object from input time for start time
+    bpt::time_duration end_duration(endHour,endMinute,0,0);         // Generate time past the date object from input time for end time
     
     // use the time zone pointer to setup the start and end full local_date_time objects
-    blt::local_date_time startLocal = blt::local_date_time(dStart,dStartDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    blt::local_date_time endLocal = blt::local_date_time(dEnd,dEndDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    blt::local_date_time start_local = blt::local_date_time(start_date,start_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    blt::local_date_time end_local = blt::local_date_time(end_date,end_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
     
-    //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
-    //// only use the start time for these dst time zone comparisons, treat the rest of the times as if they are in the same timezone as the start time
-    bpt::ptime startPtime(dStart,dStartDuration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dStart.year()); // Get when DST ends from TZ
-    CPLDebug("STATION_FETCH","startPtime: %s",boost::posix_time::to_simple_string(startPtime).c_str());
-    CPLDebug("STATION_FETCH","start_dst: %s",boost::posix_time::to_simple_string(start_dst).c_str());
-    CPLDebug("STATION_FETCH","end_dst: %s",boost::posix_time::to_simple_string(end_dst).c_str());
+    // calculate and output the dst information, super useful for debugging, though may not always match what is expected
+    bpt::ptime start_ptime(start_date,start_duration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime start_dstStartTransition = timeZonePtr->dst_local_start_time(start_date.year()); // Get when DST starts from TZ for start date. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime start_dstEndTransition = timeZonePtr->dst_local_end_time(start_date.year()); // Get when DST ends from TZ for start date
+    CPLDebug("STATION_FETCH","start_ptime: %s",boost::posix_time::to_simple_string(start_ptime).c_str());
+    CPLDebug("STATION_FETCH","start_dstStartTransition: %s",boost::posix_time::to_simple_string(start_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","start_dstEndTransition: %s",boost::posix_time::to_simple_string(start_dstEndTransition).c_str());
+    bpt::ptime end_ptime(end_date,end_duration); // Create a ptime for the end date object and end time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime end_dstStartTransition = timeZonePtr->dst_local_start_time(end_date.year()); // Get when DST starts from TZ for end date. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime end_dstEndTransition = timeZonePtr->dst_local_end_time(end_date.year()); // Get when DST ends from TZ for end date
+    CPLDebug("STATION_FETCH","end_ptime: %s",boost::posix_time::to_simple_string(end_ptime).c_str());
+    CPLDebug("STATION_FETCH","end_dstStartTransition: %s",boost::posix_time::to_simple_string(end_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","end_dstEndTransition: %s",boost::posix_time::to_simple_string(end_dstEndTransition).c_str());
     
     // determine if isDST to determine which timezone abbreviation to store
-    bool isDST = startLocal.is_dst();
-    if ( isDST == true )
+    bool start_isDST = start_local.is_dst();
+    if ( start_isDST == true )
     {
-        CPLDebug("STATION_FETCH", "Time is within DST");
-        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
+        CPLDebug("STATION_FETCH", "Start time is within DST");
+        storeStartTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
-        CPLDebug("STATION_FETCH", "Time is outside DST");
-        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
+        CPLDebug("STATION_FETCH", "Start time is outside DST");
+        storeStartTZAbbrev(timeZonePtr->std_zone_abbrev());
+    }
+    bool end_isDST = end_local.is_dst();
+    if ( end_isDST == true )
+    {
+        CPLDebug("STATION_FETCH", "End time is within DST");
+        storeEndTZAbbrev(timeZonePtr->dst_zone_abbrev());
+    } else
+    {
+        CPLDebug("STATION_FETCH", "End time is outside DST");
+        storeEndTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
     
-    // now convert the found local date time (which is now correct properly for dst) to utc time for output
-    bpt::ptime startUTC = startLocal.utc_time();
-    bpt::ptime endUTC = endLocal.utc_time();
+    // now convert the found local date times (which are now corrected properly for dst) to utc time for output
+    bpt::ptime start_UTC = start_local.utc_time();
+    bpt::ptime end_UTC = end_local.utc_time();
     
     //// do debug output
-    CPLDebug("STATION_FETCH","startLocal: %s",startLocal.to_string().c_str());
-    CPLDebug("STATION_FETCH","endLocal: %s",endLocal.to_string().c_str());
-    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","startUTC: %s",boost::posix_time::to_simple_string(startUTC).c_str());
-    CPLDebug("STATION_FETCH","endUTC: %s",boost::posix_time::to_simple_string(endUTC).c_str());
+    CPLDebug("STATION_FETCH","start_local: %s",start_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","start_tzAbbrev: %s",start_tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","end_local: %s",end_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","end_tzAbbrev: %s",end_tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","start_UTC: %s",boost::posix_time::to_simple_string(start_UTC).c_str());
+    CPLDebug("STATION_FETCH","end_UTC: %s",boost::posix_time::to_simple_string(end_UTC).c_str());
     
     
     // Sets these for use in the fetch-station functions
-    setLocalStartAndStopTimes(startLocal,endLocal);
+    setLocalStartAndStopTimes(start_local,end_local);
     
     
     
     // Get Total Time duration of simulation and divide it into time steps
-    bpt::time_duration diffTime = endUTC - startUTC;
+    bpt::time_duration diffTime = end_UTC - start_UTC;
     bpt::time_duration stepTime;
     if ( nTimeSteps > 1 )
     {
@@ -2375,19 +2392,19 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     // Sets last step to be stop time
     if (nTimeSteps > 1)
     {
-        //If there is only one timestep, just use startUTC
-        timeOut.push_back(startUTC);
+        //If there is only one timestep, just use start_UTC
+        timeOut.push_back(start_UTC);
         for (int i = 1; i < nTimeSteps-1; i++) //Subtract one to account for indexing beginning early && appending stop/start times
         {
             bpt::time_duration specTime;
             specTime = stepTime*i;
-            timeOut.push_back(startUTC+specTime);
+            timeOut.push_back(start_UTC+specTime);
         }
-        timeOut.push_back(endUTC);
+        timeOut.push_back(end_UTC);
     } else
     {
         //if it's a single timestep, run the midpoint of start/end
-        timeOut.push_back(startUTC+diffTime/2);
+        timeOut.push_back(start_UTC+diffTime/2);
     }
     timeList = timeOut;
     
@@ -2414,41 +2431,41 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     blt::time_zone_ptr timeZonePtr; // Initialize time zone
     timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
     
-    bg::date xDate(year,month,day); // Generate date object from input time
-    bpt::time_duration xDuration(hour,minute,0,0);  // Generate time past the date object from input time
+    bg::date x_date(year,month,day); // Generate date object from input time
+    bpt::time_duration x_duration(hour,minute,0,0);  // Generate time past the date object from input time
     
     // use the time zone pointer to setup the full local_date_time object
-    blt::local_date_time xLocal = blt::local_date_time(xDate,xDuration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    blt::local_date_time x_local = blt::local_date_time(x_date,x_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
     
     //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
-    bpt::ptime xPtime(xDate,xDuration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if there is no DST for the time zone
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); // Get when DST ends from TZ
-    CPLDebug("STATION_FETCH","xPtime: %s",boost::posix_time::to_simple_string(xPtime).c_str());
-    CPLDebug("STATION_FETCH","start_dst: %s",boost::posix_time::to_simple_string(start_dst).c_str());
-    CPLDebug("STATION_FETCH","end_dst: %s",boost::posix_time::to_simple_string(end_dst).c_str());
+    bpt::ptime x_ptime(x_date,x_duration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime x_dstStartTransition = timeZonePtr->dst_local_start_time(x_date.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime x_dstEndTransition = timeZonePtr->dst_local_end_time(x_date.year()); // Get when DST ends from TZ
+    CPLDebug("STATION_FETCH","x_ptime: %s",boost::posix_time::to_simple_string(x_ptime).c_str());
+    CPLDebug("STATION_FETCH","x_dstStartTransition: %s",boost::posix_time::to_simple_string(x_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","x_dstEndTransition: %s",boost::posix_time::to_simple_string(x_dstEndTransition).c_str());
     
     // determine if isDST to determine which timezone abbreviation to store
-    bool isDST = xLocal.is_dst();
-    if ( isDST == true )
+    bool x_isDST = x_local.is_dst();
+    if ( x_isDST == true )
     {
         CPLDebug("STATION_FETCH", "Time is within DST");
-        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
+        storeStartTZAbbrev(timeZonePtr->dst_zone_abbrev());
     } else
     {
         CPLDebug("STATION_FETCH", "Time is outside DST");
-        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
+        storeStartTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
     
-    // now convert the found local date time (which is now correct properly for dst) to utc time for output
-    bpt::ptime xUTC = xLocal.utc_time();
+    // now convert the found local date time (which is now corrected properly for dst) to utc time for output
+    bpt::ptime x_UTC = x_local.utc_time();
     
     //// do debug output
-    CPLDebug("STATION_FETCH","xLocal: %s",xLocal.to_string().c_str());
-    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","xUTC: %s",boost::posix_time::to_simple_string(xUTC).c_str());
+    CPLDebug("STATION_FETCH","x_local: %s",x_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","x_tzAbbrev: %s",start_tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","x_UTC: %s",boost::posix_time::to_simple_string(x_UTC).c_str());
     
-    return xUTC;
+    return x_UTC;
 }
 /**
  * @brief pointInitialization::checkFetchTimeDuration
@@ -2655,13 +2672,24 @@ void pointInitialization::storeFileNames(vector<std::string> statLoc)
     stationFiles=statLoc;
 }
 /**
- * @brief pointInitialization::storeTZAbbrev
- * Stores the time zone as an abbreviation for naming the files
- * @param tzAbbr
+ * @brief pointInitialization::storeStartTZAbbrev
+ * Stores the time zone for a start date as an abbreviation for naming the files
+ * for single times, this is the time zone used for all file naming abbreviations
+ * @param start_tzAbbr
  */
-void pointInitialization::storeTZAbbrev(string tzAbbr)
+void pointInitialization::storeStartTZAbbrev(string start_tzAbbr)
 {
-    tzAbbrev = tzAbbr;
+    start_tzAbbrev = start_tzAbbr;
+}
+/**
+ * @brief pointInitialization::storeEndTZAbbrev
+ * Stores the time zone for an end date as an abbreviation for naming the files
+ * for single times, this is left empty
+ * @param end_tzAbbr
+ */
+void pointInitialization::storeEndTZAbbrev(string end_tzAbbr)
+{
+    end_tzAbbrev = end_tzAbbr;
 }
 /**
  * @brief pointInitialization::setLocalStartAndStopTimes
@@ -2918,7 +2946,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         {
             bpt::ptime writeTime = bpt::second_clock::local_time();
             timeStream<<writeTime;
-            timeComponent = timeStream.str();
+            timeComponent = timeStream.str()+"-"+start_tzAbbrev; //because its local time, add the time zone
         }
         if (latest==false) //If it is a time series we name the file with both the start and stop time
         {
@@ -2926,7 +2954,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             
             timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
             timeStream2<<start_and_stop_times[1].local_time();
-            timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+            timeComponent = timeStream.str()+"-"+start_tzAbbrev+"-"+timeStream2.str()+"-"+end_tzAbbrev; //because its local time, add the time zone
         }
         //Generate the filename
         if(csvName!="blank")
