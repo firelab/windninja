@@ -2347,6 +2347,29 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     bpt::ptime start_UTC = start_local.utc_time();
     bpt::ptime end_UTC = end_local.utc_time();
     
+    
+    // now warn if the start and stop time cross a daylight savings time transition where time doesn't always behave as expected
+    if ( start_dstStartTransition < start_dstEndTransition )
+    {
+        // normal situation
+        // example is PST for Jan to Mar, PDT for Mar to Nov, PST for Nov to Dec
+        if ( start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition
+          || start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition )
+        {
+            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+        }
+    } else if (start_dstStartTransition > start_dstEndTransition ) // notice that if they are equal is ignored
+    {
+        // reversed order situation
+        // example is NZDT for Jan to Mar, NZST for Mar to Oct, NZDT for Oct to Dec
+        if ( start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition
+          || start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition )
+        {
+            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+        }
+    }
+    
+    
     //// do debug output
     CPLDebug("STATION_FETCH","start_local: %s",start_local.to_string().c_str());
     CPLDebug("STATION_FETCH","end_local: %s",end_local.to_string().c_str());
@@ -2448,6 +2471,14 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     
     // now convert the found local date time (which is now corrected properly for dst) to utc time for output
     bpt::ptime x_UTC = x_local.utc_time();
+    
+    // now warn if the time becomes not_a_date_time, so far the only cases for this have been at the one hour 
+    // of daylight savings time transition when both DST and ST exist.
+    boost::posix_time::ptime noTime;    // default constructor should fill it with not_a_date_time as the value
+    if ( x_UTC == noTime )
+    {
+        std::cout << "\nSTATION_FETCH warning: Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.\n" << std::endl;
+    }
     
     //// do debug output
     CPLDebug("STATION_FETCH","x_local: %s",x_local.to_string().c_str());
