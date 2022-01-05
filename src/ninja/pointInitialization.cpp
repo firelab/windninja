@@ -467,7 +467,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
 //        cout<<start_and_stop_times[0].local_time()<<endl;
 //        cout<<start_and_stop_times[1].local_time()<<endl;
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+        timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     
@@ -530,7 +530,7 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+        timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     std::string fileComponent = subDem+"_interpolate_"+timeComponent+"-";
@@ -2963,7 +2963,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             
             timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
             timeStream2<<start_and_stop_times[1].local_time();
-            timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+            timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
         }
         //Generate the filename
         if(csvName!="blank")
