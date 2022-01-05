@@ -978,7 +978,7 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
         //else the setAtmFlags() function has already set each ninja to write their own atm file,
         //so don't do it here!
         if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag ||
-           ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag )
+           (ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && ninjas.size() > 1))
         {
             //Set directory path from first ninja's velocity file
             std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
@@ -1014,7 +1014,8 @@ void ninjaArmy::setAtmFlags()
     {
         //if it's not a weather model or point run, set all ninja's atm write flags
         if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
-           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag))
+           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
+               ninjas.size() > 1))
         {
             //FOR_EVERY( ninja, ninjas )
             for(unsigned int i = 0; i < ninjas.size(); i++)

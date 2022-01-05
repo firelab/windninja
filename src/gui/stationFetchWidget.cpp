@@ -344,7 +344,7 @@ int stationFetchWidget::fetchStation()
         //Set the Station Buffer
         pointInitialization::setStationBuffer(buffer,bufferUnits);
         //Generates the directory to store the file names, because current data is on, don't specify time zone        
-        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,true);
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
 
@@ -392,7 +392,7 @@ int stationFetchWidget::fetchStation()
 
         //Generate Station directory, because timeseries is on, specify what time zone the stations will be
         //downloaded in, based on DEM time zone settings, or user specified.
-        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,false);
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),timeList,
                                                            tzString.toStdString(),false);       
@@ -404,7 +404,7 @@ int stationFetchWidget::fetchStation()
         stid=removeWhiteSpace(idLine->text().toStdString());
         fetchNow=true;
         //Fetch now is on, don't specify time zone in station path       
-        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,eTimeList,true);
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,true);
         pointInitialization::SetRawStationFilename(stationPathName);
 
         result = pointInitialization::fetchStationByName(stid,eTimeList,tzString.toStdString(),fetchNow);
@@ -445,7 +445,7 @@ int stationFetchWidget::fetchStation()
             return duration_check;
         }
 
-        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,timeList,false);  //As we keep working on the GUI, need to get change eTimeList to timeList for timeseries
+        stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,false);
         pointInitialization::SetRawStationFilename(stationPathName);
         result = pointInitialization::fetchStationByName(stid,timeList,tzString.toStdString(),fetchNow);
 
