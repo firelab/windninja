@@ -1,6 +1,29 @@
 Release Notes
 =============
 
+WindNinja 3.7.3
+---------------
+- Update Linux build script for Ubuntu 20.04 (#397)
+
+- Update Tutorial 4 with current weather model specs (#401, #425)
+
+- Fix an interpolation issue in point initialization (#418)
+
+- Fix example cfg for point initialization run syntax (#423)
+
+- Update continuous integration test (#402, #425)
+
+- Fix issue with fuel depth units (#426)
+
+- Fix issue where OpenFOAM output was occasionally incorrectly read from previous time steps (#430) 
+
+- Add debugging option for multi-timestep momentum solver simulations (#431)
+
+- Fix .atm file writing for multi-timestep point initialization runs (#432)
+
+- Fix time zone issue in point initialization (#412)
+
+
 WindNinja 3.7.2
 ---------------
 - Fix bug related to how roughness grids are set from LCP files (#398)
