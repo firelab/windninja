@@ -30,7 +30,7 @@ Directories:
  * images      -> splash image and icons for gui
  * src         -> source files
 
-Dependencies (versions are versions we build against):
+Dependencies (versions are versions we build against for the Windows installer):
  * Boost 1.46:
     * boost_date_time
     * boost_program_options
