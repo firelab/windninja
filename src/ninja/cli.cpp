@@ -1779,7 +1779,8 @@ int windNinjaCLI(int argc, char* argv[])
                 return -1;
 #endif
             }
-            windsim.setNumVertLayers( i_, 40);
+            //windsim.setNumVertLayers( i_, 40);
+            windsim.setNumVertLayers( i_, 20);
 
             //output------------------------------------------------------------------------------
             if(vm.count("output_path")){
