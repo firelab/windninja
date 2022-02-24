@@ -262,7 +262,7 @@ void FiniteElementMethod::DiscretizeTransientTerms()
 }
 
 void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
-        wn_3dVectorField& U0, double alphaH, wn_3dScalarField alphaVfield) 
+        wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield) 
 {
 //    //The governing equation to solve is
 //    //
@@ -347,10 +347,10 @@ void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int*
                 }
 
                 //calculates elem.HVJ
-                CalculateDiffusionHterm(elementArray[i], i, U0);
+                CalculateDiffusionHterm(i, U0);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateDiffusionRcoefficients(elementArray[i], j, alphaH, alphaVfield);
+                CalculateDiffusionRcoefficients(i, j, alphaH, alphaVfield);
 
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
@@ -755,7 +755,7 @@ void FiniteElementMethod::ComputeGradientField(double *scalar, wn_3dVectorField 
     }//end parallel section
 }
 
-void FiniteElementMethod::CalculateDiffusionHterm(element &elem, int i,
+void FiniteElementMethod::CalculateDiffusionHterm(int i,
         wn_3dVectorField& U0)
 {
     //Calculate the coefficient H 
@@ -767,15 +767,15 @@ void FiniteElementMethod::CalculateDiffusionHterm(element &elem, int i,
     //           d x    d y    d z
     //
 
-    elem.HVJ=0.0;
+    elementArray[i].HVJ=0.0;
 
     for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
     {
-        elem.NPK=mesh_->get_global_node(k, i); //NPK is the global nodal number
+        elementArray[i].NPK=mesh_->get_global_node(k, i); //NPK is the global nodal number
 
-        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0.vectorData_x(elem.NPK))+
-                (elem.DNDY[k]*U0.vectorData_y(elem.NPK))+
-                (elem.DNDZ[k]*U0.vectorData_z(elem.NPK)));
+        elementArray[i].HVJ=elementArray[i].HVJ+((elementArray[i].DNDX[k]*U0.vectorData_x(elementArray[i].NPK))+
+                (elementArray[i].DNDY[k]*U0.vectorData_y(elementArray[i].NPK))+
+                (elementArray[i].DNDZ[k]*U0.vectorData_z(elementArray[i].NPK)));
     } //End loop over nodes in the element
 }
 
@@ -786,8 +786,8 @@ void FiniteElementMethod::CalculateDiffusionHterm(element &elem, int i,
  * @param j The quadrature point index
  *
  */
-void FiniteElementMethod::CalculateDiffusionRcoefficients(element &elem, int j, double alphaH,
-        wn_3dScalarField alphaVfield)
+void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, double alphaH,
+        wn_3dScalarField& alphaVfield)
 {
     //                    1                          1
     //    Rx = Ry =  ------------          Rz = ------------
@@ -796,13 +796,13 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(element &elem, int j, 
     double alphaV = 0.;
     for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
     {
-        alphaV=alphaV+elem.SFV[0*mesh_->NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
+        alphaV=alphaV+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*alphaVfield(elementArray[i].NPK);
 
     } //End loop over nodes in the element
 
-    elem.RX = 1.0/(2.0*alphaH*alphaH);
-    elem.RY = 1.0/(2.0*alphaH*alphaH);
-    elem.RZ = 1.0/(2.0*alphaV*alphaV);
+    elementArray[i].RX = 1.0/(2.0*alphaH*alphaH);
+    elementArray[i].RY = 1.0/(2.0*alphaH*alphaH);
+    elementArray[i].RZ = 1.0/(2.0*alphaV*alphaV);
 }
 
 void FiniteElementMethod::Initialize(const Mesh &mesh, const WindNinjaInputs &input)

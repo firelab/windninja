@@ -48,13 +48,13 @@ class FiniteElementMethod
         void SetupSKCompressedRowStorage(double *SK, int *col_ind, int *row_ptr);
         void DiscretizeTransientTerms();
         void DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
-                wn_3dVectorField& U0, double alphaH, wn_3dScalarField alphaVfield);
+                wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield);
         void ComputeGradientField(double *scalar, wn_3dVectorField &U);
         void Deallocate();
 
     private:
-        void CalculateDiffusionRcoefficients(element &elem, int j, double alphaH, wn_3dScalarField alphaVfield);
-        void CalculateDiffusionHterm(element &elem, int i, wn_3dVectorField& U0) ;
+        void CalculateDiffusionRcoefficients(int i, int j, double alphaH, wn_3dScalarField& alphaVfield);
+        void CalculateDiffusionHterm(int i, wn_3dVectorField& U0) ;
 
         std::vector<element> elementArray;
         const Mesh *mesh_; //reference to the mesh
