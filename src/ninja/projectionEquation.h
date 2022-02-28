@@ -65,8 +65,6 @@ class ProjectionEquation
         wn_3dVectorField U;
 
     private:
-        void CalculateRcoefficients(element &elem, int j);
-        void CalculateHterm(element &elem, int i) ;
         const Mesh mesh_;
         const WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;

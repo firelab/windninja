@@ -261,25 +261,40 @@ void FiniteElementMethod::DiscretizeTransientTerms()
 //    } //End parallel region
 }
 
+/**
+ * \brief Discretize the diffusion terms.
+ *
+ *
+ *  The governing equation to solve is
+ *
+ *    d        dPhi      d        dPhi      d        dPhi
+ *   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
+ *    dx        dx       dy        dy       dz        dz
+ *
+ *
+ *    where, for conservation of mass:
+ *                    1                          1
+ *    Rx = Ry =  ------------          Rz = ------------
+ *                2*alphaH^2                 2*alphaV^2
+ *
+ *         du0     dv0     dz0
+ *    H = ----- + ----- + -----
+ *         dx      dy      dz
+ *
+ *
+ * \param SK A pointer to the SK array (A in the Ax=b equation).
+ * \param RHS A pointer to the RHS vector (b in the Ax=b equation).
+ * \param col_ind A pointer to the column index in SK.
+ * \param row_ptr A pointer to the row index in SK.
+ * \param U0 A reference to the initial velocity field.
+ * \param alphaH The horizontal alpha term (Rx=Ry=1/(2*alphaH^2) in the governing equation).
+ * \param alphaVField A reference to the 3-D alphaV field (Rz=1/(2*alphaV^2) in the governing equation).
+ *
+ * \return void
+ */
 void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
         wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield) 
 {
-//    //The governing equation to solve is
-//    //
-//    //    d        dPhi      d        dPhi      d        dPhi
-//    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H = 0.0
-//    //    dx        dx       dy        dy       dz        dz
-//    //
-//    //
-//    //    where, for conservation of mass:
-//    //                    1                          1
-//    //    Rx = Ry =  ------------          Rz = ------------
-//    //                2*alphaH^2                 2*alphaV^2
-//    //
-//    //         du0     dv0     dz0
-//    //    H = ----- + ----- + -----
-//    //         dx      dy      dz
-
     int i, j, k, l;
 
     int interrows=input_->dem.get_nRows()-2;
@@ -805,6 +820,18 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, double a
     elementArray[i].RZ = 1.0/(2.0*alphaV*alphaV);
 }
 
+/**
+ * \brief Initialize the finite element method object.
+ *
+ * Sets up a vector of elements (all elements in the mesh) for the simulation.
+ * Several element class members (quad point arrays, Jacobian quad points, DV, S) are initialized
+ * for each element object. DIAG is also allocated here.
+ *
+ * \param mesh A reference to the mesh.
+ * \param input A reference to the WindNinja inputs.
+ *
+ * \return void
+ */
 void FiniteElementMethod::Initialize(const Mesh &mesh, const WindNinjaInputs &input)
 {
     mesh_ = &mesh;

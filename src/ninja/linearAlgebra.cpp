@@ -133,7 +133,7 @@ LinearAlgebra& LinearAlgebra::operator=(LinearAlgebra const& RHS)
 
 LinearAlgebra::~LinearAlgebra()
 {
-    deallocate();
+    Deallocate();
 }
 
 /**
@@ -141,9 +141,9 @@ LinearAlgebra::~LinearAlgebra()
  * @param numberOfRows Number of rows in the A matrix.
  * @return Nothing.
  */
-void LinearAlgebra::initializeConjugateGradient(int numberOfRows)
+void LinearAlgebra::InitializeConjugateGradient(int numberOfRows)
 {
-    deallocate();
+    Deallocate();
     numRows = numberOfRows;
     p=new double[numRows];
     z=new double[numRows];
@@ -157,9 +157,9 @@ void LinearAlgebra::initializeConjugateGradient(int numberOfRows)
  * @param numberOfRows Number of rows in the A matrix.
  * @return Nothing.
  */
-void LinearAlgebra::initializeMinres(int numberOfRows)
+void LinearAlgebra::InitializeMinres(int numberOfRows)
 {
-    deallocate();
+    Deallocate();
     numRows = numberOfRows;
     R=new double[numRows];
     Z=new double[numRows];
@@ -176,7 +176,7 @@ void LinearAlgebra::initializeMinres(int numberOfRows)
  * Function to deallocate memory held by the LinearAlgebra class.
  * @return Nothing.
  */
-void LinearAlgebra::deallocate()
+void LinearAlgebra::Deallocate()
 {
     //Conjugate Gradient arrays-----------
     if(p!=NULL){

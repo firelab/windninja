@@ -118,14 +118,19 @@ void ProjectionEquation::Discretize()
     fem.DiscretizeDiffusionTerms(SK, RHS, col_ind, row_ptr, U0_, alphaH, alphaVfield);
 }
 
+/**
+ * \brief Sets the boundary conditions.
+ *
+ *   Specify known values of PHI.
+ *   This is done by replacing the particular node equation (row) with all zeros except a "1" on the 
+ *   diagonal of SK[]. Then the corresponding row in RHS[] is replaced with the value of the known PHI.
+ *   The other nodes that are "connected" to the known node need to have their equations adjusted accordingly.
+ *   This is done by moving the term with the known value to the RHS.
+ *
+ * \return void
+ */
 void ProjectionEquation::SetBoundaryConditions()
 {
-    //Specify known values of PHI
-    //This is done by replacing the particular node equation (row) with all zeros except a "1" on the diagonal of SK[].
-    //Then the corresponding row in RHS[] is replaced with the value of the known PHI.
-    //The other nodes that are "connected" to the known node need to have their equations adjusted accordingly.
-    //This is done by moving the term with the known value to the RHS.
-
     int NPK, KNP;
     int i, j, k, l;
 
@@ -398,6 +403,15 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
     row_ptr[mesh_.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
 }
 
+/**
+ * \brief Sets the 3-D stability field for the projection equation object.
+ *
+ * \param input A reference to the WindNinja inputs.
+ * \param CloudGrid A reference to the cloud grid.
+ * \param init A reference to the initialization object for this run.
+ *
+ * \return void
+ */
 void ProjectionEquation::SetStability(WindNinjaInputs &input,
                 AsciiGrid<double> &CloudGrid,
                 boost::shared_ptr<initialize> &init)
@@ -619,54 +633,15 @@ void ProjectionEquation::ComputeUVWField()
     }
 }
 
-void ProjectionEquation::CalculateHterm(element &elem, int i)
-{
-    //Calculate the coefficient H 
-    //This is what drives the flow, this is the source term
-    //for PHI
-    //
-    //           d u0   d v0   d w0
-    //     H = ( ---- + ---- + ---- )
-    //           d x    d y    d z
-    //
-
-//    elem.HVJ=0.0;
-//
-//    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
-//    {
-//        elem.NPK=mesh_.get_global_node(k, i); //NPK is the global nodal number
-//
-//        elem.HVJ=elem.HVJ+((elem.DNDX[k]*U0_.vectorData_x(elem.NPK))+
-//                (elem.DNDY[k]*U0_.vectorData_y(elem.NPK))+
-//                (elem.DNDZ[k]*U0_.vectorData_z(elem.NPK)));
-//    } //End loop over nodes in the element
-}
-
 /**
- * @brief Computes the R coefficients in the governing equations.
+ * \brief Initialize the projection equation object.
  *
- * @param elem A reference to the element which R is to be calculated in
- * @param j The quadrature point index
+ * \param mesh A reference to the mesh.
+ * \param input A reference to the WindNinja inputs.
+ * \param U0 A reference to the initial velocity field.
  *
+ * \return void
  */
-void ProjectionEquation::CalculateRcoefficients(element &elem, int j)
-{
-    //                    1                          1
-    //    Rx = Ry =  ------------          Rz = ------------
-    //                2*alphaH^2                 2*alphaV^2
-
-//    double alphaV = 0.;
-//    for(int k=0;k<mesh_.NNPE;k++) //Start loop over nodes in the element
-//    {
-//        alphaV=alphaV+elem.SFV[0*mesh_.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-//
-//    } //End loop over nodes in the element
-//
-//    elem.RX = 1.0/(2.0*alphaH*alphaH);
-//    elem.RY = 1.0/(2.0*alphaH*alphaH);
-//    elem.RZ = 1.0/(2.0*alphaV*alphaV);
-}
-
 void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0)
 {
     mesh_ = mesh;
@@ -692,11 +667,16 @@ void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &inp
 
 void ProjectionEquation::Solve(WindNinjaInputs &input)
 {
+//#define WRITE_A_B
+#ifdef WRITE_A_B	//used for debugging...
+    matrixEquation.Write_A_and_b(SK, RHS, row_ptr, col_ind);
+#endif
+
     //if the CG solver diverges, try the minres solver
-    matrixEquation.initializeConjugateGradient(mesh_.NUMNP);
+    matrixEquation.InitializeConjugateGradient(mesh_.NUMNP);
     if(matrixEquation.SolveConjugateGradient(input, SK, PHI, RHS, row_ptr, col_ind)==false)
     {
-        matrixEquation.initializeMinres(mesh_.NUMNP);
+        matrixEquation.InitializeMinres(mesh_.NUMNP);
         if(matrixEquation.SolveMinres(input, SK, PHI, RHS, row_ptr, col_ind)==false)
         {
             throw std::runtime_error("Solver returned false.");

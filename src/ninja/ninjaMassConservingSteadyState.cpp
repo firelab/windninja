@@ -128,7 +128,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 
 /*  ----------------------------------------*/
 /*  START OUTER ITERATIVE LOOP FOR          */
-/*  MATCHING INPUT POINTS		            */
+/*  MATCHING INPUT POINTS	            */
 /*  ----------------------------------------*/
 
     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
@@ -204,11 +204,6 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 /*  SET BOUNDARY CONDITIONS                 */
 /*  ----------------------------------------*/
         conservationOfMassEquation.SetBoundaryConditions();
-
-//#define WRITE_A_B
-#ifdef WRITE_A_B	//used for debugging...
-        conservationOfMassEquation.Write_A_and_b(1000);
-#endif
 
 #ifdef _OPENMP
         endBuildEq = omp_get_wtime();

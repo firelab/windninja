@@ -44,9 +44,9 @@ class LinearAlgebra
         LinearAlgebra(LinearAlgebra const& RHS);
         LinearAlgebra& operator=(LinearAlgebra const& RHS);
 
-        void initializeConjugateGradient(int numberOfRows);
-        void initializeMinres(int numberOfRows);
-        void deallocate();
+        void InitializeConjugateGradient(int numberOfRows);
+        void InitializeMinres(int numberOfRows);
+        void Deallocate();
         bool SolveConjugateGradient(WindNinjaInputs &input, double* A, double* X, double* B, int *row_ptr, int *col_ind);
         bool SolveMinres(WindNinjaInputs &input, double* A, double* X, double* B, int *row_ptr, int *col_ind);
         void Write_A_and_b(double* A, double* b, int *row_ptr, int *col_ind);
