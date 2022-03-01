@@ -50,6 +50,13 @@ ProjectionEquation::ProjectionEquation()
  */
 
 ProjectionEquation::ProjectionEquation(ProjectionEquation const& A)
+: alphaVfield(A.alphaVfield)
+, U(A.U)
+, mesh_(A.mesh_)
+, input_(A.input_)
+, U0_(A.U0_)
+, fem(A.fem)
+, matrixEquation(A.matrixEquation)
 {
     PHI=A.PHI;
     RHS=A.RHS;
@@ -62,7 +69,6 @@ ProjectionEquation::ProjectionEquation(ProjectionEquation const& A)
     rhsOutFilename=A.rhsOutFilename;
     stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
     alphaH=A.alphaH;
-    alphaVfield=A.alphaVfield;
 }
 
 /**
@@ -85,7 +91,14 @@ ProjectionEquation& ProjectionEquation::operator=(ProjectionEquation const& A)
         rhsOutFilename=A.rhsOutFilename;
         stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
         alphaH=A.alphaH;
+
         alphaVfield=A.alphaVfield;
+        U=A.U;
+        mesh_=A.mesh_;
+        input_=A.input_;
+        U0_=A.U0_;
+        fem=A.fem;
+        matrixEquation=A.matrixEquation;
     }
     return *this;
 }
@@ -137,27 +150,27 @@ void ProjectionEquation::SetBoundaryConditions()
 #pragma omp parallel default(shared) private(i,j,k,l,NPK,KNP)
     {
 #pragma omp for
-    for(k=0;k<mesh_.nlayers;k++)
+    for(k=0;k<mesh_->nlayers;k++)
     {
-        for(i=0;i<input_.dem.get_nRows();i++)
+        for(i=0;i<input_->dem.get_nRows();i++)
         {
-            for(j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            for(j=0;j<input_->dem.get_nCols();j++) //loop over nodes using i,j,k notation
             {
-                if(j==0||j==(input_.dem.get_nCols()-1)||i==0||i==(input_.dem.get_nRows()-1)||k==(mesh_.nlayers-1))  //Check the node to see if it is a boundary node
-                    isBoundaryNode[k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j]=true;
+                if(j==0||j==(input_->dem.get_nCols()-1)||i==0||i==(input_->dem.get_nRows()-1)||k==(mesh_->nlayers-1))  //Check the node to see if it is a boundary node
+                    isBoundaryNode[k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j]=true;
                 else
-                    isBoundaryNode[k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j]=false;
+                    isBoundaryNode[k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j]=false;
             }
         }
     }
 #pragma omp for
-    for(k=0;k<mesh_.nlayers;k++)
+    for(k=0;k<mesh_->nlayers;k++)
     {
-        for(i=0;i<input_.dem.get_nRows();i++)
+        for(i=0;i<input_->dem.get_nRows();i++)
         {
-            for(j=0;j<input_.dem.get_nCols();j++) //loop over nodes using i,j,k notation
+            for(j=0;j<input_->dem.get_nCols();j++) //loop over nodes using i,j,k notation
             {
-                NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+                NPK=k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
                 for(l=row_ptr[NPK];l<row_ptr[NPK+1];l++) //loop through all non-zero elements for row NPK
                 {
                     KNP=col_ind[l]; //KNP is the global column number we're on
@@ -226,9 +239,9 @@ void ProjectionEquation::Deallocate()
  */
 void ProjectionEquation::SetupSKCompressedRowStorage()
 {
-    int interrows=input_.dem.get_nRows()-2;
-    int intercols=input_.dem.get_nCols()-2;
-    int interlayers=mesh_.nlayers-2;
+    int interrows=input_->dem.get_nRows()-2;
+    int intercols=input_->dem.get_nCols()-2;
+    int interlayers=mesh_->nlayers-2;
     int i, ii, j, jj, k, kk, l;
 
     //NZND is the # of nonzero elements in the SK stiffness array that are stored
@@ -237,7 +250,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
          (intercols*interrows*interlayers)*27;
 
     //this is because we will only store the upper half of the SK matrix since it's symmetric
-    NZND = (NZND - mesh_.NUMNP)/2 + mesh_.NUMNP;	
+    NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
 
     //This is the final global stiffness matrix in Compressed Row Storage (CRS) and symmetric 
     SK = new double[NZND];
@@ -248,13 +261,13 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
     //This holds the element number in the SK array (CRS) of the first non-zero entry for the
     //global row (the "+1" is so we can use the last entry to quit loops; ie. so we know how 
     //many non-zero elements are in the last node)
-    row_ptr=new int[mesh_.NUMNP+1];
+    row_ptr=new int[mesh_->NUMNP+1];
 
     int type; //This is the type of node (corner, edge, side, internal)
     int temp, temp1;
 
 #pragma omp parallel for default(shared) private(i)
-    for(i=0; i<mesh_.NUMNP; i++)
+    for(i=0; i<mesh_->NUMNP; i++)
     {
         PHI[i]=0.;
         RHS[i]=0.;
@@ -274,16 +287,16 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
     //temp stores the location (in the SK and col_ind arrays) where the first non-zero element
     //for the current row is located
     temp=0;
-    for(k=0;k<mesh_.nlayers;k++)
+    for(k=0;k<mesh_->nlayers;k++)
     {
-        for(i=0;i<input_.dem.get_nRows();i++)
+        for(i=0;i<input_->dem.get_nRows();i++)
         {
-            for(j=0;j<input_.dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
+            for(j=0;j<input_->dem.get_nCols();j++) //Looping over all nodes using i,j,k notation
             {
-                type=mesh_.get_node_type(i,j,k);
+                type=mesh_->get_node_type(i,j,k);
                 if(type==0) //internal node
                 {
-                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    row = k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -292,8 +305,8 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
-                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_->dem.get_nCols()*input_->dem.get_nRows()+
+                                    (i+ii)*input_->dem.get_nCols()+(j+jj);
                                 if(col >= row)	//only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -306,7 +319,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                 }
                 else if(type==1) //face node
                 {
-                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    row = k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -315,15 +328,15 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_->dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_->dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_->nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
-                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_->dem.get_nCols()*input_->dem.get_nRows()+
+                                    (i+ii)*input_->dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -336,7 +349,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                 }
                 else if(type==2) //edge node
                 {
-                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    row = k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -345,15 +358,15 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_->dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_->dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_->nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
-                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_->dem.get_nCols()*input_->dem.get_nRows()+
+                                    (i+ii)*input_->dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -367,7 +380,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                 }
                 else if(type==3) //corner node
                 {
-                    row = k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j;
+                    row = k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j;
                     row_ptr[row]=temp;
                     temp1=temp;
                     for(kk=-1;kk<2;kk++)
@@ -376,15 +389,15 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
                         {
                             for(jj=-1;jj<2;jj++)
                             {
-                                if(((i+ii)<0)||((i+ii)>(input_.dem.get_nRows()-1)))
+                                if(((i+ii)<0)||((i+ii)>(input_->dem.get_nRows()-1)))
                                     continue;
-                                if(((j+jj)<0)||((j+jj)>(input_.dem.get_nCols()-1)))
+                                if(((j+jj)<0)||((j+jj)>(input_->dem.get_nCols()-1)))
                                     continue;
-                                if(((k+kk)<0)||((k+kk)>(mesh_.nlayers-1)))
+                                if(((k+kk)<0)||((k+kk)>(mesh_->nlayers-1)))
                                     continue;
 
-                                col = (k+kk)*input_.dem.get_nCols()*input_.dem.get_nRows()+
-                                    (i+ii)*input_.dem.get_nCols()+(j+jj);
+                                col = (k+kk)*input_->dem.get_nCols()*input_->dem.get_nRows()+
+                                    (i+ii)*input_->dem.get_nCols()+(j+jj);
                                 if(col >= row) //only do if we're on the upper triangular part of SK
                                 {
                                     col_ind[temp1]=col;
@@ -400,7 +413,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
             }
         }
     }
-    row_ptr[mesh_.NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
+    row_ptr[mesh_->NUMNP]=temp; //Set last value of row_ptr, so we can use "row_ptr+1" to use to index to in loops
 }
 
 /**
@@ -419,15 +432,15 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
     Stability stb(input);
-    alphaVfield.allocate(&mesh_);
+    alphaVfield.allocate(mesh_);
 
     if(stabilityUsingAlphasFlag==0) // if stabilityFlag not set
     {
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows;i++)
+            for(unsigned int i=0; i<mesh_->nrows;i++)
             {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
+                for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/1.0;
                 }
@@ -436,11 +449,11 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
     }
     else if(stabilityUsingAlphasFlag==1 && input.alphaStability!=-1) // if the alpha was specified directly in the CLI
     {
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows; i++)
+            for(unsigned int i=0; i<mesh_->nrows; i++)
             {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
+                for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/input.alphaStability;
                 }
@@ -450,10 +463,10 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
     else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::domainAverageInitializationFlag) //it's a domain-average run
     {
-        stb.SetDomainAverageAlpha(input, mesh_);  //sets alpha based on incident solar radiation
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        stb.SetDomainAverageAlpha(input, *mesh_);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows; i++)
+            for(unsigned int i=0; i<mesh_->nrows; i++)
             {
                 for(unsigned int j=0;j<input.dem.get_nCols();j++)
                 {
@@ -465,12 +478,12 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
     else if(stabilityUsingAlphasFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
     {
-        stb.SetPointInitializationAlpha(input, mesh_);
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        stb.SetPointInitializationAlpha(input, *mesh_);
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows; i++)
+            for(unsigned int i=0; i<mesh_->nrows; i++)
             {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
+                for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -482,13 +495,13 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
             input.initializationMethod==WindNinjaInputs::wxModelInitializationFlag &&
             init->getForecastIdentifier()!="WRF-3D") //it's a 2D wx model run
     {
-        stb.Set2dWxInitializationAlpha(input, mesh_, CloudGrid);
+        stb.Set2dWxInitializationAlpha(input, *mesh_, CloudGrid);
 
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows; i++)
+            for(unsigned int i=0; i<mesh_->nrows; i++)
             {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
+                for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -503,14 +516,14 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Calculating stability...");
 
-        stb.Set3dVariableAlpha(input, mesh_, init->air3d, U0_);
+        stb.Set3dVariableAlpha(input, *mesh_, init->air3d, U0_);
         init->air3d.deallocate();
 
-        for(unsigned int k=0; k<mesh_.nlayers; k++)
+        for(unsigned int k=0; k<mesh_->nlayers; k++)
         {
-            for(unsigned int i=0; i<mesh_.nrows; i++)
+            for(unsigned int i=0; i<mesh_->nrows; i++)
             {
-                for(unsigned int j=0; j<mesh_.ncols; j++)
+                for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
                 }
@@ -573,7 +586,7 @@ void ProjectionEquation::ComputeUVWField()
     /*     of the surrounding cells.                       */
     /*-----------------------------------------------------*/
 
-    for(int i=0;i<mesh_.NUMNP;i++) //Initialize u,v, and w
+    for(int i=0;i<mesh_->NUMNP;i++) //Initialize u,v, and w
     {
         U.vectorData_x(i)=0.;
         U.vectorData_y(i)=0.;
@@ -588,29 +601,29 @@ void ProjectionEquation::ComputeUVWField()
     //    phiField.allocate(&mesh_);
     //    rhsField.allocate(&mesh_);
     //    int _NPK;
-    //    for(unsigned int k=0; k<mesh_.nlayers; k++)
+    //    for(unsigned int k=0; k<mesh_->nlayers; k++)
     //    {
-    //        for(unsigned int i=0; i<mesh_.nrows;i++)
+    //        for(unsigned int i=0; i<mesh_->nrows;i++)
     //        {
-    //            for(unsigned int j=0; j<mesh_.ncols; j++)
+    //            for(unsigned int j=0; j<mesh_->ncols; j++)
     //            {
-    //                _NPK=k*input_.dem.get_nCols()*input_.dem.get_nRows()+i*input_.dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+    //                _NPK=k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
     //                phiField(i,j,k) = PHI[_NPK];
     //                rhsField(i,j,k) = RHS[_NPK];
     //            }
     //        }
     //    }
-    //    volVTK VTKphi(phiField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
-    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, phiOutFilename);
-    //    volVTK VTKrhs(rhsField, mesh_.XORD, mesh_.YORD, mesh_.ZORD, 
-    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_.nlayers, rhsOutFilename);
+    //    volVTK VTKphi(phiField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
+    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_->nlayers, phiOutFilename);
+    //    volVTK VTKrhs(rhsField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
+    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_->nlayers, rhsOutFilename);
     //    phiField.deallocate();
     //    rhsField.deallocate();
     //}
 
     double alphaV = 1.0;
 
-    for(int i=0;i<mesh_.NUMNP;i++)
+    for(int i=0;i<mesh_->NUMNP;i++)
     {
         //calculate u,v,w
         alphaV = alphaVfield(i); //set alphaV for stability
@@ -644,21 +657,21 @@ void ProjectionEquation::ComputeUVWField()
  */
 void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0)
 {
-    mesh_ = mesh;
-    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    mesh_ = &mesh;
+    input_ = &input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
     U0_ = U0;
     U = U0; //just set U to U0 for now, will be computed later
 
     if(PHI == NULL)
-        PHI=new double[mesh_.NUMNP];
+        PHI=new double[mesh_->NUMNP];
     else
         throw std::runtime_error("Error allocating PHI field.");
     if(isBoundaryNode == NULL)
-        isBoundaryNode=new bool[mesh_.NUMNP]; //flag to specify if it's a boundary node
+        isBoundaryNode=new bool[mesh_->NUMNP]; //flag to specify if it's a boundary node
     else
         throw std::runtime_error("Error allocating isBoundaryNode field.");
 
-    RHS=new double[mesh_.NUMNP]; //This is the final right hand side (RHS) matrix
+    RHS=new double[mesh_->NUMNP]; //This is the final right hand side (RHS) matrix
 
     SetupSKCompressedRowStorage();
 
@@ -673,10 +686,10 @@ void ProjectionEquation::Solve(WindNinjaInputs &input)
 #endif
 
     //if the CG solver diverges, try the minres solver
-    matrixEquation.InitializeConjugateGradient(mesh_.NUMNP);
+    matrixEquation.InitializeConjugateGradient(mesh_->NUMNP);
     if(matrixEquation.SolveConjugateGradient(input, SK, PHI, RHS, row_ptr, col_ind)==false)
     {
-        matrixEquation.InitializeMinres(mesh_.NUMNP);
+        matrixEquation.InitializeMinres(mesh_->NUMNP);
         if(matrixEquation.SolveMinres(input, SK, PHI, RHS, row_ptr, col_ind)==false)
         {
             throw std::runtime_error("Solver returned false.");

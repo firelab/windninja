@@ -39,7 +39,9 @@ NinjaMassConservingSteadyState::NinjaMassConservingSteadyState() : ninja()
  * @param A Copied value.
  */
 
-NinjaMassConservingSteadyState::NinjaMassConservingSteadyState(NinjaMassConservingSteadyState const& A ) : ninja(A)
+NinjaMassConservingSteadyState::NinjaMassConservingSteadyState(NinjaMassConservingSteadyState const& A )
+: ninja(A)
+, conservationOfMassEquation(A.conservationOfMassEquation)
 {
 
 }
@@ -54,7 +56,7 @@ NinjaMassConservingSteadyState& NinjaMassConservingSteadyState::operator=(NinjaM
 {
     if(&A != this) {
         ninja::operator=(A);
-        conservationOfMassEquation = A.conservationOfMassEquation;
+        conservationOfMassEquation=A.conservationOfMassEquation;
     }
 
     return *this;
@@ -99,7 +101,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 #endif
 
     /*
-    ** Set matching its from config options, default to 150.
+    ** Set matching iterationss from config options, default to 150.
     ** See constructor to set default.
     */
     //maximum number of outer iterations to do (for matching observations)

@@ -44,7 +44,7 @@ class FiniteElementMethod
         FiniteElementMethod(FiniteElementMethod const& A);
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
-        void Initialize(const Mesh &mesh, const WindNinjaInputs &input);
+        void Initialize(const Mesh *mesh, const WindNinjaInputs *input);
         void DiscretizeTransientTerms();
         void DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
                 wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield);

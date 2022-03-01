@@ -39,10 +39,12 @@ FiniteElementMethod::FiniteElementMethod()
  */
 
 FiniteElementMethod::FiniteElementMethod(FiniteElementMethod const& A)
+: elementArray(A.elementArray)
+, mesh_(A.mesh_)
+, input_(A.input_)
 {
     DIAG=A.DIAG;
 }
-
 
 /**
  * Equals operator.
@@ -54,9 +56,11 @@ FiniteElementMethod& FiniteElementMethod::operator=(FiniteElementMethod const& A
 {
     if(&A != this) {
         DIAG=A.DIAG;
+        elementArray=A.elementArray;
+        mesh_=A.mesh_;
+        input_=A.input_;
     }
     return *this;
-
 }
 
 FiniteElementMethod::~FiniteElementMethod()      //destructor
@@ -288,7 +292,7 @@ void FiniteElementMethod::DiscretizeTransientTerms()
  * \param row_ptr A pointer to the row index in SK.
  * \param U0 A reference to the initial velocity field.
  * \param alphaH The horizontal alpha term (Rx=Ry=1/(2*alphaH^2) in the governing equation).
- * \param alphaVField A reference to the 3-D alphaV field (Rz=1/(2*alphaV^2) in the governing equation).
+ * \param alphaVfield A reference to the 3-D alphaV field (Rz=1/(2*alphaV^2) in the governing equation).
  *
  * \return void
  */
@@ -651,10 +655,10 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, double a
  *
  * \return void
  */
-void FiniteElementMethod::Initialize(const Mesh &mesh, const WindNinjaInputs &input)
+void FiniteElementMethod::Initialize(const Mesh *mesh, const WindNinjaInputs *input)
 {
-    mesh_ = &mesh;
-    input_ = &input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    mesh_ = mesh;
+    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
 
     elementArray.resize(mesh_->NUMEL);
     for(int i=0; i<elementArray.size(); i++)

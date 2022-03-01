@@ -65,8 +65,8 @@ class ProjectionEquation
         wn_3dVectorField U;
 
     private:
-        const Mesh mesh_;
-        const WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        const Mesh *mesh_;
+        const WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         wn_3dVectorField U0_;
         FiniteElementMethod fem; //finite element method operations
         LinearAlgebra matrixEquation; //linear algebra operations
