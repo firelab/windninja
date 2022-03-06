@@ -357,7 +357,7 @@ protected:
     //u is positive toward East, v is positive toward North,
     //w is positive up
     wn_3dVectorField U; 
-    wn_3dVectorField U0;    //Initial velocity field, or last timestep's velocity field for transient simulations
+    wn_3dVectorField U0;    //Initial velocity field
 
     //Timers
     double startTotal, endTotal;

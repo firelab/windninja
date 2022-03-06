@@ -67,8 +67,13 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 {
     Deallocate();
 }
+void FiniteElementMethod::DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
+        wn_3dVectorField &windSpeedGradient) 
+{
 
-void FiniteElementMethod::DiscretizeTransientTerms() 
+}
+
+void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion() 
 {
 //    //The governing equation to solve for diffusion of the velocity field is:
 //    //
@@ -266,7 +271,7 @@ void FiniteElementMethod::DiscretizeTransientTerms()
 }
 
 /**
- * \brief Discretize the diffusion terms.
+ * \brief Discretize the conservation of mass/projection equations.
  *
  *
  *  The governing equation to solve is
@@ -296,7 +301,7 @@ void FiniteElementMethod::DiscretizeTransientTerms()
  *
  * \return void
  */
-void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int* col_ind, int* row_ptr,
+void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int* row_ptr,
         wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield) 
 {
     int i, j, k, l;
@@ -366,10 +371,10 @@ void FiniteElementMethod::DiscretizeDiffusionTerms(double* SK, double* RHS, int*
                 }
 
                 //calculates elem.HVJ
-                CalculateDiffusionHterm(i, U0);
+                CalculateHterm(i, U0);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateDiffusionRcoefficients(i, j, alphaH, alphaVfield);
+                CalculateRcoefficients(i, j, alphaH, alphaVfield);
 
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
@@ -593,7 +598,7 @@ void FiniteElementMethod::ComputeGradientField(double *scalar, wn_3dVectorField 
     }//end parallel section
 }
 
-void FiniteElementMethod::CalculateDiffusionHterm(int i,
+void FiniteElementMethod::CalculateHterm(int i,
         wn_3dVectorField& U0)
 {
     //Calculate the coefficient H 
@@ -618,13 +623,13 @@ void FiniteElementMethod::CalculateDiffusionHterm(int i,
 }
 
 /**
- * @brief Computes the R coefficients in the governing equations.
+ * @brief Computes the R coefficients in the projection/conservation of mass governing equation.
  *
  * @param elem A reference to the element which R is to be calculated in
  * @param j The quadrature point index
  *
  */
-void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, double alphaH,
+void FiniteElementMethod::CalculateRcoefficients(int i, int j, double alphaH,
         wn_3dScalarField& alphaVfield)
 {
     //                    1                          1
@@ -641,6 +646,46 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, double a
     elementArray[i].RX = 1.0/(2.0*alphaH*alphaH);
     elementArray[i].RY = 1.0/(2.0*alphaH*alphaH);
     elementArray[i].RZ = 1.0/(2.0*alphaV*alphaV);
+}
+
+/**
+ * @brief Computes the R coefficients in the diffusion equation.
+ *
+ * @param elem A reference to the element which R is to be calculated in
+ * @param j The quadrature point index
+ *
+ */
+void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j, 
+        wn_3dScalarField &heightAboveGround, wn_3dVectorField &windSpeedGradient)
+{
+    /*
+     * calculate diffusivities
+     * windSpeedGradient.vectorData_z is the 3-d array with dspeed/dz
+     * Rz = 0.4 * heightAboveGround * du/dz
+     * 
+     * TODO: Investigate other parameterizations for Rz.
+     * See Stull p. 209 for several options used in the 
+     * literature. Based on limited testing, the one commented out below
+     * with the von Karman constant and height squared seems to 
+     * produce too much diffusion.
+     */
+
+    //calculate elem.RZ, RX, RY for current element.
+    double height = 0.;
+    double speed = 0.;
+    for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+    {
+        height=height+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
+            heightAboveGround(elementArray[1].NPK);
+        speed=speed+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
+            windSpeedGradient.vectorData_z(elementArray[i].NPK);
+    }
+    //0.41 is the von Karman constant
+    //elementArray[i].RZ = 0.41*0.41 * height*height * fabs(speed);
+    elementArray[i].RZ = 0.41 * height * fabs(speed);
+    elementArray[i].RX = elementArray[i].RZ;
+    elementArray[i].RY = elementArray[i].RZ;
+    elementArray[i].RC = 1.;
 }
 
 /**

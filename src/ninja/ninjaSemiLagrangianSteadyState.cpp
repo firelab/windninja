@@ -30,9 +30,18 @@
 #include "ninjaSemiLagrangianSteadyState.h"
 
 NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
-, currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
+, currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), 
+              input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 {
+    eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
+    //eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
 
+    if(diffusionType == explicitLumpedCapacitance){
+        diffusionEquation = new ExplicitLumpedCapacitanceDiffusion();
+    }
+    else if(diffusionType == implicitCentralDifference){
+        diffusionEquation = new ImplicitCentralDifferenceDiffusion();
+    }
 }
 
 /**
@@ -40,7 +49,12 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
  * @param A Copied value.
  */
 
-NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState(NinjaSemiLagrangianSteadyState const& A ) : ninja(A), U00(A.U00), transport(A.transport)
+NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState(NinjaSemiLagrangianSteadyState const& A ) 
+: ninja(A)
+, transport(A.transport)
+, U_1(A.U_1)
+, U_0(A.U_0)
+, U_00(A.U_00)
 , currentTime(boost::local_time::not_a_date_time)
 {
 
@@ -56,7 +70,9 @@ NinjaSemiLagrangianSteadyState& NinjaSemiLagrangianSteadyState::operator= (Ninja
 {
     if(&A != this) {
         ninja::operator=(A);
-        U00 = A.U00;
+        U_1 = A.U_1;
+        U_0 = A.U_0;
+        U_00 = A.U_00;
         transport = A.transport;
         conservationOfMassEquation = A.conservationOfMassEquation;
         diffusionEquation = A.diffusionEquation;
@@ -111,16 +127,18 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating mesh...");
-    //generate mesh
+
     mesh.buildStandardMesh(input);
 
     //u is positive toward East
     //v is positive toward North
     //w is positive up
-    U.allocate(&mesh);  //REMEMBER TO MODIFY FINITELEMENTMETHOD.COMPUTE_UVW() BECAUSE IT CURRENTLY ALLOCATES U!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1111
-    U0.allocate(&mesh);
+    U.allocate(&mesh); //current/final wind field
+    U0.allocate(&mesh); //initial wind field
+    U_1.allocate(&mesh); 
+    U_0.allocate(&mesh);
     if(transport.transportType == TransportSemiLagrangian::settls)
-        U00.allocate(&mesh);
+        U_00.allocate(&mesh);
 
 #ifdef _OPENMP
     endMesh = omp_get_wtime();
@@ -140,7 +158,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
     //----------------------------COULD CHANGE THIS TO INITIALIZE USING REGULAR MASS CONSERVING SIMULATION OUTPUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     init.reset(initializationFactory::makeInitialization(input));
     init->initializeFields(input, mesh, U0, CloudGrid);
-    U00 = U0;
+    //U_00 = U0;
 
     /////////////Test/////////////////////////////////--------------------------------------------------------------
     //volVTK VTK_test(U0, mesh.XORD, mesh.YORD, mesh.ZORD,
@@ -173,17 +191,20 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 #endif
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
-        conservationOfMassEquation.Initialize(mesh, input, U0);
-        //conservationOfMassEquation.SetupSKCompressedRowStorage();
-        //this sets alphas to 1 for initialization run and projection runs below
-        conservationOfMassEquation.stabilityUsingAlphasFlag = 0;
-        conservationOfMassEquation.SetStability(input, CloudGrid, init);
+
+        //--------COM EQUATION-----------
+        conservationOfMassEquation.Initialize(mesh, input);
+        conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
+	conservationOfMassEquation.SetInitialVelocity(U0);
         conservationOfMassEquation.Discretize();
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Setting boundary conditions...");
         conservationOfMassEquation.SetBoundaryConditions();
 
-        diffusionEquation.Initialize(mesh, input, U0);
-        //diffusionEquation.SetupSKCompressedRowStorage();
+        //--------PROJECTION EQUATION-----------
+        projectionEquation.Initialize(mesh, input);
+
+        //--------DIFFUSION EQUATION-----------
+        diffusionEquation->Initialize(&mesh, &input);
 
         checkCancel();
 
@@ -191,20 +212,21 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  DO ONE CONSERVATION OF MASS RUN BEFORE TIME STEPPING LOOP    */
         /*  -------------------------------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "First project...");
-        //if the CG solver diverges, try the minres solver
-        //if(conservationOfMassEquation.Solve(input)==false)
-        //    if(conservationOfMassEquation.SolveMinres(input)==false)
-        //        throw std::runtime_error("Solver returned false.");
+
+        conservationOfMassEquation.Solve(input);
  
         //compute uvw field from phi field
-        conservationOfMassEquation.ComputeUVWField();
+        //TODO: have ComputeUVWField take a reference to a wn_3dVectorField &U to fill in, rather than
+        //returning a value so we are consistent with the behavior in the diffusion step
+        U = conservationOfMassEquation.ComputeUVWField();
+
         //use output from first projection step for copying inlet nodes later on
         U0=U;
         volVTK VTK2(U0, mesh.XORD, mesh.YORD, mesh.ZORD, 
         input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "U0.vtk");
 
-        //copy U field to new U1 field which will store the new velocity from the advection step
-        wn_3dVectorField U1(U);
+        //copy U field to new U_1 field which will store the new velocity from the advection step
+        U_1 = U;
 
         /*  ----------------------------------------*/
         /*  START TIME STEPPING LOOP                */
@@ -275,7 +297,11 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             if(with_advection){
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
-                transport.transportVector(U, U1, currentDt.total_microseconds()/1000000.0);
+                transport.transportVector(U, U_1, currentDt.total_microseconds()/1000000.0);
+
+                //testing
+                volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "vtk_transport.vtk");
             }
 
             /*  ----------------------------------------*/
@@ -284,10 +310,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             if(with_diffusion){
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
-                //resets mesh, input, and U0_ in finiteElementMethod
-                //diffusionEquation.UpdateTimeVaryingValues(currentDt, U1); //U1 is output from advection step
-                diffusionEquation.Discretize();
-                //diffusionEquation.SolveDiffusion(U, input); //dump diffusion results into U
+
+                //U_1 is output from advection step, dump diffusion results into U
+                diffusionEquation->Solve(U_1, U, currentDt); 
 
                 int mod_ = 1;
                 std::ostringstream diff_fname;
@@ -300,7 +325,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             }
             else{
                 //FOR TESTING WITHOUT DIFFUSION ONLY, REMOVE WHEN DIFFUSION IS TURNED ON 
-                U=U1;
+                U=U_1;
             }
 
             /*  ----------------------------------------*/
@@ -331,22 +356,25 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                         U.vectorData_z(i,j,0) = 0.0;
                     }
                 }
-                //resets mesh, input, and U0 in finiteElementMethod
-                //conservationOfMassEquation.UpdateTimeVaryingValues(currentDt, U);
-                conservationOfMassEquation.Discretize();
-                conservationOfMassEquation.SetBoundaryConditions();
+                cout<<"Updating time varying values...."<<endl;
+                projectionEquation.SetInitialVelocity(U);
+                projectionEquation.SetAlphaCoefficients(input, CloudGrid, init);
+                cout<<"Discretizing...."<<endl;
+                projectionEquation.Discretize();
+                cout<<"Setting BCs......."<<endl;
+                projectionEquation.SetBoundaryConditions();
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                //if(conservationOfMassEquation.Solve(input)==false)   //if the CG solver diverges, try the minres solver
-                //    if(conservationOfMassEquation.SolveMinres(input)==false)
-                //        throw std::runtime_error("Solver returned false.");
+                cout<<"Solving......."<<endl;
+                projectionEquation.Solve(input);
 
 #ifdef _OPENMP
                 endSolve = omp_get_wtime();
 #endif
                 //compute uvw field from phi field
-                conservationOfMassEquation.ComputeUVWField();
+                cout<<"Computing UVW....."<<endl;
+                U = projectionEquation.ComputeUVWField();
 
                 checkCancel();
             }
@@ -463,6 +491,17 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
     return true;
 }
 
+NinjaSemiLagrangianSteadyState::eDiffusionDiscretizationType NinjaSemiLagrangianSteadyState::getDiffusionDiscretizationType(std::string type)
+{
+    if(type == "explicitLumpedCapacitance")
+            return explicitLumpedCapacitance;
+    else if(type == "implicitCentralDifference")
+        return implicitCentralDifference;
+    else
+        throw std::runtime_error(std::string("Cannot determine diffusion discretization type in" 
+                    "ninjaSemiLagrangianSteadyState::getDiffusionDiscretizationType()."));
+}
+
 /**Deletes allocated dynamic memory.
  *
  */
@@ -470,6 +509,14 @@ void NinjaSemiLagrangianSteadyState::deleteDynamicMemory()
 {
     ninja::deleteDynamicMemory();
 
-    U00.deallocate();
+    U_00.deallocate();
+    U_0.deallocate();
+    U_1.deallocate();
+
+    if(diffusionEquation)
+    {	
+        delete diffusionEquation;
+        diffusionEquation=NULL;
+    }
 }
 

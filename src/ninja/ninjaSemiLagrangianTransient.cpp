@@ -40,7 +40,12 @@ NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient() : ninja()
  * @param A Copied value.
  */
 
-NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient(NinjaSemiLagrangianTransient const& A ) : ninja(A), U00(A.U00), transport(A.transport)
+NinjaSemiLagrangianTransient::NinjaSemiLagrangianTransient(NinjaSemiLagrangianTransient const& A ) 
+: ninja(A)
+, U_1(A.U_00)
+, U_0(A.U_00)
+, U_00(A.U_00)
+, transport(A.transport)
 , currentTime(boost::local_time::not_a_date_time)
 {
 
@@ -56,7 +61,7 @@ NinjaSemiLagrangianTransient& NinjaSemiLagrangianTransient::operator= (NinjaSemi
 {
     if(&A != this) {
         ninja::operator=(A);
-        U00 = A.U00;
+        U_00 = A.U_00;
         transport = A.transport;
         conservationOfMassEquation = A.conservationOfMassEquation;
     }
@@ -119,7 +124,7 @@ bool NinjaSemiLagrangianTransient::simulate_wind()
     U.allocate(&mesh);  //REMEMBER TO MODIFY FINITELEMENTMETHOD.COMPUTE_UVW() BECAUSE IT CURRENTLY ALLOCATES U!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1111
     U0.allocate(&mesh);
     if(transport.transportType == TransportSemiLagrangian::settls)
-        U00.allocate(&mesh);
+        U_00.allocate(&mesh);
 
 #ifdef _OPENMP
     endMesh = omp_get_wtime();
@@ -139,7 +144,7 @@ bool NinjaSemiLagrangianTransient::simulate_wind()
     //----------------------------COULD CHANGE THIS TO INITIALIZE USING REGULAR MASS CONSERVING SIMULATION OUTPUT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     init.reset(initializationFactory::makeInitialization(input));
     init->initializeFields(input, mesh, U0, CloudGrid);
-    U00 = U0;
+    U_00 = U0;
 
 
     /////////////Test/////////////////////////////////--------------------------------------------------------------
@@ -181,11 +186,11 @@ bool NinjaSemiLagrangianTransient::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Building equations...");
 
         //build A arrray
-        conservationOfMassEquation.Initialize(mesh, input, U0);
-        //conservationOfMassEquation.SetupSKCompressedRowStorage();
+        conservationOfMassEquation.Initialize(mesh, input);
         //this sets alphas to 1 for initialization run and projection runs below
         conservationOfMassEquation.stabilityUsingAlphasFlag = 0;
-        conservationOfMassEquation.SetStability(input, CloudGrid, init);
+        conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
+        conservationOfMassEquation.SetInitialVelocity(U0);
         conservationOfMassEquation.Discretize();
 
         checkCancel();
@@ -352,6 +357,8 @@ void NinjaSemiLagrangianTransient::deleteDynamicMemory()
 {
     ninja::deleteDynamicMemory();
 
-    U00.deallocate();
+    U_1.deallocate();
+    U_0.deallocate();
+    U_00.deallocate();
 }
 

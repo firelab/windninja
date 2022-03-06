@@ -35,6 +35,7 @@ set(NINJA_SOURCES air.cpp
                   EasyBMP_Font.cpp
                   EasyBMP_Geometry.cpp
                   element.cpp
+                  explicitLumpedCapacitanceDiffusion.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
@@ -46,6 +47,7 @@ set(NINJA_SOURCES air.cpp
                   gdal_util.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
+                  implicitCentralDifferenceDiffusion.cpp
                   initialize.cpp
                   initializationFactory.cpp
                   KmlVector.cpp
@@ -78,7 +80,7 @@ set(NINJA_SOURCES air.cpp
                   OutputWriter.cpp
                   pointInitialization.cpp
                   preconditioner.cpp
-                  projectionEquation.cpp
+                  poissonEquation.cpp
                   readInputFile.cpp
                   relief_fetch.cpp
                   Shade.cpp

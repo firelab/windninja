@@ -39,7 +39,7 @@
 #include "ninja_errors.h"
 #include "transportSemiLagrangian.h"
 #include "wn_3dVectorField.h"
-#include "projectionEquation.h"
+#include "poissonEquation.h"
 #include "diffusionEquation.h"
 
 #include "gdal_alg.h"
@@ -72,8 +72,10 @@ private:
     virtual void deleteDynamicMemory();
     void stepForwardOneTimestep();
 
-    ProjectionEquation conservationOfMassEquation;
-    wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
+    PoissonEquation conservationOfMassEquation;
+    wn_3dVectorField U_0;    //Previous timestep's velocity field for transient simulations
+    wn_3dVectorField U_00;   //Velocity field from two time steps ago, used sometimes in transient simulations
+    wn_3dVectorField U_1;   //Velocity field for the next time step, used in transient simulations 
 };
 
 #endif /* NINJA_SEMI_LAGRANGIAN_TRANSIENT_INCLUDED_ */

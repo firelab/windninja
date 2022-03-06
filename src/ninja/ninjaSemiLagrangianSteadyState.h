@@ -39,8 +39,10 @@
 #include "ninja_errors.h"
 #include "transportSemiLagrangian.h"
 #include "wn_3dVectorField.h"
-#include "projectionEquation.h"
+#include "poissonEquation.h"
 #include "diffusionEquation.h"
+#include "explicitLumpedCapacitanceDiffusion.h"
+#include "implicitCentralDifferenceDiffusion.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
@@ -58,8 +60,15 @@ public:
     NinjaSemiLagrangianSteadyState( NinjaSemiLagrangianSteadyState const& A );
     NinjaSemiLagrangianSteadyState& operator= ( NinjaSemiLagrangianSteadyState const& A );
 
+    enum eDiffusionDiscretizationType{
+        explicitLumpedCapacitance,
+        implicitCentralDifference
+    };
+
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjaSemiLagrangianSteadyState");}
+
+    eDiffusionDiscretizationType getDiffusionDiscretizationType(std::string type);
 
     TransportSemiLagrangian transport;
 
@@ -74,9 +83,13 @@ private:
     virtual void deleteDynamicMemory();
     void stepForwardOneTimestep();
 
-    ProjectionEquation conservationOfMassEquation;
-    DiffusionEquation diffusionEquation;
-    wn_3dVectorField U00;   //Velocity field from two time steps ago, used sometimes in transient simulations
+    wn_3dVectorField U_0;    //Previous timestep's velocity field for transient simulations
+    wn_3dVectorField U_00;   //Velocity field from two time steps ago, used sometimes in transient simulations
+    wn_3dVectorField U_1;   //Velocity field for the next time step, used in transient simulations 
+
+    PoissonEquation conservationOfMassEquation;
+    PoissonEquation projectionEquation;
+    DiffusionEquation *diffusionEquation;
 };
 
 #endif /* NINJA_SEMI_LAGRANGIAN_STEADY_STATE_INCLUDED_ */

@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Projection equation operations 
+ * Purpose:  Implicit central difference diffusion 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,53 +27,34 @@
  *
  *****************************************************************************/
 
-#ifndef PROJECTION_EQUATION_H
-#define PROJECTION_EQUATION_H
+#ifndef IMPLICIT_CENTRAL_DIFFERENCE_DIFFUSION_H
+#define IMPLICIT_CENTRAL_DIFFERENCE_DIFFUSION_H
 
-#include "stability.h"
-#include "initialize.h"
-#include "volVTK.h"
-#include "linearAlgebra.h"
-#include "finiteElementMethod.h"
+#include "diffusionEquation.h"
 
-class ProjectionEquation
+class ImplicitCentralDifferenceDiffusion: public virtual DiffusionEquation
 {
     public:
-        ProjectionEquation();
-        ~ProjectionEquation();
+        ImplicitCentralDifferenceDiffusion();
+        ~ImplicitCentralDifferenceDiffusion();
 
-        ProjectionEquation(ProjectionEquation const& A);
-        ProjectionEquation& operator=(ProjectionEquation const& A);
+        ImplicitCentralDifferenceDiffusion(ImplicitCentralDifferenceDiffusion const& A);
+        ImplicitCentralDifferenceDiffusion& operator=(ImplicitCentralDifferenceDiffusion const& A);
+        virtual ImplicitCentralDifferenceDiffusion *Clone() {return new ImplicitCentralDifferenceDiffusion(*this);}
 
-        void Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0);
-        void SetupSKCompressedRowStorage();
+        void Initialize(const Mesh *mesh, WindNinjaInputs *input); //pure virtual
         void SetBoundaryConditions();
-        void SetStability(WindNinjaInputs &input,
-                        AsciiGrid<double> &CloudGrid,
-                        boost::shared_ptr<initialize> &init);
-        void Solve(WindNinjaInputs &input);
-        void ComputeUVWField();
         void Discretize();
+        void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt);
+        void SetupSKCompressedRowStorage();
+        std::string identify() {return std::string("implicitCentralDifferenceDiffusion");}
         void Deallocate();
 
-        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
-        bool stabilityUsingAlphasFlag;
-        wn_3dScalarField alphaVfield; //stores spatially varying alphaV variable
-        bool writePHIandRHS;
-        std::string phiOutFilename;
-        std::string rhsOutFilename;
-        wn_3dVectorField U;
-
     private:
-        const Mesh *mesh_;
-        const WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-        wn_3dVectorField U0_;
-        FiniteElementMethod fem; //finite element method operations
-        LinearAlgebra matrixEquation; //linear algebra operations
-        double *PHI;
-        double *RHS, *SK;
+        double *SK; //The A in Ax=b
         int *row_ptr, *col_ind;
         bool *isBoundaryNode;
+        LinearAlgebra matrixEquation;
 };
 
-#endif	//PROJECTION_EQUATION_H
+#endif //IMPLICIT_CENTRAL_DIFFERENCE_DIFFUSION_H

@@ -122,6 +122,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
     //u is positive toward East
     //v is positive toward North
     //w is positive up
+    U.allocate(&mesh);
     U0.allocate(&mesh);
 
 #ifdef _OPENMP
@@ -190,8 +191,9 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 /*  ----------------------------------------*/
 /*  BUILD "A" ARRAY OF AX=B                 */
 /*  ----------------------------------------*/
-        conservationOfMassEquation.Initialize(mesh, input, U0);
-        conservationOfMassEquation.SetStability(input, CloudGrid, init);
+        conservationOfMassEquation.Initialize(mesh, input);
+        conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
+	conservationOfMassEquation.SetInitialVelocity(U0);
 
 #ifdef _OPENMP
         startBuildEq = omp_get_wtime();
@@ -235,7 +237,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 /*  ----------------------------------------*/
 
         //compute uvw field from phi field
-        conservationOfMassEquation.ComputeUVWField();
+        U = conservationOfMassEquation.ComputeUVWField();
 
         checkCancel();
 
@@ -307,7 +309,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
 #endif
 
     //prepare output arrays
-    prepareOutput(conservationOfMassEquation.U);
+    prepareOutput(U);
 
     checkCancel();
 

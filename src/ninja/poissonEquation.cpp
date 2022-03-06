@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Projection equation operations
+ * Purpose:  Poisson's equation operations
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -26,11 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-#include "projectionEquation.h"
+#include "poissonEquation.h"
 
-ProjectionEquation::ProjectionEquation()
+PoissonEquation::PoissonEquation()
 {
     //Pointers to dynamically allocated memory
+    mesh_=NULL;
+    input_=NULL;
     PHI=NULL;
     RHS=NULL;
     SK=NULL;
@@ -49,9 +51,9 @@ ProjectionEquation::ProjectionEquation()
  * @param A Copied value.
  */
 
-ProjectionEquation::ProjectionEquation(ProjectionEquation const& A)
+PoissonEquation::PoissonEquation(PoissonEquation const& A)
 : alphaVfield(A.alphaVfield)
-, U(A.U)
+, U_(A.U_)
 , mesh_(A.mesh_)
 , input_(A.input_)
 , U0_(A.U0_)
@@ -77,7 +79,7 @@ ProjectionEquation::ProjectionEquation(ProjectionEquation const& A)
  * @return a copy of an object
  */
 
-ProjectionEquation& ProjectionEquation::operator=(ProjectionEquation const& A)
+PoissonEquation& PoissonEquation::operator=(PoissonEquation const& A)
 {
     if(&A != this) {
         PHI=A.PHI;
@@ -93,7 +95,7 @@ ProjectionEquation& ProjectionEquation::operator=(ProjectionEquation const& A)
         alphaH=A.alphaH;
 
         alphaVfield=A.alphaVfield;
-        U=A.U;
+        U_=A.U_;
         mesh_=A.mesh_;
         input_=A.input_;
         U0_=A.U0_;
@@ -103,12 +105,12 @@ ProjectionEquation& ProjectionEquation::operator=(ProjectionEquation const& A)
     return *this;
 }
 
-ProjectionEquation::~ProjectionEquation()      //destructor
+PoissonEquation::~PoissonEquation()      //destructor
 {
     Deallocate();
 }
 
-void ProjectionEquation::Discretize() 
+void PoissonEquation::Discretize() 
 {
     //The governing equation to solve is
     //
@@ -127,8 +129,7 @@ void ProjectionEquation::Discretize()
     //         dx      dy      dz
     //
 
-    fem.Initialize(mesh_, input_);
-    fem.DiscretizeDiffusionTerms(SK, RHS, col_ind, row_ptr, U0_, alphaH, alphaVfield);
+    fem.Discretize(SK, RHS, col_ind, row_ptr, U0_, alphaH, alphaVfield);
 }
 
 /**
@@ -142,7 +143,7 @@ void ProjectionEquation::Discretize()
  *
  * \return void
  */
-void ProjectionEquation::SetBoundaryConditions()
+void PoissonEquation::SetBoundaryConditions()
 {
     int NPK, KNP;
     int i, j, k, l;
@@ -197,7 +198,7 @@ void ProjectionEquation::SetBoundaryConditions()
     }
 }
 
-void ProjectionEquation::Deallocate()
+void PoissonEquation::Deallocate()
 {
     if(PHI)
     {	
@@ -237,7 +238,7 @@ void ProjectionEquation::Deallocate()
  * @brief Sets up compressed row storage for the SK array.
  *
  */
-void ProjectionEquation::SetupSKCompressedRowStorage()
+void PoissonEquation::SetupSKCompressedRowStorage()
 {
     int interrows=input_->dem.get_nRows()-2;
     int intercols=input_->dem.get_nCols()-2;
@@ -425,7 +426,7 @@ void ProjectionEquation::SetupSKCompressedRowStorage()
  *
  * \return void
  */
-void ProjectionEquation::SetStability(WindNinjaInputs &input,
+void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
                 AsciiGrid<double> &CloudGrid,
                 boost::shared_ptr<initialize> &init)
 {
@@ -558,8 +559,10 @@ void ProjectionEquation::SetStability(WindNinjaInputs &input,
  * surrounding cells.
  *
  * This is the result of the @f$ A*x=b @f$ calculation.
+ *
+ * @return wn_3dVectorField The compute the 3d volume wind field
  */
-void ProjectionEquation::ComputeUVWField()
+wn_3dVectorField PoissonEquation::ComputeUVWField()
 {
     /*-----------------------------------------------------*/
     /*      Calculate u,v, and w from derivatives of PHI   */
@@ -588,12 +591,12 @@ void ProjectionEquation::ComputeUVWField()
 
     for(int i=0;i<mesh_->NUMNP;i++) //Initialize u,v, and w
     {
-        U.vectorData_x(i)=0.;
-        U.vectorData_y(i)=0.;
-        U.vectorData_z(i)=0.;
+        U_.vectorData_x(i)=0.;
+        U_.vectorData_y(i)=0.;
+        U_.vectorData_z(i)=0.;
     }
 
-    fem.ComputeGradientField(PHI, U);
+    fem.ComputeGradientField(PHI, U_);
 
     //if(writePHIandRHS){
     //    wn_3dScalarField phiField;
@@ -629,38 +632,42 @@ void ProjectionEquation::ComputeUVWField()
         alphaV = alphaVfield(i); //set alphaV for stability
         
         //Remember, dPHI/dx is stored in U
-        U.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_x(i);
-        U.vectorData_y(i)=U0_.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*U.vectorData_y(i);
-        U.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U.vectorData_z(i);
+        U_.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U_.vectorData_x(i);
+        U_.vectorData_y(i)=U0_.vectorData_y(i)+1.0/(2.0*alphaH*alphaH)*U_.vectorData_y(i);
+        U_.vectorData_z(i)=U0_.vectorData_z(i)+1.0/(2.0*alphaV*alphaV)*U_.vectorData_z(i);
     }
 
     //set ground to zero
-    for(int i=0; i<U.vectorData_x.mesh_->nrows; i++)
+    for(int i=0; i<U_.vectorData_x.mesh_->nrows; i++)
     {
-        for(int j=0; j<U.vectorData_x.mesh_->ncols; j++)
+        for(int j=0; j<U_.vectorData_x.mesh_->ncols; j++)
         {
-            U.vectorData_x(i,j,0) = 0.0;
-            U.vectorData_y(i,j,0) = 0.0;
-            U.vectorData_z(i,j,0) = 0.0;
+            U_.vectorData_x(i,j,0) = 0.0;
+            U_.vectorData_y(i,j,0) = 0.0;
+            U_.vectorData_z(i,j,0) = 0.0;
         }
     }
+
+    return U_;
+}
+
+void PoissonEquation::SetInitialVelocity(wn_3dVectorField &U)
+{
+   U0_ = U; 
 }
 
 /**
- * \brief Initialize the projection equation object.
+ * \brief Initialize the poisson equation object.
  *
  * \param mesh A reference to the mesh.
  * \param input A reference to the WindNinja inputs.
- * \param U0 A reference to the initial velocity field.
  *
  * \return void
  */
-void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input, wn_3dVectorField &U0)
+void PoissonEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input)
 {
     mesh_ = &mesh;
     input_ = &input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-    U0_ = U0;
-    U = U0; //just set U to U0 for now, will be computed later
 
     if(PHI == NULL)
         PHI=new double[mesh_->NUMNP];
@@ -676,9 +683,11 @@ void ProjectionEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &inp
     SetupSKCompressedRowStorage();
 
     stabilityUsingAlphasFlag = input.stabilityFlag;
+
+    fem.Initialize(mesh_, input_);
 }
 
-void ProjectionEquation::Solve(WindNinjaInputs &input)
+void PoissonEquation::Solve(WindNinjaInputs &input)
 {
 //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...

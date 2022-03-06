@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Diffusion equation operations 
+ * Purpose:  Abstract base class for diffusion equation operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -31,6 +31,9 @@
 #define DIFFUSION_EQUATION_H
 
 #include "initialize.h"
+#include "finiteElementMethod.h"
+#include "linearAlgebra.h"
+#include "poissonEquation.h"
 
 class DiffusionEquation
 {
@@ -41,36 +44,30 @@ class DiffusionEquation
         DiffusionEquation(DiffusionEquation const& A);
         DiffusionEquation& operator=(DiffusionEquation const& A);
 
-        enum eDiscretizationType{
-                        centralDifference,
-                        lumpedCapacitance};
-
-        void Initialize(const Mesh &mesh, WindNinjaInputs &input, wn_3dVectorField &U0);
-        void UpdateTimeVaryingValues(wn_3dVectorField &U0);
-        void SetBoundaryConditions();
-        void Discretize();
-        void Solve(wn_3dVectorField &U, WindNinjaInputs &input, boost::posix_time::time_duration dt);
-        void Deallocate();
-        eDiscretizationType GetDiscretizationType(std::string type);
+        virtual void Initialize(const Mesh *mesh, WindNinjaInputs *input)=0;
+        virtual void Discretize()=0;
+        virtual void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt)=0;
+        virtual std::string identify()=0;
+        virtual void Deallocate()=0;
         bool writePHIandRHS;
         std::string phiOutFilename;
         std::string rhsOutFilename;
 
-    private:
-        void CalculateRcoefficients(element &elem, int j);
-        void CalculateHterm(element &elem, int i) ;
-        eDiscretizationType discretizationType;
-        Mesh const mesh_; //reference to the mesh
-        WindNinjaInputs input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    protected:
+        Mesh const *mesh_; //reference to the mesh
+        WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
         boost::posix_time::time_duration currentDt;//current time step size in seconds (can change during simulation)
         double *PHI;
-        double *RHS, *SK;
-        double *CL; //lumped capcitence matrix for transient term in discretized diffusion equation
         double *xRHS, *yRHS, *zRHS;
         wn_3dScalarField heightAboveGround;
         wn_3dScalarField windSpeed;
         wn_3dVectorField windSpeedGradient;
         wn_3dVectorField U0_; //incoming wind field to diffuse
+
+        FiniteElementMethod fem;
+
+    private:
+
 };
 
 #endif	//DIFFUSION_EQUATION_H

@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Finite Element Method operations 
+ * Purpose:  Poisson's equation operations 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,46 +27,58 @@
  *
  *****************************************************************************/
 
-#ifndef FINITE_ELEMENT_METHOD_H
-#define FINITE_ELEMENT_METHOD_H
+#ifndef POISSON_EQUATION_H
+#define POISSON_EQUATION_H
 
 #include "stability.h"
 #include "initialize.h"
-#include "preconditioner.h"
 #include "volVTK.h"
+#include "linearAlgebra.h"
+#include "finiteElementMethod.h"
 
 /**
- * \brief Main interface to finite element method operations.
+ * \brief Handles Poisson's equation operations.
  *
  */
-class FiniteElementMethod
+class PoissonEquation
 {
     public:
-        FiniteElementMethod();
-        ~FiniteElementMethod();
+        PoissonEquation();
+        ~PoissonEquation();
 
-        FiniteElementMethod(FiniteElementMethod const& A);
-        FiniteElementMethod& operator=(FiniteElementMethod const& A);
+        PoissonEquation(PoissonEquation const& A);
+        PoissonEquation& operator=(PoissonEquation const& A);
 
-        void Initialize(const Mesh *mesh, const WindNinjaInputs *input);
-        void DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
-                wn_3dVectorField &windSpeedGradient);
-        void DiscretizeLumpedCapacitenceDiffusion();
-        void Discretize(double* SK, double* RHS, int* col_ind, int* row_ptr,
-                wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield);
-        void ComputeGradientField(double *scalar, wn_3dVectorField &U);
+        void Initialize(const Mesh &mesh, const WindNinjaInputs &input);
+        void SetupSKCompressedRowStorage();
+        void SetBoundaryConditions();
+        void SetAlphaCoefficients(WindNinjaInputs &input,
+                        AsciiGrid<double> &CloudGrid,
+                        boost::shared_ptr<initialize> &init);
+        void Solve(WindNinjaInputs &input);
+        void SetInitialVelocity(wn_3dVectorField &U);
+        wn_3dVectorField ComputeUVWField();
+        void Discretize();
         void Deallocate();
 
-    private:
-        void CalculateDiffusionRcoefficients(int i, int j, wn_3dScalarField &heightAboveGround,
-                wn_3dVectorField& windSpeedGradient);
-        void CalculateRcoefficients(int i, int j, double alphaH, wn_3dScalarField& alphaVfield);
-        void CalculateHterm(int i, wn_3dVectorField& U0) ;
+        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
+        bool stabilityUsingAlphasFlag;
+        wn_3dScalarField alphaVfield; //stores spatially varying alphaV variable
+        bool writePHIandRHS;
+        std::string phiOutFilename;
+        std::string rhsOutFilename;
 
-        std::vector<element> elementArray;
-        const Mesh *mesh_; //reference to the mesh
+    private:
+        wn_3dVectorField U_;
+        const Mesh *mesh_;
         const WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-        double *DIAG;
+        wn_3dVectorField U0_;
+        FiniteElementMethod fem; //finite element method operations
+        LinearAlgebra matrixEquation; //linear algebra operations
+        double *PHI;
+        double *RHS, *SK;
+        int *row_ptr, *col_ind;
+        bool *isBoundaryNode;
 };
 
-#endif	//FINITE_ELEMENT_METHOD_H
+#endif	//POISSON_EQUATION_H
