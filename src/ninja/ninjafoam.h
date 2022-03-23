@@ -171,7 +171,9 @@ private:
     bool CheckIfOutputWindHeightIsResolved();
 
     const char *pszVrtMem;
+    const char *pszVrtMemTurbulence;
     const char *pszGridFilename;
+    const char *pszTurbulenceGridFilename;
     
     /* Timers */
     double startTotal, endTotal;
@@ -193,6 +195,7 @@ public:
 private:
 #endif
     const char * GetGridFilename();
+    const char * GetTurbulenceGridFilename();
 
 };
 
