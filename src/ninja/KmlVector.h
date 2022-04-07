@@ -178,6 +178,7 @@ private:
 	bool turbulenceFlag;
 	std::string turbulence_tiff;
 	std::string turbulence_png;
+        std::string turbulence_legend;
         std::string ustar_legend;
 	#ifdef FRICTION_VELOCITY
 	bool ustarFlag;

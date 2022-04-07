@@ -278,7 +278,7 @@ bool KmlVector::writeKml(std::string cScheme, bool vector_scaling)
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
-                writeUstar(fout);
+                writeTurbulence(fout);
                 VSIFPrintfL(fout, "</Folder>");
             }
 
@@ -367,7 +367,7 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme,bool vector_s
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
-                writeUstar(fout);
+                writeTurbulence(fout);
                 VSIFPrintfL(fout, "</Folder>");
             }
             

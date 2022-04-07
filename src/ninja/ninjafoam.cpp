@@ -1662,14 +1662,15 @@ int NinjaFoam::SanitizeOutput()
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
-    FILE *fin, *finTurb;
+    FILE *fin, *fin2;
     VSILFILE *fout, *fvrt;
     char buf[512];
+    char buf2[512];
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
     const char *pszMem;
-    std::string s;
+    std::string s, s2;
 
     /*-------------------------------------------------------------------*/
     /* sanitize the u and v output                                       */
@@ -1687,7 +1688,7 @@ int NinjaFoam::SanitizeOutput()
             fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
-            finTurb = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
+            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
             break;
@@ -1705,7 +1706,7 @@ int NinjaFoam::SanitizeOutput()
                                                 "reading." );
         return NINJA_E_FILE_IO;
     }
-    if( !finTurb )
+    if( !fin2 )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
                                                 "reading." );
@@ -1714,6 +1715,7 @@ int NinjaFoam::SanitizeOutput()
     if( !fout )
     {
         VSIFClose( fin );
+        VSIFClose( fin2 );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
                                                 "writing." );
         return NINJA_E_FILE_IO;
@@ -1721,6 +1723,7 @@ int NinjaFoam::SanitizeOutput()
     if( !fvrt )
     {
         VSIFClose( fin );
+        VSIFClose( fin2 );
         VSIFClose( fout );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
                                                 "writing." );
@@ -1733,116 +1736,49 @@ int NinjaFoam::SanitizeOutput()
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
+    buf2[0] = '\0';
     /*
     ** eat the first line
     */
     VSIFGets( buf, 512, fin );
+    VSIFGets( buf2, 512, fin2 );
     /*
     ** fix the header
     */
     VSIFGets( buf, 512, fin );
+    buf[ strcspn( buf, "\n" ) ] = '\0';
+    VSIFGets( buf2, 512, fin2 );
 
     s = buf;
+    s2 = buf2;
     ReplaceKeys( s, "#", "", 1 );
     ReplaceKeys( s, "  ", "", 1 );
     ReplaceKeys( s, "  ", ",", 5 );
     ReplaceKeys( s, "  ", "", 1 );
+    s = s + ",k\n";
+    
     VSIFWriteL( s.c_str(), s.size(), 1, fout );
     /*
     ** sanitize the data.
     */
+    char **papszTokens = NULL;
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
+        buf[ strcspn( buf, "\n" ) ] = '\0';
         s = buf;
+        VSIFGets( buf2, 512, fin2 );
+        s2 = buf2;
         ReplaceKeys( s, " ", ",", 5 );
+        ReplaceKeys( s2, " ", ",", 5 );
+        papszTokens = CSLTokenizeString2( s2.c_str(), ",", 0);
+        s = s + "," + std::string(papszTokens[CSLCount( papszTokens )-1]); 
         VSIFWriteL( s.c_str(), s.size(), 1, fout );
     }
 
+    CSLDestroy( papszTokens );
     VSIFClose( fin );
+    VSIFClose( fin2 );
     VSIFCloseL( fout );
-
-    /*-------------------------------------------------------------------*/
-    /* sanitize the turbulence output                                    */
-    /*-------------------------------------------------------------------*/
-    pszMem = CPLSPrintf("%s/turbulenceOutput.raw", pszFoamPath);
-    /* This is a member, hold on to it so we can read it later */
-    pszVrtMem = CPLStrdup(CPLSPrintf("%s/turbulenceOutput.vrt", pszFoamPath));
-
-    char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
-
-    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
-        if(std::string(papszOutputSurfacePath[i]) != "." &&
-           std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
-                        pszFoamPath, 
-                        papszOutputSurfacePath[i]), "r");
-            break;
-        }
-        else{
-            continue;
-        }
-    }
-
-    fout = VSIFOpenL( pszMem, "w" );
-    fvrt = VSIFOpenL( pszVrtMemTurbulence, "w" );
-    if( !fin )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
-                                                "reading." );
-        return NINJA_E_FILE_IO;
-    }
-    if( !fout )
-    {
-        VSIFClose( fin );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
-                                                "writing." );
-        return NINJA_E_FILE_IO;
-    }
-    if( !fvrt )
-    {
-        VSIFClose( fin );
-        VSIFClose( fout );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
-                                                "writing." );
-        return NINJA_E_FILE_IO;
-    }
-    pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
-
-    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "turbulenceOutput", pszVrtFile, "turbulenceOutput" );
-
-    VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
-    VSIFCloseL( fvrt );
-    buf[0] = '\0';
-    /*
-    ** eat the first line
-    */
-    VSIFGets( buf, 512, fin );
-    /*
-    ** fix the header
-    */
-    VSIFGets( buf, 512, fin );
-
-    s = buf;
-    ReplaceKeys( s, "#", "", 1 );
-    ReplaceKeys( s, "  ", "", 1 );
-    ReplaceKeys( s, "  ", ",", 5 );
-    ReplaceKeys( s, "  ", "", 1 );
-    VSIFWriteL( s.c_str(), s.size(), 1, fout );
-    /*
-    ** sanitize the data.
-    */
-    while( VSIFGets( buf, 512, fin ) != NULL )
-    {
-        s = buf;
-        ReplaceKeys( s, " ", ",", 5 );
-        VSIFWriteL( s.c_str(), s.size(), 1, fout );
-    }
-
-    VSIFClose( fin );
-    VSIFCloseL( fout );
-
-    return 0;
 }
 
 static int TransformGeoToPixelSpace( double *adfInvGeoTransform, double dfX,
@@ -2072,7 +2008,7 @@ int NinjaFoam::SampleCloudGrid()
 
     /* Turbulence field */
     rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
-                         padfX, padfY, padfU, dfXMin, dfXMax, dfYMax, dfYMin,
+                         padfX, padfY, padfK, dfXMin, dfXMax, dfYMax, dfYMin,
                          nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
 
     hBand = GDALGetRasterBand( hGriddedDS, 3 );
@@ -2096,6 +2032,7 @@ int NinjaFoam::SampleCloudGrid()
     CPLFree( (void*)padfY );
     CPLFree( (void*)padfU );
     CPLFree( (void*)padfV );
+    CPLFree( (void*)padfK );
 
     CPLFree( (void*)padfData );
     OGR_G_DestroyGeometry( hGeometry );
@@ -2109,11 +2046,6 @@ int NinjaFoam::SampleCloudGrid()
 const char * NinjaFoam::GetGridFilename()
 {
     return pszGridFilename;
-}
-
-const char * NinjaFoam::GetTurbulenceGridFilename()
-{
-    return pszTurbulenceGridFilename;
 }
 
 void NinjaFoam::SetOutputResolution()
@@ -2327,27 +2259,24 @@ void NinjaFoam::SampleRawOutput()
                 "again with a coarser mesh.");
     }
 
-    GDALClose( hDS );
-
     /*-------------------------------------------------------------------*/
     /* convert k to average velocity fluctuations (u')                   */
     /* u' = sqrt(2/3*k)                                                  */
     /*-------------------------------------------------------------------*/
 
     AsciiGrid<double> foamK;
-    int rc;
-    rc = SanitizeOutput();
 
-    rc = SampleCloudGrid();
-    //rc = SampleCloud();
-    
-    hDS = GDALOpen( GetTurbulenceGridFilename(), GA_ReadOnly );
-    if( hDS == NULL )
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 3, foamK );
+    TurbulenceGrid = foamK;
+
+    for(int i=0; i<foamK.get_nRows(); i++)
     {
-        throw std::runtime_error("Invalid output written in NinjaFoam::SampleRawOutput");
+        for(int j=0; j<foamK.get_nCols(); j++)
+        {
+            TurbulenceGrid(i,j) = std::sqrt(2.0/3.0 * foamK(i,j));
+        }
     }
-
-    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
+    GDALClose( hDS );
 }
 
 void NinjaFoam::WriteOutputFiles()
