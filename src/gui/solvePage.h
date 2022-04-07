@@ -30,7 +30,10 @@
 #ifndef SOLVEPAGE_H
 #define SOLVEPAGE_H
 
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QLabel>
+#include <QLineEdit>
 #include <QSpinBox>
 #include <QToolButton>
 
@@ -55,14 +58,25 @@ class solvePage : public QWidget
   QString availProcString;
   QLabel *availProcLabel;
   QSpinBox *numProcSpinBox;
-  QToolButton *solveToolButton;
+
+  QLabel *outputDirLabel;
+  QLineEdit *outputDirLineEdit;
+  QToolButton *outputDirToolButton;
   QToolButton *openOutputPathButton;
-  QLabel *outputPathLabel;
+
+  QToolButton *solveToolButton;
 
   QHBoxLayout *pageLayout;
   QHBoxLayout *outputPathLayout;
   QVBoxLayout *layout;
-  
+
+  QString outputDirectory();
+
+public slots:
+  void setOutputDir(QString path);
+
+private slots:
+  void chooseOutputDir();
 };
 
 #endif /* SOLVEPAGE_H */

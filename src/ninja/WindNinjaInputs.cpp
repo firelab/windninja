@@ -47,6 +47,7 @@ WindNinjaInputs::WindNinjaInputs()
     inputWindHeight = -1.0;
     outputWindHeightUnits = lengthUnits::meters;
     outputWindHeight = -1.0;
+    stationFetch=false;
     matchWxStations = false;
     outer_relax = atof(CPLGetConfigOption("NINJA_POINT_MATCH_OUT_RELAX", "1.0"));
     CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
@@ -61,6 +62,10 @@ WindNinjaInputs::WindNinjaInputs()
     numberCPUs = 1;
     outputBufferClipping = 0.0;
     googOutFlag = false;
+
+    googColor = "default";
+    googVectorScale = false;
+
     writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;
     googLineWidth = 1.0;
@@ -118,10 +123,8 @@ WindNinjaInputs::WindNinjaInputs()
     downEntrainmentCoeff = 0.01;
     upDragCoeff = 0.2;
     upEntrainmentCoeff = 0.2;
-#ifdef STABILITY
     stabilityFlag = false;
     alphaStability = -1;
-#endif
 #ifdef FRICTION_VELOCITY
     frictionVelocityFlag = false; 
     frictionVelocityCalculationMethod = "!set";
@@ -139,7 +142,6 @@ WindNinjaInputs::WindNinjaInputs()
     nIterations = 1000;
     meshCount = -1;
     ninjafoamMeshChoice = WindNinjaInputs::fine;
-    nonEqBc = true;
     existingCaseDirectory = "!set";
     stlFile = "!set";
     speedInitGridFilename = "!set";
@@ -188,11 +190,15 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   inputWindHeight = rhs.inputWindHeight;
   outputWindHeightUnits = rhs.outputWindHeightUnits;
   outputWindHeight = rhs.outputWindHeight;
+  
+  realStations=rhs.realStations;
+
   stations = rhs.stations;
   wxStationFilename = rhs.wxStationFilename;
   stationsScratch = rhs.stationsScratch;
   stationsOldInput = rhs.stationsOldInput;
   stationsOldOutput = rhs.stationsOldOutput;
+  stationFetch=rhs.stationFetch;
   matchWxStations = rhs.matchWxStations;
   outer_relax = rhs.outer_relax;
   CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
@@ -201,7 +207,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     nIterations = rhs.nIterations;
     meshCount = rhs.meshCount;
     ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
-    nonEqBc = rhs.nonEqBc;
     stlFile = rhs.stlFile;
     foamVelocityGrid = rhs.foamVelocityGrid;
     foamAngleGrid = rhs.foamAngleGrid;
@@ -231,6 +236,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   googOutFlag = rhs.googOutFlag;
   googSpeedScaling = rhs.googSpeedScaling;
   googLineWidth = rhs.googLineWidth;
+  googColor = rhs.googColor;
+  googVectorScale = rhs.googVectorScale;
   wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
   wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
   wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
@@ -303,10 +310,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   ustarFile = rhs.ustarFile;
 #endif
   
-#ifdef STABILITY
   stabilityFlag = rhs.stabilityFlag;
   alphaStability = rhs.alphaStability;
-#endif
   
   outputPath = rhs.outputPath;
 
@@ -376,11 +381,14 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       inputWindHeight = rhs.inputWindHeight;
       outputWindHeightUnits = rhs.outputWindHeightUnits;
       outputWindHeight = rhs.outputWindHeight;
+      
+      
       stations = rhs.stations;
       wxStationFilename = rhs.wxStationFilename;
       stationsScratch = rhs.stationsScratch;
       stationsOldInput = rhs.stationsOldInput;
       stationsOldOutput = rhs.stationsOldOutput;
+      stationFetch=rhs.stationFetch;
       matchWxStations = rhs.matchWxStations;
       outer_relax = rhs.outer_relax;
       CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
@@ -397,7 +405,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       nIterations = rhs.nIterations;
       meshCount = rhs.meshCount;
       ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
-      nonEqBc = rhs.nonEqBc;
       stlFile = rhs.stlFile;
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
@@ -484,10 +491,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       upDragCoeff = rhs.upDragCoeff;
       upEntrainmentCoeff = rhs.upEntrainmentCoeff;
       
-#ifdef STABILITY
       stabilityFlag = rhs.stabilityFlag;
       alphaStability = rhs.alphaStability;
-#endif
 #ifdef FRICTION_VELOCITY
       frictionVelocityFlag = rhs.frictionVelocityFlag; 
       frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;

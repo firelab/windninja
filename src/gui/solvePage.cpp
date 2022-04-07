@@ -60,13 +60,21 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   numProcSpinBox->setMaximum(numProcessors);
   numProcSpinBox->setValue(numProcessors);
 
+  outputDirLabel = new QLabel( this );
+  outputDirLabel->setText( "Output Directory" );
+  outputDirLineEdit = new QLineEdit( this );
+  outputDirLineEdit->setReadOnly( true );
+
+  outputDirToolButton = new QToolButton( this );
+  outputDirToolButton->setText( "Save output in..." );
+  outputDirToolButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+  outputDirToolButton->setIcon( QIcon( ":folder.png" ) );
+
   openOutputPathButton = new QToolButton( this );
   openOutputPathButton->setText( "Open Output Files Path" );
   openOutputPathButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
   openOutputPathButton->setIcon( QIcon( ":folder.png" ) );
   openOutputPathButton->setDisabled( true );
-
-  //outputPathLabel = new QLabel( tr(""), this );
 
   layout = new QVBoxLayout;
   layout->addWidget(availProcLabel);
@@ -78,16 +86,33 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   pageLayout->addStretch();
 
   outputPathLayout = new QHBoxLayout;
-  outputPathLayout->addStretch();
+  outputPathLayout->addWidget( outputDirLineEdit );
+  outputPathLayout->addWidget( outputDirToolButton );
   outputPathLayout->addWidget( openOutputPathButton );
-  outputPathLayout->addStretch();
-  //outputPathLayout->addWidget( outputPathLabel );
+
+  connect(outputDirToolButton, SIGNAL( clicked() ),
+      this, SLOT( chooseOutputDir() ) );
 
   layout->addLayout(pageLayout);
-  layout->addStretch();
+  layout->addWidget(outputDirLabel);
   layout->addLayout( outputPathLayout );
   layout->addStretch();
   setLayout(layout);
+}
+
+void solvePage::setOutputDir(QString dir) {
+  outputDirLineEdit->setText( dir );
+}
+
+void solvePage::chooseOutputDir() {
+  QString start = QFileInfo( outputDirLineEdit->text() ).absolutePath();
+  QString dir = QFileDialog::getExistingDirectory( this,
+    tr("Open Output Directory"), start, QFileDialog::ShowDirsOnly );
+  outputDirLineEdit->setText( dir );
+}
+
+QString solvePage::outputDirectory() {
+  return outputDirLineEdit->text();
 }
 
 int solvePage::getNumProcessors()

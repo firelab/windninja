@@ -835,7 +835,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
             char* tp = new char[t_len + 1];
             //char tp[t_len + 1];
             for (int i=0; i<t_len; i++){
-                const size_t varindex[] = {t,i};  /* where to get value from */
+                const size_t varindex[] = {t,static_cast<size_t>(i)};  /* where to get value from */
                 status = nc_get_var1_text( ncid, varid, varindex, tp+i );
             }
             if( status != NC_NOERR ) {
@@ -1013,7 +1013,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
          */
 
         for( unsigned int i = 0;i < timelen;i++ ) {
-            bpt::time_duration td = bpt::hours( varvals[i] );
+            bpt::time_duration td = bpt::hours( (int)varvals[i] );
             bpt::ptime first_pt( reference_pt + td );
             blt::local_date_time first_pt_local(first_pt, timeZonePtr);
             timeList.push_back( first_pt_local );
@@ -1064,6 +1064,8 @@ void wxModelInitialization::deallocateTemp()
 #ifdef NINJAFOAM
 /**
  * Sets input speed, direction, temperature, and cloud from a surface wx model.
+ * Also sets the boundary layer variables which are needed for log interpolation
+ * of the output wind to the user-specified output height.
  * @param input WindNinjaInputs object storing necessary input information.
  */
 void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
@@ -1098,6 +1100,8 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
     //write wx model grids
     writeWxModelGrids(input);
+
+    initializeBoundaryLayer(input);
 
     /*
      * if diurnal is on, set required inputs from grids.
@@ -1565,7 +1569,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
             wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
 
-            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling))
+            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling,input.googColor,input.googVectorScale))
             {
                 if(wxModelKmlFiles.makeKmz())
                     wxModelKmlFiles.removeKmlFile();

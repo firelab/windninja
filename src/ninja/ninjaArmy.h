@@ -50,6 +50,11 @@
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
 
+namespace blt = boost::local_time;
+namespace bpt = boost::posix_time;
+
+extern boost::local_time::tz_database globalTimeZoneDB;
+
 /*-----------------------------------------------------------------------------
  *  Helper Macros
  *-----------------------------------------------------------------------------*/
@@ -71,6 +76,7 @@
  * 'func' is located inside a try-catch statement block so upon a thrown exception
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
+#ifdef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -85,6 +91,15 @@
         return NINJA_SUCCESS;                  \
     }                                          \
     return NINJA_E_INVALID;
+#else
+#define IF_VALID_INDEX_TRY( i, iterable, func ) \
+    if( i >= 0 && i < iterable.size() )        \
+    {                                          \
+       func;                                   \
+       return NINJA_SUCCESS;                  \
+    }                                          \
+    return NINJA_E_INVALID;
+#endif
 
 //#include "ninjaCom.h"
 /**
@@ -115,7 +130,12 @@ public:
         ncepGfsSurf
     };
 
+    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
+                          std::string timeZone,std::string stationFileName,
+                          std::string demFile,bool matchPoints,bool override );
+    static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
+    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
@@ -229,7 +249,7 @@ public:
     */
     int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
-
+    
     /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/
@@ -332,15 +352,6 @@ public:
                       char ** papszOptions=NULL );
 
     /**
-    * \brief Enable/disable non-equilbrium boundary conditions for a NinjaFOAM run
-    *
-    * \param nIndex index of a ninja
-    * \param nMeshCount Mesh count
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNonEqBc( const int nIndex, const bool flag, char ** papszOptions=NULL );
-
-    /**
     * \brief Set the path to an existing case for a NinjaFOAM run
     *
     * \param nIndex index of a ninja
@@ -378,16 +389,37 @@ public:
     /**
     * \brief Set the output points filename for a ninja
     *
-    *
     * \param nIndex index of a ninja
     * \param filename location of the output points file
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setOutputPointsFilename( const int nIndex, const std::string filename,
                                 char **papszOptions=NULL);
+    /**
+    * \brief Enable/disable output points for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables output points if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setOutputPointsFlag( const int nIndex, const bool flag,
+                             char ** papszOptions=NULL);
 
     int readInputFile( const int nIndex, std::string filename, char ** papszOptions=NULL );
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
+
+    /*-----------------------------------------------------------------------------
+     * Station Fetch Methods 
+     *-----------------------------------------------------------------------------*/
+
+    /**
+    * \brief Enable/disable weather station fetching 
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables station fetch if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
      *  Simulation Parameter Methods
@@ -832,7 +864,6 @@ public:
     /*-----------------------------------------------------------------------------
      *  STABILITY section
      *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
     /**
     * \brief Enable/disable stability for a given ninja
     *
@@ -849,7 +880,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAlphaStability( const int nIndex, const double stability_, char ** papszOptions=NULL );
-#endif //STABILITY
 
     /*-----------------------------------------------------------------------------
      *  Output Parameter Methods
@@ -977,6 +1007,16 @@ public:
     * \param units units of the resolution value
     * \return errval Returns NINJA_SUCCESS upon success
     */
+    int setGoogColor(const int nIndex, std::string colorScheme,bool scaling);
+    /**
+     * @brief setGoogResolution
+     * @param nIndex
+     * @param resolution
+     * @param units
+     * @param papszOptions
+     * @return
+     * Set the colorscheme for colorblind mode
+     */
     int setGoogResolution( const int nIndex, const double resolution,
                            const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
     /**
@@ -1237,6 +1277,8 @@ protected:
 
 private:
     char *pszTmpColorRelief;
+    farsiteAtm atmosphere;
+    std::vector<blt::local_date_time> overrideList;
 };
 
 #endif /* NINJA_ARMY_H */

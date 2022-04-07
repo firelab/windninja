@@ -793,7 +793,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFlag
 /*-----------------------------------------------------------------------------
  *  Stability Methods
  *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
 WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
     ( NinjaH * ninja, const int nIndex, const int flag )
 {
@@ -819,7 +818,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         return NINJA_E_NULL_PTR;
     }
 }
-#endif //Stability
 
 /*-----------------------------------------------------------------------------
  *  NinjaFoam Methods

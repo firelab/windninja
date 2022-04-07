@@ -42,7 +42,7 @@ metaWindWidget::metaWindWidget(QWidget *parent) : QWidget(parent)
   inputHeightComboBox->addItem(tr("Custom"));
   
   inputHeightDoubleSpinBox = new QDoubleSpinBox;
-  inputHeightDoubleSpinBox->setRange(0, 100);
+  inputHeightDoubleSpinBox->setRange(0, 100000); //Increased from 100
   inputHeightDoubleSpinBox->setValue(20.00);
   inputHeightDoubleSpinBox->setAccelerated(true);
   inputHeightDoubleSpinBox->setDisabled(true);

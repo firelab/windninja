@@ -1,6 +1,123 @@
 Release Notes
 =============
 
+WindNinja 3.7.3
+---------------
+- Update Linux build script for Ubuntu 20.04 (#397)
+
+- Update Tutorial 4 with current weather model specs (#401, #425)
+
+- Fix an interpolation issue in point initialization (#418)
+
+- Fix example cfg for point initialization run syntax (#423)
+
+- Update continuous integration test (#402, #425)
+
+- Fix issue with fuel depth units (#426)
+
+- Fix issue where OpenFOAM output was occasionally incorrectly read from previous time steps (#430) 
+
+- Add debugging option for multi-timestep momentum solver simulations (#431)
+
+- Fix .atm file writing for multi-timestep point initialization runs (#432)
+
+- Fix time zone issue in point initialization (#412)
+
+
+WindNinja 3.7.2
+---------------
+- Fix bug related to how roughness grids are set from LCP files (#398)
+
+- Upgrade LCP data to 2016 for CONUS and 2014 for AK and HI (#189)
+
+- Display files with appropriate extensions in the save dialog box of the DEM downloader (#406)
+
+- Ensure resampled output grids cover the original DEM extents (#399)
+
+- Fix bug causing the GUI to crash when the output directory is not populated in the Solve tab (#405)
+
+WindNinja 3.7.1
+---------------
+- Update DEM viewer for mapbox API migration to Static Tiles API (#394)
+
+WindNinja 3.7.0
+---------------
+- Add ability to set a custom output path in the GUI (#369)
+
+- Write correct units in weather station kml output (#325)
+
+- Use gridded roughness properly in initializations with LCP files (#366)
+
+- Allow users to set a custom mesh resolution in the CFD solver (#357)
+
+- Write outputs at the mesh resolution as default for CFD runs (#339)
+
+- Correctly report meshing time for CFD runs with weather model initializations (#371)
+
+- Handle how exceptions are passed through to the user via the API vs. the GUI/CLI (#373)
+
+- Properly set diurnal wind indices when stations outside the DEM are used in point initializations (#362)
+
+- Do not use internal VRT warping for band mapping for WRF NetCDF files (#375)
+
+- Properly set Monin-Obukhov length for neutral stability runs (#391)
+
+- Use log interpolation to the output wind height for CFD runs if the output height is not resolved (#76, #392)
+
+WindNinja 3.6.0
+---------------
+- Fix issue related to time interpolation in point initialization (\#352)
+
+- Add sub-hourly HRRR (\#240)
+
+- Add ability to select forecast times to simulate (\#49)
+
+- Add UTC to list of time zone options (\#353)
+
+- Check for proper file extension on elevation files when reusing a CFD case (\#345)
+
+- CFD model upgrades (\#213, \#145)
+
+WindNinja 3.5.3
+---------------
+- Update for NOMADS directory structure changes for the GFS (\#341)
+
+WindNinja 3.5.2
+---------------
+- Fix bug related to lat/lon calculations in DEM downloader (\#327, \#328, \#333)
+
+WindNinja 3.5.1
+---------------
+- Switch to using HTTPS for NOMADS downloads (\#329)
+
+WindNinja 3.5.0
+---------------
+- Switch to OpenStreetMaps and Mapbox for DEM download window to fix issues related to Google Maps API terms of service changes (\#287)
+
+WindNinja 3.4.1
+---------------
+- Fix issue where DEM names containing spaces fail with NinjaFOAM (\#230)
+
+WindNinja 3.4.0
+---------------
+
+- Add Mesowest Mesonet API to fetch weather stations for point initialization runs (\#94)
+
+- Add multiple time step point Initialization runs (\#94)
+
+- Convert Tutorials from open office to LaTeX (\#308)
+
+- Add configuration options to CLI (\#297)
+
+- Add "phone home server" (\#295)
+
+- Add various color schemes to google earth outputs (\#296,\#235)
+
+WindNinja 3.3.2
+---------------
+
+- Fix bug related to HRRR/RAP upgrade on NOMADS (\#298)
+
 WindNinja 3.3.1
 ---------------
 
@@ -406,5 +523,3 @@ WindNinja 2.0.0
   (Google Earth, fire behavior, and shape file) can now be specified
   independently. Also, an option to use the wind simulation mesh resolution has
   been added and more control over Google Earth output files is now possible.
-
-

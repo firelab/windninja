@@ -162,9 +162,9 @@ void ninja::importLCP(GDALDataset *poDataset)
     //read the elevation band and write it to the Elevation class
     poBand = poDataset->GetRasterBand(1);
 
-    int *hasNdv = NULL;
-    nDV = poBand->GetNoDataValue(hasNdv);
-    if(hasNdv == false)
+    int hasNdv = FALSE;
+    nDV = poBand->GetNoDataValue(&hasNdv);
+    if(hasNdv == FALSE)
         nDV = -9999.0;
 
     szTemp = poBand->GetMetadataItem("ELEVATION_UNIT");
@@ -291,7 +291,7 @@ void ninja::importLCP(GDALDataset *poDataset)
             {
                 nHeight = 15;
             }
-            computeSurfPropForCell(i, j, nHeight,
+            computeSurfPropForCell(nR - 1 - i, j, nHeight,
                                    cHeightUnits,
                                    (double) (panScanlineCanopyC[j]),
                                    cCoverUnits,
@@ -336,9 +336,9 @@ void ninja::importSingleBand(GDALDataset *poDataset)
 	yL = adfGeoTransform[3] + (adfGeoTransform[5] * nR);
 
     //get cell size
-    if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 100000))
-	    cS = abs(adfGeoTransform[1]);
-	else
+    if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 1000000000))
+            cS = abs(adfGeoTransform[1]);
+        else
             throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
                                  "square cells (dx=dy) in the DEM.");
     }
@@ -368,6 +368,8 @@ void ninja::importSingleBand(GDALDataset *poDataset)
 	}
     }
     delete[] padfScanline;
+
+    set_uniVegetation();
 }
 
 /**

@@ -75,8 +75,31 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeView->setColumnHidden(2, true);
     //treeView->setColumnHidden(3, true);
     //treeView->setDragDropMode( QAbstractItemView::DragOnly );
-    treeView->setAlternatingRowColors( true );
+    treeView->setAlternatingRowColors( false );
+    treeView->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    timeGroupBox = new QGroupBox(tr("Select specific time steps"), this);
+    timeGroupBox->setCheckable(true);
+    timeGroupBox->setChecked(false);
+
+    listView = new QListView(this);
+    timeModel = new QStringListModel(this);
+    listView->setModel(timeModel);
+    // Extended selection is clear on click, unless ctrl or shift is held.
+    // listView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    // Multi selection is click everything on off, no modifiers
+    listView->setSelectionMode(QAbstractItemView::MultiSelection);
+    listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    selectAllTimesButton = new QToolButton(this);
+    selectAllTimesButton->setText(tr("Select All"));
+    selectAllTimesButton->setToolTip(tr("Select all forecast times"));
+    selectAllTimesButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+    selectNoTimesButton = new QToolButton(this);
+    selectNoTimesButton->setText(tr("Select None"));
+    selectNoTimesButton->setToolTip(tr("Select no forecast times"));
+    selectNoTimesButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
     statusLabel = new QLabel(this);
     statusLabel->setText(tr("Ready."));
@@ -91,7 +114,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
         this, SLOT(getData()));
     connect(refreshToolButton, SIGNAL(clicked()),
         this, SLOT(checkForModelData()));
-    connect(treeView, SIGNAL(clicked(const QModelIndex &)),
+    connect(treeView, SIGNAL(pressed(const QModelIndex &)),
         this, SLOT(displayForecastTime(const QModelIndex &)));
 
     //clear the selection on uncheck of group box
@@ -104,6 +127,12 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(setComboToolTip(int)));
 
+    connect(selectAllTimesButton, SIGNAL(clicked(bool)),
+        listView, SLOT(selectAll(void)));
+
+    connect(selectNoTimesButton, SIGNAL(clicked(bool)),
+        listView, SLOT(clearSelection(void)));
+
     //layout
     downloadLayout = new QHBoxLayout;
     downloadLayout->addWidget(modelComboBox);
@@ -115,6 +144,18 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     treeLayout = new QHBoxLayout;
     treeLayout->addWidget(treeView);
 
+    timeLayout = new QVBoxLayout;
+    timeLayout->addWidget(listView);
+
+    selectLayout = new QHBoxLayout;
+    selectLayout->addStretch();
+    selectLayout->addWidget(selectAllTimesButton);
+    selectLayout->addWidget(selectNoTimesButton);
+
+    timeLayout->addLayout(selectLayout);
+
+    timeGroupBox->setLayout(timeLayout);
+
     loadLayout = new QHBoxLayout;
     loadLayout->addWidget(statusLabel);
     loadLayout->addWidget(refreshToolButton);
@@ -123,6 +164,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     weatherLayout->addWidget(downloadGroupBox);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
+    weatherLayout->addWidget(timeGroupBox);
     weatherLayout->addLayout(loadLayout);
     
     ninjafoamConflictLabel = new QLabel(tr("The weather model initialization option is not currently available for the\n"
@@ -368,6 +410,7 @@ void weatherModel::checkForModelData()
     treeView->setRootIndex(model->index(wd.absolutePath()));
     treeView->resizeColumnToContents(0);
     statusLabel->setText( "" );
+    timeModel->setStringList(QStringList());
 
     unselectForecast(false);
     // QModelIndex index = treeView->indexBelow( treeView->rootIndex() );
@@ -395,6 +438,13 @@ void weatherModel::setInputFile(QString newFile)
  */
 void weatherModel::displayForecastTime( const QModelIndex &index )
 {
+    clearTimes();
+
+    if(model->fileInfo(index).isDir()==true)
+    {
+        treeView->selectionModel()->select(index,QItemSelectionModel::Deselect|QItemSelectionModel::Rows);
+    }
+
     QFileInfo fi( model->fileInfo( index ) );
 
     if( !fi.exists() ) {
@@ -403,7 +453,6 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     }
     std::string filename = fi.absoluteFilePath().toStdString();
     wxModelInitialization* model = NULL;
-    std::vector<blt::local_date_time> timelist;
     try {
         model = wxModelInitializationFactory::makeWxInitialization(filename);
         timelist = model->getTimeList(tzString.toStdString());
@@ -426,6 +475,21 @@ void weatherModel::displayForecastTime( const QModelIndex &index )
     dateTime.prepend( "First forecast time: " );
 
     statusLabel->setText( dateTime );
+
+    //blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
+    QStringList times;
+    for(int i = 0; i < timelist.size(); i++) {
+        std::ostringstream os;
+        os.imbue(std::locale(std::locale::classic(), facet));
+        facet->format("%a %b %d %H:%M %z");
+        //os << timelist[i].local_time_in(utc);
+        os << timelist[i];
+        times.append(QString::fromStdString(os.str()));
+        os.clear();
+    }
+    timeModel->setStringList(times);
+    listView->selectAll();
+    listView->setFocus(Qt::OtherFocusReason);
 }
 
 /**
@@ -447,10 +511,9 @@ void weatherModel::updateTz( QString tz )
  */
 void weatherModel::unselectForecast( bool checked )
 {
-    if( checked )
-    return;
-    else
+    if( checked ) return;
     treeView->selectionModel()->clear();
+    clearTimes();
 }
 const char * weatherModel::ExpandDescription( const char *pszReadable )
 {
@@ -484,4 +547,21 @@ void weatherModel::setComboToolTip(int)
     QString s = modelComboBox->currentText();
     s = ExpandDescription( s.toLocal8Bit().data() );
     modelComboBox->setToolTip( s );
+}
+
+std::vector<blt::local_date_time> weatherModel::timeList() {
+  std::vector<blt::local_date_time> tl;
+  if(!timeGroupBox->isChecked()) {
+    return tl;
+  }
+  QModelIndexList mi = listView->selectionModel()->selectedIndexes();
+  for(int i = 0; i < mi.size(); i++) {
+      tl.push_back(timelist[mi[i].row()]);
+  }
+  return tl;
+}
+
+void weatherModel::clearTimes() {
+  timelist.clear();
+  timeModel->setStringList(QStringList());
 }

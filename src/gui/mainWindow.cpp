@@ -49,6 +49,7 @@ mainWindow::mainWindow(QWidget *parent)
 
     runProgress = 0;
     totalProgress = 0;
+    mainWindow::progressLog;
 
     noGoogleCellSize = 30.0;
 
@@ -107,6 +108,35 @@ mainWindow::mainWindow(QWidget *parent)
 
     checkAllItems();
     army = NULL;
+}
+
+/*
+** Check for version updates, or messages from the server.
+*/
+void mainWindow::checkMessages(void) {
+    QMessageBox mbox;
+    char **papszMsg = NinjaCheckVersion();
+    if (papszMsg != NULL) {
+      const char *pszVers =
+          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
+      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
+        mbox.setText("A new version of WindNinja is available: " +
+                     QString(pszVers));
+        mbox.exec();
+      }
+      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
+      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
+        mbox.setText(QString(papszUserMsg[i]));
+        mbox.exec();
+      }
+      CSLDestroy(papszUserMsg);
+      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
+        mbox.setText("There is a fatal flaw in Windninja, it must close.");
+        mbox.exec();
+        abort();
+      }
+    }
+    CSLDestroy(papszMsg);
 }
 
 bool mainWindow::okToContinue()
@@ -497,12 +527,10 @@ void mainWindow::createConnections()
       tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enablePointDate(bool)));
-#ifdef STABILITY
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enablePointDate(bool)));
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       tree->wind->windTable, SLOT(enableStabilityCells(bool)));
-#endif
 #ifdef NINJAFOAM
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(enableNinjafoamOptions(bool)));
@@ -514,10 +542,8 @@ void mainWindow::createConnections()
   //connect the diurnalGroupBox->toggled to checkers
   connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
-#ifdef STABILITY
   connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
-#endif
 #ifdef NINJAFOAM
   //connect the solver method check boxes for mutex
   connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
@@ -545,6 +571,17 @@ void mainWindow::createConnections()
       this, SLOT(enablePointDate(bool)));
   connect(tree->weather->weatherGroupBox, SIGNAL(toggled(bool)),
       this, SLOT(checkAllItems()));
+
+  //Connects making changes in pointInput to checkers
+  //Makes the validation happen instantaneously
+  connect(tree->point->treeView,
+          SIGNAL(clicked(const QModelIndex &)),
+          this,SLOT(checkAllItems()));
+  //When the user changes the date time, check to make sure it is sane
+  connect(tree->point->startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
+  connect(tree->point->stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
+
+  connect(tree->point->refreshToolButton,SIGNAL(clicked(bool)),this,SLOT(checkAllItems()));
 
   //connect selection change in weather to checkers
   connect(tree->weather->treeView->selectionModel(),
@@ -595,6 +632,10 @@ void mainWindow::createConnections()
       tree->weather, SLOT(setInputFile(QString)));
   connect(this, SIGNAL(inputFileChanged(QString)),
       tree->point, SLOT(setInputFile(QString)));
+  connect(this,SIGNAL(inputFileChanged(QString)),
+          tree->point, SLOT(checkForModelData())); //Update csv list when file changes in point
+//Signal To Point Input what Diurnal Input is doing
+  connect(this, SIGNAL(mainDiurnalChanged(bool)),tree->point,SLOT(setDiurnalParam(bool)));
 
   //connect other writeToConsoles to the main writeToConsole
   connect( tree->point, SIGNAL( writeToConsole( QString ) ),
@@ -603,6 +644,9 @@ void mainWindow::createConnections()
   //connect timezone combo to weather model tz string
   connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
        tree->weather, SLOT( updateTz( QString ) ) );
+  //connect time zone for station fetch
+  connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
+       tree->point, SLOT( updateTz( QString ) ) );
 
   //connect the initialization check boxes to the others for mutex
   connect( tree->wind->windGroupBox, SIGNAL( toggled( bool ) ),
@@ -687,9 +731,11 @@ void mainWindow::openExistingCase()
 
   tree->surface->downloadDEMButton->setEnabled(false);
   tree->surface->meshResComboBox->setEnabled(false);
-  
-  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
-      emit(inputFileChanged(QFileInfo(dir).fileName()));
+
+//  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
+//  {
+//      emit(inputFileChanged(QFileInfo(dir).fileName()));
+//  }
 
   existingCaseDir = QFileInfo(dir).canonicalFilePath();
 
@@ -705,7 +751,6 @@ void mainWindow::openExistingCase()
     const char *pszFilename;
     const char *pszBasename;
     papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", existingCaseDir.toStdString().c_str()) );
-
     //get the basename of the STL
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetFilename( papszFileList[i] );
@@ -714,23 +759,45 @@ void mainWindow::openExistingCase()
             pszBasename = CPLStrdup(CPLGetBasename( pszFilename ));
         }
     }
-
     //look for DEM
     const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
-    const char* pszInputFilename;
+    const char* pszInputFilename= ""; //Initialize the inputfile as blank
     papszFileList = VSIReadDir( pszDemPath );
 
     for(int i=0; i<CSLCount( papszFileList ); i++){
         pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
         std::string s(pszFilename);
-        if( s.compare(pszBasename) == 0 ){
-            pszInputFilename = CPLStrdup( papszFileList[i] );
-            break;
+        if( s.compare(pszBasename) == 0 ){ //Try to find the DEM name in the directory
+            if(!strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"tif") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"lcp") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"img") |
+               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"asc"))
+            {
+                pszInputFilename = CPLStrdup( papszFileList[i] );
+                break;
+            }
         }
     }
+    const char* pszFname="";
+    //if we can't file the DEM (pszInputFilename stays ""), throw an error and reset everything
+    if(strcmp(pszInputFilename,"")==0){
+        QMessageBox::critical(this,tr("Error."),
+                  "Invalid Existing Case.\n"
+                  "No DEM information could be found.",
+                     QMessageBox::Ok | QMessageBox::Default);
+        existingCaseDir = "";
+        tree->surface->foamCaseLineEdit->setText("");
+        tree->surface->downloadDEMButton->setEnabled(true);
+        tree->surface->meshResComboBox->setEnabled(true);
+        return;
+    }
+    else{//Else set pszName to the demfilename
+        pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+    }
 
-    const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
-    updateFileInputForCase(pszFname);
+////        const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
+
+    updateFileInputForCase(pszFname); //Update the dem file name
 
     CSLDestroy( papszFileList );
     CPLFree( (void*)pszBasename );
@@ -795,6 +862,7 @@ void mainWindow::openInputFile()
 
       inputFileName = fileName;
       inputFileDir = QFileInfo(fileName).absolutePath();
+      tree->solve->setOutputDir( inputFileDir.absolutePath() );
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
@@ -816,7 +884,6 @@ void mainWindow::openInputFile()
 void mainWindow::updateFileInputForCase(const char* file)
 {
     QString fileName(file);
-
     fileWatcher.addPath(fileName);
 
     if(!fileName.isEmpty())
@@ -908,6 +975,7 @@ void mainWindow::updateFileInput(const char* file)
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
+      tree->solve->setOutputDir(QFileInfo(fileName).absolutePath());
     }
 }
 
@@ -1167,6 +1235,7 @@ void mainWindow::aboutWindNinja()
   aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br />");
   aboutText.append("Joint Fire Sciences Program<br />");
   aboutText.append("Washington State University</p>");
+  aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
 
   QMessageBox::about(this, tr("About WindNinja"),
              aboutText);
@@ -1268,7 +1337,7 @@ void mainWindow::checkMeshCombo()
       tree->surface->meshResDoubleSpinBox->setValue(res);
       meshCellSize = res;
       writeToConsole("Mesh Resolution set to " +
-             QString::number(res));
+             QString::number(res)); //Note that this is very annoying for pointInitilaization/Station-fetch
     }
     }
 }
@@ -1333,26 +1402,41 @@ double mainWindow::computeCellSize(int index)
   if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
     /* ninjafoam mesh */
 
-    double XLength = (GDALXSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01); //buffer for MDM
-    double YLength = (GDALYSize + 1) * GDALCellSize + 2*(GDALCellSize * 0.01);
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     double dz = GDALMaxValue - GDALMinValue;
     double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
 
     double volume;
     double cellCount;
     double cellVolume;
 
-    volume = XLength * YLength * ZLength; //volume of blockMesh
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
     cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
     cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
-    meshResolution = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh 
-    meshResolution /= 4.0; //assume 2 rounds of refinement at surface
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
+        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+        nRoundsRefinement += 1;
+    }
+    meshResolution = side/(nRoundsRefinement*2.0);
   }
   else{
     /* native windninja mesh */
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
     double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
     double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1363,8 +1447,8 @@ double mainWindow::computeCellSize(int index)
   
   }
 #else 
-  double XLength = (GDALXSize + 1) * GDALCellSize;
-  double YLength = (GDALYSize + 1) * GDALCellSize;
+  double XLength = GDALXSize * GDALCellSize;
+  double YLength = GDALYSize * GDALCellSize;
   double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
   double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
@@ -1478,14 +1562,11 @@ int mainWindow::checkInputFile(QString fileName)
         else
         {
             hasPrj = true;
-            double ll[2];
-            if(GDALGetCenter(poInputDS, ll))
+            double longitude, latitude;
+            if(GDALGetCenter(poInputDS, &longitude, &latitude))
             {
-                GDALCenterLon = ll[0];
-                GDALCenterLat = ll[1];
-
                 //set diurnal location, also set DD.DDDDD
-                QString oTimeZone = FetchTimeZone(GDALCenterLon, GDALCenterLat, NULL).c_str();
+                QString oTimeZone = FetchTimeZone(longitude, latitude, NULL).c_str();
                 if(oTimeZone != "")
                 {
                     /* Show all time zones, so we can search all time zones */
@@ -1531,8 +1612,8 @@ int mainWindow::checkInputFile(QString fileName)
 
     GDALClose( (GDALDatasetH)poInputDS );
 
-    double XLength = (GDALXSize + 1) * GDALCellSize;
-    double YLength = (GDALYSize + 1) * GDALCellSize;
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
 
     noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
 
@@ -1574,7 +1655,6 @@ int mainWindow::solve()
 #ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
 #endif
-    
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
 
@@ -1627,17 +1707,22 @@ int mainWindow::solve()
             ninjafoamMeshChoice = WindNinjaInputs::medium;
         else if (meshIndex == 2)
             ninjafoamMeshChoice = WindNinjaInputs::fine;
+        else {
+        meshRes = tree->surface->meshResDoubleSpinBox->value();
+        customMesh = true;
+        if( tree->surface->meshFeetRadioButton->isChecked() )
+            meshUnits = lengthUnits::feet;
+        else
+            meshUnits = lengthUnits::meters;
+        }
     }
 #endif
 
     //location
-
     int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
     if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
                          tree->weather->weatherGroupBox->isChecked()
-#ifdef STABILITY
                          || tree->stability->stabilityGroupBox->isChecked()
-#endif
                          ))
     {
         QMessageBox::warning(this, tr("WindNinja"), tr("Could not auto-identify "
@@ -1658,9 +1743,7 @@ int mainWindow::solve()
     bool useDiurnal = tree->diurnal->diurnalGroupBox->isChecked();
 
     //stability
-#ifdef STABILITY
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
-#endif
 
     //initialization method
     WindNinjaInputs::eInitializationMethod initMethod;
@@ -1695,9 +1778,6 @@ int mainWindow::solve()
     tempUnits = temperatureUnits::F;
     else if(tree->wind->windTable->airTempUnits->currentIndex() == 1)
     tempUnits = temperatureUnits::C;
-
-    //point initialization
-    std::string pointFile = tree->point->stationFileName.toStdString();
 
     //model init
     std::string weatherFile;
@@ -1751,6 +1831,51 @@ int mainWindow::solve()
     else
     googleScale = KmlVector::equal_color;
 
+    std::string googleScheme;
+    bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
+    if(tree->google->colorblindBox->isChecked())
+    {
+        std::string googCheckScheme;
+        QString QgoogleScheme=tree->google->inputColorblindComboBox->currentText();
+        googCheckScheme=QgoogleScheme.toStdString();
+
+        if (googCheckScheme=="Default")
+        {
+            googleScheme="default";
+        }
+        if (googCheckScheme=="ROPGW (Red Orange Pink Green White)")
+        {
+            googleScheme="ROPGW";
+        }
+        if (googCheckScheme=="Oranges")
+        {
+            googleScheme="oranges";
+        }
+        if (googCheckScheme=="Blues")
+        {
+            googleScheme="blues";
+        }
+        if (googCheckScheme=="Pinks")
+        {
+            googleScheme="pinks";
+        }
+        if (googCheckScheme=="Greens")
+        {
+            googleScheme="greens";
+        }
+        if (googCheckScheme=="Magic Beans")
+        {
+            googleScheme="magic_beans";
+        }
+        if (googCheckScheme=="Pink to Green")
+        {
+            googleScheme="pink_to_green";
+        }
+    }
+    else
+    {
+        googleScheme="default";
+    }
     //ascii raster fb files
     bool writeFb = tree->fb->fbGroupBox->isChecked();
     double fbRes = tree->fb->fbResSpinBox->value();
@@ -1842,13 +1967,230 @@ int mainWindow::solve()
 #else
     army = new ninjaArmy(1); // native ninja solver
 #endif
-
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
-        //we can only do one run with point
-        nRuns = 1;
-        army->setSize( nRuns, false );
+        int pointFormat = tree->point->simType;
+        std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
+        std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
+        std::vector<int> xStartTime = tree->point->startSeries; //Get the start time from pointInput
+        std::vector<int> xEndTime = tree->point->endSeries; //Get the Stop time from pointInput
+        int numTimeSteps = tree->point->numSteps->value(); //Get the number of steps from pointInput
+        bool useTimeList = tree->point->enableTimeseries; //Find out if its a timeseries run or not
+        bool writeStationKML = tree->point->writeStationKmlButton->isChecked(); //Write a kml file
+        bool writeStationCSV = tree->point->writeStationFileButton->isChecked(); //hidden for now
+
+        /*
+         * Note that pointFormat is not the same as stationFormat!
+         *
+         * point Format is based on pointInput::directStationTraffic
+         * 0 == old format
+         * 1 == new format with time series
+         * 2 == new format no time series
+         *
+         * this is only used in the GUI
+         *
+         * stationFormat is based on wxStation::GetHeaderVersion
+         * 1 == old format
+         * 2 == new format, both timeseries and timeseries
+         * 3 == csv list that points to list of new format files with time series
+         *      NOT used in GUI
+         * 4 == csv list that points to list of new format files with no time series
+         *      NOT USED IN GUI
+         * based on header only, not actual data!
+         * this is used inside the actual simulation
+         *
+         * A modified version of directstationtraffic has been adapted for CLI use
+         * in wxStation::getFirstStationLine
+         *
+         */
+
+        if (pointFormat==0)
+        {
+            CPLDebug("STATION_FETCH","USING OLD FORMAT...");
+            pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this,
+            //Only the old format works, so downloaded data, with the date-time column don't yet work!
+            /* right now the only option is the old format */
+            wxStation::SetStationFormat(wxStation::oldFormat);
+            std::vector<boost::posix_time::ptime> timeList;
+            if(useDiurnal==true || useStability==true) //means that the user is specifying time
+            { //Get that time and assign it to the simulation
+                std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
+                boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
+                timeList.push_back(singleTime);
+            }
+            else//The user is not giving us time, do what we normally do
+            {
+                boost::posix_time::ptime noTime;
+                timeList.push_back(noTime);
+            }
+            try{ //Try to run windninja
+                army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
+            }
+            catch(...){ //catch all exceptions and tell the user, prevent segfaults
+
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in makeStationArmy() - OldFormat! This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor); //Restart everything
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
+            }
+            nRuns = army->getSize();
+
+        }
+        if (pointFormat==1 || pointFormat==2) //New Format
+        {
+            wxStation::SetStationFormat(wxStation::newFormat);
+            std::vector<int> formatVec;
+            std::vector<boost::posix_time::ptime> timeList;
+            CPLDebug("STATION_FETCH","NEW FORMAT...");
+            for (int i=0;i<pointFileList.size();i++) //Get the file type for all selected stations
+            {
+                formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
+            }
+            if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin())) //Make sure all the header versions are equal, in case one of them gets past all the gui checkss
+            {
+                CPLDebug("STATION_FETCH","HEADER VERSIONS ARE GOOD...");
+
+                if(useTimeList == true) //New format with TimeList!
+                {
+                    CPLDebug("STATION_FETCH","Time List Option Selected...");
+                    if(numTimeSteps==1)
+                    {
+                        CPLDebug("STATION_FETCH","USER WANTS 1 STEP, USING START TIME...");
+                        boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],timeZone);
+                        timeList.push_back(singleTime);
+                    }
+                    else
+                    {
+                        CPLDebug("STATION_FETCH","USING TIME LIST...");
+                        timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
+                                                                    xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
+                                                                    numTimeSteps,timeZone);
+                    }
+                    CPLDebug("STATION_FETCH","TIME LIST GENERATED...");
+                    pointInitialization::storeFileNames(pointFileList); //Files get stored
+                    CPLDebug("STATION_FETCH","FILES STORED...");
+
+                    try{ //try running with timelist
+                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
+                    }
+                    catch(...){ //catch any and all exceptions and tell the user
+
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - timeSeries! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }
+                    nRuns = army->getSize();
+                }
+                if (useTimeList == false)//Current Data/Single Step
+                {
+                    //Get time from file attributes, if its diurnal this matters
+                    //if not, then it really doesn't matter and who cares
+                    boost::posix_time::ptime noTime;
+                    CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
+                    std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
+                    boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],
+                                                                                                        xSingleTime[1],xSingleTime[2],
+                                                                                                        xSingleTime[3],xSingleTime[4],timeZone);
+                        timeList.push_back(singleTime);
+                    pointInitialization::storeFileNames(pointFileList);
+                    try{ //try making the army with current data
+                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
+                    }
+                    catch(...){ //catch any and all exceptions and tell the user
+
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - currentwxdata! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }
+                    nRuns = army->getSize();
+                }               
+            }
+            else
+            {
+                //Note that This error is not normally reachable if all other error
+                //handling works correctly
+                CPLDebug("STATION_FETCH","WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in deteriming data types This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again",
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor);
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
+            }
+            
+            
+        }
+        if (writeStationKML==true) //Write KMLS for each time step
+        {
+            writeToConsole("Writing Weather Station .kml");
+            nRuns = army->getSize();
+            for (int i_=0;i_<nRuns;i_++)
+            {
+                wxStation::writeKmlFile(army->getWxStations(i_),
+                                        demFile,
+                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
+            }
+        }
+//                if (writeStationCSV==true)
+        const char *csvOpt = CPLGetConfigOption("WRITE_CSV","FALSE");
+        if(csvOpt!="FALSE") //The only way to write an interpolated CSV is to set a config option
+        {
+            writeToConsole("Writing Weather Station .csv");
+            nRuns = army->getSize();
+            QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
+            QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
+            std::string csvPath = demPath.toStdString()+demBase.toStdString();
+            pointInitialization::writeStationOutFile(army->getWxStations(0),csvPath,"",true);
+
+        }
+        const char *metaOpt = CPLGetConfigOption("FETCH_METADATA","FALSE");
+        if(metaOpt!="FALSE") //set a config option to get the metadata from the DEM
+        { //There is also a button for this, that is hidden (see stationFetchWidget)
+            writeToConsole("Fetching station metadata for DEM...");
+            std::string pathDem = std::string(CPLGetDirname(demFile.c_str()));
+            std::string baseDem = std::string(CPLGetBasename(demFile.c_str()));
+            std::string baseMeta = baseDem+"-metadata";
+            std::string metaPath = std::string(CPLFormFilename(pathDem.c_str(),baseMeta.c_str(),".csv"));
+            CPLDebug("STATION_FETCH","Saving Metadata to: %s",metaPath.c_str());
+            pointInitialization::fetchMetaData(metaPath,demFile,true);
+        }
     }
     else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
     {
@@ -1878,13 +2220,15 @@ int mainWindow::solve()
             progressDialog->cancel();
             return false;
         }
+
+        std::vector<blt::local_date_time> times = tree->weather->timeList();
         /* This can throw a badForecastFile */
         try
         {
 #ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, useNinjaFoam );
+            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
 #else
-            army->makeArmy( weatherFile, timeZone, false );
+            army->makeArmy( weatherFile, timeZone, times, false );
 #endif
         }
         catch( badForecastFile &e )
@@ -1919,8 +2263,14 @@ int mainWindow::solve()
 
     progressDialog->setValue( 0 );
     //set progress dialog and initial value
-    progressDialog->setRange(0, nRuns * 100);
-    runProgress = new int[nRuns];
+    progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
+    runProgress = new int[nRuns]; //I don't think this is needed anymore
+
+    std::string outputDir = tree->solve->outputDirectory().toStdString();
+    if( outputDir == "" ) {
+      // This should never happen, so if it does, fix it.
+      throw( "no output directory specified in solve page" );
+    }
 
     //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
@@ -1947,23 +2297,10 @@ int mainWindow::solve()
         {
             army->setUniVegetation( i, vegetation );
         }
-        if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
+        if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
         {
-           if( NINJA_SUCCESS != army->setWxStationFilename( i, pointFile ) )
-            {
-                QMessageBox::critical( this, 
-                                       tr("Invalid Point inititialization file" ),
-                                       tr( "Invalid Point initialization file" ),
-                                       QMessageBox::Ok | QMessageBox::Default );
-                    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                    setCursor(Qt::ArrowCursor);
-                    tree->weather->checkForModelData();
-                    progressDialog->cancel();
-                    delete army;
-                    return false;
-            }
+
         }
-        
         else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
         {
             //get speed
@@ -1984,6 +2321,8 @@ int mainWindow::solve()
 
         //set clipping
         army->setOutputBufferClipping( i, (double) clip );
+
+        army->setOutputPath( i, outputDir.c_str() );
 
         //diurnal, if needed
         army->setDiurnalWinds( i, useDiurnal );
@@ -2007,12 +2346,6 @@ int mainWindow::solve()
             }
             else if( initMethod == WindNinjaInputs::pointInitializationFlag )
             {
-                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
-                        tree->point->dateTimeEdit->date().month(),
-                        tree->point->dateTimeEdit->date().day(),
-                        tree->point->dateTimeEdit->time().hour(),
-                        tree->point->dateTimeEdit->time().minute(),
-                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
             else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
@@ -2025,7 +2358,6 @@ int mainWindow::solve()
             army->setPosition( i );
         }
 
-#ifdef STABILITY
         //stability, if needed, check for diurnal also so we don't repeat setters
         if( useStability == true && useDiurnal == false )
         {
@@ -2045,19 +2377,12 @@ int mainWindow::solve()
                                    coverUnits::percent );
             army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag )
+            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
             {
-                army->setDateTime( 0, tree->point->dateTimeEdit->date().year(),
-                        tree->point->dateTimeEdit->date().month(),
-                        tree->point->dateTimeEdit->date().day(),
-                        tree->point->dateTimeEdit->time().hour(),
-                        tree->point->dateTimeEdit->time().minute(),
-                        0, timeZone );
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
         }
         army->setStabilityFlag( i, useStability );
-#endif
         //set mesh stuff
         if( customMesh )
         {
@@ -2092,6 +2417,7 @@ int mainWindow::solve()
         army->setGoogLineWidth   (i,vectorWidth);
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
+        army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);
@@ -2120,7 +2446,7 @@ int mainWindow::solve()
 
     for( unsigned int i = 0; i < army->getSize(); i++ )
     {
-        runProgress[i] = 0;
+        progressLog.push_back(0); //Initialize the progressLog, which stores the progress of each ninja with a zero for each ninja in the army
     }
 
     totalProgress = 0;
@@ -2221,15 +2547,16 @@ int mainWindow::solve()
     //updateTimer();
 
     elapsedRunTime = runTime->elapsed() / 1000.0;
-
+    int maxProg = nRuns*100;
+    progressDialog->setValue(maxProg);
     progressDialog->setLabelText("Simulations finished");
-    progressDialog->setValue(progressDialog->maximum());
     progressDialog->setCancelButtonText("Close");
+    progressLog.clear(); //Clear the progress bar so that we can do another run later without
+    //killing the program
 
-
-     //Everything went okay? enable output path button
+    //Everything went okay? enable output path button
     tree->solve->openOutputPathButton->setEnabled( true );
-    outputPath = QString::fromStdString( army->getOutputPath( 0 ) );
+    outputPath = QString::fromStdString( outputDir );
 
     //clear the army
     army->reset();
@@ -2247,14 +2574,30 @@ void mainWindow::updateProgress(const QString message)
 
 void mainWindow::updateProgress(int run, int progress)
 {
-  runProgress[run] = progress;
-  totalProgress = 0;
+  totalProgress = 0; //Initialize the progress bar each time
+//  runProgress[run]=progress;
 
-  for(int i = 0;i < nRuns;i++){
-    totalProgress += runProgress[i];
+  if(progressLog[run]>progress)
+  {
+/*
+ * If the stored progress is bigger than what we are seeing in the currently emitted progress
+ * ignore it
+ * this happens for pointInitialization, when the match points is iterating
+ * sometimes its next solution is worse and then it would make the progress bar go backwards
+ * by ignoring it, the progress bar just stays where it is....
+ */
+      progressLog[run]=progressLog[run];
   }
+  else //Otherwise, store the progress in the progressLog
+  {
+      progressLog[run]=progress;
+  }
+  for(int i = 0;i < nRuns;i++) //Iterate over the number of runs and sum up the progress from the Log
+  {
+          totalProgress+=progressLog[i];
 
-  progressDialog->setValue(totalProgress);
+  }
+  progressDialog->setValue(totalProgress); //Set the progress to what we have summed
 }
 
 int mainWindow::countRuns()
@@ -2358,21 +2701,18 @@ int mainWindow::checkInputItem()
   
   checkWindItem();
   
-#ifdef STABILITY
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red || checkStabilityItem() == red)
     { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input, stability input, and diurnal input");
       status = red;
     }
-#else
   if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red )
     { 
       tree->inputItem->setIcon(0, tree->cross);
       tree->inputItem->setToolTip(0, "Check surface input, wind input and diurnal input");
       status = red;
     }
-#endif
   else if(checkSurfaceItem() == red)
     { 
       tree->inputItem->setIcon(0, tree->cross);
@@ -2385,14 +2725,12 @@ int mainWindow::checkInputItem()
       tree->inputItem->setToolTip(0, "Check diurnal input");
       status = red;
     }
-#ifdef STABILITY
   else if(checkStabilityItem() == red)
     {
       tree->inputItem->setIcon(0, tree->caution);
       tree->inputItem->setToolTip(0, "Check stability input");
       status = red;
     }
-#endif
   else if(checkWindItem() == red)
     {
       tree->inputItem->setIcon(0, tree->cross);
@@ -2448,7 +2786,6 @@ int mainWindow::checkDiurnalItem()
   return status;
 }
 
-#ifdef STABILITY
 int mainWindow::checkStabilityItem()
 {   
     eInputStatus status = green;
@@ -2465,7 +2802,6 @@ int mainWindow::checkStabilityItem()
     }
     return status;
 }
-#endif
 
 int mainWindow::checkWindItem()
 {
@@ -2549,17 +2885,76 @@ int mainWindow::checkPointItem()
 {
     eInputStatus status = blue;
     if( tree->point->pointGroupBox->isChecked() ) {
-    QFileInfo fi( tree->point->stationFileName );
-    if( !fi.exists() || !fi.isFile() ) {
-        status = red;
-        tree->pointItem->setIcon( 0, tree->cross );
-        tree->pointItem->setToolTip( 0, "Cannot read or open point input file" );
-    }
-    else {
-        status = green;
-        tree->pointItem->setIcon( 0, tree->check );
-        tree->pointItem->setToolTip( 0, "Valid" );
-    }
+        bool shortGo=tree->point->pointGo;
+        if (shortGo==false)
+        {
+            if (tree->point->stationFileList.size()<1)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"No Stations Selected");
+            }
+            if (tree->point->stationFileList.size()==1)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"No Valid Data detected...");
+            }
+            if (tree->point->stationFileList.size()>=2)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"Mismatched Data Type selected");
+            }
+//            if else
+//            {
+//                status = red;
+//                tree->pointItem->setIcon(0,tree->cross);
+//                tree->pointItem->setToolTip(0,"Selected options are invald");
+//            }
+        }
+
+        if (shortGo==true)
+        {
+            //Check to make sure times are reasonable
+            QDateTime pStartTime = tree->point->startTime->dateTime();
+            QDateTime pStopTime = tree->point->stopTime->dateTime();
+            if(pStartTime>pStopTime)
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"Start Time is Greater than Stop Time!");
+            }
+            else
+            {
+                status = green;
+                tree->pointItem->setIcon(0,tree->check);
+                tree->pointItem->setToolTip(0,"Good To Go!");
+            }
+        }
+        std::vector<std::string> pfL = tree->point->stationFileList;
+        for(int i=0;i<pfL.size();i++)
+        {
+            if(pfL[i].substr(pfL[i].size()-4,4)!=".csv")
+            {
+                status = red;
+                tree->pointItem->setIcon(0,tree->cross);
+                tree->pointItem->setToolTip(0,"File Extension Must be .csv!");
+            }
+        }
+        if (tree->point->simType==0 && pfL.size()>1)
+        {
+            status = red;
+            tree->pointItem->setIcon(0,tree->cross);
+            tree->pointItem->setToolTip(0,"Too many Stations Selected for Old Format!");
+
+        }
+
+//        else {
+//            status = green;
+//            tree->pointItem->setIcon( 0, tree->check );
+//            tree->pointItem->setToolTip( 0, "Valid" );
+//        }
     }
     else {
     status = blue;
@@ -2579,7 +2974,7 @@ int mainWindow::checkWeatherItem()
     if( mi.isValid() ) {
         fi = tree->weather->model->fileInfo( mi );
         std::string filename = fi.absoluteFilePath().toStdString();
-        char *p, *q;
+        char *p, *q; //code gore
         p = strdup( filename.c_str() );
         q = strrchr( p, '/' );
         int n = 0;
@@ -2976,7 +3371,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       }
   }
 #endif
-#ifdef STABILITY
   else if(item == tree->stabilityItem)
   {
       if(tree->stability->stabilityGroupBox->isChecked())
@@ -2984,7 +3378,6 @@ void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
       else
           tree->stability->stabilityGroupBox->setChecked(true);
   }
-#endif
   else if( item == tree->spdDirItem ) {
       if( tree->wind->windGroupBox->isChecked() )
       tree->wind->windGroupBox->setChecked( false );
@@ -3119,15 +3512,24 @@ void mainWindow::enablePointDate(bool enable)
     if( tree->point->pointGroupBox->isChecked() )
     {
         if( tree->diurnal->diurnalGroupBox->isChecked()
-#ifdef STABILITY
             || tree->stability->stabilityGroupBox->isChecked()
-#endif
           )
         {
-            tree->point->dateTimeEdit->setEnabled( true );
+            //Allows for on the fly changes in diurnal parameters as users select/deselect stations of
+            //various types
+            emit mainDiurnalChanged(true); //Sets to true so that stability options are also set
+            if(tree->point->simType==0) //Only turn on datetimeEdit for single step runs old format
+            {
+                tree->point->dateTimeEdit->setEnabled( true );
+            }
+            else
+            {
+                tree->point->dateTimeEdit->setEnabled(false);
+            }
         }
         else
         {
+            emit mainDiurnalChanged(false); //Tells pointInput we don't want stability/Diurnal
             tree->point->dateTimeEdit->setEnabled( false );
         }
     }
@@ -3139,12 +3541,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
     (void)enable;
     if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
     {
-        #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( false );
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( true );
         tree->stability->ninjafoamConflictLabel->setHidden( false );
-        #endif
          
         tree->wind->windTable->enableDiurnalCells( false ); 
         
@@ -3155,7 +3555,6 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
-        tree->surface->meshResComboBox->removeItem(4);
         
         tree->vtk->ninjafoamConflictLabel->setHidden( false );
         tree->vtk->vtkLabel->setHidden( true );
@@ -3169,12 +3568,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->diurnal->diurnalGroupBox->setChecked( false );
         tree->diurnal->diurnalGroupBox->setHidden( false );
         
-        #ifdef STABILITY
         tree->stability->stabilityGroupBox->setCheckable( true );
         tree->stability->stabilityGroupBox->setChecked( false );
         tree->stability->stabilityGroupBox->setHidden( false );
         tree->stability->ninjafoamConflictLabel->setHidden( true );
-        #endif
         
         tree->point->pointGroupBox->setCheckable( true );
         tree->point->pointGroupBox->setChecked( false );

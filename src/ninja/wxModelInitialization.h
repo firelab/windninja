@@ -51,8 +51,10 @@
 #include "cpl_http.h"
 #include "cpl_string.h"
 /* omp */
+#ifdef _OPENMP
 #include <omp.h>
 #include "omp_guard.h"
+#endif /* _OPENMP */
 /* boost */
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
@@ -69,7 +71,9 @@ namespace bpt = boost::posix_time;
 
 #include "ninja_init.h"
 
+#ifdef _OPENMP
 extern omp_lock_t netCDF_lock;
+#endif /* _OPENMP */
 
 static char **papszThreddsCsv = NULL;
 
@@ -106,6 +110,12 @@ class wxModelInitialization : public initialize
     virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
     virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
     virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
+
+    // Allow specifying a subset of the time list to run
+    void setRunTimes(std::vector<blt::local_date_time> times) {
+        runTimeList = times;
+    }
+
     std::string getHost();
 
     //Pure virtual functions defined in subclasses
@@ -149,7 +159,7 @@ class wxModelInitialization : public initialize
                                   AsciiGrid<double> &uGrid,
                                   AsciiGrid<double> &vGrid,
                                   AsciiGrid<double> &wGrid ) = 0;
-                                  
+    std::vector<blt::local_date_time> runTimeList;
     #ifdef NOMADS_ENABLE_3D
     virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
     virtual void setGlobalAttributes(WindNinjaInputs &input);

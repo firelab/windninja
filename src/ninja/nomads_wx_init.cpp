@@ -210,8 +210,18 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     {
         throw badForecastFile( "Model not found" );
     }
+
+    //Check to make sure the DEM is good.
+    //This check is very similar to wxModelInitialization::fetchForecast
+    //Line ~388-394
     GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
-    
+    double demBounds[4];
+    if(!GDALGetBounds((GDALDataset*)hDS,demBounds))//Cast GDALDatasetH as a GdalDataset*
+    {
+        throw badForecastFile("Could not download weather forecast, invalid "
+                              "projection for the DEM");
+    }
+
     double adfNESW[4], adfWENS[4];
     ComputeWxModelBuffer( (GDALDataset*)hDS, adfNESW );
     /* Different order for nomads */
@@ -323,9 +333,9 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         throw badForecastFile( "Invalid forecast file name" );
     }
 
-    int i;
+    int i, j;
     char **papszFileList = NULL;
-    const char *pszPath;
+    char *pszPath;
     VSIStatBufL sStat;
     VSIStatL( wxModelFileName.c_str(), &sStat );
     if( VSI_ISDIR( sStat.st_mode ) )
@@ -334,7 +344,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( wxModelFileName.c_str() ) );
-    const char *pszFullPath = NULL;
+    char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );
     if( !nCount )
@@ -348,10 +358,12 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     GDALDatasetH hDS;
     GDALDatasetH hBand;
     std::vector<blt::local_date_time>aoTimeList;
+    char **papszTimeList = 0;
+    int nBandCount = 0;
     for( i = 0; i < nCount; i++ )
     {
         SKIP_DOT_AND_DOTDOT( papszFileList[i] );
-        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        pszFullPath = CPLStrdup( CPLSPrintf( "%s/%s", pszPath, papszFileList[i] ) );
         if( !CheckFileName( papszFileList[i],
                             ppszModelData[NOMADS_FILE_NAME_FRMT] ) )
         {
@@ -362,21 +374,33 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         {
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
+            CPLFree( (void*)pszFullPath );
             throw badForecastFile( "Could not open forecast file with GDAL" );
         }
-        hBand = GDALGetRasterBand( hDS, 1 );
-        pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
-        if( !pszValidTime )
-        {
-            CSLDestroy( papszFileList );
-            CPLFree( (void*)pszPath );
-            GDALClose( hDS );
-            throw badForecastFile( "Could not fetch ref time or forecast time " \
-                                   "from GRIB file" );
+        nBandCount = GDALGetRasterCount( hDS );
+        for( j = 0; j < nBandCount; j++ ) {
+            hBand = GDALGetRasterBand( hDS, j + 1 );
+            pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
+            if( !pszValidTime )
+            {
+                CSLDestroy( papszFileList );
+                CSLDestroy( papszTimeList );
+                CPLFree( (void*)pszPath );
+                CPLFree( (void*)pszFullPath );
+                GDALClose( hDS );
+                throw badForecastFile( "Could not fetch ref time or forecast time " \
+                                       "from GRIB file" );
+            }
+            if( CSLFindString( papszTimeList, pszValidTime ) == -1 ) {
+                papszTimeList = CSLAddString( papszTimeList, pszValidTime );
+                CPLDebug( "WINDNINJA", "Found valid time in grib: %s", pszValidTime );
+            }
         }
-        CPLDebug( "WINDNINJA", "Found valid time in grib: %s", pszValidTime );
-        nValidTime = (time_t)atoi( pszValidTime );
         GDALClose( hDS );
+    }
+
+    for( j = 0; j < CSLCount( papszTimeList ); j++ ) {
+        nValidTime = (time_t)atoi( papszTimeList[j] );
 
         bpt::ptime time_t_epoch( boost::gregorian::date( 1970,1,1 ) );
 
@@ -386,8 +410,11 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         blt::local_date_time first_pt_local( first_pt, timeZonePtr );
         aoTimeList.push_back( first_pt_local );
     }
+
     CSLDestroy( papszFileList );
+    CSLDestroy( papszTimeList );
     CPLFree( (void*)pszPath );
+    CPLFree( (void*)pszFullPath );
     aoCachedTimes = aoTimeList;
     return aoCachedTimes;
 }
@@ -395,7 +422,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
 char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
                                           time_t nTime )
 {
-    int i;
+    int i, j;
     char **papszFileList = NULL;
     VSIStatBufL sStat;
     VSIStatL( pszFilePath, &sStat );
@@ -406,9 +433,10 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
         pszPath = CPLStrdup( CPLSPrintf( "/vsizip/%s", wxModelFileName.c_str() ) );
     else
         pszPath = CPLStrdup( CPLGetPath( pszFilePath ) );
-    const char *pszFullPath = NULL;
+    char *pszFullPath = NULL;
     papszFileList = VSIReadDir( pszPath );
     int nCount = CSLCount( papszFileList );
+    int nBandCount = 0;
     if( !nCount )
     {
         CPLFree( (void*)pszPath );
@@ -427,33 +455,40 @@ char * NomadsWxModel::NomadsFindForecast( const char *pszFilePath,
         {
             continue;
         }
-        pszFullPath = CPLSPrintf( "%s/%s", pszPath, papszFileList[i] );
+        pszFullPath = CPLStrdup( CPLSPrintf( "%s/%s", pszPath, papszFileList[i] ) );
         hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
+            CPLFree( pszFullPath );
             continue;
         }
-        hBand = GDALGetRasterBand( hDS, 1 );
-        pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
-        if( !pszValidTime )
-        {
-            GDALClose( hDS );
-            continue;
-        }
-        nValidTime = (time_t)atoi( pszValidTime );
-        if( nValidTime == nTime )
-        {
-            CPLFree( (void*)pszPath );
-            CSLDestroy( papszFileList );
-            CPLPopErrorHandler();
-            GDALClose( hDS );
-            return CPLStrdup( pszFullPath );
+
+        nBandCount = GDALGetRasterCount( hDS );
+        for( j = 0; j < nBandCount; j++ ) {
+          hBand = GDALGetRasterBand( hDS, j + 1 );
+          pszValidTime = GDALGetMetadataItem( hBand, "GRIB_VALID_TIME", NULL );
+          if( !pszValidTime )
+          {
+              GDALClose( hDS );
+              CPLFree( pszFullPath );
+              continue;
+          }
+          nValidTime = (time_t)atoi( pszValidTime );
+          if( nValidTime == nTime )
+          {
+              CPLFree( (void*)pszPath );
+              CSLDestroy( papszFileList );
+              CPLPopErrorHandler();
+              GDALClose( hDS );
+              return pszFullPath;
+          }
         }
         GDALClose( hDS );
     }
     CPLFree( (void*)pszPath );
     CSLDestroy( papszFileList );
     CPLPopErrorHandler();
+    CPLFree( pszFullPath );
     return NULL;
 }
 
@@ -503,6 +538,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     }
 
     hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    if( hSrcDS == NULL ) {
+        throw badForecastFile( "Could not find forecast associated with " \
+                               "requested time step" );
+    }
     CPLFree( (void*) pszForecastFile );
     pszForecastFile = NULL;
     nBandCount = GDALGetRasterCount( hSrcDS );
@@ -526,9 +565,15 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
+#ifdef NOMADS_INTERNAL_VRT
+    hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                        GRA_NearestNeighbour, 1.0,
+                                        psWarpOptions );
+#else
     hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
+#endif
 
     const char *pszElement;
     const char *pszShortName;
@@ -627,9 +672,15 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                 throw badForecastFile( "Could not load cloud data." );
             }
             pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+#ifdef NOMADS_VRT
+            hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                              GRA_NearestNeighbour, 1.0,
+                                              psWarpOptions );
+#else
             hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                               GRA_NearestNeighbour, 1.0,
                                               psWarpOptions );
+#endif
             if( hVrtDS == NULL )
             {
                 throw badForecastFile( "Could not load cloud data." );
@@ -647,7 +698,16 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             }
             if( hBand == NULL )
             {
-                throw badForecastFile( "Could not find cloud data band." );
+               /*
+                ** This is okay for models that have no cloud cover data at
+                ** all, for example HRRR subhourly.  Before incorporation of
+                ** the HRRR subhourly, this threw a bad forecast file, now we
+                ** just set the cloud cover to 0 and issue a warning.
+                */
+                CPLFree( (void*)pszNextFcst );
+                GDALClose( hSrcDS );
+                GDALClose( hVrtDS );
+                goto noCloudOK;
             }
             GDAL2AsciiGrid( (GDALDataset*)hVrtDS, j + 1, cloudGrid );
             dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
@@ -668,6 +728,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         }
         else
         {
+noCloudOK:
             CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data " \
                       "from the forecast file, setting to 0." );
 
@@ -821,9 +882,15 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
     pszSrcWkt = GDALGetProjectionRef( hDS );
     pszDstWkt = input.dem.prjString.c_str();
+#ifdef NOMADS_VRT
+    hVrtDS = NomadsAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+#else
     hVrtDS = GDALAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
+#endif
 
     int nSkipRows, nSkipCols;
     hBand = GDALGetRasterBand( hVrtDS, 1 );

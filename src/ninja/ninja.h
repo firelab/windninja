@@ -81,6 +81,8 @@
 #include "pointInitialization.h"
 #include "griddedInitialization.h"
 
+
+
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
 #include "foamWxModelInitialization.h"
@@ -98,9 +100,7 @@
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
 #endif
 
-#ifdef STABILITY
 #include "stability.h"
-#endif
 
 #ifdef FRICTION_VELOCITY
 #include "frictionVelocity.h"
@@ -136,7 +136,6 @@ public:
     AsciiGrid<double>VelocityGrid;
     AsciiGrid<double>CloudGrid;
 
-    //AsciiGrid<double> alphaVGrid; //store spatially varying alphaV variable
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     #ifdef FRICTION_VELOCITY
@@ -167,6 +166,8 @@ public:
     int get_ComNumRuns() const;
     void set_ComNumRuns( int nRuns );
 #endif //NINJA-GUI
+    void set_progressWeight(double progressWeight); //For foam+diurnal simulations
+    double get_progressWeight();
     /*************************************************************
       kyle's fx's for importing several file types through GDAL
       function lives in readInputFile.cpp for now.
@@ -193,10 +194,8 @@ public:
     /*-----------------------------------------------------------------------------
      *  Stability Specific Functions
      *-----------------------------------------------------------------------------*/
-    #ifdef STABILITY
     void set_stabilityFlag(bool flag);
     void set_alphaStability(double stability_);
-    #endif
 
     /*-----------------------------------------------------------------------------
      *  END Stability specific functions
@@ -237,10 +236,16 @@ public:
     void set_wxModelFilename(const std::string& forecast_initialization_filename);	//sets the surface wind field initialization file (such as NDFD, etc.)
     void set_wxStationFilename(std::string station_filename);	//sets the weather station(s) filename (for use in point initialization)
     void set_wxStations(std::vector<wxStation> &wxStations);
+//stationFetch
+    void set_stationFetchFlag( bool flag );
+//    std::vector<std::vector<wxStationList> >get_wxStatList();
+
+
+//stationFetch
     std::vector<wxStation> get_wxStations();
     void set_meshResChoice( std::string choice );
     void set_meshResChoice( const Mesh::eMeshChoice );
-    void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
+    virtual void set_meshResolution( double resolution, lengthUnits::eLengthUnits units );
     virtual double get_meshResolution();
     void set_numVertLayers( const int nLayers );
 #ifdef NINJA_SPEED_TESTING
@@ -270,7 +275,6 @@ public:
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
     void set_MeshCount(int meshCount); //mesh count for a ninjafoam run
     void set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice); //mesh count for a ninjafoam run
-    void set_NonEqBc(bool flag); // enable/disable non-equilbrium boundary conditions for a ninjafoam run
     static WindNinjaInputs::eNinjafoamMeshChoice get_eNinjafoamMeshChoice(std::string meshChoice);
     void set_ExistingCaseDirectory(std::string directory); //use existing case for ninjafoam run
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
@@ -308,6 +312,9 @@ public:
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
+
+    void set_googColor(std::string scheme,bool scaling);
+
     void set_wxModelGoogOutFlag(bool flag);
     void set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling);	//sets the desired method of speed scaling in the Google Earth legend (equal_color=>equal numbers of arrows for each color,  equal_interval=>equal speed intervals over the speed range)
     void set_googLineWidth(double width);								//sets the line width for the vectors in the Google Earth kmz file

@@ -1,3 +1,4 @@
+
 /******************************************************************************
 *
 * $Id$
@@ -90,131 +91,6 @@ pair<string, string> at_option_parser(string const&s)
         return pair<string, string>();
 }
 
-/** @brief This method initializes the CLI options so that both the command line and the API can use them
- *
- */
-/*
-void initializeOptions()
-{
-    try {
-        // Declare a group of options that will be
-        // allowed only on command line
-        po::options_description generic("Generic options");
-        generic.add_options()
-                        ("version", "print version")
-                        ("help", "produce help message")
-                        ("config_file", po::value<std::string>(),
-                                "configuration file ('config_file' flag not required)")
-                        ("response_file", po::value<std::string>(),
-                                 "response file (can be specified with '@name', also)")
-                                ;
-
-        // Declare a group of options that will be
-        // allowed both on command line and in
-        // config file
-        po::options_description config("Simulation options");
-        config.add_options()
-                ("num_threads", po::value<int>()->default_value(1), "number of threads to use during simulation")
-                ("elevation_file", po::value<std::string>(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
-                ("fetch_elevation", po::value<std::string>(), "fetch elevation file and save to path/filename")
-                ("north", po::value<double>(), "north extent of elevation file bounding box")
-                ("east", po::value<double>(), "east extent of elevation file bounding box")
-                ("south", po::value<double>(), "south extent of elevation file bounding box")
-                ("west", po::value<double>(), "west extent of elevation file bounding box")
-                ("x_center", po::value<double>(), "x coordinate of center of elevation domain to be downloaded")
-                ("y_center", po::value<double>(), "y coordinate of center of elevation domain to be downloaded")
-                ("x_buffer", po::value<double>(), "x buffer of elevation domain to be downloaded")
-                ("y_buffer", po::value<double>(), "y buffer of elevation domain to be downloaded")
-                ("buffer_units", po::value<std::string>()->default_value("miles"), "units for buffer (kilometers, miles)")
-                ("elevation_source", po::value<std::string>()->default_value("us_srtm"), "Source for downloading elevation data (us_srtm, world_srtm, gmted)")
-                ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
-                ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; all choices are listed in date_time_zonespec.csv)")
-                ("wx_model_type", po::value<std::string>(), "type of wx model to download (UCAR-NAM-12-KM, UCAR-NAM-Alaska-11-KM, UCAR-NDFD-2.5-KM, UCAR-RAP-13-KM)")
-                ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
-                ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
-                ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
-                ("input_speed", po::value<double>(), "input wind speed")
-                ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph)")
-                ("output_speed_units", po::value<std::string>()->default_value("mph"), "units of output wind speed (mps, mph, kph)")
-                ("input_direction", po::value<double>(), "input wind direction")
-                ("uni_air_temp", po::value<double>(), "surface air temperature")
-                ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
-                ("uni_cloud_cover", po::value<double>(), "cloud cover")
-                ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
-                ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
-                ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
-                ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
-                ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
-                ("units_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
-                ("output_wind_height", po::value<double>()->required(), "height of output wind speed above the vegetation")
-                ("units_output_wind_height", po::value<std::string>(), "units of output wind height (ft, m)")
-                ("vegetation", po::value<std::string>(), "dominant type of vegetation (grass, brush, trees)")
-                ("diurnal_winds", po::value<bool>()->default_value(false), "include diurnal winds in simulation (true, false)")
-                ("year", po::value<int>(), "year of simulation")
-                ("month", po::value<int>(), "month of simulation")
-                ("day", po::value<int>(), "day of simulation")
-                ("hour", po::value<int>(), "hour of simulation")
-                ("minute", po::value<int>(), "minute of simulation")
-                ("mesh_choice", po::value<std::string>(), "mesh resolution choice (coarse, medium, fine)")
-                ("mesh_resolution", po::value<double>(), "mesh resolution")
-                ("units_mesh_resolution", po::value<std::string>(), "mesh resolution units (ft, m)")
-                ("output_buffer_clipping", po::value<double>()->default_value(0.0), "percent to clip buffer on output files")
-                ("write_wx_model_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file for the raw wx model forecast (true, false)")
-                ("write_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file (true, false)")
-                ("goog_out_resolution", po::value<double>()->default_value(-1.0), "resolution of Google Earth output file (-1 to use mesh resolution)")
-                ("units_goog_out_resolution", po::value<std::string>()->default_value("m"), "units of Google Earth resolution (ft, m)")
-                ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
-                ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
-                ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
-                ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
-                ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
-                ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
-                ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
-                ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolutino (ft, m)")
-                ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
-                ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
-                #ifdef STABILITY
-                ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
-                ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
-                #endif
-                #ifdef EMISSIONS
-                ("compute_emissions",po::value<bool>()->default_value(false), "compute dust emissions (true, false)")
-                ("fire_perimeter_file", po::value<std::string>(), "input burn perimeter path/filename (*.shp)")
-                ("dust_file_out", po::value<std::string>(), "name of emissions output file")
-                #endif
-                ;
-
-        // Hidden options, will be allowed both on command line and
-        // in config file, but will not be shown to the user.
-        //po::options_description hidden("Hidden options");
-        //hidden.add_options()
-        //                ("input-file", po::value< vector<string> >(), "input file")
-        //                ;
-
-
-        po::options_description cmdline_options;
-        //cmdline_options.add(generic).add(config).add(hidden);
-        cmdline_options.add(generic).add(config);
-
-        po::options_description config_file_options;
-        //config_file_options.add(config).add(hidden);
-        config_file_options.add(config);
-
-        po::options_description visible("Allowed options");
-        visible.add(generic).add(config);
-
-        po::positional_options_description p;
-        p.add("config_file", -1);
-
-        po::variables_map vm;
-
-        po::parsed_options opts_command = po::command_line_parser(argc, argv).
-                        options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
-
-    initialized = true;
-}
-*/
-
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
  * from an input file.
@@ -255,7 +131,8 @@ int windNinjaCLI(int argc, char* argv[])
                         ("response_file", po::value<std::string>(),
                                  "response file (can be specified with '@name', also)")
                         ("citation", "how to cite WindNinja in a publication")
-                                ;
+                        ("runtime_options","print all available configuration options")
+                            ;
         /*
         ** Set the available wx model names using hard codes for UCAR and api
         ** for NOMADS.
@@ -312,6 +189,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
                 ("forecast_filename", po::value<std::string>(), "path/filename of an already downloaded wx forecast file")
+                ("forecast_time", po::value<std::vector<std::string> >(), "specific time to run in wx model (in UTC with format 20200131T180000); use multiple forecast_time entries for multiple times")
                 ("match_points",po::value<bool>()->default_value(true), "match simulation to points(true, false)")
                 ("input_speed", po::value<double>(), "input wind speed")
                 ("input_speed_units", po::value<std::string>(), "units of input wind speed (mps, mph, kph, kts)")
@@ -323,9 +201,28 @@ int windNinjaCLI(int argc, char* argv[])
                 ("air_temp_units", po::value<std::string>(), "surface air temperature units (K, C, R, F)")
                 ("uni_cloud_cover", po::value<double>(), "cloud cover")
                 ("cloud_cover_units", po::value<std::string>(), "cloud cover units (fraction, percent, canopy_category)")
+                ("fetch_station", po::value<bool>()->default_value(false), "download a station file from an internet server (Mesonet API) (true/false)")
+                ("start_year",po::value<int>(),"point and weather model initialization: start year for simulation")
+                ("start_month",po::value<int>(),"point and weather model initialization: start month for simulation")
+                ("start_day",po::value<int>(),"point and weather model initialization: start day for simulation")
+                ("start_hour",po::value<int>(),"point and weather model initialization: start hour for simulation")
+                ("start_minute",po::value<int>(),"point and weather model initialization: start minute for simulation")
+                ("stop_year",po::value<int>(),"point and weather model initialization: end year for simulation")
+                ("stop_month",po::value<int>(),"point and weather model initialization: end month for simulation")
+                ("stop_day",po::value<int>(),"point and weather model initialization: end day for simulation")
+                ("stop_hour",po::value<int>(),"point and weather model initialization: end hour for simulation")
+                ("stop_minute",po::value<int>(),"point and weather model initialization: end minute for simulation")
+                ("number_time_steps",po::value<int>(),"point initialization: number of timesteps for simulation")
+                ("fetch_metadata",po::value<bool>()->default_value(false),"get weather station metadata for a domain")
+                ("metadata_filename",po::value<std::string>(),"filename for weather station metadata")
+                ("fetch_type",po::value<std::string>(),"fetch weather station from bounding box (bbox) or by station ID (stid)")
+                ("fetch_current_station_data",po::value<bool>()->default_value(false),"fetch the latest weather station data (true) or fetch a timeseries (false) (true/false)")
+                ("station_buffer",po::value<double>()->default_value(0.00),"distance around dem to fetch station data")
+                ("station_buffer_units",po::value<std::string>()->default_value("km"),"Units of distance around DEM")
+                ("fetch_station_name",po::value<std::string>(),"list of stations IDs to fetch")
                 ("wx_station_filename", po::value<std::string>(), "path/filename of input wx station file")
-                ("write_wx_station_kml", po::value<bool>()->default_value(false), "write a Google Earth kml file for the input wx stations (true, false)")
-                ("wx_station_kml_filename", po::value<std::string>(), "filename for the Google Earth kml wx station output file")
+                ("write_wx_station_kml", po::value<bool>()->default_value(false), " point initialization: write a Google Earth kml file for the input wx stations (true, false)")
+                ("write_wx_station_csv",po::value<bool>()->default_value(false),"point initialization: write a csv of the interpolated weather data (true,false)")
                 ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
                 ("units_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
                 ("output_wind_height", po::value<double>()/*->required()*/, "height of output wind speed above the vegetation")
@@ -345,6 +242,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file (true, false)")
                 ("goog_out_resolution", po::value<double>()->default_value(-1.0), "resolution of Google Earth output file (-1 to use mesh resolution)")
                 ("units_goog_out_resolution", po::value<std::string>()->default_value("m"), "units of Google Earth resolution (ft, m)")
+                ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options:\n default (ROYGB), oranges, blues, greens,pinks, magic_beans, pink_to_green,ROPGW")
+                ("goog_out_vector_scaling",po::value<bool>()->default_value(false),"Enable Vector Scaling based on Wind speed")
                 ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
@@ -364,10 +263,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_width", po::value<double>(), "width of geospatial pdf")
                 ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
-                #ifdef STABILITY
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
-                #endif
                 #ifdef FRICTION_VELOCITY
                 ("compute_friction_velocity",po::value<bool>()->default_value(false), "compute friction velocity (true, false)")
                 ("friction_velocity_calculation_method", po::value<std::string>()->default_value("logProfile"), "friction velocity calculation method (logProfile, shearStress)")
@@ -385,7 +282,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
-                ("non_equilibrium_boundary_conditions", po::value<bool>()->default_value(true), "use non-equilibrium boundary conditions for a momentum solver run (true, false)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -422,7 +318,6 @@ int windNinjaCLI(int argc, char* argv[])
 
         po::parsed_options opts_command = po::command_line_parser(argc, argv).
                         options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
-    //
 
         //write out parsed options for debugging
         if(writeParsed)
@@ -517,7 +412,52 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "WindNinja version: " << NINJA_VERSION_STRING << "\n";
             cout << "SCM version: " << NINJA_SCM_VERSION << "\n";
             cout << "Release date: " << NINJA_RELEASE_DATE << "\n";
+#ifdef _OPENMP
+            cout << "OpenMP enabled (" << omp_get_num_procs() << ")\n";
+#else
+            cout << "OpenMP disabled\n";
+#endif
             return 0;
+        }
+
+        if(vm.count("runtime_options")){
+            cout<<"==============================================="<<endl;
+            cout<<" List of available config options in WindNinja"<<endl;
+            cout<<"==============================================="<<endl;
+
+            std::string cfg_path=FindDataPath("config_options.csv"); //Find the csv file with all the config options
+            std::ifstream cfg_file(cfg_path.c_str()); //Read that file in
+            std::string cfg_line;
+
+            //This file is delimited with ":" (colons)
+            //The definititions of each cfg option has a space before the actual text
+            //ex: CFG_OPT: def
+
+            if(cfg_file.is_open())
+            {
+                while(getline(cfg_file,cfg_line)) //loop over all the lines while its valid
+                {
+
+                    if(cfg_line.find("-:")<10000) //find all the sections which are specially marked with a "-:"
+                    {
+                        int l_find=cfg_line.find("-:"); //Find that special "-:"
+                        //once found, print out the section title along with some spacing and organizational lines
+                        cout<<"\n-----------------------------------------------"<<endl;
+                        cout<<" "<<cfg_line.substr(0,l_find)<<endl;
+                        cout<<"-----------------------------------------------"<<endl;
+                    }
+                    else //If its not a title, just print it
+                    {
+                        cout<<cfg_line<<endl;
+                    }
+                }
+                cfg_file.close(); //Close the file
+            }
+            else{
+                cout<<"Unable to open config_options.csv..."<<endl;
+            }
+
+            return 0; //exit the cli
         }
 
         if (vm.count("response_file")) {
@@ -571,7 +511,6 @@ int windNinjaCLI(int argc, char* argv[])
 
         notify(vm);
 
-
         //write out values in vm for debugging
         if(writeValues)
         {
@@ -607,15 +546,15 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-        #ifdef NINJAFOAM
+#ifdef NINJAFOAM
         ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
-        #else
+#else
         ninjaArmy windsim(1); //-Moved to header file
-        #endif
+#endif
 
         /* Do we have to fetch an elevation file */
         
-        #ifdef EMISSIONS
+#ifdef EMISSIONS
         /*------------------------------------------*/
         /* Download DEM covering the fire perimeter */
         /* if elevation_file wasn't specified       */ 
@@ -623,9 +562,8 @@ int windNinjaCLI(int argc, char* argv[])
          
         if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
             OGRDataSourceH hDS = 0;
-            hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(),
-                          FALSE, 0);
-            if (hDS == 0) {
+            hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE, 0);
+            if (hDS == 0){
               fprintf(stderr, "Failed to open fire perimeter file.\n");
               exit(1);
             }
@@ -867,7 +805,8 @@ int windNinjaCLI(int argc, char* argv[])
             osTimeZone = vm["time_zone"].as<std::string>();
             if(osTimeZone =="auto-detect")
             {
-                double p[2];
+                double longitude = 0;
+                double latitude = 0;
                 GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_ReadOnly);
                 if(poDS == NULL)
                 {
@@ -875,9 +814,9 @@ int windNinjaCLI(int argc, char* argv[])
                     fprintf(stderr, "Unable to open input DEM\n");
                     return 1;
                 }
-                GDALGetCenter(poDS, p);
+                GDALGetCenter(poDS, &longitude, &latitude);
                 GDALClose((GDALDatasetH)poDS);
-                std::string tz = FetchTimeZone(p[0], p[1], NULL);
+                std::string tz = FetchTimeZone(longitude, latitude, NULL);
                 if(tz == "")
                 {
                     fprintf(stderr, "Could not detect timezone\n");
@@ -912,16 +851,13 @@ int windNinjaCLI(int argc, char* argv[])
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
-        conflicting_options(vm, "momentum_flag", "mesh_resolution");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
         #ifdef EMISSIONS
         conflicting_options(vm, "momentum_flag", "compute_emissions");
         #endif
-        #ifdef STABILITY
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
-        #endif
         
 #endif //NINJAFOAM
         
@@ -930,7 +866,10 @@ int windNinjaCLI(int argc, char* argv[])
             conflicting_options(vm, "wx_model_type", "forecast_filename");
             option_dependency(vm, "wx_model_type", "forecast_duration");
             option_dependency(vm, "wx_model_type", "time_zone");
-
+            std::vector<blt::local_date_time> timeList;
+            if(vm.count("forecast_time")) {
+              timeList = toBoostLocal(vm["forecast_time"].as<std::vector<std::string> >(), osTimeZone);
+            }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
                 std::string model_type = vm["wx_model_type"].as<std::string>();
@@ -938,17 +877,85 @@ int windNinjaCLI(int argc, char* argv[])
                 try
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                    std::string forecastFileName = model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                                                                                vm["forecast_duration"].as<int>() );
+                    if(vm.count("start_year"))
+                    {
+                        conflicting_options(vm, "forecast_time", "start_year");
+                        verify_option_set(vm, "start_month");
+                        verify_option_set(vm, "start_day");
+                        verify_option_set(vm, "start_hour");
+                        verify_option_set(vm, "start_minute");
+                        verify_option_set(vm, "stop_year");
+                        verify_option_set(vm, "stop_month");
+                        verify_option_set(vm, "stop_day");
+                        verify_option_set(vm, "stop_hour");
+                        verify_option_set(vm, "stop_minute");
+
+                        std::vector<blt::local_date_time> fullModelTimes;
+                        fullModelTimes = model->getTimeList(osTimeZone);
+
+                        boost::local_time::time_zone_ptr timeZone;
+                        timeZone = globalTimeZoneDB.time_zone_from_region(osTimeZone);
+                        if( NULL ==  timeZone )
+                        {
+                            ostringstream os;
+                            os << "The time zone string: " << osTimeZone.c_str() << " does not match any in "
+                               << "the time zone database file: date_time_zonespec.csv.";
+                            throw std::runtime_error(os.str());
+                        }
+
+                        blt::local_date_time simulationStartTime(boost::local_time::not_a_date_time);
+                        blt::local_date_time simulationStopTime(boost::local_time::not_a_date_time);
+                        simulationStartTime = boost::local_time::local_date_time( boost::gregorian::date(vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["start_hour"].as<int>(),vm["start_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        simulationStopTime = boost::local_time::local_date_time( boost::gregorian::date(vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>()),
+                                    boost::posix_time::time_duration(vm["stop_hour"].as<int>(),vm["stop_minute"].as<int>(),0,0),
+                                    timeZone,
+                                    boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+                        if(simulationStartTime >= simulationStopTime)
+                        {
+                            ostringstream os;
+                            os << "The simulation start time: " << simulationStartTime << " cannot be after the simulation stop time: "
+                               << simulationStopTime << "." << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+
+                        for(int i=0; i<fullModelTimes.size(); i++)
+                        {
+                            if(fullModelTimes[i] >= simulationStartTime && fullModelTimes[i] <= simulationStopTime)
+                                timeList.push_back(fullModelTimes[i]);
+                        }
+
+                        if(timeList.size() <= 0)
+                        {
+                            ostringstream os;
+                            os << "No timesteps in the forecast occurred between the specified start and stop times: " << std::endl
+                               << "Simulation start time:\t" << simulationStartTime << std::endl
+                               << "Simulation stop time:\t" << simulationStopTime << std::endl;
+                            throw std::runtime_error(os.str());
+                        }
+                    }
+
 #ifdef NINJAFOAM
-                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
-                                                            vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone,
-                                                            vm["momentum_flag"].as<bool>() );
+                    windsim.makeArmy( forecastFileName,
+                                      osTimeZone,
+                                      timeList,
+                                      vm["momentum_flag"].as<bool>() );
 #else
                     windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
+                                                            timeList,
                                                             false );
 #endif
+                }
+                catch (exception& e)
+                {
+                    cout << "Exception caught: " << e.what() << endl;
+                    return -1;
                 }
                 catch(... )
                 {
@@ -963,15 +970,290 @@ int windNinjaCLI(int argc, char* argv[])
 #ifdef NINJAFOAM
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
+                                 timeList,
                                  vm["momentum_flag"].as<bool>());
 #else
 
                 windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
                                  osTimeZone,
+                                 timeList,
                                  false);
 #endif
             }
         }
+//STATION_FETCH
+        //---------------------------------------------------------------------
+        // Make army for pointInitialization  
+        //---------------------------------------------------------------------
+        if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
+        {
+            //Check to be sure that the user specifies right info
+            conflicting_options(vm, "fetch_station", "wx_station_filename");
+            option_dependency(vm, "fetch_metadata","metadata_filename");
+
+            std::vector<boost::posix_time::ptime> timeList;
+            if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
+            {
+                const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
+                if(api_key_conf_opt!="FALSE")
+                {
+                    std::ostringstream api_stream;
+                    api_stream<<api_key_conf_opt;
+                    pointInitialization::setCustomAPIKey(api_stream.str());
+                }
+
+                option_dependency(vm,"station_buffer","station_buffer_units");
+                std::string stationPathName;
+                wxStation::SetStationFormat(wxStation::newFormat);
+
+                pointInitialization::setStationBuffer(vm["station_buffer"].as<double>(),
+                        vm["station_buffer_units"].as<std::string>()); //Sets buffer
+
+                if (vm["fetch_current_station_data"].as<bool>()==false) //If they want a time series
+                {
+                    option_dependency(vm, "fetch_station", "start_year");
+                    option_dependency(vm, "fetch_station", "start_month");
+                    option_dependency(vm, "fetch_station", "start_day");
+                    option_dependency(vm, "fetch_station", "start_hour");
+                    option_dependency(vm, "fetch_station", "start_minute");
+                    option_dependency(vm, "fetch_station", "stop_year");
+                    option_dependency(vm, "fetch_station", "stop_month");
+                    option_dependency(vm, "fetch_station", "stop_day");
+                    option_dependency(vm, "fetch_station", "stop_hour");
+                    option_dependency(vm, "fetch_station", "stop_minute");
+                    option_dependency(vm, "fetch_station", "number_time_steps");
+
+                    timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                         vm["start_month"].as<int>(),
+                                                         vm["start_day"].as<int>(),
+                                                         vm["start_hour"].as<int>(),
+                                                         vm["start_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
+                                                         vm["number_time_steps"].as<int>(),
+                                                         osTimeZone );
+
+                    int duration_check = pointInitialization::checkFetchTimeDuration(timeList);
+                    if(duration_check==-2)
+                    {
+                        throw std::runtime_error("ERROR: Selected Time Range exceeds 1 year! Please select a custom API key to remove limits");
+                    }
+                }
+                else if (vm["fetch_current_station_data"].as<bool>()==true) //Set for "1 step"
+                {
+                    boost::posix_time::ptime noTime;
+                    timeList.push_back(noTime);
+                }
+                //Generate a directory to store downloaded station data...
+                CPLDebug("STATION_FETCH","Generating Directory for Weather Stations");
+                if(vm.count("output_path")){
+                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
+                                                                                vm["output_path"].as<std::string>(),
+                                                                                vm["fetch_current_station_data"].as<bool>());
+                }
+                else{ //if the user doesn't specify an output path
+                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
+                                                                                "",
+                                                                                vm["fetch_current_station_data"].as<bool>());
+                }
+//                stationPathName="blank";
+                pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
+                //so that the fetchStationData function knows where to save the data
+                if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box
+                {
+                    bool fetchSuccess = pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
+                                                            timeList, osTimeZone,
+                                                            vm["fetch_current_station_data"].as<bool>());
+                    if(fetchSuccess==false) //If we fail to download any data
+                    {
+                        pointInitialization::removeBadDirectory(stationPathName); //Delete the above generated directory
+                        throw std::runtime_error(pointInitialization::error_msg);
+                    }
+
+                    //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
+                    
+                }
+                else if (vm["fetch_type"].as<std::string>()=="stid")
+                {
+                    option_dependency(vm,"fetch_type","fetch_station_name");
+
+                    bool fetchSuccess = pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
+                                                            timeList, osTimeZone,
+                                                            vm["fetch_current_station_data"].as<bool>());
+                    if(fetchSuccess==false) //Fail to download data
+                    {
+                        pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
+                        throw std::runtime_error(pointInitialization::error_msg);
+                    }
+//                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
+                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
+                    
+                }
+                else //If something else bad happens
+                {
+                    pointInitialization::removeBadDirectory(stationPathName); //Get rid of generated dir
+                    throw std::runtime_error("Station fetch type was not set properly. Options are 'bbox' and 'stid'.");
+                }
+
+                //make the army for a fetched station
+                windsim.makeStationArmy(timeList,
+                                        osTimeZone,
+                                        stationPathName,
+                                        vm["elevation_file"].as<std::string>(),
+                                        vm["match_points"].as<bool>(),false);
+
+                if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
+                {
+                    pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),true);
+                }
+            }
+            else if (vm["fetch_station"].as<bool>() == false) //If we aren't fetching, look for on disk files
+            {
+                pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
+                std::string stationFile=vm["wx_station_filename"].as<std::string>();
+                int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());
+                /*There are 4 types of files that can be fed into the CLI
+                 * 1 == old format, pre station fetch, no date time column
+                 * 2 == new Format, with a date time column, (may or may not be populated with time data)
+                 *      If this is provided, only one station file, and thus one weather station
+                 *      can be used for a run
+                 * 3 == new Format time series station list
+                 *      this is a csv that points to a bunch of new format stations
+                 *      with populated time data columns
+                 * 4 == new Format current data station list
+                 *      this is a csv that points to a bunch of new format station files
+                 *      with no time data in the datetime column, indicating current data.
+                 *
+                 */
+                if (stationFormat==2) //new format
+                {
+                    /*
+                     * There are two types of new format
+                     * timeseries
+                     * and
+                     * current data
+                     *
+                     * to determine which is which, quickly open the file
+                     * in question and read its first line
+                     * 2 == time series
+                     * 1 == current data
+                     *
+                     * This is only necessary if the user provides one file to the CLI
+                     */
+                    wxStation::SetStationFormat(wxStation::newFormat);
+                    int fileSubFormat = wxStation::GetFirstStationLine(stationFile.c_str());
+                    if(fileSubFormat==2) //Time series detected!
+                    {
+                        CPLDebug("STATION_FETCH","One File Provided...\nMultiple steps detected in file with type: newFormat");
+                        option_dependency(vm, "wx_station_filename", "start_year");
+                        option_dependency(vm, "wx_station_filename", "start_month");
+                        option_dependency(vm, "wx_station_filename", "start_day");
+                        option_dependency(vm, "wx_station_filename", "start_hour");
+                        option_dependency(vm, "wx_station_filename", "start_minute");
+                        option_dependency(vm, "wx_station_filename", "stop_year");
+                        option_dependency(vm, "wx_station_filename", "stop_month");
+                        option_dependency(vm, "wx_station_filename", "stop_day");
+                        option_dependency(vm, "wx_station_filename", "stop_hour");
+                        option_dependency(vm, "wx_station_filename", "stop_minute");
+                        option_dependency(vm, "wx_station_filename", "number_time_steps");
+
+                        timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                             vm["start_month"].as<int>(),
+                                                             vm["start_day"].as<int>(),
+                                                             vm["start_hour"].as<int>(),
+                                                             vm["start_minute"].as<int>(),
+                                                             vm["stop_year"].as<int>(),
+                                                             vm["stop_month"].as<int>(),
+                                                             vm["stop_day"].as<int>(),
+                                                             vm["stop_hour"].as<int>(),
+                                                             vm["stop_minute"].as<int>(),
+                                                             vm["number_time_steps"].as<int>(),
+                                                             osTimeZone );
+                        std::vector<std::string> sFiles;
+                        sFiles.push_back(vm["wx_station_filename"].as<std::string>());
+                        pointInitialization::storeFileNames(sFiles);
+                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                    }
+                    if(fileSubFormat==1) //not a time series
+                    {
+                        CPLDebug("STATION_FETCH","One File Provided...\nOne step in file with type: newFormat");
+                        boost::posix_time::ptime noTime;
+                        timeList.push_back(noTime);
+                        std::vector<std::string> sFiles;
+                        sFiles.push_back(vm["wx_station_filename"].as<std::string>());
+                        pointInitialization::storeFileNames(sFiles);
+                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                    }
+                }
+                else if (stationFormat==1) //old format
+                {
+                    wxStation::SetStationFormat(wxStation::oldFormat);
+                    boost::posix_time::ptime noTime;
+                    timeList.push_back(noTime);
+                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                }
+                else if (stationFormat==3) // New Format where there are multiple station files
+                {
+                    wxStation::SetStationFormat(wxStation::newFormat);
+                    CPLDebug("STATION_FETCH","Multiple Timeseries Station Files Detected...");
+                    option_dependency(vm, "wx_station_filename", "start_year");
+                    option_dependency(vm, "wx_station_filename", "start_month");
+                    option_dependency(vm, "wx_station_filename", "start_day");
+                    option_dependency(vm, "wx_station_filename", "start_hour");
+                    option_dependency(vm, "wx_station_filename", "start_minute");
+                    option_dependency(vm, "wx_station_filename", "stop_year");
+                    option_dependency(vm, "wx_station_filename", "stop_month");
+                    option_dependency(vm, "wx_station_filename", "stop_day");
+                    option_dependency(vm, "wx_station_filename", "stop_hour");
+                    option_dependency(vm, "wx_station_filename", "stop_minute");
+                    option_dependency(vm, "wx_station_filename", "number_time_steps");
+                    timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
+                                                         vm["start_month"].as<int>(),
+                                                         vm["start_day"].as<int>(),
+                                                         vm["start_hour"].as<int>(),
+                                                         vm["start_minute"].as<int>(),
+                                                         vm["stop_year"].as<int>(),
+                                                         vm["stop_month"].as<int>(),
+                                                         vm["stop_day"].as<int>(),
+                                                         vm["stop_hour"].as<int>(),
+                                                         vm["stop_minute"].as<int>(),
+                                                         vm["number_time_steps"].as<int>(),
+                                                         osTimeZone );
+                    std::vector<std::string> sFiles;
+                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
+                    pointInitialization::storeFileNames(sFiles);
+                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                }
+                else if (stationFormat==4) // New Format where there are multiple one step recent station files
+                {
+                    wxStation::SetStationFormat(wxStation::newFormat);
+                    CPLDebug("STATION_FETCH","Multiple Single Step Station Files Detected...");
+
+                    boost::posix_time::ptime noTime;
+                    timeList.push_back(noTime);
+
+                    std::vector<std::string> sFiles;
+                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
+                    pointInitialization::storeFileNames(sFiles);
+                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                }
+                else
+                {
+                    throw std::runtime_error("Problem Opening Weather Station CSV file.");
+                }
+            }
+        }
+//STATION_FETCH
 
         /*
         windsim.Com = new ninjaCLIComHandler();
@@ -998,7 +1280,9 @@ int windNinjaCLI(int argc, char* argv[])
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
+                conflicting_options(vm, "mesh_choice", "mesh_resolution");
                 conflicting_options(vm, "mesh_choice", "existing_case_directory");
+                conflicting_options(vm, "mesh_resolution", "existing_case_directory");
                 if(vm.count("number_of_iterations")){
                     windsim.setNumberOfIterations( i_, vm["number_of_iterations"].as<int>() );
                 }
@@ -1011,13 +1295,9 @@ int windNinjaCLI(int argc, char* argv[])
                         return -1;
                     }
                 }
-                if(vm.count("mesh_count") && !vm.count("mesh_choice")){
+                if(vm.count("mesh_count")){
                     windsim.setMeshCount( i_,
                         vm["mesh_count"].as<int>() );
-                }
-                if(vm["non_equilibrium_boundary_conditions"].as<bool>()){
-                    windsim.setNonEqBc( i_,
-                        vm["non_equilibrium_boundary_conditions"].as<bool>() );
                 }
                 if(vm.count("existing_case_directory")){
                     windsim.setExistingCaseDirectory( i_, vm["existing_case_directory"].as<std::string>() );
@@ -1143,7 +1423,6 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
-                #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
                 {
@@ -1183,39 +1462,71 @@ int windNinjaCLI(int argc, char* argv[])
                                                                osTimeZone);
                     }
                 }
-                #endif //STABILITY
-            }else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
+            }
+            else if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
             {
-                verify_option_set(vm, "wx_station_filename");
-                option_dependency(vm, "write_wx_station_kml", "wx_station_kml_filename");
+//STATION_FETCH
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
-                windsim.setInitializationMethod( i_,
-                        WindNinjaInputs::pointInitializationFlag,
-                        vm["match_points"].as<bool>() );
-                windsim.setWxStationFilename( i_, vm["wx_station_filename"].as<std::string>() );
-                if(vm["write_wx_station_kml"].as<bool>() == true)
-                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-                                            vm["wx_station_kml_filename"].as<std::string>());
+
+                if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
+                {
+                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
+                    if(vm.count("output_path")){
+                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
+                                                   vm["output_path"].as<std::string>(),
+                                                   vm["elevation_file"].as<std::string>(),
+                                                   true);
+                    }
+                    else{
+                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
+                                                   "",
+                                                   vm["elevation_file"].as<std::string>(),
+                                                   true);
+                    }
+                }
+                if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
+                {
+                    CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i_);
+                    if(vm.count("output_path")){
+                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                                                vm["elevation_file"].as<std::string>(),
+                                                vm["output_path"].as<std::string>(), velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
+                    }
+                    else
+                    {
+                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                                                vm["elevation_file"].as<std::string>(),
+                                                    "", velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
+                    }
+                }
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
 
                 if(vm["diurnal_winds"].as<bool>())
                 {
-                    option_dependency(vm, "diurnal_winds", "year");
-                    option_dependency(vm, "diurnal_winds", "month");
-                    option_dependency(vm, "diurnal_winds", "day");
-                    option_dependency(vm, "diurnal_winds", "hour");
-                    option_dependency(vm, "diurnal_winds", "minute");
-                    option_dependency(vm, "diurnal_winds", "time_zone");
+                    if(vm["fetch_station"].as<bool>() == true ||
+                            wxStation::GetStationFormat() == wxStation::newFormat) //new format
+                    {
+                        windsim.setDiurnalWinds( i_, true);
+                    }
+                    if(vm["fetch_station"].as<bool>() == false &&
+                            wxStation::GetStationFormat() == wxStation::oldFormat) //old format
+                    {
+                        option_dependency(vm, "diurnal_winds", "year");
+                        option_dependency(vm, "diurnal_winds", "month");
+                        option_dependency(vm, "diurnal_winds", "day");
+                        option_dependency(vm, "diurnal_winds", "hour");
+                        option_dependency(vm, "diurnal_winds", "minute");
+                        option_dependency(vm, "diurnal_winds", "time_zone");
 
-                    windsim.setDiurnalWinds( i_, true);
-                    windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-                                             vm["day"].as<int>(), vm["hour"].as<int>(),
-                                             vm["minute"].as<int>(), 0.0,
-                                             osTimeZone);
+                        windsim.setDiurnalWinds( i_, true);
+                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                                 vm["day"].as<int>(), vm["hour"].as<int>(),
+                                                 vm["minute"].as<int>(), 0.0,
+                                                 osTimeZone);
+                    }
                 }
-                #ifdef STABILITY
                 //Atmospheric stability selections
                 if(vm["non_neutral_stability"].as<bool>())
                 {
@@ -1235,22 +1546,29 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else
                     {
-                        option_dependency(vm, "non_neutral_stability", "year");
-                        option_dependency(vm, "non_neutral_stability", "month");
-                        option_dependency(vm, "non_neutral_stability", "day");
-                        option_dependency(vm, "non_neutral_stability", "hour");
-                        option_dependency(vm, "non_neutral_stability", "minute");
-                        option_dependency(vm, "non_neutral_stability", "time_zone");
+                        if(vm["fetch_station"].as<bool>() == true ||
+                                wxStation::GetStationFormat() == wxStation::newFormat) //new format
+                        {
+                            windsim.setStabilityFlag( i_, true);
+                        }
+                        if(vm["fetch_station"].as<bool>() == false &&
+                                wxStation::GetStationFormat() == wxStation::oldFormat) //old format
+                        {
+                            option_dependency(vm, "non_neutral_stability", "year");
+                            option_dependency(vm, "non_neutral_stability", "month");
+                            option_dependency(vm, "non_neutral_stability", "day");
+                            option_dependency(vm, "non_neutral_stability", "hour");
+                            option_dependency(vm, "non_neutral_stability", "minute");
+                            option_dependency(vm, "non_neutral_stability", "time_zone");
 
-                        windsim.setStabilityFlag( i_, true);
-                        windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
-                                                           vm["day"].as<int>(), vm["hour"].as<int>(),
-                                                           vm["minute"].as<int>(), 0.0,
-                                                           osTimeZone);
+                            windsim.setStabilityFlag( i_, true);
+                            windsim.setDateTime( i_, vm["year"].as<int>(), vm["month"].as<int>(),
+                                                               vm["day"].as<int>(), vm["hour"].as<int>(),
+                                                               vm["minute"].as<int>(), 0.0,
+                                                               osTimeZone);
+                        }
                     }
                 }
-                #endif //STABILITY
-
             }else if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
             {
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
@@ -1262,7 +1580,6 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     windsim.setDiurnalWinds( i_, true );
                 }
-                #ifdef STABILITY
                 if(vm["non_neutral_stability"].as<bool>())
                 {
                     //windsim.ninjas[i_].set_stabilityFlag(true);
@@ -1286,7 +1603,6 @@ int windNinjaCLI(int argc, char* argv[])
                         windsim.setStabilityFlag( i_, true );
                     }
                 }
-                #endif
             }
             else if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
             {
@@ -1402,8 +1718,15 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setMeshResolution( i_, vm["mesh_resolution"].as<double>(), lengthUnits::getUnit(vm["units_mesh_resolution"].as<std::string>()));
             }
             else{
+#ifdef NINJAFOAM
+                if(!vm.count("mesh_count") && !vm.count("existing_case_directory")){
+                    cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
+                    return -1;
+                }
+#else
                 cout << "Mesh resolution has not been set.\nUse either 'mesh_choice' or 'mesh_resolution'.\n";
                 return -1;
+#endif
             }
             windsim.setNumVertLayers( i_, 20);
 
@@ -1439,6 +1762,7 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "goog_out_resolution", "units_goog_out_resolution");
                 windsim.setGoogResolution( i_, vm["goog_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_goog_out_resolution"].as<std::string>()));
+                windsim.setGoogColor(i_,vm["goog_out_color_scheme"].as<std::string>(),vm["goog_out_vector_scaling"].as<bool>());
             }
             if(vm["write_shapefile_output"].as<bool>())
             {
@@ -1550,7 +1874,8 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
     }
-    catch (badForecastFile& e) {   //catch a badForecastFile
+    catch (badForecastFile& e
+            ) {   //catch a badForecastFile
         cout << "Exception badForecastFile caught: " << e.what() << "\n";
         cout << "There was a problem downloading the forecast file or it had bad data.\n";
         return -1;

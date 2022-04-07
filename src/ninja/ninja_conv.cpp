@@ -154,7 +154,7 @@ std::string FindDataPath(std::string file)
 //#ifdef USE_MANUAL_VSIREAD_DIR_RECURSIVE
 char **NinjaVSIReadDirRecursive( const char *pszPathIn )
 {
-    CPLStringList oFiles = NULL;
+    CPLStringList oFiles;
     char **papszFiles = NULL;
     VSIStatBufL psStatBuf;
     CPLString osTemp1, osTemp2;
@@ -330,5 +330,32 @@ std::string NinjaRemoveSpaces( std::string s )
     s.erase( std::remove_if( s.begin(), s.end(), ::isspace ), s.end() );
 
     return s;
+}
+
+//mostly for preparing OpenFOAM-compatible filenames
+std::string NinjaSanitizeString( std::string s )
+{
+    s = NinjaRemoveSpaces(s);
+
+    //filenames cannot begin with a number
+    if(s.find_first_of("0123456789") == 0){
+        s = "a" + s; //if starts with a number, prepend a letter
+    }
+
+    return s;
+}
+
+std::vector<blt::local_date_time>
+toBoostLocal(std::vector<std::string> in, std::string timeZone) {
+    std::vector<blt::local_date_time> out;
+    blt::time_zone_ptr zone = globalTimeZoneDB.time_zone_from_region(timeZone.c_str());
+    blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
+    for(int i = 0; i < in.size(); i++) {
+        bpt::ptime pt = bpt::from_iso_string(in[i]);
+        blt::local_date_time ldt = blt::local_date_time(pt, utc);
+        //ldt = ldt.local_time_in(zone);
+        out.push_back(ldt);
+    }
+    return out;
 }
 

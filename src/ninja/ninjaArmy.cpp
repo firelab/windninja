@@ -100,10 +100,7 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-       delete ninjas[i];
-    }
+    delete ninjas[0];
     destoryLocalData();
 }
 
@@ -134,6 +131,106 @@ int ninjaArmy::getSize()
     return ninjas.size();
 }
 
+
+/**
+ * @brief ninjaArmy::makeStationArmy Makes an army (array) of ninjas for a Point Initialization run.
+ * @param timeList vector of simulation times
+ * @param timeZone
+ * @param stationFileName
+ * @param demFile
+ */
+void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
+                             string timeZone, string stationFileName,
+                             string demFile, bool matchPoints, bool override)
+{
+    vector<wxStation> stationList;
+    boost::posix_time::ptime noTime;
+    //interpolate raw data to actual time steps
+    int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
+    
+    if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
+    {
+        stationList = pointInitialization::readWxStations(demFile,timeZone);
+    }
+    else //New Format (station fetch or multiple time steps)
+    {
+        stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
+    }
+    
+    ninjas.resize(timeList.size());
+
+    for(unsigned int i=0; i<timeList.size(); i++)
+    {
+        ninjas[i] = new ninja();
+    }
+
+    boost::local_time::tz_database tz_db;
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+    boost::posix_time::ptime standard = boost::posix_time::second_clock::universal_time();
+    boost::local_time::local_date_time localStandard(standard, timeZonePtr);
+    vector<boost::local_time::local_date_time> localTimeList;
+    CPLDebug("STATION_FETCH","\n!!\nList of steps generated with Local and UTC times\n!!:\n");
+    for(unsigned int i = 0; i<timeList.size(); i++)//Take the UTC timelist and covert it to local time (again)
+    {
+        boost::posix_time::ptime aGlobal = timeList[i];
+        boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
+        localTimeList.push_back(aLocal);
+        //This is a bit convoluted and obfuscated but all it does
+        //is get the times to print correctly for debugging of timelist
+        //in case that is necessary
+        CPLDebug("STATION_FETCH","STEP NUM:%i",i);
+        CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
+        CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
+        CPLDebug("STATION_FETCH","----");
+    }
+    //handle old wxStation format
+//    if (timeList.size() == 1 && timeList[0] == noTime)
+    if(timeList.size()==1)
+    {
+        CPLDebug("STATION_FETCH","Single Step Run Detected!");
+        if (timeList[0]!=noTime)
+        {
+            CPLDebug("STATION_FETCH","Date Time info available for 1 step!");
+            timeList.assign(1, timeList[0]);
+            localTimeList.assign(1, boost::local_time::local_date_time(timeList[0],timeZonePtr));
+        }
+        if (timeList[0]==noTime)
+        {
+            CPLDebug("STATION_FETCH","No date time data available, assigning simulation time to now!");
+            timeList.assign(1, standard);
+            localTimeList.assign(1, localStandard);
+        }
+    }
+    for(unsigned int k=0; k<stationList.size(); k++)
+    {
+        for (unsigned int i=0; i<timeList.size(); i++)
+        {
+            boost::posix_time::ptime aGlobal=timeList[i];
+            boost::local_time::local_date_time aLocal(aGlobal, timeZonePtr);
+            stationList[k].set_localDateTime(aLocal);
+        }
+    }
+
+    for(unsigned int i = 0; i<timeList.size(); i++)
+    {
+        ninjas[i]->set_stationFetchFlag(true);
+        ninjas[i]->set_date_time(localTimeList[i]);
+        for(int k=0; k<stationList.size(); k++)
+        {
+            stationList[k].set_currentTimeStep(ninjas[i]->get_date_time());
+        }
+        ninjas[i]->set_wxStations(stationList);
+        ninjas[i]->set_wxStationFilename(stationFileName);
+        //Setting the filename also implicitly sets the stations, set above
+        //in set_wxStations. Also it gets the units from the first station
+        //The function name is a bit misleading as to what it really does.
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
+   }
+}
+
 /**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
@@ -141,6 +238,19 @@ int ninjaArmy::getSize()
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  */
 void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
+{
+  return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
+}
+
+/**
+ * @brief Makes an army (array) of ninjas for a weather forecast run.
+ *
+ * @param forecastFilename Name of forecast file.
+ * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
+ * @param times a vector of times to run from the forecast.  If the vector is
+ *        empty, run all of the times in the forecast
+ */
+void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
     
@@ -207,6 +317,9 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+        if(times.size() > 0) {
+          timeList = times;
+        }
         ninjas.resize(timeList.size());
         //reallocate ninjas after resizing
         for(unsigned int i = 0; i < timeList.size(); i++)
@@ -222,6 +335,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
             ninjas[i] = new ninja();
 #endif
         }
+
 
         for(unsigned int i = 0; i < timeList.size(); i++)
         //int i = 0;
@@ -433,6 +547,14 @@ bool ninjaArmy::startRuns(int numProcessors)
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
+
+            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+            {
+                //Set the ninjafoam solver progress bar to stop at 80% so that
+                //the diurnal solver can contribute too
+                ninjas[0]->set_progressWeight(0.80);
+            }
+
             //start the run
             if(!ninjas[0]->simulate_wind())
                printf("Return of false from simulate_wind()");
@@ -442,6 +564,9 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
+                //Set the diurnal ninja to have the same com object,
+                //so that it can update the progress of the original ninja
+                diurnal_ninja->input.Com = ninjas[0]->input.Com;
                 diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
                 diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
                 if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
@@ -449,6 +574,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 else if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
+                }
+                else if(ninjas[0]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                 }
                 else{
                     throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
@@ -461,11 +589,17 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 //set output path on original ninja for the GUI
                 ninjas[0]->input.outputPath = diurnal_ninja->input.outputPath;
+
+                //set filenames for atm file writing
+                ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
+                ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
+                ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
             } 
 #endif //NINJAFOAM            
 
             //write farsite atmosphere file
-            writeFarsiteAtmosphereFile();
+            if(writeFarsiteAtmFile)
+                writeFarsiteAtmosphereFile();
 
         }catch (bad_alloc& e)
         {
@@ -501,7 +635,13 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
- 
+
+                if(ninjas[i]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+                {
+                    //Set the ninjafoam solver progress bar to stop at 80% so that
+                    //the diurnal solver can contribute too
+                    ninjas[i]->set_progressWeight(0.80);
+                }
                 //start the run
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
@@ -511,6 +651,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
+                    //Set the diurnal ninja to have the same com object,
+                    //so that it can update the progress of the original ninja
+                    diurnal_ninja->input.Com = ninjas[i]->input.Com;
                     diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
                     diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
@@ -518,6 +661,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
+                    }
+                    else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
+                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                     }
                     else{
                         throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
@@ -530,10 +676,26 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     //set output path on original ninja for the GUI
                     ninjas[i]->input.outputPath = diurnal_ninja->input.outputPath;
+
+                    //set filenames for atm file writing
+                    ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
+                    ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
+                    ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
                 } 
-                //write farsite atmosphere file
-                writeFarsiteAtmosphereFile();
-            
+                //store data for atmosphere file
+                if(writeFarsiteAtmFile)
+                {
+                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
+                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                }
+
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0  )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+
             }catch (bad_alloc& e)
             {
                 std::cout << "Exception bad_alloc caught: " << e.what() << endl;
@@ -552,6 +714,33 @@ bool ninjaArmy::startRuns(int numProcessors)
                 std::cout << "Exception caught: Cannot determine exception type." << endl;
                 status = false;
             }
+        }
+        try{
+            //write farsite atmosphere file
+            if(writeFarsiteAtmFile)
+                writeFarsiteAtmosphereFile();
+
+        }catch (bad_alloc& e)
+        {
+            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+            std::cout << "WindNinja appears to have run out of memory." << endl;
+            status = false;
+            throw;
+        }catch (cancelledByUser& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (exception& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            status = false;
+            throw;
+        }catch (...)
+        {
+            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            status = false;
+            throw;
         }
     }
 #endif //NINJAFOAM            
@@ -610,10 +799,19 @@ bool ninjaArmy::startRuns(int numProcessors)
                     
                     delete model;
                 }
+
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
-               
-                if( wxList.size() > 1 )
+
+                //store data for atmosphere file
+                if(writeFarsiteAtmFile)
+                {
+                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
+                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                }
+
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0  )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -784,66 +982,14 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
 {
     if(writeFarsiteAtmFile)
     {
-        //If wxModelInitialization, make one .atm with all runs (times) listed, else the setAtmFlags() function
-        //  has already set each ninja to write their own atm file, so don't do it here!
-        if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag)
+        //If wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
+        //else the setAtmFlags() function has already set each ninja to write their own atm file,
+        //so don't do it here!
+        if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag ||
+           (ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && ninjas.size() > 1))
         {
             //Set directory path from first ninja's velocity file
             std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
-            std::string tempStr;
-
-            //Check that all files have that same directory path, if not throw()
-            //  Also check that they all have the same outputSpeedUnits and outputWindHeight
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
-                //Check vel file
-                //tempStr = CPLGetPath(ninja->get_VelFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_VelFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check ang file
-                //tempStr = CPLGetPath(ninja->get_AngFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_AngFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check cld file
-                //tempStr = CPLGetPath(ninja->get_CldFileName().c_str());
-                tempStr = CPLGetPath(ninjas[i]->get_CldFileName().c_str());
-                if(tempStr != filePath)
-                {
-                    throw std::runtime_error("Problem writing FARSITE atmosphere file (*.atm).  The directory paths " \
-                            "are not equal.");
-                }
-
-                //Check outputSpeedUnits
-                //if(ninja->get_outputSpeedUnits() != ninjas[0].get_outputSpeedUnits())
-                if(ninjas[i]->get_outputSpeedUnits() != ninjas[0]->get_outputSpeedUnits())
-                    throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja speed " \
-                            "units are not equal.");
-
-                //Check outputWindHeight
-                //if(ninja->get_outputWindHeight() != ninjas[0].get_outputWindHeight() )
-                if(ninjas[i]->get_outputWindHeight() != ninjas[0]->get_outputWindHeight() )
-                    throw std::runtime_error("Problem writing the FARSITE atmosphere file (*.atm).  The ninja " \
-                            "outputWindHeights are not equal.");
-            }
-
-            farsiteAtm atmosphere;
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
-                atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                 ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
-            }
 
             //Get filename from first ninja's velFile
             std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
@@ -862,6 +1008,7 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
         }
     }
 }
+
 /**
  * @brief Determine what type of atm file to write.
  *
@@ -873,8 +1020,10 @@ void ninjaArmy::setAtmFlags()
 {
     if(writeFarsiteAtmFile)
     {
-        //if it's not a weather model run, set all ninja's atm write flags
-        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag))
+        //if it's not a weather model or point run, set all ninja's atm write flags
+        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
+           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
+               ninjas.size() > 1))
         {
             //FOR_EVERY( ninja, ninjas )
             for(unsigned int i = 0; i < ninjas.size(); i++)
@@ -902,6 +1051,7 @@ void ninjaArmy::setSize( int nSize, bool momentumFlag )
 #endif
     }
 }
+
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
@@ -1058,11 +1208,6 @@ int ninjaArmy::setMeshCount( const int nIndex,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
 }
-int ninjaArmy::setNonEqBc( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_NonEqBc( flag ) );
-}
-
 int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
@@ -1099,6 +1244,14 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->readInputFile() );
+}
+
+/*-----------------------------------------------------------------------------
+ * Station Fetch Methods 
+ *-----------------------------------------------------------------------------*/
+int ninjaArmy::setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_stationFetchFlag( flag ) );
 }
 
 /*-----------------------------------------------------------------------------
@@ -1555,7 +1708,6 @@ std::string ninjaArmy::getInitializationMethodString( const int nIndex,
 /*-----------------------------------------------------------------------------
  *  STABILITY section
  *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
 int ninjaArmy::setStabilityFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_stabilityFlag( flag ) );
@@ -1565,7 +1717,6 @@ int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_alphaStability( stability_ ) );
 }
-#endif //STABILITY
 /*-----------------------------------------------------------------------------
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/
@@ -1662,6 +1813,10 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googResolution( resolution, units ) );
+}
+int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
+{
+    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
 }
 
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,

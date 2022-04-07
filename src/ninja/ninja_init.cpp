@@ -30,6 +30,50 @@
 
 boost::local_time::tz_database globalTimeZoneDB;
 
+/*
+** Query the windninja.org server and ask for the most up to date version.  The
+** return value is a set of key value pairs stored in a GDAL string list.
+** There are three current values:
+**
+** VERSION -> a semantic version string, comparable with strcmp()
+** MESSAGE -> One or more messages to display to the user
+** ABORT   -> There is a fundamental problem with windninja, and it should call
+**            abort() after displaying a message.
+**
+** The response is currently a semi-colon delimeted list of key value pairs as
+** in:
+**
+** VERSION=3.4.0;MESSAGE=some message for the user, may not have
+** semi-colons;ABORT:TRUE
+**
+** The returned string list must be freed by the caller using CSLDestroy().
+*/
+char ** NinjaCheckVersion(void) {
+  CPLHTTPResult *poResult;
+  char **papszTokens = NULL;
+  char *pszResp = NULL;
+  CPLPushErrorHandler(CPLQuietErrorHandler);
+  poResult = CPLHTTPFetch("http://windninja.org/version/", NULL);
+  CPLPopErrorHandler();
+  if (!poResult || poResult->nStatus != 0 || poResult->nDataLen == 0) {
+    return NULL;
+  }
+  pszResp = (char *)malloc(poResult->nDataLen + 1);
+  if (pszResp == 0) {
+      return NULL;
+  }
+  /*
+  ** Copy the message body into a null terminated string for
+  ** CSLTokenizeString()
+  */
+  memcpy(pszResp, poResult->pabyData, poResult->nDataLen);
+  pszResp[poResult->nDataLen] = '\0';
+  papszTokens = CSLTokenizeString2((const char *)pszResp, ";", 0);
+  free(pszResp);
+  CPLHTTPDestroyResult( poResult );
+  return papszTokens;
+}
+
 void NinjaCheckThreddsData( void *rc )
 {
     int *r;
@@ -75,6 +119,11 @@ int NinjaInitialize()
 {
     GDALAllRegister();
     OGRRegisterAll();
+    /*
+    ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
+    ** but that doesn't mean we are in trouble.
+    */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
@@ -85,6 +134,12 @@ int NinjaInitialize()
     CPLSetConfigOption( "GDAL_DATA", pszGdalData );
 
 #if defined(FIRELAB_PACKAGE)
+    char szDriverPath[MAX_PATH+1];
+    rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
+    const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
+    CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
+
+    CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
     ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
@@ -134,36 +189,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
-    rc = TRUE;
-#ifndef DISABLE_THREDDS_UPDATE
-    /*
-    ** Disable VSI caching, this breaks nomads downloader if it's on.
-    */
-    CPLSetConfigOption( "VSI_CACHE", "FALSE" );
-
-    /* Try to update our thredds file */
-    rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
-                                                 "NO" ) );
-    if( rc == FALSE )
-    {
-        CPLDebug( "WINDNINJA", "Attempting to download the thredds.csv file" );
-        NinjaCheckThreddsData( (void*) &rc );
-        //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
-    }
-#endif /* DISABLE_THREDDS_UPDATE */
-#ifdef NINJA_ENABLE_CALL_HOME
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
-
-    {
-        if( rc == TRUE )
-        {
-            CPLHTTPResult *poResult;
-            poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?visit=1", NULL );
-            CPLHTTPDestroyResult( poResult );
-        }
-    }
-#endif
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+    CPLPopErrorHandler();
     return 0;
 }
-

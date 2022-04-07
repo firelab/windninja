@@ -18,7 +18,8 @@
 cmake_minimum_required(VERSION 2.6)
 
 QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
-                        setconfigdialog.ui)
+                        setconfigdialog.ui
+                        stationFetchWidget.ui)
 
 set(NINJA_GUI_INCLUDES consoleDockWidget.h
                        diurnalInput.h
@@ -33,8 +34,6 @@ set(NINJA_GUI_INCLUDES consoleDockWidget.h
                        outputHeightWidget.h
                        outputMetaData.h
                        pdfOutput.h
-                       pointDataModel.h
-                       pointInputDelegate.h
                        pointInput.h
                        shapeOutput.h
                        solvePage.h
@@ -46,6 +45,7 @@ set(NINJA_GUI_INCLUDES consoleDockWidget.h
                        vtkOutput.h
                        weatherModel.h
                        WidgetDownloadDEM.h
+                       stationFetchWidget.h
                        windInput.h
                        windInputTable.h
                        WindNinjaTree.h
@@ -80,9 +80,7 @@ set(NINJA_GUI_SOURCES cmake_gui.cpp
                       nativeSolverInput.cpp
                       ninjafoamInput.cpp
                       pdfOutput.cpp
-                      pointDataModel.cpp
                       pointInput.cpp
-                      pointInputDelegate.cpp
                       shapeOutput.cpp
                       solvePage.cpp
                       solveThread.cpp
@@ -96,6 +94,7 @@ set(NINJA_GUI_SOURCES cmake_gui.cpp
                       windInputTable.cpp
                       WindNinjaTree.cpp
                       WidgetDownloadDEM.cpp
+                      stationFetchWidget.cpp
                       GoogleMapsInterface.cpp
                       setconfigdialog.cpp
                       ${QTUI_H_SRCS})

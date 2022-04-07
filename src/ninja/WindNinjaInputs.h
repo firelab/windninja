@@ -135,7 +135,10 @@ public:
     double inputWindHeight;		//height of input wind above the top of the vegetation (always stored in meters!)
     lengthUnits::eLengthUnits outputWindHeightUnits;	//units of outputWindHeight when read in (always stored in meters!)
     double outputWindHeight;		//height of output wind above the top of the vegetation (always stored in meters!)
+    bool stationFetch;
+//    std::vector<std::vector<wxStationList> > vecStations;
     std::vector<wxStation> stations;		//array of weather stations used in point initialization
+    std::vector<wxStation> realStations;
     std::string wxStationFilename;	//filename of a weather station(s) file
     std::vector<wxStation> stationsScratch;		//scratch space for a copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
     std::vector<wxStation> stationsOldInput;		//old copy of WindNinjaInputs::stations to use during outer ninja interations for wind field vs wx station matching
@@ -175,6 +178,10 @@ public:
     double outputBufferClipping;	//specifies the percent to clip the output files around the perimeter.  Range 0-50.
     bool writeAtmFile;          //flage specifying if a Farsite .atm file should be written.
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
+
+    std::string googColor; //sets color scheme for output /Colorblind mode
+    bool googVectorScale; //sets the vector scaling
+
     KmlVector::egoogSpeedScaling googSpeedScaling;		//flag specifying the speed scaling for the legend/colors in the *.kmz file (0=>equal colors, 1=>equal interval)
     double googLineWidth;		//drawing line width for google output vectors
     bool wxModelGoogOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
@@ -261,10 +268,8 @@ public:
     /*-----------------------------------------------------------------------------
      *  STABILITY section
      *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
     double alphaStability;
     bool stabilityFlag;  //flag specifying if non-neutral stability parameters should be set
-#endif
 
     std::string outputPointsFilename; //name of file containing output for requested point locations
     std::string inputPointsFilename; // name of file containing locations of specfic points for output
@@ -287,7 +292,6 @@ public:
     int nIterations; //number of iterations for a ninjafoam simulation
     int meshCount; //mesh count for a ninjafoam simulation
     eNinjafoamMeshChoice ninjafoamMeshChoice; // fine, medium, coarse
-    bool nonEqBc; //flag indicating if non-equilbrium boundary conditions should be used for a ninjafoam simulation
     std::string existingCaseDirectory; //path to exisitng case for a ninjafoam run
     std::string stlFile; //path/filename of an STL file
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam

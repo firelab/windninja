@@ -153,15 +153,18 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                   pszGeom );
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
-            pszProduct = CPLStrdup( "F4W21HZ" );
+            //pszProduct = CPLStrdup( "F4W21HZ" ); //2008 data
+            pszProduct = CPLStrdup( "FHY60HZ" ); //2016 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
-            pszProduct = CPLStrdup( "F7C29HZ" );
+            //pszProduct = CPLStrdup( "F7C29HZ" ); //2008 data
+            pszProduct = CPLStrdup( "F0740HZ" ); //2014 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
-            pszProduct = CPLStrdup( "F4825HZ" );
+            //pszProduct = CPLStrdup( "F4825HZ" ); //2008 data
+            pszProduct = CPLStrdup( "FCM42HZ" ); //2014 data
         }
         /* Contiguous US */
         //if( bbox[0] < 52 && bbox[1] < -60 && bbox[2] > 22 && bbox[3] > -136 )
@@ -207,7 +210,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
      *-----------------------------------------------------------------------------*/
     pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, bbox[0], bbox[2], bbox[3],
                                               bbox[1], pszProduct );
-
     CPLFree( (void*)pszProduct );
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );

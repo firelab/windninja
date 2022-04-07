@@ -36,6 +36,7 @@
 #endif
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include "Elevation.h"
 
 typedef struct _StlPosition
 {
@@ -60,6 +61,11 @@ CPLErr NinjaElevationToStl( const char *pszInput,
                             NinjaStlType eType,
                             double dfOffset,
                             GDALProgressFunc pfnProgress );
+
+CPLErr NinjaElevationToStl( Elevation &elevationGrid,
+                            const char *pszOutput,
+                            NinjaStlType eType,
+                            double dfOffset );
 
 #endif /* NINJA_STL_CONVERT_H_ */
 

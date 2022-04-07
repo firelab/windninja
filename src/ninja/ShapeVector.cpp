@@ -132,7 +132,7 @@ bool ShapeVector::CreateShape()
      //sprintf(DataBaseID, "%s", "Ycoord");
     	//DBFAddField(hDBF, DataBaseID, FTDouble, 16, 6);
      sprintf(DataBaseID, "%s", "speed");
-    	DBFAddField(hDBF, DataBaseID, FTDouble, 16, 6 );
+        DBFAddField(hDBF, DataBaseID, FTDouble, 16, 1 ); //Note that this used to be 6, which was overkill
      sprintf(DataBaseID, "%s", "dir");
     	DBFAddField(hDBF, DataBaseID, FTInteger, 8, 0);
      sprintf(DataBaseID, "%s", "AM_dir");
@@ -184,7 +184,7 @@ void ShapeVector::WriteShapePoint(double xpt, double ypt, double spd, long dir, 
 	//DBFWriteDoubleAttribute(hDBF, NumRecord, 1, ypt);
 	//DBFWriteIntegerAttribute(hDBF, NumRecord, 2, spd);
 	//DBFWriteIntegerAttribute(hDBF, NumRecord, 3, dir);
-	DBFWriteDoubleAttribute(hDBF, NumRecord, 0, spd);
+    DBFWriteDoubleAttribute(hDBF, NumRecord, 0, spd);
 	DBFWriteIntegerAttribute(hDBF, NumRecord, 1, dir);
 	DBFWriteIntegerAttribute(hDBF, NumRecord, 2, map_dir);
 	DBFWriteIntegerAttribute(hDBF, NumRecord, 3, qgis_dir);

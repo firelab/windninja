@@ -140,6 +140,13 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
     int zone = GetUTMZoneInEPSG(point[0], point[1]);
     oDstSRS.importFromEPSG(zone);
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
     OGRCoordinateTransformation *poCT;
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
@@ -179,6 +186,14 @@ SURF_FETCH_E SurfaceFetch::WarpBoundingBox(double *bbox)
     oSrcSRS.importFromEPSG(4326);
     oDstSRS.importFromEPSG(nUtmZone);
     OGRCoordinateTransformation *poCT;
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
     {

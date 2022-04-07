@@ -41,7 +41,7 @@ double GDALGetMax( GDALDataset *poDS )
     GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
     double adfMinMax[2];
 
-    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
 
     return adfMinMax[1];
 }
@@ -56,7 +56,7 @@ double GDALGetMin( GDALDataset *poDS )
     GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
     double adfMinMax[2];
 
-    GDALComputeRasterMinMax((GDALRasterBandH)poBand, TRUE, adfMinMax);
+    GDALComputeRasterMinMax((GDALRasterBandH)poBand, FALSE, adfMinMax);
 
     return adfMinMax[0];
 }
@@ -64,60 +64,72 @@ double GDALGetMin( GDALDataset *poDS )
 /** Fetch the center of a domain.
  * Fetch the center of a domain from any valid GDAL dataset
  * @param poDS a pointer to a valid GDAL Dataset
- * @param centerLonLat a pointer to a double size of double * 2
+ * @param x the longitude of the center
+ * @param y the latitude of the center
  * @return true on valid population of the double*
  */
-bool GDALGetCenter( GDALDataset *poDS, double *centerLonLat )
+bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 {
-    char* pszPrj;
-    double adfGeoTransform[6];
-    int xSize, ySize;
-    double xCenter, yCenter;
-    double lon, lat;
+    GDALDatasetH hDS = (GDALDatasetH)poDS;
+    assert(hDS);
+    assert(longitude);
+    assert(latitude);
+    bool rc = true;
 
-    OGRSpatialReference oSourceSRS, oTargetSRS;
-    OGRCoordinateTransformation *poCT;
-
-    if( poDS == NULL )
-	return false;
-
-    xSize = poDS->GetRasterXSize( );
-    ySize = poDS->GetRasterYSize( );
-
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None )
-	return false;
-
-    if( poDS->GetProjectionRef(  ) == NULL )
-	return false;
-    else
-	pszPrj = (char*)poDS->GetProjectionRef();
-
-    oSourceSRS.importFromWkt( &pszPrj );
-    oTargetSRS.SetWellKnownGeogCS( "WGS84" );
-
-    poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
-    if( poCT == NULL )
-	return false;
-
-    xCenter = xSize / 2;
-    yCenter = ySize / 2;
-
-    lon = adfGeoTransform[0] + adfGeoTransform[1] * xCenter
-	+ adfGeoTransform[2] * yCenter;
-
-    lat = adfGeoTransform[3] + adfGeoTransform[4] * xCenter
-	+ adfGeoTransform[5] * yCenter;
-
-    if( !poCT->Transform( 1, &lon, &lat ) ) {
-	OGRCoordinateTransformation::DestroyCT( poCT );
-	return false;
+    const char *pszPrj = GDALGetProjectionRef(hDS);
+    if(pszPrj == NULL) {
+        return false;
     }
 
-    centerLonLat[0] = lon;
-    centerLonLat[1] = lat;
+    OGRSpatialReferenceH hSrcSRS, hTargetSRS;
+    hSrcSRS = OSRNewSpatialReference(pszPrj);
+    hTargetSRS = OSRNewSpatialReference(NULL);
+    if(hSrcSRS == NULL || hTargetSRS == NULL) {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+    OSRImportFromEPSG(hTargetSRS, 4326);
 
-    OGRCoordinateTransformation::DestroyCT( poCT );
-    return true;
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+    OGRCoordinateTransformationH hCT;
+    hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
+    if(hCT == NULL) {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+    int nX = GDALGetRasterXSize(hDS);
+    int nY = GDALGetRasterYSize(hDS);
+
+    double adfGeoTransform[6];
+    if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None) {
+        OCTDestroyCoordinateTransformation(hCT);
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+    double x = adfGeoTransform[0] + adfGeoTransform[1] * (nX / 2) +
+      adfGeoTransform[2] * (nY / 2);
+    double y = adfGeoTransform[3] + adfGeoTransform[4] * (nX / 2) +
+      adfGeoTransform[5] * (nY / 2);
+
+    rc = OCTTransform(hCT, 1, &x, &y, 0);
+    if(rc) {
+        *longitude = x;
+        *latitude = y;
+    }
+    OCTDestroyCoordinateTransformation(hCT);
+    OSRDestroySpatialReference(hSrcSRS);
+    OSRDestroySpatialReference(hTargetSRS);
+    return rc;
 }
 
 /** Fetch the longitude/latitude bounds of an image
@@ -150,6 +162,11 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if( poCT == NULL )
@@ -200,6 +217,11 @@ bool GDALTestSRS( GDALDataset *poDS )
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
 
@@ -356,6 +378,13 @@ bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poSrcDS,
     oSourceSRS.SetWellKnownGeogCS( datum );
     oTargetSRS.importFromWkt( &pszPrj );
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if( poCT == NULL )
 	return false;
@@ -364,6 +393,7 @@ bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poSrcDS,
 	OGRCoordinateTransformation::DestroyCT( poCT );
 	return false;
     }
+
     OGRCoordinateTransformation::DestroyCT( poCT );
     return true;
 }
@@ -386,6 +416,13 @@ bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( datum );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
 
@@ -424,6 +461,13 @@ bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS,
 
   oTargetSRS.SetWellKnownGeogCS(datum);
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
   poCT = OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS);
 
   if (poCT == NULL) {
@@ -450,13 +494,12 @@ int GDALGetUtmZone( GDALDataset *poDS )
     if( poDS == NULL )
         return 0;
 
-    double centerLonLat[2];
-    if( !GDALGetCenter( poDS, centerLonLat ) )
+    double longitude = 0;
+    double latitude = 0;
+    if( !GDALGetCenter( poDS, &longitude, &latitude ) )
         return 0;
-    double lon = centerLonLat[0];
-    double lat = centerLonLat[1];
 
-    return GetUTMZoneInEPSG( lon, lat );
+    return GetUTMZoneInEPSG( longitude, latitude );
 }
 
 /**
@@ -478,6 +521,9 @@ int GetUTMZoneInEPSG( double lon, double lat )
 {
     int wkid;
     int baseValue;
+
+    // Check for wrapped longitude
+    lon = fmod( lon, 360.0 );
 
     // Southern hemisphere if latitude is less than 0
     if ( lat < 0 )
@@ -627,6 +673,13 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
 
         oSourceSRS.SetWellKnownGeogCS( "WGS84" );
         oTargetSRS.importFromWkt( (char**)&pszWkt );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
         poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
         if( poCT == NULL )

@@ -114,6 +114,12 @@ else(WIN32)
     find_package(GDAL REQUIRED)
 endif(WIN32)
 
+option(NINJA_QT5GUI "build Qt5 experimental GUI" OFF)
+if(NINJA_QT5GUI)
+    message("building qt5 gui")
+    add_subdirectory(src/gui/ui)
+endif(NINJA_QT5GUI)
+
 if(WIN32)
     if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
         set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
@@ -188,6 +194,10 @@ if(WITH_NOMADS_SUPPORT)
     if(NOMADS_ENABLE_3D)
         add_definitions(-DNOMADS_ENABLE_3D)
     endif(NOMADS_ENABLE_3D)
+    option(NOMADS_INTERNAL_VRT "Use an internal copy of GDALAutoCreateVRT that allows for band subsetting" OFF)
+    if(NOMADS_INTERNAL_VRT)
+        add_definitions(-DNOMADS_INTERNAL_VRT)
+    endif(NOMADS_INTERNAL_VRT)
 endif(WITH_NOMADS_SUPPORT)
 
 option(DISABLE_THREDDS_UPDATE "Don't connect to server for thredds updates" OFF)
@@ -205,6 +215,12 @@ option(WITH_LCP_CLIENT "Allow LCP downloading" ON)
 if(WITH_LCP_CLIENT)
     add_definitions(-DWITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
+
+#disable for exception handling in the GUI and CLI
+option(C_API "Enable WindNinja C API" OFF)
+if(C_API)
+    add_definitions(-DC_API)
+endif(C_API)
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
@@ -237,11 +253,6 @@ if(EMISSIONS)
     add_definitions(-DEMISSIONS)
     set(FRICTION_VELOCITY ON CACHE BOOL "Enable friction velocity calculations" FORCE)
 endif(EMISSIONS)
-
-option(STABILITY "Enable atmospheric stability model" ON)
-if(STABILITY)
-    add_definitions(-DSTABILITY)
-endif(STABILITY)
 
 option(MOBILE_APP "Enable optoins for mobile app" OFF)
 if(MOBILE_APP)
@@ -278,7 +289,7 @@ else(VERBOSE_WARNINGS)
         if(MSVC)
             add_definitions(-D_CRT_SECURE_NO_WARNINGS)
         else(MSVC)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format -Wno-unused-result")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
             set(GDAL_SYSTEM_INCLUDE "SYSTEM")
         endif(MSVC)
     endif(SUPRESS_WARNINGS)
@@ -303,6 +314,12 @@ option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL fi
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
+
+option(NINJA_GDAL_OUTPUT "allow experimental output formats from GDAL" OFF)
+mark_as_advanced(NINJA_GDAL_OUTPUT)
+if(NINJA_GDAL_OUTPUT)
+  add_definitions(-DNINJA_GDAL_OUTPUT)
+endif()
 
 # Recurse into subdirectories
 add_subdirectory(src)
@@ -356,21 +373,43 @@ if(VERBOSE_CMAKE)
 endif(VERBOSE_CMAKE)
 
 # install target related files
-set(etc_files mackay.tif
+set(etc_files missoula_valley.tif
                   example_lcp.lcp
                   example_lcp.prj
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
                   cli_pointInitialization_diurnal.cfg
                   cli_wxModelInitialization_diurnal.cfg
-                  cli_momentumSolver_diurnal.cfg
-                  mackay_wx_stations.csv)
+                  cli_momentumSolver_diurnal.cfg)
 foreach(f ${etc_files})
     install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
             etc/windninja/example-files COMPONENT apps)
 endforeach(f ${etc_files})
 
+#add weather station files to example files
+set(wx_station_current_files  WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv
+                              WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv)
+foreach(f ${wx_station_current_files})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+            etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley COMPONENT apps)
+endforeach(f ${wx_station_current_files})
+
+#add weather station time series files
+set(wx_station_ts_files  WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
+                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
+foreach(f ${wx_station_ts_files})
+    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+            etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley COMPONENT apps)
+endforeach(f ${wx_station_ts_files})
+
 set(share_files date_time_zonespec.csv
+                config_options.csv
                 tz_world.zip
                 landfire.zip
                 map.htm
@@ -384,6 +423,9 @@ foreach(f ${share_files})
     install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
             share/windninja COMPONENT apps)
 endforeach(f ${share_files})
+
+# Leaflet data
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/)
 
 set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf
@@ -411,17 +453,19 @@ install(FILES ${CMAKE_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja
 install(FILES ${CMAKE_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
 install(FILES ${CMAKE_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
 
+set(ZIPFILES "")
+
 # GDAL data
 if(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
-    INSTALL(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
+    install(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
 endif(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
 
 if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
         message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
-    FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
-    FILE(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
+    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
+    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
 # CPack related scripting

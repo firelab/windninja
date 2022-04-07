@@ -38,8 +38,6 @@ ninja::ninja()
 {
     cancel = false;
     alphaH = 1.0;
-    //alphaV = 1.0;
-    alpha = 1.0;
     isNullRun = false;
     maxStartingOuterDiff = -1.0;
     matchTol = 0.22;    //0.22 m/s is about 1/2 mph
@@ -131,8 +129,6 @@ ninja::ninja(const ninja &rhs)
 
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
-    //alphaV = rhs.alphaV;
-    alpha = rhs.alpha;
     isNullRun = rhs.isNullRun;
     maxStartingOuterDiff = rhs.maxStartingOuterDiff;
     nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -206,8 +202,6 @@ ninja &ninja::operator=(const ninja &rhs)
 
         cancel = rhs.cancel;
         alphaH = rhs.alphaH;
-        //alphaV = rhs.alphaV;
-        alpha = rhs.alpha;
         isNullRun = rhs.isNullRun;
         maxStartingOuterDiff = rhs.maxStartingOuterDiff;
         nMaxMatchingIters = rhs.nMaxMatchingIters;
@@ -262,7 +256,6 @@ bool ninja::simulate_wind()
 	
 	readInputFile();
 	set_position();
-	set_uniVegetation();
 
 	checkInputs();
 
@@ -325,8 +318,9 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 	if(input.matchWxStations == true)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
-		input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
-	}
+        input.Com->noSolverProgress();    //don't print normal solver progress, just "outer iter" "matching" progress
+        //If this is commented, it messes with the progress-bar
+    }
 }
 
 int matchingIterCount = 0;
@@ -345,9 +339,9 @@ do
 
 		if(input.matchWxStations == true)
 		{
-                    matchingIterCount++;
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
-		}
+            matchingIterCount++;
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "\"matching\" loop iteration %i...", matchingIterCount);
+        }
 
 #ifdef _OPENMP
                 startInit = omp_get_wtime();
@@ -564,14 +558,25 @@ if(input.frictionVelocityFlag == 1){
 			input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
 	#endif
 
-
      input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d done!", input.inputsRunNumber);
+
+     //If its a pointInitialization Run, explicitly set run completion to 100 when they finish
+     //for some reason this doesn't happen automatically
+     if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
+     {
+         if(input.matchWxStations == true)
+         {
+             int time_percent_complete=100;
+             input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+         }
+     }
+
 
 	 deleteDynamicMemory();
 	 if(!input.keepOutGridsInMemory)
 	 {
 	     AngleGrid.deallocate();
-	     VelocityGrid.deallocate();
+         VelocityGrid.deallocate();
 	     CloudGrid.deallocate();
 	     #ifdef FRICTION_VELOCITY
 	     if(input.frictionVelocityFlag == 1){
@@ -584,7 +589,6 @@ if(input.frictionVelocityFlag == 1){
 	     }
          #endif
 	 }
-
      return true;
 }
 
@@ -595,12 +599,12 @@ if(input.frictionVelocityFlag == 1){
 double ninja::getSmallestRadiusOfInfluence()
 {
 	double smallest = DBL_MAX;
-	for(unsigned int i = 0; i < input.stations.size(); i++)
+    for(unsigned int i = 0; i < input.stations.size(); i++)
 	{
-		if(input.stations[i].get_influenceRadius() > 0)
+        if(input.stations[i].get_influenceRadius() > 0)
 		{
-			if(input.stations[i].get_influenceRadius() < smallest)
-				smallest = input.stations[i].get_influenceRadius();
+            if(input.stations[i].get_influenceRadius() < smallest)
+                smallest = input.stations[i].get_influenceRadius();
 		}
 	}
 
@@ -757,7 +761,15 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
                 time_percent_complete = 99.0;
             residual_percent_complete_old=residual_percent_complete;
             //fprintf(convergence_history,"\n%ld\t%lf\t%lf",i,residual_percent_complete, time_percent_complete);
-            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
+#ifdef NINJAFOAM
+            //If its a foam+diurnal run, progressWeight==0.80, which means we need to modify the
+            //diurnal time_percent_complete
+            if(input.Com->progressWeight!=1.0)
+            {
+                time_percent_complete = (input.Com->progressWeight*100)+(1.0-input.Com->progressWeight)*time_percent_complete;
+            }
+#endif //NINJAFOAM
+            input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5)); //Tell the GUI what the percentage to complete for the ninja is
         }
 
         if (resid <= tol)	//check residual against tolerance
@@ -800,7 +812,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     {
         throw std::runtime_error("Solution did not converge.\nMAXITS reached.");
     }else{
-        time_percent_complete = 100.0;
+        time_percent_complete = 100; //When the solver finishes, set it to 100
         input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete+0.5));
         return true;
     }
@@ -1638,7 +1650,6 @@ void ninja::discretize()
 
 	 checkCancel();
 
-    #ifdef STABILITY
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
     Stability stb(input);
@@ -1745,18 +1756,12 @@ void ninja::discretize()
 
     CPLDebug("STABILITY", "alphaVfield(0,0,0) = %lf\n", alphaVfield(0,0,0));
 
-    #endif // STABILITY
-
-
 #pragma omp parallel default(shared) private(i,j,k,l)
 	 {
 		 element elem(&mesh);
-		 int pos;
-
-		 #ifdef STABILITY
+		 int pos;  
+                 double alphaV; //used for summing over nodal points below
 		 int ii, jj, kk;
-         double alphaV; //alpha vertical from governing equation, weighting for change in vertical winds
-		 #endif
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -1816,11 +1821,7 @@ void ninja::discretize()
 
 				 elem.HVJ=0.0;
 
-				 double alphaV = 1;
-
-				 #ifdef STABILITY
-				 alphaV = 0;
-				 #endif
+				 alphaV = 0; //used for summing over the nodes in the element, reset to 0 each time through loop 
 
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
@@ -1828,14 +1829,8 @@ void ninja::discretize()
 
 					 elem.HVJ=elem.HVJ+((elem.DNDX[k]*u0(elem.NPK))+(elem.DNDY[k]*v0(elem.NPK))+(elem.DNDZ[k]*w0(elem.NPK)));
 
-					 #ifdef STABILITY
 					 alphaV=alphaV+elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*alphaVfield(elem.NPK);
-					 //cout<<"alphaV = "<<alphaV<<endl;
-                                         #endif
 				 }                             //End loop over nodes in the element
-				 //elem.HVJ=2*elem.HVJ;                    //This is the H for quad point j (the 2* comes from governing equation)
-
-				 //elem.RZ=alpha*alpha;               //This is the RZ from the governing equation
 
 				 elem.RX = 1.0/(2.0*alphaH*alphaH);
 				 elem.RY = 1.0/(2.0*alphaH*alphaH);
@@ -1921,9 +1916,7 @@ void ninja::discretize()
 		 }                                  //End loop over elements
 	 }		//End parallel region
 
-     #ifdef STABILITY
      stb.alphaField.deallocate();
-     #endif
 }
 
 /**Sets up boundary conditions for the simulation.
@@ -2170,10 +2163,6 @@ void ninja::computeUVWField()
 
      double alphaV = 1.0;
 
-     #ifdef STABILITY
-     alphaV = 1.0; //should be 1 unless stability parameters are set
-     #endif
-
      #pragma omp for
 
      for(i=0;i<mesh.NUMNP;i++)
@@ -2183,10 +2172,7 @@ void ninja::computeUVWField()
           w(i)=w(i)/DIAG[i];
 
           //Finally, calculate u,v,w
-
-          #ifdef STABILITY
           alphaV = alphaVfield(i); //set alphaV for stability
-		  #endif
 
 		  u(i)=u0(i)+1.0/(2.0*alphaH*alphaH)*u(i);         //Remember, dPHI/dx is stored in u
 		  v(i)=v0(i)+1.0/(2.0*alphaH*alphaH)*v(i);
@@ -2196,7 +2182,6 @@ void ninja::computeUVWField()
      }
      }		//end parallel section
 
-     #ifdef STABILITY
      alphaVfield.deallocate();
 
     // testing
@@ -2215,9 +2200,6 @@ void ninja::computeUVWField()
         testGrid.write_Grid(filename.c_str(), 2);
     }
     testGrid.deallocate();*/
-
-     #endif
-
 }
 
 /**Prepares for writing output files.
@@ -2446,7 +2428,7 @@ bool ninja::matched(int iter)
             //Check if station is in mesh, if not, can't do matching so skip
             if(!mesh.inMeshXY(x, y))
                 continue;
-			z = input.stations[i].get_height() + input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) + input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
+            z = input.stations[i].get_height() + input.surface.Rough_h.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1) + input.dem.interpolateGridLocalCoordinates(x, y, AsciiGrid<double>::order1);
 
 			//Get cell number and "parent cell" coordinates of station location
 			elem.get_uvw(x, y, z, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
@@ -2457,7 +2439,7 @@ bool ninja::matched(int iter)
             try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
-			wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
+            wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance
@@ -2489,6 +2471,9 @@ bool ninja::matched(int iter)
                 if(abs(true_v-try_output_v) > maxCurrentOuterDiff)
                     maxCurrentOuterDiff = abs(true_v-try_output_v);
 			}
+
+            //index for storing data back in wxstation object
+            int dataIndex=input.inputsRunNumber;
 
             wind_sd_to_uv(input.stationsScratch[i].get_speed(), input.stationsScratch[i].get_direction(), &try_input_u, &try_input_v);
             try_input_w = input.stationsScratch[i].get_w_speed();
@@ -2528,6 +2513,7 @@ bool ninja::matched(int iter)
 
 
             //Did our last correction attempt improve things for u?
+
             if(fabs(try_output_u-true_u) > fabs(old_output_u-true_u) && iter>1 && num_outer_iter_tries_u[i]<1)
             {
                 //If worse, then scrap the last try and, only step halfway
@@ -2576,48 +2562,46 @@ bool ninja::matched(int iter)
             if(u_keep_old==true && v_keep_old==true)
             {
                 wind_uv_to_sd(old_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else if(u_keep_old==true && v_keep_old==false)
             {
                 wind_uv_to_sd(old_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(old_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else if(u_keep_old==false && v_keep_old==true)
             {
                 wind_uv_to_sd(try_input_u, old_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, old_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
 
             }else
             {
                 wind_uv_to_sd(try_input_u, try_input_v, &spd, &dir);
-                input.stationsOldInput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldInput[i].set_direction(dir);
+                input.stationsOldInput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldInput[i].update_direction(dir,dataIndex);
 
                 wind_uv_to_sd(try_output_u, try_output_v, &spd, &dir);
-                input.stationsOldOutput[i].set_speed(spd, velocityUnits::metersPerSecond);
-                input.stationsOldOutput[i].set_direction(dir);
+                input.stationsOldOutput[i].update_speed(spd, velocityUnits::metersPerSecond,dataIndex);
+                input.stationsOldOutput[i].update_direction(dir,dataIndex);
             }
 
 
             //input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
-
-
 
             //u component
             //new_input_u = try_input_u + input.outer_relax*(true_u - try_output_u);
@@ -2628,9 +2612,10 @@ bool ninja::matched(int iter)
 
 			//Set stationsScratch to new velocities and direction that are closer (hopefully!)
 			wind_uv_to_sd(new_input_u, new_input_v, &spd, &dir);
-            input.stationsScratch[i].set_speed(spd, velocityUnits::metersPerSecond);
-			input.stationsScratch[i].set_direction(dir);
-			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
+            input.stationsScratch[i].update_speed(spd,velocityUnits::metersPerSecond,dataIndex);
+            input.stationsScratch[i].update_direction(dir,dataIndex);
+
+//			//input.stationsScratch[i].set_w_speed(new_input_w, velocityUnits::metersPerSecond);
         }
 
 		//compute percent complete
@@ -2651,7 +2636,9 @@ bool ninja::matched(int iter)
 		    time_percent_complete = 100.0;
 		else if(time_percent_complete >= 99.0 )
 		    time_percent_complete = 99.0;
-		input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+        input.Com->ninjaCom(ninjaComClass::ninjaOuterIterProgress, "%d",(int) (time_percent_complete+0.5));
+//        input.Com->ninjaCom(ninjaComClass::ninjaSolverProgress, "%d",(int) (time_percent_complete)); //STATION FETCH COMM
+
 
 		return ret;
 	}
@@ -2760,9 +2747,19 @@ void ninja::writeOutputFiles()
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                         //ensure grids cover original DEM extents for FARSITE
-                        tempCloud.BufferGridInPlace();
-                        angTempGrid->BufferGridInPlace();
-                        velTempGrid->BufferGridInPlace();
+                        AsciiGrid<double> demGrid;
+                        GDALDatasetH hDS;
+                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                        if( hDS == NULL )
+                        {
+                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                    "Problem reading DEM during output writing." );
+                        }
+
+                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                        tempCloud.BufferToOverlapGrid(demGrid);
+                        angTempGrid->BufferToOverlapGrid(demGrid);
+                        velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -2961,8 +2958,7 @@ void ninja::writeOutputFiles()
 			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
 			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
-
-			if(ninjaKmlFiles.writeKml(input.googSpeedScaling))
+            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
 					ninjaKmlFiles.removeKmlFile();
@@ -3380,7 +3376,19 @@ void ninja::set_ComNumRuns( int nRuns )
 {
     input.Com->nRuns = nRuns;
 }
+
 #endif //NINJA_GUI
+
+double ninja::get_progressWeight()
+{
+    return input.Com->progressWeight;
+}
+
+void ninja::set_progressWeight(double progressWeight)
+{
+    CPLDebug("NINJA","ADJUSTING PROGRESS BAR WT TO: %f",progressWeight);
+    input.Com->progressWeight = progressWeight;
+}
 
 void ninja::set_initializationMethod( WindNinjaInputs::eInitializationMethod method,
                                       bool matchPoints )
@@ -3460,7 +3468,6 @@ void ninja::setArmySize(int n)
     input.armySize = n;
 }
 
-#ifdef STABILITY
 void ninja::set_stabilityFlag(bool flag)
 {
     input.stabilityFlag = flag;
@@ -3474,7 +3481,6 @@ void ninja::set_alphaStability(double stability_)
         throw std::logic_error("Problem with stability in ninja::set_alphaStability().");
     }
 }
-#endif //STABILITY
 
 #ifdef NINJAFOAM
 void ninja::set_NumberOfIterations(int nIterations)
@@ -3501,10 +3507,6 @@ void ninja::set_MeshCount(WindNinjaInputs::eNinjafoamMeshChoice meshChoice)
     else{
         throw std::range_error("The mesh resolution choice has been set improperly.");
     }
-}
-void ninja::set_NonEqBc(bool flag)
-{
-    input.nonEqBc = flag;
 }
 
 WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::string meshChoice)
@@ -4071,6 +4073,16 @@ void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatase
 }
 
 /**
+ * Sets the flag indicating whether station fetch is on or off 
+ * @param flag true if station fetch is enbaled, otherwise false 
+ */
+void ninja::set_stationFetchFlag(bool flag)
+{
+    input.stationFetch=flag;   
+}
+
+
+/**
  * Sets the filename for a weather model initialization run.
  * @param forecast_initialization_filename Name of forecast file.  This typically is a
  * relative path starting from the directory where the elevation file is.
@@ -4090,21 +4102,15 @@ void ninja::set_wxStationFilename(std::string station_filename)
 {
     if(station_filename.empty())
         throw std::runtime_error("Weather station filename empty in ninja::set_wxStationFilename().");
-
     input.wxStationFilename = station_filename;
-    input.stations = wxStation::readStationFile(input.wxStationFilename, input.dem.fileName);	//read wxStation(s) info from file
+
     input.stationsScratch = input.stations;
     input.stationsOldInput = input.stations;
     input.stationsOldOutput = input.stations;
-    for (unsigned int i = 0; i < input.stations.size(); i++)
-    {
-        if (!input.stations[i].check_station())
-        {
-            throw std::range_error("Error in weather station parameters.");
-        }
-    }
+
     input.inputSpeedUnits = input.stations[0].get_speedUnits(); //set inputSpeedUnits in ninja class to first station.
 }
+
 
 /**
  * Returns the list of stations. Should be run after set_wxStationFilename.
@@ -4124,7 +4130,7 @@ void ninja::set_wxStations(std::vector<wxStation> &wxStations)
     input.stations = wxStations;
     for (unsigned int i = 0; i < input.stations.size(); i++)
     {
-        if (!input.stations[i].check_station())
+        if (wxStation::check_station(input.stations[i])==false)
         {
             throw std::range_error("Error in weather station parameters.");
         }
@@ -4152,6 +4158,7 @@ void ninja::set_meshResChoice( const Mesh::eMeshChoice choice )
 {
     mesh.set_meshResChoice( choice );
 }
+
 void ninja::set_meshResolution( double resolution, lengthUnits::eLengthUnits units )
 {
     mesh.set_meshResolution( resolution, units );
@@ -4183,11 +4190,12 @@ bool ninja::set_position()
     if(poDS == NULL)
         throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
 
-    double lonLat[2];
+    double longitude, latitude;
 
-    if( GDALGetCenter( poDS, lonLat ) )
+    if( GDALGetCenter( poDS, &longitude, &latitude ) )
     {
-        set_position(lonLat[1], lonLat[0]);
+        // XXX: note y/x axis ordering
+        set_position(latitude, longitude);
         GDALClose( (GDALDatasetH)poDS );
         return true;
     }
@@ -4457,6 +4465,12 @@ void ninja::set_googOutFlag(bool flag)
     input.googOutFlag = flag;
 }
 
+void ninja::set_googColor(std::string scheme, bool scaling)
+{
+    input.googColor = scheme;
+    input.googVectorScale = scaling;
+}
+
 
 
 void ninja::set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling)
@@ -4600,7 +4614,13 @@ void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
     VSIStatL( path.c_str(), &sStat );
-    const char *pszTestPath = CPLFormFilename(path.c_str(), "NINJA_TEST", "");
+    /*
+    ** We just need a unique stub here, and instead of generating a random
+    ** stub, we are using GenerateTempFile to be cross platform.  We are just
+    ** using the stub/basename instead of the whole path.
+    */
+    const char *pszTmpName = CPLGetBasename(CPLGenerateTempFilename(0));
+    const char *pszTestPath = CPLFormFilename(path.c_str(), pszTmpName, 0);
     int nRet;
     
     if( VSI_ISDIR( sStat.st_mode ) ){
@@ -4655,11 +4675,18 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     if( input.diurnalWinds == true ||
         input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )
+    {
         timestream << input.ninjaTime;
-#ifdef STABILITY
+    }
+    else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
+    {
+        if(wxStation::stationFormat == wxStation::newFormat)
+        {
+            timestream << input.ninjaTime;
+        }
+    }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
         timestream << input.ninjaTime;
-#endif
 
     std::string pathName;
     std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
@@ -4697,7 +4724,6 @@ void ninja::set_outputFilenames(double& meshResolution,
 
 
     timeAppend = timestream.str();
-
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
     wxModelOutputFacet = new boost::local_time::local_time_facet();
@@ -4737,6 +4763,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_pdf   << "_point";
     }
 
+
     double meshResolutionTemp = meshResolution;
     double kmzResolutionTemp = input.kmzResolution;
     double shpResolutionTemp = input.shpResolution;
@@ -4755,7 +4782,6 @@ void ninja::set_outputFilenames(double& meshResolution,
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
-    #ifdef STABILITY
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
         os       << "_alpha_" << input.alphaStability;
@@ -4772,13 +4798,13 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_non_neutral_stability";
         os_pdf   << "_non_neutral_stability";
     }
-    #endif
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -4846,117 +4872,119 @@ void ninja::keepOutputGridsInMemory(bool flag)
 }
 
 double ninja::getFuelBedDepth(int fuelModel)
-{	//at this point must be in meters...  could change...
-
-    //TODO: add units info, turn into table so there arent >200 branches
+{	
+    double depthInFeet;
     if(fuelModel == 1)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 2)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 3)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 4)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 5)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 6)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 7)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 8)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 9)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 10)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 11)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 12)
-        return 2.300000;
+        depthInFeet = 2.3;
     else if(fuelModel == 13)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 101)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 102)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 103)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 104)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 105)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 106)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 107)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 108)
-        return 4.000000;
+        depthInFeet = 4.0;
     else if(fuelModel == 109)
-        return 5.000000;
+        depthInFeet = 5.0;
     else if(fuelModel == 121)
-        return 0.900000;
+        depthInFeet = 0.9;
     else if(fuelModel == 122)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 123)
-        return 1.800000;
+        depthInFeet = 1.8;
     else if(fuelModel == 124)
-        return 2.100000;
+        depthInFeet = 2.1;
     else if(fuelModel == 141)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 142)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 143)
-        return 2.400000;
+        depthInFeet = 2.4;
     else if(fuelModel == 144)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 145)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 146)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 147)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 148)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 149)
-        return 4.400000;
+        depthInFeet = 4.4;
     else if(fuelModel == 161)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 162)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 163)
-        return 1.300000;
+        depthInFeet = 1.3;
     else if(fuelModel == 164)
-        return 0.500000;
+        depthInFeet = 0.5;
     else if(fuelModel == 165)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 181)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 182)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 183)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 184)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 185)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 186)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 187)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 188)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 189)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 201)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 202)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 203)
-        return 1.200000;
+        depthInFeet = 1.2;
     else if(fuelModel == 204)
-        return 2.700000;
+        depthInFeet = 2.7;
     else
         return -1.0;
+
+    //multiply by 0.3048 to convert from feet to meters
+    return (depthInFeet * 0.3048);
 }
 
 void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
@@ -5003,9 +5031,6 @@ void ninja::checkInputs()
 
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-    if(s.find_first_of("0123456789") == 0){
-        throw std::runtime_error("The DEM name cannot start with a number.");
-    }
     if(s.find_first_of("/\\:;\"'") != std::string::npos){
         throw std::runtime_error("The DEM name contains an invalid character."
                 " The DEM name cannot contain the following characters: / \\ : ; \" '.");

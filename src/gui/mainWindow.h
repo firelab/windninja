@@ -88,6 +88,7 @@ class mainWindow : public QMainWindow
 
   int *runProgress;
   int totalProgress;
+  std::vector<int> progressLog;
 
   bool okToContinueCheck;
 
@@ -141,8 +142,10 @@ class mainWindow : public QMainWindow
 
  signals:
   void inputFileChanged(QString newFile);
+  void mainDiurnalChanged(bool dC);
 
  public slots:
+  void checkMessages();
 #ifdef NINJAFOAM  
   void openExistingCase();
   void updateFileInputForCase(const char* file);
@@ -193,9 +196,7 @@ class mainWindow : public QMainWindow
   int checkInputItem();
   int checkSurfaceItem();
   int checkDiurnalItem();
-#ifdef STABILITY
   int checkStabilityItem();
-#endif
 #ifdef NINJAFOAM
   int checkNativeSolverItem();
   int checkNinjafoamItem();

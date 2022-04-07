@@ -38,9 +38,7 @@
 #include "surfaceInput.h"
 #include "diurnalInput.h"
 
-#ifdef STABILITY
 #include "stabilityInput.h"
-#endif
 
 #ifdef NINJAFOAM
 #include "ninjafoamInput.h"
@@ -84,9 +82,7 @@ class WindNinjaTree : public QWidget
   QTreeWidgetItem *pointItem;
   QTreeWidgetItem *modelItem;
   QTreeWidgetItem *diurnalItem;
-#ifdef STABILITY
   QTreeWidgetItem *stabilityItem;
-#endif
 #ifdef NINJAFOAM
   QTreeWidgetItem *ninjafoamItem;
   QTreeWidgetItem *nativeSolverItem;
@@ -116,9 +112,7 @@ class WindNinjaTree : public QWidget
 
   surfaceInput *surface;
   diurnalInput *diurnal;
-#ifdef STABILITY
   stabilityInput *stability;
-#endif
 #ifdef NINJAFOAM
   ninjafoamInput *ninjafoam;
   nativeSolverInput *nativesolver;

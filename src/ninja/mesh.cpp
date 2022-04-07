@@ -258,9 +258,6 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     {
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
-     
-        input.dem.BufferGridInPlace(); //make sure grid at least covers the original domain
-        input.surface.BufferGridInPlace();
     }
 
     nrows = input.dem.get_nRows();
@@ -788,8 +785,8 @@ void Mesh::compute_cellsize(Elevation& dem)
 {
     double nXcells, nYcells, Xlength, Ylength, Xcellsize, Ycellsize;
 
-    Xlength=(dem.get_nCols()+1)*dem.get_cellSize();
-    Ylength=(dem.get_nRows()+1)*dem.get_cellSize();
+    Xlength=dem.get_nCols()*dem.get_cellSize();
+    Ylength=dem.get_nRows()*dem.get_cellSize();
 
     nXcells=2*std::sqrt((double)targetNumHorizCells)*(Xlength/(Xlength+Ylength));
     nYcells=2*std::sqrt((double)targetNumHorizCells)*(Ylength/(Xlength+Ylength));
@@ -813,6 +810,8 @@ void Mesh::compute_cellsize(Elevation& dem)
 ** Check and make sure the domain height isn't below the maximum roughness plus
 ** the output wind height.
 **
+** 8/8/18 : Added identical check and math for input wind height.
+**
 ** Reference the domain height against the mean sea level datum (add the max
 ** DEM value).
 */
@@ -824,6 +823,10 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
     if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))
     {
         domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
+    }
+    if(domainHeight<3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue()))
+    {
+        domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + input.dem.get_maxValue();
 }

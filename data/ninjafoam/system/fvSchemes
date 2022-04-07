@@ -21,47 +21,25 @@ ddtSchemes
 
 gradSchemes
 {
-    default            cellMDLimited leastSquares 0.5; //cellMDLimited Gauss linear 0.5; //cellMDLimited leastSquares 1.0;//Gauss linear;//  leastSquares;// cellLimited leastSquares 1.0;// Gauss linear;
-
-/*    grad(p)                 Gauss linear;
-    grad(U)                 Gauss linear;
-    grad(k)                 Gauss linear;
-    grad(epsilon)           Gauss linear;
-    grad(omega)             Gauss linear;
-    grad(nuTilda)           Gauss linear;
-    grad(magSqr(U))         Gauss linear;
-    snGradCorr(U)           Gauss linear;
-    snGradCorr(p)           Gauss linear;
-    snGradCorr(k)           Gauss linear;
-    snGradCorr(epsilon)     Gauss linear;
-    snGradCorr(omega)       Gauss linear;
-    snGradCorr(nuTilda)     Gauss linear;*/
+    default            cellMDLimited leastSquares 0.5;
 }
 
 divSchemes
 {
     default                         none;
-    div(phi,U)                      Gauss linearUpwind grad(U); //bounded Gauss QUICK;
+    div(phi,U)                      bounded Gauss linearUpwind grad(U);
     div(phi,k)                      bounded Gauss upwind;
     div(phi,epsilon)                bounded Gauss upwind;
     div(phi,omega)                  bounded Gauss 1.0;
     div(phi,nuTilda)                bounded Gauss 1.0;
     div((nuEff*dev(T(grad(U)))))    Gauss linear;
-div((nuEff*dev(grad(U).T()))) Gauss linear;
+    div((nuEff*dev(grad(U).T())))   Gauss linear;
     div(phi,T)                      bounded Gauss limitedLinear 1;
 }
 
 laplacianSchemes
 {
     default                         Gauss linear limited 0.333;
-//    laplacian(1,p)                  Gauss linear corrected;
-//    laplacian(nuEff,U)              Gauss linear limited 0.5;//corrected;
-//    laplacian(DkEff,k)              Gauss linear limited 0.333;
-//    laplacian(DepsilonEff,epsilon)  Gauss linear limited 0.333;
-//    laplacian(DomegaEff,omega)      Gauss 1.0;
-//    laplacian(DnuTildaEff,nuTilda)  Gauss 1.0;
-//    laplacian((1|A(U)),p)           Gauss linear corrected;
-//    laplacian(DT,T)                 Gauss linear corrected;
 }
 
 interpolationSchemes

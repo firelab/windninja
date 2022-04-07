@@ -92,13 +92,13 @@ int main(int argc, char *argv[])
     list << "WindNinja " + ver + " loaded.";
 
     mainWindow *mw;
+    QMessageBox mbox;
     try
     {
         mw = new mainWindow;
     }
     catch(...)
     {
-        QMessageBox mbox;
         mbox.setText("WindNinja failed to initialize.  Most "
                      "likely cause is failure to find data "
                      "dependencies.  Try setting the environment "
@@ -108,9 +108,8 @@ int main(int argc, char *argv[])
     }
     splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
     splash->display();
-
+    QObject::connect(splash, SIGNAL(done()), mw, SLOT(checkMessages()));
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
-
     result = app.exec();
 
 #ifdef _OPENMP

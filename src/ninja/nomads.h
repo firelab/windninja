@@ -44,8 +44,8 @@
 #include "gdal.h"
 #endif /* GDAL_COMPUTE_VERSION */
 
-#include "cpl_string.h"
-#include "cpl_vsi.h"
+#include "gdal_alg.h"
+#include "gdalwarper.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,14 +90,14 @@ extern "C" {
 #define NOMADS_HOST                      "nomads.ncep.noaa.gov"
 
 /* Host for NOMADS */
-#define NOMADS_URL_CGI_HOST              "http://" NOMADS_HOST "/cgi-bin/"
-#define NOMADS_URL_CGI_IP                "http://" NOMADS_IP "/cgi-bin/"
+#define NOMADS_URL_CGI_HOST              "https://" NOMADS_HOST "/cgi-bin/"
+#define NOMADS_URL_CGI_IP                "https://" NOMADS_IP "/cgi-bin/"
 
 /*
 ** cgi path, ignoring the IP issues, not used but left in for reference.  Use
 ** the two constant urls above.
 */
-#define NOMADS_URL_CGI                   "http://nomads.ncep.noaa.gov/cgi-bin/"
+#define NOMADS_URL_CGI                   "https://nomads.ncep.noaa.gov/cgi-bin/"
 
 /*
 ** NAM based defaults.  Most models are derived or based on NAM, so we can use
@@ -207,7 +207,7 @@ static const char *apszNomadsKeys[][11] =
       "gfs.t%02dz.pgrb2.0p25.f%03d",
 #endif
       /* Directory formats, string is date formatted as folowing */
-      "gfs.%s%02d",
+      "gfs.%s/%02d/atmos",
       /* Date format for directory */
       "%Y%m%d",
       /* Forecast hours, start:stop:stride */
@@ -250,12 +250,12 @@ static const char *apszNomadsKeys[][11] =
       "5 km",
       "HIRES ARW Alaska" },
     /*
-    ** HIRES Alaska NMM
+    ** HIRES Alaska FV3
     */
     {
-      "hires_nmm_alaska",
+      "hires_fv3_alaska",
       "filter_hiresak.pl",
-      "hiresw.t%02dz.nmmb_5km.f%02d.ak.grib2",
+      "hiresw.t%02dz.fv3_5km.f%02d.ak.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "6:6:0",
@@ -263,7 +263,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES NMM Alaska" },
+      "HIRES FV3 Alaska" },
     /*
     ** HIRES CONUS
     */
@@ -280,12 +280,12 @@ static const char *apszNomadsKeys[][11] =
       "5 km",
       "HIRES ARW CONUS" },
     /*
-    ** HIRES CONUS NMM
+    ** HIRES CONUS FV3
     */
     {
-      "hires_nmm_conus",
+      "hires_fv3_conus",
       "filter_hiresconus.pl",
-      "hiresw.t%02dz.nmmb_5km.f%02d.conus.grib2",
+      "hiresw.t%02dz.fv3_5km.f%02d.conus.grib2",
       "hiresw.%s",
       NOMADS_GENERIC_DATE,
       "0:12:12",
@@ -293,7 +293,7 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
-      "HIRES NMM CONUS" },
+      "HIRES FV3 CONUS" },
     /* XXX: HIRES Guam */
     /* XXX: HIRES Hawaii */
     /* XXX: HIRES Puerto Rico */
@@ -455,21 +455,67 @@ static const char *apszNomadsKeys[][11] =
       "RTMA PUERTO RICO" },
 #endif /* NOMADS_EXPER_FORECASTS */
     /*
-    ** HRRR
+    ** HRRR Alaska
+    */
+    {
+      "hrrr_alaska",
+      "filter_hrrrak_2d.pl",
+      "hrrr.t%02dz.wrfsfcf%02d.ak.grib2",
+      "hrrr.%s/alaska",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      NOMADS_GENERIC_VAR_LIST,
+      "2_m_above_ground,10_m_above_ground," \
+      "entire_atmosphere",
+      "3 km",
+      "HRRR ALASKA" },
+    /*
+    ** HRRR Conus
     */
     {
       "hrrr_conus",
       "filter_hrrr_2d.pl",
       "hrrr.t%02dz.wrfsfcf%02d.grib2",
-      "hrrr.%s",
+      "hrrr.%s/conus",
       NOMADS_GENERIC_DATE,
       "0:23:1",
-      "0:15:1",
+      "0:18:1",
       NOMADS_GENERIC_VAR_LIST,
       "2_m_above_ground,10_m_above_ground," \
       "entire_atmosphere",
       "3 km",
       "HRRR CONUS" },
+    /*
+    ** HRRR Conus - subhourly
+    */
+    {
+      "hrrr_conus_sub",
+      "filter_hrrr_sub.pl",
+      "hrrr.t%02dz.wrfsubhf%02d.grib2",
+      "hrrr.%s/conus",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      "TMP,UGRD,VGRD",
+      "2_m_above_ground,10_m_above_ground",
+      "3 km",
+      "HRRR CONUS SUBHOURLY" },
+    /*
+    ** HRRR AK - subhourly
+    */
+    {
+      "hrrr_ak_sub",
+      "filter_hrrrak_sub.pl",
+      "hrrr.t%02dz.wrfsubhf%02d.ak.grib2",
+      "hrrr.%s/alaska",
+      NOMADS_GENERIC_DATE,
+      "0:23:1",
+      "0:18:1",
+      "TMP,UGRD,VGRD",
+      "2_m_above_ground,10_m_above_ground",
+      "3 km",
+      "HRRR ALASKA SUBHOURLY" },
     /*
     ** RAP
     */
@@ -543,6 +589,16 @@ const char ** NomadsFindModel( const char *pszKey );
 char * NomadsFormName( const char *pszKey, char pszSpacer );
 
 void NomadsFree( void *p );
+
+#ifdef NOMADS_INTERNAL_VRT
+GDALDatasetH
+NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
+                          const char *pszSrcWKT,
+                          const char *pszDstWKT,
+                          GDALResampleAlg eResampleAlg,
+                          double dfMaxError,
+                          const GDALWarpOptions *psOptionsIn);
+#endif
 
 #ifdef __cplusplus
 }

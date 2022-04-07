@@ -617,7 +617,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", pszConfigOpt );
     }
 
-    nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "2" ) );
+    nMaxFcstRewind = atoi( CPLGetConfigOption( "NOMADS_MAX_FCST_REWIND", "4" ) );
     if( nMaxFcstRewind < 1 || nMaxFcstRewind > 24 )
     {
         nMaxFcstRewind = 2;
@@ -629,7 +629,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     if( EQUALN( pszModelKey, "rap", 3 ) || EQUALN( pszModelKey, "hrrr", 4 ) ||
         EQUALN( pszModelKey, "rtma", 4 ) )
     {
-        nMaxFcstRewind = nMaxFcstRewind > 3 ? nMaxFcstRewind : 3;
+        nMaxFcstRewind = nMaxFcstRewind > 5 ? nMaxFcstRewind : 5;
     }
 
 #ifdef NOMADS_ENABLE_ASYNC
@@ -927,3 +927,179 @@ void NomadsFree( void *p )
 {
     CPLFree( p );
 }
+
+/*
+** NomadsAutoCreateWarpedVRT is a copy of GDALAutoCreateWarpedVRT() that allows
+** for band subsetting.
+*/
+#ifdef NOMADS_INTERNAL_VRT
+GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
+                          const char *pszSrcWKT,
+                          const char *pszDstWKT,
+                          GDALResampleAlg eResampleAlg,
+                          double dfMaxError,
+                          const GDALWarpOptions *psOptionsIn) {
+
+    int i = 0;
+    GDALWarpOptions *psWO = NULL;
+    double adfDstGeoTransform[6];
+    int nDstPixels = 0;
+    int nDstLines = 0;
+
+    adfDstGeoTransform[0] = 0.0;
+    adfDstGeoTransform[1] = 0.0;
+    adfDstGeoTransform[2] = 0.0;
+    adfDstGeoTransform[3] = 0.0;
+    adfDstGeoTransform[4] = 0.0;
+    adfDstGeoTransform[5] = 0.0;
+
+    CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
+    VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
+
+    if(psOptionsIn == NULL) {
+        return GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, eResampleAlg,
+                    dfMaxError, psOptionsIn);
+    }
+
+    if( psOptionsIn != NULL ) {
+        psWO = GDALCloneWarpOptions( psOptionsIn );
+    }
+    else {
+        psWO = GDALCreateWarpOptions();
+    }
+
+    psWO->eResampleAlg = eResampleAlg;
+
+    psWO->hSrcDS = hSrcDS;
+
+    /*
+    ** This is where we diffentiate from GDALAutoCreateWarpedVRT().  We allow
+    ** for band mapping, while the original doesn't.  We also use older
+    ** semantics here, as some functions were introduced around 2.3.x.
+    */
+    if(psWO->nBandCount == 0 || psWO->panSrcBands == NULL || psWO->panDstBands == NULL) {
+        psWO->nBandCount = GDALGetRasterCount(hSrcDS);
+        psWO->panSrcBands = CPLMalloc(psWO->nBandCount * sizeof(int));
+        if (psWO->panSrcBands == NULL) {
+            return NULL;
+        }
+        psWO->panDstBands = CPLMalloc(psWO->nBandCount * sizeof(int));
+        if (psWO->panDstBands == NULL) {
+            return NULL;
+        }
+        for( i = 0; i < GDALGetRasterCount( hSrcDS ); i++ ){
+            psWO->panSrcBands[i] = i+1;
+            psWO->panDstBands[i] = i+1;
+        }
+    }
+    for( i = 0; i < psWO->nBandCount; i++ )
+    {
+        GDALRasterBandH band = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
+        int hasNoDataValue;
+        double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
+
+        if( hasNoDataValue )
+        {
+            // Check if the nodata value is out of range
+            int bClamped = FALSE;
+            int bRounded = FALSE;
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0)
+             GDALAdjustValueToDataType(GDALGetRasterDataType(band),
+                                       noDataValue, &bClamped, &bRounded );
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+            /*
+            if( !bClamped )
+            {
+                GDALWarpInitNoDataReal(psWO, -1e10);
+
+                psWO->padfSrcNoDataReal[i] = noDataValue;
+                psWO->padfDstNoDataReal[i] = noDataValue;
+            }
+            */
+        }
+    }
+
+    if( psWO->padfDstNoDataReal != NULL )
+    {
+        if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == NULL)
+        {
+            psWO->papszWarpOptions =
+                CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the transformer.                                         */
+/* -------------------------------------------------------------------- */
+    psWO->pfnTransformer = GDALGenImgProjTransform;
+    psWO->pTransformerArg =
+        GDALCreateGenImgProjTransformer( psWO->hSrcDS, pszSrcWKT,
+                                         NULL, pszDstWKT,
+                                         TRUE, 1.0, 0 );
+
+    if( psWO->pTransformerArg == NULL )
+    {
+        GDALDestroyWarpOptions( psWO );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Figure out the desired output bounds and resolution.            */
+/* -------------------------------------------------------------------- */
+    CPLErr eErr =
+        GDALSuggestedWarpOutput( hSrcDS, psWO->pfnTransformer,
+                                 psWO->pTransformerArg,
+                                 adfDstGeoTransform, &nDstPixels, &nDstLines );
+    if( eErr != CE_None )
+    {
+        GDALDestroyTransformer( psWO->pTransformerArg );
+        GDALDestroyWarpOptions( psWO );
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Update the transformer to include an output geotransform        */
+/*      back to pixel/line coordinates.                                 */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+    GDALSetGenImgProjTransformerDstGeoTransform(
+        psWO->pTransformerArg, adfDstGeoTransform );
+
+/* -------------------------------------------------------------------- */
+/*      Do we want to apply an approximating transformation?            */
+/* -------------------------------------------------------------------- */
+    if( dfMaxError > 0.0 )
+    {
+        psWO->pTransformerArg =
+            GDALCreateApproxTransformer( psWO->pfnTransformer,
+                                         psWO->pTransformerArg,
+                                         dfMaxError );
+        psWO->pfnTransformer = GDALApproxTransform;
+        GDALApproxTransformerOwnsSubtransformer(psWO->pTransformerArg, TRUE);
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create the VRT file.                                            */
+/* -------------------------------------------------------------------- */
+    GDALDatasetH hDstDS
+        = GDALCreateWarpedVRT( hSrcDS, nDstPixels, nDstLines,
+                               adfDstGeoTransform, psWO );
+
+    GDALDestroyWarpOptions( psWO );
+
+    if( pszDstWKT != NULL )
+        GDALSetProjection( hDstDS, pszDstWKT );
+    else if( pszSrcWKT != NULL )
+        GDALSetProjection( hDstDS, pszSrcWKT );
+    else if( GDALGetGCPCount( hSrcDS ) > 0 )
+        GDALSetProjection( hDstDS, GDALGetGCPProjection( hSrcDS ) );
+    else
+        GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDS ) );
+
+    return hDstDS;
+}
+#endif /* NOMADS_INTERNAL_VRT */
+
+

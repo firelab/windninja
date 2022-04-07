@@ -192,13 +192,11 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Stability Methods
      *-----------------------------------------------------------------------------*/
-#ifdef STABILITY
     WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
         ( NinjaH * ninja, const int nIndex, const int flag );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaH * ninja, const int nIndex, const double stability_ );
-#endif //Stability
 
 //#ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------

@@ -42,6 +42,7 @@ ninjaComClass::ninjaComClass()
     errorCount = 0;
     nMaxErrors = 10;
     printSolverProgress = true;
+    progressWeight = 1.0;
 
 #ifdef NINJA_GUI
     progressMultiplier = 0;
@@ -343,11 +344,30 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         if(eMsg == ninjaSolverProgress)
         {
             if(printSolverProgress)
-                emit sendProgress(*runNumber, atoi(ninjaComMsg) * progressMultiplier[*runNumber]);
+            {
+                for(int ix=0;ix<nRuns;ix++)
+                {
+                    //Loop over all the runs and send out their progress
+                    //even if they aren't doing anything right now
+                    //or are finished
+                    emit sendProgress(*runNumber,atoi(ninjaComMsg));
+                }
+            }
         }
         if(eMsg == ninjaOuterIterProgress)
         {
-            emit sendProgress(*runNumber, atoi(ninjaComMsg) * progressMultiplier[*runNumber]);
+//            emit sendProgress(*runNumber, atoi(ninjaComMsg) * progressMultiplier[*runNumber]);
+            //^ old way
+            for(int ix=0;ix<nRuns;ix++)
+            {
+                //Loop over all the runs and send out their progress
+                //This is for point Initialization runs
+                //in which the regular solver output is supressed
+                //because it is iterative
+                //To finailize these runs this function is called again
+                //see ninja.cpp->search for explicitly ~line 565
+                emit sendProgress(*runNumber,atoi(ninjaComMsg));
+            }
         }
     }
     if (eMsg==ninjaFailure || eMsg==ninjaFatal)
@@ -387,6 +407,7 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         {
             fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
             s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
+            emit sendProgress(*runNumber,atoi(ninjaComMsg)); //Update the progress bar
             emit sendMessage(s);
         }
     }
@@ -394,6 +415,7 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
         s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
+        emit sendProgress(*runNumber,atoi(ninjaComMsg)); //update the progress bar
         emit sendMessage(s);
     }
     else if(eMsg == ninjaWarning)			//Warnings

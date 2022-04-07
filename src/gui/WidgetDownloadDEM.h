@@ -61,11 +61,6 @@ public:
     QDir settingsDir;
     void initializeGoogleMapsInterface();
     void setupGM();
-    void convertBuffer(double &lat, double &lng);
-    void convertBounds(double &north, double &south, double &east, double &west);
-    bool checkBounds(double north, double south, double east, double west);
-    void convertLatLng(double &lat, double &lng);
-    bool checkLatLng(double &lat, double &lng, double bufLat, double bufLng);
     void connectInputs();
     void fillNoDataValues(const char* file);
     void writeSettings();
@@ -77,34 +72,13 @@ protected:
    
     private slots:
         void clearListeners();
-        void plotSettings();
-        void plotUserPoint();
-        void choosePoint();
-        void plotBox();
         void saveDEM();
         void updateProgress();
         void updateDEMSource(int index);
-        void displayDEMBounds(int state);
         bool demBoundsCheck();
-        void showAdditionalData(QTreeWidgetItem *item, int column);
-        void openGMLinks(const QUrl url);
-        void geocoder();
-        void geocodeError();
         void zoomToMidpoint();
-        void estFileSize();
         void demSelectedUpdate(bool selected);
         void closeDEM();
-        void updateBounds(double north, double south, double east, double west);
-        void updateBoundsGUI(double north, double south, double east, double west);
-        void updateBuffer();
-        void chooseBox();
-        void updateLatLng(double lat, double lng);
-        void updateLatLngGUI(double lat, double lng);
-
-        void updateSTWCoordinateInputs();
-        void updateSTWBoundCoordInputs();
-
-        void updateGUI();
 
     signals:
          void doneDownloading(const char* file);

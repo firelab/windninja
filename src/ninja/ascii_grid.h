@@ -140,6 +140,7 @@ public:
     void get_cellIndex(double xCoord, double yCoord, int *i, int *j) const;
     void get_cellIndexLocalCoordinates(double xCoord, double yCoord, int *i,
                                        int *j) const;
+    void get_nearestCellIndex(double xCoord, double yCoord, int *i, int *j) const;
     double get_xDimension() const {return cellSize * data.get_numCols();};
     double get_yDimension() const {return cellSize * data.get_numRows();};
 
@@ -149,6 +150,7 @@ public:
     T get_minValue();
 
     double get_meanValue() const;
+    bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
 
     bool find_firstValue(T m, T buffer, int *k, int *l);
 
@@ -207,6 +209,10 @@ public:
 
     AsciiGrid<T> BufferGrid( int nAddCols=1, int nAddRows=1 );
     void BufferGridInPlace( int nAddCols=1, int nAddRows=1 );
+    AsciiGrid<T> BufferAroundGrid( int nAddCols=1, int nAddRows=1 );
+    void BufferAroundGridInPlace( int nAddCols=1, int nAddRows=1 );
+    void BufferToOverlapGrid(AsciiGrid &A);
+    bool CheckForGridOverlap(AsciiGrid &A);
 
     /* @todo
      * Ideally this would not be a public variable that other classes have access to, instead
@@ -641,7 +647,7 @@ void AsciiGrid<T>::get_cellPositionLocalCoordinates(int i, int j, double *xCoord
 
 template <class T>
 void AsciiGrid<T>::get_cellIndex(double xCoord, double yCoord, int *i, int *j) const
-{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system.
+{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system.  Throws exception if (xCoord,yCoord) are outside the domain
     if(xCoord < xllCorner || yCoord < yllCorner ||
         xCoord > (xllCorner + ((data.get_numCols()) * cellSize)) ||
         yCoord > (yllCorner + ((data.get_numRows()) * cellSize)))
@@ -662,7 +668,7 @@ void AsciiGrid<T>::get_cellIndex(double xCoord, double yCoord, int *i, int *j) c
 
 template <class T>
 void AsciiGrid<T>::get_cellIndexLocalCoordinates(double xCoord, double yCoord, int *i, int *j) const
-{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the local coordinate system.
+{   //Function computes the cell index (i, j) given a position (xCoord, yCoord) in the local coordinate system.  Throws exception if (xCoord,yCoord) are outside the domain
     //The local coordinate system is a coordinate system in which the lower left corner of the grid is (0, 0).
     if(xCoord < 0.0 || yCoord < 0.0 ||
         xCoord > (data.get_numCols() * cellSize) ||
@@ -680,6 +686,37 @@ void AsciiGrid<T>::get_cellIndexLocalCoordinates(double xCoord, double yCoord, i
     *j = long(xCoord / cellSize);
     *i = long(yCoord / cellSize);
     //return true;
+}
+
+template <class T>
+void AsciiGrid<T>::get_nearestCellIndex(double xCoord, double yCoord, int *i, int *j) const
+{   //Function computes the closest cell index (i, j) given a position (xCoord, yCoord) in the projected coordinate system. Works even when (xCoord, yCoord) is outside the grid's domain (doesn't throw like the other functions).
+    if(xCoord < xllCorner || yCoord < yllCorner ||
+        xCoord > (xllCorner + ((data.get_numCols()) * cellSize)) ||
+        yCoord > (yllCorner + ((data.get_numRows()) * cellSize)))   // (xCoord,yCoord) are outside the grid's domain
+    {
+        //Use brute force computation of closest cell center (could make faster and more sophisticated, but not necessary at this time)
+        double dist = std::numeric_limits<double>::max();
+        double cellX, cellY, computedDist;
+        for( int ii = 0;ii < data.get_numRows();ii++ )
+        {
+            for( int jj = 0;jj < data.get_numCols();jj++ )
+            {
+                get_cellPosition(ii, jj, &cellX, &cellY);
+                computedDist = sqrt((cellX-xCoord)*(cellX-xCoord) + (cellY-yCoord)*(cellY-yCoord));
+                if( computedDist < dist )
+                {
+                    dist = computedDist;
+                    *i = ii;
+                    *j = jj;
+                }
+            }
+        }
+    }else   // (xCoord,yCoord) are in the grid's domain
+    {
+        *j = long(((xCoord - xllCorner) / cellSize));
+        *i = long(((yCoord - yllCorner) / cellSize));
+    }
 }
 
 template <class T>
@@ -892,7 +929,7 @@ AsciiGrid<T> AsciiGrid<T>::BufferGrid( int nAddCols, int nAddRows )
         throw std::range_error("Invalid number of rows or columns to be "
                                "removed");
     }
-    AsciiGrid<T>A( get_nCols() + 1, get_nRows() + 1, get_xllCorner(),
+    AsciiGrid<T>A( get_nCols() + nAddCols, get_nRows() + nAddRows, get_xllCorner(),
                    get_yllCorner(), get_cellSize(), get_noDataValue(),
                    prjString );
     for( int i = 0;i < A.get_nRows();i++ )
@@ -934,6 +971,203 @@ template<class T>
 void AsciiGrid<T>::BufferGridInPlace( int nAddCols, int nAddRows )
 {
     AsciiGrid<T>A = BufferGrid(nAddCols, nAddRows);
+    *this = A;
+}
+
+/**
+ * \brief Add or remove cells around all edges of an ascii grid
+ *
+ * Add or remove one or more cells around the Grid.
+ *
+ * \param nAddCols number of columns to add
+ * \param nAddRows number of rows to add
+ * \return a new grid with a buffer
+ */
+template<class T>
+AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
+{
+    int nOrigXSize = get_nCols();
+    int nOrigYSize = get_nRows();
+    if( nOrigXSize + nAddCols <= 0 || nOrigYSize + nAddRows <= 0 )
+    {
+        throw std::range_error("Invalid number of rows or columns to be "
+                               "removed");
+    }
+    AsciiGrid<T>A( get_nCols() + 2*nAddCols, get_nRows() + 2*nAddRows,
+            get_xllCorner()-(nAddCols*get_cellSize()),
+            get_yllCorner()-(nAddRows*get_cellSize()),
+            get_cellSize(), get_noDataValue(), get_noDataValue(), prjString );
+
+    for( int i = 0;i < nOrigYSize;i++ )
+    {
+        for( int j = 0;j < nOrigXSize;j++ )
+        {
+            if(i+nAddRows < 0 || i+nAddRows >= A.get_nRows() ||
+                j+nAddCols < 0 || j+nAddCols >= A.get_nCols())
+            {
+                continue;
+            } 
+            A.set_cellValue( i+nAddRows, j+nAddCols, get_cellValue(i, j));
+        }
+    }
+    if(!A.fillNoDataValues(1, 50.0, 1000))
+        throw std::runtime_error("Could not fill no data values in AsciiGrid::BufferAroundGrid()");
+
+    return A;
+}
+
+/**
+ * \brief Add cells to overlap another ascii grid
+ *
+ * Add cells to overlap an ascii grid.
+ *
+ * \param A grid to buffer
+ */
+template<class T>
+void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
+{
+    double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
+    double biggestX, biggestY;
+    int nColsBuffer, nRowsBuffer;
+    xMinOverlap = get_xllCorner() - A.get_xllCorner();
+    xMaxOverlap = (A.get_xllCorner() + A.get_nCols()*A.get_cellSize()) -
+        (get_xllCorner() + get_nCols()*get_cellSize());
+    yMinOverlap = get_yllCorner() - A.get_yllCorner();
+    yMaxOverlap = (A.get_yllCorner() + A.get_nRows()*A.get_cellSize()) -
+        (get_yllCorner() + get_nRows()*get_cellSize());
+
+    if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
+    {
+        //if we only need to buffer on top and right side of grid
+        if(get_xllCorner() <= A.get_xllCorner() && get_yllCorner() <= A.get_yllCorner())
+        {
+            nColsBuffer = (int)(xMaxOverlap/get_cellSize())+1;
+            nRowsBuffer = (int)(yMaxOverlap/get_cellSize())+1;
+            if(nColsBuffer < 0)
+                nColsBuffer = 0;
+            if(nRowsBuffer < 0)
+                nRowsBuffer = 0;
+            BufferGridInPlace(nColsBuffer, nRowsBuffer);
+        }
+        else //if we need to buffer all sides of the grid
+        {
+            biggestX = xMaxOverlap;
+            if(xMinOverlap > biggestX)
+                biggestX = xMinOverlap;
+            biggestY = yMaxOverlap;
+            if(yMinOverlap > biggestY)
+                biggestY = yMinOverlap;
+            nColsBuffer = (int)(biggestX/get_cellSize())+1;
+            nRowsBuffer = (int)(biggestY/get_cellSize())+1;
+            if(nColsBuffer < 0)
+                nColsBuffer = 0;
+            if(nRowsBuffer < 0)
+                nRowsBuffer = 0;
+            BufferAroundGridInPlace(nColsBuffer, nRowsBuffer);
+        }
+    }
+}
+
+/**
+ * \brief Check if one grid overlaps another 
+ *
+ * Check if one grid completely overlaps another grid.
+ *
+ * \param A grid to check overlap against
+ * \return true if there is complete overalap, otherwise false
+ */
+template<class T>
+bool AsciiGrid<T>::CheckForGridOverlap( AsciiGrid &A )
+{
+    double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
+    xMinOverlap = get_xllCorner() - A.get_xllCorner();
+    xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
+        (A.get_xllCorner() + A.get_nCols()*A.get_cellSize());
+    yMinOverlap = get_yllCorner() - A.get_yllCorner();
+    yMaxOverlap = (get_yllCorner() + get_nRows()*get_cellSize()) -
+        (A.get_yllCorner() + A.get_nRows()*A.get_cellSize());
+
+    if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
+    {
+        return true;
+    }
+    else
+        return false;
+}
+
+template<class T>
+bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue())
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sum;
+    int nValues;
+    int numPasses = 0;
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == get_noDataValue())
+                    {
+                        sum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii <= i+1; ii++)
+                        {
+                            for(int jj = j-1; jj <= j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                    continue;
+
+                                if(get_cellValue(ii, jj) == get_noDataValue())
+                                    continue;
+
+                                sum = sum + get_cellValue(ii, jj);
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                            set_cellValue(i, j, sum/nValues);
+                        else
+                            numNoDataValues++;
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
+}
+
+/**
+ * \brief Add cells to all edges of an ascii grid
+ *
+ * Add or remove one or more cells around the Grid.
+ *
+ * \param nAddCols number of columns to add
+ * \param nAddRows number of rows to add
+ */
+template<class T>
+void AsciiGrid<T>::BufferAroundGridInPlace( int nAddCols, int nAddRows )
+{
+    AsciiGrid<T>A = BufferAroundGrid(nAddCols, nAddRows);
     *this = A;
 }
 

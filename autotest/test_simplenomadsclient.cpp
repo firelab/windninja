@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
     }
     else
         BOOST_REQUIRE( 0 );
-    CPLSetConfigOption( "NOMADS_MAX_FCST_REWIND", "3" );
+    CPLSetConfigOption( "NOMADS_MAX_FCST_REWIND", "5" );
     rc = NomadsFetch( pszKey, NULL, hours, 1, pdfBbox, pszVsiPath, NULL, NULL );
     BOOST_REQUIRE_EQUAL( rc, erc );
     if( rc == 0 )
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE( download_1 )
         else if EQUAL( pszKey, "narre" )
             BOOST_CHECK_EQUAL( rc, 2 );
         else if EQUAL( pszKey, "gfs_global" )
-            BOOST_CHECK_EQUAL( rc, 3 );
+            BOOST_CHECK_EQUAL( rc, 5 );
         else
             /* Sometimes we get double variables */
             BOOST_CHECK( rc >= 4 );

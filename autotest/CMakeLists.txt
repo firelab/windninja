@@ -41,6 +41,8 @@ set(TEST_SOURCES test_main.cpp
                  test_contain.cpp
                  test_srtm.cpp
                  test_gdal_fetch.cpp
+                 test_gdal_output.cpp
+                 test_gdal_util.cpp
                  test_grid_interp.cpp
                  test_array2d.cpp
                  test_timezone.cpp
@@ -48,7 +50,8 @@ set(TEST_SOURCES test_main.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
                  test_stl.cpp
-                 test_rmtree.cpp)
+                 test_rmtree.cpp
+                 test_utm.cpp)
 if(WITH_LCP_CLIENT)
     set(TEST_SOURCES ${TEST_SOURCES} test_landfireclient.cpp)
 endif(WITH_LCP_CLIENT)
@@ -73,8 +76,8 @@ add_executable(test_main ${TEST_SOURCES})
 add_dependencies(test_main ninja)
 #ADD_DEPENDENCIES(test_api  ninja)
 
-
 target_link_libraries(test_main ${LINK_LIBS})
+
 set(TEST_API FALSE)
 if(TEST_API)
     add_executable( test_api test_capi.c )
@@ -115,6 +118,10 @@ add_test(test_init_gdal
 add_test(test_buffer_grid_init
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=buffer_grid/init_and_set)
 
+# gdal_util
+add_test(test_gdal_util_center
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_util/center)
+
 # landfireclient Test Suite - still experimental
 if(WITH_LCP_CLIENT)
     add_test(test_landfireclient_extract
@@ -128,7 +135,31 @@ if(NOT NINJA_QTGUI)
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=input_points/mackay )
 endif(NOT NINJA_QTGUI)
 
+if(NINJA_GDAL_OUTPUT)
+add_test(test_gdal_output_shapefile
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/shapefile)
 
+add_test(test_gdal_output_write_arrow
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/write_arrow)
+
+add_test(test_gdal_output_arrow_west
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/arrow_west)
+
+add_test(test_gdal_output_kml
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kml)
+
+add_test(test_gdal_output_kmz
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz)
+
+add_test(test_gdal_output_kmz_color
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_output/kmz_color)
+endif(NINJA_GDAL_OUTPUT)
+
+add_test(test_utm_boise
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/boise)
+
+add_test(test_utm_adelaide
+    ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=utm/adelaide)
 
 # ******************************************************************************
 # Slow test section
@@ -195,14 +226,16 @@ if(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska nam_alaska 1 2 0 zip)
     add_test(nomads_hires_arw_conus_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_conus 1 2 0 zip)
-    add_test(nomads_hires_nmm_conus_1_hour_zip
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_nmm_conus 1 2 0 zip)
+    add_test(nomads_hires_fv3_conus_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_fv3_conus 1 2 0 zip)
     add_test(nomads_hires_arw_ak_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_arw_alaska 1 2 0 zip)
-    add_test(nomads_hires_nmm_ak_1_hour_zip
-             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_nmm_alaska 1 2 0 zip)
+    add_test(nomads_hires_fv3_ak_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hires_fv3_alaska 1 2 0 zip)
     add_test(nomads_hrrr_1_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 1 2 0 zip)
+    add_test(nomads_hrrr_ak_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska hrrr_alaska 1 2 0 zip)
     add_test(nomads_hrrr_15_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 15 16 0 zip)
     add_test(nomads_buffer_1

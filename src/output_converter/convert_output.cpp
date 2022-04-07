@@ -278,7 +278,7 @@ int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem
     ninjaKmlFiles.setLineWidth(1.0);
 	//ninjaKmlFiles.setTime("ninjatime");
 
-	if(ninjaKmlFiles.writeKml(KmlVector::equal_interval))
+    if(ninjaKmlFiles.writeKml(KmlVector::equal_interval,"default",false))
 	{
 		if(ninjaKmlFiles.makeKmz())
 			ninjaKmlFiles.removeKmlFile();

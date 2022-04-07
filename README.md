@@ -1,6 +1,7 @@
-[WindNinja](http://firelab.org/project/windninja) 
+WindNinja
 =========
-[![Build Status](https://travis-ci.org/firelab/windninja.svg?branch=master)](https://travis-ci.org/firelab/windninja)
+[![Build Status](https://travis-ci.com/firelab/windninja.svg?branch=master)](https://app.travis-ci.com/github/firelab/windninja)
+[![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
 WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
@@ -29,18 +30,18 @@ Directories:
  * images      -> splash image and icons for gui
  * src         -> source files
 
-Dependencies (versions are versions we build against):
+Dependencies (versions are versions we build against for the Windows installer):
  * Boost 1.46:
     * boost_date_time
     * boost_program_options
     * boost_test
  * NetCDF 4.1.1
- * GDAL 1.11.1
+ * GDAL 2.2.2
     * NetCDF support
     * PROJ.4 support
     * GEOS support
     * CURL support
- * Qt 4.7.4
+ * Qt 4.8.5
     * QtGui
     * QtCore
     * QtNetwork/Phonon
