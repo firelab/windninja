@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     }
     splashScreen *splash = new splashScreen(smallSplashPixmap, list, 1000);
     splash->display();
-    QObject::connect(splash, SIGNAL(done()), mw, SLOT(checkMessages()));
+    //QObject::connect(splash, SIGNAL(done()), mw, SLOT(checkMessages()));
     QObject::connect(splash, SIGNAL(done()), mw, SLOT(show()));
     result = app.exec();
 
