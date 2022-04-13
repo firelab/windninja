@@ -50,3 +50,8 @@ debug*
 
 # OpenFOAM
 *.dep
+
+# VS 2022 additions
+/.vs/
+/src/out/
+/CMakeSettings.json

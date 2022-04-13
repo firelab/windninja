@@ -4360,7 +4360,7 @@ double* ninja::get_outputSpeedGrid()
 
     for(int i=0; i<VelocityGrid.get_nRows(); i++){
         for(int j=0; j<VelocityGrid.get_nCols(); j++){
-            outputSpeedArray[i] = VelocityGrid(i,j);
+            outputSpeedArray[i * VelocityGrid.get_nCols() + j] = VelocityGrid(i,j);
         }
     }
 
@@ -4373,7 +4373,7 @@ double* ninja::get_outputDirectionGrid()
 
     for(int i=0; i<AngleGrid.get_nRows(); i++){
         for(int j=0; j<AngleGrid.get_nCols(); j++){
-            outputDirectionArray[i] = AngleGrid(i,j);
+            outputDirectionArray[i * AngleGrid.get_nCols() + j] = AngleGrid(i,j);
         }
     }
 

@@ -1470,7 +1470,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
-                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
+                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i_);
                     if(vm.count("output_path")){
                         pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
                                                    vm["output_path"].as<std::string>(),
