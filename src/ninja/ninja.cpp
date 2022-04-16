@@ -5023,10 +5023,10 @@ void ninja::checkInputs()
     {
         throw std::runtime_error("Could not open DEM for reading.");
     }
-    if(GDALHasNoData(poDS, 1))
+    /*if (GDALHasNoData(poDS, 1))
     {
         throw std::runtime_error("The DEM has no data values.");
-    }
+    }*/
     GDALClose((GDALDatasetH)poDS);
 
     //check for invalid characters in DEM name

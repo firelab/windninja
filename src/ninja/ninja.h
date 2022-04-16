@@ -177,6 +177,7 @@ public:
     void readInputFile();
     void importSingleBand(GDALDataset*);
     void importLCP(GDALDataset*);
+    void importGeoTIFF(GDALDataset*);
     void setSurfaceGrids();
 
     void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 

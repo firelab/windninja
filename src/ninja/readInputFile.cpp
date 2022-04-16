@@ -74,8 +74,10 @@ void ninja::readInputFile()
         input.dem.set_prjString(GDALProjRef);
     }
 
-    if(GDALDriverName == "LCP")
+    if (GDALDriverName == "LCP")
         importLCP(poDataset);
+    else if (GDALDriverName == "GTiff")
+        importGeoTIFF(poDataset);
     else
         importSingleBand(poDataset);
 
@@ -308,6 +310,8 @@ void ninja::importLCP(GDALDataset *poDataset)
     delete[] panScanlineFuelM;
     delete[] panScanlineCanopyH;
     delete[] panScanlineCanopyC;
+    //fill DEM here
+    input.dem.fillNoDataValues(1, 99.0, nC * nR);
 }
 
 /**
@@ -368,7 +372,8 @@ void ninja::importSingleBand(GDALDataset *poDataset)
 	}
     }
     delete[] padfScanline;
-
+    //try filling nodata here
+    input.dem.fillNoDataValues(1, 99.0, nC * nR);
     set_uniVegetation();
 }
 
@@ -391,3 +396,127 @@ void ninja::setSurfaceGrids()
     input.surface.Anthropogenic.set_headerData(input.dem);
 }
 
+void ninja::importGeoTIFF(GDALDataset* poDataset)
+{
+    int nC, nR;
+    double cS, nDV;
+    double xL, yL;
+
+    double adfGeoTransform[6];
+    //assume if 8 or greater bands then a landscape GeoTIFF!
+    //May want to add metadata checking here if metadata inclusion is ever standardized
+    int nBands = poDataset->GetRasterCount();
+    //band 1 is always assumed to be elevation
+    //assumed in meters
+    input.dem.elevationUnits = Elevation::meters;
+
+    //get global header info
+    nC = poDataset->GetRasterXSize();
+    nR = poDataset->GetRasterYSize();
+
+    if (poDataset->GetGeoTransform(adfGeoTransform) == CE_None) {
+        //find corners...
+        xL = adfGeoTransform[0];
+        yL = adfGeoTransform[3] + (adfGeoTransform[5] * nR);
+
+        //get cell size
+        if (areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 1000000000))
+            cS = abs(adfGeoTransform[1]);
+        else
+            throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
+                "square cells (dx=dy) in the DEM.");
+    }
+
+    //get band specific header info (no data)
+    GDALRasterBand* poBand;
+    poBand = poDataset->GetRasterBand(1);
+
+    int hasNdv = FALSE;
+
+    nDV = poBand->GetNoDataValue(&hasNdv);
+    if (hasNdv == FALSE)
+        nDV = -9999.0;
+
+    //assign values in Elevation dem from dataset
+    input.dem.set_headerData(nC, nR, xL, yL, cS, nDV, nDV, input.dem.prjString);
+
+    //read in value at i, j and set dem value.
+    double* padfScanline;
+    padfScanline = new double[nC];
+
+    for (int i = nR - 1; i >= 0; i--) {
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, padfScanline, nC, 1,
+            GDT_Float64, 0, 0);
+        for (int j = 0; j < nC; j++) {
+            input.dem.set_cellValue(nR - 1 - i, j, padfScanline[j]);
+        }
+    }
+    delete[] padfScanline;
+
+    //import roughness data now using crown fuels and fuel model
+    if (nBands >= 8)
+    {
+        setSurfaceGrids();
+        lengthUnits::eLengthUnits fDepthUnits = lengthUnits::meters;
+        lengthUnits::eLengthUnits elevUnit = lengthUnits::meters;
+        coverUnits::eCoverUnits cCoverUnits = coverUnits::percent;
+        lengthUnits::eLengthUnits cHeightUnits = lengthUnits::metersTimesTen;
+
+        //read in data for the other bands, on scanline at a time, and set rough
+        int* panScanlineFuelM = new int[nC];
+        int* panScanlineCanopyH = new int[nC];
+        int* panScanlineCanopyC = new int[nC];
+        int nHeight, nCanopy, nFuel;
+
+        for (int i = nR - 1; i >= 0; i--)
+        {
+            //get fuel model band and write scanline
+            poBand = poDataset->GetRasterBand(4);
+            poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanlineFuelM, nC, 1,
+                GDT_Int32, 0, 0);
+            //if canopy fuels are there, get the associated data
+                //height
+            poBand = poDataset->GetRasterBand(6);
+            poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanlineCanopyH, nC, 1,
+                GDT_Int32, 0, 0);
+            //cover
+            poBand = poDataset->GetRasterBand(5);
+            poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanlineCanopyC, nC, 1,
+                GDT_Int32, 0, 0);
+
+            for (int j = 0; j < nC; j++)
+            {
+                //set the roughness
+                //default values are set for NODATA values
+                nHeight = panScanlineCanopyH[j];
+                if(nHeight == nDV)
+                    nHeight = 15;
+                nCanopy = panScanlineCanopyC[j];
+                if (nCanopy == nDV)
+                    nCanopy = 0;
+                nFuel = panScanlineFuelM[j];
+                if (nFuel == nDV)
+                    nFuel = 99;
+                computeSurfPropForCell(nR - 1 - i, j, nHeight,
+                    cHeightUnits,
+                    (double)nCanopy,
+                    cCoverUnits,
+                    nFuel,
+                    getFuelBedDepth(nFuel),
+                    fDepthUnits);
+            }
+        }
+
+        /*
+          * Cleanup
+          */
+        delete[] panScanlineFuelM;
+        delete[] panScanlineCanopyH;
+        delete[] panScanlineCanopyC;
+    }
+    else
+        set_uniVegetation();
+
+    //try filling nodata here
+    input.dem.fillNoDataValues(1, 99.0, nC * nR);
+}
