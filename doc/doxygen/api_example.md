@@ -178,6 +178,8 @@ A number of functions must be called to prepare the army.
     const double* outputSpeedGrid = NULL;
     const double* outputDirectionGrid = NULL;
     const char* outputGridProjection = NULL;
+    const int nCols = 0;
+    const int nRows = 0;
     const int nIndex = 0;
 
     outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
@@ -202,6 +204,8 @@ A number of functions must be called to prepare the army.
     const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
     const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
     const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
+    const int nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
+    const int nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
 
 ```
 ### Cleaning up
