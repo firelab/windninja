@@ -31,6 +31,9 @@
 *build*
 debug*
 
+# Doxygen
+doxy.tag
+
 # vim
 *.swo
 *.swp
