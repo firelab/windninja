@@ -5016,19 +5016,6 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
-    //Check DEM
-    GDALDataset *poDS;
-    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
-    if(poDS == NULL)
-    {
-        throw std::runtime_error("Could not open DEM for reading.");
-    }
-    /*if (GDALHasNoData(poDS, 1))
-    {
-        throw std::runtime_error("The DEM has no data values.");
-    }*/
-    GDALClose((GDALDatasetH)poDS);
-
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
     if(s.find_first_of("/\\:;\"'") != std::string::npos){
