@@ -332,7 +332,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                "status: %d", i, nMaxTries, dl_status );
     } while( dl_status < 400 && dl_status > 0 && i < nMaxTries );
 
-    CPLFree(pszUrl);
+    CPLFree( (void*) pszUrl );
     delete [] pszResponse;
 
     if( dl_status >= 900 && dl_status <= 902)
