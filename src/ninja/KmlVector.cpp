@@ -1215,6 +1215,7 @@ bool KmlVector::writeTurbulence(FILE *fileOut)
     std::string legendUnits = "(m/s)";
     bool writeLegend = TRUE;
 
+    turbulence.write_Grid("turbulence.asc", 2);
     turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
 
     turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw

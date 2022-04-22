@@ -2276,6 +2276,7 @@ void NinjaFoam::SampleRawOutput()
             TurbulenceGrid(i,j) = std::sqrt(2.0/3.0 * foamK(i,j));
         }
     }
+    TurbulenceGrid.write_Grid("TurbulenceGrid.as", 2);
     GDALClose( hDS );
 }
 
@@ -2434,14 +2435,23 @@ void NinjaFoam::WriteOutputFiles()
 		if(input.googOutFlag==true)
 
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid;
 			velTempGrid=NULL;
 			angTempGrid=NULL;
+			turbTempGrid=NULL;
 
 			KmlVector ninjaKmlFiles;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+			turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+                        turbTempGrid->write_Grid("turbTempGrid.asc", 2);
+                        
+                        ninjaKmlFiles.setTurbulenceFlag("true");
+                        ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid);
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
 			ninjaKmlFiles.setKmzFile(input.kmzFile);
@@ -2469,6 +2479,11 @@ void NinjaFoam::WriteOutputFiles()
 			{
 				delete velTempGrid;
 				velTempGrid=NULL;
+			}
+			if(turbTempGrid)
+			{
+				delete turbTempGrid;
+				turbTempGrid=NULL;
 			}
 		}
 	}catch (exception& e)
