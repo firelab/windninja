@@ -312,7 +312,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
      *-----------------------------------------------------------------------------*/
     int dl_status = 0;
     //Obtain the readiness status of the current job
-    pszUrl = CPLSPrintf( LF_GET_STATUS_TEMPLATE, m_JobId.c_str() );
+    pszUrl = CPLStrdup(CPLSPrintf( LF_GET_STATUS_TEMPLATE, m_JobId.c_str() ));
     CPLDebug( "LCP_CLIENT", "Status url: %s", pszUrl );
     do
     {
@@ -332,6 +332,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                "status: %d", i, nMaxTries, dl_status );
     } while( dl_status < 400 && dl_status > 0 && i < nMaxTries );
 
+    CPLFree(pszUrl);
     delete [] pszResponse;
 
     if( dl_status >= 900 && dl_status <= 902)
