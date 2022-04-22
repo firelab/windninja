@@ -311,7 +311,8 @@ void ninja::importLCP(GDALDataset *poDataset)
     delete[] panScanlineCanopyH;
     delete[] panScanlineCanopyC;
     //fill DEM here
-    input.dem.fillNoDataValues(1, 99.0, nC * nR);
+    if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
+        throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
 }
 
 /**
@@ -373,7 +374,8 @@ void ninja::importSingleBand(GDALDataset *poDataset)
     }
     delete[] padfScanline;
     //try filling nodata here
-    input.dem.fillNoDataValues(1, 99.0, nC * nR);
+    if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
+        throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
     set_uniVegetation();
 }
 
@@ -518,5 +520,6 @@ void ninja::importGeoTIFF(GDALDataset* poDataset)
         set_uniVegetation();
 
     //try filling nodata here
-    input.dem.fillNoDataValues(1, 99.0, nC * nR);
+    if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
+        throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
 }

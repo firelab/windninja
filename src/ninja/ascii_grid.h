@@ -1109,6 +1109,8 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     }
     if(numNoDataValues == 0)
         return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
     
     double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
     double sum;
