@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+WindNinja 3.7.4
+---------------
+- Fix issue related to URL generation causing LCP downloads to intermittently fail (#449, #448)
+
+- Temporarily disabled start-up messages for server migration (#450) 
+
+
 WindNinja 3.7.3
 ---------------
 - Update Linux build script for Ubuntu 20.04 (#397)
