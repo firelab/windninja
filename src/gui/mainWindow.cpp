@@ -1252,7 +1252,7 @@ void mainWindow::citeWindNinja()
   citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
 
   citeText.append("<h4>For additional WindNinja publications visit:</h4>");
-  citeText.append("http://firelab.github.io/windninja/publications/");
+  citeText.append("https://weather.firelab.org/windninja/publications/");
 
   QMessageBox::about(this, tr("Cite WindNinja"),
              citeText);
