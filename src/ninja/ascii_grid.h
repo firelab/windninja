@@ -2224,9 +2224,10 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
             CSLSetNameValue( psWarpOptions->papszWarpOptions,
                             "INIT_DEST", "NO_DATA" );
 
+
     wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
-                                                   0.0, psWarpOptions);
+                                                   0.0, NULL);
 
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
@@ -2240,17 +2241,17 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     CPLPopErrorHandler();
 
     //---for testing--------------------------------
-    AsciiGrid<double> poDstDS_grid;
-    GDAL2AsciiGrid(poDstDS, 1, poDstDS_grid);
-    poDstDS_grid.write_Grid("poDstDS_grid", 2);
-    
-    AsciiGrid<double> wrpDS_grid;
-    GDAL2AsciiGrid(wrpDS, 1, wrpDS_grid);
-    wrpDS_grid.write_Grid("wrpDS_grid", 2);
-
-    AsciiGrid<double> poDS2_grid;
-    GDAL2AsciiGrid(poDS, 1, poDS2_grid);
-    poDS2_grid.write_Grid("poDS2_grid", 2);
+//    AsciiGrid<double> poDstDS_grid;
+//    GDAL2AsciiGrid(poDstDS, 1, poDstDS_grid);
+//    poDstDS_grid.write_Grid("poDstDS_grid", 2);
+//    
+//    AsciiGrid<double> wrpDS_grid;
+//    GDAL2AsciiGrid(wrpDS, 1, wrpDS_grid);
+//    wrpDS_grid.write_Grid("wrpDS_grid", 2);
+//
+//    AsciiGrid<double> poDS2_grid;
+//    GDAL2AsciiGrid(poDS, 1, poDS2_grid);
+//    poDS2_grid.write_Grid("poDS2_grid", 2);
 
     
     /* -------------------------------------------------------------------- */
