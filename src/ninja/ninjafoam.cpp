@@ -2276,7 +2276,6 @@ void NinjaFoam::SampleRawOutput()
             TurbulenceGrid(i,j) = std::sqrt(2.0/3.0 * foamK(i,j));
         }
     }
-    TurbulenceGrid.write_Grid("TurbulenceGrid.as", 2);
     GDALClose( hDS );
 }
 
