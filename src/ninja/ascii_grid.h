@@ -1836,7 +1836,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
     
-    this->write_Grid("this_grid", 2);
+    //this->write_Grid("this_grid", 2);
     
 
     /* -------------------------------------------------------------------- */
@@ -1861,7 +1861,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                 scaledDataGrid(i,j) = 0;
             }
         }
-    }scaledDataGrid.write_Grid("scaled_datagrid", 2);
+    }//scaledDataGrid.write_Grid("scaled_datagrid", 2);
 
     // need min value (without 0s) later to make legend
     double raw_minValue = std::numeric_limits<double>::max();
@@ -1917,7 +1917,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                 }
             }
         }
-    } scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
+    } //scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
 
     /* -------------------------------------------------------------------- */
     /*  Fill in band with scaled data                                       */

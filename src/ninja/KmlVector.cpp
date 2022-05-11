@@ -1211,7 +1211,7 @@ bool KmlVector::writeTurbulence(FILE *fileOut)
     //---------------make single png for overlay------------------
     std::string outFilename = "turbulence_png.png";
     std::string scalarLegendFilename = "turbulence_legend";
-    std::string legendTitle = "Average Velocity Fluctuations";
+    std::string legendTitle = "u'";
     std::string legendUnits = "(m/s)";
     bool writeLegend = TRUE;
 
@@ -1779,6 +1779,12 @@ bool KmlVector::removeKmlFile()
     VSIUnlink(legendFile.c_str());
     if(timeDateLegendFile != "")
         VSIUnlink(timeDateLegendFile.c_str());
+    if(turbulence_png.c_str() != ""){
+        VSIUnlink(turbulence_png.c_str());
+        VSIUnlink((turbulence_png + ".aux.xml").c_str());
+    }
+    if(turbulence_legend.c_str() !="")
+        VSIUnlink(turbulence_legend.c_str());
     
     #ifdef FRICTION_VELOCITY
     if(ustar_png.c_str() != ""){

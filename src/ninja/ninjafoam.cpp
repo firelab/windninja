@@ -2447,7 +2447,6 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
 			turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                                     AsciiGrid<double>::order0));
-                        turbTempGrid->write_Grid("turbTempGrid.asc", 2);
                         
                         ninjaKmlFiles.setTurbulenceFlag("true");
                         ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid);
