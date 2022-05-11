@@ -321,8 +321,11 @@ bool NinjaFoam::simulate_wind()
     CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
+    //suppress libXML warnings
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     Sample();
     SampleRawOutput();
+    CPLPopErrorHandler();
 
     #ifdef _OPENMP
     endOutputSampling = omp_get_wtime();
@@ -1673,7 +1676,7 @@ int NinjaFoam::SanitizeOutput()
     std::string s, s2;
 
     /*-------------------------------------------------------------------*/
-    /* sanitize the u and v output                                       */
+    /* sanitize the u, v, and k output                                       */
     /*-------------------------------------------------------------------*/
     pszMem = CPLSPrintf("%s/output.raw", pszFoamPath);
     /* This is a member, hold on to it so we can read it later */
