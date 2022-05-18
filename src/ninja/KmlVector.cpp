@@ -1211,7 +1211,7 @@ bool KmlVector::writeTurbulence(FILE *fileOut)
     //---------------make single png for overlay------------------
     std::string outFilename = "turbulence_png.png";
     std::string scalarLegendFilename = "turbulence_legend";
-    std::string legendTitle = "u'";
+    std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "(m/s)";
     bool writeLegend = TRUE;
 
