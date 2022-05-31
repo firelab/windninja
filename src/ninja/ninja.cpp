@@ -3568,13 +3568,14 @@ void ninja::computeSurfPropForCell
     coverUnits::toBaseUnits(canopyCover, canopyCoverUnits);
     lengthUnits::toBaseUnits(fuelBedDepth, fuelBedDepthUnits);
 
-    // Go through logic of determining surface properties, depending on what data is available at this cell
+    //Go through logic of determining surface properties, depending on what data is available at this cell
+    //0.75 and 0.1 coeffiecients taken from Crockford, 2007 (Wind Profiles and Forests, Masters Thesis, DTU)
 
     if (canopyCover >= 0.05 && canopyHeight > 0)	// if enough cover use the canopy hgt
     {
         input.surface.Rough_h.set_cellValue(i, j, canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assuming forest land cover for heat transfer parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3584,8 +3585,8 @@ void ninja::computeSurfPropForCell
         if(fuelModel == 90)			// Barren
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00230769);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.3);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3593,8 +3594,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 91)	// Urban Roughness
         {
             input.surface.Rough_h.set_cellValue(i, j,  5.0);
-            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 5.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 5.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.18);
             input.surface.Bowen.set_cellValue(i, j, 1.5);
             input.surface.Cg.set_cellValue(i, j, 0.25);
@@ -3602,8 +3603,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 92)	// Snow Ice
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00076923);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.7);
             input.surface.Bowen.set_cellValue(i, j, 0.5);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3611,8 +3612,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 93)	// Agriculture
         {
             input.surface.Rough_h.set_cellValue(i, j,  1.0);
-            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 1.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 1.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.15);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3620,8 +3621,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 98)	// Water
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00153846);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.1);
             input.surface.Bowen.set_cellValue(i, j, 0.0);
             input.surface.Cg.set_cellValue(i, j, 1.0);
@@ -3632,8 +3633,8 @@ void ninja::computeSurfPropForCell
     }else if(fuelBedDepth > 0.0)	//just use fuel bed depth
     {
         input.surface.Rough_h.set_cellValue(i, j,  fuelBedDepth);
-        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.63);
-        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.75);
+        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);	//use rangeland values for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3641,8 +3642,8 @@ void ninja::computeSurfPropForCell
     }else if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         input.surface.Rough_h.set_cellValue(i, j,  canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assume forest land for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3650,8 +3651,8 @@ void ninja::computeSurfPropForCell
     }else		// If we make it to here, we'll just choose parameters based on rangeland...
     {
         input.surface.Rough_h.set_cellValue(i, j,  0.384615);
-        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.63);
-        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.75);
+        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3666,8 +3667,8 @@ void ninja::computeSurfPropForCell
     if (canopyCover >= 0.05 && canopyHeight > 0 )	// if enough cover use the canopy hgt
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assuming forest land cover for heat transfer parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3683,8 +3684,8 @@ void ninja::computeSurfPropForCell
         {
         case 90:	// Barren
             (*input.surface.Rough_h.poData)[i][j] = 0.00230769;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.3;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3692,8 +3693,8 @@ void ninja::computeSurfPropForCell
             break;
         case 91:	// Urban Roughness
             (*input.surface.Rough_h.poData)[i][j] = 5.0;
-            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 5.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 5.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.18;
             (*input.surface.Bowen.poData)[i][j] = 1.5;
             (*input.surface.Cg.poData)[i][j] = 0.25;
@@ -3701,8 +3702,8 @@ void ninja::computeSurfPropForCell
             break;
         case 92:	// Snow Ice
             (*input.surface.Rough_h.poData)[i][j] = 0.00076923;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.7;
             (*input.surface.Bowen.poData)[i][j] = 0.5;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3710,8 +3711,8 @@ void ninja::computeSurfPropForCell
             break;
         case 93:	// Agriculture
             (*input.surface.Rough_h.poData)[i][j] = 1.0;
-            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 1.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 1.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.15;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3719,8 +3720,8 @@ void ninja::computeSurfPropForCell
             break;
         case 98:	// Water
             (*input.surface.Rough_h.poData)[i][j] = 0.00153846;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.1;
             (*input.surface.Bowen.poData)[i][j] = 0.0;
             (*input.surface.Cg.poData)[i][j] = 1.0;
@@ -3739,8 +3740,8 @@ void ninja::computeSurfPropForCell
     if(fuelBedDepth > 0.0)		//just use fuel bed depth
     {
         (*input.surface.Rough_h.poData)[i][j] = fuelBedDepth;
-        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.63;
-        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.75;
+        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.25;	//use rangeland values for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3752,8 +3753,8 @@ void ninja::computeSurfPropForCell
     if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assume forest land for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3764,8 +3765,8 @@ void ninja::computeSurfPropForCell
 
     // If we make it to here, we'll just choose parameters based on rangeland...
     (*input.surface.Rough_h.poData)[i][j] = 0.384615;
-    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.63;
-    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.13;
+    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.75;
+    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.1;
     (*input.surface.Albedo.poData)[i][j] = 0.25;
     (*input.surface.Bowen.poData)[i][j] = 1.0;
     (*input.surface.Cg.poData)[i][j] = 0.15;
