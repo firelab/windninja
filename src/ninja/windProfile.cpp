@@ -92,37 +92,39 @@ double windProfile::getWindSpeed()
          }
 	}else if(profile_switch==monin_obukov_similarity)   //Monin-Obukov similarity profile
     {
-		 if(AGL==0.0)
-		 {
-			velocity = 0.0;
-			return velocity;
-		 }else
-		 {		
-				inwindheight = (inputWindHeight + Rough_h) - (Rough_d);       //height of input wind (from z=0 of log profile)
-
-                if(inwindheight < Roughness)  //if the input wind is at a height where the log profile isn't defined (can happen on output interpolation), just linearly interpolate
-                {
-                    velocity = inputWindSpeed * (AGL/(inwindheight + Rough_d));
+                if(AGL==0.0)
+		{
+                    velocity = 0.0;
                     return velocity;
-                }else{  //else, just do standard profile stuff
-                    if(AGL < (Rough_d + 7.0*Roughness))	//linearly interpolate, as in AERMOD, if below 7*z0
-                    {
-                        vel7z0 = monin_obukov(7.0*Roughness, inputWindSpeed, inwindheight, Roughness, ObukovLength);	//compute windspeeds at 7*z0 height
-                        velocity = vel7z0 * (AGL/(7.0*Roughness + Rough_d));
+		}else
+                {		
+		    inwindheight = (inputWindHeight + Rough_h) - (Rough_d); //height of input wind (from z=0 of log profile)
+
+                    //If the input wind is at a height where the log profile isn't defined (can happen on output interpolation),
+                    //just linearly interpolate. Use three times the roughness height to avoid issues that can arise sampling
+                    //too close to where the log profile goes to 0.
+                    if(inwindheight < 3.0*Roughness){
+                        velocity = inputWindSpeed * (AGL/(inwindheight + Rough_d));
                         return velocity;
-                    }else if(AGL < (Rough_d + ABL_height))	//if below ABL top, monin-obukov similarity (log profile)
-                    {
-                        velocity = monin_obukov((AGL - Rough_d), inputWindSpeed, inwindheight, Roughness, ObukovLength);
+                    }else{ //else, just do standard profile stuff
+                        if(AGL < (Rough_d + 7.0*Roughness))	//linearly interpolate, as in AERMOD, if below 7*z0
+                        {
+                            vel7z0 = monin_obukov(7.0*Roughness, inputWindSpeed, inwindheight, Roughness, ObukovLength);	//compute windspeeds at 7*z0 height
+                            velocity = vel7z0 * (AGL/(7.0*Roughness + Rough_d));
+                            return velocity;
+                        }else if(AGL < (Rough_d + ABL_height))	//if below ABL top, monin-obukov similarity (log profile)
+                        {
+                            velocity = monin_obukov((AGL - Rough_d), inputWindSpeed, inwindheight, Roughness, ObukovLength);
+                            return velocity;
+                        }else{	//else we're above the ABL...
+                            if(ABL_height<=0.0) //This can happen if input velocity is 0 which gives u_star=0 (typically if diurnal is off)
+                                velocity = 0.0;
+                            else
+                                velocity = monin_obukov(ABL_height, inputWindSpeed, inwindheight, Roughness, ObukovLength);
                         return velocity;
-                    }else{	//else we're above the ABL...
-                        if(ABL_height<=0.0) //This can happen if input velocity is 0 which gives u_star=0 (typically if diurnal is off)
-                            velocity = 0.0;
-                        else
-                            velocity = monin_obukov(ABL_height, inputWindSpeed, inwindheight, Roughness, ObukovLength);
-                        return velocity;
+                        }
                     }
                 }
-         }
 	}else
 	    throw std::runtime_error("Could not identify profile switch.\n");
 }
