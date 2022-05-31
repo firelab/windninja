@@ -303,7 +303,7 @@ bool NinjaFoam::simulate_wind()
     startOutputSampling = omp_get_wtime();
     #endif
 
-    //Uupdate the sampleDict interpolation scheme. If the the output wind height is not 
+    //Update the sampleDict interpolation scheme. If the the output wind height is not
     //resolved (if we are sampling in the lowest cell), then we will use a log
     //interpolation from the cell-center value in the lowest cell in the mesh. Otherwise,
     //we use cellPoint for a linear interpolation.
