@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+WindNinja 3.7.5
+---------------
+- Restore GMTED data downloads following a change on the server that provides these data (#452)
+
+- Adjust coefficients used in estimating roughness and displacement heights to avoid wind profile interpolation issues (#456)
+
 WindNinja 3.7.4
 ---------------
 - Fix issue related to URL generation causing LCP downloads to intermittently fail (#449, #448)
