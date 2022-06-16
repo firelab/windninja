@@ -28,7 +28,6 @@
 *.app
 
 # Build folder
-*build*
 debug*
 
 # Doxygen
