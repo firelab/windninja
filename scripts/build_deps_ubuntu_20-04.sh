@@ -2,11 +2,11 @@
 
 PREFIX=/usr/local
 POPPLER="poppler-0.23.4"
-PROJ="proj-4.8.0"
+PROJ="proj-6.3.2"
 GDAL="gdal-3.2.1"
 
 #Ubuntu
-sudo apt install libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev libboost-program-options-dev libboost-date-time-dev libgeos-dev libboost-test-dev
+sudo apt install libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev libboost-program-options-dev libboost-date-time-dev libgeos-dev libboost-test-dev libsqlite3-dev sqlite3
 
 #Get and build poppler for PDF support in GDAL
 wget http://poppler.freedesktop.org/$POPPLER.tar.xz
@@ -25,7 +25,6 @@ cd $PROJ
 make clean
 make
 sudo make install
-sudo cp $PREFIX/include/proj_api.h $PREFIX/lib
 cd ..
 
 #Get and build GDAL with poppler support
