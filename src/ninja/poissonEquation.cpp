@@ -589,12 +589,8 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
     /*     of the surrounding cells.                       */
     /*-----------------------------------------------------*/
 
-    for(int i=0;i<mesh_->NUMNP;i++) //Initialize u,v, and w
-    {
-        U_.vectorData_x(i)=0.;
-        U_.vectorData_y(i)=0.;
-        U_.vectorData_z(i)=0.;
-    }
+    //Initialize u,v, and w
+    U_ = 0.0;
 
     fem.ComputeGradientField(PHI, U_);
 
@@ -685,6 +681,8 @@ void PoissonEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input)
     stabilityUsingAlphasFlag = input.stabilityFlag;
 
     fem.Initialize(mesh_, input_);
+
+    U_.allocate(&mesh);
 }
 
 void PoissonEquation::Solve(WindNinjaInputs &input)
