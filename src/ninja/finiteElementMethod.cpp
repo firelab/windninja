@@ -70,11 +70,6 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 void FiniteElementMethod::DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
         wn_3dVectorField &windSpeedGradient) 
 {
-
-}
-
-void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion() 
-{
 //    //The governing equation to solve for diffusion of the velocity field is:
 //    //
 //    //    d        dPhi      d        dPhi      d        dPhi            dPhi
@@ -93,181 +88,200 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion()
 //    //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
 //    //    Thompson book).
 //    //        
+//    //    For central difference, the equation to solve is (p. 194 in Thompson book):
+//    //    
+//    //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
+//    //
+//    //    where:
+//    //    [CPK] = [C] + (dt/2)[K]
+//    //    [CMK] = [C] - (dt/2)[K]
+//    //    {dQ} = dt{Q}sub(t+dt/2)
+//    //    
+//    //    TODO:
+//    //    [C] and [K] are evaluated at t+dt/2.
+//    //
+//    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
+//    //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
+//    //    now since Q is 0.
+//#pragma omp atomic
+//    //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
+//    xRHS[elementArray[i].NPK] += elementArray[i].C[j];  
+//    yRHS[elementArray[i].NPK] += elementArray[i].C[j];
+//    zRHS[elementArray[i].NPK] += elementArray[i].C[j];  
 //
-//    int i, j, k, l;
-//    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+//    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
 //    {
-//        for(int j=0; j<mesh_->NNPE; j++)
-//        {
-//            elementArray[i].QE[j]=0.0;
-//            for(int k=0; k<mesh_->NNPE; k++)
-//            {
-//                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-//                elementArray[i].C[j*mesh_->NNPE+k]=0.0;
-//            }
-//        }
+//        elementArray[i].KNP=mesh_->get_global_node(k, i);
+//        xRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+//                        elementArray[i].S[j*mesh_->NNPE+k]*
+//                        U0_.vectorData_x(elementArray[i].KNP);
+//        yRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+//                        elementArray[i].S[j*mesh_->NNPE+k]*
+//                        U0_.vectorData_y(elementArray[i].KNP);
+//        zRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+//                        elementArray[i].S[j*mesh_->NNPE+k]*
+//                        U0_.vectorData_z(elementArray[i].KNP);
 //    }
 //
-//#pragma omp parallel default(shared) private(i,j,k,l)
+//    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
 //    {
-//        int ii, jj, kk;
-//        int pos;  
+//        elementArray[i].KNP=mesh_->get_global_node(k, i);
 //
-//#pragma omp for
-//        for(i=0; i<mesh_->NUMNP; i++)
+//        if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
 //        {
-//            CL[i]=0.;
-//            xRHS[i]=0.;
-//            yRHS[i]=0.;
-//            zRHS[i]=0.;
+//            pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+//
+//            //l increments through col_ind[] starting from where row_ptr[] says until
+//            //we find the column number we're looking for
+//            l=0;
+//            do
+//            {
+//                if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+//                     pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
+//                l++;
+//            }
+//            while(pos<0);
+//#pragma omp atomic
+//            //Here is the final global stiffness matrix in symmetric storage
+//            //SK=[CPK]
+//            SK[pos] += elementArray[i].C[j*mesh_->NNPE+k] +
+//                       (currentDt.total_microseconds()/1000000.0)/2*elementArray[i].S[j*mesh_->NNPE+k];
 //        }
-//
-//#pragma omp for
-//        for(i=0;i<mesh_->NUMEL;i++) //Start loop over elements
-//        {
-//
-//            //Begin quadrature for current element
-//            elementArray[i].node0=mesh_->get_node0(i); //get the global nodal number of local node 0 of element i
-//
-//            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
-//            {
-//                if(elementArray[i].NUMQPTV==27)
-//                {
-//                    if(j<=7)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT1;
-//                    }
-//                    else if(j<=19)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT2;
-//                    }
-//                    else if(j<=25)
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT3;
-//                    }
-//                    else
-//                    {
-//                        elementArray[i].WT=elementArray[i].WT4;
-//                    }
-//                }
-//
-//                //calculates elem.HVJ
-//                CalculateHterm(elementArray[i], i);
-//
-//                //calculates elem.RX, elem.RY, elem.RZ
-//                CalculateRcoefficients(elementArray[i], j);
-//
-//                //Create element stiffness matrix---------------------------------------------
-//                for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
-//                {
-//                    //elementArray[i].QE is currently just 0 since elementArray[i].HVJ is 0 (no source term)
-//                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*
-//                        elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
-//                        elementArray[i].HVJ*elementArray[i].DV;
-//                    for(l=0;l<mesh_->NNPE;l++)
-//                    {
-//                        elementArray[i].C[k*mesh_->NNPE+l]=elementArray[i].C[k*mesh_->NNPE+l]+
-//                            elementArray[i].WT*elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].RC*
-//                            elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+l*elementArray[i].NUMQPTV+j]*elementArray[i].DV;
-//
-//                        elementArray[i].S[k*mesh_->NNPE+l]=elementArray[i].S[k*mesh_->NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
-//                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
-//                    }
-//                } //End loop over nodes in the element
-//            } //End loop over quadrature points in the element
-//
-//            //Place completed element matrix in global matrices
-//            for(j=0;j<mesh_->NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
-//            {
-//                //elementArray[i].NPK is the global row number of the element stiffness matrix
-//                elementArray[i].NPK=mesh_->get_global_node(j, i);
-//
-//                if(diffusionDiscretizationType == GetDiscretizationType("lumpedCapacitance"))
-//                {
-//#pragma omp atomic
-//                    xRHS[elementArray[i].NPK] += elementArray[i].QE[j];
-//                    yRHS[elementArray[i].NPK] += elementArray[i].QE[j];
-//                    zRHS[elementArray[i].NPK] += elementArray[i].QE[j];
-//
-//                    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//                    {
-//                        elementArray[i].KNP=mesh_->get_global_node(k, i);
-//#pragma omp atomic
-//                        CL[elementArray[i].NPK] += elementArray[i].C[j*mesh_->NNPE+k];
-//                        xRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
-//                            U0_.vectorData_x(elementArray[i].KNP);
-//                        yRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
-//                            U0_.vectorData_y(elementArray[i].KNP);
-//                        zRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
-//                            U0_.vectorData_z(elementArray[i].KNP);
-//                    }
-//                }
-//                else if(diffusionDiscretizationType == GetDiscretizationType("centralDifference"))
-//                {
-//                    //    For central difference, the equation to solve is (p. 194 in Thompson book):
-//                    //    
-//                    //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
-//                    //
-//                    //    where:
-//                    //    [CPK] = [C] + (dt/2)[K]
-//                    //    [CMK] = [C] - (dt/2)[K]
-//                    //    {dQ} = dt{Q}sub(t+dt/2)
-//                    //    
-//                    //    TODO:
-//                    //    [C] and [K] are evaluated at t+dt/2.
-//                    //
-//                    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
-//                    //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
-//                    //    now since Q is 0.
-//#pragma omp atomic
-//                    //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
-//                    xRHS[elementArray[i].NPK] += elementArray[i].C[j];  
-//                    yRHS[elementArray[i].NPK] += elementArray[i].C[j];
-//                    zRHS[elementArray[i].NPK] += elementArray[i].C[j];  
-//
-//                    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//                    {
-//                        elementArray[i].KNP=mesh_->get_global_node(k, i);
-//                        xRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                                        U0_.vectorData_x(elementArray[i].KNP);
-//                        yRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                                        U0_.vectorData_y(elementArray[i].KNP);
-//                        zRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                                        U0_.vectorData_z(elementArray[i].KNP);
-//                    }
-//
-//                    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//                    {
-//                        elementArray[i].KNP=mesh_->get_global_node(k, i);
-//
-//                        if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
-//                        {
-//                            pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-//
-//                            //l increments through col_ind[] starting from where row_ptr[] says until
-//                            //we find the column number we're looking for
-//                            l=0;
-//                            do
-//                            {
-//                                if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
-//                                     pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
-//                                l++;
-//                            }
-//                            while(pos<0);
-//#pragma omp atomic
-//                            //Here is the final global stiffness matrix in symmetric storage
-//                            //SK=[CPK]
-//                            SK[pos] += elementArray[i].C[j*mesh_->NNPE+k] +
-//                                       (currentDt.total_microseconds()/1000000.0)/2*elementArray[i].S[j*mesh_->NNPE+k];
-//                        }
-//                    }
-//                }
-//            } //End loop over nodes in the element
-//        } //End loop over elements
-//    } //End parallel region
+//    }
+}
+
+void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField &U0, double* xRHS,
+                            double* yRHS, double* zRHS, double* CL, wn_3dScalarField &heightAboveGround,
+                            wn_3dVectorField &windSpeedGradient) 
+{
+    //The governing equation to solve for diffusion of the velocity field is:
+    //
+    //    d        dPhi      d        dPhi      d        dPhi            dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
+    //    dx        dx       dy        dy       dz        dz              dt
+    //
+    //    where:
+    //
+    //    Phi = Ux, Uy, Uz --> the current velocity field
+    //    Rz = 0.4 * heightAboveGround * du/dz
+    //    Rx = Ry = Rz
+    //    H = source term, 0 for now
+    //    Rc = 1
+    //
+    //    There are two discretization schemes available for diffusion: lumped-capacitance (see p. 195
+    //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
+    //    Thompson book).
+    //        
+
+    int i, j, k, l;
+    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+    {
+        for(int j=0; j<mesh_->NNPE; j++)
+        {
+            elementArray[i].QE[j]=0.0;
+            for(int k=0; k<mesh_->NNPE; k++)
+            {
+                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                elementArray[i].C[j*mesh_->NNPE+k]=0.0;
+            }
+        }
+    }
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        int ii, jj, kk;
+        int pos;  
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMNP; i++)
+        {
+            CL[i]=0.;
+            xRHS[i]=0.;
+            yRHS[i]=0.;
+            zRHS[i]=0.;
+        }
+
+#pragma omp for
+        for(i=0;i<mesh_->NUMEL;i++) //Start loop over elements
+        {
+            //Begin quadrature for current element
+            elementArray[i].node0=mesh_->get_node0(i); //get the global nodal number of local node 0 of element i
+
+            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                if(elementArray[i].NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elementArray[i].WT=elementArray[i].WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elementArray[i].WT=elementArray[i].WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elementArray[i].WT=elementArray[i].WT3;
+                    }
+                    else
+                    {
+                        elementArray[i].WT=elementArray[i].WT4;
+                    }
+                }
+
+                //calculates elem.HVJ
+                //CalculateHterm(elementArray[i], i);
+                //just sent the source term to 0 for now --> no soure term for diffusion
+                elementArray[i].HVJ=0.0;
+
+                //calculates elem.RX, elem.RY, elem.RZ
+                CalculateDiffusionRcoefficients(i, j, heightAboveGround, windSpeedGradient);
+
+                //Create element stiffness matrix---------------------------------------------
+                for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+                {
+                    //elementArray[i].QE is currently just 0 since elementArray[i].HVJ is 0 (no source term)
+                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*
+                        elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
+                        elementArray[i].HVJ*elementArray[i].DV;
+                    for(l=0;l<mesh_->NNPE;l++)
+                    {
+                        elementArray[i].C[k*mesh_->NNPE+l]=elementArray[i].C[k*mesh_->NNPE+l]+
+                            elementArray[i].WT*elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].RC*
+                            elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+l*elementArray[i].NUMQPTV+j]*elementArray[i].DV;
+
+                        elementArray[i].S[k*mesh_->NNPE+l]=elementArray[i].S[k*mesh_->NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
+                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+
+            //Place completed element matrix in global matrices
+            for(j=0;j<mesh_->NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            {
+                //elementArray[i].NPK is the global row number of the element stiffness matrix
+                elementArray[i].NPK=mesh_->get_global_node(j, i);
+
+#pragma omp atomic
+                xRHS[elementArray[i].NPK] += elementArray[i].QE[j];
+                yRHS[elementArray[i].NPK] += elementArray[i].QE[j];
+                zRHS[elementArray[i].NPK] += elementArray[i].QE[j];
+
+                for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
+                {
+                    elementArray[i].KNP=mesh_->get_global_node(k, i);
+#pragma omp atomic
+                    CL[elementArray[i].NPK] += elementArray[i].C[j*mesh_->NNPE+k];
+                    xRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
+                        U0.vectorData_x(elementArray[i].KNP);
+                    yRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
+                        U0.vectorData_y(elementArray[i].KNP);
+                    zRHS[elementArray[i].NPK] -= elementArray[i].S[j*mesh_->NNPE+k]*
+                        U0.vectorData_z(elementArray[i].KNP);
+                }
+            } //End loop over nodes in the element
+        } //End loop over elements
+    } //End parallel region
 }
 
 /**

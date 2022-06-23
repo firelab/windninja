@@ -337,13 +337,13 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
                 //Debugging finite element solver--------------------------------
                 //write PHI and RHS for debugging
-                //conservationOfMassEquation.writePHIandRHS = true;
-                //std::ostringstream phi_fname;
-                //phi_fname << "PHI_" << iteration << ".vtk";
-                //conservationOfMassEquation.phiOutFilename = phi_fname.str();
-                //std::ostringstream rhs_fname;
-                //rhs_fname << "RHS_" << iteration << ".vtk";
-                //conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
+                std::ostringstream phi_fname;
+                phi_fname << "PHI_" << iteration << ".vtk";
+                conservationOfMassEquation.phiOutFilename = phi_fname.str();
+                std::ostringstream rhs_fname;
+                rhs_fname << "RHS_" << iteration << ".vtk";
+                conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
+                conservationOfMassEquation.WritePHIandRHS();
                 //---------------------------------------------------------------
 
                 //set ground to zero

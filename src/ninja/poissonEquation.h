@@ -64,7 +64,7 @@ class PoissonEquation
         double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
         bool stabilityUsingAlphasFlag;
         wn_3dScalarField alphaVfield; //stores spatially varying alphaV variable
-        bool writePHIandRHS;
+        void WritePHIandRHS();
         std::string phiOutFilename;
         std::string rhsOutFilename;
 

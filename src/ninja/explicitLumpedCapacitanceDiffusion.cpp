@@ -85,13 +85,16 @@ void ExplicitLumpedCapacitanceDiffusion::Discretize()
     //    Thompson book). 
     //        
 
-        fem.DiscretizeLumpedCapacitenceDiffusion();
+        fem.DiscretizeLumpedCapacitenceDiffusion(U0_, xRHS, yRHS, zRHS, CL, heightAboveGround,
+                windSpeedGradient);
 }
 
 void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
 {
     mesh_ = mesh;
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    U0_.allocate(mesh_);
+    fem.Initialize(mesh_, input_); //initialize the FEM object
 
     if(PHI == NULL)
         PHI=new double[mesh_->NUMNP];
@@ -115,6 +118,19 @@ void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaI
         zRHS=new double[mesh_->NUMNP]; //This is the final right hand side (RHS) matrix
     else
         throw std::runtime_error("Error allocating zRHS field.");
+
+    heightAboveGround.allocate(mesh_);
+    windSpeed.allocate(mesh_);
+    windSpeedGradient.allocate(mesh_);
+
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //find distance to ground at each node in mesh and write to wn_3dScalarField
+                heightAboveGround(i,j,k) = mesh_->ZORD(i,j,k) - mesh_->ZORD(i,j,0);
+            }
+        }
+    }
 }
 
 /**
@@ -128,11 +144,12 @@ void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaI
 void ExplicitLumpedCapacitanceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVectorField &U, 
                               boost::posix_time::time_duration dt)
 {
-    U0_ = U1;
+    U0_ = U1; //update the initial velocity field
+    Discretize(); //discretize CL matrix and RHS terms
 
     int NPK;
 
-    cout<<"Solving diffusion with lumped capacitence...."<<endl;
+    CPLDebug("SEMI_LAGRANGIAN", "Solving diffusion with lumped capacitence....");
     for(int k=0;k<mesh_->nlayers;k++)
     {
         for(int i=0;i<input_->dem.get_nRows();i++)

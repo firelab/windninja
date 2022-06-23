@@ -51,7 +51,9 @@ class FiniteElementMethod
         void Initialize(const Mesh *mesh, const WindNinjaInputs *input);
         void DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
                 wn_3dVectorField &windSpeedGradient);
-        void DiscretizeLumpedCapacitenceDiffusion();
+        void DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField &U0, double* xRHS,
+                            double* yRHS, double* zRHS, double* CL, wn_3dScalarField &heightAboveGround,
+                            wn_3dVectorField &windSpeedGradient);
         void Discretize(double* SK, double* RHS, int* col_ind, int* row_ptr,
                 wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield);
         void ComputeGradientField(double *scalar, wn_3dVectorField &U);

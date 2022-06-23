@@ -39,7 +39,6 @@ PoissonEquation::PoissonEquation()
     row_ptr=NULL;
     col_ind=NULL;
     isBoundaryNode=NULL;
-    writePHIandRHS=false;
     phiOutFilename="!set";
     rhsOutFilename="!set";
     stabilityUsingAlphasFlag=0;
@@ -66,7 +65,6 @@ PoissonEquation::PoissonEquation(PoissonEquation const& A)
     row_ptr=A.row_ptr;
     col_ind=A.col_ind;
     isBoundaryNode=A.isBoundaryNode;
-    writePHIandRHS=A.writePHIandRHS;
     phiOutFilename=A.phiOutFilename;
     rhsOutFilename=A.rhsOutFilename;
     stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
@@ -88,7 +86,6 @@ PoissonEquation& PoissonEquation::operator=(PoissonEquation const& A)
         row_ptr=A.row_ptr;
         col_ind=A.col_ind;
         isBoundaryNode=A.isBoundaryNode;
-        writePHIandRHS=A.writePHIandRHS;
         phiOutFilename=A.phiOutFilename;
         rhsOutFilename=A.rhsOutFilename;
         stabilityUsingAlphasFlag=A.stabilityUsingAlphasFlag;
@@ -191,11 +188,6 @@ void PoissonEquation::SetBoundaryConditions()
         }
     }
     }	//end parallel region
-    if(isBoundaryNode)
-    {
-        delete[] isBoundaryNode;
-        isBoundaryNode=NULL;
-    }
 }
 
 void PoissonEquation::Deallocate()
@@ -541,6 +533,38 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
 }
 
 /**
+ * \brief Write PHI and RHS for debugging.
+ *
+ * \return void
+ */
+void PoissonEquation::WritePHIandRHS()
+{
+    wn_3dScalarField phiField;
+    wn_3dScalarField rhsField;
+    phiField.allocate(mesh_);
+    rhsField.allocate(mesh_);
+    int _NPK;
+    for(unsigned int k=0; k<mesh_->nlayers; k++)
+    {
+        for(unsigned int i=0; i<mesh_->nrows;i++)
+        {
+            for(unsigned int j=0; j<mesh_->ncols; j++)
+            {
+                _NPK=k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
+                phiField(i,j,k) = PHI[_NPK];
+                rhsField(i,j,k) = RHS[_NPK];
+            }
+        }
+    }
+    volVTK VTKphi(phiField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
+                input_->dem.get_nCols(), input_->dem.get_nRows(), mesh_->nlayers, phiOutFilename);
+    volVTK VTKrhs(rhsField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
+                input_->dem.get_nCols(), input_->dem.get_nRows(), mesh_->nlayers, rhsOutFilename);
+    phiField.deallocate();
+    rhsField.deallocate();
+}
+
+/**
  * @brief Computes the u,v,w 3d volume wind field.
  *
  * Calculate @f$u@f$, @f$v@f$, and @f$w@f$ from derivitives of @f$\Phi@f$. Where:
@@ -594,31 +618,6 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
 
     fem.ComputeGradientField(PHI, U_);
 
-    //if(writePHIandRHS){
-    //    wn_3dScalarField phiField;
-    //    wn_3dScalarField rhsField;
-    //    phiField.allocate(&mesh_);
-    //    rhsField.allocate(&mesh_);
-    //    int _NPK;
-    //    for(unsigned int k=0; k<mesh_->nlayers; k++)
-    //    {
-    //        for(unsigned int i=0; i<mesh_->nrows;i++)
-    //        {
-    //            for(unsigned int j=0; j<mesh_->ncols; j++)
-    //            {
-    //                _NPK=k*input_->dem.get_nCols()*input_->dem.get_nRows()+i*input_->dem.get_nCols()+j; //NPK is the global row number (also the node # we're on)
-    //                phiField(i,j,k) = PHI[_NPK];
-    //                rhsField(i,j,k) = RHS[_NPK];
-    //            }
-    //        }
-    //    }
-    //    volVTK VTKphi(phiField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
-    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_->nlayers, phiOutFilename);
-    //    volVTK VTKrhs(rhsField, mesh_->XORD, mesh_->YORD, mesh_->ZORD, 
-    //                input.dem.get_nCols(), input.dem.get_nRows(), mesh_->nlayers, rhsOutFilename);
-    //    phiField.deallocate();
-    //    rhsField.deallocate();
-    //}
 
     double alphaV = 1.0;
 
