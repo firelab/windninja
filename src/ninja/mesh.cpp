@@ -47,13 +47,13 @@ Mesh::Mesh()
     domainHeightUnits = lengthUnits::meters;
     domainHeight = -1.0;
     numVertLayers = -1;
-    //vertGrowth = 1.001;
-    vertGrowth = 1.3;
+    vertGrowth = 1.001;
+    //vertGrowth = 1.3;
 
     meshResChoice = coarse;
     targetNumHorizCells = -1;
-    //maxAspectRatio = 1.1;
-    maxAspectRatio = 400.;
+    maxAspectRatio = 1.1;
+    //maxAspectRatio = 400.;
 
     coarseTargetCells=4000; //IF THESE ARE CHANGED, make sure to change the ones in the windninja GUI
     mediumTargetCells=10000;
