@@ -42,6 +42,6 @@ timeFormat      general;
 
 timePrecision   10;
 
-runTimeModifiable yes;
+runTimeModifiable true;
 
 // ************************************************************************* //

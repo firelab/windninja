@@ -9,31 +9,31 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    location    "0";
-    object      epsilon;
+    class       dictionary;
+    location    "constant";
+    object      momentumTransport;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 2 -3 0 0 0 0];
+simulationType RAS;
 
-internalField   uniform 1;
-
-boundaryField
+RAS
 {
-$boundaryField$
-    minZ
-    {
-        type            epsilonWallFunction;
-        Cmu             0.09;
-        kappa           0.41;
-        E               9.8;
-        value           uniform 1;
-    }
-    maxZ
-    {
-        type            zeroGradient;
-    }
+    model           kEpsilon;
+
+    turbulence      on;
+
+    printCoeffs     on;
+	
+	kEpsilonCoeffs
+	{
+	    Cmu              0.09;
+	    C1               1.44;
+	    C2               1.92;
+	    alphak           1.0;
+	    alphaEps         0.76923;
+	}
+
 }
 
 

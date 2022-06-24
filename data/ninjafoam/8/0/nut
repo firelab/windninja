@@ -1,9 +1,9 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.2.2                                 |
-|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
-|    \\/     M anipulation  |                                                 |
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -44,7 +44,7 @@ boundaryField
     minZ
     {
         type            nutkAtmRoughWallFunction;
-        z0              $z0$;
+        z0              uniform $z0$;
         value           uniform 0.1;    
     }
     maxZ
@@ -53,4 +53,6 @@ boundaryField
         value           uniform 0;
     }
 }
+
+
 // ************************************************************************* //

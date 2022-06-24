@@ -42,8 +42,16 @@ timeFormat      general;
 
 timePrecision   10;
 
-runTimeModifiable yes;
-libs ("$lib$")
+runTimeModifiable true;
+
+
+
+libs
+(
+    "$lib$"
+);
+
+
 functions
 (
 /*
