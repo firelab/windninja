@@ -1,0 +1,60 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.2.0                                  |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+transportModel  Newtonian;
+
+DT              DT [0 2 -1 0 0 0 0]     0.01;
+
+nu              nu [0 2 -1 0 0 0 0]     1.58946099535e-05; // New variable
+
+rho             rho [1 -3 0 0 0 0 0]    1.1614; // Density of the fluid
+
+CrossPowerLawCoeffs
+{
+    m               m [0 0 1 0 0 0 0]       1.0;
+    n               n [0 0 0 0 0 0 0]       1.0;
+    nu0             nu0 [0 2 -1 0 0 0 0]    1.0;    // New Varibale
+    nuInf           nuInf [0 2 -1 0 0 0 0]  1.0;    // New Varibale
+
+}
+
+BirdCarreauCoeffs
+{
+    k               k [0 0 1 0 0 0 0]       1.0;
+    n               n [0 0 0 0 0 0 0]       1.0;
+    nu0             nu0 [0 2 -1 0 0 0 0]    1.0;    // New Varibale
+    nuInf           nuInf [0 2 -1 0 0 0 0]  1.0;    // New Varibale
+
+}
+
+powerLawCoeffs
+{
+    k               k [0 2 -1 0 0 0 0]      1.0;
+    n               n [0 0 0 0 0 0 0]       1.0;
+    nuMin           nuMin [0 2 -1 0 0 0 0]  1.0;    // New Varibale
+    nuMax           nuMax [0 2 -1 0 0 0 0]  1.0;    // New Varibale
+
+}
+
+HerschelBulkleyCoeffs
+{
+    k               k [0 2 -1 0 0 0 0]          1.0;
+    n               n [0 0 0 0 0 0 0]           1.0;
+    nu0             nuMin [0 2 -1 0 0 0 0]      1.0;    // New Varibale
+    tau0            tau0 [0 2 -2 0 0 0 0]       1.0;
+}
+
+// ************************************************************************* //

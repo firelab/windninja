@@ -383,17 +383,33 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
 
     if(template_ == ""){
         if(gammavalue != ""){
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericTypeVal.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericTypeVal.tmp");
+            #endif
         }
         else if(inletoutletvalue != ""){
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType.tmp");
+            #endif
         }
         else{
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType-kep.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType-kep.tmp");
+            #endif
         }
     }
     else{
-        pszPathToFile = CPLSPrintf("ninjafoam/0/%s", template_.c_str());
+        #ifdef WIN32
+        pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
+        #else
+        pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", template_.c_str());
+        #endif
     }
 
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
@@ -581,7 +597,11 @@ void NinjaFoam::WriteFoamFiles()
     const char *pszTempFoamPath;
     //write temporary OpenFOAM directories
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
     //papszFileList = VSIReadDirRecursive( pszArchive );
     papszFileList = NinjaVSIReadDirRecursive( pszArchive );
     for(int i = 0; i < CSLCount( papszFileList ); i++){
@@ -603,8 +623,7 @@ void NinjaFoam::WriteFoamFiles()
         if(std::string(pszFilename) != "" &&
            std::string(CPLGetExtension(pszFilename)) != "tmp" &&
            std::string(pszFilename) != "pointDisplacement"){
-            pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-            pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+            
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
             pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
@@ -926,7 +945,11 @@ void NinjaFoam::writeBlockMesh()
     SetBlockMeshParametersFromDem();
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
 
     pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
@@ -1006,7 +1029,11 @@ void NinjaFoam::writeMoveDynamicMesh()
     const char *pszOutput;
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
 
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
     pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
