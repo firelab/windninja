@@ -690,7 +690,7 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j,
     for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
     {
         height=height+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
-            heightAboveGround(elementArray[1].NPK);
+            heightAboveGround(elementArray[i].NPK);
         speed=speed+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*
             windSpeedGradient.vectorData_z(elementArray[i].NPK);
     }

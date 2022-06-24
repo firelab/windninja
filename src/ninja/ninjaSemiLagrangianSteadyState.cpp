@@ -237,9 +237,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         //currentDt = boost::posix_time::seconds(5);
         bool with_advection = true;
         bool with_diffusion = true;
-        bool with_projection = false;
+        bool with_projection = true;
 
-        while(iteration <= 500)
+        while(iteration <= 2)
         {
             iteration += 1;
             currentDt0 = currentDt;
@@ -324,7 +324,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 }
             }
             else{
-                //FOR TESTING WITHOUT DIFFUSION ONLY, REMOVE WHEN DIFFUSION IS TURNED ON 
+                //FOR TESTING WITHOUT DIFFUSION ONLY
                 U=U_1;
             }
 
@@ -508,10 +508,11 @@ void NinjaSemiLagrangianSteadyState::deleteDynamicMemory()
     U_0.deallocate();
     U_1.deallocate();
 
-    if(diffusionEquation)
-    {	
-        delete diffusionEquation;
-        diffusionEquation=NULL;
-    }
+    //TODO: The below causes a segfault, double check how this should be handled
+    //if(diffusionEquation)
+    //{	
+    //    delete diffusionEquation;
+    //    diffusionEquation=NULL;
+    //}
 }
 

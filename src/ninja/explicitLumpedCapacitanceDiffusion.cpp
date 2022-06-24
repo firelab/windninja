@@ -84,9 +84,22 @@ void ExplicitLumpedCapacitanceDiffusion::Discretize()
     //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
     //    Thompson book). 
     //        
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //compute and store wind speed at each node
+                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
+            }
+        }
+    }
 
-        fem.DiscretizeLumpedCapacitenceDiffusion(U0_, xRHS, yRHS, zRHS, CL, heightAboveGround,
-                windSpeedGradient);
+    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                            windSpeedGradient.vectorData_y,
+                            windSpeedGradient.vectorData_z);
+
+    fem.DiscretizeLumpedCapacitenceDiffusion(U0_, xRHS, yRHS, zRHS, CL, heightAboveGround, windSpeedGradient);
 }
 
 void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
