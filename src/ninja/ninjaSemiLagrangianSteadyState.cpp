@@ -237,7 +237,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         //currentDt = boost::posix_time::seconds(5);
         bool with_advection = true;
         bool with_diffusion = true;
-        bool with_projection = true;
+        bool with_projection = false;
 
         while(iteration <= 500)
         {
@@ -356,24 +356,19 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                         U.vectorData_z(i,j,0) = 0.0;
                     }
                 }
-                cout<<"Updating time varying values...."<<endl;
                 projectionEquation.SetInitialVelocity(U);
                 projectionEquation.SetAlphaCoefficients(input, CloudGrid, init);
-                cout<<"Discretizing...."<<endl;
                 projectionEquation.Discretize();
-                cout<<"Setting BCs......."<<endl;
                 projectionEquation.SetBoundaryConditions();
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                cout<<"Solving......."<<endl;
                 projectionEquation.Solve(input);
 
 #ifdef _OPENMP
                 endSolve = omp_get_wtime();
 #endif
                 //compute uvw field from phi field
-                cout<<"Computing UVW....."<<endl;
                 U = projectionEquation.ComputeUVWField();
 
                 checkCancel();
