@@ -43,44 +43,56 @@ edges
 (
 );
 
-patches
+boundary
 (
     north_face
-    (
+    {
         type patch;
 		faces
-        (3 7 6 2)
-    )
+        (
+			(3 7 6 2)
+		);
+    }
     west_face
-    (
+    {
         type patch;
 		faces
-        (0 4 7 3)
-    )
+        (
+			(0 4 7 3)
+		);
+    }
     east_face
-    (
+    {
         type patch;
 		faces
-        (2 6 5 1)
-    )
+        (
+			(2 6 5 1)
+		);
+    }
     south_face
-    (
+    {
         type patch;
 		faces
-        (1 5 4 0)
-    )
+        (
+			(1 5 4 0)
+		);
+    }
     minZ
-    (
+    {
         type wall;
 		faces
-        (0 3 2 1)
-    )
+        (
+			(0 3 2 1)
+		);
+    }
     maxZ
-    (
+    {
         type patch;
 		faces
-        (4 5 6 7)
-    )
+        (
+			(4 5 6 7)
+		);
+    }
 );
 
 mergePatchPairs

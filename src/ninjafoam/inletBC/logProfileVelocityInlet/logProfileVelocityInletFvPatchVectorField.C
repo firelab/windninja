@@ -62,7 +62,7 @@ void Foam::logProfileVelocityInletFvPatchVectorField::setTerrainHeights()
         
 	    point currentPt = faceCenters[pointI];
         
-        Info << "currentPt (currentFaceCenter) = " << currentPt << endl;
+        //Info << "currentPt (currentFaceCenter) = " << currentPt << endl;
 	    
         // Set to High Values
 	    Dist[pointI] = GREAT;

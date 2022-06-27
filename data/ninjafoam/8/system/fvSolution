@@ -93,7 +93,18 @@ solvers
         nCellsInCoarsestLevel 10; 
         agglomerator    faceAreaPair;
         mergeLevels     1;  
-    }   
+    }
+    cellDisplacementFinal
+    {   
+        solver          GAMG;
+        tolerance       1e-08;
+        relTol          0;  
+        smoother        GaussSeidel;
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 10; 
+        agglomerator    faceAreaPair;
+        mergeLevels     1;  
+    }
 
     "(cellMotionU|cellMotionUz)"
     {   
@@ -110,6 +121,9 @@ potentialFlow
     pRefCell                 0;
     pRefValue                0.0;
 }
+
+PIMPLE
+{}
 
 SIMPLE
 {
