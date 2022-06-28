@@ -624,6 +624,13 @@ void NinjaFoam::WriteFoamFiles()
            std::string(CPLGetExtension(pszFilename)) != "tmp" &&
            std::string(pszFilename) != "pointDisplacement"){
             
+            pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
+            #ifdef WIN32
+            pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+            #else
+            pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+            #endif
+            
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
             pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
