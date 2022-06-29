@@ -314,8 +314,13 @@ bool NinjaFoam::simulate_wind()
     else{
         scheme = "cell";
     }
+    #ifdef WIN32
     const char *pszInput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
     const char *pszOutput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+    #else
+    const char *pszInput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+    const char *pszOutput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+    #endif
     CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
@@ -535,7 +540,7 @@ void NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszF
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
-    else if(std::string(pszFilename) == "sampleDict"){
+    else if(std::string(pszFilename) == "sampleDict" || std::string(pszFilename) == "surfaces"){
         std::string t = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
         t += "_out.stl";
         ReplaceKeys(s, "$stlFileName$", t);
@@ -1612,8 +1617,14 @@ bool NinjaFoam::SimpleFoam()
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        #ifdef WIN32
         if(nRet != 0)
             return false;
+        #else
+        if(nRet != 0){
+            //do something
+        }
+        #endif
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -1640,8 +1651,14 @@ bool NinjaFoam::SimpleFoam()
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        #ifdef WIN32
         if(nRet != 0)
             return false;
+        #else
+        if(nRet != 0){
+            //do something
+        }
+        #endif
     }
     
     // write simpleFoam stdout to a log file 
@@ -1658,11 +1675,22 @@ void NinjaFoam::Sample()
 {
     int nRet = -1;
 
+    #ifdef WIN32
     const char *const papszArgv[] = { "sample", 
                                       "-case",
                                       pszFoamPath,
                                       "-latestTime", 
                                       NULL };
+    #else
+    const char *const papszArgv[] = { "simpleFoam", 
+                                      "-case",
+                                      pszFoamPath,
+                                      "-postProcess",
+                                      "-func",
+                                      "surfaces",
+                                      "-latestTime", 
+                                      NULL };
+    #endif
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.sample", ""), "w");
 

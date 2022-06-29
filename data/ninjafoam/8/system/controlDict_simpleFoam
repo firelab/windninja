@@ -54,62 +54,12 @@ libs
 
 
 functions
-(
-/*
-    Surface-0
-/*    {
-    type faceSource;//patchAverage; //patchAverage, patchFieldFlow, patchIntegrate
-    functionObjectLibs ("libFieldFunctionObjects.so");
-    outputControl timeStep;
-    outputInterval 1;
-    verbose true;
-log yes;
-source faceZone;
-sourceName mixer_1;
-operation weightedAverage;    
-fields
-        (
-                U
-        );
-   // patches
-   // (
-   //     pressure_outlet.8
-   // );
-   // factor 1.1614;
-    }*/
 {
-        type            faceSource;
-        functionObjectLibs ("libfieldFunctionObjects.so");
-        enabled         yes;
-        outputControl   timeStep;//outputTime;
-outputInterval 1;
-        log             yes;
-        valueOutput     no;
-        source          sampledSurface;//faceZone;
-               
-        sampledSurfaceDict
-        {
-            // Sampling on triSurface
-            type        sampledTriSurfaceMesh;
-            surface     disc2.stl;
-            source      cells;  // sample cells or boundaryFaces
-            interpolate true;
-        }
-
-        // Operation: areaAverage/sum/weightedAverage ...
-//sourceName      maxX2minX0MasterZone;
-        operation       areaAverage;//weightedAverage;
-        //weightField     phi;
-autoInterpolate true;        
-fields
-        (
-            
-          U
-p
-        );
-    }
-*/
-);
+    // to look at residuals as the simulation runs, or afterwards, run
+    //  foamMonitor -l postProcessing/residuals/52/residuals.dat
+    // see https://cfd.direct/openfoam/user-guide/v9-graphs-monitoring/#x33-2590006.3
+    #includeFunc  residuals
+}
 
 
 // ************************************************************************* //
