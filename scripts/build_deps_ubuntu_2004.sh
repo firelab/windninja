@@ -50,5 +50,4 @@ sudo add-apt-repository http://dl.openfoam.org/ubuntu
 sudo apt-get update
 sudo apt-get -y install openfoam8
 echo "source /opt/openfoam8/etc/bashrc" >> ~/.bashrc
-mkdir -p $FOAM_RUN/../applications
 
