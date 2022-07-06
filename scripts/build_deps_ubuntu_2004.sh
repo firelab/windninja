@@ -5,7 +5,7 @@ POPPLER="poppler-0.23.4"
 PROJ="proj-6.3.2"
 GDAL="gdal-3.2.1"
 
-#Ubuntu
+#Dependencies
 sudo apt install libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev libboost-program-options-dev libboost-date-time-dev libgeos-dev libboost-test-dev libsqlite3-dev sqlite3
 
 #Get and build poppler for PDF support in GDAL
@@ -42,3 +42,13 @@ cd ..
 sudo add-apt-repository ppa:rock-core/qt4
 sudo apt update
 sudo apt install libqt4-dev libqtwebkit-dev 
+
+#Use OpenFOAM 8
+#add the dl.openfoam.org repo and install OpenFOAM 8
+sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+sudo add-apt-repository http://dl.openfoam.org/ubuntu
+sudo apt-get update
+sudo apt-get -y install openfoam8
+echo "source /opt/openfoam8/etc/bashrc" >> ~/.bashrc
+mkdir -p $FOAM_RUN/../applications
+
