@@ -618,7 +618,6 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
 
     fem.ComputeGradientField(PHI, U_);
 
-
     double alphaV = 1.0;
 
     for(int i=0;i<mesh_->NUMNP;i++)
