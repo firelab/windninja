@@ -13,7 +13,7 @@
 #     xhost +
 #     podman run -ti --rm \
 #                -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix \
-#                -v $HOME/MyWindNinjaRuns:/data \
+#                -v $HOME/MyWindNinjaRuns:/data:z \
 #                --env="QT_X11_NO_MITSHM=1" \
 #                --security-opt label=type:container_runtime_t \
 #                windninja:3.7.5 
@@ -54,7 +54,8 @@ RUN mkdir /opt/src && \
     cmake -D SUPRESS_WARNINGS=ON .. && \
     make -j4 && \
     make install && \
-    ldconfig
-CMD /usr/local/bin/WindNinja
+    ldconfig && \
+    echo "source /opt/openfoam8/etc/bashrc" >> /root/.bashrc
+CMD /usr/bin/bash -c /usr/local/bin/WindNinja
 VOLUME /data
 WORKDIR /data
