@@ -299,10 +299,10 @@ static const char *apszNomadsKeys[][11] =
       "hires_guam",
       "filter_hiresguam.pl",
       "hiresw.t%02dz.arw_5km.f%02d.guam.grib2",
-      " hiresw%s",
+      "hiresw.20220707",
       NOMADS_GENERIC_DATE,
-      "0:12:12", //might need changed
-      "0:48:1",//might need changed
+      NOMADS_GENERIC_FCST_HOURS, //might need changed
+      NOMADS_GENERIC_RUN_HOURS,
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
@@ -312,7 +312,7 @@ static const char *apszNomadsKeys[][11] =
       "hires_hawaii",
       "filter_hireshi.pl",
       "hiresw.t%02dz.arw_5km.f%02d.hi.grib2",
-      " hiresw%s",
+      "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
       NOMADS_GENERIC_RUN_HOURS, //might need changed
@@ -325,7 +325,7 @@ static const char *apszNomadsKeys[][11] =
       "hires_puerto_rico",
       "filter_hirespr.pl",
       "hiresw.t%02dz.arw_5km.f%02d.pr.grib2",
-      " hiresw%s",
+      "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
       NOMADS_GENERIC_RUN_HOURS, //might need changed
