@@ -695,8 +695,8 @@ void FiniteElementMethod::CalculateDiffusionRcoefficients(int i, int j,
             windSpeedGradient.vectorData_z(elementArray[i].NPK);
     }
     //0.41 is the von Karman constant
-    elementArray[i].RZ = 0.41*0.41 * height*height * fabs(speed);
-    //elementArray[i].RZ = 0.41 * height * fabs(speed);
+    //elementArray[i].RZ = 0.41*0.41 * height*height * fabs(speed);
+    elementArray[i].RZ = 0.41 * height * fabs(speed);
     elementArray[i].RX = elementArray[i].RZ;
     elementArray[i].RY = elementArray[i].RZ;
     elementArray[i].RC = 1.;

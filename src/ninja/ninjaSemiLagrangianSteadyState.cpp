@@ -233,8 +233,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
-        //currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        currentDt = boost::posix_time::seconds(5);
+        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+        //currentDt = boost::posix_time::seconds(5);
         bool with_advection = true;
         bool with_diffusion = true;
         bool with_projection = true;
