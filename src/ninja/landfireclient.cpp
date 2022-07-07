@@ -154,7 +154,8 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
             //pszProduct = CPLStrdup( "F4W21HZ" ); //2008 data
-            pszProduct = CPLStrdup( "FHY60HZ" ); //2016 data
+            //pszProduct = CPLStrdup( "FHY60HZ" ); //2016 data
+            pszProduct = CPLStrdup( "200FVC_20" ); //2016 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
@@ -206,10 +207,10 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     }
 
     /*-----------------------------------------------------------------------------
-     *  Request a Model via the landfire.cr.usgs.gov REST client
+     *  Request a Model via the lfps.usgs.gov REST client
      *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, bbox[0], bbox[2], bbox[3],
-                                              bbox[1], pszProduct );
+    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, bbox[3], bbox[2], bbox[1],
+                                              bbox[0], pszProduct );
     CPLFree( (void*)pszProduct );
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );
@@ -224,25 +225,17 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
 
     CPLDebug( "LCP_CLIENT", "JSON Response: %s", m_poResult->pabyData );
 
-    /*
-    ** Regular expression support if we have C++11 support.  isnan ambiguouity
-    ** is causing non-C++11 compliance.  Not tested or used, 0 disables.
-    */
-#if __cplusplus >= 201103 && 0
-    std::string s((const char*) m_poResult->pabyData );
-    std::smatch m;
-    std::regex e( "\\b(?:(?:https?)://|www\\.)[a-z-A-Z0-9+&@#/%=~_|$?!:,.]" \
-                  "*[a-z-A-Z0-9+&@#/%=~_|$]" );
-    std::regex_search( s, m, e );
-    std::string url = m[0].str(); //retrieve first match
-    CPLStrlcpy( pszResponse, url.c_str(), nSize );
-#else
     char **papszTokens = NULL;
     papszTokens = CSLTokenizeString2( (const char*)m_poResult->pabyData, ",:",
                                       CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES |
                                       CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
     int nTokens = CSLCount( papszTokens );
-    if( nTokens < 2 )
+    cout<<"nTokens = "<<nTokens<<endl;
+    cout<<"!!!!!!!!!!papszTokens[0] = "<<papszTokens[0]<<endl;
+    cout<<"!!!!!!!!!!papszTokens[1] = "<<papszTokens[1]<<endl;
+    cout<<"!!!!!!!!!!papszTokens[2] = "<<papszTokens[2]<<endl;
+    cout<<"!!!!!!!!!!papszTokens[3] = "<<papszTokens[3]<<endl;
+    if( nTokens < 4 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to generate valid URL for LCP download." );
@@ -251,28 +244,14 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CSLDestroy( papszTokens );
         return SURF_FETCH_E_IO_ERR;
     }
-    for( int i = 1; i < nTokens; i++ )
-    {
-        if( EQUALN( papszTokens[i], "https://", 6 ) &&
-            EQUAL( papszTokens[i - 1], "DOWNLOAD_URL" ) )
-        {
-            CPLStrlcpy( pszResponse, papszTokens[i], nSize );
-            break;
-        }
-    }
+
+    CPLStrlcpy( pszResponse, papszTokens[1], nSize );
     CSLDestroy( papszTokens );
-#endif
+
     //Grab the download URL from the JSON response, stores in pszResponse
     //std::sscanf( (char*) m_poResult->pabyData, LF_REQUEST_RETURN_TEMPLATE, pszResponse);
     CPLHTTPDestroyResult( m_poResult );
 
-    if( !EQUALN( pszResponse, "https://", 6 ) )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to generate valid URL for LCP download." );
-        delete  [] pszResponse;
-        return SURF_FETCH_E_IO_ERR;
-    }
     p = strstr( pszResponse, "}]" );
     if( p )
         *p = '\0';

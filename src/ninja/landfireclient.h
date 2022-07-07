@@ -75,13 +75,11 @@
 /*-----------------------------------------------------------------------------
  *  REST API", string templates
  *-----------------------------------------------------------------------------*/
-#define LF_REQUEST_TEMPLATE "https://landfire.cr.usgs.gov/" \
-                            "requestValidationServiceClient/" \
-                            "sampleRequestValidationServiceProxy/processAOI.jsp?" \
-                            "TOP=%lf&BOTTOM=%lf&LEFT=%lf&RIGHT=%lf" \
-                            "&LAYER_IDS=%s" \
-                            "&CHUNK_SIZE=250" \
-                            "&JSON=true"
+#define LF_REQUEST_TEMPLATE "https://lfps.usgs.gov/" \
+                            "arcgis/rest/services/LandfireProductService/" \
+                            "GPServer/LandfireProductService/submitJob?" \
+                            "Layer_List=%s&Area_of_Interest=%lf%%%lf%%%lf%%%lf" \
+                            "&f=pjson"
 
 #define LF_REQUEST_RETURN_TEMPLATE  "\n\n\n{\"REQUEST_SERVICE_RESPONSE\":" \
                                     "{\"PIECE\":[{\"THUMBNAIL_URL\":\"none\"," \
