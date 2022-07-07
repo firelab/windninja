@@ -209,6 +209,9 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Request a Model via the lfps.usgs.gov REST client
      *-----------------------------------------------------------------------------*/
+    // Fix the SRS
+    //const char *pszNewUrl = ReplaceSRS( nEpsgCode, pszResponse );
+    //CPLDebug( "LCP_CLIENT", "Sanitized SRS Download URL: %s", pszNewUrl );
     pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, bbox[3], bbox[2], bbox[1],
                                               bbox[0], pszProduct );
     CPLFree( (void*)pszProduct );
@@ -218,11 +221,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
      /*-----------------------------------------------------------------------------
      *  Parse the JSON result of the request
      *-----------------------------------------------------------------------------*/
-    int nSize = strlen( (char*) m_poResult->pabyData );
-    //Create a buffer so we can use sscanf, couldn't find a CPL version
-    char *pszResponse = new char[ nSize + 1 ];
-    pszResponse[0] = '\0';
-
     CPLDebug( "LCP_CLIENT", "JSON Response: %s", m_poResult->pabyData );
 
     char **papszTokens = NULL;
@@ -230,98 +228,80 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                       CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES |
                                       CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
     int nTokens = CSLCount( papszTokens );
-    cout<<"nTokens = "<<nTokens<<endl;
-    cout<<"!!!!!!!!!!papszTokens[0] = "<<papszTokens[0]<<endl;
-    cout<<"!!!!!!!!!!papszTokens[1] = "<<papszTokens[1]<<endl;
-    cout<<"!!!!!!!!!!papszTokens[2] = "<<papszTokens[2]<<endl;
-    cout<<"!!!!!!!!!!papszTokens[3] = "<<papszTokens[3]<<endl;
-    if( nTokens < 4 )
+    CPLDebug( "LCP_CLIENT", "papszTokens[0]: %s", papszTokens[0]);
+    CPLDebug( "LCP_CLIENT", "papszTokens[1]: %s", papszTokens[1]);
+    CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
+    CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
+
+    m_JobId = std::string(papszTokens[1]);
+    CPLDebug( "LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
+
+    if( nTokens < 4)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to generate valid URL for LCP download." );
-        delete [] pszResponse;
         CPLHTTPDestroyResult( m_poResult );
         CSLDestroy( papszTokens );
         return SURF_FETCH_E_IO_ERR;
     }
 
-    CPLStrlcpy( pszResponse, papszTokens[1], nSize );
-    CSLDestroy( papszTokens );
-
-    //Grab the download URL from the JSON response, stores in pszResponse
-    //std::sscanf( (char*) m_poResult->pabyData, LF_REQUEST_RETURN_TEMPLATE, pszResponse);
-    CPLHTTPDestroyResult( m_poResult );
-
-    p = strstr( pszResponse, "}]" );
-    if( p )
-        *p = '\0';
-    CPLDebug( "LCP_CLIENT", "Download URL: %s", pszResponse );
-    // Fix the SRS
-    const char *pszNewUrl = ReplaceSRS( nEpsgCode, pszResponse );
-    CPLDebug( "LCP_CLIENT", "Sanitized SRS Download URL: %s", pszNewUrl );
     /*-----------------------------------------------------------------------------
-     *  Get the Job ID by visiting the download URL
-     *-----------------------------------------------------------------------------*/
-    m_poResult = CPLHTTPFetch( pszNewUrl, NULL );
-    CPLFree( (void*)pszNewUrl );
-    delete [] pszResponse;
-    CHECK_HTTP_RESULT( "Failed to get Job ID" );   
-
-    nSize = strlen( (char*) m_poResult->pabyData );
-    pszResponse = new char[ nSize + 1 ];
-
-    //grabs the Job ID from the Download URL response
-    std::sscanf( (char*) m_poResult->pabyData, LF_INIT_RESPONSE_TEMPLATE, pszResponse);
-    CPLHTTPDestroyResult( m_poResult );
-   //store the Job Id into a class attribute, so we can reuse pszResponse, but keep
-    //the Job Id (needed for future parts)
-    m_JobId = std::string( pszResponse );
-    CPLDebug( "LCP_CLIENT", "Job id: %s", m_JobId.c_str() );
-    /*-----------------------------------------------------------------------------
-     * Initiate the download by using the obtained Job ID 
-     *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_INIT_DOWNLOAD_TEMPLATE, m_JobId.c_str() );
-
-    //fetch the response of download initiation
-    //note: for some reason it alway returns a key error, but download still works
-    m_poResult = CPLHTTPFetch( pszUrl, NULL );
-    CPLHTTPDestroyResult( m_poResult );
-    /*-----------------------------------------------------------------------------
-     *  Check the status of the download, able to download when status=400
+     *  Download the landfire model when it's ready
      *-----------------------------------------------------------------------------*/
     int dl_status = 0;
-    //Obtain the readiness status of the current job
+    int nSize = 0;
+    bool downloadReady = false;
+    bool downloadFailed = false;
+    CPLDebug( "LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
     pszUrl = CPLStrdup(CPLSPrintf( LF_GET_STATUS_TEMPLATE, m_JobId.c_str() ));
     CPLDebug( "LCP_CLIENT", "Status url: %s", pszUrl );
     do
     {
         m_poResult = CPLHTTPFetch( pszUrl, NULL );
-        delete [] pszResponse;
         CHECK_HTTP_RESULT( "Failed to get job status" );
+        papszTokens = CSLTokenizeString2( (const char*)m_poResult->pabyData, ",:",
+                                          CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES |
+                                          CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
+        int nTokens = CSLCount( papszTokens );
 
-        nSize = strlen( (char*) m_poResult->pabyData );
-        pszResponse = new char[ nSize + 1 ];
+        CPLDebug( "LCP_CLIENT", "papszTokens[0]: %s", papszTokens[0]);
+        CPLDebug( "LCP_CLIENT", "papszTokens[1]: %s", papszTokens[1]);
+        CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
+        CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
+        CPLDebug( "LCP_CLIENT", "papszTokens[4]: %s", papszTokens[4]);
+        CPLDebug( "LCP_CLIENT", "papszTokens[5]: %s", papszTokens[5]);
 
-        std::sscanf( (char*) m_poResult->pabyData, LF_STATUS_RESPONSE_TEMPLATE,
-                      &dl_status, pszResponse );
+        for( int i = 1; i < nTokens; i++ )
+        {
+            if(EQUAL( papszTokens[i], "jobStatus" )) 
+            {
+                if(EQUAL( papszTokens[i + 1], "esriJobSucceeded" ) )
+                    downloadReady = true;
+                if(EQUAL( papszTokens[i + 1], "esriJobFailed" ) )
+                    downloadFailed = true;
+                break;
+            }
+        }
+        CPLDebug( "LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, jobStatus: %s", i,
+            nMaxTries, papszTokens[3] );
+
+        CSLDestroy( papszTokens );
         CPLHTTPDestroyResult( m_poResult );
         i++;
         CPLSleep( dfWait );
-        CPLDebug( "LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, " \
-                               "status: %d", i, nMaxTries, dl_status );
-    } while( dl_status < 400 && dl_status > 0 && i < nMaxTries );
+
+    } while( downloadFailed == false && downloadReady == false && i < nMaxTries );
 
     CPLFree( (void*) pszUrl );
-    delete [] pszResponse;
 
-    if( dl_status >= 900 && dl_status <= 902)
+    if(downloadFailed)
     {
         CPLError( CE_Warning, CPLE_AppDefined, "Failed to download lcp," \
                                                "There was an extraction " \
                                                "error on the server." );
         return SURF_FETCH_E_IO_ERR;
     }
-    else if( dl_status != 400 )
+    else if( !downloadReady )
     {
         CPLError( CE_Warning, CPLE_AppDefined, "Failed to download lcp, timed " \
                                                "out.  Try increasing " \
@@ -329,24 +309,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                                "LCP_DOWNLOAD_WAIT" );
         return SURF_FETCH_E_TIMEOUT;
     }
-    /*-----------------------------------------------------------------------------
-     *  Download the landfire model
-     *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_DOWNLOAD_JOB_TEMPLATE, m_JobId.c_str() );
-    m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get job status" ); 
-
-    /*
-    ** Parse the URL from the returned string
-    */
-    std::string ss((const char*) m_poResult->pabyData );
-    CPLHTTPDestroyResult( m_poResult );
-    std::size_t pos1 = ss.find("https://");
-    std::size_t pos2 = ss.find(".zip");
-    std::string url = ss.substr(pos1, (pos2+4-pos1));
-    pszUrl = url.c_str();
-    m_poResult = CPLHTTPFetch( pszUrl, NULL );
-    CHECK_HTTP_RESULT( "Failed to get job status" );
 
     nSize = m_poResult->nDataLen;
     VSILFILE *fout;

@@ -78,7 +78,7 @@
 #define LF_REQUEST_TEMPLATE "https://lfps.usgs.gov/" \
                             "arcgis/rest/services/LandfireProductService/" \
                             "GPServer/LandfireProductService/submitJob?" \
-                            "Layer_List=%s&Area_of_Interest=%lf%%%lf%%%lf%%%lf" \
+                            "Layer_List=%s&Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
                             "&f=pjson"
 
 #define LF_REQUEST_RETURN_TEMPLATE  "\n\n\n{\"REQUEST_SERVICE_RESPONSE\":" \
@@ -91,18 +91,12 @@
                                   "</ns:initiateDownloadResponse>"
 
 
-#define LF_INIT_DOWNLOAD_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
-                                  "DownloadService/initiateDownload?downloadID=%s"
+#define LF_DOWNLOAD_JOB_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/directories/" \
+                                  "arcgisjobs/landfireproductservice_gpserver/%s/scratch/%s.zip"
 
-#define LF_GET_STATUS_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
-                               "DownloadService/getDownloadStatus?downloadID=%s"
+#define LF_GET_STATUS_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/services/LandfireProductService/" \
+                               "GPServer/LandfireProductService/jobs/%s/?f=pjson"
                                
-#define LF_STATUS_RESPONSE_TEMPLATE "<ns:getDownloadStatusResponse xmlns:ns=\"http://edc/usgs/gov/xsd\">" \
-                                    "<ns:return>%d,%[^'<']</ns:return>" \
-                                    "</ns:getDownloadStatusResponse>"
-
-#define LF_DOWNLOAD_JOB_TEMPLATE "https://landfire.cr.usgs.gov/axis2/services/" \
-                                 "DownloadService/getData?downloadID=%s"
 
 #define LF_DEFAULT_SRS_TOKENS     "&prj=102039,&prj=0"
 
