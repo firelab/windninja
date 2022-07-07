@@ -311,6 +311,13 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     }
     CHECK_HTTP_RESULT( "Failed to get job status" ); 
 
+    /*-----------------------------------------------------------------------------
+     *  Download the landfire model
+     *-----------------------------------------------------------------------------*/
+    pszUrl = CPLSPrintf( LF_DOWNLOAD_JOB_TEMPLATE, m_JobId.c_str(), m_JobId.c_str() );
+    m_poResult = CPLHTTPFetch( pszUrl, NULL );
+    CHECK_HTTP_RESULT( "Failed to get job status" );
+
     nSize = m_poResult->nDataLen;
     VSILFILE *fout;
     const char *pszTmpZip = CPLFormFilename( NULL, 
