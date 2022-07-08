@@ -374,8 +374,7 @@ endif(VERBOSE_CMAKE)
 
 # install target related files
 set(etc_files missoula_valley.tif
-                  example_lcp.lcp
-                  example_lcp.prj
+                  example_lcp.tif
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
                   cli_pointInitialization_diurnal.cfg
