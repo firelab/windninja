@@ -48,48 +48,15 @@
 #include "surface_fetch.h"
 #include "ninja_conv.h"
 
-
-/*
-** Codes for landfire
-**static const char *apszFileList[][] = {
-**    {"F1J17HZ", "ak_100", "FBFM40"},
-**    {"F1I16HZ", "ak_100", "FBFM13"},
-**    {"LCP07HZ", "us_100", "FBFM13"},
-**    {"LC409HZ", "us_100", "FBFM40"},
-**    {"F3V18HZ", "us_105", "FBFM13"},
-**    {"F3W19HZ", "us_105", "FBFM40"},
-**    {"F4V20HZ", "us_110", "FBFM13"},
-**    {"F4W21HZ", "us_110", "FBFM40"},
-**    {"F3722HZ", "hi_105", "FBFM13"},
-**    {"F3823HZ", "hi_105", "FBFM40"},
-**    {"F4724HZ", "hi_110", "FBFM13"},
-**    {"F4825HZ", "hi_110", "FBFM40"},
-**    {"F7B28HZ", "ak_110", "FBFM13"},
-**    {"F7C29HZ", "ak_110", "FBFM40"},
-**    {"F6B26HZ", "ak_105", "FBFM13"},
-**    {"F6C27HZ", "ak_105", "FBFM40"},
-**    {"F8V30HZ", "us_120", "FBFM13"},
-**    {"F8W31HZ", "us_120", "FBFM40"}};
-*/
-
 /*-----------------------------------------------------------------------------
  *  REST API", string templates
  *-----------------------------------------------------------------------------*/
 #define LF_REQUEST_TEMPLATE "https://lfps.usgs.gov/" \
                             "arcgis/rest/services/LandfireProductService/" \
                             "GPServer/LandfireProductService/submitJob?" \
-                            "Layer_List=%s&Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
+                            "Output_Projection=%d&Layer_List=%s&" \
+                            "Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
                             "&f=pjson"
-
-#define LF_REQUEST_RETURN_TEMPLATE  "\n\n\n{\"REQUEST_SERVICE_RESPONSE\":" \
-                                    "{\"PIECE\":[{\"THUMBNAIL_URL\":\"none\"," \
-                                    "\"DOWNLOAD_URL\":\"%[^'\"']\"}]," \
-                                    "\"STATUS\":true}}\n"
-
-#define LF_INIT_RESPONSE_TEMPLATE "<ns:initiateDownloadResponse xmlns:ns=\"http://edc/usgs/gov/xsd\">" \
-                                  "<ns:return>%[^'<']</ns:return>" \
-                                  "</ns:initiateDownloadResponse>"
-
 
 #define LF_DOWNLOAD_JOB_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/directories/" \
                                   "arcgisjobs/landfireproductservice_gpserver/%s/scratch/%s.zip"
@@ -118,7 +85,6 @@
         return SURF_FETCH_E_IO_ERR;                         \
     }
 
-
 /*-----------------------------------------------------------------------------
  *  LandFireClient Class Definition
  *-----------------------------------------------------------------------------*/
@@ -131,8 +97,6 @@ public:
                                           const char *filename, char **options);
 private:
     LandfireClient( LandfireClient &oOther ) { (void)oOther; }
-
-    const char * ReplaceSRS( int nEpsgCode, const char *pszUrl );
 
     CPLHTTPResult *m_poResult;
     std::string m_JobId;

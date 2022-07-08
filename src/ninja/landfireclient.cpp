@@ -46,62 +46,6 @@ LandfireClient::LandfireClient() : SurfaceFetch()
     northwest_y = 72;
 }
 
-/*
-** Replace the default value srs value in the url with a utm zone.
-**
-** Steps:
-**       Check for default SRS key/value
-**       Erase it from the string
-**       Add a new token with the EPSG code provided.
-**
-** The result should be freed using CPLFree();
-*/
-const char * LandfireClient::ReplaceSRS( int nEpsgCode, const char *pszUrl )
-{
-    int i, n;
-    int nUrlSize = CPLStrnlen( pszUrl, 8192 );
-    const char *pszEpsg = CPLSPrintf( "&prj=%d", nEpsgCode );
-    int nEpsgSize = CPLStrnlen( pszEpsg, 8192 );
-    char **papszBadTokens = CSLTokenizeString2( LF_DEFAULT_SRS_TOKENS, ",", 0 );
-    int nBadTokenSize = 0;
-    char *p, *q;
-    char *pszNewUrl = CPLStrdup( pszUrl );
-
-    i = 0;
-    do
-    {
-        p = strstr( pszNewUrl, papszBadTokens[i] );
-        nBadTokenSize = strlen( papszBadTokens[i] );
-        i++;
-    } while( i < CSLCount( papszBadTokens ) && !p );
-    i--;
-    if( p )
-    {
-        if( nBadTokenSize < nEpsgSize )
-        {
-            n = nUrlSize + nEpsgSize - nBadTokenSize + 1;
-            CPLAssert( n > strlen( pszNewUrl ) );
-            pszNewUrl = (char*)CPLRealloc( pszNewUrl, sizeof( char ) * n );
-            /* reset p  after realloc */
-            p = strstr( pszNewUrl, papszBadTokens[i] );
-        }
-        q = p + nBadTokenSize;
-        while( *q != '\0' )
-        {
-            *(p++) = *(q++);
-        }
-        *p = '\0';
-    }
-    else
-    {
-        n = nUrlSize + nEpsgSize + 1;
-        pszNewUrl = (char*)CPLRealloc( pszNewUrl, sizeof( char ) * n );
-    }
-    strcat( pszNewUrl, pszEpsg );
-    CSLDestroy( papszBadTokens );
-    return pszNewUrl;
-}
-
 LandfireClient::~LandfireClient()
 {
 }
@@ -151,31 +95,23 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                bbox[1], bbox[0] );
         CPLDebug( "LCP_CLIENT", "Testing if %s contains %s", osDataPath.c_str(),
                   pszGeom );
+        //using same code for all geographic areas, but could update by region as updates
+        //become available. See codes at lfps.usgs.gov/helpdocs/productstable.html
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
-            //pszProduct = CPLStrdup( "F4W21HZ" ); //2008 data
-            //pszProduct = CPLStrdup( "FHY60HZ" ); //2016 data
-            pszProduct = CPLStrdup( "200FVC_20" ); //2016 data
+            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
+                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
-            //pszProduct = CPLStrdup( "F7C29HZ" ); //2008 data
-            pszProduct = CPLStrdup( "F0740HZ" ); //2014 data
+            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
+                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
-            //pszProduct = CPLStrdup( "F4825HZ" ); //2008 data
-            pszProduct = CPLStrdup( "FCM42HZ" ); //2014 data
+            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
+                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
         }
-        /* Contiguous US */
-        //if( bbox[0] < 52 && bbox[1] < -60 && bbox[2] > 22 && bbox[3] > -136 )
-        //    pszProduct = CPLStrdup( "F4W21HZ" );
-        /* Alaska */
-        //else if( bbox[0] < 75 && bbox[1] < -125 && bbox[2] > 50 && bbox[3] > -179 )
-        //    pszProduct = CPLStrdup( "F7C29HZ" );
-        /* Hawaii */
-        //else if( bbox[0] < 25 && bbox[1] < -150 && bbox[2] > 15 && bbox[3] > -170 )
-        //    pszProduct = CPLStrdup( "F4825HZ" );
         else
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -190,6 +126,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     int nEpsgCode = -1;
     if( pszTemp == NULL )
     {
+        //get UTM zone as EPSG
         nEpsgCode = BoundingBoxUtm( bbox );
     }
     else
@@ -209,10 +146,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Request a Model via the lfps.usgs.gov REST client
      *-----------------------------------------------------------------------------*/
-    // Fix the SRS
-    //const char *pszNewUrl = ReplaceSRS( nEpsgCode, pszResponse );
-    //CPLDebug( "LCP_CLIENT", "Sanitized SRS Download URL: %s", pszNewUrl );
-    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, bbox[3], bbox[2], bbox[1],
+    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, nEpsgCode, bbox[3], bbox[2], bbox[1],
                                               bbox[0], pszProduct );
     CPLFree( (void*)pszProduct );
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
@@ -264,12 +198,8 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                           CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
         int nTokens = CSLCount( papszTokens );
 
-        CPLDebug( "LCP_CLIENT", "papszTokens[0]: %s", papszTokens[0]);
-        CPLDebug( "LCP_CLIENT", "papszTokens[1]: %s", papszTokens[1]);
         CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
         CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
-        CPLDebug( "LCP_CLIENT", "papszTokens[4]: %s", papszTokens[4]);
-        CPLDebug( "LCP_CLIENT", "papszTokens[5]: %s", papszTokens[5]);
 
         for( int i = 1; i < nTokens; i++ )
         {
@@ -341,17 +271,16 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     char **papszFileList = NULL;
     std::string osPathInZip;
     const char *pszVSIZip = CPLSPrintf( "/vsizip/%s", pszTmpZip );
-    CPLDebug( "LCP_CLIENT", "Extracting lcp from %s", pszVSIZip );
+    CPLDebug( "LCP_CLIENT", "Extracting .tif from %s", pszVSIZip );
     papszFileList = VSIReadDirRecursive( pszVSIZip );
     int bFound = FALSE;
     std::string osFullPath;
+    CPLDebug( "LCP_CLIENT", "Extracting %s", (CPLSPrintf("%s.tif", m_JobId.c_str())) );
     for( int i = 0; i < CSLCount( papszFileList ); i++ )
     {
         osFullPath = papszFileList[i];
-        if( osFullPath.find( "Landscape_1.lcp" ) != std::string::npos )
+        if( osFullPath.find( CPLSPrintf("%s.tif", m_JobId.c_str()) ) != std::string::npos )
         {
-            osPathInZip = CPLGetPath( papszFileList[i] );
-            CPLDebug( "LCP_CLIENT", "Found lcp in: %s", osPathInZip.c_str() );
             bFound = TRUE;
             break;
         }
@@ -360,30 +289,18 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     if( !bFound )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to find lcp in archive" );
-        //VSIUnlink( pszTmpZip );
+                  "Failed to find .tif in archive" );
+        VSIUnlink( pszTmpZip );
         return SURF_FETCH_E_IO_ERR;
     }
     int nError = 0;
-    const char *pszFileToFind = CPLSPrintf( "%s/Landscape_1.lcp",
-                                            osPathInZip.c_str() );
+    const char *pszFileToFind = CPLSPrintf( "%s.tif", m_JobId.c_str() );
     nError = ExtractFileFromZip( pszTmpZip, pszFileToFind, filename );
     if( nError )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to extract LCP from zip." );
+                  "Failed to extract .tif from zip." );
         VSIUnlink( pszTmpZip );
-        return SURF_FETCH_E_IO_ERR;
-    }
-    pszFileToFind = CPLSPrintf( "%s/Landscape_1.prj", osPathInZip.c_str() );
-    nError = ExtractFileFromZip( pszTmpZip, pszFileToFind,
-                                 CPLFormFilename( CPLGetPath( filename ),
-                                                  CPLGetBasename( filename ),
-                                                  ".prj" ) );
-    if( nError )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to extract PRJ from zip." );
         return SURF_FETCH_E_IO_ERR;
     }
 

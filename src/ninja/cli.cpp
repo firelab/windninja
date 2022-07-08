@@ -1681,6 +1681,14 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(EQUAL(poDS->GetDriver()->GetDescription(), "LCP"))
                 isLcp = true;
+            else if(poDS->GetDriver()->GetDescription(), "GTiff")
+            {
+                int nBandCount = GDALGetRasterCount( poDS );
+                if(nBandCount > 1)
+                {
+                    isLcp = true;
+                }
+            }
             else
                 isLcp = false;
 
