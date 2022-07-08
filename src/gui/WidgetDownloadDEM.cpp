@@ -395,8 +395,8 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         southDEMBound = lcp_southBound;
         /* this is in meters */
         currentResolution = fetcher->GetXRes();
-        currentSuffix = "lcp";
-        currentSaveAsDesc = "Landscape files (*.lcp)";
+        currentSuffix = "tif";
+        currentSaveAsDesc = "Landscape files (*.tif)";
         break;
 #endif
     }

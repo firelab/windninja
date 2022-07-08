@@ -86,7 +86,7 @@ surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
     roughnessComboBox->setDisabled(true);
 
     roughnessLabel = new QLabel;
-    roughnessLabel->setText("<font color='red'>Vegetation Data Set Using .lcp File</font>");
+    roughnessLabel->setText("<font color='red'>Vegetation Data Set Using LCP File</font>");
     roughnessLabel->setEnabled(true);
     roughnessLabel->setVisible(false);
 
