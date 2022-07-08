@@ -304,7 +304,7 @@ static const char *apszNomadsKeys[][11] =
       "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
-      NOMADS_GENERIC_RUN_HOURS, //might need changed
+      "0:48:1",
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
@@ -319,7 +319,7 @@ static const char *apszNomadsKeys[][11] =
       "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
-      NOMADS_GENERIC_RUN_HOURS, //might need changed
+      "0:48:1", 
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
@@ -334,7 +334,7 @@ static const char *apszNomadsKeys[][11] =
       "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
-      NOMADS_GENERIC_RUN_HOURS, //might need changed
+      "0:48:1", 
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
@@ -421,8 +421,36 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST,
       "3 km",
       "NAM NEST CONUS" },
-    /* XXX: NAM Hawaii NEST */
-    /* XXX: NAM Puerto Rico NEST */
+    /* 
+    ** NAM Hawaii NEST 
+    */
+    {
+      "nam_nest_hawaii",
+      "filter_nam_hawaiinest.pl",
+      "nam.t%02dz.hawaiinest.hiresf%02d" NOMADS_NAM_FILE_EXT,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_NEST_RUN_HOURS,
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "3 km",
+      "NAM NEST HAWAII" },
+    /* 
+    ** NAM Puerto Rico NEST 
+    */
+    {
+      "nam_nest_puerto_rico",
+      "filter_nam_priconest.pl",
+      "nam.t%02dz.priconest.hiresf%02d" NOMADS_NAM_FILE_EXT,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_NEST_RUN_HOURS,
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "3 km",
+      "NAM NEST PUERTO RICO" },
 #ifdef NOMADS_EXPER_FORECASTS
     /* Alaska RTMA */
     {
