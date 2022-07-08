@@ -294,7 +294,9 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
       "HIRES FV3 CONUS" },
-    /* XXX: HIRES Guam */ // currently doesn't work
+    /*
+    ** HIRES Guam 
+    */ 
     {
       "hires_guam",
       "filter_hiresguam.pl",
@@ -302,12 +304,14 @@ static const char *apszNomadsKeys[][11] =
       "hiresw.20220707",
       NOMADS_GENERIC_DATE,
       NOMADS_GENERIC_FCST_HOURS, //might need changed
-      NOMADS_GENERIC_RUN_HOURS,
+      NOMADS_GENERIC_RUN_HOURS, //might need changed
       NOMADS_GENERIC_VAR_LIST,
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
       "HIRES GUAM"},
-    /* XXX: HIRES Hawaii */ // currently doesn't work 
+    /*
+    ** HIRES Hawaii 
+    */
     {
       "hires_hawaii",
       "filter_hireshi.pl",
@@ -320,7 +324,9 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
       "HIRES HAWAII"},
-    /* XXX: HIRES Puerto Rico */ // currently doesn't work 
+    /*
+    ** HIRES Puerto Rico 
+    */ 
     {
       "hires_puerto_rico",
       "filter_hirespr.pl",
