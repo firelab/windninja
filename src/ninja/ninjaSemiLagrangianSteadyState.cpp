@@ -239,7 +239,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         bool with_diffusion = true;
         bool with_projection = true;
 
-        while(iteration <= 2)
+        while(iteration <= 5000)
         {
             iteration += 1;
             currentDt0 = currentDt;
