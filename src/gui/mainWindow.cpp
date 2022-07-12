@@ -1489,7 +1489,16 @@ int mainWindow::checkInputFile(QString fileName)
     if(GDALDriverName == "LCP")
         inputFileType = LCP;
     if(GDALDriverName == "GTiff")
-        inputFileType = GTIFF;
+    {
+        int nBandCount = GDALGetRasterCount( poInputDS );
+        //if it's a multi-band GeoTIFF, it's an lcp
+        if(nBandCount > 1)
+        {
+            inputFileType = LCP;
+        }
+        else
+            inputFileType = GTIFF;
+    }
     if(GDALDriverName == "IMG")
         inputFileType = IMG;
 
@@ -1499,7 +1508,7 @@ int mainWindow::checkInputFile(QString fileName)
         tree->surface->roughnessComboBox->hide();
         tree->surface->roughnessLabel->show();
     }
-      else
+    else
     {
         tree->surface->roughnessComboBox->setEnabled(true);
         tree->surface->roughnessComboBox->show();
