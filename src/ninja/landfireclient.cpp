@@ -146,8 +146,8 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Request a Model via the lfps.usgs.gov REST client
      *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, nEpsgCode, bbox[3], bbox[2], bbox[1],
-                                              bbox[0], pszProduct );
+    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, nEpsgCode, pszProduct, bbox[3], bbox[2], bbox[1],
+                                              bbox[0] );
     CPLFree( (void*)pszProduct );
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );
