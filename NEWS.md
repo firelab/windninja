@@ -5,6 +5,8 @@ WindNinja 3.8.0
 ---------------
 - Update LANDFIRE services used for download LCP files (#400, #411, and #4451)
 
+- Add new weather models from NOMADS for Hawaii, Puerto Rico, and Guam (#457)
+
 - Add option to write binary VTK files (#416)
 
 WindNinja 3.7.5
