@@ -3,7 +3,7 @@ Release Notes
 
 WindNinja 3.8.0
 ---------------
-- Update LANDFIRE services used for download LCP files (#400, #411, and #4451)
+- Update LANDFIRE services used for download LCP files (#400, #411, and #451)
 
 - Add new weather models from NOMADS for Hawaii, Puerto Rico, and Guam (#457)
 
