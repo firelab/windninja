@@ -174,23 +174,25 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField 
     //        
 
     int i, j, k, l;
-    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+
+#pragma omp parallel default(shared) private(i,j,k,l)
     {
-        for(int j=0; j<mesh_->NNPE; j++)
+        int ii, jj, kk;
+        int pos;  
+
+#pragma omp for
+    for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+    {
+        for(j=0; j<mesh_->NNPE; j++)
         {
             elementArray[i].QE[j]=0.0;
-            for(int k=0; k<mesh_->NNPE; k++)
+            for(k=0; k<mesh_->NNPE; k++)
             {
                 elementArray[i].S[j*mesh_->NNPE+k]=0.0;
                 elementArray[i].C[j*mesh_->NNPE+k]=0.0;
             }
         }
     }
-
-#pragma omp parallel default(shared) private(i,j,k,l)
-    {
-        int ii, jj, kk;
-        int pos;  
 
 #pragma omp for
         for(i=0; i<mesh_->NUMNP; i++)
@@ -342,7 +344,7 @@ void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int*
             for(j=0; j<mesh_->NNPE; j++)
             {
                 elementArray[i].QE[j]=0.0;
-                for(k=0; k<mesh_->NNPE; k++)
+                for(int k=0; k<mesh_->NNPE; k++)
                 {
                     elementArray[i].S[j*mesh_->NNPE+k]=0.0;
                 }
