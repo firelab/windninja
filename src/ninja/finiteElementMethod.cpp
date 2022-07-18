@@ -181,18 +181,18 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField 
         int pos;  
 
 #pragma omp for
-    for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
-    {
-        for(j=0; j<mesh_->NNPE; j++)
+        for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
         {
-            elementArray[i].QE[j]=0.0;
-            for(k=0; k<mesh_->NNPE; k++)
+            for(j=0; j<mesh_->NNPE; j++)
             {
-                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-                elementArray[i].C[j*mesh_->NNPE+k]=0.0;
+                elementArray[i].QE[j]=0.0;
+                for(k=0; k<mesh_->NNPE; k++)
+                {
+                    elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                    elementArray[i].C[j*mesh_->NNPE+k]=0.0;
+                }
             }
         }
-    }
 
 #pragma omp for
         for(i=0; i<mesh_->NUMNP; i++)
