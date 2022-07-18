@@ -330,11 +330,24 @@ void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int*
 
     //this is because we will only store the upper half of the SK matrix since it's symmetric
     NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
-
+    
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         int pos;  
         int ii, jj, kk;
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+        {
+            for(j=0; j<mesh_->NNPE; j++)
+            {
+                elementArray[i].QE[j]=0.0;
+                for(k=0; k<mesh_->NNPE; k++)
+                {
+                    elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                }
+            }
+        }
 
 #pragma omp for
         for(i=0; i<mesh_->NUMNP; i++)
@@ -736,15 +749,6 @@ void FiniteElementMethod::Initialize(const Mesh *mesh, const WindNinjaInputs *in
 
             //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
             elementArray[i].DV=elementArray[i].DETJ;
-        }
-
-        for(int j=0; j<mesh_->NNPE; j++)
-        {
-            elementArray[i].QE[j]=0.0;
-            for(int k=0; k<mesh_->NNPE; k++)
-            {
-                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-            }
         }
     }
 
