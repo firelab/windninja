@@ -88,7 +88,6 @@ private:
     wn_3dVectorField U_1;   //Velocity field for the next time step, used in transient simulations 
 
     PoissonEquation conservationOfMassEquation;
-    PoissonEquation projectionEquation;
     DiffusionEquation *diffusionEquation;
 };
 

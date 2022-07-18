@@ -200,9 +200,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Setting boundary conditions...");
         conservationOfMassEquation.SetBoundaryConditions();
 
-        //--------PROJECTION EQUATION-----------
-        //projectionEquation.Initialize(mesh, input);
-
         //--------DIFFUSION EQUATION-----------
         diffusionEquation->Initialize(&mesh, &input);
 
@@ -233,15 +230,14 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
-        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        //currentDt = boost::posix_time::seconds(5);
         bool with_advection = true;
         bool with_diffusion = true;
         bool with_projection = true;
 
-        while(iteration <= 5000)
+        while(iteration <= 1000)
         {
-            iteration += 1;
+            currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+            //currentDt = boost::posix_time::seconds(5);
             currentDt0 = currentDt;
             currentTime += currentDt;
 
@@ -360,21 +356,15 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 conservationOfMassEquation.SetInitialVelocity(U);
                 conservationOfMassEquation.Discretize();
                 conservationOfMassEquation.SetBoundaryConditions();
-                //projectionEquation.SetInitialVelocity(U);
-                //projectionEquation.SetAlphaCoefficients(input, CloudGrid, init);
-                //projectionEquation.Discretize();
-                //projectionEquation.SetBoundaryConditions();
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                //projectionEquation.Solve(input);
                 conservationOfMassEquation.Solve(input);
 
 #ifdef _OPENMP
                 endSolve = omp_get_wtime();
 #endif
                 //compute uvw field from phi field
-                //U = projectionEquation.ComputeUVWField();
                 U = conservationOfMassEquation.ComputeUVWField();
 
                 checkCancel();
@@ -407,6 +397,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 volVTK VTK(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
                 input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, filename.str());
             }
+
+            iteration += 1;
         }
 
         //compute the final average velocity field
