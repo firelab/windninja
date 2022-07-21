@@ -48,6 +48,7 @@ set(NINJA_SOURCES air.cpp
                   genericSurfInitialization.cpp
                   griddedInitialization.cpp
                   implicitCentralDifferenceDiffusion.cpp
+                  implicitBackwardDifferenceDiffusion.cpp
                   initialize.cpp
                   initializationFactory.cpp
                   KmlVector.cpp

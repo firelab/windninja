@@ -224,7 +224,7 @@ bool NinjaMassConservingSteadyState::simulate_wind()
         startSolve = omp_get_wtime();
 #endif
 
-        conservationOfMassEquation.Solve(input);
+        conservationOfMassEquation.Solve();
 
 #ifdef _OPENMP
         endSolve = omp_get_wtime();

@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Poisson's equation operations 
+ * Purpose:  Implicit backward difference diffusion 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -27,58 +27,36 @@
  *
  *****************************************************************************/
 
-#ifndef POISSON_EQUATION_H
-#define POISSON_EQUATION_H
+#ifndef IMPLICIT_BACKWARD_DIFFERENCE_DIFFUSION_H
+#define IMPLICIT_BACKWARD_DIFFERENCE_DIFFUSION_H
 
-#include "stability.h"
-#include "initialize.h"
-#include "volVTK.h"
-#include "linearAlgebra.h"
-#include "finiteElementMethod.h"
+#include "diffusionEquation.h"
 
-/**
- * \brief Handles Poisson's equation operations.
- *
- */
-class PoissonEquation
+class ImplicitBackwardDifferenceDiffusion: public virtual DiffusionEquation
 {
     public:
-        PoissonEquation();
-        ~PoissonEquation();
+        ImplicitBackwardDifferenceDiffusion();
+        ~ImplicitBackwardDifferenceDiffusion();
 
-        PoissonEquation(PoissonEquation const& A);
-        PoissonEquation& operator=(PoissonEquation const& A);
+        ImplicitBackwardDifferenceDiffusion(ImplicitBackwardDifferenceDiffusion const& A);
+        ImplicitBackwardDifferenceDiffusion& operator=(ImplicitBackwardDifferenceDiffusion const& A);
+        virtual ImplicitBackwardDifferenceDiffusion *Clone() {return new ImplicitBackwardDifferenceDiffusion(*this);}
 
-        void Initialize(const Mesh &mesh, const WindNinjaInputs &input);
+        void Initialize(const Mesh *mesh, WindNinjaInputs *input); //pure virtual
         void SetupSKCompressedRowStorage();
         void SetBoundaryConditions();
-        void SetAlphaCoefficients(WindNinjaInputs &input,
-                        AsciiGrid<double> &CloudGrid,
-                        boost::shared_ptr<initialize> &init);
-        void Solve();
-        void SetInitialVelocity(wn_3dVectorField &U);
-        wn_3dVectorField ComputeUVWField();
         void Discretize();
+        void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt);
+        std::string identify() {return std::string("implicitCentralDifferenceDiffusion");}
         void Deallocate();
-
-        double alphaH; //alpha horizontal from governing equation, weighting for change in horizontal winds
-        bool stabilityUsingAlphasFlag;
-        wn_3dScalarField alphaVfield; //stores spatially varying alphaV variable
-        void WritePHIandRHS();
-        std::string phiOutFilename;
-        std::string rhsOutFilename;
 
     private:
         wn_3dVectorField U_;
-        const Mesh *mesh_;
-        WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-        wn_3dVectorField U0_;
-        FiniteElementMethod fem; //finite element method operations
+        wn_3dScalarField scalarField; //scalar to diffuse
         LinearAlgebra matrixEquation; //linear algebra operations
-        double *PHI;
         double *RHS, *SK;
         int *row_ptr, *col_ind;
         bool *isBoundaryNode;
 };
 
-#endif	//POISSON_EQUATION_H
+#endif //IMPLICIT_CENTRAL_DIFFERENCE_DIFFUSION_H

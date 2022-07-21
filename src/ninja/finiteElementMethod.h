@@ -49,8 +49,13 @@ class FiniteElementMethod
         FiniteElementMethod& operator=(FiniteElementMethod const& A);
 
         void Initialize(const Mesh *mesh, const WindNinjaInputs *input);
-        void DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
-                wn_3dVectorField &windSpeedGradient);
+        void DiscretizeBackwardDifferenceDiffusion(double* SK, double* PHI, int* col_ind,
+                            int* row_ptr, wn_3dScalarField &scalarField, double* RHS, 
+                            boost::posix_time::time_duration &currentDt, wn_3dScalarField &heightAboveGround,
+                            wn_3dVectorField &windSpeedGradient);
+        void DiscretizeCentralDifferenceDiffusion(double* SK, double* PHI, int* col_ind,
+                            int* row_ptr, wn_3dScalarField &scalarField, double* RHS, 
+                            boost::posix_time::time_duration currentDt);
         void DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField &U0, double* xRHS,
                             double* yRHS, double* zRHS, double* CL, wn_3dScalarField &heightAboveGround,
                             wn_3dVectorField &windSpeedGradient);
