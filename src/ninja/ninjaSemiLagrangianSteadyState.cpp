@@ -33,14 +33,18 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 , currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), 
               input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 {
-    eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
+    //eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
     //eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
+    eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
 
     if(diffusionType == explicitLumpedCapacitance){
         diffusionEquation = new ExplicitLumpedCapacitanceDiffusion();
     }
     else if(diffusionType == implicitCentralDifference){
         diffusionEquation = new ImplicitCentralDifferenceDiffusion();
+    }
+    else if(diffusionType == implicitBackwardDifference){
+        diffusionEquation = new ImplicitBackwardDifferenceDiffusion();
     }
 }
 
@@ -200,9 +204,6 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Setting boundary conditions...");
         conservationOfMassEquation.SetBoundaryConditions();
 
-        //--------PROJECTION EQUATION-----------
-        projectionEquation.Initialize(mesh, input);
-
         //--------DIFFUSION EQUATION-----------
         diffusionEquation->Initialize(&mesh, &input);
 
@@ -213,7 +214,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  -------------------------------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "First project...");
 
-        conservationOfMassEquation.Solve(input);
+        conservationOfMassEquation.Solve();
  
         //compute uvw field from phi field
         //TODO: have ComputeUVWField take a reference to a wn_3dVectorField &U to fill in, rather than
@@ -233,15 +234,14 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         /*  ----------------------------------------*/
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
-        currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
-        //currentDt = boost::posix_time::seconds(5);
         bool with_advection = true;
         bool with_diffusion = true;
         bool with_projection = true;
 
-        while(iteration <= 5000)
+        while(iteration <= 1000)
         {
-            iteration += 1;
+            currentDt = boost::posix_time::seconds(int(get_meshResolution()/U.getMaxValue()));
+            //currentDt = boost::posix_time::seconds(5);
             currentDt0 = currentDt;
             currentTime += currentDt;
 
@@ -300,8 +300,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 transport.transportVector(U, U_1, currentDt.total_microseconds()/1000000.0);
 
                 //testing
-                volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
-                input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "vtk_transport.vtk");
+                //volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                //input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "vtk_transport.vtk");
             }
 
             /*  ----------------------------------------*/
@@ -314,14 +314,14 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 //U_1 is output from advection step, dump diffusion results into U
                 diffusionEquation->Solve(U_1, U, currentDt); 
 
-                int mod_ = 1;
-                std::ostringstream diff_fname;
-                if(iteration % mod_ == 0)
-                {
-                    diff_fname << "vtk_diffusion" << iteration << ".vtk";
-                    volVTK VTK_diff(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
-                    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, diff_fname.str());
-                }
+                //int mod_ = 1;
+                //std::ostringstream diff_fname;
+                //if(iteration % mod_ == 0)
+                //{
+                //    diff_fname << "vtk_diffusion" << iteration << ".vtk";
+                //    volVTK VTK_diff(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                //    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, diff_fname.str());
+                //}
             }
             else{
                 //FOR TESTING WITHOUT DIFFUSION ONLY
@@ -337,13 +337,13 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
                 //Debugging finite element solver--------------------------------
                 //write PHI and RHS for debugging
-                std::ostringstream phi_fname;
-                phi_fname << "PHI_" << iteration << ".vtk";
-                conservationOfMassEquation.phiOutFilename = phi_fname.str();
-                std::ostringstream rhs_fname;
-                rhs_fname << "RHS_" << iteration << ".vtk";
-                conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
-                conservationOfMassEquation.WritePHIandRHS();
+                //std::ostringstream phi_fname;
+                //phi_fname << "PHI_" << iteration << ".vtk";
+                //conservationOfMassEquation.phiOutFilename = phi_fname.str();
+                //std::ostringstream rhs_fname;
+                //rhs_fname << "RHS_" << iteration << ".vtk";
+                //conservationOfMassEquation.rhsOutFilename = rhs_fname.str();
+                //conservationOfMassEquation.WritePHIandRHS();
                 //---------------------------------------------------------------
 
                 //set ground to zero
@@ -356,20 +356,20 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                         U.vectorData_z(i,j,0) = 0.0;
                     }
                 }
-                projectionEquation.SetInitialVelocity(U);
-                projectionEquation.SetAlphaCoefficients(input, CloudGrid, init);
-                projectionEquation.Discretize();
-                projectionEquation.SetBoundaryConditions();
+                conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
+                conservationOfMassEquation.SetInitialVelocity(U);
+                conservationOfMassEquation.Discretize();
+                conservationOfMassEquation.SetBoundaryConditions();
 #ifdef _OPENMP
                 startSolve = omp_get_wtime();
 #endif
-                projectionEquation.Solve(input);
+                conservationOfMassEquation.Solve();
 
 #ifdef _OPENMP
                 endSolve = omp_get_wtime();
 #endif
                 //compute uvw field from phi field
-                U = projectionEquation.ComputeUVWField();
+                U = conservationOfMassEquation.ComputeUVWField();
 
                 checkCancel();
             }
@@ -401,6 +401,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 volVTK VTK(U, mesh.XORD, mesh.YORD, mesh.ZORD, 
                 input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, filename.str());
             }
+
+            iteration += 1;
         }
 
         //compute the final average velocity field
@@ -492,8 +494,10 @@ NinjaSemiLagrangianSteadyState::eDiffusionDiscretizationType NinjaSemiLagrangian
             return explicitLumpedCapacitance;
     else if(type == "implicitCentralDifference")
         return implicitCentralDifference;
+    else if(type == "implicitBackwardDifference")
+        return implicitBackwardDifference;
     else
-        throw std::runtime_error(std::string("Cannot determine diffusion discretization type in" 
+        throw std::runtime_error(std::string("Cannot determine diffusion discretization type in " 
                     "ninjaSemiLagrangianSteadyState::getDiffusionDiscretizationType()."));
 }
 

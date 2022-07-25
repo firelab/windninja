@@ -618,7 +618,6 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
 
     fem.ComputeGradientField(PHI, U_);
 
-
     double alphaV = 1.0;
 
     for(int i=0;i<mesh_->NUMNP;i++)
@@ -684,7 +683,7 @@ void PoissonEquation::Initialize(const Mesh &mesh, const WindNinjaInputs &input)
     U_.allocate(&mesh);
 }
 
-void PoissonEquation::Solve(WindNinjaInputs &input)
+void PoissonEquation::Solve()
 {
 //#define WRITE_A_B
 #ifdef WRITE_A_B	//used for debugging...
@@ -693,10 +692,10 @@ void PoissonEquation::Solve(WindNinjaInputs &input)
 
     //if the CG solver diverges, try the minres solver
     matrixEquation.InitializeConjugateGradient(mesh_->NUMNP);
-    if(matrixEquation.SolveConjugateGradient(input, SK, PHI, RHS, row_ptr, col_ind)==false)
+    if(matrixEquation.SolveConjugateGradient(*input_, SK, PHI, RHS, row_ptr, col_ind)==false)
     {
         matrixEquation.InitializeMinres(mesh_->NUMNP);
-        if(matrixEquation.SolveMinres(input, SK, PHI, RHS, row_ptr, col_ind)==false)
+        if(matrixEquation.SolveMinres(*input_, SK, PHI, RHS, row_ptr, col_ind)==false)
         {
             throw std::runtime_error("Solver returned false.");
         }

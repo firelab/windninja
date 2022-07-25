@@ -67,87 +67,274 @@ FiniteElementMethod::~FiniteElementMethod()      //destructor
 {
     Deallocate();
 }
-void FiniteElementMethod::DiscretizeCentralDifferenceDiffusion(wn_3dScalarField &heightAboveGround,
-        wn_3dVectorField &windSpeedGradient) 
+
+void FiniteElementMethod::DiscretizeBackwardDifferenceDiffusion(double* SK, double* PHI, 
+                            int* col_ind, int* row_ptr, wn_3dScalarField &scalarField, double* RHS,
+                            boost::posix_time::time_duration &currentDt, wn_3dScalarField &heightAboveGround,
+                            wn_3dVectorField &windSpeedGradient) 
 {
-//    //The governing equation to solve for diffusion of the velocity field is:
-//    //
-//    //    d        dPhi      d        dPhi      d        dPhi            dPhi
-//    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
-//    //    dx        dx       dy        dy       dz        dz              dt
-//    //
-//    //    where:
-//    //
-//    //    Phi = Ux, Uy, Uz --> the current velocity field
-//    //    Rz = 0.4 * heightAboveGround * du/dz
-//    //    Rx = Ry = Rz
-//    //    H = source term, 0 for now
-//    //    Rc = 1
-//    //
-//    //    There are two discretization schemes available for diffusion: lumped-capacitance (see p. 195
-//    //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
-//    //    Thompson book).
-//    //        
-//    //    For central difference, the equation to solve is (p. 194 in Thompson book):
-//    //    
-//    //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
-//    //
-//    //    where:
-//    //    [CPK] = [C] + (dt/2)[K]
-//    //    [CMK] = [C] - (dt/2)[K]
-//    //    {dQ} = dt{Q}sub(t+dt/2)
-//    //    
-//    //    TODO:
-//    //    [C] and [K] are evaluated at t+dt/2.
-//    //
-//    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
-//    //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
-//    //    now since Q is 0.
-//#pragma omp atomic
-//    //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
-//    xRHS[elementArray[i].NPK] += elementArray[i].C[j];  
-//    yRHS[elementArray[i].NPK] += elementArray[i].C[j];
-//    zRHS[elementArray[i].NPK] += elementArray[i].C[j];  
-//
-//    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//    {
-//        elementArray[i].KNP=mesh_->get_global_node(k, i);
-//        xRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                        U0_.vectorData_x(elementArray[i].KNP);
-//        yRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                        U0_.vectorData_y(elementArray[i].KNP);
-//        zRHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
-//                        elementArray[i].S[j*mesh_->NNPE+k]*
-//                        U0_.vectorData_z(elementArray[i].KNP);
-//    }
-//
-//    for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
-//    {
-//        elementArray[i].KNP=mesh_->get_global_node(k, i);
-//
-//        if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
-//        {
-//            pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
-//
-//            //l increments through col_ind[] starting from where row_ptr[] says until
-//            //we find the column number we're looking for
-//            l=0;
-//            do
-//            {
-//                if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
-//                     pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
-//                l++;
-//            }
-//            while(pos<0);
-//#pragma omp atomic
-//            //Here is the final global stiffness matrix in symmetric storage
-//            //SK=[CPK]
-//            SK[pos] += elementArray[i].C[j*mesh_->NNPE+k] +
-//                       (currentDt.total_microseconds()/1000000.0)/2*elementArray[i].S[j*mesh_->NNPE+k];
-//        }
-//    }
+    //The governing equation to solve for diffusion of the velocity field is:
+    //
+    //    d        dPhi      d        dPhi      d        dPhi            dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
+    //    dx        dx       dy        dy       dz        dz              dt
+    //
+    //    where:
+    //
+    //    Phi = Ux, Uy, Uz --> the current velocity field
+    //    Rz = 0.4 * heightAboveGround * du/dz
+    //    Rx = Ry = Rz
+    //    H = source term, 0 for now
+    //    Rc = 1
+    //
+    //    There are three discretization schemes available for diffusion: lumped-capacitance (see p. 195
+    //    in Thompson book), backward difference (see p. 193), and central difference (see eq. 10.26 on 
+    //    p. 194 and p. 203-209 in Thompson book).
+    //        
+    //    For backward difference, the equation to solve is (p. 193 in Thompson book):
+    //    
+    //    [1/dt[C]+[K]]{PHI}sub(t+dt) = {Q}sub(t+dt) + 1/dt[C]{PHI}sub(t)
+    //
+    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
+    //    for Ax=b --> A=[1/dt[C]+[K]], x={PHI}sub(t+dt), b={Q}sub(t+dt)+1/dt[C]{PHI}sub(t)
+    cout<<"currentDt............... = "<<currentDt<<endl;
+    cout<<"scalarField(25) = "<<scalarField(25)<<endl;
+    
+    int i, j, k, l;
+
+    int interrows=input_->dem.get_nRows()-2;
+    int intercols=input_->dem.get_nCols()-2;
+    int interlayers=mesh_->nlayers-2;
+    //NZND is the # of nonzero elements in the SK stiffness array that are stored
+    int NZND=(8*8)+(intercols*4+interrows*4+interlayers*4)*12+
+         (intercols*interlayers*2+interrows*interlayers*2+intercols*interrows*2)*18+
+         (intercols*interrows*interlayers)*27;
+
+    //this is because we will only store the upper half of the SK matrix since it's symmetric
+    NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        int pos;  
+        int ii, jj, kk;
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+        {
+            for(j=0; j<mesh_->NNPE; j++)
+            {
+                elementArray[i].QE[j]=0.0;
+                //just set the transient term to 1 for now --> not sure if this is right
+                elementArray[i].C[j]=1.0;
+                for(int k=0; k<mesh_->NNPE; k++)
+                {
+                    elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                }
+            }
+        }
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMNP; i++)
+        {
+            RHS[i]=0.;
+        }
+
+#pragma omp for 
+        for(i=0; i<NZND; i++)
+        {
+            SK[i]=0.;
+        }
+
+cout<<"Going into loop over elements............"<<endl;
+#pragma omp for
+        for(i=0;i<mesh_->NUMEL;i++) //Start loop over elements
+        {
+            /*-----------------------------------------------------*/
+            /*      NO SURFACE QUADRATURE NEEDED SINCE NONE OF     */
+            /*      THE BOUNDARY CONDITIONS HAVE A NON-ZERO FLUX   */
+            /*      SPECIFICATION:                                 */
+            /*      Flow through =>  Phi = 0                       */
+            /*      Ground       =>  normal flux = 0               */
+            /*-----------------------------------------------------*/
+
+            //Begin quadrature for current element
+            elementArray[i].node0=mesh_->get_node0(i); //get the global nodal number of local node 0 of element i
+
+            for(j=0;j<elementArray[i].NUMQPTV;j++) //Start loop over quadrature points in the element
+            {
+                if(elementArray[i].NUMQPTV==27)
+                {
+                    if(j<=7)
+                    {
+                        elementArray[i].WT=elementArray[i].WT1;
+                    }
+                    else if(j<=19)
+                    {
+                        elementArray[i].WT=elementArray[i].WT2;
+                    }
+                    else if(j<=25)
+                    {
+                        elementArray[i].WT=elementArray[i].WT3;
+                    }
+                    else
+                    {
+                        elementArray[i].WT=elementArray[i].WT4;
+                    }
+                }
+
+                //calculates elem.HVJ
+                //CalculateHterm(i, U0);
+                //just set the source term to 0 for now --> no soure term for diffusion
+                elementArray[i].HVJ=0.0;
+
+                //calculates elem.RX, elem.RY, elem.RZ
+                CalculateDiffusionRcoefficients(i, j, heightAboveGround, windSpeedGradient);
+
+                //Create element stiffness matrix---------------------------------------------
+                for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
+                {
+                    elementArray[i].QE[k]=elementArray[i].QE[k]+elementArray[i].WT*elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*elementArray[i].HVJ*elementArray[i].DV;
+                    for(l=0;l<mesh_->NNPE;l++)
+                    {
+                        elementArray[i].S[k*mesh_->NNPE+l]=elementArray[i].S[k*mesh_->NNPE+l]+elementArray[i].WT*(elementArray[i].DNDX[k]*elementArray[i].RX*elementArray[i].DNDX[l]+
+                                elementArray[i].DNDY[k]*elementArray[i].RY*elementArray[i].DNDY[l]+elementArray[i].DNDZ[k]*elementArray[i].RZ*elementArray[i].DNDZ[l])*elementArray[i].DV;
+                    }
+                } //End loop over nodes in the element
+            } //End loop over quadrature points in the element
+
+            //Place completed element matrix in global SK and Q matrices
+            for(j=0;j<mesh_->NNPE;j++) //Start loop over nodes in the element (also, it is the row # in S[])
+            {
+                //elem.NPK is the global row number of the element stiffness matrix
+                elementArray[i].NPK=mesh_->get_global_node(j, i);
+
+#pragma omp atomic
+                //Q is currently 0 (no volumetric source)
+                RHS[elementArray[i].NPK] += elementArray[i].QE[j] + 
+                                            elementArray[i].C[j]*scalarField(elementArray[i].NPK);  
+
+                for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
+                {
+                    elementArray[i].KNP=mesh_->get_global_node(k, i);
+
+                    if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
+                    {
+                        pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                        //l increments through col_ind[] starting from where row_ptr[] says until
+                        //we find the column number we're looking for
+                        l=0;
+                        do
+                        {
+                            if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+                                 pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
+                            l++;
+                        }
+                        while(pos<0);
+#pragma omp atomic
+                        //Here is the final global stiffness matrix in symmetric storage
+                        //What is [C]?
+                        //[SK] = [A] = 1/dt[C] + [K]
+                        SK[pos] += elementArray[i].S[j*mesh_->NNPE+k] +
+                                   1/currentDt.total_microseconds()/1000000.0/2. * elementArray[i].C[j];
+                    }
+                }
+            } //End loop over nodes in the element
+        } //End loop over elements
+    } //End parallel region
+}
+
+void FiniteElementMethod::DiscretizeCentralDifferenceDiffusion(double* SK, double* PHI, int* col_ind, int* row_ptr,
+                            wn_3dScalarField &scalarField, double* RHS, boost::posix_time::time_duration currentDt) 
+{
+    //The governing equation to solve for diffusion of the velocity field is:
+    //
+    //    d        dPhi      d        dPhi      d        dPhi            dPhi
+    //   ---- ( Rx ---- ) + ---- ( Ry ---- ) + ---- ( Rz ---- ) + H - Rc ---- = 0.0
+    //    dx        dx       dy        dy       dz        dz              dt
+    //
+    //    where:
+    //
+    //    Phi = Ux, Uy, Uz --> the current velocity field
+    //    Rz = 0.4 * heightAboveGround * du/dz
+    //    Rx = Ry = Rz
+    //    H = source term, 0 for now
+    //    Rc = 1
+    //
+    //    There are two discretization schemes available for diffusion: lumped-capacitance (see p. 195
+    //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
+    //    Thompson book).
+    //        
+    //    For central difference, the equation to solve is (p. 194 in Thompson book):
+    //    
+    //    [CPK]{PHI}sub(t+dt) = {dQ} + [CMK]{PHI}sub(t)
+    //
+    //    where:
+    //    [CPK] = [C] + (dt/2)[K]
+    //    [CMK] = [C] - (dt/2)[K]
+    //    {dQ} = dt{Q}sub(t+dt/2)
+    //    
+    //    TODO:
+    //    [C] and [K] are evaluated at t+dt/2.
+    //
+    //    Currently, for us C (transient coefficient) is 1 and Q (the volumetric source) is 0.
+    //    for Ax=b --> A=[CPK], x={PHI}sub(t+dt), b={dQ}+[CMK]{PHI}sub(t)
+    //    now since Q is 0.
+    
+    int i, j, k, l;
+
+    for(i=0; i<mesh_->NUMNP; i++)
+    {
+        PHI[i]=0.;
+        RHS[i]=0.;
+    }
+
+    //compute [CMK]
+    //CMK[
+
+    //we can omit {dQ} for now since Q is currently 0 (no volumetric source)
+    RHS[elementArray[i].NPK] += elementArray[i].C[j];  
+
+#pragma omp parallel default(shared) private(i,j,k,l)
+    {
+        int pos;
+
+#pragma omp for
+        for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
+        {
+            elementArray[i].KNP=mesh_->get_global_node(k, i);
+            RHS[elementArray[i].NPK] -= (currentDt.total_microseconds()/1000000.0)/2.*
+                            elementArray[i].S[j*mesh_->NNPE+k]*
+                            scalarField(elementArray[i].KNP);
+        }
+
+#pragma omp for
+        for(k=0;k<mesh_->NNPE;k++) //k is the local column number in S[]
+        {
+            elementArray[i].KNP=mesh_->get_global_node(k, i);
+
+            if(elementArray[i].KNP >= elementArray[i].NPK) //do only if we're on the upper triangular region of SK[]
+            {
+                pos=-1; //pos is the position # in SK[] to place S[j*mesh.NNPE+k]
+
+                //l increments through col_ind[] starting from where row_ptr[] says until
+                //we find the column number we're looking for
+                l=0;
+                do
+                {
+                    if(col_ind[row_ptr[elementArray[i].NPK]+l]==elementArray[i].KNP) //Check if we're at the correct position
+                         pos=row_ptr[elementArray[i].NPK]+l; //If so, save that position in pos
+                    l++;
+                }
+                while(pos<0);
+#pragma omp atomic
+                //Here is the final global stiffness matrix in symmetric storage
+                //SK=[CPK]
+                SK[pos] += elementArray[i].C[j*mesh_->NNPE+k] +
+                           (currentDt.total_microseconds()/1000000.0)/2*elementArray[i].S[j*mesh_->NNPE+k];
+            }
+        }
+    }
 }
 
 void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField &U0, double* xRHS,
@@ -174,23 +361,25 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField 
     //        
 
     int i, j, k, l;
-    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
-    {
-        for(int j=0; j<mesh_->NNPE; j++)
-        {
-            elementArray[i].QE[j]=0.0;
-            for(int k=0; k<mesh_->NNPE; k++)
-            {
-                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-                elementArray[i].C[j*mesh_->NNPE+k]=0.0;
-            }
-        }
-    }
 
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         int ii, jj, kk;
         int pos;  
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+        {
+            for(j=0; j<mesh_->NNPE; j++)
+            {
+                elementArray[i].QE[j]=0.0;
+                for(k=0; k<mesh_->NNPE; k++)
+                {
+                    elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                    elementArray[i].C[j*mesh_->NNPE+k]=0.0;
+                }
+            }
+        }
 
 #pragma omp for
         for(i=0; i<mesh_->NUMNP; i++)
@@ -231,7 +420,7 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField 
 
                 //calculates elem.HVJ
                 //CalculateHterm(elementArray[i], i);
-                //just sent the source term to 0 for now --> no soure term for diffusion
+                //just set the source term to 0 for now --> no soure term for diffusion
                 elementArray[i].HVJ=0.0;
 
                 //calculates elem.RX, elem.RY, elem.RZ
@@ -330,11 +519,24 @@ void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int*
 
     //this is because we will only store the upper half of the SK matrix since it's symmetric
     NZND = (NZND - mesh_->NUMNP)/2 + mesh_->NUMNP;	
-
+    
 #pragma omp parallel default(shared) private(i,j,k,l)
     {
         int pos;  
         int ii, jj, kk;
+
+#pragma omp for
+        for(i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+        {
+            for(j=0; j<mesh_->NNPE; j++)
+            {
+                elementArray[i].QE[j]=0.0;
+                for(int k=0; k<mesh_->NNPE; k++)
+                {
+                    elementArray[i].S[j*mesh_->NNPE+k]=0.0;
+                }
+            }
+        }
 
 #pragma omp for
         for(i=0; i<mesh_->NUMNP; i++)
@@ -736,15 +938,6 @@ void FiniteElementMethod::Initialize(const Mesh *mesh, const WindNinjaInputs *in
 
             //DV is the DV for the volume integration (could be eliminated and just use DETJ everywhere)
             elementArray[i].DV=elementArray[i].DETJ;
-        }
-
-        for(int j=0; j<mesh_->NNPE; j++)
-        {
-            elementArray[i].QE[j]=0.0;
-            for(int k=0; k<mesh_->NNPE; k++)
-            {
-                elementArray[i].S[j*mesh_->NNPE+k]=0.0;
-            }
         }
     }
 

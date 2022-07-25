@@ -43,18 +43,25 @@ class ImplicitCentralDifferenceDiffusion: public virtual DiffusionEquation
         virtual ImplicitCentralDifferenceDiffusion *Clone() {return new ImplicitCentralDifferenceDiffusion(*this);}
 
         void Initialize(const Mesh *mesh, WindNinjaInputs *input); //pure virtual
+        void SetupSKCompressedRowStorage();
         void SetBoundaryConditions();
         void Discretize();
         void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt);
-        void SetupSKCompressedRowStorage();
         std::string identify() {return std::string("implicitCentralDifferenceDiffusion");}
         void Deallocate();
 
     private:
-        double *SK; //The A in Ax=b
+        wn_3dVectorField U_;
+        const Mesh *mesh_;
+        WindNinjaInputs *input_; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+        wn_3dVectorField U0_;
+        wn_3dScalarField scalarField; //scalar to diffuse
+        FiniteElementMethod fem; //finite element method operations
+        LinearAlgebra matrixEquation; //linear algebra operations
+        double *PHI;
+        double *RHS, *SK, *CMK;
         int *row_ptr, *col_ind;
         bool *isBoundaryNode;
-        LinearAlgebra matrixEquation;
 };
 
 #endif //IMPLICIT_CENTRAL_DIFFERENCE_DIFFUSION_H

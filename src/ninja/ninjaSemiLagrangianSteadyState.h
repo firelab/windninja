@@ -43,6 +43,7 @@
 #include "diffusionEquation.h"
 #include "explicitLumpedCapacitanceDiffusion.h"
 #include "implicitCentralDifferenceDiffusion.h"
+#include "implicitBackwardDifferenceDiffusion.h"
 
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
@@ -62,7 +63,8 @@ public:
 
     enum eDiffusionDiscretizationType{
         explicitLumpedCapacitance,
-        implicitCentralDifference
+        implicitCentralDifference,
+        implicitBackwardDifference
     };
 
     virtual bool simulate_wind();
@@ -88,7 +90,6 @@ private:
     wn_3dVectorField U_1;   //Velocity field for the next time step, used in transient simulations 
 
     PoissonEquation conservationOfMassEquation;
-    PoissonEquation projectionEquation;
     DiffusionEquation *diffusionEquation;
 };
 

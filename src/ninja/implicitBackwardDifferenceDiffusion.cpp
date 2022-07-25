@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Implicit central difference diffusion 
+ * Purpose:  Implicit backward difference diffusion 
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
@@ -26,13 +26,10 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-#include "implicitCentralDifferenceDiffusion.h"
+#include "implicitBackwardDifferenceDiffusion.h"
 
-ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion() : DiffusionEquation()
+ImplicitBackwardDifferenceDiffusion::ImplicitBackwardDifferenceDiffusion() : DiffusionEquation()
 {
-    mesh_=NULL;
-    input_=NULL;
-    PHI=NULL;
     RHS=NULL;
     SK=NULL;
     row_ptr=NULL;
@@ -45,17 +42,12 @@ ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion() : Diffu
  * @param A Copied value.
  */
 
-ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion(ImplicitCentralDifferenceDiffusion const& A)
+ImplicitBackwardDifferenceDiffusion::ImplicitBackwardDifferenceDiffusion(ImplicitBackwardDifferenceDiffusion const& A)
 : DiffusionEquation(A)
 , U_(A.U_)
-, mesh_(A.mesh_)
-, input_(A.input_)
-, U0_(A.U0_)
-, fem(A.fem)
 , matrixEquation(A.matrixEquation)
 , scalarField(A.scalarField)
 {
-    PHI=A.PHI;
     RHS=A.RHS;
     SK=A.SK;
     row_ptr=A.row_ptr;
@@ -69,11 +61,10 @@ ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion(ImplicitC
  * @return a copy of an object
  */
 
-ImplicitCentralDifferenceDiffusion& ImplicitCentralDifferenceDiffusion::operator=(ImplicitCentralDifferenceDiffusion const& A)
+ImplicitBackwardDifferenceDiffusion& ImplicitBackwardDifferenceDiffusion::operator=(ImplicitBackwardDifferenceDiffusion const& A)
 {
     if(&A != this) {
         DiffusionEquation::operator=(A);
-        PHI=A.PHI;
         RHS=A.RHS;
         SK=A.SK;
         row_ptr=A.row_ptr;
@@ -81,22 +72,18 @@ ImplicitCentralDifferenceDiffusion& ImplicitCentralDifferenceDiffusion::operator
         isBoundaryNode=A.isBoundaryNode;
 
         U_=A.U_;
-        mesh_=A.mesh_;
-        input_=A.input_;
-        U0_=A.U0_;
-        fem=A.fem;
         matrixEquation=A.matrixEquation;
         scalarField=A.scalarField;
     }
     return *this;
 }
 
-ImplicitCentralDifferenceDiffusion::~ImplicitCentralDifferenceDiffusion()      //destructor
+ImplicitBackwardDifferenceDiffusion::~ImplicitBackwardDifferenceDiffusion()      //destructor
 {
     Deallocate();
 }
 
-void ImplicitCentralDifferenceDiffusion::Discretize() 
+void ImplicitBackwardDifferenceDiffusion::Discretize() 
 {
     //The governing equation to solve for diffusion of the velocity field is:
     //
@@ -112,15 +99,31 @@ void ImplicitCentralDifferenceDiffusion::Discretize()
     //    H = source term, 0 for now
     //    Rc = 1
     //
-    //    There are two discretization schemes available for diffusion: lumped-capacitance (see p. 195
+    //    There are two implicit discretization schemes available for diffusion: backward difference (see p. 193
     //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
     //    Thompson book). 
-    //        
+    
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //compute and store wind speed at each node
+                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
+            }
+        }
+    }
 
-    fem.DiscretizeCentralDifferenceDiffusion(SK, PHI, col_ind, row_ptr, scalarField, RHS, currentDt);
+    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                            windSpeedGradient.vectorData_y,
+                            windSpeedGradient.vectorData_z);
+
+    cout<<"scalarField(25) = "<<scalarField(25)<<endl;
+    fem.DiscretizeBackwardDifferenceDiffusion(SK, PHI, col_ind, row_ptr, scalarField, RHS, currentDt,
+                                              heightAboveGround, windSpeedGradient);
 }
 
-void ImplicitCentralDifferenceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
+void ImplicitBackwardDifferenceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
 {
     mesh_ = mesh;
     input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
@@ -142,9 +145,28 @@ void ImplicitCentralDifferenceDiffusion::Initialize(const Mesh *mesh, WindNinjaI
     SetupSKCompressedRowStorage();
 
     fem.Initialize(mesh_, input_);
+
+    for(int i=0; i<mesh_->NUMNP; i++)
+    {
+        PHI[i]=0.;
+        RHS[i]=0.;
+    }
+
+    heightAboveGround.allocate(mesh_);
+    windSpeed.allocate(mesh_);
+    windSpeedGradient.allocate(mesh_);
+
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //find distance to ground at each node in mesh and write to wn_3dScalarField
+                heightAboveGround(i,j,k) = mesh_->ZORD(i,j,k) - mesh_->ZORD(i,j,0);
+            }
+        }
+    }
 }
 
-void ImplicitCentralDifferenceDiffusion::SetupSKCompressedRowStorage()
+void ImplicitBackwardDifferenceDiffusion::SetupSKCompressedRowStorage()
 {
     int interrows=input_->dem.get_nRows()-2;
     int intercols=input_->dem.get_nCols()-2;
@@ -332,7 +354,7 @@ void ImplicitCentralDifferenceDiffusion::SetupSKCompressedRowStorage()
  *
  * \return void
  */
-void ImplicitCentralDifferenceDiffusion::SetBoundaryConditions()
+void ImplicitBackwardDifferenceDiffusion::SetBoundaryConditions()
 {
     int NPK, KNP;
     int i, j, k, l;
@@ -399,13 +421,14 @@ void ImplicitCentralDifferenceDiffusion::SetBoundaryConditions()
  *       double check how RHS, SK, and PHI are being used here
  *
  */
-void ImplicitCentralDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVectorField &U, 
+void ImplicitBackwardDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVectorField &U, 
                               boost::posix_time::time_duration dt)
 {
     U0_ = U1;
-
+    currentDt = dt;
     int NPK;
 
+    //set scalar fied to be diffused
     scalarField = U0_.vectorData_x;
     Discretize();
 
@@ -433,6 +456,7 @@ void ImplicitCentralDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVector
         }
     }
 
+    //set scalar fied to be diffused
     scalarField = U0_.vectorData_y;
     Discretize();
 
@@ -459,6 +483,7 @@ void ImplicitCentralDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVector
         }
     }
 
+    //set scalar fied to be diffused
     scalarField = U0_.vectorData_z;
     Discretize();
 
@@ -486,7 +511,7 @@ void ImplicitCentralDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVector
     }
 }
 
-void ImplicitCentralDifferenceDiffusion::Deallocate()
+void ImplicitBackwardDifferenceDiffusion::Deallocate()
 {
     if(PHI)
     {	
