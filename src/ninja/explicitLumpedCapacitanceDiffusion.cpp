@@ -28,7 +28,12 @@
  *****************************************************************************/
 #include "explicitLumpedCapacitanceDiffusion.h"
 
-ExplicitLumpedCapacitanceDiffusion::ExplicitLumpedCapacitanceDiffusion() : DiffusionEquation()
+ExplicitLumpedCapacitanceDiffusion::ExplicitLumpedCapacitanceDiffusion() 
+{
+
+}
+
+ExplicitLumpedCapacitanceDiffusion::ExplicitLumpedCapacitanceDiffusion(const Mesh *mesh, WindNinjaInputs *input) : DiffusionEquation(mesh, input)
 {
    CL=NULL;
 }
@@ -84,35 +89,13 @@ void ExplicitLumpedCapacitanceDiffusion::Discretize()
     //    in Thompson book) and central difference (see eq. 10.26 on p. 194 and p. 203-209 in 
     //    Thompson book). 
     //        
-    for(int i = 0; i < mesh_->nrows; i++){
-        for(int j = 0; j < mesh_->ncols; j++){
-            for(int k = 0; k < mesh_->nlayers; k++){
-                //compute and store wind speed at each node
-                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
-                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
-            }
-        }
-    }
-
-    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
-    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
-                            windSpeedGradient.vectorData_y,
-                            windSpeedGradient.vectorData_z);
 
     fem.DiscretizeLumpedCapacitenceDiffusion(U0_, xRHS, yRHS, zRHS, CL, heightAboveGround, windSpeedGradient);
 }
 
-void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
+void ExplicitLumpedCapacitanceDiffusion::Initialize()
 {
-    mesh_ = mesh;
-    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-    U0_.allocate(mesh_);
-    fem.Initialize(mesh_, input_); //initialize the FEM object
 
-    if(PHI == NULL)
-        PHI=new double[mesh_->NUMNP];
-    else
-        throw std::runtime_error("Error allocating PHI field.");
     if(CL == NULL)
     {
         CL = new double[mesh_->NUMNP]; //lumped capacitence matrix for transient term in discretized diffusion equation
@@ -131,19 +114,6 @@ void ExplicitLumpedCapacitanceDiffusion::Initialize(const Mesh *mesh, WindNinjaI
         zRHS=new double[mesh_->NUMNP]; //This is the final right hand side (RHS) matrix
     else
         throw std::runtime_error("Error allocating zRHS field.");
-
-    heightAboveGround.allocate(mesh_);
-    windSpeed.allocate(mesh_);
-    windSpeedGradient.allocate(mesh_);
-
-    for(int i = 0; i < mesh_->nrows; i++){
-        for(int j = 0; j < mesh_->ncols; j++){
-            for(int k = 0; k < mesh_->nlayers; k++){
-                //find distance to ground at each node in mesh and write to wn_3dScalarField
-                heightAboveGround(i,j,k) = mesh_->ZORD(i,j,k) - mesh_->ZORD(i,j,0);
-            }
-        }
-    }
 }
 
 /**
@@ -158,6 +128,8 @@ void ExplicitLumpedCapacitanceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVector
                               boost::posix_time::time_duration dt)
 {
     U0_ = U1; //update the initial velocity field
+    currentDt = dt;
+    CalculateGradientsForDiffusion();
     Discretize(); //discretize CL matrix and RHS terms
 
     int NPK;

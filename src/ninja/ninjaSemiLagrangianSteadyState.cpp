@@ -33,19 +33,10 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 , currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), 
               input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 {
-    //eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
-    //eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
-    eDiffusionDiscretizationType diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
+    //diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
+    //diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
+    diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
 
-    if(diffusionType == explicitLumpedCapacitance){
-        diffusionEquation = new ExplicitLumpedCapacitanceDiffusion();
-    }
-    else if(diffusionType == implicitCentralDifference){
-        diffusionEquation = new ImplicitCentralDifferenceDiffusion();
-    }
-    else if(diffusionType == implicitBackwardDifference){
-        diffusionEquation = new ImplicitBackwardDifferenceDiffusion();
-    }
 }
 
 /**
@@ -61,6 +52,7 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState(NinjaSemiLagrangi
 , U_00(A.U_00)
 , currentTime(boost::local_time::not_a_date_time)
 {
+    diffusionType = A.diffusionType;
 
 }
 
@@ -80,6 +72,7 @@ NinjaSemiLagrangianSteadyState& NinjaSemiLagrangianSteadyState::operator= (Ninja
         transport = A.transport;
         conservationOfMassEquation = A.conservationOfMassEquation;
         diffusionEquation = A.diffusionEquation;
+        diffusionType = A.diffusionType;
     }
     return *this;
 }
@@ -205,7 +198,17 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         conservationOfMassEquation.SetBoundaryConditions();
 
         //--------DIFFUSION EQUATION-----------
-        diffusionEquation->Initialize(&mesh, &input);
+        cout<<"About to initialize diffusion..........."<<endl;
+        if(diffusionType == explicitLumpedCapacitance){
+            diffusionEquation = new ExplicitLumpedCapacitanceDiffusion(&mesh, &input);
+        }
+        else if(diffusionType == implicitCentralDifference){
+            diffusionEquation = new ImplicitCentralDifferenceDiffusion(&mesh, &input);
+        }
+        else if(diffusionType == implicitBackwardDifference){
+            diffusionEquation = new ImplicitBackwardDifferenceDiffusion(&mesh, &input);
+        }
+        diffusionEquation->Initialize();
 
         checkCancel();
 

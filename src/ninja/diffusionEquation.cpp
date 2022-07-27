@@ -30,6 +30,11 @@
 
 DiffusionEquation::DiffusionEquation()
 {
+
+}
+
+DiffusionEquation::DiffusionEquation(const Mesh *mesh, WindNinjaInputs *input)
+{
     //Pointers to dynamically allocated memory
     PHI=NULL;
     xRHS=NULL;
@@ -38,6 +43,34 @@ DiffusionEquation::DiffusionEquation()
     writePHIandRHS=false;
     phiOutFilename="!set";
     rhsOutFilename="!set";
+
+    mesh_ = mesh;
+    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
+    U0_.allocate(mesh_);
+    fem.Initialize(mesh_, input_); //initialize the FEM object
+
+    if(PHI == NULL)
+        PHI=new double[mesh_->NUMNP];
+    else
+        throw std::runtime_error("Error allocating PHI field.");
+
+    for(int i=0; i<mesh_->NUMNP; i++)
+    {
+        PHI[i]=0.;
+    }
+
+    heightAboveGround.allocate(mesh_);
+    windSpeed.allocate(mesh_);
+    windSpeedGradient.allocate(mesh_);
+
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //find distance to ground at each node in mesh and write to wn_3dScalarField
+                heightAboveGround(i,j,k) = mesh_->ZORD(i,j,k) - mesh_->ZORD(i,j,0);
+            }
+        }
+    }
 }
 
 /**
@@ -74,6 +107,24 @@ DiffusionEquation& DiffusionEquation::operator=(DiffusionEquation const& A)
         rhsOutFilename=A.rhsOutFilename;
     }
     return *this;
+}
+
+void DiffusionEquation::CalculateGradientsForDiffusion()
+{
+    for(int i = 0; i < mesh_->nrows; i++){
+        for(int j = 0; j < mesh_->ncols; j++){
+            for(int k = 0; k < mesh_->nlayers; k++){
+                //compute and store wind speed at each node
+                windSpeed(i,j,k) = std::sqrt(U0_.vectorData_x(i,j,k) * U0_.vectorData_x(i,j,k) +
+                        U0_.vectorData_y(i,j,k) * U0_.vectorData_y(i,j,k));
+            }
+        }
+    }
+
+    //calculate and store dspeed/dx, dspeed/dy, dspeed/dz
+    windSpeed.ComputeGradient(windSpeedGradient.vectorData_x,
+                            windSpeedGradient.vectorData_y,
+                            windSpeedGradient.vectorData_z);
 }
 
 DiffusionEquation::~DiffusionEquation()      //destructor

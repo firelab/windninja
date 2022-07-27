@@ -36,13 +36,14 @@ class ImplicitCentralDifferenceDiffusion: public virtual DiffusionEquation
 {
     public:
         ImplicitCentralDifferenceDiffusion();
+        ImplicitCentralDifferenceDiffusion(const Mesh *mesh, WindNinjaInputs *input);
         ~ImplicitCentralDifferenceDiffusion();
 
         ImplicitCentralDifferenceDiffusion(ImplicitCentralDifferenceDiffusion const& A);
         ImplicitCentralDifferenceDiffusion& operator=(ImplicitCentralDifferenceDiffusion const& A);
         virtual ImplicitCentralDifferenceDiffusion *Clone() {return new ImplicitCentralDifferenceDiffusion(*this);}
 
-        void Initialize(const Mesh *mesh, WindNinjaInputs *input); //pure virtual
+        void Initialize(); //pure virtual
         void SetupSKCompressedRowStorage();
         void SetBoundaryConditions();
         void Discretize();

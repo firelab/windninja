@@ -36,13 +36,14 @@ class ImplicitBackwardDifferenceDiffusion: public virtual DiffusionEquation
 {
     public:
         ImplicitBackwardDifferenceDiffusion();
+        ImplicitBackwardDifferenceDiffusion(const Mesh *mesh, WindNinjaInputs *input);
         ~ImplicitBackwardDifferenceDiffusion();
 
         ImplicitBackwardDifferenceDiffusion(ImplicitBackwardDifferenceDiffusion const& A);
         ImplicitBackwardDifferenceDiffusion& operator=(ImplicitBackwardDifferenceDiffusion const& A);
         virtual ImplicitBackwardDifferenceDiffusion *Clone() {return new ImplicitBackwardDifferenceDiffusion(*this);}
 
-        void Initialize(const Mesh *mesh, WindNinjaInputs *input); //pure virtual
+        void Initialize(); //pure virtual
         void SetupSKCompressedRowStorage();
         void SetBoundaryConditions();
         void Discretize();
@@ -51,7 +52,6 @@ class ImplicitBackwardDifferenceDiffusion: public virtual DiffusionEquation
         void Deallocate();
 
     private:
-        wn_3dVectorField U_;
         wn_3dScalarField scalarField; //scalar to diffuse
         LinearAlgebra matrixEquation; //linear algebra operations
         double *RHS, *SK;

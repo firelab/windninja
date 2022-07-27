@@ -39,15 +39,17 @@ class DiffusionEquation
 {
     public:
         DiffusionEquation();
+        DiffusionEquation(const Mesh *mesh, WindNinjaInputs *input);
         ~DiffusionEquation();
 
         DiffusionEquation(DiffusionEquation const& A);
         DiffusionEquation& operator=(DiffusionEquation const& A);
 
-        virtual void Initialize(const Mesh *mesh, WindNinjaInputs *input)=0;
+        virtual void Initialize()=0;
         virtual void Discretize()=0;
         virtual void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt)=0;
         virtual std::string identify()=0;
+        virtual void CalculateGradientsForDiffusion();
         virtual void Deallocate()=0;
         bool writePHIandRHS;
         std::string phiOutFilename;

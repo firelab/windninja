@@ -36,13 +36,14 @@ class ExplicitLumpedCapacitanceDiffusion: public virtual DiffusionEquation
 {
     public:
         ExplicitLumpedCapacitanceDiffusion();
+        ExplicitLumpedCapacitanceDiffusion(const Mesh *mesh, WindNinjaInputs *input);
         ~ExplicitLumpedCapacitanceDiffusion();
 
         ExplicitLumpedCapacitanceDiffusion(ExplicitLumpedCapacitanceDiffusion const& A);
         ExplicitLumpedCapacitanceDiffusion& operator=(ExplicitLumpedCapacitanceDiffusion const& A);
         virtual ExplicitLumpedCapacitanceDiffusion *Clone() {return new ExplicitLumpedCapacitanceDiffusion(*this);}
 
-        void Initialize(const Mesh *mesh, WindNinjaInputs *input);
+        void Initialize();
         void Discretize();
         void Solve(wn_3dVectorField &U1, wn_3dVectorField &U, boost::posix_time::time_duration dt);
         std::string identify() {return std::string("explicitLumpedCapcitanceDiffusion");}

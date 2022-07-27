@@ -28,7 +28,12 @@
  *****************************************************************************/
 #include "implicitCentralDifferenceDiffusion.h"
 
-ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion() : DiffusionEquation()
+ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion()
+{
+
+}
+
+ImplicitCentralDifferenceDiffusion::ImplicitCentralDifferenceDiffusion(const Mesh *mesh, WindNinjaInputs *input) : DiffusionEquation(mesh, input)
 {
     mesh_=NULL;
     input_=NULL;
@@ -120,15 +125,8 @@ void ImplicitCentralDifferenceDiffusion::Discretize()
     fem.DiscretizeCentralDifferenceDiffusion(SK, PHI, col_ind, row_ptr, scalarField, RHS, currentDt);
 }
 
-void ImplicitCentralDifferenceDiffusion::Initialize(const Mesh *mesh, WindNinjaInputs *input)
+void ImplicitCentralDifferenceDiffusion::Initialize()
 {
-    mesh_ = mesh;
-    input_ = input; //NOTE: don't use for Com since input.Com is set to NULL in equals operator
-
-    if(PHI == NULL)
-        PHI=new double[mesh_->NUMNP];
-    else
-        throw std::runtime_error("Error allocating PHI field.");
     if(RHS == NULL)
         RHS=new double[mesh_->NUMNP]; //This is the final right hand side (RHS) matrix
     else
@@ -141,7 +139,10 @@ void ImplicitCentralDifferenceDiffusion::Initialize(const Mesh *mesh, WindNinjaI
     //allocate SK, row_ptr, col_ind and initialize col_ind, row_ptr
     SetupSKCompressedRowStorage();
 
-    fem.Initialize(mesh_, input_);
+    for(int i=0; i<mesh_->NUMNP; i++)
+    {
+        RHS[i]=0.;
+    }
 }
 
 void ImplicitCentralDifferenceDiffusion::SetupSKCompressedRowStorage()
@@ -403,12 +404,13 @@ void ImplicitCentralDifferenceDiffusion::Solve(wn_3dVectorField &U1, wn_3dVector
                               boost::posix_time::time_duration dt)
 {
     U0_ = U1;
+    currentDt = dt;
 
-    int NPK;
-
+    CalculateGradientsForDiffusion();
     scalarField = U0_.vectorData_x;
     Discretize();
 
+    int NPK;
     //if the CG solver diverges, try the minres solver
     matrixEquation.InitializeConjugateGradient(mesh_->NUMNP);
     if(matrixEquation.SolveConjugateGradient(*input_, SK, PHI, RHS, row_ptr, col_ind)==false)

@@ -89,6 +89,8 @@ private:
     wn_3dVectorField U_00;   //Velocity field from two time steps ago, used sometimes in transient simulations
     wn_3dVectorField U_1;   //Velocity field for the next time step, used in transient simulations 
 
+    eDiffusionDiscretizationType diffusionType;
+
     PoissonEquation conservationOfMassEquation;
     DiffusionEquation *diffusionEquation;
 };
