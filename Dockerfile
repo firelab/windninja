@@ -26,6 +26,7 @@ USER root
 ADD . /opt/src/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
+ENV WM_PROJECT_INST_DIR /opt
 RUN dpkg-reconfigure debconf --frontend=noninteractive && \
     apt-get update && \
     apt-get upgrade -y && \
@@ -44,15 +45,8 @@ RUN cd  /opt/src/windninja && \
     make -j4 && \
     make install && \
     ldconfig && \
-    sed -i 's/$USER-$WM/$WM/g' /opt/openfoam8/etc/bashrc && \
-    source /opt/openfoam8/etc/bashrc && \
-    mkdir -p $FOAM_RUN/../applications && \
-    cp -r /opt/src/windninja/src/ninjafoam/* $FOAM_RUN/../applications && \
-    cd $FOAM_RUN/../applications && \
-    wmake libso && \
-    cd utility/applyInit && \
-    wmake && \
-    ldconfig
+    cd /opt/src/windninja && \
+    /usr/bin/bash -c scripts/build_libs.sh
 
 CMD /usr/bin/bash -c /usr/local/bin/WindNinja
 VOLUME /data
