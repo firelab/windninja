@@ -33,9 +33,9 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
 , currentTime(boost::gregorian::date(2000, 1, 1), boost::posix_time::hours(0), 
               input.ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR) 
 {
-    //diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
+    diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
     //diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
-    diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
+    //diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
 
 }
 

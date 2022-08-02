@@ -129,6 +129,7 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 				count++;
 		}
 		
+                std::cout<<"count = "<<count<<std::endl;
 		//Allocate matrix storage;
 
 		Lt = new double[count-NUMNP];
@@ -231,6 +232,9 @@ void Preconditioner::mkl_dcsrsv(char *transa, int *m, double *alpha, char *matde
 	//			matdescra[2]='n';	//not unit diagonal
 	//			matdescra[3]='c';	//zero based indexing
 	int i, j;
+        std::cout<<"....................transa = "<<*transa<<std::endl;
+        std::cout<<"NUMNP = "<<NUMNP<<std::endl;
+        std::cout<<"*m = "<<*m<<std::endl;
 
 	//Case 1:
 	if(*transa=='t' && matdescra[0]=='t' && matdescra[1]=='u' && matdescra[2]=='u' && matdescra[3]=='c')
