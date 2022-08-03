@@ -574,8 +574,8 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         DIAG[i]=0.;
     }
 
-	#pragma omp parallel default(shared) private(i,j,k)
-    {
+//#pragma omp parallel default(shared) private(i,j,k)
+//    {
 
     double DPHIDX, DPHIDY, DPHIDZ;
     double XJ, YJ, ZJ;
@@ -590,7 +590,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
     if(DIAGScratch == NULL)
         DIAGScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
 
-    for(i=0;i<mesh_->NUMNP;i++)     //Initialize scratch x,y, and z
+    for(int i=0;i<mesh_->NUMNP;i++)     //Initialize scratch x,y, and z
     {
         xScratch[i]=0.;
         yScratch[i]=0.;
@@ -598,8 +598,8 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         DIAGScratch[i]=0.;
     }
 
-#pragma omp for
-    for(i=0;i<mesh_->NUMEL;i++)     //Start loop over elements
+//#pragma omp for
+    for(int i=0;i<mesh_->NUMEL;i++)     //Start loop over elements
     {
         elem.node0 = mesh_->get_node0(i);  //get the global node number of local node 0 of element i
         for(j=0;j<elem.NUMQPTV;j++)      //Start loop over quadrature points in the element
@@ -611,7 +611,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
             elem.computeJacobianQuadraturePoint(j, i, XJ, YJ, ZJ);
 
             //Calculate dN/dx, dN/dy, dN/dz (Remember we're using the transpose of the inverse!)
-            for(k=0;k<mesh_->NNPE;k++)
+            for(int k=0;k<mesh_->NNPE;k++)
             {
                 elem.NPK=mesh_->get_global_node(k, i);            //NPK is the global node number
 
@@ -621,7 +621,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
             }
 
             //Now we know DPHI/DX, etc. for quad point j.  We will distribute this inverse distance weighted average to each nodal point for the cell we're on
-            for(k=0;k<mesh_->NNPE;k++)     //Start loop over nodes in the element
+            for(int k=0;k<mesh_->NNPE;k++)     //Start loop over nodes in the element
             {                            //Calculate the Jacobian at the quad point
                 elem.NPK=mesh_->get_global_node(k, i);            //NPK is the global nodal number
 
@@ -642,8 +642,8 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         }                                 //End loop over quadrature points in the element
     }                                     //End loop over elements
 
-#pragma omp critical
-    {
+//#pragma omp critical
+//    {
     for(i=0;i<mesh_->NUMNP;i++)
     {
         gradientVectorXComponent(i) += xScratch[i];
@@ -651,16 +651,18 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         gradientVectorZComponent(i) += zScratch[i];
         DIAG[i] += DIAGScratch[i];
     }
-    } //end critical
+//    } //end critical
 
-#pragma omp for
-    for(i=0;i<mesh_->NUMNP;i++)
+//#pragma omp barrier
+
+//#pragma omp for
+    for(int i=0;i<mesh_->NUMNP;i++)
     {
         gradientVectorXComponent(i)=gradientVectorXComponent(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc.
         gradientVectorYComponent(i)=gradientVectorYComponent(i)/DIAG[i];
         gradientVectorZComponent(i)=gradientVectorZComponent(i)/DIAG[i];
     }
-    }   //end parallel section
+//    }   //end parallel section
 }
 
 double wn_3dScalarField::getMaxValue()
