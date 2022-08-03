@@ -70,6 +70,12 @@ public:
 
 private:
     wn_3dArray scalarData_;
+    double *DIAG;
+    double *xScratch;
+    double *yScratch;
+    double *zScratch;
+    double *DIAGScratch;
+    element elem;
 };
 
 #endif /* WN_3D_SCALAR_FIELD_H */

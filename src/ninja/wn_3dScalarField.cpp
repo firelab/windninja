@@ -32,32 +32,55 @@
 
 wn_3dScalarField::wn_3dScalarField()
 {
-	mesh_ = NULL;
+    mesh_ = NULL;
+    DIAG = NULL;
+    xScratch=NULL;
+    yScratch=NULL;
+    zScratch=NULL;
+    DIAGScratch=NULL;
 }
 
 wn_3dScalarField::wn_3dScalarField(Mesh const* m)
+:elem(m)
 {
     allocate(m);
+    mesh_ = NULL;
+    DIAG = NULL;
+    xScratch=NULL;
+    yScratch=NULL;
+    zScratch=NULL;
+    DIAGScratch=NULL;
 }
 
 wn_3dScalarField::~wn_3dScalarField()
 {
+    deallocate();
 }
 
 wn_3dScalarField::wn_3dScalarField(wn_3dScalarField const& f)	// Copy constructor
 {
-	allocate(f.mesh_);
-	scalarData_ = f.scalarData_;
+    allocate(f.mesh_);
+    scalarData_ = f.scalarData_;
+    DIAG = f.DIAG;
+    xScratch = f.xScratch;
+    yScratch = f.yScratch;
+    zScratch = f.zScratch;
+    DIAGScratch = f.DIAGScratch;
 }
 
 wn_3dScalarField& wn_3dScalarField::operator= (wn_3dScalarField const& f)	// Assignment operator
 {
-	if(&f != this)
-	{
-		allocate(f.mesh_);
-		scalarData_ = f.scalarData_;
-	}
-	return *this;
+    if(&f != this)
+    {
+        allocate(f.mesh_);
+        scalarData_ = f.scalarData_;
+        DIAG = f.DIAG;
+        xScratch = f.xScratch;
+        yScratch = f.yScratch;
+        zScratch = f.zScratch;
+        DIAGScratch = f.DIAGScratch;
+    }
+    return *this;
 }
 
 void wn_3dScalarField::allocate(Mesh const* m)
@@ -81,7 +104,34 @@ void wn_3dScalarField::allocate(Mesh const* m)
 
 void wn_3dScalarField::deallocate()
 {
-	scalarData_.deallocate();
+    scalarData_.deallocate();
+    elem.deallocate();
+
+    if(DIAG)
+    {
+        delete[] DIAG;
+        DIAG=NULL;
+    }
+    if(xScratch)
+    {
+        delete[] xScratch;
+		xScratch=NULL;
+    }
+    if(yScratch)
+    {
+        delete[] yScratch;
+		yScratch=NULL;
+    }
+    if(zScratch)
+    {
+		delete[] zScratch;
+		zScratch=NULL;
+    }
+    if(DIAGScratch)
+    {
+		delete[] DIAGScratch;
+		DIAGScratch=NULL;
+    }
 }
 
 /**
@@ -512,11 +562,8 @@ double wn_3dScalarField::operator() (int num) const
 void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent)
 {
     int i, j, k;
-    double *DIAG;
-    DIAG = NULL;
 
     if(DIAG == NULL)
-
         DIAG=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];  //DIAG is the sum of the weights at each nodal point; eventually, dPHI/dx, etc. are divided by this value to get the "smoothed" (or averaged) value of dPHI/dx at each node point
 
     for(i=0;i<mesh_->NUMNP;i++)    //Initialize x,y, and z
@@ -530,21 +577,18 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
 	#pragma omp parallel default(shared) private(i,j,k)
     {
 
-    element elem(mesh_);
-
     double DPHIDX, DPHIDY, DPHIDZ;
     double XJ, YJ, ZJ;
     double wght, XK, YK, ZK;
-    double *xScratch, *yScratch, *zScratch, *DIAGScratch;
-    xScratch=NULL;
-    yScratch=NULL;
-    zScratch=NULL;
-    DIAGScratch=NULL;
 
-    xScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
-    yScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
-    zScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
-    DIAGScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    if(xScratch == NULL)
+        xScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    if(yScratch == NULL)
+        yScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    if(zScratch == NULL)
+        zScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
+    if(DIAGScratch == NULL)
+        DIAGScratch=new double[mesh_->nlayers*mesh_->nrows*mesh_->ncols];
 
     for(i=0;i<mesh_->NUMNP;i++)     //Initialize scratch x,y, and z
     {
@@ -554,7 +598,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         DIAGScratch[i]=0.;
     }
 
-    #pragma omp for
+#pragma omp for
     for(i=0;i<mesh_->NUMEL;i++)     //Start loop over elements
     {
         elem.node0 = mesh_->get_node0(i);  //get the global node number of local node 0 of element i
@@ -598,7 +642,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
         }                                 //End loop over quadrature points in the element
     }                                     //End loop over elements
 
-    #pragma omp critical
+#pragma omp critical
     {
     for(i=0;i<mesh_->NUMNP;i++)
     {
@@ -609,30 +653,7 @@ void wn_3dScalarField::ComputeGradient(wn_3dScalarField &gradientVectorXComponen
     }
     } //end critical
 
-    if(xScratch)
-    {
-        delete[] xScratch;
-		xScratch=NULL;
-    }
-    if(yScratch)
-    {
-        delete[] yScratch;
-		yScratch=NULL;
-    }
-    if(zScratch)
-    {
-		delete[] zScratch;
-		zScratch=NULL;
-    }
-    if(DIAGScratch)
-    {
-		delete[] DIAGScratch;
-		DIAGScratch=NULL;
-    }
-
-    #pragma omp barrier
-
-    #pragma omp for
+#pragma omp for
     for(i=0;i<mesh_->NUMNP;i++)
     {
         gradientVectorXComponent(i)=gradientVectorXComponent(i)/DIAG[i];      //Dividing by the DIAG[NPK] gives the value of DPHI/DX, etc.
