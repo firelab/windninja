@@ -648,6 +648,10 @@ void FiniteElementMethod::Deallocate()
         delete[] DIAG;
         DIAG=NULL;
     }
+    for(int i=0; i<mesh_->NUMEL; i++) //Start loop over elements
+    {
+        elementArray[i].deallocate();
+    }
 }
 
 /**

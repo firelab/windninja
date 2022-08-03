@@ -50,42 +50,52 @@ element::element()
 
 element::element(Mesh const* m)
 {
-	mesh_ = m;
+    mesh_ = m;
 
-	NUMQPTV=1;               //number of quadrature points used in the volume quadrature (can be 1, 8, or 27)
-	iterativeInterpTol = 1E-6;
+    NUMQPTV=1;               //number of quadrature points used in the volume quadrature (can be 1, 8, or 27)
+    iterativeInterpTol = 1E-6;
 
-	SFV=NULL;
-	QPTV=NULL;
-	QE=NULL;
-	C=NULL;
-	S=NULL;
-	DNDX=NULL;
-	DNDY=NULL;
-	DNDZ=NULL;
-	RJACV=NULL;
-	RJACVI=NULL;
+    SFV=NULL;
+    QPTV=NULL;
+    QE=NULL;
+    C=NULL;
+    S=NULL;
+    DNDX=NULL;
+    DNDY=NULL;
+    DNDZ=NULL;
+    RJACV=NULL;
+    RJACVI=NULL;
 }
 
 element::~element()
 {
-	deallocate();
+    deallocate();
 }
 
 void element::initializeQuadPtArrays()
 {
+    if(SFV == NULL)
 	SFV=new double[4*mesh_->NNPE*NUMQPTV];   //SF array for the volume quadrature (either(0=N,1=dN/du,2=dN/dv,3=dN/dw),local nodal point,quadrature point)
+    if(QPTV == NULL)
 	QPTV=new double[NUMQPTV*3];        //QPTV stores the u, v, and w coordinates of the quadrature points
+    if(QE == NULL)
 	QE=new double[mesh_->NNPE];
+    if(C == NULL)
 	C=new double[mesh_->NNPE*mesh_->NNPE];
+    if(S == NULL)
 	S=new double[mesh_->NNPE*mesh_->NNPE];
+    if(DNDX == NULL)
 	DNDX=new double[mesh_->NNPE];
+    if(DNDY == NULL)
 	DNDY=new double[mesh_->NNPE];
+    if(DNDZ == NULL)
 	DNDZ=new double[mesh_->NNPE];
+    if(RJACV == NULL)
 	RJACV=new double[9];                    //Jacobian matrix for volume quadrature
+    if(RJACVI == NULL)
 	RJACVI=new double[9];                   //Jacobian matrix inverse for volume quadrature
 
-	if(NUMQPTV==1)        //This corresponds to one point quadrature
+    if(NUMQPTV==1)        //This corresponds to one point quadrature
     {
         A1=0;
         WT=8.0;
@@ -249,35 +259,65 @@ void element::initializeQuadPtArrays()
 
 void element::deallocate()
 {
-	delete[] SFV;
-	SFV = NULL;
+    if(SFV)
+    {
+        delete[] SFV;
+        SFV = NULL;
+    }
 
-	delete[] QPTV;
-	QPTV = NULL;
+    if(QPTV)
+    {
+        delete[] QPTV;
+        QPTV = NULL;
+    }
 
-	delete[] QE;
-	QE=NULL;
+    if(QE)
+    {
+        delete[] QE;
+        QE=NULL;
+    }
 
-	delete[] C;
-	C=NULL;
+    if(C)
+    {
+        delete[] C;
+        C=NULL;
+    }
 
-	delete[] S;
-	S=NULL;
+    if(S)
+    {
+        delete[] S;
+        S=NULL;
+    }
 
-	delete[] DNDX;
-	DNDX=NULL;
+    if(DNDX)
+    {
+        delete[] DNDX;
+        DNDX=NULL;
+    }
 
-	delete[] DNDY;
-	DNDY=NULL;
+    if(DNDY)
+    {
+        delete[] DNDY;
+        DNDY=NULL;
+    }
 
-	delete[] DNDZ;
-	DNDZ=NULL;
+    if(DNDZ)
+    {
+        delete[] DNDZ;
+        DNDZ=NULL;
+    }
 
-	delete[] RJACV;
-	RJACV=NULL;
+    if(RJACV)
+    {
+        delete[] RJACV;
+        RJACV=NULL;
+    }
 
-	delete[] RJACVI;
-	RJACVI=NULL;
+    if(RJACVI)
+    {
+        delete[] RJACVI;
+        RJACVI=NULL;
+    }
 }
 
 void element::setMeshPointer(Mesh const* m)
@@ -287,13 +327,13 @@ void element::setMeshPointer(Mesh const* m)
 
 void element::computeJacobianEtc(int &elementNum, const double &u, const double &v, const double &w, double &x, double &y, double &z)
 {
-	//Given elementNum and (u,v,w), function computes the Jacobian, inverse Jacobian, determinant of the Jacobian, and (x,y,z)
+    //Given elementNum and (u,v,w), function computes the Jacobian, inverse Jacobian, determinant of the Jacobian, and (x,y,z)
     if(SFV == NULL)
-		initializeQuadPtArrays();
+        initializeQuadPtArrays();
 
-	node0=mesh_->get_node0(elementNum);  //get the global nodal number of local node 0 of element i
+    node0=mesh_->get_node0(elementNum);  //get the global nodal number of local node 0 of element i
 
-	x=0.0;
+    x=0.0;
     y=0.0;
     z=0.0;
 
