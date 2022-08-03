@@ -34,6 +34,8 @@ DiffusionEquation::DiffusionEquation()
 }
 
 DiffusionEquation::DiffusionEquation(const Mesh *mesh, WindNinjaInputs *input)
+:windSpeed(mesh),
+heightAboveGround(mesh)
 {
     //Pointers to dynamically allocated memory
     PHI=NULL;
