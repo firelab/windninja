@@ -23,39 +23,31 @@ FROM ubuntu:20.04
 MAINTAINER Kyle Shannon <kyle@pobox.com>
 
 USER root
+ADD . /opt/src/windninja/
+SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-    apt-get install -y wget gnupg2 && \
-    sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -" && \
-    apt-get install -y apt-transport-https ca-certificates && \
-    apt-get install -y -qq software-properties-common && \
-    add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable && \
-    add-apt-repository http://dl.openfoam.org/ubuntu && \
-    add-apt-repository -y ppa:rock-core/qt4 && \
+ENV WM_PROJECT_INST_DIR /opt
+RUN dpkg-reconfigure debconf --frontend=noninteractive && \
     apt-get update && \
-    apt-get install -y  \
-        cmake \
-        git \
-        libgdal-dev \
-        libqt4-dev \
-        libqtwebkit-dev \
-        libboost-program-options-dev \
-        libboost-date-time-dev \
-        libboost-test-dev \
-        openfoam8 && \
+    apt-get upgrade -y && \
+    apt-get install -y wget gnupg2 cmake git apt-transport-https ca-certificates \
+                       software-properties-common sudo build-essential \
+                       pkg-config g++ libboost-program-options-dev \
+                       libboost-date-time-dev libboost-test-dev  && \
+    cd /opt/src && \
+    DEBIAN_FRONTEND=noninteractive ./windninja/scripts/build_deps_ubuntu_2004.sh && \
     rm -rf /var/lib/apt/lists
 
-RUN mkdir /opt/src && \
-    cd /opt/src && \
-    git clone http://github.com/firelab/windninja && \
-    cd  /opt/src/windninja && \
+RUN cd  /opt/src/windninja && \
     mkdir build && \
     cd  /opt/src/windninja/build && \
-    cmake -D SUPRESS_WARNINGS=ON .. && \
+    cmake -D SUPRESS_WARNINGS=ON -DNINJAFOAM=ON .. && \
     make -j4 && \
     make install && \
     ldconfig && \
-    echo "source /opt/openfoam8/etc/bashrc" >> /root/.bashrc
+    cd /opt/src/windninja && \
+    /usr/bin/bash -c scripts/build_libs.sh
+
 CMD /usr/bin/bash -c /usr/local/bin/WindNinja
 VOLUME /data
 WORKDIR /data
