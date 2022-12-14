@@ -1,6 +1,6 @@
 <GDAL_WMS>
 <Service name="TMS">
-   <ServerUrl>http://topofire.dbs.umt.edu/topomap/relief/${z}/${x}/${y}.jpg</ServerUrl>
+    <ServerUrl>https://topofire.dbs.umt.edu/topofire_v2/data/osmUShydro/${z}/${x}/${y}.png</ServerUrl>
 </Service>
 <DataWindow>
    <UpperLeftX>-20037508.34</UpperLeftX>

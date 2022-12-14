@@ -28,8 +28,10 @@
 *.app
 
 # Build folder
-*build*
 debug*
+
+# Doxygen
+doxy.tag
 
 # vim
 *.swo
@@ -53,3 +55,8 @@ debug*
 
 #ctags
 tags
+
+# VS 2022 additions
+/.vs/
+/src/out/
+/CMakeSettings.json

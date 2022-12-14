@@ -1,0 +1,53 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes graph data for specified fields along a line, specified by start
+    and end points.
+    
+    See /opt/openfoam8/src/sampling/sampledSet/ for the various types of sets/graphs/lines
+    and the header files of the various functions for examples of how to use them,
+    see /opt/openfoam8/etc/caseDicts/postProcessing/graphs/ for an example of
+    using the /opt/openfoam8/src/sampling/sampledSet/ functions.
+    In addition, /opt/openfoam8/tutorials/incompressible/pimpleFoam/laminar/planarContraction/system/graphs
+    is a great example of doing multiple line samples at once.
+    
+    This can be used as a runTime processing function, or as a post processing function.
+    See https://cfd.direct/openfoam/user-guide/v9-graphs-monitoring/#x33-2590006.3 for examples of runTime processing, a little bit of post processing,
+    see https://cfd.direct/openfoam/user-guide/v9-post-processing-cli/ for examples of post processing.
+
+\*---------------------------------------------------------------------------*/
+
+type            sets;
+libs            ("libsampling.so");
+
+writeControl    writeTime;
+
+setFormat   raw;
+interpolationScheme cellPoint;
+
+
+fields
+(
+    U
+   // p
+);
+
+sets
+(
+    transect
+    {
+        type            lineUniform; // lineCell, lineCellFace
+        axis            $axis$;     // distance, x, y, z, xyz
+        start           ($xstart$ $ystart$ $zstart$);
+        end             ($xend$ $yend$ $zend$);
+        nPoints         $nPoints$;
+    }
+);
+
+
+// *********************************************************************** //

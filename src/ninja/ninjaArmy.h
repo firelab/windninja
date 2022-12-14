@@ -41,6 +41,7 @@
 #include "ninjaSemiLagrangianSteadyState.h"
 #include "ninjaSemiLagrangianTransient.h"
 #include "ninjaMassConservingSteadyState.h"
+#include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
@@ -143,6 +144,8 @@ public:
     bool startRuns(int numProcessors);
     bool startFirstRun();
     eSolverType getSolverType(std::string type);
+    
+    int ninjaInitialize();
 
     /**
     * \brief Return the number of ninjas in the army
@@ -152,6 +155,14 @@ public:
     //int getSize() const { return ninjas.size(); }
 
     int getSize();
+
+    /**
+    * \brief Set the number of ninja in the army
+    *
+    * \param nRuns number of ninjas to create
+    * \return
+    */
+    void setSize( int nRuns, bool momentumFlag);
 
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
@@ -168,6 +179,8 @@ public:
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
+    int setNinjaCommunication( const int nIndex, std::string comType,
+                               char ** papszOptions = NULL);
 #ifdef NINJA_GUI
     /**
     * \brief Set the number of runs for a ninjaCom
@@ -417,26 +430,9 @@ public:
     */
     int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
     
-    /**
-    * \brief Set the DEM file for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param dem_filename path of the DEM file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
-    /**
-    * \brief Set the latitude/longitude position of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param lat_degrees position latitude in degrees
-    * \param lon_degrees position longitude in degrees
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setPosition( const int nIndex, const double lat_degrees,
-                     const double lon_degrees,
-                     char ** papszOptions=NULL );
-    int setPosition( const int nIndex, char ** papszOptions=NULL );
+    /*-----------------------------------------------------------------------------
+     *  Point Initialization Methods
+     *-----------------------------------------------------------------------------*/
     /**
     * \brief Set the input points filename for a ninja
     *
@@ -526,6 +522,31 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the DEM file for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param dem_filename path of the DEM file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
+
+    int setDEM( const int nIndex, const double* demValues, const int nXSize, const int nYSize,
+                const double* geoRef, std::string prj, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the latitude/longitude position of a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param lat_degrees position latitude in degrees
+    * \param lon_degrees position longitude in degrees
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setPosition( const int nIndex, const double lat_degrees,
+                     const double lon_degrees,
+                     char ** papszOptions=NULL );
+    int setPosition( const int nIndex, char ** papszOptions=NULL );
+
     /**
     * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
     *
@@ -928,6 +949,70 @@ public:
     */
     int setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output speed grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return Pointer to the output speed array
+    */
+    const double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output direction grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return Pointer to the output direction array
+    */
+    const double* getOutputDirectionGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid projection string for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid projection string
+    */
+    const char* getOutputGridProjection( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid cell size for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid cell size in meters
+    */
+    const double getOutputGridCellSize( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid xllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid xllCorner
+    */
+    const double getOutputGridxllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid yllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid yllCorner
+    */
+    const double getOutputGridyllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of columns in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of columns in the output grid
+    */
+    const int getOutputGridnCols( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of rows in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of rows in the output grid
+    */
+    const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja

@@ -34,12 +34,6 @@ branches:
 notifications:
   email:
     recipients:
-      - kyle@pobox.com
       - nwagenbrenner@gmail.com
       - jforthofer@gmail.com
       - levi@third.consulting
-
-  irc:
-    channels:
-      - "irc.freenode.org#windninja"
-    use_notice: true

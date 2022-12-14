@@ -33,17 +33,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-//#include <conio.h>
 #include <string.h>
-//#include <dos.h>
 #include <memory.h>
 #include <time.h>
 #include <ctime>
-//#include <tchar.h>
 #include <iostream>
 
 #include <sstream>
-//#include <string>
 #include <iomanip>
 #include <fstream>
 #include <cstdlib>
@@ -57,8 +53,6 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-//#include "taucsaddon.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -105,17 +99,10 @@
 
 #define LENGTH 256
 
-#ifdef WINDNINJA_EXPORTS
-#define WINDNINJA_API __declspec(dllexport)
-#else
-#define WINDNINJA_API
-#endif
-
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
-
-class WINDNINJA_API ninja
+class ninja
 {
 public:
     ninja();
@@ -175,12 +162,15 @@ public:
     void readInputFile();
     void importSingleBand(GDALDataset*);
     void importLCP(GDALDataset*);
+    void importGeoTIFF(GDALDataset*);
     void setSurfaceGrids();
 
     void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
     void setArmySize(int n);
-    void set_DEM(std::string dem_file_name); //Sets elevation filename (Should be in units of meters!)
-    void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false); //input wind initialization method
+    void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
+    void set_DEM(const double* dem, const int nXSize, const int nYSize, const double* geoRef,
+                 std::string prj);
+    void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false);	//input wind initialization method
     WindNinjaInputs::eInitializationMethod get_initializationMethod(); //returns the initializationMethod
 
     void set_uniVegetation(WindNinjaInputs::eVegetation vegetation_); //set all uniform surface parameters based on a vegetation type (grass, brush, trees)
@@ -313,6 +303,14 @@ public:
     /*-----------------------------------------------------------------------------
      *  Output
      *-----------------------------------------------------------------------------*/
+    double *get_outputSpeedGrid();
+    double *get_outputDirectionGrid();
+    const char* get_outputGridProjection();
+    double get_outputGridCellSize();
+    double get_outputGridxllCorner();
+    double get_outputGridyllCorner();
+    int get_outputGridnCols();
+    int get_outputGridnRows();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
@@ -389,6 +387,9 @@ protected:
     Slope *slope;
     Shade *shade;
     Solar *solar;
+
+    double* outputSpeedArray; //output speed array returned in the API
+    double* outputDirectionArray; //output direction array returned in the API
 
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
 

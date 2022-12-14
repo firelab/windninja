@@ -234,19 +234,25 @@ void WidgetDownloadDEM::saveDEM()
     else if(!demSelected)
     {
         QMessageBox noBoundsError2;
-        noBoundsError2.setText("Please Select an Area on the Map");
+        noBoundsError2.setText("Please select an area on the map.");
         noBoundsError2.exec();
     }
     else if(!demBoundsCheck())
     {
         QMessageBox demBoundsError;
-        demBoundsError.setText("Area Is Outside Data Bounds, Please Select New Data Source or New Area, \nClick 'Show Available Data' To View Current Data Bounds");
+        demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area. \nClick 'Show Available Data' to view current data bounds.");
         demBoundsError.exec();
+    }
+    else if(cbDEMSource->currentIndex()==0 || cbDEMSource->currentIndex()==1)//SRTM sources
+    {
+        QMessageBox dataSourceError;
+        dataSourceError.setText("The US and World SRTM data sources are currently unavailalble due to a change on the server that provides these data. Please try a different data source from the drop down box in the upper left corner of the DEM download window.");
+        dataSourceError.exec();
     }
     else if((fileSize/1024) > 50)
     {
         QMessageBox demBoundsError;
-        demBoundsError.setText("File Size Is Limited to 50mb, Please Select a Smaller Area");
+        demBoundsError.setText("File size is limited to 50mb. Please select a smaller area.");
         demBoundsError.exec();
     }
     else
@@ -301,7 +307,7 @@ void WidgetDownloadDEM::updateProgress()
 
         if(result < 0)
         {
-            progressBar->setLabelText("An Error Occured: Please Try Again");
+            progressBar->setLabelText("The surface data download failed. \nThis normally happens when the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
             progressBar->setRange(0,1);
             progressBar->setValue( 0 );
             progressBar->setCancelButtonText("Close");
@@ -343,6 +349,7 @@ void WidgetDownloadDEM::closeDEM()
 int WidgetDownloadDEM::fetchBoundBox(double *boundsBox, const char *fileName, double resolution)
 {
     int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+
     return result;
 }          
 
@@ -388,8 +395,8 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         southDEMBound = lcp_southBound;
         /* this is in meters */
         currentResolution = fetcher->GetXRes();
-        currentSuffix = "lcp";
-        currentSaveAsDesc = "Landscape files (*.lcp)";
+        currentSuffix = "tif";
+        currentSaveAsDesc = "Landscape files (*.tif)";
         break;
 #endif
     }

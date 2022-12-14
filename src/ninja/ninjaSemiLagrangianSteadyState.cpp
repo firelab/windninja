@@ -359,7 +359,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                         U.vectorData_z(i,j,0) = 0.0;
                     }
                 }
-                conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
+                //conservationOfMassEquation.SetAlphaCoefficients(input, CloudGrid, init);
                 conservationOfMassEquation.SetInitialVelocity(U);
                 conservationOfMassEquation.Discretize();
                 conservationOfMassEquation.SetBoundaryConditions();

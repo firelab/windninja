@@ -649,7 +649,7 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
 
 void PoissonEquation::SetInitialVelocity(wn_3dVectorField &U)
 {
-   U0_ = U; 
+    U0_ = U; 
     //reset PHI and RHS (the x and b in Ax=b) to 0
     for(int i=0; i<mesh_->NUMNP; i++)
     {
@@ -699,7 +699,7 @@ void PoissonEquation::Solve()
 #endif
 
     //if the CG solver diverges, try the minres solver
-    cout<<"SK[500], row_ptr[500], col_ind[500] = "<<SK[500]<<", "<<row_ptr[500]<<", "<<col_ind[500]<<endl;
+    //cout<<"SK[500], row_ptr[500], col_ind[500] = "<<SK[500]<<", "<<row_ptr[500]<<", "<<col_ind[500]<<endl;
     matrixEquation.InitializeConjugateGradient(mesh_->NUMNP);
     if(matrixEquation.SolveConjugateGradient(*input_, SK, PHI, RHS, row_ptr, col_ind)==false)
     {

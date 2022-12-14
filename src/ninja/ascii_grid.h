@@ -197,6 +197,8 @@ public:
 
     void divide_gridData(double *d, int splits);
 
+    GDALDatasetH ascii2GDAL();
+
     void ascii2png(std::string outFilename,
                    std::string legendTitle,
                    std::string legendUnits,
@@ -1107,6 +1109,8 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     }
     if(numNoDataValues == 0)
         return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
     
     double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
     double sum;
@@ -1799,6 +1803,61 @@ bool AsciiGrid<T>::checkForCoincidentGrids(AsciiGrid &A)
     return true;
 }
 
+/**
+ * Create an in-meomory GDALDataset from an ascii grid.
+ *
+ */
+
+template <class T>
+GDALDatasetH AsciiGrid<T>::ascii2GDAL()
+{
+    GDALDatasetH hDS;
+    GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+
+    int nXSize = get_nCols();
+    int nYSize = get_nRows();
+
+    hDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+
+    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                get_yllCorner()+(get_nRows()*get_cellSize()),
+                                0, -(get_cellSize())};
+
+    GDALSetGeoTransform(hDS, adfGeoTransform);
+
+    double *padfScanline;
+    padfScanline = new double[nXSize];
+    CPLErr eErr = CE_None;
+
+    adfGeoTransform[0] = get_xllCorner();
+    adfGeoTransform[1] = get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = get_yllCorner()+(get_nRows()*get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -get_cellSize();
+    
+    char* pszDstWKT = (char*)prjString.c_str();
+    GDALSetProjection(hDS, pszDstWKT);
+    GDALSetGeoTransform(hDS, adfGeoTransform);
+    
+    GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
+    
+    GDALSetRasterNoDataValue(hBand, -9999.0);
+
+    for(int i=nYSize-1; i>=0; i--)
+    {
+        for(int j=0; j<nXSize; j++)
+        {
+            padfScanline[j] = get_cellValue(nYSize-1-i, j);
+        }
+        eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
+                            1, GDT_Float64, 0, 0); 
+        assert( eErr == CE_None );
+    }
+
+    return hDS;
+}
+    
 
 /**
  * Create a png for an ascii grid.

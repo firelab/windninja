@@ -294,9 +294,51 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST,
       "5 km",
       "HIRES FV3 CONUS" },
-    /* XXX: HIRES Guam */
-    /* XXX: HIRES Hawaii */
-    /* XXX: HIRES Puerto Rico */
+    /*
+    ** HIRES Guam 
+    */ 
+    {
+      "hires_guam",
+      "filter_hiresguam.pl",
+      "hiresw.t%02dz.arw_5km.f%02d.guam.grib2",
+      "hiresw.%s",
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS, //might need changed
+      "0:48:1",
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "5 km",
+      "HIRES GUAM"},
+    /*
+    ** HIRES Hawaii 
+    */
+    {
+      "hires_hawaii",
+      "filter_hireshi.pl",
+      "hiresw.t%02dz.arw_5km.f%02d.hi.grib2",
+      "hiresw.%s",
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS, //might need changed
+      "0:48:1", 
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "5 km",
+      "HIRES HAWAII"},
+    /*
+    ** HIRES Puerto Rico 
+    */ 
+    {
+      "hires_puerto_rico",
+      "filter_hirespr.pl",
+      "hiresw.t%02dz.arw_5km.f%02d.pr.grib2",
+      "hiresw.%s",
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS, //might need changed
+      "0:48:1", 
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "5 km",
+      "HIRES PUERTO RICO"},
     /*
     ** NAM ALASKA
     */
@@ -379,8 +421,36 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST,
       "3 km",
       "NAM NEST CONUS" },
-    /* XXX: NAM Hawaii NEST */
-    /* XXX: NAM Puerto Rico NEST */
+    /* 
+    ** NAM Hawaii NEST 
+    */
+    {
+      "nam_nest_hawaii",
+      "filter_nam_hawaiinest.pl",
+      "nam.t%02dz.hawaiinest.hiresf%02d" NOMADS_NAM_FILE_EXT,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_NEST_RUN_HOURS,
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "3 km",
+      "NAM NEST HAWAII" },
+    /* 
+    ** NAM Puerto Rico NEST 
+    */
+    {
+      "nam_nest_puerto_rico",
+      "filter_nam_priconest.pl",
+      "nam.t%02dz.priconest.hiresf%02d" NOMADS_NAM_FILE_EXT,
+      NOMADS_GENERIC_DIR,
+      NOMADS_GENERIC_DATE,
+      NOMADS_GENERIC_FCST_HOURS,
+      NOMADS_NEST_RUN_HOURS,
+      NOMADS_GENERIC_VAR_LIST,
+      NOMADS_GENERIC_LEVELS_LIST,
+      "3 km",
+      "NAM NEST PUERTO RICO" },
 #ifdef NOMADS_EXPER_FORECASTS
     /* Alaska RTMA */
     {

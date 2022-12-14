@@ -446,17 +446,25 @@ bool ninjaArmy::startRuns(int numProcessors)
         return false;
 
     //check for duplicate runs before we start the simulations
-    //this is mostly for batch domain avg runs in the GUI
-    if(ninjas.size() > 1){
-        for(unsigned int i=0; i<ninjas.size()-1; i++){
-            for(unsigned int j=i+1; j<ninjas.size(); j++){
-                if(ninjas[i]->input == ninjas[j]->input &&
-                   ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
-                        throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+    //this is mostly for batch domain avg runs in the GUI and the API
+    try{
+        if(ninjas.size() > 1){
+            for(unsigned int i=0; i<ninjas.size()-1; i++){
+                for(unsigned int j=i+1; j<ninjas.size(); j++){
+                    if(ninjas[i]->input == ninjas[j]->input &&
+                       ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
+                            throw std::runtime_error("Multiple runs were requested with the same input parameters.");
+                    }
                 }
             }
         }
+    }catch (exception& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
     }
+
 #ifdef NINJAFOAM
     //if it's a ninjafoam run and the user specified an existing case dir, set it here
     if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.existingCaseDirectory != "!set"){
@@ -1050,9 +1058,11 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
 {
     if(writeFarsiteAtmFile)
     {
-        //If wxModelInitialization, make one .atm with all runs (times) listed, else the setAtmFlags() function
-        //has already set each ninja to write their own atm file, so don't do it here!
-        if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag)
+        //If wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
+        //else the setAtmFlags() function has already set each ninja to write their own atm file,
+        //so don't do it here!
+        if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag ||
+           (ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && ninjas.size() > 1))
         {
             //Set directory path from first ninja's velocity file
             std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
@@ -1086,8 +1096,10 @@ void ninjaArmy::setAtmFlags()
 {
     if(writeFarsiteAtmFile)
     {
-        //if it's not a weather model run, set all ninja's atm write flags
-        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag))
+        //if it's not a weather model or point run, set all ninja's atm write flags
+        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
+           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
+               ninjas.size() > 1))
         {
             //FOR_EVERY( ninja, ninjas )
             for(unsigned int i = 0; i < ninjas.size(); i++)
@@ -1108,6 +1120,33 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
+}
+
+int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
+                           char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
+        if( comType == "ninjaCLICom" || comType == "cli" )
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication
+                ( nIndex, ninjaComClass::ninjaCLICom );
+            retval = NINJA_SUCCESS;
+        }
+        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication
+                ( nIndex, ninjaComClass::ninjaQuietCom );
+            retval = NINJA_SUCCESS;
+        }
+        else
+        {
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
 }
 
 #ifdef NINJA_GUI
@@ -1207,9 +1246,6 @@ int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** pap
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
-
-
-
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -1271,21 +1307,9 @@ int ninjaArmy::setWxModelFilename(const int nIndex, const std::string wx_filenam
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_wxModelFilename( wx_filename ) );
 }
 
-int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
-}
-
-int ninjaArmy::setPosition( const int nIndex, const double lat_degrees, const double lon_degrees,
-                 char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_position( lat_degrees, lon_degrees ) );
-}
-int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
-}
+/*-----------------------------------------------------------------------------
+ *  Point Initializaiton Methods
+ *-----------------------------------------------------------------------------*/
 int ninjaArmy::setInputPointsFilename( const int nIndex, const std::string filename, char ** papszOptions)
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_inputPointsFilename( filename ) );
@@ -1319,6 +1343,39 @@ int ninjaArmy::setStationFetchFlag( const int nIndex, const bool flag, char ** p
 /*-----------------------------------------------------------------------------
  *  Simulation Parameter Methods
  *-----------------------------------------------------------------------------*/
+int ninjaArmy::ninjaInitialize()
+{
+    int retval = NINJA_E_INVALID;
+
+    retval = NinjaInitialize();
+    
+    return retval;    
+}
+
+int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( dem_filename ) );
+}
+
+int ninjaArmy::setDEM( const int nIndex, const double* demValues, const int nXSize,
+                       const int nYSize, const double* geoRef, std::string prj, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_DEM( demValues, nXSize, nYSize,
+                                                                   geoRef, prj ) );
+}
+
+int ninjaArmy::setPosition( const int nIndex, const double lat_degrees, const double lon_degrees,
+                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_position( lat_degrees, lon_degrees ) );
+}
+
+int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
+}
+
 int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
@@ -1755,7 +1812,62 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
+    }
+}
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputDirectionGrid( );
+    }
+}
+const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridProjection( );
+    }
+}
+const double ninjaArmy::getOutputGridCellSize( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridCellSize( );
+    }
+}
+const double ninjaArmy::getOutputGridxllCorner( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridxllCorner( );
+    }
+}
+const double ninjaArmy::getOutputGridyllCorner( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridyllCorner( );
+    }
+}
+const int ninjaArmy::getOutputGridnCols( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridnCols( );
+    }
+}
+const int ninjaArmy::getOutputGridnRows( const int nIndex, char ** papszOptions )
+{
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        return ninjas[ nIndex ]->get_outputGridnRows( );
+    }
+}
 int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {

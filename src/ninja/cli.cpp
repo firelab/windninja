@@ -1071,12 +1071,12 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm.count("output_path")){
                     stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
                                                                                 vm["output_path"].as<std::string>(),
-                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                                                                                vm["fetch_current_station_data"].as<bool>());
                 }
                 else{ //if the user doesn't specify an output path
                     stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
                                                                                 "",
-                                                                                timeList, vm["fetch_current_station_data"].as<bool>());
+                                                                                vm["fetch_current_station_data"].as<bool>());
                 }
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
@@ -1521,7 +1521,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
-                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i);
+                    CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i_);
                     if(vm.count("output_path")){
                         pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
                                                    vm["output_path"].as<std::string>(),
@@ -1732,6 +1732,14 @@ int windNinjaCLI(int argc, char* argv[])
 
             if(EQUAL(poDS->GetDriver()->GetDescription(), "LCP"))
                 isLcp = true;
+            else if(poDS->GetDriver()->GetDescription(), "GTiff")
+            {
+                int nBandCount = GDALGetRasterCount( poDS );
+                if(nBandCount > 1)
+                {
+                    isLcp = true;
+                }
+            }
             else
                 isLcp = false;
 

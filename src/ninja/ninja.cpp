@@ -64,6 +64,8 @@ ninja::ninja()
     slope=NULL;
     shade=NULL;
     solar=NULL;
+    outputDirectionArray=NULL;
+    outputSpeedArray=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -95,6 +97,8 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+, outputSpeedArray(rhs.outputSpeedArray)
+, outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
 , DustGrid(rhs.DustGrid)
 #endif
@@ -159,6 +163,8 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+        outputSpeedArray=rhs.outputSpeedArray;
+        outputDirectionArray = rhs.outputDirectionArray;
 #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
 #endif
@@ -1473,19 +1479,13 @@ void ninja::set_DEM(std::string dem_file_name)
     if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 dem_file_name + " does not exist or may be in use by another program.");
-//	dem.read_elevation(dem_file_name, units);
-//	input.surface.Roughness.set_headerData(dem);
-//	input.surface.Rough_h.set_headerData(input.dem);
-//	input.surface.Rough_d.set_headerData(input.dem);
-//	input.surface.Albedo.set_headerData(input.dem);
-//	input.surface.Bowen.set_headerData(input.dem);
-//	input.surface.Cg.set_headerData(input.dem);
-//	input.surface.Anthropogenic.set_headerData(input.dem);
-//
-//	input.surface.RoughnessUnits = lengthUnits::meters;
-//	input.surface.Rough_hUnits = lengthUnits::meters;
-//	input.surface.Rough_dUnits = lengthUnits::meters;
     input.dem.fileName = dem_file_name;
+}
+
+void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
+                    const double* geoRef, std::string prj)
+{
+    input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
 int ninja::get_inputsRunNumber() const
@@ -1722,13 +1722,14 @@ void ninja::computeSurfPropForCell
     coverUnits::toBaseUnits(canopyCover, canopyCoverUnits);
     lengthUnits::toBaseUnits(fuelBedDepth, fuelBedDepthUnits);
 
-    // Go through logic of determining surface properties, depending on what data is available at this cell
+    //Go through logic of determining surface properties, depending on what data is available at this cell
+    //0.75 and 0.1 coeffiecients taken from Crockford, 2007 (Wind Profiles and Forests, Masters Thesis, DTU)
 
     if (canopyCover >= 0.05 && canopyHeight > 0)	// if enough cover use the canopy hgt
     {
         input.surface.Rough_h.set_cellValue(i, j, canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assuming forest land cover for heat transfer parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1738,8 +1739,8 @@ void ninja::computeSurfPropForCell
         if(fuelModel == 90)			// Barren
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00230769);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.3);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1747,8 +1748,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 91)	// Urban Roughness
         {
             input.surface.Rough_h.set_cellValue(i, j,  5.0);
-            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 5.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 5.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.18);
             input.surface.Bowen.set_cellValue(i, j, 1.5);
             input.surface.Cg.set_cellValue(i, j, 0.25);
@@ -1756,8 +1757,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 92)	// Snow Ice
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00076923);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.7);
             input.surface.Bowen.set_cellValue(i, j, 0.5);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1765,8 +1766,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 93)	// Agriculture
         {
             input.surface.Rough_h.set_cellValue(i, j,  1.0);
-            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 1.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 1.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.15);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1774,8 +1775,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 98)	// Water
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00153846);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.1);
             input.surface.Bowen.set_cellValue(i, j, 0.0);
             input.surface.Cg.set_cellValue(i, j, 1.0);
@@ -1786,8 +1787,8 @@ void ninja::computeSurfPropForCell
     }else if(fuelBedDepth > 0.0)	//just use fuel bed depth
     {
         input.surface.Rough_h.set_cellValue(i, j,  fuelBedDepth);
-        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.63);
-        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.75);
+        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);	//use rangeland values for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1795,8 +1796,8 @@ void ninja::computeSurfPropForCell
     }else if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         input.surface.Rough_h.set_cellValue(i, j,  canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assume forest land for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1804,8 +1805,8 @@ void ninja::computeSurfPropForCell
     }else		// If we make it to here, we'll just choose parameters based on rangeland...
     {
         input.surface.Rough_h.set_cellValue(i, j,  0.384615);
-        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.63);
-        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.75);
+        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -1820,8 +1821,8 @@ void ninja::computeSurfPropForCell
     if (canopyCover >= 0.05 && canopyHeight > 0 )	// if enough cover use the canopy hgt
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assuming forest land cover for heat transfer parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1837,8 +1838,8 @@ void ninja::computeSurfPropForCell
         {
         case 90:	// Barren
             (*input.surface.Rough_h.poData)[i][j] = 0.00230769;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.3;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1846,8 +1847,8 @@ void ninja::computeSurfPropForCell
             break;
         case 91:	// Urban Roughness
             (*input.surface.Rough_h.poData)[i][j] = 5.0;
-            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 5.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 5.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.18;
             (*input.surface.Bowen.poData)[i][j] = 1.5;
             (*input.surface.Cg.poData)[i][j] = 0.25;
@@ -1855,8 +1856,8 @@ void ninja::computeSurfPropForCell
             break;
         case 92:	// Snow Ice
             (*input.surface.Rough_h.poData)[i][j] = 0.00076923;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.7;
             (*input.surface.Bowen.poData)[i][j] = 0.5;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1864,8 +1865,8 @@ void ninja::computeSurfPropForCell
             break;
         case 93:	// Agriculture
             (*input.surface.Rough_h.poData)[i][j] = 1.0;
-            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 1.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 1.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.15;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1873,8 +1874,8 @@ void ninja::computeSurfPropForCell
             break;
         case 98:	// Water
             (*input.surface.Rough_h.poData)[i][j] = 0.00153846;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.1;
             (*input.surface.Bowen.poData)[i][j] = 0.0;
             (*input.surface.Cg.poData)[i][j] = 1.0;
@@ -1893,8 +1894,8 @@ void ninja::computeSurfPropForCell
     if(fuelBedDepth > 0.0)		//just use fuel bed depth
     {
         (*input.surface.Rough_h.poData)[i][j] = fuelBedDepth;
-        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.63;
-        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.75;
+        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.25;	//use rangeland values for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1906,8 +1907,8 @@ void ninja::computeSurfPropForCell
     if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assume forest land for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -1918,8 +1919,8 @@ void ninja::computeSurfPropForCell
 
     // If we make it to here, we'll just choose parameters based on rangeland...
     (*input.surface.Rough_h.poData)[i][j] = 0.384615;
-    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.63;
-    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.13;
+    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.75;
+    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.1;
     (*input.surface.Albedo.poData)[i][j] = 0.25;
     (*input.surface.Bowen.poData)[i][j] = 1.0;
     (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -2383,7 +2384,7 @@ bool ninja::set_position()
                         GA_ReadOnly);
 
     if(poDS == NULL)
-    throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
+        throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
 
     double longitude, latitude;
 
@@ -2547,6 +2548,95 @@ void ninja::set_numberCPUs(int CPUs)
     //		}
     //	}
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
+}
+
+double* ninja::get_outputSpeedGrid()
+{
+    outputSpeedArray = new double[VelocityGrid.get_arraySize()];
+
+    for(int i=0; i<VelocityGrid.get_nRows(); i++){
+        for(int j=0; j<VelocityGrid.get_nCols(); j++){
+            outputSpeedArray[i * VelocityGrid.get_nCols() + j] = VelocityGrid(i,j);
+        }
+    }
+
+    return outputSpeedArray;
+}
+
+double* ninja::get_outputDirectionGrid()
+{
+    outputDirectionArray = new double[AngleGrid.get_arraySize()];
+
+    for(int i=0; i<AngleGrid.get_nRows(); i++){
+        for(int j=0; j<AngleGrid.get_nCols(); j++){
+            outputDirectionArray[i * AngleGrid.get_nCols() + j] = AngleGrid(i,j);
+        }
+    }
+
+    return outputDirectionArray;
+}
+
+const char* ninja::get_outputGridProjection()
+{
+    return VelocityGrid.prjString.c_str();
+}
+
+double ninja::get_outputGridCellSize()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_cellSize();
+}
+
+double ninja::get_outputGridxllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_xllCorner();
+}
+
+double ninja::get_outputGridyllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_yllCorner();
+}
+
+int ninja::get_outputGridnCols()
+{
+    return input.dem.get_nCols();
+}
+
+int ninja::get_outputGridnRows()
+{
+    return input.dem.get_nRows();
 }
 
 void ninja::set_outputBufferClipping(double percent)
@@ -2978,117 +3068,119 @@ void ninja::keepOutputGridsInMemory(bool flag)
 }
 
 double ninja::getFuelBedDepth(int fuelModel)
-{	//at this point must be in meters...  could change...
-
-    //TODO: add units info, turn into table so there arent >200 branches
+{	
+    double depthInFeet;
     if(fuelModel == 1)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 2)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 3)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 4)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 5)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 6)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 7)
-        return 2.500000;
+        depthInFeet = 2.5;
     else if(fuelModel == 8)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 9)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 10)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 11)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 12)
-        return 2.300000;
+        depthInFeet = 2.3;
     else if(fuelModel == 13)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 101)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 102)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 103)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 104)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 105)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 106)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 107)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 108)
-        return 4.000000;
+        depthInFeet = 4.0;
     else if(fuelModel == 109)
-        return 5.000000;
+        depthInFeet = 5.0;
     else if(fuelModel == 121)
-        return 0.900000;
+        depthInFeet = 0.9;
     else if(fuelModel == 122)
-        return 1.500000;
+        depthInFeet = 1.5;
     else if(fuelModel == 123)
-        return 1.800000;
+        depthInFeet = 1.8;
     else if(fuelModel == 124)
-        return 2.100000;
+        depthInFeet = 2.1;
     else if(fuelModel == 141)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 142)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 143)
-        return 2.400000;
+        depthInFeet = 2.4;
     else if(fuelModel == 144)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 145)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 146)
-        return 2.000000;
+        depthInFeet = 2.0;
     else if(fuelModel == 147)
-        return 6.000000;
+        depthInFeet = 6.0;
     else if(fuelModel == 148)
-        return 3.000000;
+        depthInFeet = 3.0;
     else if(fuelModel == 149)
-        return 4.400000;
+        depthInFeet = 4.4;
     else if(fuelModel == 161)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 162)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 163)
-        return 1.300000;
+        depthInFeet = 1.3;
     else if(fuelModel == 164)
-        return 0.500000;
+        depthInFeet = 0.5;
     else if(fuelModel == 165)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 181)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 182)
-        return 0.200000;
+        depthInFeet = 0.2;
     else if(fuelModel == 183)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 184)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 185)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 186)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 187)
-        return 0.400000;
+        depthInFeet = 0.4;
     else if(fuelModel == 188)
-        return 0.300000;
+        depthInFeet = 0.3;
     else if(fuelModel == 189)
-        return 0.600000;
+        depthInFeet = 0.6;
     else if(fuelModel == 201)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 202)
-        return 1.000000;
+        depthInFeet = 1.0;
     else if(fuelModel == 203)
-        return 1.200000;
+        depthInFeet = 1.2;
     else if(fuelModel == 204)
-        return 2.700000;
+        depthInFeet = 2.7;
     else
         return -1.0;
+
+    //multiply by 0.3048 to convert from feet to meters
+    return (depthInFeet * 0.3048);
 }
 
 void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
@@ -3120,19 +3212,6 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
-    //Check DEM
-    GDALDataset *poDS;
-    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
-    if(poDS == NULL)
-    {
-        throw std::runtime_error("Could not open DEM for reading.");
-    }
-    if(GDALHasNoData(poDS, 1))
-    {
-        throw std::runtime_error("The DEM has no data values.");
-    }
-    GDALClose((GDALDatasetH)poDS);
-
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
     if(s.find_first_of("/\\:;\"'") != std::string::npos){
