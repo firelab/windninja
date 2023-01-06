@@ -263,8 +263,9 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  ----------------------------------------*/
             checkCancel();
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
-            //copy inlet values from initial field U0 to U
-            U.copyInletNodes(U0);
+            //copy inlet and outlet values from initial field U0 to U
+            //outlet values are copied to prevent reversed flow from propagating back into the domain
+            U.copyInletAndOutletNodes(U0);
 
             //TESTING------------------------------------------
             //for(int i=0;i<input.dem.get_nRows();i++)

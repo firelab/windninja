@@ -93,7 +93,6 @@ void wn_3dVectorField::deallocate()
     vectorData_y.deallocate();
     vectorData_z.deallocate();
 }
-
 /**
  * \brief Copies inlet nodes from another wn_3dVectorField.
  *
@@ -112,6 +111,40 @@ void wn_3dVectorField::copyInletNodes(wn_3dVectorField &f)
             for(int j=0;j<f.vectorData_x.mesh_->ncols;j++)
             {
                 if(f.isInlet(i,j,k))
+                {
+                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
+                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
+                    vectorData_z(i,j,k) = 0.0;
+                }
+            }
+        }
+    }
+}
+
+/**
+ * \brief Copies inlet and outlet nodes from another wn_3dVectorField.
+ *
+ * Copies inlet and outlet nodes from one wn_3dVectorField to another.
+ *
+ * \param f wn_3dVectorField to copy nodes from.
+ *
+ * \return Void.
+ */
+void wn_3dVectorField::copyInletAndOutletNodes(wn_3dVectorField &f)
+{
+    for(int k=0;k<f.vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<f.vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<f.vectorData_x.mesh_->ncols;j++)
+            {
+                if(f.isInlet(i,j,k))
+                {
+                    vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
+                    vectorData_y(i,j,k) = f.vectorData_y(i,j,k);
+                    vectorData_z(i,j,k) = 0.0;
+                }
+                if(f.isOutlet(i,j,k))
                 {
                     vectorData_x(i,j,k) = f.vectorData_x(i,j,k);
                     vectorData_y(i,j,k) = f.vectorData_y(i,j,k);

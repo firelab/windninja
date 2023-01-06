@@ -50,6 +50,7 @@ class wn_3dVectorField
         bool isOutlet(const int &i, const int &j, const int &k);
         bool isOnGround(const int &i, const int &j, const int &k);
         void copyInletNodes(wn_3dVectorField &f);
+        void copyInletAndOutletNodes(wn_3dVectorField &f);
         double getMaxValue(); //returns the magnitude of the largest wind vector
         double getMinValue(); //returns the magnitude of the smallest wind vector
         double getMagnitude(const int &i, const int &j, const int &k); //returns magnitude of vector at i,j,k
