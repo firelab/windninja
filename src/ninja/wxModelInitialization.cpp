@@ -29,7 +29,6 @@
 
 #include "wxModelInitialization.h"
 
-
 // #define NC_NOERR        0       /* No Error */
 
 // #define NC_EBADID       (-33)   /* Not a netcdf id */
@@ -596,6 +595,25 @@ std::vector<blt::local_date_time> wxModelInitialization::getTimeList(blt::time_z
     return aoCachedTimes;
 }
 
+// PCM - we can't assume fixed band numbers since HRRR formats change and might be filtered to reduce size
+// TODO this is redundant to ncepHrrrSurfInitialization.cpp
+GDALRasterBand* get10UBand (GDALDataset *srcDS) {
+    const int nRasterSets = srcDS->GetRasterCount();
+
+    for (int i=1; i<=nRasterSets; i++) {
+        GDALRasterBand *poBand = srcDS->GetRasterBand(i);
+        const char* comment = poBand->GetMetadataItem("GRIB_COMMENT");
+        if (comment && strcmp(comment, "u-component of wind [m/s]") == 0){
+            const char* description = poBand->GetDescription();
+            if (strncmp(description, "10[m] ", 6) == 0){
+                return poBand;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 /**
  * Fetch a list of times that the forecast holds for the dataset.  It
  * is assumed that the time variable is "time" and the units string is
@@ -634,12 +652,9 @@ wxModelInitialization::getTimeList(const char *pszVariable,
         }
 
         //get time info from 10u band
-        GDALRasterBand *poBand;
-        if( this->getForecastIdentifier() == "NCEP-NAM-12km-SURFACE-GRIB2" ) {
-            poBand = srcDS->GetRasterBand( 9 );
-        }
-        else {
-            poBand = srcDS->GetRasterBand( 33 );
+        GDALRasterBand *poBand = get10UBand(srcDS);
+        if (poBand == NULL) {
+            CPLDebug( "wxModelInitialization::getTimeList()", " getTimeList() failed - no 10m UGRD band");
         }
 
         const char *vt;
