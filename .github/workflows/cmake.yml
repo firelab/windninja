@@ -19,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - with:
+        cmake-version: '3.16.3'
     
     #install dependencies
     - name: Build Dependencies
@@ -29,9 +31,11 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -B ${{github.workspace}}/build -D CMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON
 
-    - name: Build
+    - name: make
+      working-directory: ${{github.workspace}}/build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      #run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: make && make install
 
     - name: Test
       working-directory: ${{github.workspace}}/build
