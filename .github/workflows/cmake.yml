@@ -16,14 +16,13 @@ jobs:
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-20.04
-
+   
     steps:
+    - name: setup cmake
     - uses: actions/checkout@v3
     
     #install dependencies
     - name: Build Dependencies
-      with:
-        cmake-version: '3.16.3'
       run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
 
     - name: Configure CMake
