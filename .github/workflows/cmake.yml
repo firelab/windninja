@@ -19,11 +19,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - with:
-        cmake-version: '3.16.3'
     
     #install dependencies
     - name: Build Dependencies
+      with:
+        cmake-version: '3.16.3'
       run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
 
     - name: Configure CMake
