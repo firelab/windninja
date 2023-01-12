@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-20.04
    
     steps:
-    - name: setup cmake
     - uses: actions/checkout@v3
     
     #install dependencies
