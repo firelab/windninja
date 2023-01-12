@@ -33,7 +33,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       # Build your program with the given configuration
       #run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-      run: make && make install
+      run: make && sudo make install
 
     - name: Test
       working-directory: ${{github.workspace}}/build
