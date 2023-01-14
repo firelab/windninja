@@ -250,6 +250,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
+                ("write_ascii_4326_output", po::value<bool>()->default_value(false), "write AAIGRID (ascii) fire behavior output files in EPSG:4326 lat/lon projection (true, false)")
+                ("write_json_4326_output", po::value<bool>()->default_value(false), "write AAIGRID (JSON) fire behavior output files in EPSG:4326 lat/lon projection (true, false)")
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
@@ -1779,9 +1781,13 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
-            if(vm["write_ascii_output"].as<bool>())
+            // those are all AAIGRID variants (in different projections and text formats)
+            if(option<bool>(vm,"write_ascii_output") || option<bool>(vm,"write_ascii_4326_output") || option<bool>(vm,"write_json_4326_output"))
             {
-                windsim.setAsciiOutFlag( i_, true );
+                if (option<bool>(vm,"write_ascii_output")) windsim.setAsciiOutFlag( i_, true );
+                if (option<bool>(vm,"write_ascii_4326_output")) windsim.setAscii4326OutFlag( i_, true );
+                if (option<bool>(vm,"write_json_4326_output")) windsim.setJson4326OutFlag( i_, true );
+
                 option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_ascii_out_resolution"].as<std::string>()));

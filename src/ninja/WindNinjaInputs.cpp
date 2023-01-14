@@ -74,6 +74,8 @@ WindNinjaInputs::WindNinjaInputs()
     wxModelGoogLineWidth = 3.0;
     shpOutFlag = false;
     asciiOutFlag = false;
+    ascii4326OutFlag = false;
+    json4326OutFlag = false;
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
     txtOutFlag = false;
@@ -253,6 +255,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
   pdfHeight = rhs.pdfHeight;
   pdfDPI = rhs.pdfDPI;
   asciiOutFlag = rhs.asciiOutFlag;
+  ascii4326OutFlag = rhs.ascii4326OutFlag;
+  json4326OutFlag = rhs.json4326OutFlag;
   wxModelShpOutFlag = rhs.wxModelShpOutFlag;
   wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
   txtOutFlag = rhs.txtOutFlag;
@@ -439,6 +443,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
       shpOutFlag = rhs.shpOutFlag;
       asciiOutFlag = rhs.asciiOutFlag;
+      ascii4326OutFlag = rhs.ascii4326OutFlag;
+      json4326OutFlag = rhs.json4326OutFlag;
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
       txtOutFlag = rhs.txtOutFlag;

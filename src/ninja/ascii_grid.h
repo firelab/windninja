@@ -188,6 +188,8 @@ public:
     void print_Grid() const;
 
     void write_GridInfo(FILE *fileOut);
+    void write_integralGridData(FILE *fileOut);
+    void write_fpGridData(FILE *fileOut, int numDecimals);
     void write_Grid(std::string outputFile, int numDecimals);
 
     void write_binaryGrid(std::string outputFile);
@@ -1558,6 +1560,33 @@ void AsciiGrid<T>::write_GridInfo(FILE *fileOut)
 }
 
 template <class T>
+void AsciiGrid<T>::write_integralGridData (FILE* fout) {
+    int nRows = data.get_numRows();
+    int nCols = data.get_numCols();
+
+    for (int i=nRows-1; i>=0; i--) {
+        for (int j=0; j<nCols; j++) {
+            fprintf(fout,"%ld\t", (long)data(i,j));
+        }
+        fprintf(fout,"\n");
+    }
+}
+
+
+template <class T>
+void AsciiGrid<T>::write_fpGridData (FILE* fout, int numDecimals) {
+    int nRows = data.get_numRows();
+    int nCols = data.get_numCols();
+
+    for (int i=nRows-1; i>=0; i--) {
+        for (int j=0; j<nCols; j++) {
+            fprintf(fout,"%.*lf\t", numDecimals, data(i,j));
+        }
+        fprintf(fout,"\n");
+    }
+}
+
+template <class T>
 void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
 {
     FILE *fout;
@@ -1577,73 +1606,12 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
     if(numDecimals < -1 || numDecimals > 3)
         numDecimals = 2;
 
-    switch(numDecimals)
-    {
-        case -1:    //for printing bools, or longs or ints
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0;j < data.get_numCols();j++)
-                {
-                    fprintf(fout,"%d\t", (int)data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
-        case 0:
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0;j < data.get_numCols();j++)
-                {
-                    fprintf(fout,"%.0lf\t",data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
-
-        case 1:
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0; j < data.get_numCols(); j++)
-                {
-                    fprintf(fout,"%.1lf\t",data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
-
-        case 2:
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0;j < data.get_numCols();j++)
-                {
-                    fprintf(fout,"%.2lf\t",data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
-
-        case 3:
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0;j < data.get_numCols();j++)
-                {
-                    fprintf(fout,"%.3lf\t",data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
-
-        default:
-            for(int i = data.get_numRows() - 1;i >= 0;i--)
-            {
-                for (int j = 0;j < data.get_numCols();j++)
-                {
-                    fprintf(fout,"%.2lf\t",data(i,j));
-                }
-                fprintf(fout,"\n");
-            }
-            break;
+    if (numDecimals == -1) { 
+        write_integralGridData(fout);
+    } else { 
+        write_fpGridData(fout,numDecimals);
     }
+
     fclose(fout);
 
     //write projection file

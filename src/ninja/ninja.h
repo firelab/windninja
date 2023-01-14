@@ -326,6 +326,11 @@ public:
     void set_wxModelShpOutFlag(bool flag);
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
     void set_asciiOutFlag(bool flag);
+
+    // different variants of AAIGRID
+    void set_ascii4326OutFlag(bool flag);
+    void set_json4326OutFlag(bool flag);
+
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
     void set_txtOutFlag(bool flag);

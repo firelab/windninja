@@ -1120,6 +1120,25 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable AAIGRID ASCII output in EPSG:4326 projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable AAIGRID JSON output in EPSG:4326 projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setJson4326OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
     /**
     * \brief Set the resoultion of ASCII output for a ninja
     * Set the resolution of ASCII output for a ninja given the resolution

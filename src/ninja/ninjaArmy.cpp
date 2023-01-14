@@ -1919,6 +1919,16 @@ int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papsz
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
 }
+int ninjaArmy::setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, 
+            ninjas[ nIndex ]->set_ascii4326OutFlag( flag ) );
+}
+int ninjaArmy::setJson4326OutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, 
+            ninjas[ nIndex ]->set_json4326OutFlag( flag ) );
+}
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {

@@ -2746,20 +2746,20 @@ void ninja::writeOutputFiles()
 			AsciiGrid<double> tempCloud(CloudGrid);
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
-                        //ensure grids cover original DEM extents for FARSITE
-                        AsciiGrid<double> demGrid;
-                        GDALDatasetH hDS;
-                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                        if( hDS == NULL )
-                        {
-                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                                    "Problem reading DEM during output writing." );
-                        }
+            //ensure grids cover original DEM extents for FARSITE
+            AsciiGrid<double> demGrid;
+            GDALDatasetH hDS;
+            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+            if( hDS == NULL )
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                        "Problem reading DEM during output writing." );
+            }
 
-                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                        tempCloud.BufferToOverlapGrid(demGrid);
-                        angTempGrid->BufferToOverlapGrid(demGrid);
-                        velTempGrid->BufferToOverlapGrid(demGrid);
+            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+            tempCloud.BufferToOverlapGrid(demGrid);
+            angTempGrid->BufferToOverlapGrid(demGrid);
+            velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -4585,6 +4585,16 @@ void ninja::set_pdfDEM(std::string dem_file_name)
 void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
+}
+
+void ninja::set_ascii4326OutFlag(bool flag)
+{
+    input.ascii4326OutFlag = flag;
+}
+
+void ninja::set_json4326OutFlag(bool flag)
+{
+    input.json4326OutFlag = flag;
 }
 
 void ninja::set_wxModelAsciiOutFlag(bool flag)
