@@ -133,6 +133,8 @@ endif(NINJA_QTGUI)
 
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
+    add_library(WindNinjadll SHARED ${NINJA_SOURCES})
+    target_link_libraries(WindNinjadll ${LINK_LIBS})
 else(WIN32)
     add_library(ninja STATIC SHARED ${NINJA_SOURCES})
 endif(WIN32)
@@ -140,5 +142,5 @@ endif(WIN32)
 target_link_libraries(ninja ${LINK_LIBS})
 
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
-install(FILES WindNinjaInputs.h ninja.h windninja.h DESTINATION include COMPONENT includes)
+install(FILES WindNinjaInputs.h ninja.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 

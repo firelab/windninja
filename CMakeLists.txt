@@ -374,8 +374,7 @@ endif(VERBOSE_CMAKE)
 
 # install target related files
 set(etc_files missoula_valley.tif
-                  example_lcp.lcp
-                  example_lcp.prj
+                  example_lcp.tif
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
                   cli_pointInitialization_diurnal.cfg
@@ -480,7 +479,6 @@ set(CPACK_PACKAGE_VERSION ${WINDNINJA_VERSION})
 
 set(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
-CMAKE_POLICY(SET CMP0010 OLD)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 CMAKE_POLICY(POP)
@@ -545,9 +543,9 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
     endif( BUILD_TYPE MATCHES "release")
     # HACK FOR OPENMP
     if(BUILD_64)
-        install(PROGRAMS ${MSVC10_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
+        install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
     else(BUILD_64)
-        install(PROGRAMS ${MSVC10_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
+        install(PROGRAMS ${MSVC_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
     endif(BUILD_64)
     if(NINJAFOAM)
         install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)

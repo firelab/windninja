@@ -303,7 +303,7 @@ bool NinjaFoam::simulate_wind()
     startOutputSampling = omp_get_wtime();
     #endif
 
-    //Uupdate the sampleDict interpolation scheme. If the the output wind height is not 
+    //Update the sampleDict interpolation scheme. If the the output wind height is not
     //resolved (if we are sampling in the lowest cell), then we will use a log
     //interpolation from the cell-center value in the lowest cell in the mesh. Otherwise,
     //we use cellPoint for a linear interpolation.
@@ -314,8 +314,13 @@ bool NinjaFoam::simulate_wind()
     else{
         scheme = "cell";
     }
+    #ifdef WIN32
     const char *pszInput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
     const char *pszOutput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+    #else
+    const char *pszInput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+    const char *pszOutput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+    #endif
     CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
@@ -383,17 +388,33 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
 
     if(template_ == ""){
         if(gammavalue != ""){
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericTypeVal.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericTypeVal.tmp");
+            #endif
         }
         else if(inletoutletvalue != ""){
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType.tmp");
+            #endif
         }
         else{
-            pszPathToFile = CPLSPrintf("ninjafoam/0/%s", "genericType-kep.tmp");
+            #ifdef WIN32
+            pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
+            #else
+            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType-kep.tmp");
+            #endif
         }
     }
     else{
-        pszPathToFile = CPLSPrintf("ninjafoam/0/%s", template_.c_str());
+        #ifdef WIN32
+        pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
+        #else
+        pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", template_.c_str());
+        #endif
     }
 
     pszTemplateFile = CPLFormFilename(pszPath, pszPathToFile, "");
@@ -519,7 +540,7 @@ void NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszF
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
-    else if(std::string(pszFilename) == "sampleDict"){
+    else if(std::string(pszFilename) == "sampleDict" || std::string(pszFilename) == "surfaces"){
         std::string t = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
         t += "_out.stl";
         ReplaceKeys(s, "$stlFileName$", t);
@@ -581,7 +602,11 @@ void NinjaFoam::WriteFoamFiles()
     const char *pszTempFoamPath;
     //write temporary OpenFOAM directories
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
     //papszFileList = VSIReadDirRecursive( pszArchive );
     papszFileList = NinjaVSIReadDirRecursive( pszArchive );
     for(int i = 0; i < CSLCount( papszFileList ); i++){
@@ -603,8 +628,14 @@ void NinjaFoam::WriteFoamFiles()
         if(std::string(pszFilename) != "" &&
            std::string(CPLGetExtension(pszFilename)) != "tmp" &&
            std::string(pszFilename) != "pointDisplacement"){
+            
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-            pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+            #ifdef WIN32
+            pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+            #else
+            pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+            #endif
+            
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
             pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
@@ -926,7 +957,11 @@ void NinjaFoam::writeBlockMesh()
     SetBlockMeshParametersFromDem();
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
 
     pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
@@ -1006,7 +1041,11 @@ void NinjaFoam::writeMoveDynamicMesh()
     const char *pszOutput;
 
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    pszArchive = CPLSPrintf("%s/ninjafoam", pszPath);
+    #ifdef WIN32
+    pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    #else
+    pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
+    #endif
 
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
     pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
@@ -1578,8 +1617,14 @@ bool NinjaFoam::SimpleFoam()
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        #ifdef WIN32
         if(nRet != 0)
             return false;
+        #else
+        if(nRet != 0){
+            //do something
+        }
+        #endif
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -1606,8 +1651,14 @@ bool NinjaFoam::SimpleFoam()
             }
         }
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
+        #ifdef WIN32
         if(nRet != 0)
             return false;
+        #else
+        if(nRet != 0){
+            //do something
+        }
+        #endif
     }
     
     // write simpleFoam stdout to a log file 
@@ -1624,11 +1675,22 @@ void NinjaFoam::Sample()
 {
     int nRet = -1;
 
+    #ifdef WIN32
     const char *const papszArgv[] = { "sample", 
                                       "-case",
                                       pszFoamPath,
                                       "-latestTime", 
                                       NULL };
+    #else
+    const char *const papszArgv[] = { "simpleFoam", 
+                                      "-case",
+                                      pszFoamPath,
+                                      "-postProcess",
+                                      "-func",
+                                      "surfaces",
+                                      "-latestTime", 
+                                      NULL };
+    #endif
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.sample", ""), "w");
 
@@ -1669,19 +1731,19 @@ int NinjaFoam::SanitizeOutput()
     const char *pszMem;
     std::string s;
 
-    pszMem = CPLSPrintf( "%s/output.raw", pszFoamPath );
+    pszMem = CPLSPrintf("%s/output.raw", pszFoamPath);
     /* This is a member, hold on to it so we can read it later */
-    pszVrtMem = CPLStrdup( CPLSPrintf( "%s/output.vrt", pszFoamPath ) );
+    pszVrtMem = CPLStrdup(CPLSPrintf("%s/output.vrt", pszFoamPath));
 
     char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir( CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath) );
+    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
 
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpen(CPLSPrintf( "%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
-                            pszFoamPath, 
-                            papszOutputSurfacePath[i]), "r");
+            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+                        pszFoamPath, 
+                        papszOutputSurfacePath[i]), "r");
             break;
         }
         else{
@@ -2464,6 +2526,58 @@ void NinjaFoam::UpdateExistingCase()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
+
+
+    /*
+    ** Copy and save OpenFOAM files for this timestep if NINJAFOAM_KEEP_ALL_TIMESTEPS is TRUE.
+    */
+    if(CSLTestBoolean(CPLGetConfigOption("NINJAFOAM_KEEP_ALL_TIMESTEPS", "FALSE")))
+    {
+        CPLDebug("NINJAFOAM", "Keeping all timesteps for simulation.");
+
+        char *pszPath;
+        char *pszFoamTimePath = CPLStrdup(CPLSPrintf("%s_run%d", pszFoamPath, input.inputsRunNumber-1));
+        VSIMkdir(pszFoamTimePath, 0777);
+        
+        CPLDebug("NINJAFOAM", "Writing files for the previous timestep to %s", pszFoamTimePath);
+
+        const char *pszInput;
+        const char *pszOutput;
+        char **papszFileList;
+        const char *pszFilename;
+        std::string osFullPath;
+        papszFileList = NinjaVSIReadDirRecursive(pszFoamPath);
+        for(int i = 0; i < CSLCount( papszFileList ); i++){
+            pszFilename = CPLGetFilename(papszFileList[i]);
+            osFullPath = papszFileList[i];
+            if(std::string(pszFilename) == ""){
+                VSIMkdir(CPLFormFilename(pszFoamTimePath, osFullPath.c_str(), ""), 0777);
+            }
+            else{
+                pszInput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
+                pszOutput = CPLFormFilename(pszFoamTimePath, osFullPath.c_str(), "");
+                CopyFile(pszInput, pszOutput);
+            }
+        }
+
+        CSLDestroy(papszFileList);
+    }
+
+    //find and delete the old sampled output directory
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
+
+    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
+        if(std::string(papszOutputSurfacePath[i]) != "." &&
+           std::string(papszOutputSurfacePath[i]) != "..") {
+            NinjaUnlinkTree(CPLSPrintf("%s/postProcessing/surfaces/%s", 
+                    pszFoamPath, papszOutputSurfacePath[i]));
+            break;
+        }
+        else{
+            continue;
+        }
+    }
 
     //set meshResolution from log.ninja
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);

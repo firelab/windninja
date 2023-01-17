@@ -43,7 +43,7 @@ const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/sta
 std::string pointInitialization::rawStationFilename = ""; //make the station name blank at first
 double pointInitialization::stationBuffer; //Buffer
 std::vector<std::string> pointInitialization::stationFiles; //Where the files are stored
-std::string pointInitialization::tzAbbrev; //Abbreviation of the time zone
+std::string pointInitialization::tzAbbrev; // Abbreviation of the time zone
 vector<blt::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
 bool pointInitialization::enforce_limits = true; //Enfore limitations on the API ->set to false if the user provides a custom key
@@ -431,12 +431,10 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
  * Creates a directory to store the downloaded weather stations
  * @param demFile
  * @param outPath
- * @param timeList
  * @param latest
  * @return
  */
-std::string pointInitialization::generatePointDirectory(string demFile, string outPath,
-                                                        std::vector<bpt::ptime> timeList,bool latest)
+std::string pointInitialization::generatePointDirectory(string demFile, string outPath, bool latest)
 {
     std::string subDem;
     std::string xDem;
@@ -462,17 +460,14 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
         timeStream2.imbue(locale(timeStream2.getloc(),facet));                            
-//        timeStream<<timeList[0];
-//        timeStream2<<timeList.back();
-//        timeComponent = timeStream.str()+"-"+timeStream2.str();
-
+        
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
 //        cout<<start_and_stop_times[0].local_time()<<endl;
 //        cout<<start_and_stop_times[1].local_time()<<endl;
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+        timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     
@@ -531,14 +526,11 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     if (latest==false) //If it is a time series we name the directory with both the start and stop time
     {
         timeStream2.imbue(locale(timeStream2.getloc(),facet));
-//        timeStream<<timeList[0];
-//        timeStream2<<timeList.back();
-//        timeComponent = timeStream.str()+"-"+timeStream2.str();
-
+        
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
-        timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+        timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     std::string fileComponent = subDem+"_interpolate_"+timeComponent+"-";
@@ -1288,286 +1280,90 @@ vector<wxStation> pointInitialization::interpolateNull(std::string demFileName,
  *
  */
 vector<vector<pointInitialization::preInterpolate> > pointInitialization::interpolateTimeData(std::string demFileName,
-                        vector<vector<pointInitialization::preInterpolate> > vecStations,
-                        std::vector<bpt::ptime> timeList)
+    vector<vector<pointInitialization::preInterpolate> > sts,
+    std::vector<bpt::ptime> timeList)
 {
-    CPLDebug("STATION_FETCH", "Interpolating time data");
+	
+    CPLDebug("STATION_FETCH", "Interpolating Weather Data...");
 
-//    bpt::ptime tempq;
-//    bpt::ptime init;
-
-//    vector<vector<preInterpolate> > Selectify;
-
-    bpt::time_duration zero(0, 0, 0, 0);
-//    bpt::time_duration max(168, 0, 0, 0); //Maximum time between steps (formerly 48 hrs, try 168)
-//    bpt::time_duration one(0, 1, 0, 0);
-    bpt::time_duration null(bpt::not_a_date_time);
-
-    int totalsize=vecStations.size(); //Total Number of Stations
-
-    /* This is the new interpolation and sorting function, its much better and doesn't leak memory
-     * Start with 1 station and 1 step
-     *
-     * Get time distance of all steps to the stations
-     *
-     * pick 1 in the future and 1 in the past if possible
-     *
-     * if not,
-     *
-     * get closest and call it good
-     *
-     * NEGATIVE == FUTURE!
-     * POSITIVE == PAST!
-     *
-     */
-    vector<vector<bpt::time_duration> > posMasterTime;
-    vector<vector<bpt::time_duration> > negMasterTime;
-    vector<vector<int> > posMasterIdx;
-    vector<vector<int> >negMasterIdx;
-
-    for (int k=0; k<totalsize; k++) //Do this for all the stations
-    {
-        CPLDebug("STATION_FETCH","STATION ID: %i, %s",k,vecStations[k][0].stationName.c_str());
-        int numObserve=vecStations[k].size(); //Number of observations
-        int numSteps=timeList.size();
-
-        vector<bpt::time_duration> posStepTime; //Master lists of times and indecies for 1 station
-        vector<bpt::time_duration> negStepTime;
-        vector<int> posStepIdx;
-        vector<int> negStepIdx;
-
-        for (int j=0;j<numSteps;j++)//Do this for all time steps
-        {
-            int counter=0;
-            bpt::ptime comparator = timeList[j]; //Get the Baseline
-            vector<bpt::time_duration> posTimeDeltas; //Positive List of time deltas
-            vector<int>posTimeIndecies;
-            vector<bpt::time_duration> negTimeDeltas; // Negative List of time deltas
-            vector<int>negTimeIndecies;
-            for (int i = 0; i<numObserve;i++)
-            {
-                bpt::time_duration difference;
-                difference = comparator - vecStations[k][i].datetime; //Calculate differences for each time step and obs
-                if (difference>zero) //If difference is greater than zero, put in one vect
-                {
-                    posTimeDeltas.push_back(difference);
-                    posTimeIndecies.push_back(i);
-                }
-                if(difference<zero) // if less than zero, put in other vect
-                {
-                    negTimeDeltas.push_back(difference);
-                    negTimeIndecies.push_back(i);
-                }
-            }
-            if (posTimeDeltas.size()>0) //If there are any positive ones, put them into master list
-            {
-                bpt::time_duration minPos=*std::min_element(posTimeDeltas.begin(),posTimeDeltas.end());
-                int posIdx=std::min_element(posTimeDeltas.begin(),posTimeDeltas.end())-posTimeDeltas.begin();
-                posStepTime.push_back(minPos);
-                posStepIdx.push_back(posTimeIndecies[posIdx]);
-
-            }
-            if(posTimeDeltas.size()==0) // If there aren't any, give it a not-a-date-time obj and set the idx to -1
-            {
-                posStepTime.push_back(null);
-                posStepIdx.push_back(-1);
-            }
-            if (negTimeDeltas.size()>0) //Same thing, for negative times
-            {
-                bpt::time_duration minNeg=*std::max_element(negTimeDeltas.begin(),negTimeDeltas.end());
-                int negIdx=std::max_element(negTimeDeltas.begin(),negTimeDeltas.end())-negTimeDeltas.begin();
-                negStepTime.push_back(minNeg);
-                negStepIdx.push_back(negTimeIndecies[negIdx]);
-            }
-            if(negTimeDeltas.size()==0) //if none, give it a -1 and not-a-date-time
-            {
-                negStepTime.push_back(null);
-                negStepIdx.push_back(-1);
-            }
-        }
-        for (int i = 0; i<numSteps;i++)
-        {
-            CPLDebug("STATION_FETCH","Positive IDX %i",posStepIdx[i]);
-            CPLDebug("STATION_FETCH","Negative IDX %i \n",negStepIdx[i]);
-        }
-        posMasterTime.push_back(posStepTime);
-        negMasterTime.push_back(negStepTime);
-        posMasterIdx.push_back(posStepIdx);
-        negMasterIdx.push_back(negStepIdx);
-    }
-    CPLDebug("STATION_FETCH", "Weather times sorted...");
-    CPLDebug("STATION_FETCH","Sizing weather station Vector...");
-    /*
-     * Now for Interpolation...
-     * Take the data out the vecStations and put it into a new struct, for interpolation
-     * Metadata, ie lat lon etc, doesn't need interpolation
-     */
     vector<vector<preInterpolate> > interpolatedWxData;
-    for (int k=0; k<totalsize; k++) //Initialize interpolatedWxData with the right dimensions
+
+    for (int k = 0; k < sts.size(); k++)
     {
         vector<preInterpolate> subInter;
-        for(int ex=0; ex<timeList.size(); ex++)
+
+        //Data may be unordered so we search for the first (minIdx) and last (maxIdx) measurements in time
+        //----------------------------------------------------
+        int minIdx = 0;
+        int maxIdx = 0;
+        for (int mm = 0; mm < sts[k].size(); mm++)
         {
-            preInterpolate timeStorage;
-            timeStorage.datetime = timeList[ex];
-            subInter.push_back(timeStorage);
+            if (sts[k][mm].datetime < sts[k][minIdx].datetime) { minIdx = mm; }
+            if (sts[k][mm].datetime > sts[k][maxIdx].datetime) { maxIdx = mm; }
         }
+
+
+        for (int i = 0; i < timeList.size(); i++)
+        {
+            bpt::time_duration delta0 = bpt::time_duration(bpt::neg_infin);
+            bpt::time_duration delta1 = bpt::time_duration(bpt::pos_infin);
+            bpt::time_duration zero(0, 0, 0, 0);
+
+            //  Find closest measurement to timeList[i] in the past (idx0) and future (idx1) . If there are none assign the first or last of the existing data respectively.
+            //-----------------------------------------------------------------------
+            int idx0 = minIdx;
+            int idx1 = maxIdx;
+            for (int mm = 0; mm < sts[k].size(); mm++)
+            {
+                bpt::time_duration delta = sts[k][mm].datetime - timeList[i];
+                if (delta >= zero && delta <= delta1) { idx1 = mm; delta1 = delta; }
+                if (delta <= zero && delta >= delta0) { idx0 = mm; delta0 = delta; }
+            }
+          
+            //Interpolation weight w0 (if timeList[i] is outside range idx0=idx1 and w0=1)
+            //------------------------
+            double t0 = unixTime(sts[k][idx0].datetime);
+            double t1 = unixTime(sts[k][idx1].datetime);
+            double w0 = 1;
+            if (t1 > t0) { w0 = (t1 - unixTime(timeList[i])) / (t1 - t0); }
+
+            //Interpolate
+            //---------------------
+            double speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed ;
+            double temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
+            double cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
+            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0) ;
+            double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
+            double angle = atan2(xx, yy) * 180.0 / PI;
+            if (angle < 0.0) { angle += 360.0; }
+
+
+           // Create interpolated data
+           //----------------------------
+            preInterpolate interpol;
+            interpol.datetime = timeList[i];
+            interpol.speed = speed;
+            interpol.temperature = temperature;
+            interpol.cloudCover = cloudCover;
+            interpol.direction = angle;
+			
+            interpol.lat = sts[k][0].lat;
+            interpol.lon = sts[k][0].lon;
+            interpol.datumType = sts[k][0].datumType;
+            interpol.coordType = sts[k][0].coordType;
+            interpol.height = sts[k][0].height;
+            interpol.heightUnits = sts[k][0].heightUnits;
+            interpol.influenceRadius = sts[k][0].influenceRadius;
+            interpol.influenceRadiusUnits = sts[k][0].influenceRadiusUnits;
+            interpol.stationName = sts[k][0].stationName;
+            interpol.inputSpeedUnits = sts[k][0].inputSpeedUnits;
+            interpol.tempUnits = sts[k][0].tempUnits;
+            interpol.cloudCoverUnits = sts[k][0].cloudCoverUnits;
+
+            subInter.push_back(interpol);
+        }
+
         interpolatedWxData.push_back(subInter);
-    }
-    CPLDebug("STATION_FETCH","Interpolating Weather Data...");
-    for (int k=0; k<totalsize; k++) //Set the Metadata for each station
-    {
-        double latitude;
-        double longitude;
-        double height;
-        double radiusInfluence;
-        std::string datum;
-        std::string coord;
-        std::string stationName;
-
-        latitude = vecStations[k][0].lat;
-        longitude = vecStations[k][0].lon;
-        height = vecStations[k][0].height;
-        radiusInfluence = vecStations[k][0].influenceRadius;
-        datum = vecStations[k][0].datumType;
-        coord = vecStations[k][0].coordType;
-        const char* newdatum = "WGS84";
-        stationName = vecStations[k][0].stationName;
-
-        std::string demfile = demFileName;
-
-        for(int i=0; i<timeList.size(); i++)
-        {
-            interpolatedWxData[k][i].lat = latitude;
-            interpolatedWxData[k][i].lon = longitude;
-            interpolatedWxData[k][i].datumType = datum;
-            interpolatedWxData[k][i].coordType = coord;
-            interpolatedWxData[k][i].height = height;
-            interpolatedWxData[k][i].heightUnits = lengthUnits::meters;
-            interpolatedWxData[k][i].influenceRadius = radiusInfluence;
-            interpolatedWxData[k][i].influenceRadiusUnits = lengthUnits::meters;
-            interpolatedWxData[k][i].stationName = stationName;
-        }
-
-    }
-
-    for(int k=0; k<totalsize; k++)
-    {
-        for(int i=0; i<timeList.size(); i++)
-        {
-            //Tells us whether we need to interpolate or not for each step
-            int direction = directTemporalInterpolation(posMasterIdx[k][i],negMasterIdx[k][i]);
-            if(direction==0)
-            {
-                /*
-                 * Remember that Negative is future (high)
-                 * Positive is past (low)
-                 */
-                //Get the Time of the past and future station and set the interpolate time to the timeList
-                bpt::ptime pLow = vecStations[k][posMasterIdx[k][i]].datetime;
-                bpt::ptime pHigh = vecStations[k][negMasterIdx[k][i]].datetime;
-                bpt::ptime pInter = timeList[i];
-                //Convert time to time since epoch
-                double low = unixTime(pLow); //Times
-                double high = unixTime(pHigh);
-                double inter = unixTime(pInter);
-
-                //Get Low and High for each data Type
-                //Wind Speed
-                double speed_L = vecStations[k][posMasterIdx[k][i]].speed;
-                double speed_H = vecStations[k][negMasterIdx[k][i]].speed;
-
-                double speed_I = interpolator(inter,low,high,speed_L,speed_H);
-                if(speed_I > 113.000) //this is too fast, probably a bad interpolation
-                {
-                    speed_I = speed_L;
-
-                }
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Wind Direction
-                double dir_L = vecStations[k][posMasterIdx[k][i]].direction;
-                double dir_H = vecStations[k][negMasterIdx[k][i]].direction;
-
-                double dir_I = interpolateDirection(dir_L,dir_H);
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_L = vecStations[k][posMasterIdx[k][i]].temperature;
-                double temp_H = vecStations[k][negMasterIdx[k][i]].temperature;
-
-                double temp_I  = interpolator(inter,low,high,temp_L,temp_H);
-                if(temp_I > 57.0) //this is very hot, probably a bad interpolation
-                {
-                    temp_I = temp_H;
-                    if(temp_I > 57.0)
-                    {
-                        temp_I = temp_L;
-                    }
-                    if(temp_I > 57.0)
-                    {
-                        temp_I = 25; //if something is really bad, just let it be 25degC
-                    }
-                }
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_L = vecStations[k][posMasterIdx[k][i]].cloudCover;
-                double cloud_H = vecStations[k][negMasterIdx[k][i]].cloudCover;
-
-                double cloud_I = interpolator(inter,low,high,cloud_L,cloud_H);
-
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-            if (direction==1) //No interpolation, use closest positive step (past)
-            {
-                //Speed
-                double speed_I = vecStations[k][posMasterIdx[k][i]].speed;
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Direction
-                double dir_I = vecStations[k][posMasterIdx[k][i]].direction;
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_I = vecStations[k][posMasterIdx[k][i]].temperature;
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_I =vecStations[k][posMasterIdx[k][i]].cloudCover;
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-            if (direction==2) //No interpolation, use closest negative step (future)
-            {
-                //Speed
-                double speed_I = vecStations[k][negMasterIdx[k][i]].speed;
-                interpolatedWxData[k][i].speed = speed_I;
-                interpolatedWxData[k][i].inputSpeedUnits = vecStations[k][0].inputSpeedUnits;
-
-                //Direction
-                double dir_I = vecStations[k][negMasterIdx[k][i]].direction;
-                interpolatedWxData[k][i].direction = dir_I;
-
-                //Temperature
-                double temp_I = vecStations[k][negMasterIdx[k][i]].temperature;
-                interpolatedWxData[k][i].temperature = temp_I;
-                interpolatedWxData[k][i].tempUnits = vecStations[k][0].tempUnits;
-
-                //Cloud Cover
-                double cloud_I =vecStations[k][negMasterIdx[k][i]].cloudCover;
-                interpolatedWxData[k][i].cloudCover = cloud_I;
-                interpolatedWxData[k][i].cloudCoverUnits = coverUnits::percent;
-
-            }
-        }
     }
     return interpolatedWxData;
 }
@@ -2500,120 +2296,130 @@ vector<std::string> pointInitialization::fixWindDir(const double *winddir, std::
  * @param nTimeSteps Number of time steps for the simulation.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  * @return Vector of datetimes in UTC.
+ * notice that the input simulation time is in local time, the output timeList/datetimes is in utc time.
  */
 std::vector<bpt::ptime>
 pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
-                                    int startHour, int startMinute, int endYear,
-                                    int endMonth, int endDay, int endHour, int endMinute,
-                                    int nTimeSteps, std::string timeZone)
+                                 int startHour, int startMinute, int endYear,
+                                 int endMonth, int endDay, int endHour, int endMinute,
+                                 int nTimeSteps, std::string timeZone)
 {
-    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
-    endHour=endHour;//Not Really sure why this is necssary
-    startHour=startHour;
+    blt::time_zone_ptr timeZonePtr; // Initialize time zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
     
-//    CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
-
-    /*
-    Correct for daylight savings time...
-    */
-    bg::date dStart(startYear,startMonth,startDay);//Generate Date Object from str for start time
-    bg::date dEnd(endYear,endMonth,endDay); //Generate Date Obj from str for end time
-
-    bpt::time_duration dStartTime(startHour,startMinute,0,0); //Generate Time obj for start
-    bpt::time_duration dEndTime(endHour,endMinute,0,0); // Same for stop
-
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(dStart.year()); //Get When DST Starts from TZ
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(dEnd.year()); //Get When DST ends from TZ
-
-    /*
-     * Here we put the time and date objs into a time zone native obj for comparison
-     */
-    bpt::ptime utcStart(dStart,dStartTime);
-    bpt::ptime utcEnd(dEnd,dEndTime);
+    bg::date start_date(startYear,startMonth,startDay); // Generate date object from input time for start time
+    bg::date end_date(endYear,endMonth,endDay);         // Generate date object from input time for end time
+    bpt::time_duration start_duration(startHour,startMinute,0,0);   // Generate time past the date object from input time for start time
+    bpt::time_duration end_duration(endHour,endMinute,0,0);         // Generate time past the date object from input time for end time
     
-    /*
-     * Here we check to see if the user provided time is within daylight savings time
-     * If it is, we set the bool to true, if not, false.
-     * For places without daylight savings time, this sets the DST bool to false
-     * This also allows for simulations to be run in between time changes as the
-     * start and stop times are checked independently of eachother
-     * 
-     * Update 10/6/2020: the old comparison method for figuring out whether start 
-     * and stop time are in DST don't work for time zones in the southern hemisphere,
-     * and it was crude anyway. The below two lines handle all the time zone checking by boost 
-     * internally.
-     * 
-     * See https://github.com/firelab/windninja/issues/386 for more details.
-     */
+    // use the time zone pointer to setup the start and end full local_date_time objects
+    blt::local_date_time start_local = blt::local_date_time(start_date,start_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    blt::local_date_time end_local = blt::local_date_time(end_date,end_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
     
-    blt::local_date_time startLocal =  blt::local_date_time(utcStart,timeZonePtr);
-    blt::local_date_time endLocal =  blt::local_date_time(utcEnd,timeZonePtr);
+    // calculate and output the dst information, super useful for debugging, though may not always match what is expected
+    bpt::ptime start_ptime(start_date,start_duration); // Create a ptime for the start date object and start time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime start_dstStartTransition = timeZonePtr->dst_local_start_time(start_date.year()); // Get when DST starts from TZ for start date. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime start_dstEndTransition = timeZonePtr->dst_local_end_time(start_date.year()); // Get when DST ends from TZ for start date
+    CPLDebug("STATION_FETCH","start_ptime: %s",boost::posix_time::to_simple_string(start_ptime).c_str());
+    CPLDebug("STATION_FETCH","start_dstStartTransition: %s",boost::posix_time::to_simple_string(start_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","start_dstEndTransition: %s",boost::posix_time::to_simple_string(start_dstEndTransition).c_str());
+    bpt::ptime end_ptime(end_date,end_duration); // Create a ptime for the end date object and end time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime end_dstStartTransition = timeZonePtr->dst_local_start_time(end_date.year()); // Get when DST starts from TZ for end date. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime end_dstEndTransition = timeZonePtr->dst_local_end_time(end_date.year()); // Get when DST ends from TZ for end date
+    CPLDebug("STATION_FETCH","end_ptime: %s",boost::posix_time::to_simple_string(end_ptime).c_str());
+    CPLDebug("STATION_FETCH","end_dstStartTransition: %s",boost::posix_time::to_simple_string(end_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","end_dstEndTransition: %s",boost::posix_time::to_simple_string(end_dstEndTransition).c_str());
     
-    CPLDebug("STATION_FETCH", "Start Time is DST?: %i",startLocal.is_dst());
-    CPLDebug("STATION_FETCH", "End Time is DST?: %i",endLocal.is_dst());
-
-    //Sets these for use in the fetch-station functions
-    setLocalStartAndStopTimes(startLocal,endLocal);
-
-    /*
-    Now that we have figured out the local time, convert it to UTC time for all other time purposes
-    */
-    bpt::ptime startUtc=startLocal.utc_time();
-    bpt::ptime endUtc=endLocal.utc_time();
-
-
-//This is all old stuff that I am leaving in until I am sure the above stuff works. Good for debugging if we get time zone issues
-//    bpt::ptime utcStart(dStart,dStartTime);
-//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    blt::local_date_time startLocal(utcStart,timeZoneUtc);
-//    blt::local_date_time xLocal(dStart,dStartTime,timeZonePtr);
-//    blt::local_date_time startLocal(dStart,dStartTime,timeZonePtr,true);
-
-//    blt::local_date_time endLocal(utcEnd,timeZonePtr); //Apparently when this was written, everything was in daylight savings time, and then
-//    blt::local_date_time endLocal(dEnd,dEndTime,timeZonePtr,timeZonePtr->has_dst());
-    /**Now it isn't (2/17), SO this is the fix to allow non daylight savings time stuff
-    //Update (5/9/18)-> The fix that was implemented was doing this backwards, making it no good,
-    //new fix is to have boost check if daylight savings time exists (timeZonePtr->has_dst()), and then
-    tell that to the Local_date_time constructor, this hopefully will fix time offset issues...
-    **/
-//    bpt::ptime startUtc=startLocal.utc_time();
-//    bpt::ptime endUtc=endLocal.utc_time();
-//    printf("\n");
-
-    //Get Total Time duration of simulation and divide it into time steps
-    bpt::time_duration diffTime=endUtc-startUtc;
+    // determine if isDST to determine which timezone abbreviation to store
+    // only use the start time for these dst time zone comparisons, treat the rest of the times as if they are in the same timezone as the start time
+    bool isDST = start_local.is_dst();
+    if ( isDST == true )
+    {
+        CPLDebug("STATION_FETCH", "Time is within DST");
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
+    } else
+    {
+        CPLDebug("STATION_FETCH", "Time is outside DST");
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
+    }
+    
+    // now convert the found local date times (which are now corrected properly for dst) to utc time for output
+    bpt::ptime start_UTC = start_local.utc_time();
+    bpt::ptime end_UTC = end_local.utc_time();
+    
+    
+    // now warn if the start and stop time cross a daylight savings time transition where time doesn't always behave as expected
+    if ( start_dstStartTransition < start_dstEndTransition )
+    {
+        // normal situation
+        // example is PST for Jan to Mar, PDT for Mar to Nov, PST for Nov to Dec
+        if ( start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition
+          || start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition )
+        {
+            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+        }
+    } else if (start_dstStartTransition > start_dstEndTransition ) // notice that if they are equal is ignored
+    {
+        // reversed order situation
+        // example is NZDT for Jan to Mar, NZST for Mar to Oct, NZDT for Oct to Dec
+        if ( start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition
+          || start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition )
+        {
+            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+        }
+    }
+    
+    
+    //// do debug output
+    CPLDebug("STATION_FETCH","start_local: %s",start_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","end_local: %s",end_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","start_UTC: %s",boost::posix_time::to_simple_string(start_UTC).c_str());
+    CPLDebug("STATION_FETCH","end_UTC: %s",boost::posix_time::to_simple_string(end_UTC).c_str());
+    
+    
+    // Sets these for use in the fetch-station functions
+    setLocalStartAndStopTimes(start_local,end_local);
+    
+    
+    
+    // Get Total Time duration of simulation and divide it into time steps
+    bpt::time_duration diffTime = end_UTC - start_UTC;
     bpt::time_duration stepTime;
-    if(nTimeSteps > 1){
-        stepTime=diffTime/(nTimeSteps-1);
+    if ( nTimeSteps > 1 )
+    {
+        stepTime = diffTime/(nTimeSteps-1);
+    } else
+    {
+        stepTime = diffTime/nTimeSteps;
     }
-    else{
-        stepTime=diffTime/nTimeSteps;
-    }
-
+    
     std::vector<bpt::ptime> timeOut;
     std::vector<bpt::ptime> timeConstruct;
     std::vector<bpt::ptime> timeList;
     std::vector<bpt::time_duration> timeStorage;
-
-    //Create Time Steps by multiplying steps by durations
-    //Sets first step to be start time
-    //Sets last step to be stop time
-    if(nTimeSteps > 1){ //If there is only one timestep, just use startUtc
-        timeOut.push_back(startUtc);
-        for (int i=1;i<nTimeSteps-1;i++) //Subtract one to account for indexing beginning early && appending stop/start times
+    
+    // Create Time Steps by multiplying steps by durations
+    // Sets first step to be start time
+    // Sets last step to be stop time
+    if (nTimeSteps > 1)
+    {
+        //If there is only one timestep, just use start_UTC
+        timeOut.push_back(start_UTC);
+        for (int i = 1; i < nTimeSteps-1; i++) //Subtract one to account for indexing beginning early && appending stop/start times
         {
             bpt::time_duration specTime;
-            specTime=stepTime*i;
-            timeOut.push_back(startUtc+specTime);
+            specTime = stepTime*i;
+            timeOut.push_back(start_UTC+specTime);
         }
-        timeOut.push_back(endUtc);
+        timeOut.push_back(end_UTC);
+    } else
+    {
+        //if it's a single timestep, run the midpoint of start/end
+        timeOut.push_back(start_UTC+diffTime/2);
     }
-    else{
-        timeOut.push_back(startUtc+diffTime/2); //if it's a single timestep, run the midpoint of start/end
-    }
-    timeList=timeOut;
-
+    timeList = timeOut;
+    
     return timeList;
 }
 /**
@@ -2627,39 +2433,59 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
  * @param hour
  * @param minute
  * @param timeZone
- * @return
+ * @return Single datetime in UTC.
+ * notice that the input simulation time is in local time, the output time is in utc time.
  */
 bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, int day,
-                                                                       int hour, int minute,
-                                                                       string timeZone)
+                                                         int hour, int minute,
+                                                         string timeZone)
 {
-    bpt::ptime noTime;
-    blt::time_zone_ptr timeZonePtr;//Initialize time Zone
-    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);//Get Time Zone from Databse
-
-    bg::date xDate(year,month,day);
-    bpt::time_duration xTime(hour,minute,0,0);
-    bpt::ptime start_dst = timeZonePtr->dst_local_start_time(xDate.year()); //Get When DST Starts from TZ
-    bpt::ptime end_dst = timeZonePtr->dst_local_end_time(xDate.year()); //Get When DST ends from TZ
-
-    bpt::ptime xUTC(xDate,xTime); //Set the tIme to UTC, tz naive
-
-    blt::local_date_time xLocal = boost::local_time::local_sec_clock::local_time(timeZonePtr);
-    //like in get time list, check to see where we are WRT daylight savings time!
-    if(xUTC>start_dst && xUTC<end_dst)
+    blt::time_zone_ptr timeZonePtr; // Initialize time zone
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone); // Get time zone from database
+    
+    bg::date x_date(year,month,day); // Generate date object from input time
+    bpt::time_duration x_duration(hour,minute,0,0);  // Generate time past the date object from input time
+    
+    // use the time zone pointer to setup the full local_date_time object
+    blt::local_date_time x_local = blt::local_date_time(x_date,x_duration,timeZonePtr,blt::local_date_time::NOT_DATE_TIME_ON_ERROR);
+    
+    //// calculate and output the dst information, super useful for debugging, though may not always match what is expected
+    bpt::ptime x_ptime(x_date,x_duration); // Create a ptime for the date object and time duration, will be in the same time zone as the input time (in this case, local time)
+    bpt::ptime x_dstStartTransition = timeZonePtr->dst_local_start_time(x_date.year()); // Get when DST starts from TZ. Becomes "not-a-date-time" if no DST exists for the TZ
+    bpt::ptime x_dstEndTransition = timeZonePtr->dst_local_end_time(x_date.year()); // Get when DST ends from TZ
+    CPLDebug("STATION_FETCH","x_ptime: %s",boost::posix_time::to_simple_string(x_ptime).c_str());
+    CPLDebug("STATION_FETCH","x_dstStartTransition: %s",boost::posix_time::to_simple_string(x_dstStartTransition).c_str());
+    CPLDebug("STATION_FETCH","x_dstEndTransition: %s",boost::posix_time::to_simple_string(x_dstEndTransition).c_str());
+    
+    // determine if isDST to determine which timezone abbreviation to store
+    bool isDST = x_local.is_dst();
+    if ( isDST == true )
     {
-        CPLDebug("STATION_FETCH", "Time is within DST!");
-        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,true);
-    }
-    else
+        CPLDebug("STATION_FETCH", "Time is within DST");
+        storeTZAbbrev(timeZonePtr->dst_zone_abbrev());
+    } else
     {
-        CPLDebug("STATION_FETCH", "Time is outside DST!");
-        xLocal = blt::local_date_time(xDate,xTime,timeZonePtr,false);
+        CPLDebug("STATION_FETCH", "Time is outside DST");
+        storeTZAbbrev(timeZonePtr->std_zone_abbrev());
     }
-
-    bpt::ptime xxUTC=xLocal.utc_time(); //now that we know where we are, go back to utc as a corrected time object
-
-    return xxUTC;
+    
+    // now convert the found local date time (which is now corrected properly for dst) to utc time for output
+    bpt::ptime x_UTC = x_local.utc_time();
+    
+    // now warn if the time becomes not_a_date_time, so far the only cases for this have been at the one hour 
+    // of daylight savings time transition when both DST and ST exist.
+    boost::posix_time::ptime noTime;    // default constructor should fill it with not_a_date_time as the value
+    if ( x_UTC == noTime )
+    {
+        std::cout << "\nSTATION_FETCH warning: Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.\n" << std::endl;
+    }
+    
+    //// do debug output
+    CPLDebug("STATION_FETCH","x_local: %s",x_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
+    CPLDebug("STATION_FETCH","x_UTC: %s",boost::posix_time::to_simple_string(x_UTC).c_str());
+    
+    return x_UTC;
 }
 /**
  * @brief pointInitialization::checkFetchTimeDuration
@@ -2814,7 +2640,7 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     }
     CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
 
-    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest);
 
     return fetchGood;
 }
@@ -2850,7 +2676,7 @@ bool pointInitialization::fetchStationByName(std::string stationList,
         CPLDebug("STATION_FETCH", "WxData URL: %s", URL.c_str());
     }
 
-    bool fetchGood = fetchStationData(URL, timeZone, latest,timeList);
+    bool fetchGood = fetchStationData(URL, timeZone, latest);
 
     return fetchGood;
 }
@@ -3052,10 +2878,9 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
  * @param URL
  * @param timeZone
  * @param latest
- * @param timeList
  */
 
-bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest, std::vector<bpt::ptime> timeList)
+bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest)
 {
     OGRDataSourceH hDS;
     OGRLayerH hLayer;
@@ -3135,11 +2960,10 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         if (latest==false) //If it is a time series we name the file with both the start and stop time
         {
             timeStream2.imbue(locale(timeStream2.getloc(),facet));
-//            timeStream<<timeList[0]; //Old Way with cryptic UTC times
-//            timeStream2<<timeList.back();
+            
             timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
             timeStream2<<start_and_stop_times[1].local_time();
-            timeComponent = tzAbbrev+"-"+timeStream.str()+"-"+timeStream2.str();
+            timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
         }
         //Generate the filename
         if(csvName!="blank")

@@ -1,6 +1,50 @@
 Release Notes
 =============
 
+WindNinja 3.8.0
+---------------
+- Update LANDFIRE services used for downloading LCP files (#400, #411, and #451)
+
+- Add new weather models from NOMADS for Hawaii, Puerto Rico, and Guam (#457)
+
+- Add option to write binary VTK files (#416)
+
+WindNinja 3.7.5
+---------------
+- Restore GMTED data downloads following a change on the server that provides these data (#452)
+
+- Adjust coefficients used in estimating roughness and displacement heights to avoid wind profile interpolation issues (#456)
+
+WindNinja 3.7.4
+---------------
+- Fix issue related to URL generation causing LCP downloads to intermittently fail (#449, #448)
+
+- Temporarily disabled start-up messages for server migration (#450) 
+
+
+WindNinja 3.7.3
+---------------
+- Update Linux build script for Ubuntu 20.04 (#397)
+
+- Update Tutorial 4 with current weather model specs (#401, #425)
+
+- Fix an interpolation issue in point initialization (#418)
+
+- Fix example cfg for point initialization run syntax (#423)
+
+- Update continuous integration test (#402, #425)
+
+- Fix issue with fuel depth units (#426)
+
+- Fix issue where OpenFOAM output was occasionally incorrectly read from previous time steps (#430) 
+
+- Add debugging option for multi-timestep momentum solver simulations (#431)
+
+- Fix .atm file writing for multi-timestep point initialization runs (#432)
+
+- Fix time zone issue in point initialization (#412)
+
+
 WindNinja 3.7.2
 ---------------
 - Fix bug related to how roughness grids are set from LCP files (#398)

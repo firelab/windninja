@@ -28,8 +28,10 @@
 *.app
 
 # Build folder
-*build*
 debug*
+
+# Doxygen
+doxy.tag
 
 # vim
 *.swo
@@ -50,3 +52,12 @@ debug*
 
 # OpenFOAM
 *.dep
+
+# VS 2022 additions
+/.vs/
+/src/out/
+/CMakeSettings.json
+
+# VScode
+.vscode/
+

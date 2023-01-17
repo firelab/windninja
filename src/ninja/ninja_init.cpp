@@ -125,6 +125,16 @@ int NinjaInitialize()
     */
     CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
+
+    /*
+    ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
+    ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
+    ** >2.1.2. Test with CPL_CURL_VERBOSE.  For #231.
+    **
+    ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
+    */
+    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
     std::string osGdalData;
@@ -140,14 +150,6 @@ int NinjaInitialize()
     CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
 
     CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
-    /*
-    ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
-    ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
-    ** >2.1.2. Test with CPL_CURL_VERBOSE.  For #231.
-    **
-    ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
-    */
-    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
 #endif /* defined(FIRELAB_PACKAGE) */
 
@@ -189,35 +191,6 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
-    rc = TRUE;
-#ifndef DISABLE_THREDDS_UPDATE
-    /*
-    ** Disable VSI caching, this breaks nomads downloader if it's on.
-    */
-    CPLSetConfigOption( "VSI_CACHE", "FALSE" );
-
-    /* Try to update our thredds file */
-    rc = CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_THREDDS_UPDATE",
-                                                 "NO" ) );
-    if( rc == FALSE )
-    {
-        CPLDebug( "WINDNINJA", "Attempting to download the thredds.csv file" );
-        NinjaCheckThreddsData( (void*) &rc );
-        //CPLCreateThread( NinjaCheckThreddsData, (void*) &rc );
-    }
-#endif /* DISABLE_THREDDS_UPDATE */
-#ifdef NINJA_ENABLE_CALL_HOME
-    if( !CSLTestBoolean( CPLGetConfigOption( "NINJA_DISABLE_CALL_HOME", "NO" ) ) )
-
-    {
-        if( rc == TRUE )
-        {
-            CPLHTTPResult *poResult;
-            poResult = CPLHTTPFetch( "http://windninja.org/cgi-bin/ninjavisit?visit=1", NULL );
-            CPLHTTPDestroyResult( poResult );
-        }
-    }
-#endif
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     CPLPopErrorHandler();
     return 0;

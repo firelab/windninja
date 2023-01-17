@@ -1,0 +1,46 @@
+name: CMake
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-20.04
+   
+    steps:
+    - uses: actions/checkout@v3
+    
+    #install dependencies
+    - name: build dependencies
+      run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
+
+    - name: configure CMake
+      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      run: cmake -B ${{github.workspace}}/build -D CMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON
+
+    - name: make
+      working-directory: ${{github.workspace}}/build
+      # Build your program with the given configuration
+      #run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: make && sudo make install
+      
+    - name: set environment
+      run: export WINDNINJA_DATA=${{github.workspace}}/data
+
+    - name: test
+      working-directory: ${{github.workspace}}/build
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
+

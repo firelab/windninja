@@ -378,6 +378,13 @@ bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poSrcDS,
     oSourceSRS.SetWellKnownGeogCS( datum );
     oTargetSRS.importFromWkt( &pszPrj );
 
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if( poCT == NULL )
 	return false;
@@ -386,6 +393,7 @@ bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poSrcDS,
 	OGRCoordinateTransformation::DestroyCT( poCT );
 	return false;
     }
+
     OGRCoordinateTransformation::DestroyCT( poCT );
     return true;
 }
@@ -408,6 +416,13 @@ bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
 
     oSourceSRS.importFromWkt( &pszPrj );
     oTargetSRS.SetWellKnownGeogCS( datum );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
 
@@ -445,6 +460,13 @@ bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS,
   }
 
   oTargetSRS.SetWellKnownGeogCS(datum);
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
   poCT = OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS);
 
@@ -649,9 +671,15 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
 
-        // TODO(kyle): check on GDAL 3.x axis ordering here.
         oSourceSRS.SetWellKnownGeogCS( "WGS84" );
         oTargetSRS.importFromWkt( (char**)&pszWkt );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
         poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
         if( poCT == NULL )

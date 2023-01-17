@@ -45,13 +45,6 @@
 #include "wxStation.h"
 #include "ninjaCom.h"
 #include "ninja_conv.h"
-/*
-#ifdef WINDNINJA_EXPORTS
-    #define WINDNINJA_API __declspec(dllexport) 	
-#else
-    #define WINDNINJA_API
-#endif
-*/
 
 struct WindNinjaInputs
 {

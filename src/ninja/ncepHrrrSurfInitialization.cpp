@@ -146,62 +146,39 @@ void ncepHrrrSurfInitialization::checkForValidData()
 * on filename and id of 10u band.
 * @param fileName grib2 filename
 *
+* PCM 01/04/23: account for different variable sets/versions of HRRR. We cannot rely on specific band numbers as the sources and/or filters
+* for the HRRR datasets might differ
+* TODO - this should check for all bands we need and keep respective band numbers so that we don't have to re-check later
+*
 * @return true if the forecast is a NCEP HRRR forecast
 */
 
 bool ncepHrrrSurfInitialization::identify( std::string fileName )
 {
-    bool identified = true;
-
-    if( fileName.find("nam") != fileName.npos ) {
-        identified = false;
-        return identified;
-    }
-
-    //ID based on 10u band
-    GDALDataset *srcDS;
-    srcDS = (GDALDataset*)GDALOpenShared( fileName.c_str(), GA_ReadOnly );
+    GDALDataset *srcDS = (GDALDataset*)GDALOpenShared( fileName.c_str(), GA_ReadOnly );
 
     if( srcDS == NULL ) {
-        CPLDebug( "ncepHRRRSurfaceInitialization::identify()",
-                "Bad forecast file" );
+        CPLDebug( "ncepHRRRSurfaceInitialization::identify()", "Bad forecast file" );
         return false;
-    }
 
-    if( srcDS->GetRasterCount() < 8 )
-    {
-        /* Short circuit */
-        GDALClose( (GDALDatasetH)srcDS );
-        identified = false;
-        return identified;
-    }
-    GDALRasterBand *poBand = srcDS->GetRasterBand( 33 ); //2010 structure
-    const char *gc;
-    gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-    std::string bandName( gc );
+    } else {
+        bool identified = false;
+        const int nRasterSets = srcDS->GetRasterCount();
 
-    if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-        poBand = srcDS->GetRasterBand( 49 ); //files after 2010 have different structure
-        gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-        bandName = gc;
-        if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-            poBand = srcDS->GetRasterBand( 50 ); //2012 files have different structure
-            gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-            bandName = gc;
-            if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-                poBand = srcDS->GetRasterBand( 53 ); //2013 files have different structure
-                gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
-                bandName = gc;
-                if( bandName.find( "u-component of wind [m/s]" ) == bandName.npos ){
-                    identified = false;
+        for (int i=1; i<=nRasterSets && !identified; i++) {
+            GDALRasterBand *poBand = srcDS->GetRasterBand(i);
+            const char* comment = poBand->GetMetadataItem("GRIB_COMMENT");
+            if (comment && strcmp(comment, "u-component of wind [m/s]") == 0){
+                const char* description = poBand->GetDescription();
+                if (strncmp(description, "10[m] ", 6) == 0){
+                    identified = true;
                 }
             }
         }
+
+        GDALClose( (GDALDatasetH)srcDS );
+        return identified;
     }
-    GDALClose( (GDALDatasetH)srcDS );
-
-    return identified;
-
 }
 
 /**
@@ -233,6 +210,9 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     GDALRasterBand *poBand;
     const char *gc;
 
+    double dfNoData;
+    int pbSuccess = false;
+
     //get time list
     std::vector<boost::local_time::local_date_time> timeList( getTimeList( input.ninjaTimeZone ) );
 
@@ -243,22 +223,27 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     {
         if(input.ninjaTime == timeList[i])
         {
-            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            cout<<"input.ninjaTime = "<<input.ninjaTime<<endl;
+            for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
                 std::string bandName( gc );
 
-                if( bandName.find( "Temperature [K]" ) != bandName.npos ){
+                if( bandName.find( "Temperature [K]" ) != bandName.npos ||
+                    bandName.find( "Temperature [C]" ) != bandName.npos){
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "2-HTGL" ) != bandName.npos ){
                         bandList.push_back( j );  // 2t 
                         break;
                     }
+                    if( bandName.find( "Temperature [C]" ) != bandName.npos){ 
+                        airGrid += 273.15;
+                    }
                 }
             }
-            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
@@ -273,7 +258,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                     }
                 }
             }
-            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
@@ -283,12 +268,13 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
-                        bandList.push_back( j );  // 10u
+                        bandList.push_back( j );  // 10u    
+                        dfNoData = poBand->GetNoDataValue( &pbSuccess );
                         break;
                     }
                 }
             }
-            for(unsigned int j = 1; j < srcDS->GetRasterCount(); j++)
+            for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
@@ -297,7 +283,8 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
-                    if( bandName.find( "0-RESERVED" ) != bandName.npos ){
+                    if( bandName.find( "0-RESERVED" ) != bandName.npos ||
+                        bandName.find( "0-EATM" ) != bandName.npos){
                         bandList.push_back( j );  // Total cloud cover in % 
                         break;
                     }
@@ -324,11 +311,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     GDALWarpOptions* psWarpOptions;
 
     srcWkt = srcDS->GetProjectionRef();
-
-    poBand = srcDS->GetRasterBand( 9 );
-    int pbSuccess;
-    double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-
     psWarpOptions = GDALCreateWarpOptions();
 
     int nBandCount = bandList.size();
@@ -415,7 +397,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
-    airGrid += 273.15;
 
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );
