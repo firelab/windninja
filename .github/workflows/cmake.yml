@@ -21,10 +21,10 @@ jobs:
     - uses: actions/checkout@v3
     
     #install dependencies
-    - name: Build Dependencies
+    - name: build dependencies
       run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
 
-    - name: Configure CMake
+    - name: configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -B ${{github.workspace}}/build -D CMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON
@@ -36,9 +36,9 @@ jobs:
       run: make && sudo make install
       
     - name: set environment
-      run: export WINDNINJA_DATA=$PWD/data
+      run: export WINDNINJA_DATA=${{github.workspace}}/data
 
-    - name: Test
+    - name: test
       working-directory: ${{github.workspace}}/build
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
