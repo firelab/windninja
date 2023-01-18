@@ -31,9 +31,9 @@ jobs:
       run: make && sudo make install
       
     - name: set environment
-      run: export WINDNINJA_DATA=${{github.workspace}}/data && echo $WINDNINJA_DATA && echo $PWD    
-
+      run: echo "WINDNINJA_DATA=${{github.workspace}}/data" >> $GITHUB_ENV
+      
     - name: test
       working-directory: ${{github.workspace}}/build
-      run: export WINDNINJA_DATA=${{github.workspace}} && ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
+      run: echo "${{env.WINDNINJA_DATA}}" && ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
 
