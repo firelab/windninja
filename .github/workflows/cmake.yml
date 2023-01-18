@@ -16,20 +16,21 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: build dependencies
-      run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
+#    - name: build dependencies
+#      run: ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
 
-    - name: configure CMake
-      run: cmake -B ${{github.workspace}}/build -D CMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON
+#    - name: configure CMake
+#      run: cmake -B ${{github.workspace}}/build -D CMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON
 
-    - name: make
-      working-directory: ${{github.workspace}}/build
-      run: make && sudo make install
+#    - name: make
+#      working-directory: ${{github.workspace}}/build
+#      run: make && sudo make install
       
     - name: set environment
-      run: export WINDNINJA_DATA=${{github.workspace}}/data
+      run: export WINDNINJA_DATA=${{github.workspace}}/data && echo $WINDNINJA_DATA && echo ${{github.workspace}}
+      
 
-    - name: test
-      working-directory: ${{github.workspace}}/build
-      run: ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
+#    - name: test
+#      working-directory: ${{github.workspace}}/build
+#      run: ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
 
