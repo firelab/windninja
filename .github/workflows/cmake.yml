@@ -27,7 +27,10 @@ jobs:
 #      run: make && sudo make install
       
     - name: set environment
-      run: export WINDNINJA_DATA=${{github.workspace}}/data && echo $WINDNINJA_DATA && echo ${{github.workspace}} && echo ../${{github.workspace}} && echo $PWD
+      run: export WINDNINJA_DATA=${{github.workspace}}/data && echo $WINDNINJA_DATA && echo ${{github.workspace}} && echo ${{github.workspace}}/../ && echo $PWD
+      
+    - name: mkdir
+      run: mkdir ../build && cd ../build && echo $PWD
       
 
 #    - name: test
