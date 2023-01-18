@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  WINDNINJA_DATA: ${{github.workspace}}/data
 
 jobs:
   build:
@@ -30,10 +31,6 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: make && sudo make install
       
-    - name: set environment
-      run: echo "WINDNINJA_DATA=${{github.workspace}}/data" >> $GITHUB_ENV
-      
     - name: test
       working-directory: ${{github.workspace}}/build
       run: echo "${{env.WINDNINJA_DATA}}" && ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
-
