@@ -1,4 +1,4 @@
-name: CMake
+name: Testing
 
 on:
   push:
@@ -33,4 +33,5 @@ jobs:
       
     - name: test
       working-directory: ${{github.workspace}}/build
-      run: echo "${{env.WINDNINJA_DATA}}" && ctest --output-on-failure -E 'landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
+      #skip cfg tests until UCAR THREDDS service is fixed
+      run: echo "${{env.WINDNINJA_DATA}}" && ctest --output-on-failure -E 'cfg_ucar_rap|cfg_ucar_ndfd|cfg_ucar_gfs|landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'
