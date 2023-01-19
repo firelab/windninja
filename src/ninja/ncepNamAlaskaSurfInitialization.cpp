@@ -36,7 +36,7 @@
 ncepNamAlaskaSurfInitialization::ncepNamAlaskaSurfInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground1";
-    path = "/thredds/ncss/grib/NCEP/NAM/Alaska_11km/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
+    path = "/thredds/ncss/grid/grib/NCEP/NAM/Alaska_11km/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
     LoadFromCsv();
 }
 
