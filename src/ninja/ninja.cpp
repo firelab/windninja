@@ -3975,8 +3975,37 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-  input.ninjaTimeZone =
-      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if (timeZoneString == "auto-detect" || timeZoneString == "") 
+    {
+        double longitude = 0;
+        double latitude = 0;
+        GDALDataset *poDS = (GDALDataset *)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+        if (poDS == NULL) {
+            GDALClose((GDALDatasetH)poDS);
+            ostringstream os;
+            os << "Could not open datasource " << input.dem.fileName << ".";
+            throw std::runtime_error(os.str());
+        }
+        GDALGetCenter(poDS, &longitude, &latitude);
+        GDALClose((GDALDatasetH)poDS);
+        std::string tz = FetchTimeZone(longitude, latitude, NULL);
+        if (tz == "") {
+            ostringstream os;
+            os << "Could not detect timezone string with FetchTimeZone lat="
+               << latitude << "lon=" << longitude << ".";
+            throw std::runtime_error(os.str());
+        } 
+        else 
+        {
+            input.ninjaTimeZone =
+                globalTimeZoneDB.time_zone_from_region(tz);
+        }
+    } 
+    else 
+    {
+        input.ninjaTimeZone =
+            globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    }
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;
