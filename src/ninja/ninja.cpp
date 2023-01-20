@@ -3983,7 +3983,7 @@ void ninja::set_date_time(int const &yr, int const &mo, int const &day, int cons
         if (poDS == NULL) {
             GDALClose((GDALDatasetH)poDS);
             ostringstream os;
-            os << "Could not open datasource " << input.dem.fileName << ".";
+            os << "Could not open datasource " << input.dem.fileName << " in ninja::set_date_time().";
             throw std::runtime_error(os.str());
         }
         GDALGetCenter(poDS, &longitude, &latitude);
@@ -3991,8 +3991,8 @@ void ninja::set_date_time(int const &yr, int const &mo, int const &day, int cons
         std::string tz = FetchTimeZone(longitude, latitude, NULL);
         if (tz == "") {
             ostringstream os;
-            os << "Could not detect timezone string with FetchTimeZone lat="
-               << latitude << "lon=" << longitude << ".";
+            os << "Could not detect timezone string with FetchTimeZone() dfY="
+               << latitude << " dfX=" << longitude << " in ninja::set_date_time().";
             throw std::runtime_error(os.str());
         } 
         else 
@@ -4004,7 +4004,7 @@ void ninja::set_date_time(int const &yr, int const &mo, int const &day, int cons
     else 
     {
         input.ninjaTimeZone =
-            globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+            globalTimeZoneDB.time_zone_from_region(timeZoneString);
     }
     if( NULL ==  input.ninjaTimeZone )
     {
