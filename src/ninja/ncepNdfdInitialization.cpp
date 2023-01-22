@@ -36,7 +36,7 @@
 ncepNdfdInitialization::ncepNdfdInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground1";
-    path = "/thredds/ncss/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best/LambertConformal_1377X2145-38p22N-95p43W?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
+    path = "/thredds/ncss/grid/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
     LoadFromCsv();
 }
 

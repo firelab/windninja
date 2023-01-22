@@ -43,13 +43,30 @@ class volVTK
 public:
 
 	volVTK();
-	volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, int i, int j, int k, std::string filename);
+    volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
+           wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+           int i, int j, int k, std::string filename, std::string vtkWriteFormat);
 	~volVTK();
 
-	bool writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, int i, int j, int k, std::string filename);
+    bool writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
+                     wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+                     int i, int j, int k, std::string filename);
     bool writeMeshVolVTK(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
-                         int i, int j, int k,
-                         std::string filename);
+                         int i, int j, int k, std::string filename);
+    
+    
+    bool isBigEndian;
+    void determineEndianness();
+    
+    template <typename T>
+    void swapEnd(T& var);
+    
+    bool writeVolVTK_binary(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
+                            wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
+                            int i, int j, int k, std::string filename);
+    bool writeMeshVolVTK_binary(wn_3dArray& x, wn_3dArray& y, wn_3dArray& z,
+                                int i, int j, int k, std::string filename);
+
 private:
 	
 };

@@ -11,7 +11,7 @@ sudo -E apt-get install -y pkg-config libfontconfig1-dev libcurl4-gnutls-dev lib
                            libboost-test-dev libsqlite3-dev sqlite3
 
 #Get and build poppler for PDF support in GDAL
-wget http://poppler.freedesktop.org/$POPPLER.tar.xz
+wget https://poppler.freedesktop.org/$POPPLER.tar.xz
 tar -xvf $POPPLER.tar.xz 
 cd $POPPLER/
 ./configure --prefix=$PREFIX --enable-xpdf-headers
@@ -20,7 +20,7 @@ sudo make install
 cd ..
 
 #Get and build proj
-wget http://download.osgeo.org/proj/$PROJ.tar.gz
+wget https://download.osgeo.org/proj/$PROJ.tar.gz
 tar xvfz $PROJ.tar.gz
 cd $PROJ
 ./configure --prefix=$PREFIX
@@ -30,7 +30,7 @@ sudo make install
 cd ..
 
 #Get and build GDAL with poppler support
-wget http://download.osgeo.org/gdal/${GDAL:5}/$GDAL.tar.gz
+wget https://download.osgeo.org/gdal/${GDAL:5}/$GDAL.tar.gz
 tar -xvf $GDAL.tar.gz 
 cd $GDAL/
 ./configure --prefix=$PREFIX --with-poppler=$PREFIX
