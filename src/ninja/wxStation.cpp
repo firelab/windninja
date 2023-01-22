@@ -760,11 +760,7 @@ int wxStation::GetFirstStationLine(const char *xFilename)
         return 2;
     }
 
-
-
-
-
-
+    throw std::runtime_error("invalid station file");
 }
 
 /**Write a csv file with no data, just a header

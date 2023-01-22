@@ -1078,6 +1078,8 @@ int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
     {
         return 2;
     }
+
+    throw std::runtime_error("invalid index combination");
 }
 
 /**
