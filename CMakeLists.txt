@@ -15,7 +15,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
+
 project(WindNinja)
 
 # Needed for FindNetCDF and GET_DATE()
@@ -76,6 +78,10 @@ set(WINDNINJA_VERSION ${VER_STR})
 set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
+
+# set the C++ level (at least required for clang++ on macOS)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Locate third party libs
 include(FindBoost)

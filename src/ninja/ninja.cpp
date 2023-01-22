@@ -611,12 +611,13 @@ double ninja::getSmallestRadiusOfInfluence()
 	return smallest;
 }
 
-/*
 
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
 //    If this solver diverges, try MINRES from PetSc below...
-/**Method called in ninja::simulate_wind() to solve the matrix equations.
+
+/**
+ * Method called in ninja::simulate_wind() to solve the matrix equations.
  * This is a congugate gradient solver.
  * It seems to be the fastest, but is not monotonic convergence (residual oscillates a bit up and down).
  * If this solver diverges, try the MINRES from PetSc which is commented out below...
@@ -2700,6 +2701,94 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
+
+void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_Grid( input.cldFile.c_str(), 1);
+            angGrid.write_Grid( input.angFile.c_str(), 0);
+            velGrid.write_Grid( input.velFile.c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
+            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
+            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
+            angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
+            velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
+            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
+            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+        }
+    }
+
+    if (input.asciiUvOutFlag) {
+        writeAsciiUvOutputFiles( angGrid, velGrid);
+    }
+}
+
+// write u,v wind vector output files
+void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    AsciiGrid<double> uGrid(angGrid);
+    AsciiGrid<double> vGrid(angGrid);
+    setUvGrids( angGrid, velGrid, uGrid, vGrid);
+
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
+            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
+            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
+            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
+            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
+        }
+    }
+}
+
+void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
+{
+    int nRows = angGrid.get_nRows();
+    int nCols = angGrid.get_nCols();
+    double pi180 = M_PI / 180;
+
+    for (int m=0; m<nRows; m++){
+        for (int n=0; n<nCols; n++) {
+            double vel = velGrid.get_cellValue(m,n);
+            double ang = angGrid.get_cellValue(m,n);
+
+            double deg = 270.0 - ang;  // uv angle is ccw from W
+            if (deg < 0) deg += 360;
+            double rad = deg * pi180;
+
+            double u = cos(rad) * vel;
+            double v = sin(rad) * vel;
+
+            uGrid.set_cellValue(m,n,u);
+            vGrid.set_cellValue(m,n,v);
+        }
+    }
+}
+
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
@@ -2729,12 +2818,11 @@ void ninja::writeOutputFiles()
 	#pragma omp parallel sections
 	{
 
-
 	//write FARSITE files
 	#pragma omp section
 	{
 	try{
-		if(input.asciiOutFlag==true)
+		if(input.asciiOutFlag)
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
 			velTempGrid=NULL;
@@ -2761,9 +2849,7 @@ void ninja::writeOutputFiles()
             angTempGrid->BufferToOverlapGrid(demGrid);
             velTempGrid->BufferToOverlapGrid(demGrid);
 
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+            writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
 			#ifdef FRICTION_VELOCITY
 			if(input.frictionVelocityFlag == 1){
@@ -4581,20 +4667,9 @@ void ninja::set_pdfDEM(std::string dem_file_name)
     input.pdfDEMFileName = dem_file_name;
 }
 
-
 void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
-}
-
-void ninja::set_ascii4326OutFlag(bool flag)
-{
-    input.ascii4326OutFlag = flag;
-}
-
-void ninja::set_json4326OutFlag(bool flag)
-{
-    input.json4326OutFlag = flag;
 }
 
 void ninja::set_wxModelAsciiOutFlag(bool flag)
@@ -5108,4 +5183,33 @@ void ninja::dumpMemory()
 {
     input.dem.deallocate();
     input.surface.deallocate();
+}
+
+
+// derive a new pathname from the given one, swapping the path (if given) and optionally applying a regex replacement
+std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement) 
+{
+#ifdef WIN32
+    const char fs = '\\';
+#else
+    const char fs = '/';
+#endif
+
+    std::string s = pathname;
+
+    if (newpath) {
+        int i = s.rfind(fs);
+        if (i < 0) { // no path
+            s.insert(0,newpath);
+            s.insert(strlen(newpath), &fs, 1);
+        } else {
+            s.replace(0, i, newpath);
+        }
+    }
+
+    if (pattern && replacement) {
+        s = std::regex_replace(s, std::regex(pattern), replacement);
+    }
+
+    return s;
 }

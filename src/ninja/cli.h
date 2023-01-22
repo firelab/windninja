@@ -63,7 +63,7 @@ void verify_option_set(const po::variables_map& vm, const char* optn);
 // in the key literal results in undefined behavior that can corrupt memory miles away. 
 // Alternatively keys could be defined/used as constants to catch this at compile time
 template<typename T>
-inline T option (const po::variables_map& vm, const char* key) {
+inline T option_val (const po::variables_map& vm, const char* key) {
     const po::variable_value &vv = vm[key];
     if (vv.empty()) {
         throw logic_error(std::string("no value for option '") + key + "' set.\n");
