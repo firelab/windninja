@@ -51,8 +51,8 @@ class Array2D
     Array2D(const Array2D& A);
     ~Array2D();
 
-    int get_numRows() const;
-    int get_numCols() const;
+    inline int get_numRows() const;
+    inline int get_numCols() const;
     void set_numRows(unsigned int m);
     void set_numCols(unsigned int n);
     void setMatrix(unsigned nRows, unsigned nCols, T noDataVal);
@@ -64,7 +64,7 @@ class Array2D
     T max() const;
     T min() const;
     double mean() const;
-    double* sortData();
+    T* sortData();
     void dumpMatrix();
     void dumpMatrix(std::string file);
 
@@ -174,7 +174,7 @@ Array2D<T>::~Array2D()
 *@return number of rows in array
 */
 template<typename T>
-int Array2D<T>::get_numRows() const
+inline int Array2D<T>::get_numRows() const
 {
     return rows;
 }
@@ -183,7 +183,7 @@ int Array2D<T>::get_numRows() const
 *@return number of columns in array
 */
 template<typename T>
-int Array2D<T>::get_numCols() const
+inline int Array2D<T>::get_numCols() const
 {
     return cols;
 }
@@ -356,9 +356,9 @@ inline double Array2D<T>::mean() const
 *@return returns a pointer to the new sorted data array
 */
 template<typename T>
-double* Array2D<T>::sortData()
+T* Array2D<T>::sortData()
 {
-    double* sorted = new double[matrix.size()];
+    T* sorted = new T[matrix.size()];
     for(int i=0; i<matrix.size(); i++)
     {
         sorted[i] = matrix[i];

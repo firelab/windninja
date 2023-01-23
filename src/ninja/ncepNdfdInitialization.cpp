@@ -108,6 +108,8 @@ std::vector<blt::local_date_time> ncepNdfdInitialization::getTempTimeList(eTempT
         return wxModelInitialization::getTimeList("Maximum_temperature_height_above_ground_12_Hour_Maximum", timeZonePtr);
     else if(type == min)
         return wxModelInitialization::getTimeList("Minimum_temperature_height_above_ground_12_Hour_Minimum", timeZonePtr);
+
+    throw std::runtime_error("invalid timelist spec");
 }
 
 /**

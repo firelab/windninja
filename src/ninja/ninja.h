@@ -325,7 +325,14 @@ public:
     void set_shpOutFlag(bool flag);
     void set_wxModelShpOutFlag(bool flag);
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
+
     void set_asciiOutFlag(bool flag);
+    inline void set_asciiAaigridOutFlag(bool flag) { input.asciiAaigridOutFlag = flag; }
+    inline void set_asciiJsonOutFlag(bool flag) { input.asciiJsonOutFlag = flag; }
+    inline void set_asciiUtmOutFlag(bool flag) { input.asciiUtmOutFlag = flag; }
+    inline void set_ascii4326OutFlag(bool flag) { input.ascii4326OutFlag = flag; }
+    inline void set_asciiUvOutFlag(bool flag) { input.asciiUvOutFlag = flag; }
+
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
     void set_txtOutFlag(bool flag);
@@ -470,7 +477,14 @@ private:
     bool matched(int iter);
     void writeOutputFiles(); 
     void deleteDynamicMemory();
+
+private:
+    void setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid);
+    void writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 };
+
+std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);
 
 #endif	//NINJA_HEADER
 
