@@ -30,6 +30,7 @@
 #ifndef NINJA_EXCEPTION_H
 #define NINJA_EXCEPTION_H
 
+#include <string.h>
 #include <stdexcept>
 #include <vector>
 #include <string>
