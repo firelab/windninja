@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <regex>
 #include "ninjaException.h"
+#include "ninjaMathUtility.h"
 
 #include "gdal.h"
 #include "gdal_priv.h"

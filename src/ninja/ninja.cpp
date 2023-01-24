@@ -352,6 +352,7 @@ do
 		//initialize
                 init.reset(initializationFactory::makeInitialization(input));
                 init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif

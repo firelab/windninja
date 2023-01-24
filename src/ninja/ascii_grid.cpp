@@ -926,7 +926,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     {
         for(int j = 0;j < data.get_numCols();j++)
         {
-            if(get_cellValue(i,j) == get_noDataValue())
+            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
                 numNoDataValues++;
         }
     }
@@ -950,7 +950,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == get_noDataValue())
+                    if(get_cellValue(i, j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
                     {
                         sum = 0.0;
                         nValues = 0;
@@ -962,7 +962,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
                                     jj < 0 || jj >= get_nCols())
                                     continue;
 
-                                if(get_cellValue(ii, jj) == get_noDataValue())
+                                if(get_cellValue(ii, jj) == get_noDataValue() || cplIsNan(get_cellValue(ii, jj)))
                                     continue;
 
                                 sum = sum + get_cellValue(ii, jj);
