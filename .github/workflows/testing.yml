@@ -25,6 +25,13 @@ jobs:
           ${{github.workspace}}/gdal-3.2.1
         key: ${{ runner.os }}-windDep
         restore-keys: ${{ runner.os }}-windDep
+        
+    - name: check cacheing, dir contents
+      run: |
+        echo "running pwd"
+        pwd
+        echo "running ls -la"
+        ls -la
     
     - name: build dependencies
       if: steps.cacheDep.outputs.cache-hit != 'true'
