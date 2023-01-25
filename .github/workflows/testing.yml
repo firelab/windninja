@@ -41,10 +41,10 @@ jobs:
         cd ${{github.workspace}}/poppler-0.23.4
         ./configure --prefix=/usr/local --enable-xpdf-headers
         sudo make install
-        cd ../${{github.workspace}}/proj-6.3.2
+        cd ${{github.workspace}}/proj-6.3.2
         ./configure --prefix=/usr/local
         sudo make install
-        cd ../${{github.workspace}}/gdal-3.2.1
+        cd ${{github.workspace}}/gdal-3.2.1
         ./configure --prefix=/usr/local --with-poppler=/usr/local
         sudo make install
         # install qt
