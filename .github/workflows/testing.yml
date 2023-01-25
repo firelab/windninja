@@ -39,13 +39,13 @@ jobs:
                                    libboost-test-dev libsqlite3-dev sqlite3
         # sudo make poppler, proj, and gdal
         cd ${{github.workspace}}/poppler-0.23.4
-        ./configure --prefix=$PREFIX --enable-xpdf-headers
+        ./configure --prefix=/usr/local --enable-xpdf-headers
         sudo make install
         cd ../${{github.workspace}}/proj-6.3.2
-        ./configure --prefix=$PREFIX
+        ./configure --prefix=/usr/local
         sudo make install
         cd ../${{github.workspace}}/gdal-3.2.1
-        ./configure --prefix=$PREFIX --with-poppler=$PREFIX
+        ./configure --prefix=/usr/local --with-poppler=/usr/local
         sudo make install
         # install qt
         sudo add-apt-repository ppa:rock-core/qt4
