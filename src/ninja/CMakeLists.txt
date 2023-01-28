@@ -93,6 +93,7 @@ set(NINJA_SOURCES air.cpp
                   surfaceVectorField.cpp
                   SurfProperties.cpp
                   volVTK.cpp
+                  volNetcdf.cpp
                   WindNinjaInputs.cpp
                   windProfile.cpp
                   wn_3dArray.cpp

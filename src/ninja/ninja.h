@@ -68,6 +68,7 @@
 #include "ShapeVector.h"
 #include "preconditioner.h"
 #include "volVTK.h"
+#include "volNetcdf.h"
 #include "ninjaCom.h"
 #include "ninjaException.h"
 #include "mesh.h"

@@ -2803,7 +2803,7 @@ void ninja::writeOutputFiles()
 	{
 		try{
             // can pick between "ascii" and "binary" format for the vtk write format
-            std::string vtkWriteFormat = "binary";//"binary";//"ascii";
+            std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
 			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat);
 		}catch (exception& e)
 		{
@@ -2811,6 +2811,23 @@ void ninja::writeOutputFiles()
 		}catch (...)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+		}
+	}
+    
+    //Write volume data to netcdf format (always in m/s?)
+    bool volNetcdfOutFlag = true;
+    if(volNetcdfOutFlag)
+    {
+        try{
+            // set a manual filename for now
+            std::string volNetcdfFile = "/home/atw09001/Downloads/out.nc";
+			volNetcdf netcdfOutput(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, volNetcdfFile,  input.dem.prjString, mesh.meshResolution);
+		}catch (exception& e)
+		{
+			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume netcdf file writing: %s", e.what());
+		}catch (...)
+		{
+			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume netcdf file writing: Cannot determine exception type.");
 		}
 	}
 
