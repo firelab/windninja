@@ -2,18 +2,18 @@ A diagnostic wind model developed for use in wildland fire modeling {#mainpage}
 ---
 
 Web:
-http://firelab.github.io/windninja/
+http://weather.firelab.org/windninja/
 
 Source & wiki:
 https://github.com/firelab/windninja
 
 FAQ:
-https://firelab.github.io/windninja/faq/
+https://weather.firelab.org/windninja/faq.html
 
 ---
 
 ### User Documentation
-[WindNinja Tutorials](https://firelab.github.io/windninja/tutorial/)
+[WindNinja Tutorials](https://weather.firelab.org/windninja/tutorials/)
 
 ### Developer Documentation
 [API Tutorial](https://weather.firelab.org/windninja_api/md_doc_doxygen_api_example.html)
