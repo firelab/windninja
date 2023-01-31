@@ -41,7 +41,20 @@ volNetcdf::volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3d
 {
     //std::cout << "nCols = \"" << nCols << "\", nRows = \"" << nRows << "\", nLayers = \"" << nLayers << "\"" << std::endl;
     
-    prjString_latLong = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
+    //prjString_latLong = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]";   // original, found online
+    //prjString_latLong = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]";   // output from exportToWkt
+    
+    // better method for getting the CORRECT lat/long projection string, the original one that was used seemed to cause problems
+    // nope, looks like the problem is caused by something else. Still seems best to get the lat/long projection string from code libraries instead of using a hard coded value
+    //  so I'm keeping this here. Plus these are good examples for the various ways to get the value.
+    OGRSpatialReference oSRS;
+    char* pszWKT = NULL;
+    oSRS.SetWellKnownGeogCS( "EPSG:4326" );
+    //oSRS.importFromEPSG( 4326 );  // alternative method
+    //oSRS.SetWellKnownGeogCS("WGS84");  // yet another alternative method, I'm surprised that this one works as it doesn't seem as specific as the other ones. Same result though
+    oSRS.exportToWkt( &pszWKT );    // normally only needed for getting the spatial reference in terms of projection string, which is required for warpVRT-like calls
+    prjString_latLong = pszWKT;
+    // seems to still be causing problems, because lat values are still not correct, might have to skip trying to use prjString for the transformation
     
     writeVolNetcdf(u, v, w, x, y, z, nCols, nRows, nLayers, filename,  prjString, meshRes, convertToTrueLatLong);
 }
@@ -303,7 +316,10 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
         oSourceSRS.importFromWkt( prjString.c_str() );     // .SetWellKnownGeogCS( datum); is used for datum inputs
-        oTargetSRS.importFromWkt( prjString_latLong.c_str() );
+        //oTargetSRS.importFromWkt( prjString_latLong.c_str() );    // using prjString for both seems to cause problems, examples always have the lat/long one as a datum rather than prjString
+        oTargetSRS.SetWellKnownGeogCS( "EPSG:4326" );
+        //oTargetSRS.importFromEPSG( 4326 );  // alternative method
+        //oTargetSRS.SetWellKnownGeogCS("WGS84");  // yet another alternative method, I'm surprised that this one works as it doesn't seem as specific as the other ones. Same result though
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
