@@ -37,10 +37,13 @@ volNetcdf::volNetcdf()
 volNetcdf::volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                      wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                      int nCols, int nRows, int nLayers, std::string filename,  
-                     std::string prjString, double meshRes)
+                     std::string prjString, double meshRes, bool convertToTrueLatLong)
 {
     //std::cout << "nCols = \"" << nCols << "\", nRows = \"" << nRows << "\", nLayers = \"" << nLayers << "\"" << std::endl;
-    writeVolNetcdf(u, v, w, x, y, z, nCols, nRows, nLayers, filename,  prjString, meshRes);
+    
+    prjString_latLong = "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]]";
+    
+    writeVolNetcdf(u, v, w, x, y, z, nCols, nRows, nLayers, filename,  prjString, meshRes, convertToTrueLatLong);
 }
 
 volNetcdf::~volNetcdf()
@@ -51,7 +54,7 @@ volNetcdf::~volNetcdf()
 bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                                wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                                int nCols, int nRows, int nLayers, std::string filename,  
-                               std::string prjString, double meshRes)
+                               std::string prjString, double meshRes, bool convertToTrueLatLong)
 {
     
     // define error handling index var
@@ -68,8 +71,15 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     std::string WindNinja_Version = NINJA_VERSION_STRING;
     if ((retval = nc_put_att_text( ncid, NC_GLOBAL, "WindNinja_Version", WindNinja_Version.length(), WindNinja_Version.c_str() )))
         ERR(retval);
-    if ((retval = nc_put_att_text( ncid, NC_GLOBAL, "PROJCS", prjString.length(), prjString.c_str() )))
-        ERR(retval);
+    if ( convertToTrueLatLong == true )
+    {
+        if ((retval = nc_put_att_text( ncid, NC_GLOBAL, "PROJCS", prjString_latLong.length(), prjString_latLong.c_str() )))
+            ERR(retval);
+    } else
+    {
+        if ((retval = nc_put_att_text( ncid, NC_GLOBAL, "PROJCS", prjString.length(), prjString.c_str() )))
+            ERR(retval);
+    }
     if ((retval = nc_put_att_double( ncid, NC_GLOBAL, "Mesh_Resolution", NC_DOUBLE, 1, &meshRes )))
         ERR(retval);
     
@@ -141,7 +151,7 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     std::string z_units = "m";
     if ((retval = nc_put_att_text( ncid, z_varid, "units", z_units.length(), z_units.c_str() )))
         ERR(retval);
-    std::string z_long_name = "3D point array of position, z component";
+    std::string z_long_name = "3D point array of position, z component, in units of above ground level (AGL)";
     if ((retval = nc_put_att_text( ncid, z_varid, "long_name", z_long_name.length(), z_long_name.c_str() )))
         ERR(retval);
     std::string z_coords = "x y";
@@ -151,11 +161,25 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     
     // now create all other variables
     
+    int terrain_varid;     // ID for holding the terrain variable
+    //if ((retval = nc_def_var( ncid, "terrain", NC_DOUBLE, dimids_2D.size(), &dimids_2D[0], &terrain_varid )))    // for vector form of dimids. &dimids[0] converts from std::vector<int> to pointer to array int*
+    if ((retval = nc_def_var( ncid, "terrain", NC_DOUBLE, dimids_2D.size(), dimids_2D.data(), &terrain_varid )))    // for improved vector form of dimids, .data() acts like &dimids[0] but is safe from empty vectors, only works for c++ 11 or greater though
+        ERR(retval);
+    std::string terrain_units = "m";
+    if ((retval = nc_put_att_text( ncid, terrain_varid, "units", terrain_units.length(), terrain_units.c_str() )))
+        ERR(retval);
+    std::string terrain_long_name = "terrain height in units of above sea level (ASL)";
+    if ((retval = nc_put_att_text( ncid, terrain_varid, "long_name", terrain_long_name.length(), terrain_long_name.c_str() )))
+        ERR(retval);
+    std::string terrain_coords = "x y";
+    if ((retval = nc_put_att_text( ncid, terrain_varid, "coordinates", terrain_coords.length(), terrain_coords.c_str() )))
+        ERR(retval);
+    
     int u_varid;     // ID for holding the u variable
     //if ((retval = nc_def_var( ncid, "u", NC_DOUBLE, dimids_3D.size(), &dimids_3D[0], &u_varid )))    // for vector form of dimids. &dimids[0] converts from std::vector<int> to pointer to array int*
     if ((retval = nc_def_var( ncid, "u", NC_DOUBLE, dimids_3D.size(), dimids_3D.data(), &u_varid )))    // for improved vector form of dimids, .data() acts like &dimids[0] but is safe from empty vectors, only works for c++ 11 or greater though
         ERR(retval);
-    std::string u_units = "m/s";
+    std::string u_units = "m s-1";
     if ((retval = nc_put_att_text( ncid, u_varid, "units", u_units.length(), u_units.c_str() )))
         ERR(retval);
     std::string u_long_name = "velocity, u component";
@@ -169,7 +193,7 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     //if ((retval = nc_def_var( ncid, "v", NC_DOUBLE, dimids_3D.size(), &dimids_3D[0], &v_varid )))    // for vector form of dimids. &dimids[0] converts from std::vector<int> to pointer to array int*
     if ((retval = nc_def_var( ncid, "v", NC_DOUBLE, dimids_3D.size(), dimids_3D.data(), &v_varid )))    // for improved vector form of dimids, .data() acts like &dimids[0] but is safe from empty vectors, only works for c++ 11 or greater though
         ERR(retval);
-    std::string v_units = "m/s";
+    std::string v_units = "m s-1";
     if ((retval = nc_put_att_text( ncid, v_varid, "units", v_units.length(), v_units.c_str() )))
         ERR(retval);
     std::string v_long_name = "velocity, v component";
@@ -183,7 +207,7 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     //if ((retval = nc_def_var( ncid, "w", NC_DOUBLE, dimids_3D.size(), &dimids_3D[0], &w_varid )))    // for vector form of dimids. &dimids[0] converts from std::vector<int> to pointer to array int*
     if ((retval = nc_def_var( ncid, "w", NC_DOUBLE, dimids_3D.size(), dimids_3D.data(), &w_varid )))    // for improved vector form of dimids, .data() acts like &dimids[0] but is safe from empty vectors, only works for c++ 11 or greater though
         ERR(retval);
-    std::string w_units = "m/s";
+    std::string w_units = "m s-1";
     if ((retval = nc_put_att_text( ncid, w_varid, "units", w_units.length(), w_units.c_str() )))
         ERR(retval);
     std::string w_long_name = "velocity, w component";
@@ -234,6 +258,7 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     std::vector<double> y_2D;
     std::vector<double> x_2D;
     std::vector<double> z_3D;
+    std::vector<double> terrain;
     std::vector<double> u_reformatted;
     std::vector<double> v_reformatted;
     std::vector<double> w_reformatted;
@@ -247,6 +272,8 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
             int idx = jj*nCols + ii;    // kk is 0, storage style index with cols before rows
             x_2D.push_back( x(idx) );
             y_2D.push_back( y(idx) );
+            
+            terrain.push_back( z(idx) );
         }
     }
     
@@ -259,12 +286,50 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
                 // changing the order of the output doesn't seem to be changing the result in paraview, may have to revisit this later
                 //int idx = kk*nCols*nRows + ii*nRows + jj; // rows before column form, volVtk output form
                 int idx = kk*nCols*nRows + jj*nCols + ii; // column before rows form, storage form
-                z_3D.push_back( z(idx) );
+                int terrain_idx = 0*nCols*nRows + jj*nCols + ii;
+                z_3D.push_back( z(idx) - z(terrain_idx) );
                 u_reformatted.push_back( u(idx) );
                 v_reformatted.push_back( v(idx) );
                 w_reformatted.push_back( w(idx) );
             }
         }
+    }
+    
+    
+    // if required, convert the x/y positions from the input projection to the desired output projection
+    if ( convertToTrueLatLong == true )
+    {
+        // create the necessary transform function for the conversion process
+        OGRSpatialReference oSourceSRS, oTargetSRS;
+        OGRCoordinateTransformation *poCT;
+        oSourceSRS.importFromWkt( prjString.c_str() );     // .SetWellKnownGeogCS( datum); is used for datum inputs
+        oTargetSRS.importFromWkt( prjString_latLong.c_str() );
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+        
+        // debugging, somehow the lat dropped the values a bit?
+        //std::cout << "prjString = \"" << prjString << "\"" << std::endl;
+        //std::cout << "prjString_latLong = \"" << prjString_latLong << "\"" << std::endl;
+        
+        poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
+        if( poCT == NULL )
+        {
+	        std::cout << "!!! volNetcdf Error!!! couldn't create OGRCoordinateTransformation poCT!!!\n" << std::endl;
+            exit(ERRCODE);
+        }
+        
+        for(int idx=0; idx<nCols*nRows; idx++)
+        {
+            // call the transform function on each given point
+            poCT->Transform( 1, &x_2D[idx], &y_2D[idx] );
+        }
+        
+        // finished using the transform function, need to cleanup the memory
+        OGRCoordinateTransformation::DestroyCT( poCT );
     }
     
     
@@ -281,6 +346,11 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
     
     //if ((retval = nc_put_var_double( ncid, z_varid, &z_3D[0] )))   // &data[0] converts from std::vector<datatype> to pointer to array datatype*
     if ((retval = nc_put_var_double( ncid, z_varid, z_3D.data() )))  // .data() acts like &data[0] but is safe from empty vectors, only works for c++ 11 or greater though
+        ERR(retval)
+    
+    
+    //if ((retval = nc_put_var_double( ncid, terrain_varid, &terrain[0] )))   // &data[0] converts from std::vector<datatype> to pointer to array datatype*
+    if ((retval = nc_put_var_double( ncid, terrain_varid, terrain.data() )))  // .data() acts like &data[0] but is safe from empty vectors, only works for c++ 11 or greater though
         ERR(retval)
     
     

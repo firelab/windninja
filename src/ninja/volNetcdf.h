@@ -30,16 +30,15 @@
 #ifndef VOLNETCDF_H
 #define VOLNETCDF_H
 
-#include <stdio.h>
 #include <string>
 #include <vector>
-#include <cmath>
 
 #include "netcdf.h"
+#include "gdal.h"
+#include "ogr_spatialref.h"
 
 #include "wn_3dArray.h"
 #include "wn_3dScalarField.h"
-#include "ninjaException.h"
 
 #include "ninja_version.h"
 
@@ -57,16 +56,18 @@ public:
     volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
               wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
               int nCols, int nRows, int nLayers, std::string filename,  
-              std::string prjString, double meshRes);
+              std::string prjString, double meshRes, bool convertToTrueLatLong);
 	~volNetcdf();
 
     bool writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                         wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                         int nCols, int nRows, int nLayers, std::string filename,  
-                        std::string prjString, double meshRes);
+                        std::string prjString, double meshRes, bool convertToTrueLatLong);
     
 private:
 	
+    std::string prjString_latLong;
+    
 };
 
 
