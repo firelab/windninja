@@ -2822,7 +2822,7 @@ void ninja::writeOutputFiles()
             // set a manual filename for now
             std::string volNetcdfFile = "/home/atw09001/Downloads/out.nc";
             bool convertToTrueLatLong = true;   //true;//false;
-			volNetcdf netcdfOutput(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, volNetcdfFile,  input.dem.prjString, mesh.meshResolution, convertToTrueLatLong);
+			volNetcdf netcdfOutput(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, volNetcdfFile,  input.dem.prjString, mesh.meshResolution, convertToTrueLatLong, input.dem.xllCorner, input.dem.yllCorner);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume netcdf file writing: %s", e.what());

@@ -56,13 +56,15 @@ public:
     volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
               wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
               int nCols, int nRows, int nLayers, std::string filename,  
-              std::string prjString, double meshRes, bool convertToTrueLatLong);
+              std::string prjString, double meshRes, 
+              bool convertToTrueLatLong, double dem_xllCorner, double dem_yllCorner);
 	~volNetcdf();
 
     bool writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                         wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                         int nCols, int nRows, int nLayers, std::string filename,  
-                        std::string prjString, double meshRes, bool convertToTrueLatLong);
+                        std::string prjString, double meshRes, 
+                        bool convertToTrueLatLong, double dem_xllCorner, double dem_yllCorner);
     
 private:
 	

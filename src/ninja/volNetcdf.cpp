@@ -37,7 +37,8 @@ volNetcdf::volNetcdf()
 volNetcdf::volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                      wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                      int nCols, int nRows, int nLayers, std::string filename,  
-                     std::string prjString, double meshRes, bool convertToTrueLatLong)
+                     std::string prjString, double meshRes, 
+                     bool convertToTrueLatLong, double dem_xllCorner, double dem_yllCorner)
 {
     //std::cout << "nCols = \"" << nCols << "\", nRows = \"" << nRows << "\", nLayers = \"" << nLayers << "\"" << std::endl;
     
@@ -54,9 +55,10 @@ volNetcdf::volNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3d
     //oSRS.SetWellKnownGeogCS("WGS84");  // yet another alternative method, I'm surprised that this one works as it doesn't seem as specific as the other ones. Same result though
     oSRS.exportToWkt( &pszWKT );    // normally only needed for getting the spatial reference in terms of projection string, which is required for warpVRT-like calls
     prjString_latLong = pszWKT;
+    CPLFree(pszWKT);    // apparently need to clean up this char* after exportToWkt is called on it
     // seems to still be causing problems, because lat values are still not correct, might have to skip trying to use prjString for the transformation
     
-    writeVolNetcdf(u, v, w, x, y, z, nCols, nRows, nLayers, filename,  prjString, meshRes, convertToTrueLatLong);
+    writeVolNetcdf(u, v, w, x, y, z, nCols, nRows, nLayers, filename,  prjString, meshRes, convertToTrueLatLong, dem_xllCorner, dem_yllCorner);
 }
 
 volNetcdf::~volNetcdf()
@@ -67,7 +69,8 @@ volNetcdf::~volNetcdf()
 bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                                wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
                                int nCols, int nRows, int nLayers, std::string filename,  
-                               std::string prjString, double meshRes, bool convertToTrueLatLong)
+                               std::string prjString, double meshRes, 
+                               bool convertToTrueLatLong, double dem_xllCorner, double dem_yllCorner)
 {
     
     // define error handling index var
@@ -315,9 +318,9 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
         // create the necessary transform function for the conversion process
         OGRSpatialReference oSourceSRS, oTargetSRS;
         OGRCoordinateTransformation *poCT;
-        oSourceSRS.importFromWkt( prjString.c_str() );     // .SetWellKnownGeogCS( datum); is used for datum inputs
-        //oTargetSRS.importFromWkt( prjString_latLong.c_str() );    // using prjString for both seems to cause problems, examples always have the lat/long one as a datum rather than prjString
-        oTargetSRS.SetWellKnownGeogCS( "EPSG:4326" );
+        oSourceSRS.importFromWkt( prjString.c_str() );     // consumes the input string up to the point that is needed // .SetWellKnownGeogCS( datum); is used for datum inputs
+        oTargetSRS.importFromWkt( prjString_latLong.c_str() );    // using prjString for both seems to cause problems, examples always have the lat/long one as a datum rather than prjString
+        //oTargetSRS.SetWellKnownGeogCS( "EPSG:4326" );
         //oTargetSRS.importFromEPSG( 4326 );  // alternative method
         //oTargetSRS.SetWellKnownGeogCS("WGS84");  // yet another alternative method, I'm surprised that this one works as it doesn't seem as specific as the other ones. Same result though
 #ifdef GDAL_COMPUTE_VERSION
@@ -340,6 +343,10 @@ bool volNetcdf::writeVolNetcdf(wn_3dScalarField const& u, wn_3dScalarField const
         
         for(int idx=0; idx<nCols*nRows; idx++)
         {
+            // first convert the given point from local (0,0) coordinates to 
+            // projection style coordinates
+            x_2D[idx] += dem_xllCorner;
+            y_2D[idx] += dem_yllCorner;
             // call the transform function on each given point
             poCT->Transform( 1, &x_2D[idx], &y_2D[idx] );
         }
