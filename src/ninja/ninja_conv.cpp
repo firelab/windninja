@@ -86,6 +86,23 @@ std::string FindBoostDataBaseFile()
     return std::string();
 }
 
+// TODO this should use C++17 Optional
+bool find_path (const char* pszPath, const char* pszFilename, std::string& pathName) {
+    if (pszFilename) {
+        VSIStatBufL sStat;
+        const char* pszPathname = CPLFormFilename(pszPath, pszFilename, NULL); // don't free it
+
+        if (pszPathname && VSIStatL( pszPathname, &sStat ) == 0) {
+            if( VSI_ISREG( sStat.st_mode ) || VSI_ISDIR( sStat.st_mode ) ){
+                pathName = pszPathname;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 /**
  * \brief Find a file or folder in the WindNinja data path
  *
@@ -96,53 +113,41 @@ std::string FindBoostDataBaseFile()
  * path, ie ../share/data, otherwise return WINDNINJA_DATA + filename.
  *
  * \param file file or folder to look for.
- * \return a full path to file
+ * \return a full path to file or empty string if not found
  */
 std::string FindDataPath(std::string file)
 {
-    const char* pszFilename;
-    const char* pszNinjaPath;
-    const char* pszNinjaDataPath;
-    const char* pszCurDir;
+    std::string filePath("");
+    const char* fileName = file.c_str();
+
+    // explicit WINDNINJA_DATA environment variable takes precedence
+    if (find_path( CPLGetConfigOption( "WINDNINJA_DATA", NULL), fileName, filePath)) return filePath;
+
     char pszExePath[MAX_PATH];
+    if (CPLGetExecPath( pszExePath, MAX_PATH )){
+        const char*  pszNinjaPath = CPLGetPath( pszExePath );
 
-    /* Check WINDNINJA_DATA */
-    VSIStatBufL sStat;
-    pszNinjaDataPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    if( pszNinjaDataPath != NULL )
-    {
-        pszFilename = CPLFormFilename( pszNinjaDataPath, file.c_str(), NULL );
-        VSIStatL( pszFilename, &sStat );
-        if( VSI_ISREG( sStat.st_mode ) || VSI_ISDIR( sStat.st_mode ) )
-        {
-            return std::string( pszFilename );
-        }
+        // default CMAKE INSTALL
+        if (find_path( CPLProjectRelativeFilename( pszNinjaPath, "../share/windninja"), fileName, filePath)) return filePath;
+
+        // check current dir
+        const char* pszCurrentDir = CPLGetCurrentDir();
+        if (find_path( pszCurrentDir, fileName, filePath)) return filePath;
+
+        // more well known locations
+
+        // cmake build dir (build/ as peer of windninja/, execute src/cli/WindNinja )
+        if (find_path( CPLProjectRelativeFilename( pszNinjaPath, "../../../windninja/data"), fileName, filePath)) return filePath;
+
+        // data subdir (maybe link)
+        if (find_path( CPLProjectRelativeFilename( pszCurrentDir, "data"), fileName, filePath)) return filePath;
+        // parent data dir
+        if (find_path( CPLProjectRelativeFilename( pszCurrentDir, "../data"), fileName, filePath)) return filePath;
+        // parent windninja dir
+        if (find_path( CPLProjectRelativeFilename( pszCurrentDir, "../windninja/data"), fileName, filePath)) return filePath;
     }
 
-    /* Check 'normal' installation location */
-    CPLGetExecPath( pszExePath, MAX_PATH );
-    pszNinjaPath = CPLGetPath( pszExePath );
-
-    pszNinjaDataPath = CPLProjectRelativeFilename(pszNinjaPath, 
-                                                   "../share/windninja");
-    pszFilename = CPLFormFilename( pszNinjaDataPath, file.c_str(), NULL );
-    VSIStatL( pszFilename, &sStat );
-    if( VSI_ISREG( sStat.st_mode ) || VSI_ISDIR( sStat.st_mode ) )
-    {
-        return std::string( pszFilename );
-    }
-
-    /* Check the current directory */
-    pszCurDir = CPLGetCurrentDir();
-    pszFilename = CPLFormFilename( pszCurDir, file.c_str(), NULL );
-    CPLFree( (void*)pszCurDir );
-    if( CPLCheckForFile( (char*)pszFilename, NULL ))
-    {
-        return std::string( pszFilename );
-    }
-
-    return std::string();
-
+    return filePath;
 }
 
 /*
@@ -278,7 +283,7 @@ char **NinjaVSIReadDirRecursive( const char *pszPathIn )
 
 static int NinjaUnlinkTreeRecurse( const char *pszPath )
 {
-    int i, n, rc;
+    int i, n;
     char **papszDirList = NULL;
     char *pszJoinedPath, *pszTmp;
     VSIStatBufL sStat;

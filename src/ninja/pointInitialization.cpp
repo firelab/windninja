@@ -2355,8 +2355,8 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     {
         // normal situation
         // example is PST for Jan to Mar, PDT for Mar to Nov, PST for Nov to Dec
-        if ( start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition
-          || start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition )
+        if ( (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition)
+          || (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition) )
         {
             std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
         }
@@ -2364,8 +2364,8 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     {
         // reversed order situation
         // example is NZDT for Jan to Mar, NZST for Mar to Oct, NZDT for Oct to Dec
-        if ( start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition
-          || start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition )
+        if ( (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition)
+          || (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition) )
         {
             std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
         }

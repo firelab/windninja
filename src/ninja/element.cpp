@@ -64,6 +64,7 @@ void element::initializeQuadPtArrays()
 	RJACV=new double[9];                    //Jacobian matrix for volume quadrature
 	RJACVI=new double[9];                   //Jacobian matrix inverse for volume quadrature
 
+
 	if(NUMQPTV==1)        //This corresponds to one point quadrature
     {
         A1=0;
@@ -282,7 +283,7 @@ void element::computeJacobianEtc(int &elementNum, const double &u, const double 
         y=y+SFNV(u, v, w, k) * mesh_->YORD(NPK);
         z=z+SFNV(u, v, w, k) * mesh_->ZORD(NPK);
 
-		RJACV[0*3+0]=RJACV[0*3+0] + SFNVu(u, v, w, k) * mesh_->XORD(NPK);
+	   RJACV[0*3+0]=RJACV[0*3+0] + SFNVu(u, v, w, k) * mesh_->XORD(NPK);
         RJACV[0*3+1]=RJACV[0*3+1] + SFNVv(u, v, w, k) * mesh_->XORD(NPK);
         RJACV[0*3+2]=RJACV[0*3+2] + SFNVw(u, v, w, k) * mesh_->XORD(NPK);
         RJACV[1*3+0]=RJACV[1*3+0] + SFNVu(u, v, w, k) * mesh_->YORD(NPK);
@@ -434,7 +435,6 @@ void element::computeJacobianQuadraturePoint(const int &localQuadPointNum, const
 		DNDY[k]=RJACVI[0*3+1]*SFV[1*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum]+RJACVI[1*3+1]*SFV[2*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum]+RJACVI[2*3+1]*SFV[3*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum];
 		DNDZ[k]=RJACVI[0*3+2]*SFV[1*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum]+RJACVI[1*3+2]*SFV[2*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum]+RJACVI[2*3+2]*SFV[3*mesh_->NNPE*NUMQPTV+k*NUMQPTV+localQuadPointNum];
 	}
-
 }
 
 //void element::computeElementStiffnessMatrix(const int &elementNum, const wn_3dScalarField &u0, const wn_3dScalarField &v0, const wn_3dScalarField &w0, const double &alpha)

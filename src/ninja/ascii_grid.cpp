@@ -2598,6 +2598,12 @@ void AsciiGrid<T>::write_4326_Grid (std::string& filename, int precision, void (
             GDALDatasetH hTmpDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, GRA_NearestNeighbour, 1.0, NULL);
             if (hTmpDS) {
                 AsciiGrid<T> geoAsciiGrid( (GDALDataset*) hTmpDS, 1);
+                
+                if (!geoAsciiGrid.crop_noData( 10)){
+                    cerr << "failed to crop EPSG:4326 grid to defined data\n";
+                }
+                
+
                 (geoAsciiGrid.*(write_grid))( filename, precision);
 
                 GDALClose(hTmpDS);
@@ -2624,6 +2630,22 @@ template <class T>
 void AsciiGrid<T>::write_json_4326_Grid (std::string filename, int precision) 
 {
     write_4326_Grid(filename, precision, &AsciiGrid<T>::write_json_Grid);
+}
+
+template<class T>
+bool AsciiGrid<T>::crop_noData (int noDataThreshold)
+{
+    int minRow, maxRow, minCol, maxCol;
+    if (data.get_dataBoundaries( noDataThreshold, minRow, maxRow, minCol, maxCol)) {
+        if (minRow > 0 || minCol > 0 || maxRow < data.get_numRows()-1 || maxCol < data.get_numCols()-1) {
+            xllCorner += minCol * cellSize;
+            yllCorner += (data.get_numRows()-1 - maxRow) * cellSize;
+            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place            
+        }
+        return true;
+    } else {
+        return false;
+    }
 }
 
 //--- template instantiations

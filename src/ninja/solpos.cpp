@@ -348,7 +348,7 @@ static long int validate ( struct posdata *pdat)
   if ( (pdat->function & L_REFRAC) && (fabs (pdat->temp) > 100.0) )
     retval |= (1L << S_TEMP_ERROR);
   if ( (pdat->function & L_REFRAC) &&
-    (pdat->press < 0.0) || (pdat->press > 2000.0) )
+    ((pdat->press < 0.0) || (pdat->press > 2000.0)) )
     retval |= (1L << S_PRESS_ERROR);
 
   /* No out of bounds tilts, please */
@@ -358,11 +358,9 @@ static long int validate ( struct posdata *pdat)
     retval |= (1L << S_ASPECT_ERROR);
 
   /* No oddball shadowbands, please */
-  if ( (pdat->function & L_SBCF) &&
-       (pdat->sbwid < 1.0) || (pdat->sbwid > 100.0) )
+  if ( (pdat->function & L_SBCF) && ((pdat->sbwid < 1.0) || (pdat->sbwid > 100.0)) )
     retval |= (1L << S_SBWID_ERROR);
-  if ( (pdat->function & L_SBCF) &&
-       (pdat->sbrad < 1.0) || (pdat->sbrad > 100.0) )
+  if ( (pdat->function & L_SBCF) && ((pdat->sbrad < 1.0) || (pdat->sbrad > 100.0)) )
     retval |= (1L << S_SBRAD_ERROR);
   if ( (pdat->function & L_SBCF) && ( fabs (pdat->sbsky) > 1.0) )
     retval |= (1L << S_SBSKY_ERROR);
