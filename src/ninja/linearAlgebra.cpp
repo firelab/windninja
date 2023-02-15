@@ -262,7 +262,7 @@ bool LinearAlgebra::SolveConjugateGradient(WindNinjaInputs &input, double* A, do
 {
     //note these values can get altered in the loop below
     int max_iter = 100000;    //maximum number of iterations in the solver
-    double tol = 1E-1; //stopping criteria for iterations (2-norm of residual)
+    double tol = 1.E-1; //stopping criteria for iterations (2-norm of residual)
     int print_iters = 10;   //Iterations to print out
 
     //stuff for sparse BLAS MV multiplication
