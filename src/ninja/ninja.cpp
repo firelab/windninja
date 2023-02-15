@@ -2827,85 +2827,86 @@ void ninja::writeOutputFiles()
 	try{
 		if(input.asciiOutFlag)
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+                    AsciiGrid<double> *velTempGrid, *angTempGrid;
+                    velTempGrid=NULL;
+                    angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+                    AsciiGrid<double> tempCloud(CloudGrid);
+                    tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
-            //ensure grids cover original DEM extents for FARSITE
-            AsciiGrid<double> demGrid;
-            GDALDatasetH hDS;
-            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-            if( hDS == NULL )
-            {
-                input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                        "Problem reading DEM during output writing." );
-            }
+                    //if output clipping was set by the user, don't buffer to overlap the DEM
+                    if(!input.outputBufferClipping > 0.0)
+                    {
+                        //ensure grids cover original DEM extents for FARSITE
+                        AsciiGrid<double> demGrid;
+                        GDALDatasetH hDS;
+                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                        if( hDS == NULL )
+                        {
+                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                    "Problem reading DEM during output writing." );
+                        }
+                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                        tempCloud.BufferToOverlapGrid(demGrid);
+                        angTempGrid->BufferToOverlapGrid(demGrid);
+                        velTempGrid->BufferToOverlapGrid(demGrid);
+                    }
 
-            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-            tempCloud.BufferToOverlapGrid(demGrid);
-            angTempGrid->BufferToOverlapGrid(demGrid);
-            velTempGrid->BufferToOverlapGrid(demGrid);
+                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
-            writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+#ifdef FRICTION_VELOCITY
+                    if(input.frictionVelocityFlag == 1){
+                        AsciiGrid<double> *ustarTempGrid;
+                        ustarTempGrid=NULL;
 
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                AsciiGrid<double> *ustarTempGrid;
-                ustarTempGrid=NULL;
+                        ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
 
-                ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
+                        if(ustarTempGrid)
+                        {
+                            delete ustarTempGrid;
+                            ustarTempGrid=NULL;
+                        }
+                    }
+#endif
+#ifdef EMISSIONS
+                    if(input.dustFlag == 1){
+                        AsciiGrid<double> *dustTempGrid;
+                        dustTempGrid=NULL;
 
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid=NULL;
-                }
-			}
-			#endif
+                        dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                AsciiGrid<double> *dustTempGrid;
-                dustTempGrid=NULL;
+                        dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
 
-                dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        if(dustTempGrid)
+                        {
+                            delete dustTempGrid;
+                            dustTempGrid=NULL;
+                        }
+                    }
+#endif
+                    if(angTempGrid)
+                    {
+                            delete angTempGrid;
+                            angTempGrid=NULL;
+                    }
+                    if(velTempGrid)
+                    {
+                            delete velTempGrid;
+                            velTempGrid=NULL;
+                    }
 
-                dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
-
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid=NULL;
-                }
-            }
-			#endif
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
+                    //Write .atm file for this run.  Only has one time value in file.
+                    if(input.writeAtmFile)
+                    {
+                        farsiteAtm atmosphere;
+                        atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+                        atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                    }
 		}
 	}catch (exception& e)
 	{
