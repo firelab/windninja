@@ -100,7 +100,14 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    delete ninjas[0];
+    for (int i = 0; i < ninjas.size(); i++) 
+    {
+        if (ninjas[i]) 
+        {
+             delete ninjas[i];
+             ninjas[i] = NULL;
+        }
+    }
     destoryLocalData();
 }
 
@@ -811,11 +818,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                if( i != 0  )
+                //removed, SB, 2023/02/14 so inmemory data retreival works
+                //This needs to be dealt with for GUI
+                /* if (i != 0)
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
-                }
+                }*/
 
             }catch (bad_alloc& e)
             {
