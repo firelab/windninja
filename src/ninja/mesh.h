@@ -98,6 +98,7 @@ public:
     double get_maxX() const {return XORD(XORD.rows_ - 1, XORD.cols_ - 1, 0);}
     double get_maxY() const {return YORD(XORD.rows_ - 1, XORD.cols_ - 1, 0);}
     bool inMeshXY(double x, double y) const;    //checks if x,y point is in mesh (doesn't check z direction)
+    double getDistanceToPoint(const int globalNode, const double x, const double y, const double z);  
 
     void set_meshResolution(double resolution, lengthUnits::eLengthUnits units);
     void set_targetNumHorizCells(long cells);     //sets the target number of horizontal cells in the mesh and computes the cellsize

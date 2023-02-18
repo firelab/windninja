@@ -516,6 +516,78 @@ double wn_3dScalarField::interpolate(double const& x,double const& y, double con
 	return value;
 }
 
+double wn_3dScalarField::interpolateInverseDistance(double const& x,double const& y, double const& z, int interpDistPower)
+{
+    int node_i = 0;
+    int node_j = 0;
+    int node_k = 0;
+    int cell_i = -1;
+    int cell_j = -1;
+    int cell_k = -1;
+    double zAverage = 0;;
+
+    //figure out which i,j,k cell we're in
+    //compute cell i value
+    for(node_i=1; node_i<mesh_->nrows; node_i++)
+    {
+        if(y <= mesh_->YORD(node_i, 0, 0))
+        {
+            cell_i = node_i - 1;
+            break;
+        }
+    }
+    if(cell_i<0)
+        throw std::range_error("Range error in wn_3dScalarField::interpolateInverseDistance");
+
+    //compute cell j value
+    for(node_j=1; node_j<mesh_->ncols; node_j++)
+    {
+        if(x <= mesh_->XORD(0, node_j, 0))
+        {
+            cell_j = node_j - 1;
+            break;
+        }
+    }
+    if(cell_j<0)
+        throw std::range_error("Range error in wn_3dScalarField::interpolateInverseDistance");
+
+    //compute cell k value (estimate using average of 4 points surrounding)
+    for(node_k=1; node_k<mesh_->nlayers; node_k++)
+    {	    
+        zAverage = (mesh_->ZORD(node_i-1, node_j-1, node_k) + mesh_->ZORD(node_i-1, node_j, node_k) + mesh_->ZORD(node_i, node_j-1, node_k) + mesh_->ZORD(node_i, node_j, node_k)) / 4.0; 
+
+        if(z <= zAverage)
+        {
+            cell_k = node_k - 1;
+            break;
+        }
+    }
+    
+    if(cell_k<0)
+        throw std::range_error("Range error in wn_3dScalarField::interpolateInverseDistance");
+
+    //now that we have the cell i,j,k, compute distance from x,y,z point to each node in cell i,j,k
+    double distance = 0.;
+    double weight = 0.;
+    double weight_sum = 0;
+    double value = 0.;
+    int NPK = -1;
+
+    //inverse distance weighting average of the 8 surrounding nodes
+    for(int n=0;n<mesh_->NNPE;n++) //loop over nodes in the element
+    {
+        NPK=mesh_->get_global_node(n, cell_i, cell_j, cell_k); //NPK is the global node number
+        distance = mesh_->getDistanceToPoint(NPK, x, y, z);
+        weight = 1.0/std::pow(distance,interpDistPower);
+        weight_sum = weight_sum + weight;
+        value = value + scalarData_(NPK) * weight;
+    }
+
+    double finalValue = value/weight_sum;
+
+    return finalValue;
+}
+
 double wn_3dScalarField::interpolate(element &elem, const int &cell_i, const int &cell_j, const int &cell_k, const double &u, const double &v, const double &w)
 {
 	//Function calculates the value of the scalar field (scalarData) at the cell_i, cell_j, cell_k and (u, v, w) point in "parent cell" coordinates.

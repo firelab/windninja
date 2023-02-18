@@ -100,9 +100,12 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                         traceParticle(U0, dt, i, j, k, xDeparture, yDeparture, zDeparture);
                         if(elem.isInMesh(xDeparture, yDeparture, zDeparture)) //COULD SPEED THIS UP A BIT BY STORING THE ELEMENT NUMBER WE FIND HERE AND USE THAT BELOW DURING THE INTERPOLATION
                         {
-                            U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
-                            U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
-                            U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                            //U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
+                            //U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
+                            //U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                            U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
+                            U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
+                            U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
                         }else{  //Else we have tracked out of the domain.
                             boundary = U0.vectorData_x.mesh_->getNearestMeshBoundaryFromOutsidePoint(xDeparture, yDeparture, zDeparture);
 
@@ -152,9 +155,12 @@ void TransportSemiLagrangian::transportVector(const wn_3dVectorField &U0, wn_3dV
                                 yDeparture = departure.get_y();
                                 zDeparture = departure.get_z();
 
-                                U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
-                                U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
-                                U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                                //U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolate(xDeparture, yDeparture, zDeparture);
+                                //U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolate(xDeparture, yDeparture, zDeparture);
+                                //U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolate(xDeparture, yDeparture, zDeparture);
+                                U1.vectorData_x(i, j, k) = U0.vectorData_x.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
+                                U1.vectorData_y(i, j, k) = U0.vectorData_y.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
+                                U1.vectorData_z(i, j, k) = U0.vectorData_z.interpolateInverseDistance(xDeparture, yDeparture, zDeparture);
                             }
                         }
                     }

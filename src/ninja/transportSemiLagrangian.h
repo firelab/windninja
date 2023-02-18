@@ -69,6 +69,7 @@ class TransportSemiLagrangian
 
     private:
         void traceParticle(const wn_3dVectorField &U0, const double &dt, int &startI, int &startJ, int &startK, double &endX, double &endY, double &endZ);
+        FILE *output;
         
 };
 

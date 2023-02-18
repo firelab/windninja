@@ -979,3 +979,10 @@ Mesh::eMeshBoundary Mesh::getMeshBoundary(std::string boundary)
         throw std::runtime_error(std::string("Cannot determine boundary in Mesh::getMeshBoundary()."));
     }
 }
+
+double Mesh::getDistanceToPoint(const int globalNode, const double x, const double y, const double z)
+{
+    double distance = sqrt((XORD(globalNode)-x)*(XORD(globalNode)-x) + (YORD(globalNode)-y)*(YORD(globalNode)-y) + (ZORD(globalNode)-z)*(ZORD(globalNode)-z));
+
+    return distance;
+}  
