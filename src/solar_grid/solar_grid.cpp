@@ -201,15 +201,14 @@ int main(int argc, char *argv[])
     oDstSRS.importFromEPSG(4326);
     VSIFree((void*)startOfMem);
 
-    poCT = OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
-    poCT->Transform(1, &latitude, &longitude);
-#else
-    poCT->Transform(1, &longitude, &latitude);
+    oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
+    poCT = OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
+    poCT->Transform(1, &longitude, &latitude);
     boost::local_time::time_zone_ptr ninjaTimeZone;
 
     ninjaTimeZone = globalTimeZoneDB.time_zone_from_region(pszTimeZone);
