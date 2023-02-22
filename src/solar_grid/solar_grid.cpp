@@ -202,7 +202,13 @@ int main(int argc, char *argv[])
     VSIFree((void*)startOfMem);
 
     poCT = OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS);
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    poCT->Transform(1, &latitude, &longitude);
+#else
     poCT->Transform(1, &longitude, &latitude);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
     boost::local_time::time_zone_ptr ninjaTimeZone;
 
@@ -262,11 +268,13 @@ int main(int argc, char *argv[])
             solar.set_aspect(asp(i,j));
             solar.set_slope(slp(i,j));
             solar.call_solPos();
-
+            
             if(shd(i,j) == true)
                 sinPsi = 0.0;
             else
+            {
                 sinPsi = solar.get_solarIntensity() / 1353.0;
+            }
             solar_grid(i,j) = (a1 * sinPsi + a2) * 
                               (1.0 + b1 * std::pow(CloudCover(i,j), b2));
             //incident solar radiation cannot be less than 0.0
