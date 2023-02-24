@@ -243,7 +243,6 @@ bool Shade::compute_gridShade()
 			}
 		}
 
-				
 		///////////////////////////////////////////end multithreading///////////////////////////////////////
 			
 		if(elevation_norm)
@@ -252,6 +251,7 @@ bool Shade::compute_gridShade()
 			delete flagMap;
 		grid_made = true;
 		return true;
+
 	}
 	else
 	{
@@ -459,6 +459,12 @@ bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function mov
 {
 	double interpolatedHeight,interpolatedFlagMap,distance,val;
 	double height;		//height of the ray at the current point
+        int i = 0;
+        int j = 0;
+        double t = 0.;
+        double u = 0.;
+        double val1, val2, val3, val4;
+
 	while(1)
 	{
 		px -= x_light;  //negative because "x_light" is vector FROM the sun, but we track TOWARD the sun
@@ -476,19 +482,103 @@ bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function mov
 
 		// get interpolated height and flagMap value (using nearest neighbor interpolation)
 		interpolatedHeight = elevation_norm->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order1);	//add 0.5 here because interpolateGrid() works on original "cell" based grid and px,py is in node based grid
-		interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+		//interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+
+                //use a bilinear interpolation for flagMap; 0 order can induce artifacts along the edge of shadows
+                //if within outermost two rows or columns use 0 order interpolation 
+                if(px + 0.5 >= (flagMap->get_xllCorner() + (flagMap->get_xDimension() - 3*(flagMap->get_cellSize() / 2)))
+                    || px + 0.5 <= flagMap->get_xllCorner() + 3*(flagMap->get_cellSize() / 2)
+                    || py + 0.5 >= (flagMap->get_yllCorner() + (flagMap->get_yDimension() - 3*(flagMap->get_cellSize() / 2)))
+                    || py + 0.5 <= flagMap->get_yllCorner() + 3*(flagMap->get_cellSize() / 2))
+                {
+                    //just do a 0 order interpolation
+                    interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+                }
+                else
+                {
+                    flagMap->get_cellIndex((px + 0.5 - flagMap->get_cellSize() / 2), (py + 0.5 - flagMap->get_cellSize() / 2), &i, &j);
+                    t = (py + 0.5 - ((i * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner())) /
+
+                        ((((i + 1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner()) -
+
+                        (((i * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_yllCorner()));
+
+                    u = (px + 0.5 - ((j * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner())) /
+
+                        ((((j + 1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner()) -
+
+                        (((j * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_xllCorner()));
+
+                    //check x_light and y_light to see which direction to move for the interpolation
+                    if(x_light < 0. && y_light < 0.)
+                    {
+                        val1 = flagMap->get_cellValue(i, j);
+                        val2 = flagMap->get_cellValue(i + 1, j);
+                        val3 = flagMap->get_cellValue(i + 1, j + 1);
+                        val4 = flagMap->get_cellValue(i, j + 1);
+                    }
+                    else if(x_light > 0. && y_light < 0.)
+                    {
+                        val1 = flagMap->get_cellValue(i, j);
+                        val2 = flagMap->get_cellValue(i + 1, j);
+                        val3 = flagMap->get_cellValue(i + 1, j - 1);
+                        val4 = flagMap->get_cellValue(i, j - 1);
+                    }
+                    else if(x_light > 0. && y_light > 0.)
+                    {
+                        val1 = flagMap->get_cellValue(i, j);
+                        val2 = flagMap->get_cellValue(i - 1, j);
+                        val3 = flagMap->get_cellValue(i - 1, j - 1);
+                        val4 = flagMap->get_cellValue(i, j - 1);
+                    }
+                    else if(x_light < 0. && y_light > 0.)
+                    {
+                        val1 = flagMap->get_cellValue(i, j);
+                        val2 = flagMap->get_cellValue(i - 1, j);
+                        val3 = flagMap->get_cellValue(i - 1, j + 1);
+                        val4 = flagMap->get_cellValue(i, j + 1);
+                    }
+                    if(val1==flagMap->get_NoDataValue() || val2==flagMap->get_NoDataValue() || val3==flagMap->get_NoDataValue() || val4==flagMap->get_NoDataValue())
+                    {
+                        //just do a 0 order interpolation
+                        interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+                    }
+                    if(val1 <= 0. || val2 <= 0. || val3 <= 0. || val4 <= 0.)
+                    {
+                        //just do a 0 order interpolation
+                        interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+                    }
+                    else
+                    {
+                        //replace -1 flags with 0 for interpolation of the shadow height
+                        if(val1 == -1.0f)
+                            val1 = 0.0;
+                        if(val2 == -1.0f)
+                            val2 = 0.0;
+                        if(val3 == -1.0f)
+                            val3 = 0.0;
+                        if(val4 == -1.0f)
+                            val4 = 0.0;
+                        interpolatedFlagMap = (1 - t) * (1 - u) * val1
+                                                 + t * (1 - u) * val2
+                                                 + t * u * val3
+                                                 + (1 - t) * u * val4;
+                    }
+                }
+
+                //if a 0 order interpolation gave us -1, set to 0
+                if(interpolatedFlagMap < 0.)
+                    interpolatedFlagMap = 0.;
 
 		// get distance from original point to current point
-		distance = std::sqrt( (double)  (((int)(px + 0.5) - *X)*((int)(px + 0.5) - *X) + ((int)(py + 0.5) - *Y)*((int)(py + 0.5) - *Y)) );
+		distance = std::sqrt((px - *X)*(px - *X) + (py - *Y)*(py - *Y));
 
 		// get height of light ray at current point while traveling along light ray
-
 		height = (*elevation_norm)(*Y,*X) + tan(phi*pi/180.0)*distance;
 
 		// check intersection with either terrain or flagMap
-		val = interpolatedHeight;
-		if(interpolatedFlagMap > 0)
-			val = interpolatedFlagMap + interpolatedHeight;
+		val = interpolatedHeight + interpolatedFlagMap;
+
 		if(height < val)        //then it is shaded
 		{
 			(*flagMap)(*Y,*X) = val - height;
@@ -497,16 +587,14 @@ bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function mov
 			break;
 		}	
 		// check if pixel we've moved to is unshadowed
-		// since the flagMap value we're using is interpolated, we will be in between shadowed and unshadowed areas
-		// to compensate for this, simply define some epsilon value and use this as an offset from -1 to decide
-		// if current point under the ray is unshadowed
-		if(interpolatedFlagMap == -1.0f)
+		if((interpolatedFlagMap-0.) < smalll)
 		{
 			(*flagMap)(*Y,*X) = -1.0f;
 			data(*Y, *X) = false; //mark as unshaded
 			break;
 		}
 	}
+
 	return true;
 }
 
