@@ -29,14 +29,14 @@ jobs:
     - name: build dependencies -- no cache
       if: steps.cacheDep.outputs.cache-hit != 'true'
       run: |
-        sudo -E apt-get install -y unixodbc unixodbc-dev
+        sudo -E apt-get install -o Dpkg::Options::="--force-overwrite" -y mssql-tools unixodbc-dev
         ${{github.workspace}}/scripts/build_deps_ubuntu_2004.sh
       
     - name: build dependencies -- with cache
       if: steps.cacheDep.outputs.cache-hit == 'true'
       run: |
         # install standard dependencies
-        sudo -E apt-get install -y unixodbc unixodbc-dev
+        sudo -E apt-get install -o Dpkg::Options::="--force-overwrite" -y mssql-tools unixodbc-dev
         sudo -E apt-get install -y pkg-config libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev \
                                    libboost-program-options-dev libboost-date-time-dev libgeos-dev \
                                    libboost-test-dev libsqlite3-dev sqlite3
