@@ -1170,13 +1170,13 @@ T AsciiGrid<T>::interpolateGrid(double x, double y, interpTypeEnum interpType) c
             {
                 get_cellIndex((xCoord - get_cellSize() / 2), (yCoord - get_cellSize() / 2), &i, &j);
 
-                u = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner())) /
+                t = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner())) /
 
                     ((((i + 1) * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner()) -
 
                     (((i * get_cellSize() + (get_cellSize() / 2))) + get_yllCorner()));
 
-                t = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner())) /
+                u = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner())) /
 
                     ((((j + 1) * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner()) -
 
@@ -1246,13 +1246,13 @@ T AsciiGrid<T>::interpolateGridLocalCoordinates(double x, double y, interpTypeEn
             {
                 get_cellIndexLocalCoordinates((xCoord - get_cellSize() / 2), (yCoord - get_cellSize() / 2), &i, &j);
 
-                u = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)))) /
+                t = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)))) /
 
                     ((((i + 1) * get_cellSize() + (get_cellSize() / 2))) -
 
                     (((i * get_cellSize() + (get_cellSize() / 2)))));
 
-                t = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)))) /
+                u = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)))) /
 
                     ((((j + 1) * get_cellSize() + (get_cellSize() / 2))) -
 
