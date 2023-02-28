@@ -1246,13 +1246,13 @@ T AsciiGrid<T>::interpolateGridLocalCoordinates(double x, double y, interpTypeEn
             {
                 get_cellIndexLocalCoordinates((xCoord - get_cellSize() / 2), (yCoord - get_cellSize() / 2), &i, &j);
 
-                t = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)))) /
+                u = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)))) /
 
                     ((((i + 1) * get_cellSize() + (get_cellSize() / 2))) -
 
                     (((i * get_cellSize() + (get_cellSize() / 2)))));
 
-                u = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)))) /
+                t = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)))) /
 
                     ((((j + 1) * get_cellSize() + (get_cellSize() / 2))) -
 
