@@ -128,68 +128,72 @@ bool Shade::compute_gridShade()
 
 		// decide which loop will come first, the y loop or x loop
 		// based on direction of light, makes calculations faster
-		if(lightDirXMagnitude < lightDirYMagnitude)        //move in x direction first, x direction is inner loop
-		{
-			inner_loop_num = elevation->get_nCols();
-			outer_loop_num = elevation->get_nRows();
-			Y = &iX;        //outer loop
-			X = &iY;      //inner loop
-			sizeiY = elevation->get_nCols();      //set inner loop indexing size, ie ncols or nrows
-			sizeiX = elevation->get_nRows();      //set outer loop indexing size, ie ncols or nrows
+        if(lightDirXMagnitude < lightDirYMagnitude)        //move in x direction first, x direction is inner loop
+        {
+            inner_loop_num = elevation->get_nCols();
+            outer_loop_num = elevation->get_nRows();
+            Y = &iX;        //outer loop
+            X = &iY;      //inner loop
+            sizeiY = elevation->get_nCols();      //set inner loop indexing size, ie ncols or nrows
+            sizeiX = elevation->get_nRows();      //set outer loop indexing size, ie ncols or nrows
 
-			if(x_light < 0)
-			{
-				iY = sizeiY-1;
-				diriY = -1;
-			}
-			else
-			{
-				iY = 0;
-				diriY = 1;
-			}
+            if(x_light < 0)
+            {
+                iY = sizeiY-1;
+                diriY = -1;
+            }
+            else
+            {
+                iY = 0;
+                diriY = 1;
+            }
 
-			if(y_light < 0)
-			{
-				iX = sizeiX-1;
-				diriX = -1;
-			}
-			else
-			{
-				iX = 0;
-				diriX = 1;
-			}
-		}
-		else               //move in y direction first, y direction is inner loop
-		{
-			inner_loop_num = elevation->get_nRows();
-			outer_loop_num = elevation->get_nCols();
-			Y = &iY;        //inner loop
-			X = &iX;      //outer loop
-			sizeiY = elevation->get_nRows();      //set inner loop indexing size
-			sizeiX = elevation->get_nCols();      //set outer loop indexing size
+            if(y_light < 0)
+            {
+                iX = sizeiX-1;
+                diriX = -1;
+                sideClosestToSun = 3;   // 0=>west  1=>east  2=>south  3=>north
+            }
+            else
+            {
+                iX = 0;
+                diriX = 1;
+                sideClosestToSun = 2;   // 0=>west  1=>east  2=>south  3=>north
+            }
+        }
+        else               //move in y direction first, y direction is inner loop
+        {
+            inner_loop_num = elevation->get_nRows();
+            outer_loop_num = elevation->get_nCols();
+            Y = &iY;        //inner loop
+            X = &iX;      //outer loop
+            sizeiY = elevation->get_nRows();      //set inner loop indexing size
+            sizeiX = elevation->get_nCols();      //set outer loop indexing size
 
-			if(x_light < 0)
-			{
-				iX = sizeiX-1;
-				diriX = -1;
-			}
-			else
-			{
-				iX = 0;
-				diriX = 1;
-			}
+            if(x_light < 0)
+            {
+                iX = sizeiX-1;
+                diriX = -1;
+                sideClosestToSun = 1;   // 0=>west  1=>east  2=>south  3=>north
+            }
+            else
+            {
+                iX = 0;
+                diriX = 1;
+                sideClosestToSun = 0;   // 0=>west  1=>east  2=>south  3=>north
+            }
 
-			if(y_light < 0)
-			{
-				iY = sizeiY-1;
-				diriY = -1;
-			}
-			else
-			{
-				iY = 0;
-				diriY = 1;
-			}
-		}
+            if(y_light < 0)
+            {
+                iY = sizeiY-1;
+                diriY = -1;
+            }
+            else
+            {
+                iY = 0;
+                diriY = 1;
+            }
+        }
 
 
 		///////////////////////////////////////////start multithreading/////////////////////////////////////
@@ -320,6 +324,7 @@ bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, i
 	int iY;			//represents the inner loop variable of our loops
 	//diriX;		//if less than 0 then we travel to the left after we	process the current point, else travel right
 	//diriY;		//if less than 0 then we travel up after we process the	current point, else travel down
+    sideClosestToSun = -1;   // 0=>west  1=>east  2=>south  3=>north
 
 	// calculate absolute values for light direction lightDir
 	lightDirXMagnitude = x_light;
@@ -353,11 +358,13 @@ bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, i
 		{
 			iX = sizeiX-1;
 			diriX = -1;
+            sideClosestToSun = 3;   // 0=>west  1=>east  2=>south  3=>north
 		}
 		else
 		{
 			iX = 0;
 			diriX = 1;
+            sideClosestToSun = 2;   // 0=>west  1=>east  2=>south  3=>north
 		}
 	}
 	else               //move in y direction first, y direction is inner loop
@@ -373,11 +380,13 @@ bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, i
 		{
 			iX = sizeiX-1;
 			diriX = -1;
+            sideClosestToSun = 1;   // 0=>west  1=>east  2=>south  3=>north
 		}
 		else
 		{
 			iX = 0;
 			diriX = 1;
+            sideClosestToSun = 0;   // 0=>west  1=>east  2=>south  3=>north
 		}
 
 		if(y_light < 0)
@@ -457,144 +466,172 @@ bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, i
 
 bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function moves along a path toward the sun to determine if the cell in question is shaded
 {
-	double interpolatedHeight,interpolatedFlagMap,distance,val;
-	double height;		//height of the ray at the current point
-        int i = 0;
-        int j = 0;
-        double t = 0.;
-        double u = 0.;
-        double val1, val2, val3, val4;
+    double interpolatedHeight,interpolatedFlagMap,distance,val;
+    double height;		//height of the ray at the current point
+    int i = 0;
+    int j = 0;
+    double t = 0.;
+    double u = 0.;
+    double val0, val1, val2, val3;
 
-	while(1)
-	{
-		px -= x_light;  //negative because "x_light" is vector FROM the sun, but we track TOWARD the sun
-		py -= y_light;  //negative because "y_light" is vector FROM the sun, but we track TOWARD the sun
+    while(1)
+    {
+        px -= x_light;  //negative because "x_light" is vector FROM the sun, but we track TOWARD the sun
+        py -= y_light;  //negative because "y_light" is vector FROM the sun, but we track TOWARD the sun
 
-		// check if we've reached the boundary, if so, mark as unshaded
-		if(px < (0 - smalll) || px >= (elevation_norm->get_nCols() - 1 + smalll) || py < (0 - smalll) || py >= (elevation_norm->get_nRows() -1 + smalll))
-		{
-			(*flagMap)(*Y,*X) = -1;
-			data(*Y,*X) = false; //mark as unshaded
-			break;
-		}
+        // check if we've reached the boundary, if so, mark as unshaded
+        if(px < (0 - smalll) || px >= (elevation_norm->get_nCols() - 1 + smalll) || py < (0 - smalll) || py >= (elevation_norm->get_nRows() -1 + smalll))
+        {
+            (*flagMap)(*Y,*X) = -1;
+            data(*Y,*X) = false; //mark as unshaded
+            break;
+        }
 
-		// calculate interpolated values
+        // calculate interpolated values
 
-		// get interpolated height and flagMap value (using nearest neighbor interpolation)
-		interpolatedHeight = elevation_norm->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order1);	//add 0.5 here because interpolateGrid() works on original "cell" based grid and px,py is in node based grid
-		//interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+        // get interpolated height and flagMap value (using nearest neighbor interpolation)
+        interpolatedHeight = elevation_norm->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order1);	//add 0.5 here because interpolateGrid() works on original "cell" based grid and px,py is in node based grid
+        //interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
 
-                //use a bilinear interpolation for flagMap; 0 order can induce artifacts along the edge of shadows
-                //if within outermost two rows or columns use 0 order interpolation 
-                if(px + 0.5 >= (flagMap->get_xllCorner() + (flagMap->get_xDimension() - 3*(flagMap->get_cellSize() / 2)))
-                    || px + 0.5 <= flagMap->get_xllCorner() + 3*(flagMap->get_cellSize() / 2)
-                    || py + 0.5 >= (flagMap->get_yllCorner() + (flagMap->get_yDimension() - 3*(flagMap->get_cellSize() / 2)))
-                    || py + 0.5 <= flagMap->get_yllCorner() + 3*(flagMap->get_cellSize() / 2))
-                {
-                    //just do a 0 order interpolation
-                    interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
-                }
-                else
-                {
-                    flagMap->get_cellIndex((px + 0.5 - flagMap->get_cellSize() / 2), (py + 0.5 - flagMap->get_cellSize() / 2), &i, &j);
-                    t = (py + 0.5 - ((i * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner())) /
+        //use a bilinear interpolation for flagMap; 0 order can induce artifacts along the edge of shadows
+        //if within outermost two rows or columns use 0 order interpolation
+        if(px + 0.5 >= (flagMap->get_xllCorner() + (flagMap->get_xDimension() - 3.0*(flagMap->get_cellSize() / 2.0)))
+                || px + 0.5 <= flagMap->get_xllCorner() + 3.0*(flagMap->get_cellSize() / 2.0)
+                || py + 0.5 >= (flagMap->get_yllCorner() + (flagMap->get_yDimension() - 3.0*(flagMap->get_cellSize() / 2.0)))
+                || py + 0.5 <= flagMap->get_yllCorner() + 3.0*(flagMap->get_cellSize() / 2.0))
+        {
+            //just do a 0 order interpolation
+            interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
+        }
+        else
+        {
+            int i0, i1, i2, i3, j0, j1, j2, j3; // i,j indexes of 4 cells in interpolation/extrapolation stencil; cell 0 is lower left, and counting goes counter-clockwise order
+            //check sideClosestToSun to see which direction to move for the interpolation
+            if(sideClosestToSun==0) // 0=>west
+            {
+                flagMap->get_cellIndex((px + 0.5), (py + 0.5 - flagMap->get_cellSize() / 2.0), &i, &j);   // The half cell subtraction is necessary for adjustment to ensure the proper cells ij
 
-                        ((((i + 1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner()) -
+                i0 = i;
+                j0 = j-1;
 
-                        (((i * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_yllCorner()));
+                i1 = i0;
+                j1 = j0+1;
 
-                    u = (px + 0.5 - ((j * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner())) /
+                i2 = i0+1;
+                j2 = j0+1;
 
-                        ((((j + 1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner()) -
+                i3 = i0+1;
+                j3 = j0;
 
-                        (((j * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_xllCorner()));
+            }
+            else if(sideClosestToSun==1)    // 1=>east
+            {
+                flagMap->get_cellIndex((px + 0.5), (py + 0.5 + flagMap->get_cellSize() / 2.0), &i, &j);   // The half cell subtraction is necessary for adjustment to ensure the proper cells ij
 
-                    //check x_light and y_light to see which direction to move for the interpolation
-                    if(x_light < 0. && y_light < 0.)
-                    {
-                        val1 = flagMap->get_cellValue(i, j);
-                        val2 = flagMap->get_cellValue(i + 1, j);
-                        val3 = flagMap->get_cellValue(i + 1, j + 1);
-                        val4 = flagMap->get_cellValue(i, j + 1);
-                    }
-                    else if(x_light > 0. && y_light < 0.)
-                    {
-                        val1 = flagMap->get_cellValue(i, j);
-                        val2 = flagMap->get_cellValue(i + 1, j);
-                        val3 = flagMap->get_cellValue(i + 1, j - 1);
-                        val4 = flagMap->get_cellValue(i, j - 1);
-                    }
-                    else if(x_light > 0. && y_light > 0.)
-                    {
-                        val1 = flagMap->get_cellValue(i, j);
-                        val2 = flagMap->get_cellValue(i - 1, j);
-                        val3 = flagMap->get_cellValue(i - 1, j - 1);
-                        val4 = flagMap->get_cellValue(i, j - 1);
-                    }
-                    else if(x_light < 0. && y_light > 0.)
-                    {
-                        val1 = flagMap->get_cellValue(i, j);
-                        val2 = flagMap->get_cellValue(i - 1, j);
-                        val3 = flagMap->get_cellValue(i - 1, j + 1);
-                        val4 = flagMap->get_cellValue(i, j + 1);
-                    }
-                    if(val1==flagMap->get_NoDataValue() || val2==flagMap->get_NoDataValue() || val3==flagMap->get_NoDataValue() || val4==flagMap->get_NoDataValue())
-                    {
-                        //just do a 0 order interpolation
-                        interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
-                    }
-                    if(val1 <= 0. || val2 <= 0. || val3 <= 0. || val4 <= 0.)
-                    {
-                        //just do a 0 order interpolation
-                        interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
-                    }
-                    else
-                    {
-                        //replace -1 flags with 0 for interpolation of the shadow height
-                        if(val1 == -1.0f)
-                            val1 = 0.0;
-                        if(val2 == -1.0f)
-                            val2 = 0.0;
-                        if(val3 == -1.0f)
-                            val3 = 0.0;
-                        if(val4 == -1.0f)
-                            val4 = 0.0;
-                        interpolatedFlagMap = (1 - t) * (1 - u) * val1
-                                                 + t * (1 - u) * val2
-                                                 + t * u * val3
-                                                 + (1 - t) * u * val4;
-                    }
-                }
+                i0 = i-1;
+                j0 = j;
 
-                //if a 0 order interpolation gave us -1, set to 0
-                if(interpolatedFlagMap < 0.)
-                    interpolatedFlagMap = 0.;
+                i1 = i0;
+                j1 = j0+1;
 
-		// get distance from original point to current point
-		distance = std::sqrt((px - *X)*(px - *X) + (py - *Y)*(py - *Y));
+                i2 = i0+1;
+                j2 = j0+1;
 
-		// get height of light ray at current point while traveling along light ray
-		height = (*elevation_norm)(*Y,*X) + tan(phi*pi/180.0)*distance;
+                i3 = i0+1;
+                j3 = j0;
+            }
+            else if(sideClosestToSun==2)    // 2=>south
+            {
+                flagMap->get_cellIndex((px + 0.5 + flagMap->get_cellSize() / 2.0), (py + 0.5), &i, &j);   // The half cell subtraction is necessary for adjustment to ensure the proper cells ij
 
-		// check intersection with either terrain or flagMap
-		val = interpolatedHeight + interpolatedFlagMap;
+                i0 = i-1;
+                j0 = j-1;
 
-		if(height < val)        //then it is shaded
-		{
-			(*flagMap)(*Y,*X) = val - height;
-			data(*Y,*X) = true;  //mark as shaded
+                i1 = i0;
+                j1 = j0+1;
 
-			break;
-		}	
-		// check if pixel we've moved to is unshadowed
-		if((interpolatedFlagMap-0.) < smalll)
-		{
-			(*flagMap)(*Y,*X) = -1.0f;
-			data(*Y, *X) = false; //mark as unshaded
-			break;
-		}
-	}
+                i2 = i0+1;
+                j2 = j0+1;
 
-	return true;
+                i3 = i0+1;
+                j3 = j0;
+            }
+            else if(sideClosestToSun==3)    // 3=>north
+            {
+                flagMap->get_cellIndex((px + 0.5 - flagMap->get_cellSize() / 2.0), (py + 0.5), &i, &j);   // The half cell subtraction is necessary for adjustment to ensure the proper cells ij
+
+                i0 = i;
+                j0 = j;
+
+                i1 = i0;
+                j1 = j0+1;
+
+                i2 = i0+1;
+                j2 = j0+1;
+
+                i3 = i0+1;
+                j3 = j0;
+            }
+
+            u = (py + 0.5 - ((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner())) /
+
+                    ((((i3) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner()) -
+
+                     (((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_yllCorner()));
+
+            t = (px + 0.5 - ((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner())) /
+
+                    ((((j1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner()) -
+
+                     (((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_xllCorner()));
+
+
+            val0 = flagMap->get_cellValue(i0, j0);
+                    val1 = flagMap->get_cellValue(i1, j1);
+            val2 = flagMap->get_cellValue(i2, j2);
+            val3 = flagMap->get_cellValue(i3, j3);
+
+            if(val0 <= 0.0f)
+                val0 = 0.0;
+            if(val1 <= 0.0f)
+                val1 = 0.0;
+            if(val2 <= 0.0f)
+                val2 = 0.0;
+            if(val3 <= 0.0f)
+                val3 = 0.0;
+            interpolatedFlagMap = (1 - t) * (1 - u) * val0
+                    + t * (1 - u) * val1
+                    + t * u * val2
+                    + (1 - t) * u * val3;
+        }
+
+        //if a 0 order interpolation gave us -1, set to 0
+        if(interpolatedFlagMap < 0.)
+            interpolatedFlagMap = 0.;
+
+        // get distance from original point to current point
+        distance = std::sqrt((px - *X)*(px - *X) + (py - *Y)*(py - *Y));
+
+        // get height of light ray at current point while traveling along light ray
+        height = (*elevation_norm)(*Y,*X) + tan(phi*pi/180.0)*distance;
+
+        // check intersection with either terrain or flagMap
+        val = interpolatedHeight + interpolatedFlagMap;
+
+        if(height < val)        //then it is shaded
+        {
+            (*flagMap)(*Y,*X) = val - height;
+            data(*Y,*X) = true;  //mark as shaded
+
+            break;
+        }
+
+        // if we've made it here, the pixel is unshadowed
+        (*flagMap)(*Y,*X) = -1.0f;
+        data(*Y, *X) = false; //mark as unshaded
+        break;
+    }
+
+    return true;
 }
 
