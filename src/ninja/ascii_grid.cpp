@@ -1170,13 +1170,13 @@ T AsciiGrid<T>::interpolateGrid(double x, double y, interpTypeEnum interpType) c
             {
                 get_cellIndex((xCoord - get_cellSize() / 2), (yCoord - get_cellSize() / 2), &i, &j);
 
-                t = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner())) /
+                u = (yCoord - ((i * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner())) /
 
                     ((((i + 1) * get_cellSize() + (get_cellSize() / 2)) + get_yllCorner()) -
 
                     (((i * get_cellSize() + (get_cellSize() / 2))) + get_yllCorner()));
 
-                u = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner())) /
+                t = (xCoord - ((j * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner())) /
 
                     ((((j + 1) * get_cellSize() + (get_cellSize() / 2)) + get_xllCorner()) -
 
