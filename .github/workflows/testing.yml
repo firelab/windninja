@@ -32,7 +32,9 @@ jobs:
         sudo -E apt-get update -y
         sudo -E apt-get upgrade -y
         cd ${{github.workspace}}/scripts
-        build_deps_ubuntu_2004.sh
+        ./build_deps_ubuntu_2004.sh
+        # return to start directory
+        cd ${{github.workspace}}
       
     - name: build dependencies -- with cache
       if: steps.cacheDep.outputs.cache-hit == 'true'
