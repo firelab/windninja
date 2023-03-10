@@ -76,19 +76,17 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     assert(latitude);
     bool rc = true;
 
-/*
     const char *pszPrj = GDALGetProjectionRef(hDS);
-    if(pszPrj == NULL) {
+/*    if(pszPrj == NULL) {
         return false;
     }
 */
 
     OGRSpatialReferenceH hSrcSRS, hTargetSRS;
-    //hSrcSRS = OSRNewSpatialReference(pszPrj);
-    hSrcSRS = GDALGetSpatialRef(hDS);
+    hSrcSRS = OSRNewSpatialReference(pszPrj);
     hTargetSRS = OSRNewSpatialReference(NULL);
     if(hSrcSRS == NULL || hTargetSRS == NULL) {
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -103,7 +101,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     OGRCoordinateTransformationH hCT;
     hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
     if(hCT == NULL) {
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -114,7 +112,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     double adfGeoTransform[6];
     if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None) {
         OCTDestroyCoordinateTransformation(hCT);
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -130,7 +128,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
         *latitude = y;
     }
     OCTDestroyCoordinateTransformation(hCT);
-    //OSRDestroySpatialReference(hSrcSRS);
+    OSRDestroySpatialReference(hSrcSRS);
     OSRDestroySpatialReference(hTargetSRS);
     return rc;
 }
