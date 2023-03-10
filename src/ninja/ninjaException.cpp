@@ -46,7 +46,7 @@ armyException::~armyException() throw()
 
 }
 
-const char* armyException::what() const noexcept
+const char* armyException::what() const NOEXCEPT
 {
     std::string s;
     for(int i = 0; i < messages.size(); i++)
