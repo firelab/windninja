@@ -137,7 +137,6 @@ bool Preconditioner::initialize(int numnp, double *A, int *row_ptr, int *col_ind
 		//U_row_ptr = new int[NUMNP];
 		L_col_ind = new int[count-NUMNP];
 		//U_col_ind = new int[count];
-		
 
 		count=0;
 		for(i=0; i<NUMNP; i++)	//loop over matrix A, setting up storage for Lt (not storing diagonal since it's 1)

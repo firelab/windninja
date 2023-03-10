@@ -32,6 +32,7 @@
 Fluid::Fluid()
 {
 }
+
 Fluid::~Fluid()
 {
      if(t)
@@ -115,9 +116,46 @@ bool Fluid::read_fluidProperties(std::string inputFile)
 			fin >> pr[i];
 		}
 		fin.close();
+
 		return true;
 	}
 }
+
+
+double Fluid::interpolate(double T, double* vs)
+{
+	int rmax = nRows-1;
+
+    if (T < t[0] || T > t[rmax]) throw std::runtime_error("Invalid temperature.");
+
+	if (T == t[0]) {
+		return vs[0];
+
+	} else {
+		double ti1 = t[0];
+
+		for (int i=1; i<nRows; i++) {
+			double ti = t[i];
+
+			if (T < ti) {
+				double dt = T - ti1;
+				double dti = ti - ti1;
+				double vi1 = vs[i-1];
+				double dv = vs[i] - vi1;
+				return vi1 + (dt / dti) * dv;
+
+			} else if (T == ti) {
+				return vs[i];
+			}
+			ti1 = ti;
+		}
+
+		throw std::runtime_error("can't get here");
+	}
+}
+
+
+/*
 double Fluid::get_rho(double T)
 {
 	if(T > t[nRows - 1])
@@ -130,99 +168,12 @@ double Fluid::get_rho(double T)
 		int i = 0;
 		while(T > t[i])
 			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(rho[i] - rho[i - 1])) + rho[i - 1];
+
+		return (( (T - t[i - 1]) / (t[i] - t[i - 1])) * (rho[i] - rho[i - 1])) + rho[i - 1];
 	}
 }
-double Fluid::get_cSubP(double T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(cSubP[i] - cSubP[i - 1])) + cSubP[i - 1];
-	}
-}
-double Fluid::get_mu(double T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(mu[i] - mu[i - 1])) + mu[i - 1];
-	}
-}
-double Fluid::get_v(double T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(v[i] - v[i - 1])) + v[i - 1];
-	}
-}
-double Fluid::get_k(double T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(k[i] - k[i - 1])) + k[i - 1];
-	}
-}
-double Fluid::get_alpha(double  T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(alpha[i] - alpha[i - 1])) + alpha[i - 1];
-	}
-}
-double Fluid::get_pr(double  T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-		return (((T - t[i - 1])/(t[i] - t[i - 1]))*(pr[i] - pr[i - 1])) + pr[i - 1];
-	}
-}
+*/
+
 bool Fluid::print_t()
 {
 	std::cout << std::endl << "t" << std::endl;
