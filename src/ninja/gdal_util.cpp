@@ -77,10 +77,9 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     bool rc = true;
 
     const char *pszPrj = GDALGetProjectionRef(hDS);
-/*    if(pszPrj == NULL) {
+    if(pszPrj == NULL) {
         return false;
     }
-*/
 
     OGRSpatialReferenceH hSrcSRS, hTargetSRS;
     hSrcSRS = OSRNewSpatialReference(pszPrj);
@@ -828,17 +827,14 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 bool gdalHasGeographicSRS (const char* filename) {
     bool isGeographic = false;
-    GDALDataset *pDS = (GDALDataset*) GDALOpen(filename, GA_ReadOnly);
-    CPLAssert(pDS);
+    GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename, GA_ReadOnly);
+    CPLAssert(hDS);
 
-    const OGRSpatialReference *pSR = pDS->GetSpatialRef();
-    if (pSR) {
-        if(!pSR->IsProjected())
-        {
-          isGeographic = true;
-        }
+    const char *pszPrj = GDALGetProjectionRef(hDS);
+    if (pszPrj == "") {
+      isGeographic = true;
     }
-    GDALClose(pDS);
+    GDALClose(hDS);
 
     return isGeographic;
 }
@@ -849,14 +845,20 @@ bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
     bool rc = false;
 
     if (pDS) {
-        const OGRSpatialReference *pSrcSRS = pDS->GetSpatialRef();
-        if (pSrcSRS) {
+        const char *pszPrj = pDS->GetProjectionRef();
+        OGRSpatialReferenceH hSrcSRS;
+        hSrcSRS = OSRNewSpatialReference(pszPrj);
+        if (pszPrj == "") {
             OGRSpatialReference tgtSRS;
 
             tgtSRS.SetWellKnownGeogCS("EPSG:4326");
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
             tgtSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
-            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(pSrcSRS, &tgtSRS);
+            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(hSrcSRS, &tgtSRS);
             if (pCT) {
                 int nX = pDS->GetRasterXSize();
                 int nY = pDS->GetRasterYSize();
