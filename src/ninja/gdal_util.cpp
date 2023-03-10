@@ -835,7 +835,10 @@ bool gdalHasGeographicSRS (const char* filename) {
 
     const OGRSpatialReference *pSR = pDS->GetSpatialRef();
     if (pSR) {
-        isGeographic = pSR->IsGeographic();
+        if(!pSR->IsProjected())
+        {
+          isGeographic = true;
+        }
     }
     GDALClose(pDS);
 

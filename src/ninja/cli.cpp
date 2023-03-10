@@ -105,7 +105,7 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
         GDALDataset *pSrcDS = (GDALDataset*) GDALOpen(filename->c_str(), GA_ReadOnly);
         if (pSrcDS) {
             const OGRSpatialReference *pSR = pSrcDS->GetSpatialRef();
-            if (pSR && pSR->IsGeographic()){
+            if (pSR && !pSR->IsProjected()){
                 cout << "provided elevation_file " << *filename << " is geographic, converting..\n";
                 string output_path = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
                 string new_filename = derived_pathname( filename->c_str(), output_path.c_str(), "\\.([^.]+)$", "-utm.$1");
