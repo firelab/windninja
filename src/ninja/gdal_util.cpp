@@ -846,8 +846,8 @@ bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
 
     if (pDS) {
         const char *pszPrj = pDS->GetProjectionRef();
-        OGRSpatialReferenceH hSrcSRS;
-        hSrcSRS = OSRNewSpatialReference(pszPrj);
+        OGRSpatialReference* pSrcSRS;
+        pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
         if (pszPrj == "") {
             OGRSpatialReference tgtSRS;
 
@@ -858,7 +858,7 @@ bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
-            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(hSrcSRS, &tgtSRS);
+            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(pSrcSRS, &tgtSRS);
             if (pCT) {
                 int nX = pDS->GetRasterXSize();
                 int nY = pDS->GetRasterYSize();

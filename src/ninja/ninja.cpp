@@ -5241,7 +5241,7 @@ std::string derived_pathname (const char* pathname, const char* newpath, const c
     }
 
     if (pattern && replacement) {
-        s = std::regex_replace(s, std::regex(pattern), replacement);
+        s = std::regex_replace(std::string(s), std::regex(pattern), std::string(replacement));
     }
 
     return s;

@@ -13,12 +13,12 @@ template<> GDALDataType getGdalDataType<double>() { return GDT_Float64; }
 template<> GDALDataType getGdalDataType<short>() { return GDT_Int16; }
 template<> GDALDataType getGdalDataType<int>() { return GDT_Int32; }
 // ...and more specializations to follow
-
-// make the default throw so that we don't try to scan into a wrong type size
-template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); }
-template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "lf"); }
-template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "d"); }
-template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "hd"); }
+// make the default throw so that we don't try to scan into a wrong type size 
+// note - older MSVCs seem to have problems with regex_replace(const char* fmt..) hene we have to pass in temporary strings 
+template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); } 
+template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("lf")); } 
+template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("d")); } 
+template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("hd")); } 
 
 template <class T> inline T epsClr() { throw std::runtime_error("unknown eps value"); }
 template<> inline double epsClr<double>() { return 0.001; }
@@ -1432,7 +1432,7 @@ void AsciiGrid<T>::write_json_Grid(std::string outputFile, int numDecimals)
     fprintf( fout, noDataFmt.c_str(), data.getNoDataValue());
 
     // this is not in the AAIGRID specs but since this is our own JSON version we just add it here
-    string const wkt = std::regex_replace( prjString, regex("\""), "\\\"");
+    string const wkt = std::regex_replace( std::string(prjString), regex("\""), std::string("\\\""));
     fprintf( fout, "\"WKT\":\"%s\"\n", wkt.c_str());
 
     fprintf( fout, "\"data\":[\n");
@@ -1999,7 +1999,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     char *pszSRS_WKT = NULL;
 
     const char* prj2 = (const char*)prjString.c_str();
-    oSRS.importFromWkt(&prj2);
+    oSRS.importFromWkt((char **)&prj2);
     oSRS.exportToWkt(&pszSRS_WKT);
 
     char *pszDST_WKT = NULL;
