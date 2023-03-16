@@ -2031,7 +2031,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
-                                                   0.0, psWarpOptions);
+                                                   0.0, NULL);
 
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
