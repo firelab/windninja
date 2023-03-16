@@ -1,6 +1,27 @@
 Release Notes
 =============
 
+WindNinja 3.8.0
+---------------
+- Update LANDFIRE services used for downloading LCP files (#400, #411, and #451)
+
+- Add new weather models from NOMADS for Hawaii, Puerto Rico, and Guam (#457)
+
+- Add option to write binary VTK files (#416)
+
+WindNinja 3.7.5
+---------------
+- Restore GMTED data downloads following a change on the server that provides these data (#452)
+
+- Adjust coefficients used in estimating roughness and displacement heights to avoid wind profile interpolation issues (#456)
+
+WindNinja 3.7.4
+---------------
+- Fix issue related to URL generation causing LCP downloads to intermittently fail (#449, #448)
+
+- Temporarily disabled start-up messages for server migration (#450) 
+
+
 WindNinja 3.7.3
 ---------------
 - Update Linux build script for Ubuntu 20.04 (#397)

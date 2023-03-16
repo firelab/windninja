@@ -15,8 +15,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
+
 project(WindNinja)
+
+# let cmake figure out how to set the C++ level
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
@@ -374,8 +379,7 @@ endif(VERBOSE_CMAKE)
 
 # install target related files
 set(etc_files missoula_valley.tif
-                  example_lcp.lcp
-                  example_lcp.prj
+                  example_lcp.tif
                   cli_domainAverage.cfg
                   cli_domainAverage_diurnal.cfg
                   cli_pointInitialization_diurnal.cfg
@@ -425,7 +429,7 @@ foreach(f ${share_files})
 endforeach(f ${share_files})
 
 # Leaflet data
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 
 set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf
@@ -480,7 +484,6 @@ set(CPACK_PACKAGE_VERSION ${WINDNINJA_VERSION})
 
 set(CPACK_NSIS_INSTALL_ROOT "C:")
 CMAKE_POLICY(PUSH)
-CMAKE_POLICY(SET CMP0010 OLD)
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 CMAKE_POLICY(POP)
@@ -545,9 +548,9 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
     endif( BUILD_TYPE MATCHES "release")
     # HACK FOR OPENMP
     if(BUILD_64)
-        install(PROGRAMS ${MSVC10_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
+        install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
     else(BUILD_64)
-        install(PROGRAMS ${MSVC10_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
+        install(PROGRAMS ${MSVC_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
     endif(BUILD_64)
     if(NINJAFOAM)
         install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)

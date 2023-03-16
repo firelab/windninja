@@ -33,17 +33,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-//#include <conio.h>
 #include <string.h>
-//#include <dos.h>
 #include <memory.h>
 #include <time.h>
 #include <ctime>
-//#include <tchar.h>
 #include <iostream>
 
 #include <sstream>
-//#include <string>
 #include <iomanip>
 #include <fstream>
 #include <cstdlib>
@@ -53,12 +49,11 @@
 #include <sstream>
 #include <cctype>
 #include <cfloat>
+#include <regex>
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-//#include "taucsaddon.h"
 
 #include "gdal_priv.h"
 #include "cpl_string.h"
@@ -120,17 +115,10 @@
 
 #define LENGTH 256
 
-#ifdef WINDNINJA_EXPORTS
-#define WINDNINJA_API __declspec(dllexport)
-#else
-#define WINDNINJA_API
-#endif
-
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
-
-class WINDNINJA_API ninja
+class ninja
 {
 public:
     ninja();
@@ -190,11 +178,14 @@ public:
     void readInputFile();
     void importSingleBand(GDALDataset*);
     void importLCP(GDALDataset*);
+    void importGeoTIFF(GDALDataset*);
     void setSurfaceGrids();
 
     void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
     void setArmySize(int n);
     void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
+    void set_DEM(const double* dem, const int nXSize, const int nYSize, const double* geoRef,
+                 std::string prj);
     void set_initializationMethod(WindNinjaInputs::eInitializationMethod method, bool matchPoints = false);	//input wind initialization method
     WindNinjaInputs::eInitializationMethod get_initializationMethod(); //returns the initializationMethod
 
@@ -312,6 +303,14 @@ public:
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
     void set_numberCPUs(int CPUs);
+    double *get_outputSpeedGrid();
+    double *get_outputDirectionGrid();
+    const char* get_outputGridProjection();
+    double get_outputGridCellSize();
+    double get_outputGridxllCorner();
+    double get_outputGridyllCorner();
+    int get_outputGridnCols();
+    int get_outputGridnRows();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
@@ -327,7 +326,14 @@ public:
     void set_shpOutFlag(bool flag);
     void set_wxModelShpOutFlag(bool flag);
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
+
     void set_asciiOutFlag(bool flag);
+    inline void set_asciiAaigridOutFlag(bool flag) { input.asciiAaigridOutFlag = flag; }
+    inline void set_asciiJsonOutFlag(bool flag) { input.asciiJsonOutFlag = flag; }
+    inline void set_asciiUtmOutFlag(bool flag) { input.asciiUtmOutFlag = flag; }
+    inline void set_ascii4326OutFlag(bool flag) { input.ascii4326OutFlag = flag; }
+    inline void set_asciiUvOutFlag(bool flag) { input.asciiUvOutFlag = flag; }
+
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
     void set_txtOutFlag(bool flag);
@@ -384,6 +390,9 @@ private:
     Slope *slope;
     Shade *shade;
     Solar *solar;
+
+    double* outputSpeedArray; //output speed array returned in the API
+    double* outputDirectionArray; //output direction array returned in the API
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
@@ -469,7 +478,14 @@ private:
     bool matched(int iter);
     void writeOutputFiles(); 
     void deleteDynamicMemory();
+
+private:
+    void setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid);
+    void writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 };
+
+std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);
 
 #endif	//NINJA_HEADER
 

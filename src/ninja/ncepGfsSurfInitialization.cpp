@@ -36,7 +36,7 @@
 ncepGfsSurfInitialization::ncepGfsSurfInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground4";
-    path = "/thredds/ncss/grib/NCEP/GFS/Global_0p5deg/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
+    path = "/thredds/ncss/grid/grib/NCEP/GFS/Global_0p5deg/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
     LoadFromCsv();
 }
 

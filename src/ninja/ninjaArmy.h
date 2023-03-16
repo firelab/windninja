@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
 #include "wxModelInitializationFactory.h"
@@ -68,6 +69,10 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * */
 #define IF_VALID_INDEX( i, iterable ) \
    if( i >= 0 && i < iterable.size() )
+
+#define CHECK_VALID_INDEX(i,iterable) \
+  if( i < 0 || i >= iterable.size() ) throw std::runtime_error("invalid index");
+
 /* *
  * Macro IF_VALID_INDEX_DO is a boiler plate for most of the ninjaArmy functions.
  * First, a range check is done on iterable to determine if 'i' is a valid index.
@@ -138,6 +143,8 @@ public:
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
+    
+    int ninjaInitialize();
 
     /**
     * \brief Return the number of ninjas in the army
@@ -155,6 +162,7 @@ public:
     * \return
     */
     void setSize( int nRuns, bool momentumFlag);
+
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
@@ -170,6 +178,8 @@ public:
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
+    int setNinjaCommunication( const int nIndex, std::string comType,
+                               char ** papszOptions = NULL);
 #ifdef NINJA_GUI
     /**
     * \brief Set the number of runs for a ninjaCom
@@ -368,26 +378,9 @@ public:
     */
     int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
     
-    /**
-    * \brief Set the DEM file for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param dem_filename path of the DEM file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
-    /**
-    * \brief Set the latitude/longitude position of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param lat_degrees position latitude in degrees
-    * \param lon_degrees position longitude in degrees
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setPosition( const int nIndex, const double lat_degrees,
-                     const double lon_degrees,
-                     char ** papszOptions=NULL );
-    int setPosition( const int nIndex, char ** papszOptions=NULL );
+    /*-----------------------------------------------------------------------------
+     *  Point Initialization Methods
+     *-----------------------------------------------------------------------------*/
     /**
     * \brief Set the input points filename for a ninja
     *
@@ -477,6 +470,31 @@ public:
                                  std::string method,
                                  const bool matchPoints=false,
                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the DEM file for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param dem_filename path of the DEM file
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions=NULL );
+
+    int setDEM( const int nIndex, const double* demValues, const int nXSize, const int nYSize,
+                const double* geoRef, std::string prj, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the latitude/longitude position of a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param lat_degrees position latitude in degrees
+    * \param lon_degrees position longitude in degrees
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setPosition( const int nIndex, const double lat_degrees,
+                     const double lon_degrees,
+                     char ** papszOptions=NULL );
+    int setPosition( const int nIndex, char ** papszOptions=NULL );
+
     /**
     * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal
     *
@@ -879,6 +897,70 @@ public:
     */
     int setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output speed grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return Pointer to the output speed array
+    */
+    const double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output direction grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return Pointer to the output direction array
+    */
+    const double* getOutputDirectionGrid( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid projection string for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid projection string
+    */
+    const char* getOutputGridProjection( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid cell size for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid cell size in meters
+    */
+    const double getOutputGridCellSize( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid xllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid xllCorner
+    */
+    const double getOutputGridxllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the output grid yllCorner for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return output grid yllCorner
+    */
+    const double getOutputGridyllCorner( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of columns in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of columns in the output grid
+    */
+    const int getOutputGridnCols( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Get the number of rows in the output grid for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \return number of rows in the output grid
+    */
+    const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
     
     /**
     * \brief Set the percent of output buffer clipping for a ninja
@@ -1042,6 +1124,52 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable AAIGRID (*.asc) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Enable/disable JSON output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output in UTM projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output in EPSG:4326 projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output of u,v wind fields for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
     /**
     * \brief Set the resoultion of ASCII output for a ninja
     * Set the resolution of ASCII output for a ninja given the resolution

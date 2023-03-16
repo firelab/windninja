@@ -78,6 +78,7 @@ private:
 	double z_light;
 	double lightDirXMagnitude;
 	double lightDirYMagnitude;
+    int sideClosestToSun;   // 0=>west  1=>east  2=>south  3=>north
 	int sizeiX;		//size of array for outer loop
 	int sizeiY;		//size of array for inner loop
 	double phi;	//sun elevation	

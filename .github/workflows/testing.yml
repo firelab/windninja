@@ -1,0 +1,83 @@
+name: Testing
+
+on:
+  push:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+  WINDNINJA_DATA: ${{github.workspace}}/data
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+   
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Cache Build Dependencies
+      id: cacheDep
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{github.workspace}}/scripts/poppler-0.23.4
+          ${{github.workspace}}/scripts/proj-6.3.2
+          ${{github.workspace}}/scripts/gdal-3.2.1
+        key: ${{ runner.os }}-windDep
+        restore-keys: ${{ runner.os }}-windDep
+    
+    - name: build dependencies -- no cache
+      if: steps.cacheDep.outputs.cache-hit != 'true'
+      run: |
+        sudo -E apt-get update -y
+        sudo -E apt-get upgrade -y
+        cd ${{github.workspace}}/scripts
+        ./build_deps_ubuntu_2004.sh
+        # return to start directory
+        cd ${{github.workspace}}
+      
+    - name: build dependencies -- with cache
+      if: steps.cacheDep.outputs.cache-hit == 'true'
+      run: |
+        # install standard dependencies
+        sudo -E apt-get update -y
+        sudo -E apt-get upgrade -y
+        sudo -E apt-get install -y pkg-config libfontconfig1-dev libcurl4-gnutls-dev libnetcdf-dev \
+                                   libboost-program-options-dev libboost-date-time-dev libgeos-dev \
+                                   libboost-test-dev libsqlite3-dev sqlite3
+        # sudo make poppler, proj, and gdal
+        cd ${{github.workspace}}/scripts/poppler-0.23.4
+        sudo make install
+        cd ${{github.workspace}}/scripts/proj-6.3.2
+        sudo make install
+        cd ${{github.workspace}}/scripts/gdal-3.2.1
+        sudo make install
+        # install qt
+        sudo add-apt-repository ppa:rock-core/qt4
+        sudo apt-get update
+        sudo -E apt-get install -y libqt4-dev libqtwebkit-dev
+        # Use OpenFOAM 8
+        # add the dl.openfoam.org repo and install OpenFOAM 8
+        sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+        sudo add-apt-repository http://dl.openfoam.org/ubuntu
+        sudo apt-get update
+        sudo -E apt-get install -y openfoam8
+        echo "source /opt/openfoam8/etc/bashrc" >> ~/.bashrc
+        # return to start directory
+        cd ${{github.workspace}}
+
+    - name: make build directory
+      run: mkdir build
+
+    - name: configure
+      working-directory: ${{github.workspace}}/build
+      run: cmake -B ${{github.workspace}}/build -D SUPRESS_WARNINGS=ON  -D SKIP_GETDATE=ON -D BUILD_TESTING=ON -D DISABLE_THREDDS_UPDATE=ON -D OPENMP_SUPPORT=ON -D RUN_CFG_TESTS=ON -D STABILITY=ON -D WITH_LCP_CLIENT=ON -D CMAKE_BUILD_TYPE=debug -D NINJA_CLI=ON ..
+
+    - name: make
+      working-directory: ${{github.workspace}}/build
+      run: make && sudo make install
+      
+    - name: test
+      working-directory: ${{github.workspace}}/build
+      #skip cfg tests until UCAR THREDDS service is fixed
+      run: echo "${{env.WINDNINJA_DATA}}" && ctest --output-on-failure -E 'cfg_ucar_rap|cfg_ucar_ndfd|cfg_ucar_gfs|landfire|rtma|cfg_ucar_nam|cfg_wx1_config|cfg_mesonet_point|cfg_nomads_arw_ak|cfg_nomads_arw_conus'

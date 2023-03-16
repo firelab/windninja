@@ -64,6 +64,10 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         if(ncepNamGrib2Surf.identify(fileName)) {
             ncepNamGrib2Surf.setModelFileName( fileName );
             return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
+        } else {
+            std::ostringstream outString;
+            outString << "failed to identify " << fileName;
+            throw std::runtime_error(outString.str());
         }
     }
     else if( !VSI_ISDIR( sStat.st_mode ) && !strstr( fileName.c_str(), ".zip" ) )

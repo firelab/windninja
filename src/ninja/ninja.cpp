@@ -71,6 +71,8 @@ ninja::ninja()
     slope=NULL;
     shade=NULL;
     solar=NULL;
+    outputDirectionArray=NULL;
+    outputSpeedArray=NULL;
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
@@ -102,6 +104,8 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+, outputSpeedArray(rhs.outputSpeedArray)
+, outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
 , DustGrid(rhs.DustGrid)
 #endif
@@ -178,6 +182,8 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+        outputSpeedArray=rhs.outputSpeedArray;
+        outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
         DustGrid = rhs.DustGrid;
         #endif
@@ -346,6 +352,7 @@ do
 		//initialize
                 init.reset(initializationFactory::makeInitialization(input));
                 init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif
@@ -402,6 +409,7 @@ do
 		//solver
 
 		//if the CG solver diverges, try the minres solver
+
 		if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 		    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
@@ -605,12 +613,13 @@ double ninja::getSmallestRadiusOfInfluence()
 	return smallest;
 }
 
-/*
 
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
 //    If this solver diverges, try MINRES from PetSc below...
-/**Method called in ninja::simulate_wind() to solve the matrix equations.
+
+/**
+ * Method called in ninja::simulate_wind() to solve the matrix equations.
  * This is a congugate gradient solver.
  * It seems to be the fastest, but is not monotonic convergence (residual oscillates a bit up and down).
  * If this solver diverges, try the MINRES from PetSc which is commented out below...
@@ -668,8 +677,6 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     //Ax=new double[NUMNP];
     //Ap=new double[NUMNP];
     //Anorm=new double[NUMNP];
-
-
 
     //matrix vector multiplication A*x=Ax
     mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
@@ -731,8 +738,9 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
         resid = cblas_dnrm2(NUMNP, r, 1) / normb;	//compute resid
         //resid = nrm2(NUMNP, r) / normb;
 
-        if(i==1)
+        if(i==1) {
             start_resid = resid;
+        }
 
         if((i%print_iters)==0)
         {
@@ -743,6 +751,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
 #endif //NINJA_DEBUG_VERBOSE
 
             residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
+
             if(residual_percent_complete<residual_percent_complete_old)
                 residual_percent_complete=residual_percent_complete_old;
             if(residual_percent_complete<0.)
@@ -1546,7 +1555,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+27;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==1)   //face node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1575,7 +1584,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+18;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==2)   //edge node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1604,7 +1613,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+12;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==3)   //corner node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1623,7 +1632,7 @@ void ninja::discretize()
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-					col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+					                    col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                         if(col >= row)	//only do if we're on the upper triangular part of SK
                                         {
                                             col_ind[temp1]=col;
@@ -1633,10 +1642,10 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+8;
-			 temp=temp1;
+			             temp=temp1;
                     }
                     else
-			throw std::logic_error("Error arranging SK array.  Exiting...");
+			             throw std::logic_error("Error arranging SK array.  Exiting...");
                }
           }
      }
@@ -1646,6 +1655,7 @@ void ninja::discretize()
 
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
+
     Stability stb(input);
     alphaVfield.allocate(&mesh);
 
@@ -1754,8 +1764,7 @@ void ninja::discretize()
 	 {
 		 element elem(&mesh);
 		 int pos;  
-                 double alphaV; //used for summing over nodal points below
-		 int ii, jj, kk;
+         double alphaV; //used for summing over nodal points below
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -1768,15 +1777,7 @@ void ninja::discretize()
 			 /*      Ground       =>  normal flux = 0               */
 			 /*-----------------------------------------------------*/
 
-
-
 			 //elem.computeElementStiffnessMatrix(i, u0, v0, w0, alpha);
-
-
-
-
-
-
 
 			 //Given the above parameters, function computes the element stiffness matrix
 
@@ -1797,7 +1798,6 @@ void ninja::discretize()
 
 			 for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
 			 {
-
 				 elem.computeJacobianQuadraturePoint(j, i);
 
 				 //Calculate the coefficient H here and the alpha-squared term in front of the second partial of z in governing equation (we are still on element i, quadrature point j)
@@ -1851,31 +1851,13 @@ void ninja::discretize()
 				 //Create element stiffness matrix---------------------------------------------
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
-					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+					 elem.QE[k] = elem.QE[k] + elem.WT * elem.SFV[0*mesh.NNPE*elem.NUMQPTV + k*elem.NUMQPTV + j] * elem.HVJ * elem.DV;
 					 for(l=0;l<mesh.NNPE;l++)
 					 {
-                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
 					 }
 				 }                            //End loop over nodes in the element
 			 }                                  //End loop over quadrature points in the element
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 			 //Place completed element matrix in global SK and Q matrices
 
@@ -2694,6 +2676,94 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
+
+void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_Grid( input.cldFile.c_str(), 1);
+            angGrid.write_Grid( input.angFile.c_str(), 0);
+            velGrid.write_Grid( input.velFile.c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
+            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
+            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
+            angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
+            velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
+            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
+            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+        }
+    }
+
+    if (input.asciiUvOutFlag) {
+        writeAsciiUvOutputFiles( angGrid, velGrid);
+    }
+}
+
+// write u,v wind vector output files
+void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    AsciiGrid<double> uGrid(angGrid);
+    AsciiGrid<double> vGrid(angGrid);
+    setUvGrids( angGrid, velGrid, uGrid, vGrid);
+
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
+            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
+            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
+            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
+            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
+        }
+    }
+}
+
+void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
+{
+    int nRows = angGrid.get_nRows();
+    int nCols = angGrid.get_nCols();
+    double pi180 = M_PI / 180;
+
+    for (int m=0; m<nRows; m++){
+        for (int n=0; n<nCols; n++) {
+            double vel = velGrid.get_cellValue(m,n);
+            double ang = angGrid.get_cellValue(m,n);
+
+            double deg = 270.0 - ang;  // uv angle is ccw from W
+            if (deg < 0) deg += 360;
+            double rad = deg * pi180;
+
+            double u = cos(rad) * vel;
+            double v = sin(rad) * vel;
+
+            uGrid.set_cellValue(m,n,u);
+            vGrid.set_cellValue(m,n,v);
+        }
+    }
+}
+
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
@@ -2706,7 +2776,9 @@ void ninja::writeOutputFiles()
 	if(input.volVTKOutFlag)
 	{
 		try{
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
+            // can pick between "ascii" and "binary" format for the vtk write format
+            std::string vtkWriteFormat = "binary";//"binary";//"ascii";
+			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
@@ -2723,23 +2795,25 @@ void ninja::writeOutputFiles()
 	#pragma omp parallel sections
 	{
 
-
 	//write FARSITE files
 	#pragma omp section
 	{
 	try{
-		if(input.asciiOutFlag==true)
+		if(input.asciiOutFlag)
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+                    AsciiGrid<double> *velTempGrid, *angTempGrid;
+                    velTempGrid=NULL;
+                    angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+                    AsciiGrid<double> tempCloud(CloudGrid);
+                    tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
+                    //if output clipping was set by the user, don't buffer to overlap the DEM
+                    if(!input.outputBufferClipping > 0.0)
+                    {
                         //ensure grids cover original DEM extents for FARSITE
                         AsciiGrid<double> demGrid;
                         GDALDatasetH hDS;
@@ -2749,68 +2823,64 @@ void ninja::writeOutputFiles()
                             input.Com->ninjaCom(ninjaComClass::ninjaNone,
                                     "Problem reading DEM during output writing." );
                         }
-
                         GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
                         tempCloud.BufferToOverlapGrid(demGrid);
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
+                    }
 
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                AsciiGrid<double> *ustarTempGrid;
-                ustarTempGrid=NULL;
+#ifdef FRICTION_VELOCITY
+                    if(input.frictionVelocityFlag == 1){
+                        AsciiGrid<double> *ustarTempGrid;
+                        ustarTempGrid=NULL;
 
-                ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
+                        ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
 
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid=NULL;
-                }
-			}
-			#endif
+                        if(ustarTempGrid)
+                        {
+                            delete ustarTempGrid;
+                            ustarTempGrid=NULL;
+                        }
+                    }
+#endif
+#ifdef EMISSIONS
+                    if(input.dustFlag == 1){
+                        AsciiGrid<double> *dustTempGrid;
+                        dustTempGrid=NULL;
 
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                AsciiGrid<double> *dustTempGrid;
-                dustTempGrid=NULL;
+                        dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
 
-                dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
+                        if(dustTempGrid)
+                        {
+                            delete dustTempGrid;
+                            dustTempGrid=NULL;
+                        }
+                    }
+#endif
+                    if(angTempGrid)
+                    {
+                            delete angTempGrid;
+                            angTempGrid=NULL;
+                    }
+                    if(velTempGrid)
+                    {
+                            delete velTempGrid;
+                            velTempGrid=NULL;
+                    }
 
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid=NULL;
-                }
-            }
-			#endif
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
+                    //Write .atm file for this run.  Only has one time value in file.
+                    if(input.writeAtmFile)
+                    {
+                        farsiteAtm atmosphere;
+                        atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+                        atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                    }
 		}
 	}catch (exception& e)
 	{
@@ -3130,6 +3200,14 @@ void ninja::deleteDynamicMemory()
 	{	delete[] DIAG;
 		DIAG=NULL;
 	}
+	if(outputSpeedArray)
+	{	delete[] outputSpeedArray;
+		outputSpeedArray = NULL;
+	}
+	if(outputDirectionArray)
+	{	delete[] outputDirectionArray;
+		outputDirectionArray = NULL;
+	}
 
 	u0.deallocate();
 	v0.deallocate();
@@ -3319,19 +3397,13 @@ void ninja::set_DEM(std::string dem_file_name)
     if(!CPLCheckForFile((char*)dem_file_name.c_str(), NULL))
         throw std::runtime_error(std::string("The file ") +
                 dem_file_name + " does not exist or may be in use by another program.");
-//	dem.read_elevation(dem_file_name, units);
-//	input.surface.Roughness.set_headerData(dem);
-//	input.surface.Rough_h.set_headerData(input.dem);
-//	input.surface.Rough_d.set_headerData(input.dem);
-//	input.surface.Albedo.set_headerData(input.dem);
-//	input.surface.Bowen.set_headerData(input.dem);
-//	input.surface.Cg.set_headerData(input.dem);
-//	input.surface.Anthropogenic.set_headerData(input.dem);
-//
-//	input.surface.RoughnessUnits = lengthUnits::meters;
-//	input.surface.Rough_hUnits = lengthUnits::meters;
-//	input.surface.Rough_dUnits = lengthUnits::meters;
     input.dem.fileName = dem_file_name;
+}
+
+void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
+                    const double* geoRef, std::string prj)
+{
+    input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
 int ninja::get_inputsRunNumber() const
@@ -3568,13 +3640,14 @@ void ninja::computeSurfPropForCell
     coverUnits::toBaseUnits(canopyCover, canopyCoverUnits);
     lengthUnits::toBaseUnits(fuelBedDepth, fuelBedDepthUnits);
 
-    // Go through logic of determining surface properties, depending on what data is available at this cell
+    //Go through logic of determining surface properties, depending on what data is available at this cell
+    //0.75 and 0.1 coeffiecients taken from Crockford, 2007 (Wind Profiles and Forests, Masters Thesis, DTU)
 
     if (canopyCover >= 0.05 && canopyHeight > 0)	// if enough cover use the canopy hgt
     {
         input.surface.Rough_h.set_cellValue(i, j, canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assuming forest land cover for heat transfer parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3584,8 +3657,8 @@ void ninja::computeSurfPropForCell
         if(fuelModel == 90)			// Barren
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00230769);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00230769*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00230769*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.3);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3593,8 +3666,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 91)	// Urban Roughness
         {
             input.surface.Rough_h.set_cellValue(i, j,  5.0);
-            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 5.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 5.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 5.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.18);
             input.surface.Bowen.set_cellValue(i, j, 1.5);
             input.surface.Cg.set_cellValue(i, j, 0.25);
@@ -3602,8 +3675,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 92)	// Snow Ice
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00076923);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00076923*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00076923*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.7);
             input.surface.Bowen.set_cellValue(i, j, 0.5);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3611,8 +3684,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 93)	// Agriculture
         {
             input.surface.Rough_h.set_cellValue(i, j,  1.0);
-            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 1.0*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 1.0*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 1.0*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.15);
             input.surface.Bowen.set_cellValue(i, j, 1.0);
             input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3620,8 +3693,8 @@ void ninja::computeSurfPropForCell
         }else if(fuelModel == 98)	// Water
         {
             input.surface.Rough_h.set_cellValue(i, j,  0.00153846);
-            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.63);
-            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.13);
+            input.surface.Rough_d.set_cellValue(i, j, 0.00153846*0.75);
+            input.surface.Roughness.set_cellValue(i, j, 0.00153846*0.1);
             input.surface.Albedo.set_cellValue(i, j, 0.1);
             input.surface.Bowen.set_cellValue(i, j, 0.0);
             input.surface.Cg.set_cellValue(i, j, 1.0);
@@ -3632,8 +3705,8 @@ void ninja::computeSurfPropForCell
     }else if(fuelBedDepth > 0.0)	//just use fuel bed depth
     {
         input.surface.Rough_h.set_cellValue(i, j,  fuelBedDepth);
-        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.63);
-        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, fuelBedDepth*0.75);
+        input.surface.Roughness.set_cellValue(i, j, fuelBedDepth*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);	//use rangeland values for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3641,8 +3714,8 @@ void ninja::computeSurfPropForCell
     }else if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         input.surface.Rough_h.set_cellValue(i, j,  canopyHeight);
-        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.63);
-        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, canopyHeight*0.75);
+        input.surface.Roughness.set_cellValue(i, j, canopyHeight*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.1);	//assume forest land for heat flux parameters
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3650,8 +3723,8 @@ void ninja::computeSurfPropForCell
     }else		// If we make it to here, we'll just choose parameters based on rangeland...
     {
         input.surface.Rough_h.set_cellValue(i, j,  0.384615);
-        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.63);
-        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.13);
+        input.surface.Rough_d.set_cellValue(i, j, 0.384615*0.75);
+        input.surface.Roughness.set_cellValue(i, j, 0.384615*0.1);
         input.surface.Albedo.set_cellValue(i, j, 0.25);
         input.surface.Bowen.set_cellValue(i, j, 1.0);
         input.surface.Cg.set_cellValue(i, j, 0.15);
@@ -3666,8 +3739,8 @@ void ninja::computeSurfPropForCell
     if (canopyCover >= 0.05 && canopyHeight > 0 )	// if enough cover use the canopy hgt
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assuming forest land cover for heat transfer parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3683,8 +3756,8 @@ void ninja::computeSurfPropForCell
         {
         case 90:	// Barren
             (*input.surface.Rough_h.poData)[i][j] = 0.00230769;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00230769*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00230769*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.3;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3692,8 +3765,8 @@ void ninja::computeSurfPropForCell
             break;
         case 91:	// Urban Roughness
             (*input.surface.Rough_h.poData)[i][j] = 5.0;
-            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 5.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 5.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 5.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.18;
             (*input.surface.Bowen.poData)[i][j] = 1.5;
             (*input.surface.Cg.poData)[i][j] = 0.25;
@@ -3701,8 +3774,8 @@ void ninja::computeSurfPropForCell
             break;
         case 92:	// Snow Ice
             (*input.surface.Rough_h.poData)[i][j] = 0.00076923;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00076923*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00076923*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.7;
             (*input.surface.Bowen.poData)[i][j] = 0.5;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3710,8 +3783,8 @@ void ninja::computeSurfPropForCell
             break;
         case 93:	// Agriculture
             (*input.surface.Rough_h.poData)[i][j] = 1.0;
-            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 1.0*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 1.0*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 1.0*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.15;
             (*input.surface.Bowen.poData)[i][j] = 1.0;
             (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3719,8 +3792,8 @@ void ninja::computeSurfPropForCell
             break;
         case 98:	// Water
             (*input.surface.Rough_h.poData)[i][j] = 0.00153846;
-            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.63;
-            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.13;
+            (*input.surface.Rough_d.poData)[i][j] = 0.00153846*0.75;
+            (*input.surface.Roughness.poData)[i][j] = 0.00153846*0.1;
             (*input.surface.Albedo.poData)[i][j] = 0.1;
             (*input.surface.Bowen.poData)[i][j] = 0.0;
             (*input.surface.Cg.poData)[i][j] = 1.0;
@@ -3739,8 +3812,8 @@ void ninja::computeSurfPropForCell
     if(fuelBedDepth > 0.0)		//just use fuel bed depth
     {
         (*input.surface.Rough_h.poData)[i][j] = fuelBedDepth;
-        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.63;
-        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = fuelBedDepth*0.75;
+        (*input.surface.Roughness.poData)[i][j] = fuelBedDepth*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.25;	//use rangeland values for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3752,8 +3825,8 @@ void ninja::computeSurfPropForCell
     if(canopyHeight > 0.0)	//if there is a canopy height (no fuel model though)
     {
         (*input.surface.Rough_h.poData)[i][j] = canopyHeight;
-        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.63;
-        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.13;
+        (*input.surface.Rough_d.poData)[i][j] = canopyHeight*0.75;
+        (*input.surface.Roughness.poData)[i][j] = canopyHeight*0.1;
         (*input.surface.Albedo.poData)[i][j] = 0.1;	//assume forest land for heat flux parameters
         (*input.surface.Bowen.poData)[i][j] = 1.0;
         (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3764,8 +3837,8 @@ void ninja::computeSurfPropForCell
 
     // If we make it to here, we'll just choose parameters based on rangeland...
     (*input.surface.Rough_h.poData)[i][j] = 0.384615;
-    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.63;
-    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.13;
+    (*input.surface.Rough_d.poData)[i][j] = 0.384615*0.75;
+    (*input.surface.Roughness.poData)[i][j] = 0.384615*0.1;
     (*input.surface.Albedo.poData)[i][j] = 0.25;
     (*input.surface.Bowen.poData)[i][j] = 1.0;
     (*input.surface.Cg.poData)[i][j] = 0.15;
@@ -3966,8 +4039,37 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-  input.ninjaTimeZone =
-      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if (timeZoneString == "auto-detect" || timeZoneString == "") 
+    {
+        double longitude = 0;
+        double latitude = 0;
+        GDALDataset *poDS = (GDALDataset *)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+        if (poDS == NULL) {
+            GDALClose((GDALDatasetH)poDS);
+            ostringstream os;
+            os << "Could not open datasource " << input.dem.fileName << " in ninja::set_date_time().";
+            throw std::runtime_error(os.str());
+        }
+        GDALGetCenter(poDS, &longitude, &latitude);
+        GDALClose((GDALDatasetH)poDS);
+        std::string tz = FetchTimeZone(longitude, latitude, NULL);
+        if (tz == "") {
+            ostringstream os;
+            os << "Could not detect timezone string with FetchTimeZone() dfY="
+               << latitude << " dfX=" << longitude << " in ninja::set_date_time().";
+            throw std::runtime_error(os.str());
+        } 
+        else 
+        {
+            input.ninjaTimeZone =
+                globalTimeZoneDB.time_zone_from_region(tz);
+        }
+    } 
+    else 
+    {
+        input.ninjaTimeZone =
+            globalTimeZoneDB.time_zone_from_region(timeZoneString);
+    }
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;
@@ -4180,7 +4282,7 @@ bool ninja::set_position()
                         GA_ReadOnly);
 
     if(poDS == NULL)
-    throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
+        throw std::runtime_error("Error in ninja::set_position() trying to find the center of the elevation file.");
 
     double longitude, latitude;
 
@@ -4346,6 +4448,95 @@ void ninja::set_numberCPUs(int CPUs)
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
 
+double* ninja::get_outputSpeedGrid()
+{
+    outputSpeedArray = new double[VelocityGrid.get_arraySize()];
+
+    for(int i=0; i<VelocityGrid.get_nRows(); i++){
+        for(int j=0; j<VelocityGrid.get_nCols(); j++){
+            outputSpeedArray[i * VelocityGrid.get_nCols() + j] = VelocityGrid(i,j);
+        }
+    }
+
+    return outputSpeedArray;
+}
+
+double* ninja::get_outputDirectionGrid()
+{
+    outputDirectionArray = new double[AngleGrid.get_arraySize()];
+
+    for(int i=0; i<AngleGrid.get_nRows(); i++){
+        for(int j=0; j<AngleGrid.get_nCols(); j++){
+            outputDirectionArray[i * AngleGrid.get_nCols() + j] = AngleGrid(i,j);
+        }
+    }
+
+    return outputDirectionArray;
+}
+
+const char* ninja::get_outputGridProjection()
+{
+    return VelocityGrid.prjString.c_str();
+}
+
+double ninja::get_outputGridCellSize()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_cellSize();
+}
+
+double ninja::get_outputGridxllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_xllCorner();
+}
+
+double ninja::get_outputGridyllCorner()
+{
+    /*
+     * TODO: Handle in-memory grids more precisely
+     * What grid do we return here? Do we offer to interpolate
+     * to different resolutions like we do for the on-disk formats?
+     * Or do we just provide data at the mesh resolution?
+     * For now we are writing the mesh resolution. Note that the
+     * dem is resampled to the mesh resoltution, so I'm using the
+     * dem for georeferencing here. Somehow the header info is
+     * not set at this point for VelocityGrid or AngleGrid
+     */ 
+
+    return input.dem.get_yllCorner();
+}
+
+int ninja::get_outputGridnCols()
+{
+    return input.dem.get_nCols();
+}
+
+int ninja::get_outputGridnRows()
+{
+    return input.dem.get_nRows();
+}
+
 void ninja::set_outputBufferClipping(double percent)
 {
     if(percent < 0.0 || percent >= 50.0)
@@ -4482,7 +4673,6 @@ void ninja::set_pdfDEM(std::string dem_file_name)
     */
     input.pdfDEMFileName = dem_file_name;
 }
-
 
 void ninja::set_asciiOutFlag(bool flag)
 {
@@ -4919,19 +5109,6 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::checkInputs()
 {
-    //Check DEM
-    GDALDataset *poDS;
-    poDS = (GDALDataset*)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
-    if(poDS == NULL)
-    {
-        throw std::runtime_error("Could not open DEM for reading.");
-    }
-    if(GDALHasNoData(poDS, 1))
-    {
-        throw std::runtime_error("The DEM has no data values.");
-    }
-    GDALClose((GDALDatasetH)poDS);
-
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
     if(s.find_first_of("/\\:;\"'") != std::string::npos){
@@ -5013,4 +5190,33 @@ void ninja::dumpMemory()
 {
     input.dem.deallocate();
     input.surface.deallocate();
+}
+
+
+// derive a new pathname from the given one, swapping the path (if given) and optionally applying a regex replacement
+std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement) 
+{
+#ifdef WIN32
+    const char fs = '\\';
+#else
+    const char fs = '/';
+#endif
+
+    std::string s = pathname;
+
+    if (newpath) {
+        int i = s.rfind(fs);
+        if (i < 0) { // no path
+            s.insert(0,newpath);
+            s.insert(strlen(newpath), &fs, 1);
+        } else {
+            s.replace(0, i, newpath);
+        }
+    }
+
+    if (pattern && replacement) {
+        s = std::regex_replace(std::string(s), std::regex(pattern), std::string(replacement));
+    }
+
+    return s;
 }
