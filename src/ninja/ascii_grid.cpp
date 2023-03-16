@@ -2006,28 +2006,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     oSRS.importFromEPSG(4326);
     oSRS.exportToWkt(&pszDST_WKT);
 
-    GDALWarpOptions *psWarpOptions;
     GDALDataset *wrpDS;
-
-    double dfNoData;
-    dfNoData = scaledDataGrid.get_noDataValue();
-
-    psWarpOptions = GDALCreateWarpOptions();
-
-    int nBandCount = srcDS->GetRasterCount();
-    psWarpOptions->nBandCount = nBandCount;
-
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-    psWarpOptions->padfDstNoDataReal[1] = dfNoData;
-    psWarpOptions->padfDstNoDataImag[1] = dfNoData;
-
-    psWarpOptions->papszWarpOptions =
-            CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                            "INIT_DEST", "NO_DATA" );
 
     wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
@@ -2068,7 +2047,6 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     delete [] padfScanline;
 
     GDALDestroyColorTable((GDALColorTableH) poCT);
-    GDALDestroyWarpOptions( psWarpOptions );
 
     GDALClose((GDALDatasetH) poDS);
     GDALClose((GDALDatasetH) srcDS);
