@@ -70,8 +70,9 @@ void KmlVector::setDirGrid(AsciiGrid<double> &d)
 	dir = d;
 }
 
-void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb)
+void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units)
 {
+	speedUnits = units;
 	turbulence = turb;
 }
 
@@ -1212,7 +1213,25 @@ bool KmlVector::writeTurbulence(FILE *fileOut)
     std::string outFilename = "turbulence_png.png";
     std::string scalarLegendFilename = "turbulence_legend";
     std::string legendTitle = "Speed Fluctuation";
-    std::string legendUnits = "(m/s)";
+    std::string legendUnits = "";
+    switch(speedUnits)
+    {
+            case velocityUnits::metersPerSecond:	// m/s
+                    legendUnits = "(m/s)";
+                    break;
+            case velocityUnits::milesPerHour:		// mph
+                    legendUnits = "(mph)";
+                    break;
+            case velocityUnits::kilometersPerHour:	// kph
+                    legendUnits = "(kph)";
+                    break;
+            case velocityUnits::knots:	// kts
+                    legendUnits = "(knots)";
+        break;
+            default:				// default is mph
+                    legendUnits = "(mph)";
+                    break;
+    }
     bool writeLegend = TRUE;
 
     turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);

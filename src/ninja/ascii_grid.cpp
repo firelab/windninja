@@ -1461,7 +1461,8 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
         throw std::runtime_error("Cannot open output file in AsciiGrid<T>::write_Grid().");
         //return false;
     }
-    printf("writing ascii output: %s\n", outputFile.c_str());
+
+    CPLDebug("WINDNINJA", "writing ascii output: %s", outputFile.c_str());
 
     write_GridInfo(fout);
 

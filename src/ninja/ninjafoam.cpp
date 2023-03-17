@@ -2514,7 +2514,7 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
                         
                         ninjaKmlFiles.setTurbulenceFlag("true");
-                        ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid);
+                        ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
 			ninjaKmlFiles.setKmzFile(input.kmzFile);
