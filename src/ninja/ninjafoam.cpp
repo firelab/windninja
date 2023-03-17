@@ -53,6 +53,7 @@ NinjaFoam::NinjaFoam() : ninja()
     cellCount = 0; 
     nRoundsRefinement = 0;
     simpleFoamEndTime = 1000; //initial value in controlDict_simpleFoam
+    writeTurbulence = false;
 
     startTotal = 0.0;
     endTotal = 0.0;
@@ -2510,11 +2511,14 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
                                     AsciiGrid<double>::order0));
-			turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
-                                    AsciiGrid<double>::order0));
-                        
-                        ninjaKmlFiles.setTurbulenceFlag("true");
-                        ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        if(writeTurbulence)
+                        {
+                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setTurbulenceFlag("true");
+                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        }
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
 			ninjaKmlFiles.setKmzFile(input.kmzFile);

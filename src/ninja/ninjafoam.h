@@ -171,6 +171,7 @@ private:
     void SetOutputResolution();
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
+    bool writeTurbulence;
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;
