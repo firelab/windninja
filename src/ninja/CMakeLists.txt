@@ -29,6 +29,7 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
 
 set(NINJA_SOURCES air.cpp
                   ascii_grid.cpp
+                  Array2D.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp

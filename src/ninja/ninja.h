@@ -49,6 +49,7 @@
 #include <sstream>
 #include <cctype>
 #include <cfloat>
+#include <regex>
 
 #ifdef _OPENMP
 #include <omp.h>

@@ -29,6 +29,7 @@ set(LINK_LIBS ${Boost_LIBRARIES}
 
 set(SOLAR_GRID_SRC solar_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp

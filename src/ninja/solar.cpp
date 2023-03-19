@@ -39,9 +39,16 @@ Solar::Solar()
 	longitude = noDataValue;
 	slope = noDataValue;
 	solarIntensity = noDataValue;
+        second = -1;
+        minute = -1;
+        hour = -1;
+        day = -1;
+        month = -1;
+        year = -1;
+        offset = -1.0;
 
 	solarPosData = new posdata;
-
+        
 	S_init(solarPosData);
 }
 
@@ -60,6 +67,19 @@ Solar::Solar(const boost::local_time::local_date_time& time_in,
 	solarIntensity = noDataValue;
 
 	solarPosData = new posdata;
+
+	second = solarTime.local_time().time_of_day().seconds();
+	minute = solarTime.local_time().time_of_day().minutes();
+	hour = solarTime.local_time().time_of_day().hours();
+	day = solarTime.local_time().date().day();
+	month = solarTime.local_time().date().month();
+	year = solarTime.local_time().date().year();
+        //Compute offset from UTC, including if in daylight savings or not
+        boost::posix_time::ptime UTC_time(solarTime.utc_time());
+        boost::posix_time::ptime Local_time(solarTime.local_time());
+
+	//Get offset from UTC in decimal hours
+	offset = ((double) (Local_time - UTC_time).total_seconds())/3600.0;
 
 	set_allSolarPosData();
 
@@ -81,8 +101,15 @@ Solar::Solar(Solar &s)
 
 	solarPosData = new posdata;
 
+	second = s.second;
+	minute = s.minute;
+	hour = s.hour;
+	day = s.day;
+	month = s.month;
+	year = s.year;
+        offset = s.offset;
+
 	set_allSolarPosData();
-	
 }
 
 
@@ -153,28 +180,18 @@ bool Solar::set_allSolarPosData()
 	S_init(solarPosData);
 	solarPosData->aspect = aspect;
 	solarPosData->azim = theta;
-	solarPosData->day = solarTime.local_time().date().day();
+	solarPosData->day = day;
 	solarPosData->elevref = phi;
-	solarPosData->hour = solarTime.local_time().time_of_day().hours();
+	solarPosData->hour = hour;
 	solarPosData->interval = interval;
 	solarPosData->latitude = latitude;
 	solarPosData->longitude = longitude;
-	solarPosData->minute = solarTime.local_time().time_of_day().minutes();
-	solarPosData->month = solarTime.local_time().date().month();
-	solarPosData->second = solarTime.local_time().time_of_day().seconds();
+	solarPosData->minute = minute;
+	solarPosData->month = month;
+	solarPosData->second = second;
 	solarPosData->tilt = slope;
-	solarPosData->year = solarTime.local_time().date().year();
-
-	//Compute offset from UTC, including if in daylight savings or not
-	boost::posix_time::ptime UTC_time(solarTime.utc_time());
-	boost::posix_time::ptime Local_time(solarTime.local_time());
-	boost::posix_time::time_duration offset = Local_time - UTC_time;
-//	if(offset.is_negative())
-//		offset = offset.invert_sign();
-
-	//Get offset from UTC in decimal hours
-	solarPosData->timezone = ((double) offset.total_seconds())/3600.0;
-
+	solarPosData->year = year;
+	solarPosData->timezone = offset;
 	solarPosData->etrtilt = solarIntensity;
 
 	return true;
@@ -185,7 +202,6 @@ bool Solar::call_solPos()
 	set_allSolarPosData();
 
 	solarPosData->function = (S_ALL & ~S_DOY);
-
 	errorCode = S_solpos(solarPosData);
 	theta = solarPosData->azim;
 	phi = solarPosData->elevref;

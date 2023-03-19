@@ -1427,7 +1427,7 @@ void AsciiGrid<T>::write_json_Grid(std::string outputFile, int numDecimals)
     fprintf( fout, noDataFmt.c_str(), data.getNoDataValue());
 
     // this is not in the AAIGRID specs but since this is our own JSON version we just add it here
-    string const wkt = std::regex_replace( prjString, regex("\""), "\\\"");
+    string const wkt = std::regex_replace( std::string(prjString), regex("\""), std::string("\\\""));
     fprintf( fout, "\"WKT\":\"%s\"\n", wkt.c_str());
 
     fprintf( fout, "\"data\":[\n");
@@ -1456,7 +1456,8 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
         throw std::runtime_error("Cannot open output file in AsciiGrid<T>::write_Grid().");
         //return false;
     }
-    printf("writing ascii output: %s\n", outputFile.c_str());
+
+    CPLDebug("WINDNINJA", "writing ascii output: %s", outputFile.c_str());
 
     write_GridInfo(fout);
 
@@ -1977,39 +1978,18 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     char *pszSRS_WKT = NULL;
 
     const char* prj2 = (const char*)prjString.c_str();
-    oSRS.importFromWkt(&prj2);
+    oSRS.importFromWkt((char **)&prj2);
     oSRS.exportToWkt(&pszSRS_WKT);
 
     char *pszDST_WKT = NULL;
     oSRS.importFromEPSG(4326);
     oSRS.exportToWkt(&pszDST_WKT);
 
-    GDALWarpOptions *psWarpOptions;
     GDALDataset *wrpDS;
-
-    double dfNoData;
-    dfNoData = scaledDataGrid.get_noDataValue();
-
-    psWarpOptions = GDALCreateWarpOptions();
-
-    int nBandCount = srcDS->GetRasterCount();
-    psWarpOptions->nBandCount = nBandCount;
-
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-    psWarpOptions->padfDstNoDataReal[1] = dfNoData;
-    psWarpOptions->padfDstNoDataImag[1] = dfNoData;
-
-    psWarpOptions->papszWarpOptions =
-            CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                            "INIT_DEST", "NO_DATA" );
 
     wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
-                                                   0.0, psWarpOptions);
+                                                   0.0, NULL);
 
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
@@ -2046,7 +2026,6 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     delete [] padfScanline;
 
     GDALDestroyColorTable((GDALColorTableH) poCT);
-    GDALDestroyWarpOptions( psWarpOptions );
 
     GDALClose((GDALDatasetH) poDS);
     GDALClose((GDALDatasetH) srcDS);
@@ -2576,6 +2555,12 @@ void AsciiGrid<T>::write_4326_Grid (std::string& filename, int precision, void (
             GDALDatasetH hTmpDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, GRA_NearestNeighbour, 1.0, NULL);
             if (hTmpDS) {
                 AsciiGrid<T> geoAsciiGrid( (GDALDataset*) hTmpDS, 1);
+                
+                if (!geoAsciiGrid.crop_noData( 10)){
+                    cerr << "failed to crop EPSG:4326 grid to defined data\n";
+                }
+                
+
                 (geoAsciiGrid.*(write_grid))( filename, precision);
 
                 GDALClose(hTmpDS);
@@ -2602,6 +2587,22 @@ template <class T>
 void AsciiGrid<T>::write_json_4326_Grid (std::string filename, int precision) 
 {
     write_4326_Grid(filename, precision, &AsciiGrid<T>::write_json_Grid);
+}
+
+template<class T>
+bool AsciiGrid<T>::crop_noData (int noDataThreshold)
+{
+    int minRow, maxRow, minCol, maxCol;
+    if (data.get_dataBoundaries( noDataThreshold, minRow, maxRow, minCol, maxCol)) {
+        if (minRow > 0 || minCol > 0 || maxRow < data.get_numRows()-1 || maxCol < data.get_numCols()-1) {
+            xllCorner += minCol * cellSize;
+            yllCorner += (data.get_numRows()-1 - maxRow) * cellSize;
+            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place            
+        }
+        return true;
+    } else {
+        return false;
+    }
 }
 
 //--- template instantiations

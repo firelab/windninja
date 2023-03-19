@@ -102,14 +102,15 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
             throw std::logic_error( string("elevation_file " + *filename + " not found"));
         }
 
-        GDALDataset *pSrcDS = (GDALDataset*) GDALOpen(filename->c_str(), GA_ReadOnly);
-        if (pSrcDS) {
-            const OGRSpatialReference *pSR = pSrcDS->GetSpatialRef();
-            if (pSR && pSR->IsGeographic()){
+        GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename->c_str(), GA_ReadOnly);
+        if (hDS) {
+            const char *pszPrj = GDALGetProjectionRef(hDS);
+            OGRSpatialReferenceH hSrcSRS = OSRNewSpatialReference(pszPrj);
+            if (hSrcSRS == NULL){
                 cout << "provided elevation_file " << *filename << " is geographic, converting..\n";
                 string output_path = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
                 string new_filename = derived_pathname( filename->c_str(), output_path.c_str(), "\\.([^.]+)$", "-utm.$1");
-                GDALDataset *pDstDS = gdalWarpToUtm( new_filename.c_str(), pSrcDS);
+                GDALDataset *pDstDS = gdalWarpToUtm( new_filename.c_str(), (GDALDataset *)hDS);
                 if (pDstDS) {
                     // check if we have to crop noData values caused by the warp
                     int minRow, maxRow, minCol, maxCol;
@@ -129,16 +130,16 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
                     }
                     cout << "using warped UTM elevation_file " << new_filename << "\n";
                     GDALClose(pDstDS);
-                    GDALClose(pSrcDS);
+                    GDALClose(hDS);
                     return new string(new_filename);
 
                 } else { // converting to UTM elevation file failed
-                    GDALClose(pSrcDS);
+                    GDALClose(hDS);
                     throw std::logic_error( string("elevation_file ") + *filename + " cannot be converted to UTM");
                 }
 
             } else { // original elevation_file SRS is not geographic, use as-is
-                GDALClose(pSrcDS);
+                GDALClose(hDS);
                 return filename;
             }
         } else { // GDALOpen of original elevation_file failed

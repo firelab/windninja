@@ -417,6 +417,7 @@ do
 		//solver
 
 		//if the CG solver diverges, try the minres solver
+
 		if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 		    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
@@ -685,8 +686,6 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     //Ap=new double[NUMNP];
     //Anorm=new double[NUMNP];
 
-
-
     //matrix vector multiplication A*x=Ax
     mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
 
@@ -747,8 +746,9 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
         resid = cblas_dnrm2(NUMNP, r, 1) / normb;	//compute resid
         //resid = nrm2(NUMNP, r) / normb;
 
-        if(i==1)
+        if(i==1) {
             start_resid = resid;
+        }
 
         if((i%print_iters)==0)
         {
@@ -759,6 +759,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
 #endif //NINJA_DEBUG_VERBOSE
 
             residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
+
             if(residual_percent_complete<residual_percent_complete_old)
                 residual_percent_complete=residual_percent_complete_old;
             if(residual_percent_complete<0.)
@@ -1581,7 +1582,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+27;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==1)   //face node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1610,7 +1611,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+18;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==2)   //edge node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1639,7 +1640,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+12;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==3)   //corner node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1658,7 +1659,7 @@ void ninja::discretize()
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-					col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+					                    col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                         if(col >= row)	//only do if we're on the upper triangular part of SK
                                         {
                                             col_ind[temp1]=col;
@@ -1668,10 +1669,10 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+8;
-			 temp=temp1;
+			             temp=temp1;
                     }
                     else
-			throw std::logic_error("Error arranging SK array.  Exiting...");
+			             throw std::logic_error("Error arranging SK array.  Exiting...");
                }
           }
      }
@@ -1681,6 +1682,7 @@ void ninja::discretize()
 
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
+
     Stability stb(input);
     alphaVfield.allocate(&mesh);
 
@@ -1789,8 +1791,7 @@ void ninja::discretize()
 	 {
 		 element elem(&mesh);
 		 int pos;  
-                 double alphaV; //used for summing over nodal points below
-		 int ii, jj, kk;
+         double alphaV; //used for summing over nodal points below
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -1803,15 +1804,7 @@ void ninja::discretize()
 			 /*      Ground       =>  normal flux = 0               */
 			 /*-----------------------------------------------------*/
 
-
-
 			 //elem.computeElementStiffnessMatrix(i, u0, v0, w0, alpha);
-
-
-
-
-
-
 
 			 //Given the above parameters, function computes the element stiffness matrix
 
@@ -1832,7 +1825,6 @@ void ninja::discretize()
 
 			 for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
 			 {
-
 				 elem.computeJacobianQuadraturePoint(j, i);
 
 				 //Calculate the coefficient H here and the alpha-squared term in front of the second partial of z in governing equation (we are still on element i, quadrature point j)
@@ -1886,31 +1878,13 @@ void ninja::discretize()
 				 //Create element stiffness matrix---------------------------------------------
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
-					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+					 elem.QE[k] = elem.QE[k] + elem.WT * elem.SFV[0*mesh.NNPE*elem.NUMQPTV + k*elem.NUMQPTV + j] * elem.HVJ * elem.DV;
 					 for(l=0;l<mesh.NNPE;l++)
 					 {
-                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
 					 }
 				 }                            //End loop over nodes in the element
 			 }                                  //End loop over quadrature points in the element
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 			 //Place completed element matrix in global SK and Q matrices
 
@@ -5223,7 +5197,7 @@ std::string derived_pathname (const char* pathname, const char* newpath, const c
     }
 
     if (pattern && replacement) {
-        s = std::regex_replace(s, std::regex(pattern), replacement);
+        s = std::regex_replace(std::string(s), std::regex(pattern), std::string(replacement));
     }
 
     return s;

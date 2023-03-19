@@ -336,16 +336,18 @@ void ninja::importSingleBand(GDALDataset *poDataset)
     nR = poDataset->GetRasterYSize();
 
     if(poDataset->GetGeoTransform(adfGeoTransform) == CE_None) {
-	//find corners...
-	xL = adfGeoTransform[0];
-	yL = adfGeoTransform[3] + (adfGeoTransform[5] * nR);
+        //find corners...
+        xL = adfGeoTransform[0];
+        yL = adfGeoTransform[3] + (adfGeoTransform[5] * nR);
 
-    //get cell size
-    if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 1000000000))
-            cS = abs(adfGeoTransform[1]);
-        else
-            throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
-                                 "square cells (dx=dy) in the DEM.");
+        //get cell size
+        if(areEqual(abs(adfGeoTransform[1]), abs(adfGeoTransform[5]), 1000000000))
+                cS = abs(adfGeoTransform[1]);
+            else
+                throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
+                                    "square cells (dx=dy) in the DEM.");
+    } else {
+        throw std::runtime_error("no GeoTransform in data set");
     }
 
     //get band specific header info (no data)
@@ -427,6 +429,8 @@ void ninja::importGeoTIFF(GDALDataset* poDataset)
         else
             throw std::runtime_error("Rectangular cells were detected in your DEM. WindNinja requires " \
                 "square cells (dx=dy) in the DEM.");
+    } else {
+        throw std::runtime_error("no GeoTransform in data set");
     }
 
     //get band specific header info (no data)

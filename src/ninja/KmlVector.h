@@ -85,6 +85,7 @@ public:
 	~KmlVector();
 
 	AsciiGrid<double> spd, dir;
+	AsciiGrid<double> turbulence;
 	#ifdef FRICTION_VELOCITY
 	AsciiGrid<double> ustar;
 	#endif
@@ -121,6 +122,7 @@ public:
 	bool writeScreenOverlayDateTimeLegendWxModelRun(FILE *fileOut);
 
 	bool writeVectors(FILE *fileOut);
+	bool writeTurbulence(FILE *fileOut);
 	#ifdef FRICTION_VELOCITY
 	bool writeUstar(FILE *fileOut);
 	#endif
@@ -138,6 +140,8 @@ public:
 
 	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
 	void setDirGrid(AsciiGrid<double> &d);
+	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
+	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
 	#ifdef FRICTION_VELOCITY
 	void setUstarGrid(AsciiGrid<double> &ust);
 	void setUstarFlag(bool inputUstarFlag){ustarFlag = inputUstarFlag;}
@@ -171,6 +175,11 @@ private:
 	std::string legendFile;
 	std::string timeDateLegendFile;
 	std::string wxModelName;
+	bool turbulenceFlag;
+	std::string turbulence_tiff;
+	std::string turbulence_png;
+        std::string turbulence_legend;
+        std::string ustar_legend;
 	#ifdef FRICTION_VELOCITY
 	bool ustarFlag;
 	std::string ustar_tiff;

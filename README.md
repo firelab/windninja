@@ -1,6 +1,6 @@
 WindNinja
 =========
-![example workflow](https://github.com/firelab/windninja/actions/workflows/testing.yml/badge.svg)
+[![example workflow](https://github.com/firelab/windninja/actions/workflows/testing.yml/badge.svg)](https://github.com/firelab/windninja/actions)
 [![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 

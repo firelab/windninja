@@ -115,12 +115,11 @@ public:
     void set_headerData(int nC, int nR, double xL, double yL, double cS,
                         double nDV, T a, std::string prjStr = "");
 
-    inline bool set_xllCorner(double x){xllCorner = x; return true;}
-    inline bool set_yllCorner(double y){yllCorner = y; return true;}
+    inline bool set_xllCorner(double x) {xllCorner = x; return true;}
+    inline bool set_yllCorner(double y) {yllCorner = y; return true;}
     bool set_noDataValue(double nDV);
-    inline bool set_cellSize(double cS){cellSize = cS; return true;}
-    inline bool set_prjString(std::string prjStr)
-    {prjString = prjStr; return true;}
+    inline bool set_cellSize(double cS) {cellSize = cS; return true;}
+    inline bool set_prjString(std::string prjStr) {prjString = prjStr; return true;}
 
     inline int get_nRows() const {return data.get_numRows();}
     inline int get_nCols() const {return data.get_numCols();}
@@ -195,6 +194,8 @@ public:
 
     void write_ascii_4326_Grid (std::string outputFile, int numDecimals);
     void write_json_4326_Grid(std::string outputFile, int numDecimals);
+
+    bool crop_noData(int noDataThreshold);
 
     void sort_grid();
 
@@ -271,4 +272,5 @@ private:
     void write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int));
 };
 
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #endif  //ASCII_GRID_H

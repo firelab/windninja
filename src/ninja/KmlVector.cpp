@@ -70,6 +70,12 @@ void KmlVector::setDirGrid(AsciiGrid<double> &d)
 	dir = d;
 }
 
+void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units)
+{
+	speedUnits = units;
+	turbulence = turb;
+}
+
 #ifdef FRICTION_VELOCITY
 void KmlVector::setUstarGrid(AsciiGrid<double> &ust)
 {
@@ -264,6 +270,19 @@ bool KmlVector::writeKml(std::string cScheme, bool vector_scaling)
 			writeVectors(fout);
 			VSIFPrintfL(fout, "</Folder>");
 
+            turbulenceFlag = false;
+            
+            if(turbulence.get_nRows()!=0)
+                turbulenceFlag = true;
+            
+            if(turbulenceFlag ==true)
+            {
+                VSIFPrintfL(fout, "<Folder>");
+                VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
+                writeTurbulence(fout);
+                VSIFPrintfL(fout, "</Folder>");
+            }
+
             #ifdef FRICTION_VELOCITY
             if(ustarFlag ==true)
 			{
@@ -339,6 +358,19 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme,bool vector_s
 			VSIFPrintfL(fout, "\n\t<name>Wind Speed</name>\n");
 			writeVectors(fout);
                         VSIFPrintfL(fout, "</Folder>");
+
+            turbulenceFlag = false;
+            
+            if(turbulence.get_nRows()!=0)
+                turbulenceFlag = true;
+            
+            if(turbulenceFlag ==true)
+            {
+                VSIFPrintfL(fout, "<Folder>");
+                VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
+                writeTurbulence(fout);
+                VSIFPrintfL(fout, "</Folder>");
+            }
             
             #ifdef FRICTION_VELOCITY
             ustarFlag = false;
@@ -1153,6 +1185,129 @@ bool KmlVector::writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut)
     return true;
 }
 
+bool KmlVector::writeTurbulence(FILE *fileOut)
+{
+	double xPoint, yPoint;
+	double xCenter, yCenter;
+	double left_x, right_x, lower_y, upper_y;
+	double u = 0;
+	double cSize;
+	int nR;
+	int nC;
+	double upper, lower, upper_mid, lower_mid, mid;
+	std::string icon;
+
+	turbulence_png = "turbulence_png.png";
+
+	cSize = turbulence.get_cellSize();
+	nR = turbulence.get_nRows();
+	nC = turbulence.get_nCols();
+
+	lower = turbulence.get_minValue();
+	upper = turbulence.get_maxValue();
+	lower_mid = lower + (turbulence.get_maxValue() - turbulence.get_minValue())/4;
+	upper_mid = upper - (turbulence.get_maxValue() - turbulence.get_minValue())/4;
+	mid = upper_mid - (turbulence.get_maxValue() - turbulence.get_minValue())/4;
+
+    //---------------make single png for overlay------------------
+    std::string outFilename = "turbulence_png.png";
+    std::string scalarLegendFilename = "turbulence_legend";
+    std::string legendTitle = "Speed Fluctuation";
+    std::string legendUnits = "";
+    switch(speedUnits)
+    {
+            case velocityUnits::metersPerSecond:	// m/s
+                    legendUnits = "(m/s)";
+                    break;
+            case velocityUnits::milesPerHour:		// mph
+                    legendUnits = "(mph)";
+                    break;
+            case velocityUnits::kilometersPerHour:	// kph
+                    legendUnits = "(kph)";
+                    break;
+            case velocityUnits::knots:	// kts
+                    legendUnits = "(knots)";
+        break;
+            default:				// default is mph
+                    legendUnits = "(mph)";
+                    break;
+    }
+    bool writeLegend = TRUE;
+
+    turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+
+    turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    left_x = xCenter - cSize/2; //west
+    lower_y = yCenter - cSize/2; //south
+    turbulence.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    right_x = xCenter + cSize/2; //east
+    upper_y = yCenter + cSize/2;  //north
+
+	coordTransform->Transform(1, &right_x, &upper_y);
+	coordTransform->Transform(1, &left_x, &lower_y);
+	coordTransform->Transform(1, &xCenter, &yCenter);
+
+	int pos;
+	std::string shortName;
+	pos = turbulence_png.find_last_of('\\');
+	if(pos == -1)
+	  pos = turbulence_png.find_last_of('/');
+
+	shortName = turbulence_png.substr(pos + 1, turbulence_png.size());
+
+	VSIFPrintfL(fileOut, "<GroundOverlay>");
+	VSIFPrintfL(fileOut, "\n\t<name>Average Velocity Fluctuations</name>");
+	VSIFPrintfL(fileOut, "\n\t<ExtendedData>");
+	VSIFPrintfL(fileOut, "\n\t\t<Data name=\"Turbulence\">");
+	VSIFPrintfL(fileOut, "\n\t\t\t<value>2</value>");
+	VSIFPrintfL(fileOut, "\n\t\t</Data>");
+	VSIFPrintfL(fileOut, "\n\t</ExtendedData>");
+
+	VSIFPrintfL(fileOut, "\n\t<altitude>0</altitude>");
+	VSIFPrintfL(fileOut, "\n\t<altitudeMode>clampToGround</altitudeMode>");
+	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
+
+	VSIFPrintfL(fileOut, "\n\t<Icon>");
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //turbulence_png.png
+	VSIFPrintfL(fileOut, "\n\t</Icon>");
+
+	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
+	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
+	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
+
+	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
+
+	//---add legend----------------------------------------------
+        turbulence_legend = "./turbulence_legend";
+	//int pos;
+	//std::string shortName;
+	pos = turbulence_legend.find_last_of('\\');
+	if(pos == -1)
+	  pos = turbulence_legend.find_last_of('/');
+
+	shortName = turbulence_legend.substr(pos + 1, turbulence_legend.size());
+
+	VSIFPrintfL(fileOut, "<ScreenOverlay>");
+	VSIFPrintfL(fileOut, "\n<name>Legend</name>");
+	VSIFPrintfL(fileOut, "\n<visibility>1</visibility>");
+	VSIFPrintfL(fileOut, "\n<color>9bffffff</color>");
+	VSIFPrintfL(fileOut, "\n<Snippet maxLines=\"0\"></Snippet>");
+	VSIFPrintfL(fileOut, "\n<Icon>");
+	VSIFPrintfL(fileOut, "\n<href>%s</href>", shortName.c_str());
+	VSIFPrintfL(fileOut, "\n</Icon>");
+	VSIFPrintfL(fileOut, "\n<overlayXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<screenXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<rotationXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<size x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n</ScreenOverlay>\n");
+
+	return true;
+}
+
 #ifdef FRICTION_VELOCITY
 bool KmlVector::writeUstar(FILE *fileOut)
 {
@@ -1565,6 +1720,14 @@ bool KmlVector::makeKmz()
   filesInZip.push_back(getShortName(kmlFile));
   filesInZip.push_back(getShortName(legendFile));
 
+  if(turbulenceFlag==1)
+  {
+      filesToZip.push_back(turbulence_png);
+      filesToZip.push_back(turbulence_legend);
+      filesInZip.push_back(getShortName(turbulence_png));
+      filesInZip.push_back(getShortName(turbulence_legend));
+  }
+
   #ifdef FRICTION_VELOCITY
   if(ustarFlag==1)
   {
@@ -1635,6 +1798,12 @@ bool KmlVector::removeKmlFile()
     VSIUnlink(legendFile.c_str());
     if(timeDateLegendFile != "")
         VSIUnlink(timeDateLegendFile.c_str());
+    if(turbulence_png.c_str() != ""){
+        VSIUnlink(turbulence_png.c_str());
+        VSIUnlink((turbulence_png + ".aux.xml").c_str());
+    }
+    if(turbulence_legend.c_str() !="")
+        VSIUnlink(turbulence_legend.c_str());
     
     #ifdef FRICTION_VELOCITY
     if(ustar_png.c_str() != ""){

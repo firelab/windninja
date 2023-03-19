@@ -76,19 +76,16 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     assert(latitude);
     bool rc = true;
 
-/*
     const char *pszPrj = GDALGetProjectionRef(hDS);
     if(pszPrj == NULL) {
         return false;
     }
-*/
 
     OGRSpatialReferenceH hSrcSRS, hTargetSRS;
-    //hSrcSRS = OSRNewSpatialReference(pszPrj);
-    hSrcSRS = GDALGetSpatialRef(hDS);
+    hSrcSRS = OSRNewSpatialReference(pszPrj);
     hTargetSRS = OSRNewSpatialReference(NULL);
     if(hSrcSRS == NULL || hTargetSRS == NULL) {
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -103,7 +100,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     OGRCoordinateTransformationH hCT;
     hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
     if(hCT == NULL) {
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -114,7 +111,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     double adfGeoTransform[6];
     if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None) {
         OCTDestroyCoordinateTransformation(hCT);
-        //OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
     }
@@ -130,7 +127,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
         *latitude = y;
     }
     OCTDestroyCoordinateTransformation(hCT);
-    //OSRDestroySpatialReference(hSrcSRS);
+    OSRDestroySpatialReference(hSrcSRS);
     OSRDestroySpatialReference(hTargetSRS);
     return rc;
 }
@@ -830,14 +827,14 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 bool gdalHasGeographicSRS (const char* filename) {
     bool isGeographic = false;
-    GDALDataset *pDS = (GDALDataset*) GDALOpen(filename, GA_ReadOnly);
-    CPLAssert(pDS);
+    GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename, GA_ReadOnly);
+    CPLAssert(hDS);
 
-    const OGRSpatialReference *pSR = pDS->GetSpatialRef();
-    if (pSR) {
-        isGeographic = pSR->IsGeographic();
+    const char *pszPrj = GDALGetProjectionRef(hDS);
+    if (pszPrj == "") {
+      isGeographic = true;
     }
-    GDALClose(pDS);
+    GDALClose(hDS);
 
     return isGeographic;
 }
@@ -848,12 +845,18 @@ bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
     bool rc = false;
 
     if (pDS) {
-        const OGRSpatialReference *pSrcSRS = pDS->GetSpatialRef();
-        if (pSrcSRS) {
+        const char *pszPrj = pDS->GetProjectionRef();
+        OGRSpatialReference* pSrcSRS;
+        pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
+        if (pszPrj == "") {
             OGRSpatialReference tgtSRS;
 
             tgtSRS.SetWellKnownGeogCS("EPSG:4326");
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
             tgtSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
 
             OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(pSrcSRS, &tgtSRS);
             if (pCT) {

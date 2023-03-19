@@ -51,8 +51,13 @@
 //	WITH ABOVE, REMEMBER TO USE std:: NAMESPACE!!
 
 
-// Below are user-defined exceptions
+#ifdef WIN32
+#define NOEXCEPT 
+#else
+#define NOEXCEPT noexcept
+#endif 
 
+// Below are user-defined exceptions
 class cancelledByUser : public std::runtime_error {
 public:
 	cancelledByUser() : std::runtime_error("Simulation was cancelled by the user.") { }
