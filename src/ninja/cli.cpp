@@ -111,6 +111,22 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
                 string new_filename = derived_pathname( filename->c_str(), output_path.c_str(), "\\.([^.]+)$", "-utm.$1");
                 GDALDataset *pDstDS = gdalWarpToUtm( new_filename.c_str(), pSrcDS);
                 if (pDstDS) {
+                    // check if we have to crop noData values caused by the warp
+                    int minRow, maxRow, minCol, maxCol;
+                    if (gdalGetDataBoundaries(pDstDS, 1, 0.02, minRow, maxRow, minCol, maxCol)){
+                        if (minRow > 0 || minCol > 0 || maxRow < pDstDS->GetRasterYSize()-1 || maxCol < pDstDS->GetRasterXSize()-1) {
+                            new_filename = derived_pathname( filename->c_str(), output_path.c_str(), "\\.([^.]+)$", "-utm-data.$1");
+                            GDALDataset* pCroppedDS = gdalCrop(new_filename.c_str(), pDstDS, minRow,maxRow,minCol,maxCol);
+                            if (pCroppedDS) {
+                                delete pDstDS;
+                                pDstDS = pCroppedDS;
+                            } else {
+                                GDALClose(pDstDS);
+                                GDALClose(pSrcDS);
+                                throw std::logic_error( string("no defined data region for UTM elevation file " + new_filename));
+                            }
+                        } // else no crop neccessary - all data values in new grid are defined
+                    }
                     cout << "using warped UTM elevation_file " << new_filename << "\n";
                     GDALClose(pDstDS);
                     GDALClose(pSrcDS);
@@ -290,15 +306,15 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
                 ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
+
+                ("write_huvw_output", po::value<bool>()->default_value(false), "write HUVW wind vector output files (true, default:false)")
+                ("huvw_tif", po::value<bool>()->default_value(false), "write HUVW *.tif (true, default:false)")
+                ("huvw_json", po::value<bool>()->default_value(false), "write HUVW (epsg 4326) raster as *.json (default: true, false)")
+                ("huvw_geojson", po::value<bool>()->default_value(false), "write HUVW vectors as *.geojson (true, default:false)")
+                ("huvw_csv", po::value<bool>()->default_value(false), "write HUVW ECEF vectors as *.csv (true, default:false)")
+
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
-
-                ("ascii_out_aaigrid", po::value<bool>()->default_value(true), "write ascii output as AAIGRID files (default: true, false)")
-                ("ascii_out_json", po::value<bool>()->default_value(false), "write ascii output as JSON files (true, default:false)")
-                ("ascii_out_4326", po::value<bool>()->default_value(false), "write ascii files as EPSG:4326 lat/lon grids (true, default:false)")
-                ("ascii_out_utm", po::value<bool>()->default_value(true), "write ascii files as UTM northing/easting grids (default: true, false)")
-                ("ascii_out_uv", po::value<bool>()->default_value(false), "write ascii files as u,v wind vector components (true, default:false)")
-
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
@@ -1682,7 +1698,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
 
             //check if lcp to determine if surface veg needs to be set or not
-            bool isLcp;
+            bool isLcp = false;
             GDALDataset *poDS = (GDALDataset*)GDALOpen(elevation_file->c_str(),
                     GA_ReadOnly);
             if(poDS == NULL) {
@@ -1697,7 +1713,7 @@ int windNinjaCLI(int argc, char* argv[])
                 return -1;
             }
             OGRSpatialReference oSRS;
-            oSRS.importFromWkt((char**)&pszWkt);
+            oSRS.importFromWkt((const char**)&pszWkt);
             if(oSRS.IsGeographic())
             {
                 // PCM - try to convert to UTM
@@ -1806,15 +1822,24 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
-            // those are all AAIGRID variants (in different projections and text formats)
+
+            // HUVW output options (3D wind grids/vectors in various formats)
+            if (vm["write_huvw_output"].as<bool>())
+            {
+                windsim.setHuvwOutFlag( i_, true );
+                windsim.setHuvwTifOutFlag( i_, option_val<bool>(vm,"huvw_tif"));
+                windsim.setHuvwJsonOutFlag( i_, option_val<bool>(vm,"huvw_json"));
+                windsim.setHuvwGeoJsonOutFlag( i_, option_val<bool>(vm,"huvw_geojson"));
+                windsim.setHuvwCsvOutFlag( i_, option_val<bool>(vm,"huvw_csv"));
+            } else {
+                windsim.setHuvwOutFlag( i_, false );
+                // all the huvw_* flags will be ignored
+            }
+
+            // AAIGRID text output
             if(option_val<bool>(vm,"write_ascii_output"))
             {
                 windsim.setAsciiOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_aaigrid")) windsim.setAsciiAaigridOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_json")) windsim.setAsciiJsonOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_4326")) windsim.setAscii4326OutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_utm")) windsim.setAsciiUtmOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_uv")) windsim.setAsciiUvOutFlag( i_, true );
 
                 option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),
@@ -1849,7 +1874,7 @@ int windNinjaCLI(int argc, char* argv[])
                 conflicting_options(vm, "pdf_size", "pdf_height");
                 conflicting_options(vm, "pdf_size", "pdf_width");
                 option_dependency(vm, "pdf_height", "pdf_width");
-                double pdfHeight, pdfWidth;
+                double pdfHeight=0, pdfWidth=0;
                 if(vm.count("pdf_height"))
                 {
                     pdfHeight = vm["pdf_height"].as<double>();

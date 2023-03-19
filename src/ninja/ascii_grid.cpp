@@ -1,5 +1,6 @@
 #include "ascii_grid.h"
 
+#include "gdal_util.h" // watch out - this is a cyclic dependency
 
 inline void check(CPLErr res) {
     if (res != CE_None) {
@@ -7,12 +8,6 @@ inline void check(CPLErr res) {
         CPLError(res, err, "GDAL error: %d", err);
     }
 }
-
-template <class T> GDALDataType getGdalDataType() { return GDT_Unknown; }
-template<> GDALDataType getGdalDataType<double>() { return GDT_Float64; }
-template<> GDALDataType getGdalDataType<short>() { return GDT_Int16; }
-template<> GDALDataType getGdalDataType<int>() { return GDT_Int32; }
-// ...and more specializations to follow
 
 // make the default throw so that we don't try to scan into a wrong type size
 template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); }
@@ -1568,29 +1563,12 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     hDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
-                                get_yllCorner()+(get_nRows()*get_cellSize()),
-                                0, -(get_cellSize())};
+    gdalSetSrs( GDALDataset::FromHandle(hDS), nXSize, nYSize, get_xllCorner(), get_yllCorner(), get_cellSize(), prjString);
 
-    GDALSetGeoTransform(hDS, adfGeoTransform);
-
-    double *padfScanline;
-    padfScanline = new double[nXSize];
+    double *padfScanline = new double[nXSize];
     CPLErr eErr = CE_None;
-
-    adfGeoTransform[0] = get_xllCorner();
-    adfGeoTransform[1] = get_cellSize();
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = get_yllCorner()+(get_nRows()*get_cellSize());
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = -get_cellSize();
-    
-    char* pszDstWKT = (char*)prjString.c_str();
-    GDALSetProjection(hDS, pszDstWKT);
-    GDALSetGeoTransform(hDS, adfGeoTransform);
     
     GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
-    
     GDALSetRasterNoDataValue(hBand, -9999.0);
 
     for(int i=nYSize-1; i>=0; i--)
@@ -1827,8 +1805,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
 	    double maxxx = get_maxValue();
 	    double minnn = raw_minValue;
-        double _brk0 = 0;
-        double _brk1 = raw_minValue;
+        //double _brk0 = 0;
+        //double _brk1 = raw_minValue;
         double _brk2 = 0.25*(raw_maxValue-raw_minValue)+raw_minValue;
         double _brk4 = raw_maxValue;
         double _brk3 = (_brk4+_brk2)/2;
@@ -2629,5 +2607,6 @@ void AsciiGrid<T>::write_json_4326_Grid (std::string filename, int precision)
 //--- template instantiations
 
 template class AsciiGrid<double>;
+template class AsciiGrid<float>;
 template class AsciiGrid<int>;
 template class AsciiGrid<short>;

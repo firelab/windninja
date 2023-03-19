@@ -197,8 +197,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         AsciiGrid<double> &vGrid,
         AsciiGrid<double> &wGrid )
 {
-    int bandNum = -1;
-
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
 
@@ -212,6 +210,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     double dfNoData;
     int pbSuccess = false;
+    bool convertToKelvin = false;
 
     //get time list
     std::vector<boost::local_time::local_date_time> timeList( getTimeList( input.ninjaTimeZone ) );
@@ -230,16 +229,19 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 gc = poBand->GetMetadataItem( "GRIB_COMMENT" );
                 std::string bandName( gc );
 
-                if( bandName.find( "Temperature [K]" ) != bandName.npos ||
-                    bandName.find( "Temperature [C]" ) != bandName.npos){
+                if ( bandName.find("Temperature") == 0) {
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
-                    std::string bandName( gc );
-                    if( bandName.find( "2-HTGL" ) != bandName.npos ){
-                        bandList.push_back( j );  // 2t 
-                        break;
-                    }
-                    if( bandName.find( "Temperature [C]" ) != bandName.npos){ 
-                        airGrid += 273.15;
+                    std::string shortName( gc);
+                    if (shortName == "2-HTGL") {
+                        if (bandName == "Temperature [C]") {
+                            convertToKelvin = true;
+                            bandList.push_back( j);  // 2t
+
+                        } else if (bandName != "Temperature [K]") {
+                            bandList.push_back( j);  // 2t
+                        } else {
+                            cout << "skipping unsupported forecast temperature unit: " << bandName << endl;
+                        }
                     }
                 }
             }
@@ -298,8 +300,10 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     CPLDebug("HRRR", "10u: bandList[2] = %d", bandList[2]);
     CPLDebug("HRRR", "tcc: bandList[3] = %d", bandList[3]);
 
-    if(bandList.size() < 4)
+    if(bandList.size() < 4) {
+        GDALClose((GDALDatasetH) srcDS );
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
+    }
 
     std::string dstWkt;
     dstWkt = input.dem.prjString;
@@ -357,9 +361,14 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     for( unsigned int i = 0; i < varList.size(); i++ ) {
         if( varList[i] == "2t" ) {
             GDAL2AsciiGrid( wrpDS, i+1, airGrid );
+
             if( CPLIsNan( dfNoData ) ) {
                 airGrid.set_noDataValue( -9999.0 );
                 airGrid.replaceNan( -9999.0 );
+            }
+
+            if (convertToKelvin) {
+                airGrid += 273.15;
             }
         }
         else if( varList[i] == "10v" ) {

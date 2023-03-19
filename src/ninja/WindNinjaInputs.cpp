@@ -74,12 +74,13 @@ WindNinjaInputs::WindNinjaInputs()
     wxModelGoogLineWidth = 3.0;
     shpOutFlag = false;
     
+    huvwOutFlag = false;
+    huvwTifOutFlag = false;
+    huvwJsonOutFlag = true;
+    huvwGeoJsonOutFlag = false;
+    huvwCsvOutFlag = true;
+
     asciiOutFlag = false;
-    asciiAaigridOutFlag = true;
-    asciiJsonOutFlag = false;
-    ascii4326OutFlag = false;
-    asciiUtmOutFlag = true;
-    asciiUvOutFlag = false;
     
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
@@ -296,12 +297,13 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
       shpOutFlag = rhs.shpOutFlag;
 
+      huvwOutFlag = rhs.huvwOutFlag;
+      huvwTifOutFlag = rhs.huvwTifOutFlag;
+      huvwJsonOutFlag = rhs.huvwJsonOutFlag;
+      huvwGeoJsonOutFlag = rhs.huvwGeoJsonOutFlag;
+      huvwCsvOutFlag = rhs.huvwCsvOutFlag;
+
       asciiOutFlag = rhs.asciiOutFlag;
-      asciiAaigridOutFlag = rhs.asciiAaigridOutFlag;
-      asciiJsonOutFlag = rhs.asciiJsonOutFlag;
-      asciiUtmOutFlag = rhs.asciiUtmOutFlag;
-      ascii4326OutFlag = rhs.ascii4326OutFlag;
-      asciiUvOutFlag = rhs.asciiUvOutFlag;
       
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;

@@ -369,7 +369,6 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 */
 bool ninjaArmy::startRuns(int numProcessors)
 {
-    int j;
     bool status = true;
 
     if(ninjas.size()<1 || numProcessors<1)
@@ -497,8 +496,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             padfData = (float*)CPLMalloc( nNewXSize * nNewYSize * sizeof( float ) );
             unsigned char *pabyData = NULL;
             pabyData = (unsigned char*)CPLMalloc( nNewXSize * nNewYSize * sizeof( unsigned char* ) );
-            double adfMinMax[2];
-            int bSuccess = TRUE;
+            //double adfMinMax[2];
+            //int bSuccess = TRUE;
             double dfMin, dfMax, dfMean, dfStdDev;
             GDALComputeRasterStatistics( hBand, FALSE, &dfMin, &dfMax, &dfMean, &dfStdDev, NULL, NULL );
 
@@ -1720,6 +1719,27 @@ int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
 /*-----------------------------------------------------------------------------
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/
+int ninjaArmy::setResolution (const int nIndex, const double resolution, std::string units, char ** papszOptions,
+                              void (ninja::*set_res)(const double,lengthUnits::eLengthUnits))
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower);
+       try
+       {
+           (ninjas[ nIndex ]->*set_res)( resolution, lengthUnits::getUnit(units));
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
 int ninjaArmy::setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions )
 {
@@ -1822,22 +1842,7 @@ int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {
-   int retval = NINJA_E_INVALID;
-   IF_VALID_INDEX( nIndex, ninjas )
-   {
-       //Parse units so it contains only lowercase letters
-       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
-       try
-       {
-           ninjas[ nIndex ]->set_googResolution( resolution, lengthUnits::getUnit( units ) );
-           retval = NINJA_SUCCESS;
-       }
-       catch( std::logic_error &e )
-       {
-           retval = NINJA_E_INVALID;
-       }
-   }
-   return retval;
+    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_googResolution);
 }
 
 int ninjaArmy::setGoogSpeedScaling
@@ -1896,49 +1901,43 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
 int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
                                  std::string units, char ** papszOptions )
 {
-   int retval = NINJA_E_INVALID;
-   IF_VALID_INDEX( nIndex, ninjas )
-   {
-       //Parse units so it contains only lowercase letters
-       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
-       try
-       {
-           ninjas[ nIndex ]->set_shpResolution( resolution, lengthUnits::getUnit( units ) );
-           retval = NINJA_SUCCESS;
-       }
-       catch( std::logic_error &e )
-       {
-           retval = NINJA_E_INVALID;
-       }
-   }
-   return retval;
+   return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_shpResolution);
 }
+
+//--- storing 3D HUVW grids and vectors
+
+int ninjaArmy::setHuvwOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwOutFlag( flag ) );
+}
+
+int ninjaArmy::setHuvwTifOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwTifOutFlag( flag ) );
+}
+
+int ninjaArmy::setHuvwJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwJsonOutFlag( flag ) );
+}
+
+int ninjaArmy::setHuvwGeoJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwGeoJsonOutFlag( flag ) );
+}
+
+int ninjaArmy::setHuvwCsvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwCsvOutFlag( flag ) );
+}
+
+
+//--- ASCII (AAIGRID) output
 
 int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
 }
-int ninjaArmy::setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiAaigridOutFlag( flag ) );
-}
-int ninjaArmy::setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiJsonOutFlag( flag ) );
-}
-int ninjaArmy::setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUtmOutFlag( flag ) );
-}
-int ninjaArmy::setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ascii4326OutFlag( flag ) );
-}
-int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUvOutFlag( flag ) );
-}
-
 
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
@@ -1950,22 +1949,7 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                                    std::string units, char ** papszOptions )
 {
-   int retval = NINJA_E_INVALID;
-   IF_VALID_INDEX( nIndex, ninjas )
-   {
-       //Parse units so it contains only lowercase letters
-       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
-       try
-       {
-           ninjas[ nIndex ]->set_asciiResolution( resolution, lengthUnits::getUnit( units ) );
-           retval = NINJA_SUCCESS;
-       }
-       catch( std::logic_error &e )
-       {
-           retval = NINJA_E_INVALID;
-       }
-   }
-   return retval;
+    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_asciiResolution);
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2001,22 +1985,7 @@ int ninjaArmy::setPDFLineWidth( const int nIndex, const float linewidth, char **
 int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {
-   int retval = NINJA_E_INVALID;
-   IF_VALID_INDEX( nIndex, ninjas )
-   {
-       //Parse units so it contains only lowercase letters
-       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
-       try
-       {
-           ninjas[ nIndex ]->set_pdfResolution( resolution, lengthUnits::getUnit( units ) );
-           retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
-       {
-           retval = NINJA_E_INVALID;
-       }
-   }
-   return retval;
+    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_pdfResolution);
 }
 
 int ninjaArmy::setPDFBaseMap( const int nIndex,

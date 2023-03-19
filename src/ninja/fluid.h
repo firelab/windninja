@@ -42,14 +42,14 @@ public:
 	virtual ~Fluid();
 	bool read_fluidProperties(std::string inputFile);
 
-	double get_t();
-	double get_cSubP(double);
-	double get_rho(double);
-	double get_mu(double);
-	double get_v(double);
-	double get_k(double);
-	double get_alpha(double);
-	double get_pr(double);
+	inline double get_t();
+	inline double get_cSubP(double);
+	inline double get_rho(double);
+	inline double get_mu(double);
+	inline double get_v(double);
+	inline double get_k(double);
+	inline double get_alpha(double);
+	inline double get_pr(double);
 
 
 
@@ -76,6 +76,14 @@ public:
 	double *pr;
 
 private:
+	double interpolate (double T, double*v);
 };
+
+inline double Fluid::get_rho(double T) { return interpolate(T, rho); }
+inline double Fluid::get_cSubP(double T) { return interpolate(T, cSubP); }
+inline double Fluid::get_v(double T) { return interpolate(T, v); }
+inline double Fluid::get_k(double T) { return interpolate(T, k); }
+inline double Fluid::get_alpha(double T) { return interpolate(T, alpha); }
+inline double Fluid::get_pr(double T) { return interpolate(T, pr); }
 
 #endif /* FLUID_H */
