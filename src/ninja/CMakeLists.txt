@@ -28,8 +28,8 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${PROJECT_SOURCE_DIR}/src)
 
 set(NINJA_SOURCES air.cpp
-                  ascii_grid.cpp
                   Array2D.cpp
+                  ascii_grid.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp

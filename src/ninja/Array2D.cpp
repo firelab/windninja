@@ -478,5 +478,6 @@ void Array2D<T>::crop (int minRow, int maxRow, int minCol, int maxCol){
 //--- template instantiations
 
 template class Array2D<double>;
+template class Array2D<float>;
 template class Array2D<int>;
 template class Array2D<short>;
