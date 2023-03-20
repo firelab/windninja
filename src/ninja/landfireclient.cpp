@@ -216,7 +216,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
             nMaxTries, papszTokens[3] );
 
         CSLDestroy( papszTokens );
-        CPLHTTPDestroyResult( m_poResult );
         i++;
         CPLSleep( dfWait );
 
@@ -229,6 +228,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CPLError( CE_Warning, CPLE_AppDefined, "Failed to download lcp," \
                                                "There was an extraction " \
                                                "error on the server." );
+        CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_IO_ERR;
     }
     else if( !downloadReady )
@@ -237,6 +237,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                                "out.  Try increasing " \
                                                "LCP_MAX_DOWNLOAD_TRIES or "
                                                "LCP_DOWNLOAD_WAIT" );
+        CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_TIMEOUT;
     }
     CHECK_HTTP_RESULT( "Failed to get job status" ); 
