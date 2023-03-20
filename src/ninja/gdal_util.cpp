@@ -1078,7 +1078,7 @@ bool gdalGetDataBoundaries (GDALDataset* pDS, int bandNr, double noDataThreshold
 
         if (hasNoDataValue) {
             int maxNoDataPerLine = std::round(nX * noDataThreshold);
-            std::unique_ptr<double> scanLine( new double[nX]);
+            std::unique_ptr<double[]> scanLine( new double[nX]);
 
             for (; minRow<nY; minRow++) {
                 if (band->RasterIO(GF_Read, 0,minRow, nX,1, scanLine.get(), nX,1,GDT_Float64, 0,0,nullptr) != CE_None) return false;
@@ -1273,15 +1273,15 @@ void gdalProcessScanLines (GDALDataset* pDS, int bandNo, void (*func)(int,int,T*
 
     if (bandNo <= nBands) {
         GDALRasterBand* band = pDS->GetRasterBand(bandNo);
-        T scanLine[nX];
+        std::unique_ptr<T[]> scanLine(new T[nX]);
         GDALDataType eDT = getGdalDataType<T>();
 
         for (int i=0; i<nY; i++) {
-            if (band->RasterIO(GF_Read, 0, i, nX,1, scanLine, nX,1,eDT, 0,0,nullptr ) != CE_None) {
+            if (band->RasterIO(GF_Read, 0, i, nX,1, scanLine.get(), nX,1,eDT, 0,0,nullptr ) != CE_None) {
                 cerr << "error reading band:scanline " << bandNo << ":" << i << "\n";
                 break;
             }
-            func(i,nX,scanLine);
+            func(i,nX,scanLine.get());
         }
 
     } else cerr << "invalid band number\n";

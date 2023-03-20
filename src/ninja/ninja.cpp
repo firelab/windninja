@@ -1319,13 +1319,13 @@ void ninja::interp_uvw()
         double windHeight = input.outputWindHeight;
         int nRows = VelocityGrid.get_nRows();
         int nCols = VelocityGrid.get_nCols();
+
+        // scan lines for HUVW data set
+        std::unique_ptr<float[]> hRow(new float[nCols]), uRow(new float[nCols]), vRow(new float[nCols]), wRow(new float[nCols]);
                                                                         //make sure rough_h is set to zero if profile switch is 0 or 2
 #pragma omp for
         for(i=0;i<nRows;i++)
         {
-            // scan lines for HUVW data set
-            float hRow[nCols], uRow[nCols], vRow[nCols], wRow[nCols];
-
             for(j=0;j<nCols;j++)
             {
                 k=1;
@@ -1393,7 +1393,7 @@ void ninja::interp_uvw()
             }
 
             if (pHuvwDS) {
-                setHuvwScanlines( pHuvwDS, i, nCols, hRow,uRow,vRow,wRow);
+                setHuvwScanlines( pHuvwDS, i, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get());
             }
         }
     }	//end parallel region

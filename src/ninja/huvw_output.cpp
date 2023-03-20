@@ -97,13 +97,13 @@ static std::string gzipped (std::string& fileName)
 
 static void printData (GDALRasterBand* pBand, int nCols, int nRows, VSILFILE* fout, const char* varName)
 {
-    float scanLine[nCols];
+    std::unique_ptr<float[]> scanLine(new float[nCols]);
     int maxCol = nCols-1;
 
     VSIFPrintfL(fout,"\"%s\":[\n", varName);
 
     for (int i=0; i<nRows; i++) {
-        if (pBand->RasterIO(GF_Read, 0, i, nCols,1, scanLine, nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None) {
+        if (pBand->RasterIO(GF_Read, 0, i, nCols,1, scanLine.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None) {
             cerr << "error reading band:scanline " << pBand->GetBand() << ":" << i << "\n";
             break;
         }
@@ -207,7 +207,7 @@ static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func
         return;
     }
     double cellSize = a[1]; // we assume a[1] == a[5] for HUVW dataset
-    float h[nCols], u[nCols], v[nCols], w[nCols];
+    std::unique_ptr<float[]> h(new float[nCols]), u(new float[nCols]), v(new float[nCols]), w(new float[nCols]);
 
     GDALRasterBand* pH = pDS->GetRasterBand(1);
     GDALRasterBand* pU = pDS->GetRasterBand(2);
@@ -218,10 +218,10 @@ static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func
     double cy2 = a[5] / 2;
 
     for (int i=0; i<nRows; i++) {
-        if ((pH->RasterIO(GF_Read, 0, i, nCols,1, h, nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
-             || (pU->RasterIO(GF_Read, 0, i, nCols,1, u, nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
-             || (pV->RasterIO(GF_Read, 0, i, nCols,1, v, nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
-             || (pW->RasterIO(GF_Read, 0, i, nCols,1, w, nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None) ) {
+        if ((pH->RasterIO(GF_Read, 0, i, nCols,1, h.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pU->RasterIO(GF_Read, 0, i, nCols,1, u.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pV->RasterIO(GF_Read, 0, i, nCols,1, v.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pW->RasterIO(GF_Read, 0, i, nCols,1, w.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None) ) {
             cerr << "error reading HUVW grid line " << i << "\n";
             return;
         }
