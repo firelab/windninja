@@ -58,7 +58,7 @@ public:
                                
     double interpolate(double const& x,double const& y, double const& z);
     double interpolate(element &elem, const int &cell_i, const int &cell_j, const int &cell_k, const double &u, const double &v, const double &w);
-    double interpolateInverseDistance(double const& x,double const& y, double const& z, int interpDistPower = 3);
+    double interpolateInverseDistance(double const& x,double const& y, double const& z, int interpDistPower = 2);
     void ComputeGradient(wn_3dScalarField &gradientVectorXComponent, wn_3dScalarField &gradientVectorYComponent, wn_3dScalarField &gradientVectorZComponent);
     double getMaxValue();
     double getMinValue();
