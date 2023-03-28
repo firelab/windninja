@@ -982,7 +982,5 @@ Mesh::eMeshBoundary Mesh::getMeshBoundary(std::string boundary)
 
 double Mesh::getDistanceToPoint(const int globalNode, const double x, const double y, const double z)
 {
-    double distance = sqrt((XORD(globalNode)-x)*(XORD(globalNode)-x) + (YORD(globalNode)-y)*(YORD(globalNode)-y) + (ZORD(globalNode)-z)*(ZORD(globalNode)-z));
-
-    return distance;
+    return sqrt((XORD(globalNode)-x)*(XORD(globalNode)-x) + (YORD(globalNode)-y)*(YORD(globalNode)-y) + (ZORD(globalNode)-z)*(ZORD(globalNode)-z));
 }  

@@ -36,6 +36,9 @@ NinjaSemiLagrangianSteadyState::NinjaSemiLagrangianSteadyState() : ninja()
     diffusionType = getDiffusionDiscretizationType("explicitLumpedCapacitance");
     //diffusionType = getDiffusionDiscretizationType("implicitCentralDifference");
     //diffusionType = getDiffusionDiscretizationType("implicitBackwardDifference");
+    //output = fopen("output.txt", "w");
+
+    //fprintf(output,"iteration\ti\tj\tk\tbefore_advection_u\tbefore_advection_v\tbefore_advection_w\tbefore_diffusion_u\tbefore_diffusion_v\tbefore_diffusion_w\tbefore_projection_u\tbefore_projection_v\tbefore_projection_w\n");
 
 }
 
@@ -80,6 +83,7 @@ NinjaSemiLagrangianSteadyState& NinjaSemiLagrangianSteadyState::operator= (Ninja
 NinjaSemiLagrangianSteadyState::~NinjaSemiLagrangianSteadyState()
 {
     deleteDynamicMemory();
+    //fclose(output);
 }
 
 /**Method to start a wind simulation.
@@ -238,7 +242,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting iteration loop...");
         iteration = 0;
         bool with_advection = true;
-        bool with_diffusion = true;
+        bool with_diffusion = false;
         bool with_projection = true;
 
         while(iteration <= 1000)
@@ -265,7 +269,8 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Refresh boundary conditions...");
             //copy inlet and outlet values from initial field U0 to U
             //outlet values are copied to prevent reversed flow from propagating back into the domain
-            U.copyInletAndOutletNodes(U0);
+            U.copyInletNodes(U0);
+            //U.copyInletAndOutletNodes(U0);
 
             //TESTING------------------------------------------
             //for(int i=0;i<input.dem.get_nRows();i++)
@@ -299,13 +304,44 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  TRANSPORT                               */
             /*  ----------------------------------------*/
             if(with_advection){
+                //testing
+                //int mod_ = 1;
+                //std::ostringstream adv1_fname;
+                //if(iteration % mod_ == 0)
+                //{
+                //    adv1_fname << "vtk_before_advection" << iteration << ".vtk";
+                //    volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                //    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, adv1_fname.str());
+                //}
+                //for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
+                //{
+                //    for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
+                //    {
+                //        for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
+                //        {
+                //            //if(U.isInlet(i,j,k))
+                //            //{
+                //                if(i == 32 && j == U0.vectorData_x.mesh_->ncols - 1 && k == 5)
+                //                {
+                //                    fprintf(output,"%d\t%d\t%d\t%d\t%lf\t%lf\t%lf\t",iteration,i,j,k,U.vectorData_x(i,j,k),U.vectorData_y(i,j,k),U.vectorData_z(i,j,k));
+                //                }
+                //            //}
+                //        }
+                //    }
+                //}
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transport...");
                 transport.transportVector(U, U_1, currentDt.total_microseconds()/1000000.0);
 
                 //testing
-                //volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
-                //input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, "vtk_transport.vtk");
+                //int mod_ = 1;
+                //std::ostringstream adv_fname;
+                //if(iteration % mod_ == 0)
+                //{
+                //    adv_fname << "vtk_advection" << iteration << ".vtk";
+                //    volVTK VTK_transport(U_1, mesh.XORD, mesh.YORD, mesh.ZORD, 
+                //    input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, adv_fname.str());
+                //}
             }
 
             /*  ----------------------------------------*/
@@ -315,6 +351,22 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Diffuse...");
 
+                //for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
+                //{
+                //    for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
+                //    {
+                //        for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
+                //        {
+                //            //if(U_1.isInlet(i,j,k))
+                //            //{
+                //                if(i == 32 && j == U0.vectorData_x.mesh_->ncols - 1 && k == 5)
+                //                {
+                //                    fprintf(output,"%lf\t%lf\t%lf\t",U_1.vectorData_x(i,j,k),U_1.vectorData_y(i,j,k),U_1.vectorData_z(i,j,k));
+                //                }
+                //            //}
+                //        }
+                //    }
+                //}
                 //U_1 is output from advection step, dump diffusion results into U
                 diffusionEquation->Solve(U_1, U, currentDt); 
 
@@ -336,6 +388,22 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
             /*  PROJECT                                 */
             /*  ----------------------------------------*/
             if(with_projection){
+                //for(int k=0;k<U0.vectorData_x.mesh_->nlayers;k++)
+                //{
+                //    for(int i=0;i<U0.vectorData_x.mesh_->nrows;i++)
+                //    {
+                //        for(int j=0;j<U0.vectorData_x.mesh_->ncols;j++)
+                //        {
+                //            //if(U.isInlet(i,j,k))
+                //            //{
+                //                if(i == 32 && j == U0.vectorData_x.mesh_->ncols - 1 && k == 5)
+                //                {
+                //                    fprintf(output,"%lf\t%lf\t%lf\n",U.vectorData_x(i,j,k),U.vectorData_y(i,j,k),U.vectorData_z(i,j,k));
+                //                }
+                //            //}
+                //        }
+                //    }
+                //}
                 checkCancel();
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Project...");
 
@@ -377,6 +445,7 @@ bool NinjaSemiLagrangianSteadyState::simulate_wind()
 
                 checkCancel();
             }
+
 
             /*  ----------------------------------------*/
             /*  WRITE OUTPUTS                           */

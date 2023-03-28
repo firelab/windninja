@@ -60,14 +60,14 @@ class FiniteElementMethod
                             double* yRHS, double* zRHS, double* CL, wn_3dScalarField &heightAboveGround,
                             wn_3dVectorField &windSpeedGradient);
         void Discretize(double* SK, double* RHS, int* col_ind, int* row_ptr,
-                wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield);
+                wn_3dVectorField& U0, wn_3dScalarField& alphaHfield, wn_3dScalarField& alphaVfield);
         void ComputeGradientField(double *scalar, wn_3dVectorField &U);
         void Deallocate();
 
     private:
         void CalculateDiffusionRcoefficients(int i, int j, wn_3dScalarField &heightAboveGround,
                 wn_3dVectorField& windSpeedGradient);
-        void CalculateRcoefficients(int i, int j, double alphaH, wn_3dScalarField& alphaVfield);
+        void CalculateRcoefficients(int i, int j, wn_3dScalarField& alphaHfield, wn_3dScalarField& alphaVfield);
         void CalculateHterm(int i, wn_3dVectorField& U0) ;
 
         std::vector<element> elementArray;

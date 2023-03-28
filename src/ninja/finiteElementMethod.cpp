@@ -505,7 +505,7 @@ void FiniteElementMethod::DiscretizeLumpedCapacitenceDiffusion(wn_3dVectorField 
  * \return void
  */
 void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int* row_ptr,
-        wn_3dVectorField& U0, double alphaH, wn_3dScalarField& alphaVfield) 
+        wn_3dVectorField& U0, wn_3dScalarField& alphaHfield, wn_3dScalarField& alphaVfield) 
 {
     int i, j, k, l;
 
@@ -590,7 +590,7 @@ void FiniteElementMethod::Discretize(double* SK, double* RHS, int* col_ind, int*
                 CalculateHterm(i, U0);
 
                 //calculates elem.RX, elem.RY, elem.RZ
-                CalculateRcoefficients(i, j, alphaH, alphaVfield);
+                CalculateRcoefficients(i, j, alphaHfield, alphaVfield);
 
                 //Create element stiffness matrix---------------------------------------------
                 for(k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
@@ -849,7 +849,7 @@ void FiniteElementMethod::CalculateHterm(int i,
  * @param j The quadrature point index
  *
  */
-void FiniteElementMethod::CalculateRcoefficients(int i, int j, double alphaH,
+void FiniteElementMethod::CalculateRcoefficients(int i, int j, wn_3dScalarField& alphaHfield,
         wn_3dScalarField& alphaVfield)
 {
     //                    1                          1
@@ -857,9 +857,11 @@ void FiniteElementMethod::CalculateRcoefficients(int i, int j, double alphaH,
     //                2*alphaH^2                 2*alphaV^2
 
     double alphaV = 0.;
+    double alphaH = 0.;
     for(int k=0;k<mesh_->NNPE;k++) //Start loop over nodes in the element
     {
         alphaV=alphaV+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*alphaVfield(elementArray[i].NPK);
+        alphaH=alphaH+elementArray[i].SFV[0*mesh_->NNPE*elementArray[i].NUMQPTV+k*elementArray[i].NUMQPTV+j]*alphaHfield(elementArray[i].NPK);
 
     } //End loop over nodes in the element
 

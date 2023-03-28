@@ -52,6 +52,7 @@ PoissonEquation::PoissonEquation()
 
 PoissonEquation::PoissonEquation(PoissonEquation const& A)
 : alphaVfield(A.alphaVfield)
+, alphaHfield(A.alphaHfield)
 , U_(A.U_)
 , mesh_(A.mesh_)
 , input_(A.input_)
@@ -92,6 +93,7 @@ PoissonEquation& PoissonEquation::operator=(PoissonEquation const& A)
         alphaH=A.alphaH;
 
         alphaVfield=A.alphaVfield;
+        alphaHfield=A.alphaHfield;
         U_=A.U_;
         mesh_=A.mesh_;
         input_=A.input_;
@@ -126,7 +128,27 @@ void PoissonEquation::Discretize()
     //         dx      dy      dz
     //
 
-    fem.Discretize(SK, RHS, col_ind, row_ptr, U0_, alphaH, alphaVfield);
+    for(int k=0;k<U0_.vectorData_x.mesh_->nlayers;k++)
+    {
+        for(int i=0;i<U0_.vectorData_x.mesh_->nrows;i++)
+        {
+            for(int j=0;j<U0_.vectorData_x.mesh_->ncols;j++)
+            {
+                if(U0_.isOutlet(i,j,k))
+                {
+                    alphaHfield(i,j,k) = 0.55;
+                    alphaVfield(i,j,k) = 0.55;
+                }
+                else
+                {
+                    alphaHfield(i,j,k) = 1.;
+                    alphaVfield(i,j,k) = 1.;
+                }
+            }
+        }
+    }
+
+    fem.Discretize(SK, RHS, col_ind, row_ptr, U0_, alphaHfield, alphaVfield);
 }
 
 /**
@@ -224,6 +246,7 @@ void PoissonEquation::Deallocate()
     }
 
     alphaVfield.deallocate();
+    alphaHfield.deallocate();
 
     fem.Deallocate();
 }
@@ -428,6 +451,7 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
     Stability stb(input);
     alphaVfield.allocate(mesh_);
+    alphaHfield.allocate(mesh_);
 
     if(stabilityUsingAlphasFlag==0) // if stabilityFlag not set
     {
@@ -438,6 +462,7 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
                 for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/1.0;
+                    alphaHfield(i,j,k) = 1.0;
                 }
             }
         }
@@ -451,6 +476,7 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
                 for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/input.alphaStability;
+                    alphaHfield(i,j,k) = 1.0;
                 }
             }
         }
@@ -466,6 +492,7 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
                 for(unsigned int j=0;j<input.dem.get_nCols();j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                    alphaHfield(i,j,k) = 1.0;
                 }
             }
         }
@@ -481,6 +508,7 @@ void PoissonEquation::SetAlphaCoefficients(WindNinjaInputs &input,
                 for(unsigned int j=0; j<mesh_->ncols; j++)
                 {
                     alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                    alphaHfield(i,j,k) = 1.0;
                 }
             }
         }
@@ -621,11 +649,13 @@ wn_3dVectorField PoissonEquation::ComputeUVWField()
     fem.ComputeGradientField(PHI, U_);
 
     double alphaV = 1.0;
+    double alphaH = 1.0;
 
     for(int i=0;i<mesh_->NUMNP;i++)
     {
         //calculate u,v,w
         alphaV = alphaVfield(i); //set alphaV for stability
+        alphaH = alphaHfield(i); //set alphaV for stability
         
         //Remember, dPHI/dx is stored in U
         U_.vectorData_x(i)=U0_.vectorData_x(i)+1.0/(2.0*alphaH*alphaH)*U_.vectorData_x(i);

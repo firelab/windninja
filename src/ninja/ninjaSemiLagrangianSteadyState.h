@@ -93,6 +93,7 @@ private:
 
     PoissonEquation conservationOfMassEquation;
     DiffusionEquation *diffusionEquation;
+    //FILE *output;
 };
 
 #endif /* NINJA_SEMI_LAGRANGIAN_STEADY_STATE_INCLUDED_ */
