@@ -1564,7 +1564,7 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     hDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-    gdalSetSrs( GDALDataset::FromHandle(hDS), nXSize, nYSize, get_xllCorner(), get_yllCorner(), get_cellSize(), prjString);
+    gdalSetSrs( GDALDataset::FromHandle(hDS), nXSize, nYSize, get_xllCorner(), get_yllCorner(), get_cellSize(), prjString.c_str());
 
     double *padfScanline = new double[nXSize];
     CPLErr eErr = CE_None;

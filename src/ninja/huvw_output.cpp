@@ -30,16 +30,23 @@
 
 
 /**
- * create (optional) 3d (u,v,w,h) output grid dataset 
+ * create (optional) 3d (h,u,v,w,spd) output grid dataset 
+ * we store the redundant spd value as a separate layer so that we can easily create contour maps from the data set
  * called from ninja::prepareOutput()
  */
-GDALDataset* createHuvwDS (const char* fileName, int nCols, int nRows, double xllCorner, double yllCorner, double cellSize, std::string& prjString)
+GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* prjString, int nCols, int nRows, double xllCorner, double yllCorner, double cellSize)
 {
     GDALDriver* pDriver = GetGDALDriverManager()->GetDriverByName( "GTiff"); // should be built-in format
-    GDALDataset* pDS = pDriver->Create( fileName, nCols, nRows, 4, GDT_Float32, nullptr);
+    char **papszOptions = nullptr;
+    papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "ZSTD" );
+    //papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "LZW" );
+    //papszOptions = CSLSetNameValue( papszOptions, "PREDICTOR", "3" );
+
+    GDALDataset* pDS = pDriver->Create( filename, nCols, nRows, 5, GDT_Float32, papszOptions);
+
     if (pDS) {
         gdalSetSrs( pDS, nCols,nRows, xllCorner,yllCorner, cellSize, prjString);
-        pDS->SetMetadataItem("info", "H,U,V,W output grid");
+        pDS->SetMetadataItem("info", descr);
 
         GDALRasterBand *pBand = pDS->GetRasterBand(1);
         pBand->SetMetadataItem("name", "H");
@@ -65,6 +72,11 @@ GDALDataset* createHuvwDS (const char* fileName, int nCols, int nRows, double xl
         pBand->SetMetadataItem("unit", "[m/sec]");
         pBand->SetNoDataValue(-9999);
 
+        pBand = pDS->GetRasterBand(5);
+        pBand->SetMetadataItem("name", "Speed");
+        pBand->SetMetadataItem("info", "wind speed");
+        pBand->SetMetadataItem("unit", "[m/sec]");
+        pBand->SetNoDataValue(-9999);
     } else {
         cerr << "failed to create huvw output data set\n"; // should we throw a runtime_error here?
     }
@@ -73,16 +85,19 @@ GDALDataset* createHuvwDS (const char* fileName, int nCols, int nRows, double xl
 }
 
 /**
- * set scanlines for d (h,u,v,w) output grid dataset 
+ * set scanlines for d (h,u,v,w,spd) output grid dataset 
  * called from ninja::interp_uvw()
  */
-void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow)
+void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow)
 {
     pDS->GetRasterBand(1)->RasterIO( GF_Write, 0,rowIdx, nCols,1, hRow, nCols,1, GDT_Float32, 0,0,nullptr); 
     pDS->GetRasterBand(2)->RasterIO( GF_Write, 0,rowIdx, nCols,1, uRow, nCols,1, GDT_Float32, 0,0,nullptr); 
     pDS->GetRasterBand(3)->RasterIO( GF_Write, 0,rowIdx, nCols,1, vRow, nCols,1, GDT_Float32, 0,0,nullptr); 
-    pDS->GetRasterBand(4)->RasterIO( GF_Write, 0,rowIdx, nCols,1, wRow, nCols,1, GDT_Float32, 0,0,nullptr); 
+    pDS->GetRasterBand(4)->RasterIO( GF_Write, 0,rowIdx, nCols,1, wRow, nCols,1, GDT_Float32, 0,0,nullptr);
+    pDS->GetRasterBand(5)->RasterIO( GF_Write, 0,rowIdx, nCols,1, spdRow, nCols,1, GDT_Float32, 0,0,nullptr);
 }
+
+/////////////////////// REMOVE
 
 static std::string gzipped (std::string& fileName)
 {
@@ -163,7 +178,8 @@ void writeHuvwJsonGrid (GDALDataset* pDS, std::string& fname)
 // returns length of wind vector in percent of cell size
 static double scaleFactor (float u, float v, float w, double& spd)
 {
-    spd = std::sqrt( u*u + v*v + w*w);
+    //spd = std::sqrt( u*u + v*v + w*w);
+    spd = std::sqrt( u*u + v*v);
     // we could emphasize high vertical (w) wind components here to avoid ortho view angle distortion
 
     if (spd < 2.2352) return 0.2;  // < 5mph
@@ -175,9 +191,9 @@ static double scaleFactor (float u, float v, float w, double& spd)
 typedef bool (*pv_func_t)(VSILFILE* fout, OGRCoordinateTransformation*,bool,double,double,double,float,float,float,float);
 
 
-static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func_t pv)
+static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func_t pv, bool isHuvw0=false)
 {
-    if (pDS->GetRasterCount() != 4) {
+    if (pDS->GetRasterCount() < 4) {
         cerr << "invalid HUVW dataset (wrong raster count)\n";
         return;
     }
@@ -210,9 +226,11 @@ static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func
     std::unique_ptr<float[]> h(new float[nCols]), u(new float[nCols]), v(new float[nCols]), w(new float[nCols]);
 
     GDALRasterBand* pH = pDS->GetRasterBand(1);
-    GDALRasterBand* pU = pDS->GetRasterBand(2);
-    GDALRasterBand* pV = pDS->GetRasterBand(3);
-    GDALRasterBand* pW = pDS->GetRasterBand(4);
+
+    int baseIdx = isHuvw0 ? 6 : 2;
+    GDALRasterBand* pU = pDS->GetRasterBand(baseIdx);
+    GDALRasterBand* pV = pDS->GetRasterBand(baseIdx+1);
+    GDALRasterBand* pW = pDS->GetRasterBand(baseIdx+2);
 
     double cx2 = a[1] / 2;
     double cy2 = a[5] / 2;
@@ -227,11 +245,9 @@ static void printVectors (VSILFILE* fout, GDALDataset* pDS, int tgtEpsg, pv_func
         }
 
         for (int j=0; j<nCols; j++) {
-            // do we have to offset the position by cx/2, cy/2 ?
-            double x = a[0] + (a[1] * j) + (a[2] * i);
-            double y = a[3] + (a[5] * i) + (a[4] * j);
-            //double x = a[0] + (a[1] * j + cx2) + (a[2] * i + cy2);
-            //double y = a[3] + (a[5] * i + cy2) + (a[4] * j + cx2);
+            // the grid values are for the respective grid cell centers. note there is no rotation
+            double x = a[0] + (a[1] * j) + cx2;
+            double y = a[3] + (a[5] * i) + cy2;
 
             if (!pv( fout, pTrans, (i==0 && j==0), cellSize, x, y, h[j], u[j], v[j], w[j])){
                 return;
@@ -301,7 +317,8 @@ void writeHuvwJsonVectors (GDALDataset* pDS, std::string& fname)
 
 //--- ECEF wind-vectors as CSV
 
-static bool printCsvVector (VSILFILE* fout, OGRCoordinateTransformation* pTrans, bool isFirst, double cellSize, double x, double y, float h, float u, float v, float w)
+static bool printCsvVector (VSILFILE* fout, OGRCoordinateTransformation* pTrans, bool isFirst, 
+                            double cellSize, double x, double y, float h, float u, float v, float w)
 {
     double spd = 0; // [m/sec]
     double s = scaleFactor(u,v,w, spd) * cellSize; // length of display vector in [m]
@@ -326,20 +343,94 @@ static bool printCsvVector (VSILFILE* fout, OGRCoordinateTransformation* pTrans,
     }
 }
 
-static void printCsvVectors (VSILFILE* fout, GDALDataset* pDS)
+static void printCsvVectors (VSILFILE* fout, GDALDataset* pDS, bool isHuvw0)
 {
-    VSIFPrintfL(fout, "x0,y0,z0,x1,y1,z1,spd[m/sec]\n");
-    printVectors(fout,pDS, 4978, printCsvVector);
+    int nCols = pDS->GetRasterXSize();
+    int nRows = pDS->GetRasterYSize();
+
+    VSIFPrintfL(fout, "# length:%d\n", nCols*nRows); // comment prefix line to let clients pre-allocate data
+    VSIFPrintfL(fout, "x0,y0,z0, x1,y1,z1, spd m/sec\n");
+
+    printVectors(fout,pDS, 4978, printCsvVector, isHuvw0);
 }
 
-void writeHuvwCsvVectors (GDALDataset* pDS, std::string& fname)
+
+void writeHuvwCsvVectors (GDALDataset* pDS, std::string& fname, bool isHuvw0)
 {
     std::string fn = gzipped(fname);
-    cout << "writing HUVW CSV vectors to " << fn << "\n";
+    cout << "writing HUVW ECEF vectors to " << fn << "\n";
 
     VSILFILE *fout = VSIFOpenL( fn.c_str(), "w");
     if (fout) {
-        printCsvVectors(fout,pDS);
+        printCsvVectors(fout,pDS, isHuvw0);
+        VSIFCloseL(fout);
+    } else {
+        cerr << "failed to write " << fname << "\n";
+    }
+}
+
+//--- wind vectors as single array CSV
+
+
+static void printCsvGrid (VSILFILE* fout, GDALDataset* pDS, bool isHuvw0=false)
+{
+    int nCols = pDS->GetRasterXSize();
+    int nRows = pDS->GetRasterYSize();
+
+    double a[6];
+    if (pDS->GetGeoTransform(a) != CE_None){
+        cerr << "error retrieving HUVW geo transform\n";
+        return;
+    }
+
+    double x0 = a[0];
+    double cx = a[1];
+    double y0 = a[3];
+    double cy = a[5];
+
+    double cx2 = a[1] / 2;
+    double cy2 = a[5] / 2;
+
+    std::unique_ptr<float[]> hs(new float[nCols]), us(new float[nCols]), vs(new float[nCols]), ws(new float[nCols]);
+
+    GDALRasterBand* pH = pDS->GetRasterBand(1);
+
+    int baseIdx = isHuvw0 ? 6 : 2;
+    GDALRasterBand* pU = pDS->GetRasterBand(baseIdx);
+    GDALRasterBand* pV = pDS->GetRasterBand(baseIdx+1);
+    GDALRasterBand* pW = pDS->GetRasterBand(baseIdx+2);
+
+    VSIFPrintfL(fout, "# nx:%d, x0:%f, dx:%f, ny:%d, y0:%f, dy:%f\n", nCols, x0, cx, nRows, y0, cy);
+    VSIFPrintfL(fout, "h, u,v,w, spd m/sec\n");
+
+    for (int i=0; i<nRows; i++) {
+        if ((pH->RasterIO(GF_Read, 0, i, nCols,1, hs.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pV->RasterIO(GF_Read, 0, i, nCols,1, vs.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pW->RasterIO(GF_Read, 0, i, nCols,1, ws.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None)
+             || (pU->RasterIO(GF_Read, 0, i, nCols,1, us.get(), nCols,1,GDT_Float32, 0,0,nullptr ) != CE_None) ) {
+            cerr << "error reading HUVW grid line " << i << "\n";
+            return;
+        }
+
+        for (int j=0; j<nCols; j++) {
+            float u = us[j];
+            float v = vs[j];
+            float w = ws[j];
+            float spd = std::sqrt( u*u + v*v + w*w);
+
+            VSIFPrintfL(fout, "%.1f,%.1f,%.1f,%.1f,%.1f\n", hs[j], u, v, w, spd);
+        }
+    }
+}
+
+void writeHuvwCsvGrid (GDALDataset* pDS, std::string& fname, bool isHuvw0)
+{
+    std::string fn = gzipped(fname);
+    cout << "writing HUVW CSV grid to " << fn << "\n";
+
+    VSILFILE *fout = VSIFOpenL( fn.c_str(), "w");
+    if (fout) {
+        printCsvGrid(fout,pDS, isHuvw0);
         VSIFCloseL(fout);
     } else {
         cerr << "failed to write " << fname << "\n";

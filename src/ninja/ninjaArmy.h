@@ -1120,10 +1120,8 @@ public:
 
     // HUVW grid and vector output in various formats
     int setHuvwOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    int setHuvwTifOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    int setHuvwJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    int setHuvwGeoJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    int setHuvwCsvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    int setHuvw0OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
 
     /**
     * \brief Enable/disable ASCII output for a ninja

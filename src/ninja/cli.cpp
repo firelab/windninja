@@ -307,11 +307,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
                 ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
 
-                ("write_huvw_output", po::value<bool>()->default_value(false), "write HUVW wind vector output files (true, default:false)")
-                ("huvw_tif", po::value<bool>()->default_value(false), "write HUVW *.tif (true, default:false)")
-                ("huvw_json", po::value<bool>()->default_value(false), "write HUVW (epsg 4326) raster as *.json (default: true, false)")
-                ("huvw_geojson", po::value<bool>()->default_value(false), "write HUVW vectors as *.geojson (true, default:false)")
-                ("huvw_csv", po::value<bool>()->default_value(false), "write HUVW ECEF vectors as *.csv (true, default:false)")
+                ("write_huvw_output", po::value<bool>()->default_value(false), "write HUVW wind vector output grid (true, default:false)")
+                ("write_huvw_0_output" , po::value<bool>()->default_value(false), "write input wind speed (wxModel or point) (true, default:false)")
 
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
@@ -1824,17 +1821,8 @@ int windNinjaCLI(int argc, char* argv[])
             }
 
             // HUVW output options (3D wind grids/vectors in various formats)
-            if (vm["write_huvw_output"].as<bool>())
-            {
-                windsim.setHuvwOutFlag( i_, true );
-                windsim.setHuvwTifOutFlag( i_, option_val<bool>(vm,"huvw_tif"));
-                windsim.setHuvwJsonOutFlag( i_, option_val<bool>(vm,"huvw_json"));
-                windsim.setHuvwGeoJsonOutFlag( i_, option_val<bool>(vm,"huvw_geojson"));
-                windsim.setHuvwCsvOutFlag( i_, option_val<bool>(vm,"huvw_csv"));
-            } else {
-                windsim.setHuvwOutFlag( i_, false );
-                // all the huvw_* flags will be ignored
-            }
+            windsim.setHuvwOutFlag( i_, vm["write_huvw_output"].as<bool>());
+            windsim.setHuvw0OutFlag( i_, vm["write_huvw_0_output"].as<bool>());
 
             // AAIGRID text output
             if(option_val<bool>(vm,"write_ascii_output"))

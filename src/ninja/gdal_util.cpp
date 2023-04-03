@@ -846,9 +846,10 @@ bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
 
     if (pDS) {
         const char *pszPrj = pDS->GetProjectionRef();
-        OGRSpatialReference* pSrcSRS;
-        pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
-        if (pszPrj == "") {
+        if (*pszPrj) {
+            OGRSpatialReference* pSrcSRS;
+            pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
+
             OGRSpatialReference tgtSRS;
 
             tgtSRS.SetWellKnownGeogCS("EPSG:4326");
@@ -1300,7 +1301,7 @@ template void gdalProcessScanLines<unsigned short> (GDALDataset* pDS, int bandNo
 /**
  * set SRS from given ll corner and cellsize 
  */
-void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, std::string& prjString)
+void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT)
 {
     double adfGeoTransform[6] = { 
         xllCorner, cellSize, 0,  
@@ -1308,7 +1309,6 @@ void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double 
     };
     pDS->SetGeoTransform( adfGeoTransform);
 
-    char* pszDstWKT = (char*)prjString.c_str();
     pDS->SetProjection(pszDstWKT);
 }
 

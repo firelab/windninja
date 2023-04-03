@@ -85,7 +85,8 @@ ninja::ninja()
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
     input.Com = new ninjaDefaultComHandler();
 
-    pHuvwDS = nullptr;
+    pHuvwDS = nullptr; // (optional) data set to store computed (h,u,v,w) grid
+    pHuvw0DS = nullptr; // (optional) data set to store input (h,u,v,w) grid (wxModel or point source)
 }
 
 /**Ninja destructor
@@ -171,6 +172,7 @@ ninja::ninja(const ninja &rhs)
     solar=NULL;
 
     pHuvwDS = rhs.pHuvwDS;
+    pHuvw0DS - rhs.pHuvw0DS;
 }
 
 /**
@@ -189,6 +191,7 @@ ninja &ninja::operator=(const ninja &rhs)
         CloudGrid = rhs.CloudGrid;
 
         pHuvwDS = rhs.pHuvwDS;
+        pHuvw0DS = rhs.pHuvw0DS;
 
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
@@ -358,8 +361,8 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
 		//initialize
-                init.reset(initializationFactory::makeInitialization(input));
-                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+        init.reset(initializationFactory::makeInitialization(input));
+        init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
 
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
@@ -1304,6 +1307,10 @@ void ninja::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *
         delete[] temp;
 }
 
+inline float vec_length (float u, float v, float w) {
+    return std::sqrt( u*u + v*v + w*w);
+}
+
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
  */
@@ -1320,9 +1327,17 @@ void ninja::interp_uvw()
         int nRows = VelocityGrid.get_nRows();
         int nCols = VelocityGrid.get_nCols();
 
-        // scan lines for HUVW data set
-        std::unique_ptr<float[]> hRow(new float[nCols]), uRow(new float[nCols]), vRow(new float[nCols]), wRow(new float[nCols]);
-                                                                        //make sure rough_h is set to zero if profile switch is 0 or 2
+        // scan lines for HUVW data set (only alloc if we need them, hRow and spdRow are used for both)
+        int len = (pHuvwDS || pHuvw0DS) ? nCols : 0;
+        std::unique_ptr<float[]> hRow(new float[nCols]), spdRow(new float[nCols]);
+
+        len = pHuvwDS ? nCols : 0;
+        std::unique_ptr<float[]> uRow(new float[nCols]), vRow(new float[nCols]), wRow(new float[nCols]);
+
+        len = pHuvw0DS ? nCols : 0;
+        std::unique_ptr<float[]> u0Row(new float[len]), v0Row(new float[len]), w0Row(new float[len]);
+
+        //make sure rough_h is set to zero if profile switch is 0 or 2
 #pragma omp for
         for(i=0;i<nRows;i++)
         {
@@ -1384,16 +1399,29 @@ void ninja::interp_uvw()
                 AngleGrid(i,j)=(180.0/pi*intermedval);
 
                 // optional HUVW output
-                if (pHuvwDS) {
+                if (pHuvwDS || pHuvw0DS) {
                     hRow[j] = (float) (input.dem.get_cellValue(i,j) + windHeight);
+                }
+
+                if (pHuvwDS) {
                     uRow[j] = (float)uu;
                     vRow[j] = (float)vv;
                     wRow[j] = (float)ww;
                 }
+                if (pHuvw0DS) {
+                    u0Row[j] = u0(i,j,k);
+                    v0Row[j] = v0(i,j,k);
+                    w0Row[j] = w0(i,j,k);
+                }
             }
 
             if (pHuvwDS) {
-                setHuvwScanlines( pHuvwDS, i, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get());
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[i],vRow[j],wRow[j]);
+                setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get());
+            }
+            if (pHuvw0DS) {
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[i],v0Row[j],w0Row[j]);
+                setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get());
             }
         }
     }	//end parallel region
@@ -2217,7 +2245,8 @@ void ninja::prepareOutput()
     double yllCorner = input.dem.get_yllCorner();
     double cellSize = input.dem.get_cellSize();
     double noDataValue = input.dem.get_noDataValue();
-    std::string prjString = input.dem.prjString;
+    std::string& prjString = input.dem.prjString;
+
 
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
@@ -2227,7 +2256,12 @@ void ninja::prepareOutput()
     if (input.huvwOutFlag) {
         // create the HUVW dataset that is populated during interp_uvw().
         // We back this with a file so that we don't have keep the whole thing in memory
-        pHuvwDS = createHuvwDS(input.huvwTifFile.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize, prjString);
+        const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) wind velocity grid";
+        pHuvwDS = createHuvwDS(input.huvwTifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
+    }
+    if (input.huvw0OutFlag) {
+        const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) input wind velocity grid";
+        pHuvw0DS = createHuvwDS(input.huvw0TifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
     }
 
 	if(!isNullRun) {
@@ -3187,6 +3221,11 @@ void ninja::deleteDynamicMemory()
     if (pHuvwDS) {
         pHuvwDS->Release();
         pHuvwDS = nullptr;
+    }
+
+    if (pHuvw0DS) {
+        pHuvw0DS->Release();
+        pHuvw0DS = nullptr;
     }
 }
 
@@ -4896,9 +4935,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     // HUVW output files
     input.huvwTifFile = rootFile + ascii_fileAppend + "_huvw.tif";
-    input.huvwJsonFile = rootFile + ascii_fileAppend + "_huvw.json";
-    input.huvwGeoJsonFile = rootFile + ascii_fileAppend + "_huvw.geojson";
-    input.huvwCsvFile = rootFile + ascii_fileAppend + "_huvw.csv";
+    input.huvw0TifFile = rootFile + ascii_fileAppend + "_huvw_0.tif";
 
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";
@@ -5205,8 +5242,25 @@ std::string derived_pathname (const char* pathname, const char* newpath, const c
 
 void ninja::writeHuvwOutputFiles ()
 {
+    // file are already there - flush if we keep them, delete if not
+    if (input.huvwOutFlag) {
+        cout << "writing HUVW geo-TIFF output: " << input.huvwTifFile << "\n";
+        pHuvwDS->FlushCache();
+    } else {
+        VSIUnlink(input.huvwTifFile.c_str()); // delete temp HUVW grid file
+    }
+
+    // files are already there - flush if we keep them, delete if not
+    if (input.huvw0OutFlag) {
+        cout << "writing input HUVW geo-TIFF output: " << input.huvw0TifFile << "\n";
+        pHuvw0DS->FlushCache();
+    } else {
+        VSIUnlink(input.huvw0TifFile.c_str()); // delete temp HUVW-0 grid file
+    }
+
+/**************** turn into external programs
     if (pHuvwDS) {
-        if (input.huvwJsonOutFlag) {
+        if (input.huvwCsvGridOutFlag) {
             // re-project the HUVW grids to epsg:4326 (lon/lat)
             // note this creates some undefined values around the edges
             std::string temp4326File = input.huvwTifFile + ".4326";
@@ -5217,7 +5271,10 @@ void ninja::writeHuvwOutputFiles ()
                 std::string temp4326CroppedFile = temp4326File + ".crop";
                 GDALDataset* pCroppedDS = gdalCropToData( temp4326CroppedFile.c_str(), pWarpedDS, 0.1);
                 if (pCroppedDS) {
-                    writeHuvwJsonGrid( pCroppedDS, input.huvwJsonFile);  // this is the output we keep
+                    writeHuvwCsvGrid( pCroppedDS, input.huvwCsvGridFile);  // this is the output we keep
+                    if (input.huvw0OutFlag) {
+                        writeHuvwCsvGrid( pCroppedDS, input.huvw0CsvGridFile, true);
+                    }
                     pCroppedDS->ReleaseRef();
                 } else {
                     cerr << "failed to crop lat/lon grid to defined data values\n";
@@ -5236,14 +5293,12 @@ void ninja::writeHuvwOutputFiles ()
             writeHuvwJsonVectors( pHuvwDS, input.huvwGeoJsonFile);
         }
 
-        if (input.huvwCsvOutFlag) {
-            writeHuvwCsvVectors( pHuvwDS, input.huvwCsvFile);
-        }
-
-        if (input.huvwTifOutFlag) {
-            cout << "writing HUVW geo-TIFF output: " << input.huvwTifFile << "\n";  // sort of a lie - we just keep it
-        } else {
-            VSIUnlink(input.huvwTifFile.c_str()); // delete temp HUVW grid file
+        if (input.huvwCsvVectorOutFlag) {
+            writeHuvwCsvVectors( pHuvwDS, input.huvwCsvVectorFile);
+            if (input.huvw0OutFlag) {
+                writeHuvwCsvVectors( pHuvwDS, input.huvw0CsvVectorFile, true);
+            }
         }
     }
+****************/
 }

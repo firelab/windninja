@@ -76,7 +76,7 @@ GDALDataset* gdalCropToData (const char* filename, GDALDataset* pSrcDS, double n
 template<typename T> void gdalProcessScanLines (GDALDataset* pDS, int band, void (*func)(int,int,T*));
 template <class T> GDALDataType getGdalDataType();
 
-void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, std::string& prjString);
+void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT);
 
 GDALDataset* gdalWarpToVRT (GDALDataset* pSrcDS, const char* csName);
 

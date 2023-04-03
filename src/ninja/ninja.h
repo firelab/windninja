@@ -137,9 +137,13 @@ public:
     AsciiGrid<double>VelocityGrid;
     AsciiGrid<double>CloudGrid;
 
-    // optional 3D (u,v,w,h) grid. Directly using a GDALDataset instead of an AsciiGrid since we usually have to warp
-    // the grid from UTM to lat,lon, which would require a temporary GDALDataset anyways
+    // optional 3D (u,v,w,h) grid for computed wind. This is directly using a GDALDataset so that we don't have to keep
+    // the whole set in memory.
     GDALDataset* pHuvwDS;
+
+    // optional 3D (u,v,w,h) input grid. Directly using a GDALDataset. This stores the wxModel or point source generated
+    // wind field in the same grid as pHuvwDS
+    GDALDataset* pHuvw0DS;
 
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
@@ -332,10 +336,7 @@ public:
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
 
     inline void set_huvwOutFlag(bool flag) { input.huvwOutFlag = flag; }
-    inline void set_huvwTifOutFlag(bool flag) { input.huvwTifOutFlag = flag; }
-    inline void set_huvwJsonOutFlag(bool flag) { input.huvwJsonOutFlag = flag; }
-    inline void set_huvwGeoJsonOutFlag(bool flag) { input.huvwGeoJsonOutFlag = flag; }
-    inline void set_huvwCsvOutFlag(bool flag) { input.huvwCsvOutFlag = flag; }
+    inline void set_huvw0OutFlag(bool flag) { input.huvw0OutFlag = flag; }
  
     void set_asciiOutFlag(bool flag);
 

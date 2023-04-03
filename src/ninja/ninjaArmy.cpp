@@ -1911,26 +1911,10 @@ int ninjaArmy::setHuvwOutFlag( const int nIndex, const bool flag, char ** papszO
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwOutFlag( flag ) );
 }
 
-int ninjaArmy::setHuvwTifOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setHuvw0OutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwTifOutFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvw0OutFlag( flag ) );
 }
-
-int ninjaArmy::setHuvwJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwJsonOutFlag( flag ) );
-}
-
-int ninjaArmy::setHuvwGeoJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwGeoJsonOutFlag( flag ) );
-}
-
-int ninjaArmy::setHuvwCsvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwCsvOutFlag( flag ) );
-}
-
 
 //--- ASCII (AAIGRID) output
 

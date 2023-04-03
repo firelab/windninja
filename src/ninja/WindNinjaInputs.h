@@ -192,14 +192,10 @@ public:
     bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be written
 
     bool huvwOutFlag;  // do we write HUVW wind grids/vectors
-    bool huvwTifOutFlag; // store huvw grids as UTM geotif (to process with GDAL tools)
     std::string huvwTifFile;
-    bool huvwJsonOutFlag; // store huvw EPSG:4326 grids as json object
-    std::string huvwJsonFile;
-    bool huvwGeoJsonOutFlag; // store huvw as EPSG:4326 vectors in geojson format
-    std::string huvwGeoJsonFile;
-    bool huvwCsvOutFlag; // store huvw ECEF vectores in CSV format
-    std::string huvwCsvFile;
+
+    bool huvw0OutFlag; // do we store u,v,w of input wind ? 
+    std::string huvw0TifFile;
     
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)
     bool wxModelShpOutFlag;		//flag specifying if a wxModel shapefile should be written

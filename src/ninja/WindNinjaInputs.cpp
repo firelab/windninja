@@ -75,10 +75,7 @@ WindNinjaInputs::WindNinjaInputs()
     shpOutFlag = false;
     
     huvwOutFlag = false;
-    huvwTifOutFlag = false;
-    huvwJsonOutFlag = true;
-    huvwGeoJsonOutFlag = false;
-    huvwCsvOutFlag = true;
+    huvw0OutFlag = false;
 
     asciiOutFlag = false;
     
@@ -298,10 +295,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       shpOutFlag = rhs.shpOutFlag;
 
       huvwOutFlag = rhs.huvwOutFlag;
-      huvwTifOutFlag = rhs.huvwTifOutFlag;
-      huvwJsonOutFlag = rhs.huvwJsonOutFlag;
-      huvwGeoJsonOutFlag = rhs.huvwGeoJsonOutFlag;
-      huvwCsvOutFlag = rhs.huvwCsvOutFlag;
+      huvw0OutFlag = rhs.huvw0OutFlag;
 
       asciiOutFlag = rhs.asciiOutFlag;
       
