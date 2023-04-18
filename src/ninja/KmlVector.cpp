@@ -242,7 +242,7 @@ bool KmlVector::setOGR() {
 bool KmlVector::writeKml(std::string cScheme, bool vector_scaling)
 {
 	VSILFILE* fout = 0;
-    makeDefaultStyles(cScheme,vector_scaling);
+        makeDefaultStyles(cScheme,vector_scaling);
 	if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
 		return false;
 	else
