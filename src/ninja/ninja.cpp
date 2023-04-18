@@ -2999,7 +2999,6 @@ void ninja::writeOutputFiles()
 #ifdef NINJAFOAM
                         if(input.writeTurbulence)
                         {
-                            cout<<"writing turbulence..............!!!!!!!!!!!!!!"<<endl;
                             turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
