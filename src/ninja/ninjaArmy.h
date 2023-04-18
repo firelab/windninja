@@ -364,6 +364,15 @@ public:
     */
     int setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions=NULL );
         
+    /**
+    * \brief Set the flag to write turbulence output from a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param  bool flag indicating if turbulence output should be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------

@@ -42,6 +42,7 @@ KmlVector::KmlVector()
 	timeDateLegendFile = "";
 	wxModelName = "";
         coordTransform = NULL;
+        turbulenceFlag = false; 
 }
 
 KmlVector::~KmlVector()
@@ -75,6 +76,7 @@ void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVeloc
 	speedUnits = units;
 	turbulence = turb;
 }
+
 
 #ifdef FRICTION_VELOCITY
 void KmlVector::setUstarGrid(AsciiGrid<double> &ust)
@@ -270,12 +272,8 @@ bool KmlVector::writeKml(std::string cScheme, bool vector_scaling)
 			writeVectors(fout);
 			VSIFPrintfL(fout, "</Folder>");
 
-            turbulenceFlag = false;
-            
-            if(turbulence.get_nRows()!=0)
-                turbulenceFlag = true;
-            
-            if(turbulenceFlag ==true)
+
+            if(turbulenceFlag)
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
@@ -359,12 +357,8 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme,bool vector_s
 			writeVectors(fout);
                         VSIFPrintfL(fout, "</Folder>");
 
-            turbulenceFlag = false;
-            
-            if(turbulence.get_nRows()!=0)
-                turbulenceFlag = true;
-            
-            if(turbulenceFlag ==true)
+
+            if(turbulenceFlag)
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
@@ -1720,7 +1714,7 @@ bool KmlVector::makeKmz()
   filesInZip.push_back(getShortName(kmlFile));
   filesInZip.push_back(getShortName(legendFile));
 
-  if(turbulenceFlag==1)
+  if(turbulenceFlag)
   {
       filesToZip.push_back(turbulence_png);
       filesToZip.push_back(turbulence_legend);

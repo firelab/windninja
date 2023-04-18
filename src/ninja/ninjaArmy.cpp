@@ -569,6 +569,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 diurnal_ninja->input.Com = ninjas[0]->input.Com;
                 diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
                 diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
+                diurnal_ninja->set_writeTurbulenceFlag(ninjas[0]->input.writeTurbulence);
                 if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                 }
@@ -656,6 +657,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.Com = ninjas[i]->input.Com;
                     diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
                     diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
+                    diurnal_ninja->set_writeTurbulenceFlag(ninjas[0]->input.writeTurbulence);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                     }
@@ -1211,6 +1213,10 @@ int ninjaArmy::setMeshCount( const int nIndex,
 int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
+}
+int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
 }
 #endif
 /*-----------------------------------------------------------------------------

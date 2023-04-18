@@ -303,6 +303,7 @@ public:
     std::string stlFile; //path/filename of an STL file
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
+    bool writeTurbulence;
 #endif
 };
 
