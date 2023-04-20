@@ -1688,7 +1688,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
 
             //check if lcp to determine if surface veg needs to be set or not
-            bool isLcp;
+            bool isLcp = false;
             GDALDataset *poDS = (GDALDataset*)GDALOpen(elevation_file->c_str(),
                     GA_ReadOnly);
             if(poDS == NULL) {
@@ -1722,8 +1722,6 @@ int windNinjaCLI(int argc, char* argv[])
                     isLcp = true;
                 }
             }
-            else
-                isLcp = false;
 
             GDALClose((GDALDatasetH)poDS);
 
