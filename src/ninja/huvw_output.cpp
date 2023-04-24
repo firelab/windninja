@@ -182,10 +182,10 @@ static double scaleFactor (float u, float v, float w, double& spd)
     spd = std::sqrt( u*u + v*v);
     // we could emphasize high vertical (w) wind components here to avoid ortho view angle distortion
 
-    if (spd < 2.2352) return 0.2;  // < 5mph
-    if (spd < 4.4704) return 0.4;  // < 10mph
-    if (spd < 8.9408) return 0.6;  // < 20mph
-    return 0.8; // >= 20mph
+    if (spd < 2.2352) return 0.25;  // < 5mph
+    if (spd < 4.4704) return 0.5;  // < 10mph
+    if (spd < 8.9408) return 0.75;  // < 20mph
+    return 0.95; // >= 20mph
 }
 
 typedef bool (*pv_func_t)(VSILFILE* fout, OGRCoordinateTransformation*,bool,double,double,double,float,float,float,float);

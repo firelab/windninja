@@ -5257,48 +5257,4 @@ void ninja::writeHuvwOutputFiles ()
     } else {
         VSIUnlink(input.huvw0TifFile.c_str()); // delete temp HUVW-0 grid file
     }
-
-/**************** turn into external programs
-    if (pHuvwDS) {
-        if (input.huvwCsvGridOutFlag) {
-            // re-project the HUVW grids to epsg:4326 (lon/lat)
-            // note this creates some undefined values around the edges
-            std::string temp4326File = input.huvwTifFile + ".4326";
-            GDALDataset *pWarpedDS = gdalWarpTo4326( temp4326File.c_str(), pHuvwDS);
-            if (pWarpedDS) {
-                // cropp epsg:4326 grid to defined data value sub-grid
-                // note this means the generated output files will cover a slightly smaller region than the DEM input
-                std::string temp4326CroppedFile = temp4326File + ".crop";
-                GDALDataset* pCroppedDS = gdalCropToData( temp4326CroppedFile.c_str(), pWarpedDS, 0.1);
-                if (pCroppedDS) {
-                    writeHuvwCsvGrid( pCroppedDS, input.huvwCsvGridFile);  // this is the output we keep
-                    if (input.huvw0OutFlag) {
-                        writeHuvwCsvGrid( pCroppedDS, input.huvw0CsvGridFile, true);
-                    }
-                    pCroppedDS->ReleaseRef();
-                } else {
-                    cerr << "failed to crop lat/lon grid to defined data values\n";
-                }
-                pWarpedDS->ReleaseRef();
-                VSIUnlink( temp4326CroppedFile.c_str());
-
-            } else {
-                cerr << "failed to warp huvw grid from UTM to lat/lon\n";
-            }
-            
-            VSIUnlink(temp4326File.c_str());            
-        }
-
-        if (input.huvwGeoJsonOutFlag) {
-            writeHuvwJsonVectors( pHuvwDS, input.huvwGeoJsonFile);
-        }
-
-        if (input.huvwCsvVectorOutFlag) {
-            writeHuvwCsvVectors( pHuvwDS, input.huvwCsvVectorFile);
-            if (input.huvw0OutFlag) {
-                writeHuvwCsvVectors( pHuvwDS, input.huvw0CsvVectorFile, true);
-            }
-        }
-    }
-****************/
 }
