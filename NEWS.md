@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+WindNinja 3.8.1
+---------------
+- Update Mapbox API requests for GUI download widget (#483)
+
+- Fixed issue causing an occassional double free of an object in LCP client (#482)
+
 WindNinja 3.8.0
 ---------------
 - Update LANDFIRE services used for downloading LCP files (#400, #411, and #451)

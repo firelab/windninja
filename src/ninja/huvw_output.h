@@ -36,11 +36,4 @@
 GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* prjString, int nCols, int nRows, double xllCorner, double yllCorner, double cellSize);
 void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow);
 
-/////////////// REMOVE
-//--- the output generators
-void writeHuvwJsonVectors (GDALDataset* pDS, std::string& fname);
-void writeHuvwCsvGrid (GDALDataset* pDS, std::string& fname, bool isHuvw0=false);
-void writeHuvwCsvVectors (GDALDataset* pDS, std::string& fname, bool isHuvw0=false);
-///////////////
-
 #endif //UVWH_OUTPUT

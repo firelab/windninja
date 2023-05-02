@@ -53,7 +53,6 @@ NinjaFoam::NinjaFoam() : ninja()
     cellCount = 0; 
     nRoundsRefinement = 0;
     simpleFoamEndTime = 1000; //initial value in controlDict_simpleFoam
-    writeTurbulence = false;
 
     startTotal = 0.0;
     endTotal = 0.0;
@@ -71,6 +70,11 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
+
+    if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
+    {
+        set_writeTurbulenceFlag("true");
+    }
 }
 
 /**
@@ -377,6 +381,7 @@ bool NinjaFoam::simulate_wind()
        CloudGrid.deallocate();
        AngleGrid.deallocate();
        VelocityGrid.deallocate();
+       TurbulenceGrid.deallocate();
     }
 
     if(input.diurnalWinds == true){
@@ -2354,9 +2359,17 @@ void NinjaFoam::WriteOutputFiles()
     //Clip off bounding doughnut if desired
     VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    if(input.writeTurbulence)
+    {
+        TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    }
 
     //change windspeed units back to what is specified by speed units switch
     velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+    if(input.writeTurbulence)
+    {
+        velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+    }
 
     //resample to requested output resolutions
     SetOutputResolution();
@@ -2399,20 +2412,23 @@ void NinjaFoam::WriteOutputFiles()
 			AsciiGrid<double> tempCloud(CloudGrid);
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
-                        //ensure grids cover original DEM extents for FARSITE
-                        AsciiGrid<double> demGrid;
-                        GDALDatasetH hDS;
-                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                        if( hDS == NULL )
+                        //if output clipping was set by the user, don't buffer to overlap the DEM
+                        if(!input.outputBufferClipping > 0.0)
                         {
-                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                                    "Problem reading DEM during output writing." );
+                            //ensure grids cover original DEM extents for FARSITE
+                            AsciiGrid<double> demGrid;
+                            GDALDatasetH hDS;
+                            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                            if( hDS == NULL )
+                            {
+                                input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                        "Problem reading DEM during output writing." );
+                            }
+                            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                            tempCloud.BufferToOverlapGrid(demGrid);
+                            angTempGrid->BufferToOverlapGrid(demGrid);
+                            velTempGrid->BufferToOverlapGrid(demGrid);
                         }
-
-                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                        tempCloud.BufferToOverlapGrid(demGrid);
-                        angTempGrid->BufferToOverlapGrid(demGrid);
-                        velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -2511,7 +2527,7 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
                                     AsciiGrid<double>::order0));
-                        if(writeTurbulence)
+                        if(input.writeTurbulence)
                         {
                             turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));

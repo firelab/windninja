@@ -108,6 +108,7 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+, TurbulenceGrid(rhs.TurbulenceGrid)
 , outputSpeedArray(rhs.outputSpeedArray)
 , outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
@@ -189,6 +190,7 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+        TurbulenceGrid = rhs.TurbulenceGrid;
 
         pHuvwDS = rhs.pHuvwDS;
         pHuvw0DS = rhs.pHuvw0DS;
@@ -591,6 +593,9 @@ if(input.frictionVelocityFlag == 1){
 	     AngleGrid.deallocate();
          VelocityGrid.deallocate();
 	     CloudGrid.deallocate();
+#ifdef NINJAFOAM
+             TurbulenceGrid.deallocate();
+#endif
 	     #ifdef FRICTION_VELOCITY
 	     if(input.frictionVelocityFlag == 1){
             UstarGrid.deallocate();
@@ -2253,6 +2258,13 @@ void ninja::prepareOutput()
     VelocityGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
 	AngleGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
 
+#ifdef NINJAFOAM
+    if(input.writeTurbulence)
+    {
+        TurbulenceGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
+    }
+#endif
+
     if (input.huvwOutFlag) {
         // create the HUVW dataset that is populated during interp_uvw().
         // We back this with a file so that we don't have keep the whole thing in memory
@@ -2273,6 +2285,9 @@ void ninja::prepareOutput()
         VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
         AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 
+#ifdef NINJAFOAM
+	    TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+#endif
         //Clip cloud cover grid if it's a wxModel intitialization (since it's gridded)
         //	if not wxModel initialization, don't clip since it's just one cell anyway
         if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -2297,10 +2312,14 @@ void ninja::prepareOutput()
                 -9999.0, tempCloudCover, prjString);
     }
 
-
-
 	//change windspeed units back to what is specified by speed units switch
 	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+#ifdef NINJAFOAM
+        if(input.writeTurbulence)
+        {
+            velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+        }
+#endif
 
 	/*
 	 * Interpolate u, v, w to specific locations if an input_points_file is provided
@@ -2955,13 +2974,31 @@ void ninja::writeOutputFiles()
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
+#ifdef NINJAFOAM
+			AsciiGrid<double> *turbTempGrid;
+
+#endif
 			velTempGrid=NULL;
 			angTempGrid=NULL;
+#ifdef NINJAFOAM
+			turbTempGrid=NULL;
+#endif
 
 			KmlVector ninjaKmlFiles;
 
 			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+#ifdef NINJAFOAM
+                        if(input.writeTurbulence)
+                        {
+                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setTurbulenceFlag("true");
+                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        }
+#endif //NINJAFOAM
 
 			#ifdef FRICTION_VELOCITY
 			if(input.frictionVelocityFlag == 1){
@@ -3032,6 +3069,11 @@ void ninja::writeOutputFiles()
 			{
 				delete velTempGrid;
 				velTempGrid=NULL;
+			}
+			if(turbTempGrid)
+			{
+				delete turbTempGrid;
+				turbTempGrid=NULL;
 			}
 		}
 	}catch (exception& e)
@@ -3617,6 +3659,11 @@ void ninja::set_foamVelocityGrid(AsciiGrid<double> velocityGrid)
 void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 {
     input.foamAngleGrid = angleGrid;
+}
+
+void ninja::set_writeTurbulenceFlag(bool flag)
+{
+    input.writeTurbulence = flag;
 }
 #endif
 
@@ -5242,16 +5289,16 @@ std::string derived_pathname (const char* pathname, const char* newpath, const c
 
 void ninja::writeHuvwOutputFiles ()
 {
-    // file are already there - flush if we keep them, delete if not
-    if (input.huvwOutFlag) {
+    // files are already there - flush if we keep them, delete if not
+
+    if (input.huvwOutFlag) { // the simulation result
         cout << "writing HUVW geo-TIFF output: " << input.huvwTifFile << "\n";
         pHuvwDS->FlushCache();
     } else {
         VSIUnlink(input.huvwTifFile.c_str()); // delete temp HUVW grid file
     }
 
-    // files are already there - flush if we keep them, delete if not
-    if (input.huvw0OutFlag) {
+    if (input.huvw0OutFlag) { // the interpolated input
         cout << "writing input HUVW geo-TIFF output: " << input.huvw0TifFile << "\n";
         pHuvw0DS->FlushCache();
     } else {

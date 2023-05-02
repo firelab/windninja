@@ -153,6 +153,7 @@ WindNinjaInputs::WindNinjaInputs()
     dirInitGridFilename= "!set";
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
+    writeTurbulence = false;
 #endif
     
     outputPointsFilename = "!set";
@@ -263,6 +264,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       stlFile = rhs.stlFile;
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
+      writeTurbulence = rhs.writeTurbulence;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;
@@ -289,6 +291,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       googOutFlag = rhs.googOutFlag;
       googSpeedScaling = rhs.googSpeedScaling;
       googLineWidth = rhs.googLineWidth;
+      googColor = rhs.googColor;
+      googVectorScale = rhs.googVectorScale;
       wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
       wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
       wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
