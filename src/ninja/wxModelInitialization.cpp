@@ -1192,6 +1192,12 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
 void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
+    //check that the wx model grid overlaps the DEM
+    if(!airTempGrid_wxModel.CheckForGridOverlap(input.dem))
+    {
+        throw std::logic_error("The weather model grid does not completely overlap the DEM.");
+    }
+
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
     cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
