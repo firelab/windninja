@@ -122,12 +122,12 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
-    if(!CPLCheckForFile(CPLFormFilename("gdalicon.png", "pszGdalData", NULL), NULL))
+    if(!CPLCheckForFile(CPLFormFilename("gdalicon.png", CPLStrdup(pszGdalData), NULL), NULL))
     {
         CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
         return 2;
     }
-    if(!CPLCheckForFile(CPLFormFilename("date_time_zonespec.csv", "pszWindNinjaData", NULL), NULL))
+    if(!CPLCheckForFile(CPLFormFilename("date_time_zonespec.csv", CPLStrdup(pszWindNinjaData), NULL), NULL))
     {
         CPLDebug("WINDNINJA", "Invalid path for WINDNINJA_DATA: %s", pszWindNinjaData);
         return 2; 
