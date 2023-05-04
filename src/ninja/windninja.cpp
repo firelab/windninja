@@ -272,24 +272,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
-    (const char *pszGdalData, const char *pszWindNinjaData )
+    ( const char *pszGdalData, const char *pszWindNinjaData )
 
 {
-    //set GDAL_DATA and WINDNINJA_DATA
-    GDALAllRegister();
-    OGRRegisterAll();    
+    NinjaErr retval = NINJA_E_INVALID;
 
-    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+    retval = NinjaInitialize(pszGdalData, pszWindNinjaData);
 
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
-
-    CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
-    CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
-
-    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
-
-    return NINJA_SUCCESS;
+    return retval;
 }
         
 WINDNINJADLL_EXPORT NinjaErr NinjaInit

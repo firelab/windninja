@@ -44,6 +44,7 @@
 #endif
 
 int NinjaInitialize();
+int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
 char ** NinjaCheckVersion(void);
 
 #endif /* NINJA_INIT_H_ */

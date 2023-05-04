@@ -111,6 +111,38 @@ void NinjaCheckThreddsData( void *rc )
     CPLHTTPDestroyResult( poResult );
     return;
 }
+/*
+** Initialize global singletons and environments.
+*/
+int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
+{
+    //set GDAL_DATA and WINDNINJA_DATA
+    GDALAllRegister();
+    OGRRegisterAll();    
+
+    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+    if(!CPLCheckForFile(CPLFormFilename("gdalicon.png", "pszGdalData", NULL), NULL))
+    {
+        CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
+        return 2;
+    }
+    if(!CPLCheckForFile(CPLFormFilename("date_time_zonespec.csv", "pszWindNinjaData", NULL), NULL))
+    {
+        CPLDebug("WINDNINJA", "Invalid path for WINDNINJA_DATA: %s", pszWindNinjaData);
+        return 2; 
+    }
+
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+
+    CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
+    CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
+
+    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+
+    return 0;
+}
 
 /*
 ** Initialize global singletons and environments.
