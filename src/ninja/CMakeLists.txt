@@ -28,8 +28,8 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${PROJECT_SOURCE_DIR}/src)
 
 set(NINJA_SOURCES air.cpp
-                  ascii_grid.cpp
                   Array2D.cpp
+                  ascii_grid.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp
@@ -103,7 +103,9 @@ set(NINJA_SOURCES air.cpp
                   wxModelInitialization.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
-                  windninja.cpp)
+                  windninja.cpp
+                  init_tz.cpp
+                  huvw_output.cpp)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp

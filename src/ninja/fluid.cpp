@@ -154,26 +154,6 @@ double Fluid::interpolate(double T, double* vs)
 	}
 }
 
-
-/*
-double Fluid::get_rho(double T)
-{
-	if(T > t[nRows - 1])
-	{
-		std::cout << "Invalid temperature.";
-		return -1;
-	}
-	else
-	{
-		int i = 0;
-		while(T > t[i])
-			i++;
-
-		return (( (T - t[i - 1]) / (t[i] - t[i - 1])) * (rho[i] - rho[i - 1])) + rho[i - 1];
-	}
-}
-*/
-
 bool Fluid::print_t()
 {
 	std::cout << std::endl << "t" << std::endl;

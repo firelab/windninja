@@ -80,7 +80,8 @@ class armyException : public std::runtime_error
         armyException(std::vector<std::string> m);
         ~armyException() throw();
         std::vector<std::string> messages;
-        const char* what() const NOEXCEPT override;
+
+    const char* what() const noexcept override;
 };
 
 

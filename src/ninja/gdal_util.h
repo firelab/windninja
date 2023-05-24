@@ -67,6 +67,17 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 bool gdalHasGeographicSRS (const char* filename);
 bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude);
 int gdalGetUtmZone (double latitude, double longitude);
-GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS, const char* pszDstDriverName = nullptr);
+GDALDataset* gdalWarpTo4326 (const char* filename, GDALDataset* pSrcDS, const char* pszDstDriverName = nullptr);
+bool gdalGetDataBoundaries (GDALDataset* pDS, int bandNr, double noDataThreshold, int& minRow, int& maxRow, int& minCol, int& maxCol);
+GDALDataset* gdalCrop (const char* filename, GDALDataset* pSrcDS, int minRow, int maxRow, int minCol, int maxCol);
+GDALDataset* gdalCropToData (const char* filename, GDALDataset* pSrcDS, double noDataThreshold);
+
+template<typename T> void gdalProcessScanLines (GDALDataset* pDS, int band, void (*func)(int,int,T*));
+template <class T> GDALDataType getGdalDataType();
+
+void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT);
+
+GDALDataset* gdalWarpToVRT (GDALDataset* pSrcDS, const char* csName);
 
 #endif /* GDAL_UTIL_H */

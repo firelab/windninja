@@ -28,6 +28,8 @@
 
 
 #include "ninja.h"
+#include "huvw_output.h"
+
 
 extern boost::local_time::tz_database globalTimeZoneDB;
 
@@ -83,6 +85,8 @@ ninja::ninja()
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
     input.Com = new ninjaDefaultComHandler();
 
+    pHuvwDS = nullptr; // (optional) data set to store computed (h,u,v,w) grid
+    pHuvw0DS = nullptr; // (optional) data set to store input (h,u,v,w) grid (wxModel or point source)
 }
 
 /**Ninja destructor
@@ -91,7 +95,7 @@ ninja::ninja()
 ninja::~ninja()
 {
 	deleteDynamicMemory();
-        delete input.Com;
+    delete input.Com;
 }
 
 /**
@@ -167,6 +171,9 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
+
+    pHuvwDS = rhs.pHuvwDS;
+    pHuvw0DS - rhs.pHuvw0DS;
 }
 
 /**
@@ -184,6 +191,10 @@ ninja &ninja::operator=(const ninja &rhs)
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
         TurbulenceGrid = rhs.TurbulenceGrid;
+
+        pHuvwDS = rhs.pHuvwDS;
+        pHuvw0DS = rhs.pHuvw0DS;
+
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
@@ -352,8 +363,8 @@ do
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initializing flow...");
 
 		//initialize
-                init.reset(initializationFactory::makeInitialization(input));
-                init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+        init.reset(initializationFactory::makeInitialization(input));
+        init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
 
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
@@ -576,7 +587,7 @@ if(input.frictionVelocityFlag == 1){
      }
 
 
-	 deleteDynamicMemory();
+	 deleteDynamicMemory();  // ?? this is called twice (also from ninja dtor during ninjaArmy destruction) - do we need this here?
 	 if(!input.keepOutGridsInMemory)
 	 {
 	     AngleGrid.deallocate();
@@ -1301,6 +1312,10 @@ void ninja::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *
         delete[] temp;
 }
 
+inline float vec_length (float u, float v, float w) {
+    return std::sqrt( u*u + v*v + w*w);
+}
+
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
  */
@@ -1313,17 +1328,32 @@ void ninja::interp_uvw()
         double h2, h1=0.0, slopeu, slopev, slopew, uu, vv, ww, intermedval;
         windProfile profile;
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
+        double windHeight = input.outputWindHeight;
+        int nRows = VelocityGrid.get_nRows();
+        int nCols = VelocityGrid.get_nCols();
 
-                                                                        //make sure rough_h is set to zero if profile switch is 0 or 2
+        // scan lines for HUVW data set (only alloc if we need them, hRow and spdRow are used for both)
+        int len = (pHuvwDS || pHuvw0DS) ? nCols : 0;
+        std::unique_ptr<float[]> hRow(new float[nCols]), spdRow(new float[nCols]);
+
+        len = pHuvwDS ? nCols : 0;
+        std::unique_ptr<float[]> uRow(new float[nCols]), vRow(new float[nCols]), wRow(new float[nCols]);
+
+        len = pHuvw0DS ? nCols : 0;
+        std::unique_ptr<float[]> u0Row(new float[len]), v0Row(new float[len]), w0Row(new float[len]);
+
+        //make sure rough_h is set to zero if profile switch is 0 or 2
 #pragma omp for
-        for(i=0;i<VelocityGrid.get_nRows();i++)
+        for(i=0;i<nRows;i++)
         {
-            for(j=0;j<VelocityGrid.get_nCols();j++)
+            for(j=0;j<nCols;j++)
             {
                 k=1;
                 h2=0;
+                double surfaceHeight = input.surface.Rough_h(i,j);
+                double h = windHeight + surfaceHeight;
 
-                while(h2 < (input.outputWindHeight + input.surface.Rough_h(i,j)))
+                while(h2 < h)
                 {
                     assert( k < mesh.nlayers );
                     h2=mesh.ZORD(i, j, k)-mesh.ZORD(i, j, 0);
@@ -1337,11 +1367,11 @@ void ninja::interp_uvw()
                     profile.ObukovLength = init->L(i,j);
                     profile.ABL_height = init->bl_height(i,j);
                     profile.Roughness = input.surface.Roughness(i,j);
-                    profile.Rough_h = input.surface.Rough_h(i,j);
+                    profile.Rough_h = surfaceHeight;
                     profile.Rough_d = input.surface.Rough_d(i,j);
-                    profile.inputWindHeight = h2 - input.surface.Rough_h(i,j);
+                    profile.inputWindHeight = h2 - surfaceHeight;
 
-                    profile.AGL=input.outputWindHeight + input.surface.Rough_h(i,j);			//this is height above THE GROUND!! (not "z=0" for the log profile)
+                    profile.AGL=windHeight;			//this is height above THE GROUND!! (not "z=0" for the log profile)
 
                     profile.inputWindSpeed = u(i, j, k);
                     uu = profile.getWindSpeed();
@@ -1352,26 +1382,51 @@ void ninja::interp_uvw()
                     profile.inputWindSpeed = w(i, j, k);
                     ww = profile.getWindSpeed();
 
-                    VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
+                    VelocityGrid(i,j)=std::sqrt(uu*uu + vv*vv);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
 
                 }else{  //else use linear interpolation
-                    slopeu=(u(i, j, k)-u(i, j, k-1))/(h2-h1);
-                    slopev=(v(i, j, k)-v(i, j, k-1))/(h2-h1);
-                    slopew=(w(i, j, k)-w(i, j, k-1))/(h2-h1);
-                    uu=slopeu*(input.outputWindHeight + input.surface.Rough_h(i,j))+u(i, j, k-1)-slopeu*h1;
-                    vv=slopev*(input.outputWindHeight + input.surface.Rough_h(i,j))+v(i, j, k-1)-slopev*h1;
-                    ww=slopew*(input.outputWindHeight + input.surface.Rough_h(i,j))+w(i, j, k-1)-slopew*h1;
-                    VelocityGrid(i,j)=std::pow((uu*uu+vv*vv),0.5);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
+                    slopeu = (u(i, j, k)-u(i, j, k-1))/(h2-h1);
+                    slopev = (v(i, j, k)-v(i, j, k-1))/(h2-h1);
+                    slopew = (w(i, j, k)-w(i, j, k-1))/(h2-h1);
+                    uu = slopeu*h + u(i, j, k-1) - slopeu*h1;
+                    vv = slopev*h + v(i, j, k-1) - slopev*h1;
+                    ww = slopew*h + w(i, j, k-1) - slopew*h1;
+                    VelocityGrid(i,j)=std::sqrt(uu*uu + vv*vv);       //calculate velocity magnitude (in x,y plane; I decided to NOT include z here so the wind is the horizontal wind)
                 }
 
-                if (uu==0.0 && vv==0.0)
+                if (uu==0.0 && vv==0.0) {
                     intermedval=0.0;
-                else
+                } else {
                     intermedval=-atan2(uu, -vv);
-                if(intermedval<0)
-                    intermedval+=2.0*pi;
+                    if(intermedval<0) intermedval += 2.0*pi;
+                }
+
                 AngleGrid(i,j)=(180.0/pi*intermedval);
 
+                // optional HUVW output
+                if (pHuvwDS || pHuvw0DS) {
+                    hRow[j] = (float) (input.dem.get_cellValue(i,j) + windHeight);
+                }
+
+                if (pHuvwDS) {
+                    uRow[j] = (float)uu;
+                    vRow[j] = (float)vv;
+                    wRow[j] = (float)ww;
+                }
+                if (pHuvw0DS) {
+                    u0Row[j] = u0(i,j,k);
+                    v0Row[j] = v0(i,j,k);
+                    w0Row[j] = w0(i,j,k);
+                }
+            }
+
+            if (pHuvwDS) {
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[i],vRow[j],wRow[j]);
+                setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get());
+            }
+            if (pHuvw0DS) {
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[i],v0Row[j],w0Row[j]);
+                setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get());
             }
         }
     }	//end parallel region
@@ -2189,49 +2244,74 @@ void ninja::computeUVWField()
  */
 void ninja::prepareOutput()
 {
-    VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
-	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+    int nRows = input.dem.get_nRows();
+    int nCols = input.dem.get_nCols();
+    double xllCorner = input.dem.get_xllCorner();
+    double yllCorner = input.dem.get_yllCorner();
+    double cellSize = input.dem.get_cellSize();
+    double noDataValue = input.dem.get_noDataValue();
+    std::string& prjString = input.dem.prjString;
+
+
+    set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
+
+    VelocityGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
+	AngleGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
 
 #ifdef NINJAFOAM
-        if(input.writeTurbulence)
-        {
-            TurbulenceGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), 
-                    input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
-        }
+    if(input.writeTurbulence)
+    {
+        TurbulenceGrid.set_headerData(nCols,nRows, xllCorner, yllCorner, cellSize, noDataValue, 0, prjString);
+    }
 #endif
-	
-	if(!isNullRun)
+
+    if (input.huvwOutFlag) {
+        // create the HUVW dataset that is populated during interp_uvw().
+        // We back this with a file so that we don't have keep the whole thing in memory
+        const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) wind velocity grid";
+        pHuvwDS = createHuvwDS(input.huvwTifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
+    }
+    if (input.huvw0OutFlag) {
+        const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) input wind velocity grid";
+        pHuvw0DS = createHuvwDS(input.huvw0TifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
+    }
+
+	if(!isNullRun) {
 		interp_uvw();
+    }
  
-        if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag){
-            //Set cloud grid
-            int longEdge = input.dem.get_nRows();
-            if(input.dem.get_nRows() < input.dem.get_nCols())
-                    longEdge = input.dem.get_nCols();
-            double tempCloudCover;
-            if(input.cloudCover < 0)
-                tempCloudCover = 0.0;
-            else
-                tempCloudCover = input.cloudCover;
-            CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(), 
-                    input.dem.get_yllCorner(),
-                    (longEdge * input.dem.cellSize), 
-                    -9999.0, tempCloudCover, input.dem.prjString);
-        }
-
 	//Clip off bounding doughnut if desired
-	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-#ifdef NINJAFOAM
-	TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-#endif
+    if (input.outputBufferClipping != 0.0) {
+        VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+        AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 
-	//Clip cloud cover grid if it's a wxModel intitialization (since it's gridded)
-	//	if not wxModel initialization, don't clip since it's just one cell anyway
-	if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-	{
-		CloudGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-	}
+#ifdef NINJAFOAM
+	    TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+#endif
+        //Clip cloud cover grid if it's a wxModel intitialization (since it's gridded)
+        //	if not wxModel initialization, don't clip since it's just one cell anyway
+        if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+        {
+            CloudGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+        }
+    }
+
+    if(input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag){
+        //Set cloud grid
+        int longEdge = nRows;
+        if(nRows < nCols)
+                longEdge = nCols;
+        double tempCloudCover;
+        if(input.cloudCover < 0)
+            tempCloudCover = 0.0;
+        else
+            tempCloudCover = input.cloudCover;
+        CloudGrid.set_headerData(1, 1, xllCorner, 
+                yllCorner,
+                (longEdge * input.dem.cellSize), 
+                -9999.0, tempCloudCover, prjString);
+    }
+
 	//change windspeed units back to what is specified by speed units switch
 	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
 #ifdef NINJAFOAM
@@ -2699,101 +2779,12 @@ void ninja::computeDustEmissions()
 #endif //EMISISONS
 
 
-void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
-{
-    if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            cldGrid.write_Grid( input.cldFile.c_str(), 1);
-            angGrid.write_Grid( input.angFile.c_str(), 0);
-            velGrid.write_Grid( input.velFile.c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
-            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
-            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
-        }
-    }
-
-    if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
-            angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
-            velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
-        }
-        if (input.ascii4326OutFlag){
-            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
-            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
-            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
-        }
-    }
-
-    if (input.asciiUvOutFlag) {
-        writeAsciiUvOutputFiles( angGrid, velGrid);
-    }
-}
-
-// write u,v wind vector output files
-void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
-{
-    AsciiGrid<double> uGrid(angGrid);
-    AsciiGrid<double> vGrid(angGrid);
-    setUvGrids( angGrid, velGrid, uGrid, vGrid);
-
-    if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
-            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
-            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
-        }
-    }
-
-    if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
-            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
-            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
-        }
-    }
-}
-
-void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
-{
-    int nRows = angGrid.get_nRows();
-    int nCols = angGrid.get_nCols();
-    double pi180 = M_PI / 180;
-
-    for (int m=0; m<nRows; m++){
-        for (int n=0; n<nCols; n++) {
-            double vel = velGrid.get_cellValue(m,n);
-            double ang = angGrid.get_cellValue(m,n);
-
-            double deg = 270.0 - ang;  // uv angle is ccw from W
-            if (deg < 0) deg += 360;
-            double rad = deg * pi180;
-
-            double u = cos(rad) * vel;
-            double v = sin(rad) * vel;
-
-            uGrid.set_cellValue(m,n,u);
-            vGrid.set_cellValue(m,n,v);
-        }
-    }
-}
-
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
 
 void ninja::writeOutputFiles()
 {
-    set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
-
 	//Write volume data to VTK format (always in m/s?)
 	if(input.volVTKOutFlag)
 	{
@@ -2851,7 +2842,9 @@ void ninja::writeOutputFiles()
                         velTempGrid->BufferToOverlapGrid(demGrid);
                     }
 
-                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+                    tempCloud.write_Grid( input.cldFile.c_str(), 1);
+                    angTempGrid->write_Grid( input.angFile.c_str(), 0);
+                    velTempGrid->write_Grid( input.velFile.c_str(), 2);
 
 #ifdef FRICTION_VELOCITY
                     if(input.frictionVelocityFlag == 1){
@@ -3170,6 +3163,15 @@ void ninja::writeOutputFiles()
 #endif //EMISSIONS
 	} //end omp section
 	}	//end parallel sections region
+
+    try {
+        if (input.huvwOutFlag) {
+            writeHuvwOutputFiles();
+        }
+
+    } catch (exception& e) {
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception while writing HUVW output file: %s", e.what());
+	}
 }
 
 /**Deletes allocated dynamic memory.
@@ -3257,6 +3259,16 @@ void ninja::deleteDynamicMemory()
 	u0.deallocate();
 	v0.deallocate();
 	w0.deallocate();
+
+    if (pHuvwDS) {
+        pHuvwDS->Release();
+        pHuvwDS = nullptr;
+    }
+
+    if (pHuvw0DS) {
+        pHuvw0DS->Release();
+        pHuvw0DS = nullptr;
+    }
 }
 
 /**Checks the cancel flag for cancelling simulation.
@@ -4968,6 +4980,10 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
 
+    // HUVW output files
+    input.huvwTifFile = rootFile + ascii_fileAppend + "_huvw.tif";
+    input.huvw0TifFile = rootFile + ascii_fileAppend + "_huvw_0.tif";
+
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";
     #endif
@@ -5269,4 +5285,23 @@ std::string derived_pathname (const char* pathname, const char* newpath, const c
     }
 
     return s;
+}
+
+void ninja::writeHuvwOutputFiles ()
+{
+    // files are already there - flush if we keep them, delete if not
+
+    if (input.huvwOutFlag) { // the simulation result
+        cout << "writing HUVW geo-TIFF output: " << input.huvwTifFile << "\n";
+        pHuvwDS->FlushCache();
+    } else {
+        VSIUnlink(input.huvwTifFile.c_str()); // delete temp HUVW grid file
+    }
+
+    if (input.huvw0OutFlag) { // the interpolated input
+        cout << "writing input HUVW geo-TIFF output: " << input.huvw0TifFile << "\n";
+        pHuvw0DS->FlushCache();
+    } else {
+        VSIUnlink(input.huvw0TifFile.c_str()); // delete temp HUVW-0 grid file
+    }
 }
