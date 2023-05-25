@@ -181,17 +181,19 @@ double wxStation::get_speed(velocityUnits::eVelocityUnits units)
 
 double wxStation::get_direction()
 {
+    double d;
     boost::local_time::local_date_time cur=get_currentTimeStep();
 
     for (int i=0;i<datetimeList.size();i++)
     {
         if (cur==localDateTimeList[i])
         {
-            return directionList[i];
+            d=directionList[i];
+            break;
         }
     }
 
-    throw runtime_error("no matching timestep found");
+    return d;
 }
 
 /**

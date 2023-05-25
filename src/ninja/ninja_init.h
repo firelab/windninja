@@ -43,8 +43,6 @@
 #include "boost/date_time/local_time/local_time.hpp"
 #endif
 
-#include "init_tz.h"
-
 int NinjaInitialize();
 int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
 char ** NinjaCheckVersion(void);
