@@ -1,6 +1,5 @@
 #include "ascii_grid.h"
 
-#include "gdal_util.h" // watch out - this is a cyclic dependency
 
 inline void check(CPLErr res) {
     if (res != CE_None) {
@@ -9,11 +8,17 @@ inline void check(CPLErr res) {
     }
 }
 
-// make the default throw so that we don't try to scan into a wrong type size
-template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); }
-template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "lf"); }
-template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "d"); }
-template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "hd"); }
+template <class T> GDALDataType getGdalDataType() { return GDT_Unknown; }
+template<> GDALDataType getGdalDataType<double>() { return GDT_Float64; }
+template<> GDALDataType getGdalDataType<short>() { return GDT_Int16; }
+template<> GDALDataType getGdalDataType<int>() { return GDT_Int32; }
+// ...and more specializations to follow
+// make the default throw so that we don't try to scan into a wrong type size 
+// note - older MSVCs seem to have problems with regex_replace(const char* fmt..) hene we have to pass in temporary strings 
+template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); } 
+template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("lf")); } 
+template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("d")); } 
+template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("hd")); } 
 
 template <class T> inline T epsClr() { throw std::runtime_error("unknown eps value"); }
 template<> inline double epsClr<double>() { return 0.001; }
@@ -1560,12 +1565,29 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     hDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-    gdalSetSrs( GDALDataset::FromHandle(hDS), nXSize, nYSize, get_xllCorner(), get_yllCorner(), get_cellSize(), prjString.c_str());
+    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                get_yllCorner()+(get_nRows()*get_cellSize()),
+                                0, -(get_cellSize())};
 
-    double *padfScanline = new double[nXSize];
+    GDALSetGeoTransform(hDS, adfGeoTransform);
+
+    double *padfScanline;
+    padfScanline = new double[nXSize];
     CPLErr eErr = CE_None;
+
+    adfGeoTransform[0] = get_xllCorner();
+    adfGeoTransform[1] = get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = get_yllCorner()+(get_nRows()*get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -get_cellSize();
+    
+    char* pszDstWKT = (char*)prjString.c_str();
+    GDALSetProjection(hDS, pszDstWKT);
+    GDALSetGeoTransform(hDS, adfGeoTransform);
     
     GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
+    
     GDALSetRasterNoDataValue(hBand, -9999.0);
 
     for(int i=nYSize-1; i>=0; i--)
@@ -1802,8 +1824,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
 	    double maxxx = get_maxValue();
 	    double minnn = raw_minValue;
-        //double _brk0 = 0;
-        //double _brk1 = raw_minValue;
+        double _brk0 = 0;
+        double _brk1 = raw_minValue;
         double _brk2 = 0.25*(raw_maxValue-raw_minValue)+raw_minValue;
         double _brk4 = raw_maxValue;
         double _brk3 = (_brk4+_brk2)/2;
@@ -2604,6 +2626,5 @@ bool AsciiGrid<T>::crop_noData (int noDataThreshold)
 //--- template instantiations
 
 template class AsciiGrid<double>;
-template class AsciiGrid<float>;
 template class AsciiGrid<int>;
 template class AsciiGrid<short>;

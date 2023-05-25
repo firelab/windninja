@@ -1125,13 +1125,6 @@ public:
     */
     int setShpResolution( const int nIndex, const double resolution,
                           std::string units, char ** papszOptions=NULL );
-
-
-    // HUVW grid and vector output in various formats
-    int setHuvwOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    int setHuvw0OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-
-
     /**
     * \brief Enable/disable ASCII output for a ninja
     *
@@ -1141,9 +1134,53 @@ public:
     */
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
+    /**
+    * \brief Enable/disable AAIGRID (*.asc) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Enable/disable JSON output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Set the resolution of ASCII output for a ninja
+    * \brief Enable/disable output in UTM projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output in EPSG:4326 projection for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output of u,v wind fields for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the resoultion of ASCII output for a ninja
     * Set the resolution of ASCII output for a ninja given the resolution
     * and units.
     *
@@ -1296,10 +1333,6 @@ protected:
     void initLocalData(void);
     void destoryLocalData(void);
     void copyLocalData( const ninjaArmy &A );
-
-    // common unit-based output resolution setting
-    int setResolution (const int nIndex, const double resolution, std::string units, char ** papszOptions,
-                              void (ninja::*set_res)(const double,lengthUnits::eLengthUnits));
 
 private:
     char *pszTmpColorRelief;

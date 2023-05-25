@@ -223,14 +223,7 @@ int NinjaInitialize()
             CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
         }
     }
-
-    init_default_timezones(globalTimeZoneDB);
-
-    std::string localTzSpec = FindDataPath("date_time_zonespec.csv");
-    if (localTzSpec.length() > 0) {
-        globalTimeZoneDB.load_from_file( localTzSpec.c_str());
-    }
-
+    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     CPLPopErrorHandler();
     return 0;
 }

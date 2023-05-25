@@ -140,14 +140,6 @@ public:
     AsciiGrid<double>TurbulenceGrid; //this needs to be a member of ninja since we need to write this for ninjafoam runs with diurnal 
 #endif
 
-    // optional 3D (u,v,w,h) grid for computed wind. This is directly using a GDALDataset so that we don't have to keep
-    // the whole set in memory.
-    GDALDataset* pHuvwDS;
-
-    // optional 3D (u,v,w,h) input grid. Directly using a GDALDataset. This stores the wxModel or point source generated
-    // wind field in the same grid as pHuvwDS
-    GDALDataset* pHuvw0DS;
-
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     #ifdef FRICTION_VELOCITY
@@ -339,10 +331,12 @@ public:
     void set_wxModelShpOutFlag(bool flag);
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
 
-    inline void set_huvwOutFlag(bool flag) { input.huvwOutFlag = flag; }
-    inline void set_huvw0OutFlag(bool flag) { input.huvw0OutFlag = flag; }
- 
     void set_asciiOutFlag(bool flag);
+    inline void set_asciiAaigridOutFlag(bool flag) { input.asciiAaigridOutFlag = flag; }
+    inline void set_asciiJsonOutFlag(bool flag) { input.asciiJsonOutFlag = flag; }
+    inline void set_asciiUtmOutFlag(bool flag) { input.asciiUtmOutFlag = flag; }
+    inline void set_ascii4326OutFlag(bool flag) { input.ascii4326OutFlag = flag; }
+    inline void set_asciiUvOutFlag(bool flag) { input.asciiUvOutFlag = flag; }
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
@@ -489,7 +483,10 @@ private:
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 
-    void writeHuvwOutputFiles();
+private:
+    void setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid);
+    void writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 };
 
 std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);
