@@ -268,6 +268,10 @@ bool ninja::simulate_wind()
 	    input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
 	}
 
+#ifdef C_API
+        keepOutputGridsInMemory(true);
+#endif
+
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
 	#endif
