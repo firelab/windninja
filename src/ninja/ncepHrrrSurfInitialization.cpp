@@ -230,6 +230,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if ( bandName.find("Temperature") == 0) {
+                    CPLDebug("HRRR", "2-m T found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string shortName( gc);
                     if (shortName == "2-HTGL") {
@@ -252,6 +253,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "v-component of wind [m/s]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "v-component of wind found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
@@ -267,6 +269,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "u-component of wind [m/s]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "u-component of wind found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
@@ -283,6 +286,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "cloud cover found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "0-RESERVED" ) != bandName.npos ||
@@ -294,11 +298,6 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             }
         }
     }
-
-    CPLDebug("HRRR", "2t: bandList[0] = %d", bandList[0]);
-    CPLDebug("HRRR", "10v: bandList[1] = %d", bandList[1]);
-    CPLDebug("HRRR", "10u: bandList[2] = %d", bandList[2]);
-    CPLDebug("HRRR", "tcc: bandList[3] = %d", bandList[3]);
 
     if(bandList.size() < 4) {
         GDALClose((GDALDatasetH) srcDS );
