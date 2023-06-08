@@ -70,11 +70,6 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
-
-    if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
-    {
-        set_writeTurbulenceFlag("true");
-    }
 }
 
 /**
@@ -86,6 +81,7 @@ NinjaFoam::NinjaFoam(NinjaFoam const& A ) : ninja(A)
 {
 
 }
+
 
 /**
  * Equals operator.
@@ -126,6 +122,12 @@ double NinjaFoam::get_meshResolution()
 
 bool NinjaFoam::simulate_wind()
 {
+    if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
+    {
+        CPLDebug("NINJAFOAM", "Writing turbulence output...");
+        set_writeTurbulenceFlag("true");
+    }
+
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
     #endif
@@ -2256,7 +2258,6 @@ void NinjaFoam::SetOutputFilenames()
         input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
 }
 
-
 void NinjaFoam::SampleRawOutput()
 {
     /*-------------------------------------------------------------------*/
@@ -2334,7 +2335,6 @@ void NinjaFoam::SampleRawOutput()
     /* convert k to average velocity fluctuations (u')                   */
     /* u' = sqrt(2/3*k)                                                  */
     /*-------------------------------------------------------------------*/
-
     AsciiGrid<double> foamK;
 
     GDAL2AsciiGrid( (GDALDataset *)hDS, 3, foamK );
