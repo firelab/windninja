@@ -133,6 +133,8 @@
         }
     });
 
+
+
     // the function evaluated by the C++ code to retrieve the selected box
     function mbr() {
       var b = [
@@ -169,6 +171,7 @@
       return b;
     }
 </script>
+
 <div id="data_entry" style="width: 100%; height: 10%; border: 1px solid #ccc">
   <form>
     <label for="south_lat">South</label>
@@ -181,5 +184,16 @@
     <input type="number" id="east_lon" name="east_lon" />
   </form>
 </div>
+
+<script>
+    // clear the graphical "draw" box whenever user types in numbers directly
+    function update_bounds(e) {
+        mbrLayer.clearLayers();
+    };
+    document.getElementById("west_lon").addEventListener("input", update_bounds);
+    document.getElementById("east_lon").addEventListener("input", update_bounds);
+    document.getElementById("south_lat").addEventListener("input", update_bounds);
+    document.getElementById("north_lat").addEventListener("input", update_bounds);
+</script>
 </body>
 </html>
