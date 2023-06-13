@@ -96,6 +96,8 @@
     var map = new L.Map('map', {layers: [mbl], center: new L.LatLng(43.62455, -113.2971), zoom: 8});
     var mbrLayer = new L.FeatureGroup();
     map.addLayer(mbrLayer);
+    var txtboxLayer = new L.FeatureGroup();
+    map.addLayer(txtboxLayer) ;
 
     var drawControl = new L.Control.Draw({
         position: 'topright',
@@ -116,21 +118,22 @@
 
     map.on(L.Draw.Event.DRAWSTART, function (e) {
         mbrLayer.clearLayers();
+        txtboxLayer.clearLayers();
     });
 
     map.on(L.Draw.Event.CREATED, function (e) {
-        mbrLayer.addLayer(e.layer);
-        map.addLayer(mbrLayer);
-        if(mbrLayer.getLayers().length > 0){
-          var b = mbrLayer.getLayers()[0]._bounds;
+          var b = e.layer._bounds;
           var bounds = fix_bounds([b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat]);
+
           //set the input boxes at the bottom
           document.getElementById("west_lon").value = bounds[0];
           document.getElementById("east_lon").value = bounds[1];
           document.getElementById("south_lat").value = bounds[2];
           document.getElementById("north_lat").value = bounds[3];
+
+          //draw the rectangle
+          update_rectangle();
           console.log(bounds);
-        }
     });
 
 
@@ -170,6 +173,27 @@
       }
       return b;
     }
+
+    function update_rectangle() {
+      var bounds = [ [ document.getElementById("south_lat").value,
+                       document.getElementById("west_lon").value],
+                     [ document.getElementById("north_lat").value,
+                       document.getElementById("east_lon").value] ];
+
+      // if any of the text boxes are empty, disregard.
+      for (var i = 0; i < bounds.length; i++) {
+          var corner = bounds[i];
+          for (var j = 0; j < corner.length; j++) { 
+             if (corner[j] == null || corner[j] == "") {
+                 return null ;
+             }
+          }
+      }
+
+      // draw the box
+      txtboxLayer.clearLayers() ;
+      L.rectangle(bounds).addTo(txtboxLayer);
+    }
 </script>
 
 <div id="data_entry" style="width: 100%; height: 10%; border: 1px solid #ccc">
@@ -186,14 +210,11 @@
 </div>
 
 <script>
-    // clear the graphical "draw" box whenever user types in numbers directly
-    function update_bounds(e) {
-        mbrLayer.clearLayers();
-    };
-    document.getElementById("west_lon").addEventListener("input", update_bounds);
-    document.getElementById("east_lon").addEventListener("input", update_bounds);
-    document.getElementById("south_lat").addEventListener("input", update_bounds);
-    document.getElementById("north_lat").addEventListener("input", update_bounds);
+    // draw a new box whenever user types in coordinates
+    document.getElementById("west_lon").addEventListener("input", update_rectangle);
+    document.getElementById("east_lon").addEventListener("input", update_rectangle);
+    document.getElementById("south_lat").addEventListener("input", update_rectangle);
+    document.getElementById("north_lat").addEventListener("input", update_rectangle);
 </script>
 </body>
 </html>
