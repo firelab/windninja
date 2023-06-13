@@ -53,7 +53,7 @@
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 </head>
 <body>
- <div id="map" style="width: 100%; height: 100%; border: 1px solid #ccc"></div>
+ <div id="map" style="width: 100%; height: 90%; border: 1px solid #ccc"></div>
 <script>
     // Get a valid key from our server
     var apiKey = "";
@@ -121,30 +121,65 @@
     map.on(L.Draw.Event.CREATED, function (e) {
         mbrLayer.addLayer(e.layer);
         map.addLayer(mbrLayer);
-        console.log(mbr());
+        if(mbrLayer.getLayers().length > 0){
+          var b = mbrLayer.getLayers()[0]._bounds;
+          var bounds = fix_bounds([b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat]);
+          //set the input boxes at the bottom
+          document.getElementById("west_lon").value = bounds[0];
+          document.getElementById("east_lon").value = bounds[1];
+          document.getElementById("south_lat").value = bounds[2];
+          document.getElementById("north_lat").value = bounds[3];
+          console.log(bounds);
+        }
     });
+
+    // the function evaluated by the C++ code to retrieve the selected box
     function mbr() {
-     if(mbrLayer.getLayers().length > 0){
-      var b = mbrLayer.getLayers()[0]._bounds;
-      b._southWest.lng = b._southWest.lng % 360;
-      if(b._southWest.lng < -180) {
-        b._southWest.lng += 360;
+      var b = [
+          document.getElementById("west_lon").value,
+          document.getElementById("east_lon").value,
+          document.getElementById("south_lat").value,
+          document.getElementById("north_lat").value
+      ];
+      console.log(b);
+      return fix_bounds(b);
+    }
+
+    function fix_bounds(bounds) {
+      // make shallow copy of array
+      // element ordering should be west, east, south, north
+      var b = bounds.slice(0) ;
+
+      // normalize longitudes to -180 - 180.
+      b[0] = b[0] % 360;
+      if(b[0] < -180) {
+        b[0] += 360;
       }
-      b._northEast.lng = b._northEast.lng % 360;
-      if(b._northEast.lng < -180) {
-        b._northEast.lng += 360;
+      b[1] = b[1] % 360;
+      if(b[1] < -180) {
+        b[1] += 360;
       }
       // switch to negative longitudes if needed
-      if(b._southWest.lng > 180){
-        b._southWest.lng -= 360;
+      if(b[0] > 180){
+        b[0] -= 360;
       }
-      if(b._northEast.lng > 180){
-        b._northEast.lng -= 360;
+      if(b[1] > 180){
+        b[1] -= 360;
       }
-      return [b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat];
-     }
-     return null;
+      return b;
     }
 </script>
+<div id="data_entry" style="width: 100%; height: 10%; border: 1px solid #ccc">
+  <form>
+    <label for="south_lat">South</label>
+    <input type="number" id="south_lat" name="south_lat" />
+    <label for="west_lon">West</label>
+    <input type="number" id="west_lon" name="west_lon" />
+    <label for="north_lat">North</label>
+    <input type="number" id="north_lat" name="north_lat" />
+    <label for="east_lon">East</label>
+    <input type="number" id="east_lon" name="east_lon" />
+  </form>
+</div>
 </body>
 </html>
