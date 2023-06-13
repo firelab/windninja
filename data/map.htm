@@ -53,7 +53,7 @@
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 </head>
 <body>
- <div id="map" style="width: 100%; height: 90%; border: 1px solid #ccc"></div>
+ <div id="map" style="width: 100%; height: 85%; border: 1px solid #ccc"></div>
 <script>
     // Get a valid key from our server
     var apiKey = "";
@@ -125,13 +125,16 @@
           var b = e.layer._bounds;
           var bounds = fix_bounds([b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat]);
 
+          disable_listeners() ;
           //set the input boxes at the bottom
           document.getElementById("west_lon").value = bounds[0];
           document.getElementById("east_lon").value = bounds[1];
           document.getElementById("south_lat").value = bounds[2];
           document.getElementById("north_lat").value = bounds[3];
+          enable_listeners() ; 
 
           //draw the rectangle
+          clear_center_radius();
           update_rectangle();
           console.log(bounds);
     });
@@ -141,10 +144,10 @@
     // the function evaluated by the C++ code to retrieve the selected box
     function mbr() {
       var b = [
-          document.getElementById("west_lon").value,
-          document.getElementById("east_lon").value,
-          document.getElementById("south_lat").value,
-          document.getElementById("north_lat").value
+          document.getElementById("west_lon").valueAsNumber,
+          document.getElementById("east_lon").valueAsNumber,
+          document.getElementById("south_lat").valueAsNumber,
+          document.getElementById("north_lat").valueAsNumber
       ];
       console.log(b);
       return fix_bounds(b);
@@ -174,17 +177,35 @@
       return b;
     }
 
+    function clear_center_radius() {
+        console.log("clear_center_radius")
+        disable_listeners();
+        //set the input boxes at the bottom
+        document.getElementById("center_lat").value =  null ;
+        document.getElementById("center_lon").value =  null ;
+        document.getElementById("radius").value = null ;
+        enable_listeners() ; 
+    }
+
+    function update_text_bounds() {
+        console.log("update_text_bounds") ; 
+        clear_center_radius() ; 
+        update_rectangle() ;
+    }
+
+
     function update_rectangle() {
-      var bounds = [ [ document.getElementById("south_lat").value,
-                       document.getElementById("west_lon").value],
-                     [ document.getElementById("north_lat").value,
-                       document.getElementById("east_lon").value] ];
+      console.log("update_rectangle") ; 
+      var bounds = [ [ document.getElementById("south_lat").valueAsNumber,
+                       document.getElementById("west_lon").valueAsNumber],
+                     [ document.getElementById("north_lat").valueAsNumber,
+                       document.getElementById("east_lon").valueAsNumber] ];
 
       // if any of the text boxes are empty, disregard.
       for (var i = 0; i < bounds.length; i++) {
           var corner = bounds[i];
           for (var j = 0; j < corner.length; j++) { 
-             if (corner[j] == null || corner[j] == "") {
+             if (isNaN(corner[j])) {
                  return null ;
              }
           }
@@ -194,9 +215,64 @@
       txtboxLayer.clearLayers() ;
       L.rectangle(bounds).addTo(txtboxLayer);
     }
+
+    function update_center() { 
+        console.log("update_center");
+        var center_lat = document.getElementById("center_lat").valueAsNumber;
+        var center_lon = document.getElementById("center_lon").valueAsNumber;
+        var radius = document.getElementById("radius").valueAsNumber;
+
+        // if any boxes empty, skip
+        if (isNaN(center_lat)) return null ;
+        if (isNaN(center_lon)) return null ;
+        if (isNaN(radius)) return null ; 
+
+
+        // crude spherical earth distance calculation.
+        var delta_lat = radius / ( 2 * Math.PI * 3958.7613 / 360.);
+        var lat_rad = 3958.7613 * Math.cos(center_lat * Math.PI/180) ;
+        var delta_lon = radius / ( 2 * Math.PI * lat_rad / 360.);
+
+        console.log([delta_lat, delta_lon, lat_rad]);
+
+        //set the input boxes at the bottom
+        disable_listeners();
+        document.getElementById("west_lon").value = center_lon - delta_lon;
+        document.getElementById("east_lon").value = center_lon + delta_lon;
+        document.getElementById("south_lat").value = center_lat - delta_lat;
+        document.getElementById("north_lat").value = center_lat + delta_lat;
+        enable_listeners();
+
+        update_rectangle();
+    } 
+
+    function enable_listeners() {
+        // draw a new box whenever user types in coordinates
+        document.getElementById("west_lon").addEventListener("input", update_text_bounds);
+        document.getElementById("east_lon").addEventListener("input", update_text_bounds);
+        document.getElementById("south_lat").addEventListener("input", update_text_bounds);
+        document.getElementById("north_lat").addEventListener("input", update_text_bounds);
+    
+        // calculate new bounds whenever user types in center and radius
+        document.getElementById("center_lat").addEventListener("input", update_center);
+        document.getElementById("center_lon").addEventListener("input", update_center);
+        document.getElementById("radius").addEventListener("input", update_center);
+    }
+    function disable_listeners() {
+        // draw a new box whenever user types in coordinates
+        document.getElementById("west_lon").removeEventListener("input", update_text_bounds);
+        document.getElementById("east_lon").removeEventListener("input", update_text_bounds);
+        document.getElementById("south_lat").removeEventListener("input", update_text_bounds);
+        document.getElementById("north_lat").removeEventListener("input", update_text_bounds);
+    
+        // calculate new bounds whenever user types in center and radius
+        document.getElementById("center_lat").removeEventListener("input", update_center);
+        document.getElementById("center_lon").removeEventListener("input", update_center);
+        document.getElementById("radius").removeEventListener("input", update_center);
+    }
 </script>
 
-<div id="data_entry" style="width: 100%; height: 10%; border: 1px solid #ccc">
+<div id="data_entry" style="width: 100%; height: 15%; border: 1px solid #ccc">
   <form>
     <label for="south_lat">South</label>
     <input type="number" id="south_lat" name="south_lat" />
@@ -206,15 +282,17 @@
     <input type="number" id="north_lat" name="north_lat" />
     <label for="east_lon">East</label>
     <input type="number" id="east_lon" name="east_lon" />
+    <label for="center_lat">Center Lat</label>
+    <input type="number" id="center_lat" name="center_lat" />
+    <label for="center_lon">Center Lon</label>
+    <input type="number" id="center_lon" name="center_lon" />
+    <label for="radius">Radius (miles)</label>
+    <input type="number" id="radius" name="radius" />
   </form>
 </div>
 
 <script>
-    // draw a new box whenever user types in coordinates
-    document.getElementById("west_lon").addEventListener("input", update_rectangle);
-    document.getElementById("east_lon").addEventListener("input", update_rectangle);
-    document.getElementById("south_lat").addEventListener("input", update_rectangle);
-    document.getElementById("north_lat").addEventListener("input", update_rectangle);
+  enable_listeners();
 </script>
 </body>
 </html>
