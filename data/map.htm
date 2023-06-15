@@ -3,10 +3,26 @@
 <meta charset="UTF-8">
 <head>
  <style>
-  html, body {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+ body {
+   padding: 0 ;
+   margin:  0 ;
+ }
+ html, body {
+    height: 100% ;
+    width:  100% ;
+ }
+ #map {
+    height: 85% ;
+    width: 100% ;
+ }
+ .option_hdr {
+   font-size: 0.9em ;
+ }
+ .verbose {
+   font-size: .7em ;
+ }
+ label, input {
+   font-size: 0.8em;
  }
  </style>
     <title>Leaflet.draw drawing and editing tools</title>
@@ -53,7 +69,7 @@
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 </head>
 <body>
- <div id="map" style="width: 100%; height: 80%; border: 1px solid #ccc"></div>
+ <div id="map" style="border: 1px solid #ccc"></div>
 <script>
     // Get a valid key from our server
     var apiKey = "";
@@ -272,8 +288,16 @@
     }
 </script>
 
-<div id="data_entry" style="width: 95%; height: 20%; border: 1px solid #ccc">
+<div id="data_entry" style="border: 1px solid #ccc">
+  <p class="verbose">Define your bounding box using one of the following methods.</p>
+    <ol class="verbose">
+      <li>Draw a box on the map using the box icon in the upper right corner of the map.</li>
+      <li>Enter bounding box coordinates in decimal degrees.</li>
+      <li>Specify a center lat/lon in decimal degrees and a radius.</li>
+    </ol>
+  <p class="verbose">Once a bounding box is specified, the box will appear on the map and the coordinates will be displayed in the bounding box fields.</p>
   <form id="bounds" style="border-style: solid">
+    <p class="option_hdr">Bounding Box Coordinates:</p>
     <label for="south_lat">South</label>
     <input type="number" id="south_lat" name="south_lat" />
     <label for="west_lon">West</label>
@@ -284,6 +308,7 @@
     <input type="number" id="east_lon" name="east_lon" />
   </form>
   <form id="center_radius" style="border-style: solid;">
+    <p class="option_hdr">Point and Radius:</p>
     <label for="center_lat">Center Lat</label>
     <input type="number" id="center_lat" name="center_lat" />
     <label for="center_lon">Center Lon</label>
