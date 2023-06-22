@@ -285,32 +285,25 @@
 </script>
 
 <div id="data_entry" style="border: 1px solid #ccc">
-  <p class="verbose">Define your bounding box using one of the following methods.</p>
-    <ol class="verbose">
-      <li>Draw a box on the map using the box icon in the upper right corner of the map.</li>
-      <li>Enter bounding box coordinates in decimal degrees.</li>
-      <li>Specify a center lat/lon in decimal degrees and a radius.</li>
-    </ol>
-  <p class="verbose">Once a bounding box is specified, the box will appear on the map and the coordinates will be displayed in the bounding box fields.</p>
   <form id="bounds" style="border-style: solid">
     <p class="option_hdr">Bounding Box Coordinates:</p>
-    <label for="south_lat">South</label>
-    <input type="number" id="south_lat" name="south_lat" />
-    <label for="west_lon">West</label>
-    <input type="number" id="west_lon" name="west_lon" />
     <label for="north_lat">North</label>
-    <input type="number" id="north_lat" name="north_lat" />
+    <input type="number" placeholder="44.334" id="north_lat" name="north_lat" />
+    <label for="south_lat">South</label>
+    <input type="number" placeholder="43.532" id="south_lat" name="south_lat" />
     <label for="east_lon">East</label>
-    <input type="number" id="east_lon" name="east_lon" />
+    <input type="number" placeholder="-112.555" id="east_lon" name="east_lon" />
+    <label for="west_lon">West</label>
+    <input type="number" placeholder="-113.058" id="west_lon" name="west_lon" />
   </form>
   <form id="center_radius" style="border-style: solid;">
     <p class="option_hdr">Point and Radius:</p>
     <label for="center_lat">Center Lat</label>
-    <input type="number" id="center_lat" name="center_lat" />
+    <input type="number" placeholder="44.334" id="center_lat" name="center_lat" />
     <label for="center_lon">Center Lon</label>
-    <input type="number" id="center_lon" name="center_lon" />
+    <input type="number" placeholder="-112.555" id="center_lon" name="center_lon" />
     <label for="radius">Radius (miles)</label>
-    <input type="number" id="radius" name="radius" />
+    <input type="number" placeholder="1.5" id="radius" name="radius" />
   </form>
 </div>
 
