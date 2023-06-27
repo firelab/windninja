@@ -429,7 +429,11 @@ foreach(f ${share_files})
 endforeach(f ${share_files})
 
 # Leaflet data
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
+if(WIN32 AND FIRELAB_PACKAGE)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share)
+else(WIN32 AND FIRELAB_PACKAGE)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
+endif(WIN32 AND FIRELAB_PACKAGE)
 
 set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf
