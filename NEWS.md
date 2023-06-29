@@ -1,6 +1,26 @@
 Release Notes
 =============
 
+WindNinja 3.9.0
+---------------
+- Re-enable ability to download DEM from point and radius or bbox coordinates (#336)
+
+- Speed up solar radiation calculations used in diurnal and non-neutral stability parameterizations (#478)
+
+- Fix a bug that caused the vegetation to be set incorrectly in the GUI (#486)
+
+- Temporary fix for NDFD issue on THREDDS server related to temperature grids (#494)
+
+- Fix issue in terrain shading code used in diurnal and non-neutral stability parameterizations (#476)
+
+- Fix coordinate transformation issue in solar calculations for newer GDAL versions (#475)
+
+- Don't buffer output grids for FARSITE if output clipping is requested (#472)
+
+- Re-enable topofire basemaps in GeoPDF output (#463)
+
+- Add scale bar to map in DEM downloader widget (#422)
+
 WindNinja 3.8.1
 ---------------
 - Update Mapbox API requests for GUI download widget (#483)
