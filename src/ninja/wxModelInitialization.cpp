@@ -1193,7 +1193,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
     //check that the wx model grid overlaps the DEM
-    if(!airTempGrid_wxModel.CheckForGridOverlap(input.dem))
+    if(!uGrid_wxModel.CheckForGridOverlap(input.dem))
     {
         throw std::logic_error("The weather model grid does not completely overlap the DEM.");
     }
