@@ -37,7 +37,8 @@ ncepNamAlaskaSurfInitialization::ncepNamAlaskaSurfInitialization() : wxModelInit
 {
     heightVarName = "height_above_ground1";
     path = "/thredds/ncss/grid/grib/NCEP/NAM/Alaska_11km/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
-    LoadFromCsv();
+    //Don't call LoadFromCSV here because all necep model constructors get called in makeWxInitialization and values get overwritten
+    //LoadFromCsv();
 }
 
 /**
