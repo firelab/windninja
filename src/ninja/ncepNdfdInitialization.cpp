@@ -578,7 +578,6 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
      * Set the initial values in the warped dataset to no data
      */
     GDALWarpOptions* psWarpOptions;
-    cout<<"Preparing to loop over bands................"<<endl;
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
