@@ -116,16 +116,6 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     Shade shade;
     Solar solar;
 
-    if(input.diurnalWinds == true)  //compute values needed for diurnal computations
-    {
-        aspect.compute_gridAspect(&input.dem, input.numberCPUs);
-        slope.compute_gridSlope(&input.dem, input.numberCPUs);
-        double aspect_temp = 0; //just placeholder, basically
-        double slope_temp = 0;  //just placeholder, basically
-        solar.compute_solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
-        shade.compute_gridShade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
-    }
-
     double *u, *v, *T, *cc, *X, *Y, *influenceRadius;
     u = new double [input.stationsScratch.size()];
     v = new double [input.stationsScratch.size()];
@@ -169,11 +159,6 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     double U_star, anthropogenic_, cg_, bowen_, albedo_;
     int i_, j_;
 
-    cellDiurnal cDiurnal;
-    if( input.diurnalWinds == true ) {
-        cDiurnal.create( &input.dem, &shade, &solar );
-    }
-
     //now interpolate all stations vertically to the maxStationHeight
     for(unsigned int ii = 0; ii<input.stationsScratch.size(); ii++)
     {
@@ -194,55 +179,41 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
                     profile.Rough_h = (input.surface.Rough_h)(i_, j_);
                     profile.Rough_d = (input.surface.Rough_d)(i_, j_);
 
-                    if(input.diurnalWinds == true)	//compute values needed for diurnal computation
-                    {
-                        double projXord = input.stationsScratch[ii].get_projXord();
-                        double projYord = input.stationsScratch[ii].get_projYord();
-                        cDiurnal.initialize(projXord, projYord, aspect(i_, j_), slope(i_, j_), cloudCoverGrid(i_, j_),
-                                            airTempGrid(i_, j_), input.stationsScratch[ii].get_speed(),
-                                            input.stationsScratch[ii].get_height(), (input.surface.Albedo)(i_, j_),
-                                            (input.surface.Bowen)(i_, j_), (input.surface.Cg)(i_, j_),
-                                            (input.surface.Anthropogenic)(i_, j_), (input.surface.Roughness)(i_, j_),
-                                            (input.surface.Rough_h)(i_, j_), (input.surface.Rough_d)(i_, j_));
+                    //compute neutral ABL height
+                    double f;
+                    double velocity;
 
-                        cDiurnal.compute_cell_diurnal_parameters(i_, j_,&profile.ObukovLength, &U_star, &profile.ABL_height);
-                            
+                    //compute f -> Coriolis parameter
+                    if(input.latitude<=90.0 && input.latitude>=-90.0)
+                    {
+                        // f = 2 * omega * sin(theta)
+                        // f should be about 10^-4 for mid-latitudes
+                        // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
+                        // obtained from Stull 1988 book
+                        f = (1.4544e-4) * sin(pi/180 * input.latitude);	
+                        if(f<0)
+                            f = -f;
                     }
                     else
                     {
-                        //compute neutral ABL height
-                        double f;
-                        double velocity;
-
-                        //compute f -> Coriolis parameter
-                        if(input.latitude<=90.0 && input.latitude>=-90.0)
-                        {
-                            // f = 2 * omega * sin(theta)
-                            // f should be about 10^-4 for mid-latitudes
-                            // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-                            // obtained from Stull 1988 book
-                            f = (1.4544e-4) * sin(pi/180 * input.latitude);	
-                            if(f<0)
-                                f = -f;
-                        }
-                        else
-                        {
-                            //if latitude is not available, set f to mid-latitude value
-                            f = 1e-4;	
-                        }
-                        
-                        if(f==0.0)	//zero will give division by zero below
-                            f = 1e-8;	//if latitude is zero, set f small
-
-                        //compute neutral ABL height
-                        velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
-                        U_star = velocity*0.4/(log((profile.inputWindHeight +
-                                                    profile.Rough_h - profile.Rough_d)/profile.Roughness));
-                                
-                        //compute neutral ABL height
-                        profile.ABL_height = 0.2 * U_star / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-                        profile.ObukovLength = 0.0;
+                        //if latitude is not available, set f to mid-latitude value
+                        f = 1e-4;	
                     }
+                    
+                    if(f==0.0)	//zero will give division by zero below
+                        f = 1e-8;	//if latitude is zero, set f small
+
+                    //TODO: We are just using a profile for a neutral atmosphere here. We could add in code for a non-netrual atmosphere if 
+                    //diurnal or stability is on. Need to carefully initialize the diurnal object, the previous implementation was
+                    //not properly initialized and caused a seg fault in the shade grid.
+                    //compute neutral ABL height
+                    velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
+                    U_star = velocity*0.4/(log((profile.inputWindHeight +
+                                                profile.Rough_h - profile.Rough_d)/profile.Roughness));
+                            
+                    //compute neutral ABL height
+                    profile.ABL_height = 0.2 * U_star / f;	//from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
+                    profile.ObukovLength = 0.0;
                 }
                 else
                 {	
@@ -255,57 +226,39 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
                     cg_ = 0.15;
                     anthropogenic_ = 0.0;
 
-                    if(input.diurnalWinds == true)	//compute values needed for diurnal computation
+                    //compute neutral ABL height
+                    
+                    double f;
+                    double velocity;
+
+                    //compute f -> Coriolis parameter
+                    if(input.latitude<=90.0 && input.latitude>=-90.0)
                     {
-                        double projXord = input.stationsScratch[ii].get_projXord();
-                        double projYord = input.stationsScratch[ii].get_projYord();
-                        cDiurnal.initialize(projXord, projYord, 0.0, 0.0,
-                                            input.stationsScratch[ii].get_cloudCover(), input.stationsScratch[ii].get_temperature(),
-                                            input.stationsScratch[ii].get_speed(),
-                                            input.stationsScratch[ii].get_height(), albedo_, bowen_, cg_,
-                                            anthropogenic_, profile.Roughness, profile.Rough_h, profile.Rough_d);
-
-                        input.dem.get_nearestCellIndex(input.stationsScratch[ii].get_projXord(),
-                                                input.stationsScratch[ii].get_projYord(), &i_, &j_);
-
-                        cDiurnal.compute_cell_diurnal_parameters(i_, j_, &profile.ObukovLength, &U_star, &profile.ABL_height);
+                        // f should be about 10^-4 for mid-latitudes
+                        // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
+                        // obtained from Stull 1988 book
+                        // f = 2 * omega * sin(theta)
+                        f = (1.4544e-4) * sin(pi/180 * input.latitude);	
+                            if(f<0)
+                                f = -f;
                     }
                     else
                     {
-                        //compute neutral ABL height
-                        
-                        double f;
-                        double velocity;
-
-                        //compute f -> Coriolis parameter
-                        if(input.latitude<=90.0 && input.latitude>=-90.0)
-                        {
-                            // f should be about 10^-4 for mid-latitudes
-                            // (1.4544e-4) here is 2 * omega = 2 * (2 * pi radians) / 24 hours = 1.4544e-4 seconds^-1
-                            // obtained from Stull 1988 book
-                            // f = 2 * omega * sin(theta)
-                            f = (1.4544e-4) * sin(pi/180 * input.latitude);	
-                                if(f<0)
-                                    f = -f;
-                        }
-                        else
-                        {
-                            f = 1e-4;	//if latitude is not available, set f to mid-latitude value
-                        }
-                
-                        if(f==0.0)	//zero will give division by zero below
-                            f = 1e-8;	//if latitude is zero, set f small
-
-                        //compute neutral ABL height
-                        velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
-                        U_star = velocity*0.4/(log((profile.inputWindHeight +
-                                                    profile.Rough_h - profile.Rough_d)/profile.Roughness));
-                        
-                        //compute neutral ABL height
-                        //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
-                        profile.ABL_height = 0.2 * U_star / f;	
-                        profile.ObukovLength = 0.0;
+                        f = 1e-4;	//if latitude is not available, set f to mid-latitude value
                     }
+            
+                    if(f==0.0)	//zero will give division by zero below
+                        f = 1e-8;	//if latitude is zero, set f small
+
+                    //compute neutral ABL height
+                    velocity=std::pow(u[ii]*u[ii]+v[ii]*v[ii],0.5);     //Velocity is the velocity magnitude
+                    U_star = velocity*0.4/(log((profile.inputWindHeight +
+                                                profile.Rough_h - profile.Rough_d)/profile.Roughness));
+                    
+                    //compute neutral ABL height
+                    //from Van Ulden and Holtslag 1985 (originally Blackadar and Tennekes 1968)
+                    profile.ABL_height = 0.2 * U_star / f;	
+                    profile.ObukovLength = 0.0;
                 }
 
                 //this is height above THE GROUND!! (not "z=0" for the log profile)
