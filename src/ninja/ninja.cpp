@@ -104,7 +104,9 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+#ifdef NINJAFOAM
 , TurbulenceGrid(rhs.TurbulenceGrid)
+#endif
 , outputSpeedArray(rhs.outputSpeedArray)
 , outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
@@ -183,7 +185,9 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+#ifdef NINJAFOAM
         TurbulenceGrid = rhs.TurbulenceGrid;
+#endif
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
@@ -3081,11 +3085,13 @@ void ninja::writeOutputFiles()
 				delete velTempGrid;
 				velTempGrid=NULL;
 			}
+#ifdef NINJAFOAM
 			if(turbTempGrid)
 			{
 				delete turbTempGrid;
 				turbTempGrid=NULL;
 			}
+#endif
 		}
 	}catch (exception& e)
 	{
