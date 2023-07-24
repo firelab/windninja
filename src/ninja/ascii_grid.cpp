@@ -902,25 +902,24 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
 template<class T>
 bool AsciiGrid<T>::CheckForGridOverlap( AsciiGrid &A )
 {
-	double xmin = get_xllCorner();
-	double xmax = xmin + get_nCols()*get_cellSize();
-	double ymin = get_yllCorner();
-	double ymax = ymin + get_nRows()*get_cellSize();
-	
-	double A_xmin = A.get_xllCorner();
-	double A_xmax = A_xmin + A.get_nCols()*A.get_cellSize();
-	double A_ymin = A.get_yllCorner();
-	double A_ymax = A_ymin + A.get_nRows()*A.get_cellSize();
-	
-	if (A_xmin > xmin && A_xmax < xmax && A_ymin > ymin && A_ymax < ymax)
-	{
+    double xmin = get_xllCorner();
+    double xmax = xmin + get_nCols()*get_cellSize();
+    double ymin = get_yllCorner();
+    double ymax = ymin + get_nRows()*get_cellSize();
+    
+    double A_xmin = A.get_xllCorner();
+    double A_xmax = A_xmin + A.get_nCols()*A.get_cellSize();
+    double A_ymin = A.get_yllCorner();
+    double A_ymax = A_ymin + A.get_nRows()*A.get_cellSize();
+    
+    if (A_xmin > xmin && A_xmax < xmax && A_ymin > ymin && A_ymax < ymax)
+    {
         return true;
     }
     else
-	{
+    {
         return false;
-	}
-
+    }
 }
 
 template<class T>
