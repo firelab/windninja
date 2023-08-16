@@ -91,6 +91,7 @@ int NinjaUnlinkTree( const char *pszPath );
 void NinjaMalloc( void *hData );
 void NinjaFree( void *hData );
 std::string NinjaRemoveSpaces( std::string s);
+std::string NinjaRemoveApostrophes( std::string s);
 std::string NinjaSanitizeString( std::string s );
 std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
 
