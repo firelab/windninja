@@ -470,6 +470,15 @@ void pointInitialization::writeStationOutFile(std::vector<wxStation> stationVect
     timeStream.imbue(locale(timeStream.getloc(),facet));
     std::string timeComponent;
 
+
+    if(basePathName == ""){
+
+        basePathName = demFileName.substr(0, demFileName.rfind("/") + 1);
+
+    }
+
+
+
     if(latest==true) // if it is a "now" type sim, we name the directory with the current time
     {
         bpt::ptime writeTime =bpt::second_clock::local_time();

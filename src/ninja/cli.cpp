@@ -41,9 +41,12 @@
 void conflicting_options(const po::variables_map& vm, const char* opt1, const char* opt2)
 {
     if (vm.count(opt1) && !vm[opt1].defaulted()
-        && vm.count(opt2) && !vm[opt2].defaulted())
+        && vm.count(opt2) && !vm[opt2].defaulted()){
+
+        if (strcmp(opt1, "fetch_station") == 0 && vm[opt1].value().type() == typeid(bool) && !vm[opt1].as<bool>())
+        return;
         throw logic_error(string("Conflicting options '")
-                          + opt1 + "' and '" + opt2 + "'.");
+                          + opt1 + "' and '" + opt2 + "'.");}
 }
 
 /**
