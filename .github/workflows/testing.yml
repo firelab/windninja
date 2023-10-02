@@ -26,6 +26,26 @@ jobs:
         key: ${{ runner.os }}-windDep
         restore-keys: ${{ runner.os }}-windDep
     
+    - name: List Cache Contents
+      if: steps.cacheDeps.outputs.cache-hit == 'true'
+      run: |
+              echo "Listing contents of poppler:"
+              ls -laR ${{github.workspace}}/scripts/poppler-0.23.4
+              echo "Listing contents of proj:"
+              ls -laR ${{github.workspace}}/scripts/proj-6.3.2
+              echo "Listing contents of gdal:"
+              ls -laR ${{github.workspace}}/scripts/gdal-3.2.1
+
+    - name: Check File Integrity
+      if: steps.cacheDep.outputs.cache-hit == 'true'
+      run: |
+          echo "Checksums of file in poppler:"
+          find ${{github.workspace}}/scripts/poppler-0.23.4 -type f -exec md5sum {} \;          
+          echo "Checksums of files in proj:"
+          find ${{github.workspace}}/scripts/proj-6.3.2 -type f -exec md5sum {} \;
+          echo "Checksums of files in gdal:"
+          find ${{github.workspace}}/scripts/gdal-3.2.1 -type f -exec md5sum {} \;
+
     - name: build dependencies -- no cache
       if: steps.cacheDep.outputs.cache-hit != 'true'
       run: |
