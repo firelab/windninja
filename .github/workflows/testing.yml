@@ -2,7 +2,7 @@ name: Testing
 
 on:
   push:
-    branches: [ "master", "actions-debugging"]
+    branches: [ "master", "actions-debugging" ]
 
 env:
   BUILD_TYPE: Release
