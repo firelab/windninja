@@ -39,7 +39,7 @@ jobs:
     - name: Check File Integrity
       if: steps.cacheDep.outputs.cache-hit == 'true'
       run: |
-          echo "Checksums of file in poppler:"
+          echo "Checksums of file in poppler: "
           find ${{github.workspace}}/scripts/poppler-0.23.4 -type f -exec md5sum {} \;          
           echo "Checksums of files in proj:"
           find ${{github.workspace}}/scripts/proj-6.3.2 -type f -exec md5sum {} \;
