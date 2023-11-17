@@ -2885,7 +2885,8 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         const char* writeID; //C array for storing station IDs
         bool write_this_station = true; //Assume the data is good until proven otherwise
 
-        hFeature=OGR_L_GetFeature(hLayer,ex);//Cycle through the features
+        //hFeature=OGR_L_GetFeature(hLayer,ex);  // old method for cycling through the features, the getFeature() by index method is FAILING, fails to read
+        hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
 
         //Get the type of wxStation and its ID so that we can sort them
         //by unique variables and so that we can create a file
