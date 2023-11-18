@@ -2837,11 +2837,13 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
 
 bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest)
 {
-    OGRDataSourceH hDS;
+    //OGRDataSourceH hDS;  // for old method, OGROpen()
+    GDALDatasetH hDS;  // for new method, GDALOpenEx()
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
     CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
-    hDS=OGROpen(URL.c_str(),0,NULL); //open the mesowest url
+    //hDS=OGROpen(URL.c_str(),0,NULL); //open the mesowest url    // deprecated since gdal 2.0, use GDALOpenEx() with GDALDatasetH instead of OGRDataSourceH
+    hDS = GDALOpenEx( URL.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL ); //open the mesowest url
 
     if (hDS==NULL) //This is mainly caused by a bad URL, the user enters something wrong
     {
@@ -2852,10 +2854,12 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     }
     //get the data
 
-    hLayer=OGR_DS_GetLayer(hDS,0);
+    //hLayer=OGR_DS_GetLayer(hDS,0);   // deprecated since gdal 2.0, use GDALDatasetGetLayer() instead
+    hLayer=GDALDatasetGetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
     int fCount=OGR_L_GetFeatureCount(hLayer,1); // this is the number of weather stations
+    //GIntBig fCount=OGR_L_GetFeatureCount(hLayer,1); // as of gdal 2.0, returns GIntBig instead of int. still seems to work to use an int though
     CPLDebug("STATION_FETCH","Found %i Stations...",fCount);
     std::string csvName; //This is a prefix that generally comes from specifying an out directory or something
 
@@ -3169,7 +3173,8 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         }
         OGR_F_Destroy(hFeature);
     }
-    OGR_DS_Destroy(hDS);
+    //OGR_DS_Destroy(hDS);   // deprecated since gdal 2.0, use GDALClose() instead, for GDALOpenEx() instead of OGROpen()
+    GDALClose(hDS);
     if(stationChecks.size()>=fCount)
     {
         error_msg="ERROR: Data check failed on all stations, likley stations are missing sensors.";
