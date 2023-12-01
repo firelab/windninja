@@ -3595,7 +3595,7 @@ void ninja::set_stabilityFlag(bool flag)
 void ninja::set_alphaStability(double stability_)
 {
     input.alphaStability = stability_;
-    if(input.alphaStability < 0 || input.alphaStability > 5)
+    if(input.alphaStability < 0.0 || input.alphaStability > 5.0)
     {
         throw std::logic_error("Problem with stability in ninja::set_alphaStability().");
     }
