@@ -91,6 +91,49 @@ pair<string, string> at_option_parser(string const&s)
         return pair<string, string>();
 }
 
+// if we have an 'elevation_file' program option check if file exists and has a non-geographic srs.
+// if the srs is geographic, try to convert to a UTM file in the configured 'output_path' (or current dir if not set)
+// return address of a string that points to a valid non-geographic file or NULL if none was found or could be constructed
+const std::string* get_checked_elevation_file (po::variables_map& vm)
+{
+    if (vm.count("elevation_file")) {
+        const string* filename = &vm["elevation_file"].as<string>();
+        if (!CPLCheckForFile( (char*)filename->c_str(), NULL)){
+            throw std::logic_error( string("elevation_file " + *filename + " not found"));
+        }
+
+        GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename->c_str(), GA_ReadOnly);
+        if (hDS) {
+            const char *pszPrj = GDALGetProjectionRef(hDS);
+            OGRSpatialReferenceH hSrcSRS = OSRNewSpatialReference(pszPrj);
+            if (hSrcSRS == NULL){
+                cout << "provided elevation_file " << *filename << " is geographic, converting..\n";
+                string output_path = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
+                string new_filename = derived_pathname( filename->c_str(), output_path.c_str(), "\\.([^.]+)$", "-utm.$1");
+                GDALDataset *pDstDS = gdalWarpToUtm( new_filename.c_str(), (GDALDataset *)hDS);
+                if (pDstDS) {
+                    cout << "using warped UTM elevation_file " << new_filename << "\n";
+                    GDALClose(pDstDS);
+                    GDALClose(hDS);
+                    return new string(new_filename);
+
+                } else { // converting to UTM elevation file failed
+                    GDALClose(hDS);
+                    throw std::logic_error( string("elevation_file ") + *filename + " cannot be converted to UTM");
+                }
+
+            } else { // original elevation_file SRS is not geographic, use as-is
+                GDALClose(hDS);
+                return filename;
+            }
+        } else { // GDALOpen of original elevation_file failed
+            throw std::logic_error( string("invalid elevation_file ") + *filename);
+        }
+    } else { // no elevation_file specified
+        return NULL; 
+    }
+}
+
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
  * from an input file.
@@ -250,6 +293,13 @@ int windNinjaCLI(int argc, char* argv[])
                 ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
+
+                ("ascii_out_aaigrid", po::value<bool>()->default_value(true), "write ascii output as AAIGRID files (default: true, false)")
+                ("ascii_out_json", po::value<bool>()->default_value(false), "write ascii output as JSON files (true, default:false)")
+                ("ascii_out_4326", po::value<bool>()->default_value(false), "write ascii files as EPSG:4326 lat/lon grids (true, default:false)")
+                ("ascii_out_utm", po::value<bool>()->default_value(true), "write ascii files as UTM northing/easting grids (default: true, false)")
+                ("ascii_out_uv", po::value<bool>()->default_value(false), "write ascii files as u,v wind vector components (true, default:false)")
+
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
@@ -282,6 +332,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
+                ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -546,6 +597,9 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
+        const std::string* elevation_file = get_checked_elevation_file(vm); // might either be NULL or set dynamically
+        std::string output_path = vm.count("output_path") ? vm["output_path"].as<std::string>() : "";
+
 #ifdef NINJAFOAM
         ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
 #else
@@ -560,7 +614,7 @@ int windNinjaCLI(int argc, char* argv[])
         /* if elevation_file wasn't specified       */ 
         /*------------------------------------------*/            
          
-        if(vm["compute_emissions"].as<bool>() && !vm.count("elevation_file")){
+        if(vm["compute_emissions"].as<bool>() && !elevation_file){
             OGRDataSourceH hDS = 0;
             hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE, 0);
             if (hDS == 0){
@@ -649,8 +703,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
             }
             
-            vm.insert(std::make_pair("elevation_file", po::variable_value(new_elev, false)));
-            po::notify(vm);
+            elevation_file = new string(new_elev);
         }
         #endif //EMISSIONS
 
@@ -761,8 +814,8 @@ int windNinjaCLI(int argc, char* argv[])
                 VSIUnlink(new_elev.c_str());
                 exit(1);
             }
-            vm.insert(std::make_pair("elevation_file", po::variable_value(vm["fetch_elevation"])));
-            po::notify(vm);
+
+            elevation_file = &vm["fetch_elevation"].as<std::string>();
             //std::cout << "Elevation file download complete." << std::endl;
         }
 
@@ -779,7 +832,7 @@ int windNinjaCLI(int argc, char* argv[])
         if( bFillNoData )
         {
             GDALDataset *poDS;
-            poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_Update);
+            poDS = (GDALDataset*)GDALOpen(elevation_file->c_str(), GA_Update);
             if(poDS == NULL)
             {
                 throw std::runtime_error("Could not open DEM for reading");
@@ -807,7 +860,7 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 double longitude = 0;
                 double latitude = 0;
-                GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_ReadOnly);
+                GDALDataset *poDS = (GDALDataset*)GDALOpen(elevation_file->c_str(), GA_ReadOnly);
                 if(poDS == NULL)
                 {
                     GDALClose((GDALDatasetH)poDS);
@@ -851,6 +904,7 @@ int windNinjaCLI(int argc, char* argv[])
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
+        option_dependency(vm, "turbulence_output_flag", "momentum_flag");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -877,8 +931,7 @@ int windNinjaCLI(int argc, char* argv[])
                 try
                 {
                     model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
-                    std::string forecastFileName = model->fetchForecast( vm["elevation_file"].as<std::string>(),
-                                                                                vm["forecast_duration"].as<int>() );
+                    std::string forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
                     if(vm.count("start_year"))
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
@@ -945,7 +998,7 @@ int windNinjaCLI(int argc, char* argv[])
                                       timeList,
                                       vm["momentum_flag"].as<bool>() );
 #else
-                    windsim.makeArmy( model->fetchForecast( vm["elevation_file"].as<std::string>(),
+                    windsim.makeArmy( model->fetchForecast( *elevation_file,
                                                             vm["forecast_duration"].as<int>() ),
                                                             osTimeZone,
                                                             timeList,
@@ -995,7 +1048,7 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
                 const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
-                if(api_key_conf_opt!="FALSE")
+                if (strcmp(api_key_conf_opt,"FALSE") != 0)
                 {
                     std::ostringstream api_stream;
                     api_stream<<api_key_conf_opt;
@@ -1047,24 +1100,18 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                 }
+
                 //Generate a directory to store downloaded station data...
                 CPLDebug("STATION_FETCH","Generating Directory for Weather Stations");
-                if(vm.count("output_path")){
-                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
-                                                                                vm["output_path"].as<std::string>(),
+                stationPathName=pointInitialization::generatePointDirectory(*elevation_file,
+                                                                                output_path,
                                                                                 vm["fetch_current_station_data"].as<bool>());
-                }
-                else{ //if the user doesn't specify an output path
-                    stationPathName=pointInitialization::generatePointDirectory(vm["elevation_file"].as<std::string>(),
-                                                                                "",
-                                                                                vm["fetch_current_station_data"].as<bool>());
-                }
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
                 //so that the fetchStationData function knows where to save the data
                 if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box
                 {
-                    bool fetchSuccess = pointInitialization::fetchStationFromBbox(vm["elevation_file"].as<std::string>(),
+                    bool fetchSuccess = pointInitialization::fetchStationFromBbox(*elevation_file,
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
                     if(fetchSuccess==false) //If we fail to download any data
@@ -1074,7 +1121,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
 
                     //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
+                    pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
                     
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
@@ -1089,8 +1136,8 @@ int windNinjaCLI(int argc, char* argv[])
                         pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
                         throw std::runtime_error(pointInitialization::error_msg);
                     }
-//                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>()); 
-                    pointInitialization::writeStationLocationFile(stationPathName,vm["elevation_file"].as<std::string>(),vm["fetch_current_station_data"].as<bool>());
+//                    pointInitialization::writeStationLocationFile(*elevation_file); 
+                    pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
                     
                 }
                 else //If something else bad happens
@@ -1103,13 +1150,13 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeStationArmy(timeList,
                                         osTimeZone,
                                         stationPathName,
-                                        vm["elevation_file"].as<std::string>(),
+                                        *elevation_file,
                                         vm["match_points"].as<bool>(),false);
 
                 if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
                     pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),true);
+                            *elevation_file,true);
                 }
             }
             else if (vm["fetch_station"].as<bool>() == false) //If we aren't fetching, look for on disk files
@@ -1178,7 +1225,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                                *elevation_file,vm["match_points"].as<bool>(),false);
                     }
                     if(fileSubFormat==1) //not a time series
                     {
@@ -1189,7 +1236,7 @@ int windNinjaCLI(int argc, char* argv[])
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
                         windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                                vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                                *elevation_file,vm["match_points"].as<bool>(),false);
                     }
                 }
                 else if (stationFormat==1) //old format
@@ -1198,7 +1245,7 @@ int windNinjaCLI(int argc, char* argv[])
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                            *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
                 {
@@ -1231,7 +1278,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                            *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==4) // New Format where there are multiple one step recent station files
                 {
@@ -1245,7 +1292,7 @@ int windNinjaCLI(int argc, char* argv[])
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
-                            vm["elevation_file"].as<std::string>(),vm["match_points"].as<bool>(),false);
+                            *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else
                 {
@@ -1272,9 +1319,9 @@ int windNinjaCLI(int argc, char* argv[])
 
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
-            //windsim.ninjas[i_].readInputFile(vm["elevation_file"].as<std::string>());
+            //windsim.ninjas[i_].readInputFile(*elevation_file);
             
-            windsim.setDEM( i_, vm["elevation_file"].as<std::string>() );
+            windsim.setDEM( i_, *elevation_file );
             windsim.setPosition( i_ );    //get position from DEM file
             
             #ifdef NINJAFOAM
@@ -1301,6 +1348,9 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 if(vm.count("existing_case_directory")){
                     windsim.setExistingCaseDirectory( i_, vm["existing_case_directory"].as<std::string>() );
+                }
+                if(vm.count("turbulence_output_flag")){
+                    windsim.setWriteTurbulenceFlag( i_, vm["turbulence_output_flag"].as<bool>() );
                 }
             }
             #endif //NINJAFOAM
@@ -1471,33 +1521,14 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm["write_wx_station_csv"].as<bool>()==true) //If the user wants an interpolated CSV
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation csv for step #%d", i_);
-                    if(vm.count("output_path")){
-                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
-                                                   vm["output_path"].as<std::string>(),
-                                                   vm["elevation_file"].as<std::string>(),
-                                                   true);
-                    }
-                    else{
-                        pointInitialization::writeStationOutFile(windsim.getWxStations(i_),
-                                                   "",
-                                                   vm["elevation_file"].as<std::string>(),
-                                                   true);
-                    }
+                    pointInitialization::writeStationOutFile(windsim.getWxStations(i_), output_path, *elevation_file, true);
                 }
                 if(vm["write_wx_station_kml"].as<bool>() == true) //If the user wants a KML of the stations
                 {
                     CPLDebug("STATION_FETCH", "Writing wxStation kml for step #%d", i_);
-                    if(vm.count("output_path")){
-                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-                                                vm["elevation_file"].as<std::string>(),
-                                                vm["output_path"].as<std::string>(), velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
-                    }
-                    else
-                    {
-                        wxStation::writeKmlFile(windsim.getWxStations( i_ ),
-                                                vm["elevation_file"].as<std::string>(),
-                                                    "", velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
-                    }
+                    wxStation::writeKmlFile(windsim.getWxStations( i_ ),
+                                                *elevation_file,
+                                                output_path, velocityUnits::getUnit(vm["output_speed_units"].as<std::string>()));
                 }
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
@@ -1658,9 +1689,10 @@ int windNinjaCLI(int argc, char* argv[])
 
             //check if lcp to determine if surface veg needs to be set or not
             bool isLcp = false;
-            GDALDataset *poDS = (GDALDataset*)GDALOpen(vm["elevation_file"].as<std::string>().c_str(), GA_ReadOnly);
+            GDALDataset *poDS = (GDALDataset*)GDALOpen(elevation_file->c_str(),
+                    GA_ReadOnly);
             if(poDS == NULL) {
-                fprintf(stderr, "Cannot open %s for reading, exiting...", vm["elevation_file"].as<std::string>().c_str());
+                fprintf(stderr, "Cannot open %s for reading, exiting...", elevation_file->c_str());
                 return -1;
             }
             const char *pszWkt = poDS->GetProjectionRef();
@@ -1674,6 +1706,8 @@ int windNinjaCLI(int argc, char* argv[])
             oSRS.importFromWkt((char**)&pszWkt);
             if(oSRS.IsGeographic())
             {
+                // PCM - try to convert to UTM
+
                 cerr << "Invalid DEM spatial reference, it is Geographic.\n";
                 return -1;
             }
@@ -1776,9 +1810,16 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
-            if(vm["write_ascii_output"].as<bool>())
+            // those are all AAIGRID variants (in different projections and text formats)
+            if(option_val<bool>(vm,"write_ascii_output"))
             {
                 windsim.setAsciiOutFlag( i_, true );
+                if (option_val<bool>(vm,"ascii_out_aaigrid")) windsim.setAsciiAaigridOutFlag( i_, true );
+                if (option_val<bool>(vm,"ascii_out_json")) windsim.setAsciiJsonOutFlag( i_, true );
+                if (option_val<bool>(vm,"ascii_out_4326")) windsim.setAscii4326OutFlag( i_, true );
+                if (option_val<bool>(vm,"ascii_out_utm")) windsim.setAsciiUtmOutFlag( i_, true );
+                if (option_val<bool>(vm,"ascii_out_uv")) windsim.setAsciiUvOutFlag( i_, true );
+
                 option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_ascii_out_resolution"].as<std::string>()));

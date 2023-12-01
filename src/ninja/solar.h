@@ -111,6 +111,13 @@ private:
 	double longitude;
 	int interval;
 	double solarIntensity;
+        int second;
+        int minute;
+        int hour;
+        int day;
+        int month;
+        int year;
+        double offset; //offset from UTC
 
 	
     posdata* solarPosData;

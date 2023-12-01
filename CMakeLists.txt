@@ -15,8 +15,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
+
 project(WindNinja)
+
+# let cmake figure out how to set the C++ level
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
@@ -424,7 +429,11 @@ foreach(f ${share_files})
 endforeach(f ${share_files})
 
 # Leaflet data
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/)
+if(WIN32 AND FIRELAB_PACKAGE)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share)
+else(WIN32 AND FIRELAB_PACKAGE)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
+endif(WIN32 AND FIRELAB_PACKAGE)
 
 set(doc_files CLI_instructions.pdf
               displaying_wind_vectors_in_ArcMap.pdf

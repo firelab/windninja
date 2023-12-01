@@ -206,7 +206,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         }
         catch( ... )
         {
-            handleException();
+            return handleException();
         }
     }
     else
@@ -271,6 +271,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
+    ( const char *pszGdalData, const char *pszWindNinjaData )
+
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaInitialize(pszGdalData, pszWindNinjaData);
+
+    return retval;
+}
+        
 WINDNINJADLL_EXPORT NinjaErr NinjaInit
     ( )
 {
@@ -749,8 +760,7 @@ WINDNINJADLL_EXPORT const char * NinjaGetInitializationMethod
 {
     if( NULL != ninja )
     {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getInitializationMethodString
-            ( nIndex ).c_str();
+        return strdup(reinterpret_cast<ninjaArmy*>(ninja)->getInitializationMethodString(nIndex).c_str());
     }
     else
     {
@@ -952,9 +962,10 @@ WINDNINJADLL_EXPORT NinjaErr  NinjaSetNumVertLayers
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
     ( NinjaH * ninja, const int nIndex, const char * path)
 {
-    if( NULL != ninja )
-    {
+    if( NULL != ninja ){
         return reinterpret_cast<ninjaArmy*>( ninja )->setOutputPath( nIndex, std::string( path ) );
+    } else {
+        return NINJA_E_NULL_PTR;
     }
 }
 
@@ -974,9 +985,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
+    if( NULL != ninja ) {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
+    } else {
+        return NULL;
     }
 }
 
@@ -996,9 +1008,10 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
+    } else {
+        return NULL;
     }
 }
 
@@ -1019,9 +1032,10 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
 WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridProjection( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridProjection( nIndex );
+    } else {
+        return NULL;
     }
 }
 
@@ -1042,9 +1056,10 @@ WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridCellSize( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridCellSize( nIndex );
+    } else {
+        throw std::runtime_error("no ninjaArmy");
     }
 }
 
@@ -1065,9 +1080,10 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridCellSize
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridxllCorner( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridxllCorner( nIndex );
+    } else {
+        throw std::runtime_error("no ninjaArmy");
     }
 }
 
@@ -1088,9 +1104,10 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridxllCorner
 WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridyllCorner( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridyllCorner( nIndex );
+    } else {
+        throw std::runtime_error("no ninjaArmy");
     }
 }
 
@@ -1111,9 +1128,10 @@ WINDNINJADLL_EXPORT const double NinjaGetOutputGridyllCorner
 WINDNINJADLL_EXPORT const int NinjaGetOutputGridnCols
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnCols( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnCols( nIndex );
+    } else {
+        throw std::runtime_error("no ninjaArmy");
     }
 }
 
@@ -1134,9 +1152,10 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnCols
 WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnRows( nIndex );
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputGridnRows( nIndex );
+    } else {
+        throw std::runtime_error("no ninjaArmy");
     }
 }
 
@@ -1468,9 +1487,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
 WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
     ( NinjaH * ninja, const int nIndex )
 {
-    if( NULL != ninja )
-    {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputPath( nIndex ).c_str();
+    if( NULL != ninja ) {
+        return strdup(reinterpret_cast<ninjaArmy*>( ninja )->getOutputPath( nIndex ).c_str());
+    } else {
+        return NULL;
     }
 }
 

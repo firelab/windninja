@@ -59,6 +59,18 @@ void option_dependency(const po::variables_map& vm, const char* for_what, const 
 
 void verify_option_set(const po::variables_map& vm, const char* optn);
 
+// this should be used instead of direct 'variables_map["key"].as<T>()' calls since otherwise a single typo
+// in the key literal results in undefined behavior that can corrupt memory miles away. 
+// Alternatively keys could be defined/used as constants to catch this at compile time
+template<typename T>
+inline T option_val (const po::variables_map& vm, const char* key) {
+    const po::variable_value &vv = vm[key];
+    if (vv.empty()) {
+        throw logic_error(std::string("no value for option '") + key + "' set.\n");
+    } else {
+        return vv.as<T>();
+    }
+}
 
 //bool checkArgs(string arg1, string arg2, string arg3);
 

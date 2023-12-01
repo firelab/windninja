@@ -62,4 +62,11 @@ int GDALGetCorners( GDALDataset *poDS, double *corners );
 std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt );
 int NinjaOGRContain(const char *pszWkt, const char *pszFile,
                     const char *pszLayer);
+
+
+bool gdalHasGeographicSRS (const char* filename);
+bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude);
+int gdalGetUtmZone (double latitude, double longitude);
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
+
 #endif /* GDAL_UTIL_H */

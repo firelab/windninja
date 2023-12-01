@@ -85,6 +85,7 @@ public:
 	~KmlVector();
 
 	AsciiGrid<double> spd, dir;
+	AsciiGrid<double> turbulence;
 	#ifdef FRICTION_VELOCITY
 	AsciiGrid<double> ustar;
 	#endif
@@ -112,15 +113,16 @@ public:
 
     void orangeLegend();
 
-	bool writeHeader(FILE *fileOut);
-	bool writeRegion(FILE *fileOut);
-	bool writeStyles(FILE *fileOut);
-	bool writeHtmlLegend(FILE *fileOut);
-    bool writeScreenOverlayLegend(FILE *fileOut,std::string cScheme);
-	bool writeScreenOverlayDateTimeLegend(FILE *fileOut);
-	bool writeScreenOverlayDateTimeLegendWxModelRun(FILE *fileOut);
+	bool writeHeader(VSILFILE *fileOut);
+	bool writeRegion(VSILFILE *fileOut);
+	bool writeStyles(VSILFILE *fileOut);
+	bool writeHtmlLegend(VSILFILE *fileOut);
+    bool writeScreenOverlayLegend(VSILFILE *fileOut,std::string cScheme);
+	bool writeScreenOverlayDateTimeLegend(VSILFILE *fileOut);
+	bool writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut);
 
-	bool writeVectors(FILE *fileOut);
+	bool writeVectors(VSILFILE *fileOut);
+	bool writeTurbulence(VSILFILE *fileOut);
 	#ifdef FRICTION_VELOCITY
 	bool writeUstar(FILE *fileOut);
 	#endif
@@ -138,6 +140,8 @@ public:
 
 	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
 	void setDirGrid(AsciiGrid<double> &d);
+	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
+	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
 	#ifdef FRICTION_VELOCITY
 	void setUstarGrid(AsciiGrid<double> &ust);
 	void setUstarFlag(bool inputUstarFlag){ustarFlag = inputUstarFlag;}
@@ -171,6 +175,11 @@ private:
 	std::string legendFile;
 	std::string timeDateLegendFile;
 	std::string wxModelName;
+	bool turbulenceFlag;
+	std::string turbulence_tiff;
+	std::string turbulence_png;
+        std::string turbulence_legend;
+        std::string ustar_legend;
 	#ifdef FRICTION_VELOCITY
 	bool ustarFlag;
 	std::string ustar_tiff;

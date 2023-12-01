@@ -46,10 +46,10 @@ armyException::~armyException() throw()
 
 }
 
-const char* armyException::what()
+const char* armyException::what() const NOEXCEPT
 {
     std::string s;
     for(int i = 0; i < messages.size(); i++)
         s = s + messages[i] + "\n";
-   return s.c_str();
+   return strdup(s.c_str());
 }

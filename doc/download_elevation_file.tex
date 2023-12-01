@@ -43,7 +43,7 @@
     \includegraphics[scale=0.75]{dem_download_0}
     \vfill
   	{\Huge
-	  3/25/2020 %Date Last Edited
+	  6/30/2023 %Date Last Edited
   	}
     \vfill
 \end{titlepage}
@@ -56,7 +56,7 @@ grabber”.  It allows you to use a custom \textcopyright Mapbox \textcopyright 
 and select a desired area for wind modeling. The elevation data for this area
 is downloaded by WindNinja from a USGS server and saved to a file on your
 computer.  There is also a command line version of the elevation file grabber
-that is described \href{http://firelab.github.io/windninja/pdf/fetch_dem_instructions.pdf}{here}.  The specific
+that is described \href{https://weather.firelab.org/windninja/tutorials/fetch_dem_instructions.pdf}{here}.  The specific
 options available and work flow are described below.
 
 To open the elevation file grabber window, start WindNinja and click \textit{Surface Input} in the navigation tree at the top of WindNinja, then click the \textit{Download File} button as shown below.
@@ -78,7 +78,13 @@ The \textit{Download Elevation File} graphics window will open. This graphics wi
 
 \subsection*{Defining Your Simulation Area}
 
-To define the area that you want to download, click the \textit{Draw a rectangle} button in the upper right corner of the graphics window. Draw a box on the map bounding the area that you want to simulate. A transparent blue box will be drawn in the graphics window showing the area you've defined.  If you want, you can enlarge or shrink this bounding box by clicking the \textit{Edit layers} button in the upper right corner of the graphics window. This will allow you to drag the sides or corners of the box. You can also move the box by dragging the center icon. When you are done, click \textit{Save} next to the \textit{Edit layers} button. You can also delete a bounding box by clicking the \textit{Delete layers} button and  \textit{Clear All} in the upper right corner of the graphics window. 
+There are three ways to define the area you want to download. 
+\begin{enumerate}
+\item Click the \textit{Draw bounding box} button in the upper right corner of the graphics window. Draw a box on the map bounding the area that you want to simulate. A transparent blue box will be drawn in the graphics window showing the area you've defined. 
+\item Use the \textit{Point and Radius} method. Enter a latitude and longitude in decimal degrees specifying the center of the domain and a radius in miles specifying the distance from the center of the domain to the bounding box edge.
+\item Specify the \textit{Bounding Box Coordinates} directly by entering the north and south latitudes and the east and west longitudes in decimal degrees that define your bounding box.
+\end{enumerate}
+The bounding box coordinates will be displyed in the \textit{Bounding Box Coordinates} text boxes at the bottom of the graphics window once a bounding box has been defined by any method. These coordinates can be edited to change the size of the bounding box. The blue box on the map will update when the \textit{Bounding Box Coordinates} are edited. If a bounding box has been already defined, clicking on the \textit{Draw bounding box} button will delete it.
 
 \subsection*{Elevation Data Source}
 
@@ -105,9 +111,7 @@ There are 4 possible on-line data sets to download elevation data from.  These a
 
 
 \section*{Download The File}
-Once you have defined your download area and selected the elevation data source, click the \textit{Download File} button at the top left of the graphics window to download the elevation file.  A window will open to allow you to specify a file name and location.  %The downloaded file is a geotiff file (*.tif) in best fit UTM projection using WGS84.
-If you chose the option \textbf{US SRTM}, \textbf{WORLD SRTM}, or \textbf{WORLD GMTED}, the downloaded file will be a GeoTIFF (*.tif). \textbf{Landscape} files are downloaded as a .lcp file.
-After the file is successfully downloaded, you can close the Download elevation file window and the downloaded file will be automatically loaded into the main WindNinja window.
+Once you have defined your download area and selected the elevation data source, click the \textit{Download File} button at the top left of the graphics window to download the elevation file.  A window will open to allow you to specify a file name and location. The downloaded file will be a GeoTIFF file (*.tif) in best fit UTM projection using WGS84. After the file is successfully downloaded, you can close the Download elevation file window and the downloaded file will be automatically loaded into the main WindNinja window.
 
 
 \end{document}

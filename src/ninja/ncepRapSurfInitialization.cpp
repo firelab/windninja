@@ -36,8 +36,9 @@
 ncepRapSurfInitialization::ncepRapSurfInitialization() : wxModelInitialization()
 {
     heightVarName = "height_above_ground1";
-    path = "/thredds/ncss/grib/NCEP/RAP/CONUS_13km/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf";
-    LoadFromCsv();
+    path = "/thredds/ncss/grid/grib/NCEP/RAP/CONUS_13km/best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
+    //Don't call LoadFromCSV here because all necep model constructors get called in makeWxInitialization and values get overwritten
+    //LoadFromCsv();
 }
 
 /**

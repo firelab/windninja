@@ -48,13 +48,14 @@
                            "    <SrcDataSource>%s</SrcDataSource>" \
                            "    <SrcLayer>%s</SrcLayer>" \
                            "    <GeometryType>wkbPoint</GeometryType>" \
-                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\"/>"  \
+                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\" k=\"k\"/>"  \
                            "    <Field name=\"X\" src=\"x\" type=\"Real\"/>" \
                            "    <Field name=\"Y\" src=\"y\" type=\"Real\"/>" \
                            "    <Field name=\"Z\" src=\"z\" type=\"Real\"/>" \
                            "    <Field name=\"U\" src=\"U_x\" type=\"Real\"/>" \
                            "    <Field name=\"V\" src=\"U_y\" type=\"Real\"/>" \
                            "    <Field name=\"W\" src=\"U_z\" type=\"Real\"/>" \
+                           "    <Field name=\"K\" src=\"k\" type=\"Real\"/>" \
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
 
@@ -80,6 +81,7 @@ public:
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
 
+    AsciiGrid<double> TurbulenceGrid;
 private:
     static const char *pszFoamPath;
 
@@ -171,7 +173,9 @@ private:
     bool CheckIfOutputWindHeightIsResolved();
 
     const char *pszVrtMem;
+    const char *pszVrtMemTurbulence;
     const char *pszGridFilename;
+    const char *pszTurbulenceGridFilename;
     
     /* Timers */
     double startTotal, endTotal;
@@ -193,7 +197,6 @@ public:
 private:
 #endif
     const char * GetGridFilename();
-
 };
 
 #endif /* NINJA_FOAM_INCLUDED_ */

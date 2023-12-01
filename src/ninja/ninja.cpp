@@ -104,6 +104,9 @@ ninja::ninja(const ninja &rhs)
 : AngleGrid(rhs.AngleGrid)
 , VelocityGrid(rhs.VelocityGrid)
 , CloudGrid(rhs.CloudGrid)
+#ifdef NINJAFOAM
+, TurbulenceGrid(rhs.TurbulenceGrid)
+#endif
 , outputSpeedArray(rhs.outputSpeedArray)
 , outputDirectionArray(rhs.outputDirectionArray)
 #ifdef EMISSIONS
@@ -182,6 +185,9 @@ ninja &ninja::operator=(const ninja &rhs)
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
+#ifdef NINJAFOAM
+        TurbulenceGrid = rhs.TurbulenceGrid;
+#endif
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
@@ -265,6 +271,10 @@ bool ninja::simulate_wind()
 	    out << "Simulation time is " << input.ninjaTime;
 	    input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
 	}
+
+#ifdef C_API
+        keepOutputGridsInMemory(true);
+#endif
 
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -352,6 +362,7 @@ do
 		//initialize
                 init.reset(initializationFactory::makeInitialization(input));
                 init->initializeFields(input, mesh, u0, v0, w0, CloudGrid);
+
 #ifdef _OPENMP
                 endInit = omp_get_wtime();
 #endif
@@ -408,6 +419,7 @@ do
 		//solver
 
 		//if the CG solver diverges, try the minres solver
+
 		if(solve(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 		    if(solveMinres(SK, RHS, PHI, row_ptr, col_ind, mesh.NUMNP, MAXITS, print_iters, stop_tol)==false)
 			throw std::runtime_error("Solver returned false.");
@@ -578,6 +590,9 @@ if(input.frictionVelocityFlag == 1){
 	     AngleGrid.deallocate();
          VelocityGrid.deallocate();
 	     CloudGrid.deallocate();
+#ifdef NINJAFOAM
+             TurbulenceGrid.deallocate();
+#endif
 	     #ifdef FRICTION_VELOCITY
 	     if(input.frictionVelocityFlag == 1){
             UstarGrid.deallocate();
@@ -611,12 +626,13 @@ double ninja::getSmallestRadiusOfInfluence()
 	return smallest;
 }
 
-/*
 
 //  CG solver
 //    This solver is fastest, but is not monotonic convergence (residual oscillates a bit up and down)
 //    If this solver diverges, try MINRES from PetSc below...
-/**Method called in ninja::simulate_wind() to solve the matrix equations.
+
+/**
+ * Method called in ninja::simulate_wind() to solve the matrix equations.
  * This is a congugate gradient solver.
  * It seems to be the fastest, but is not monotonic convergence (residual oscillates a bit up and down).
  * If this solver diverges, try the MINRES from PetSc which is commented out below...
@@ -674,8 +690,6 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
     //Ax=new double[NUMNP];
     //Ap=new double[NUMNP];
     //Anorm=new double[NUMNP];
-
-
 
     //matrix vector multiplication A*x=Ax
     mkl_dcsrmv(&transa, &NUMNP, &NUMNP, &one, matdescra, A, col_ind, row_ptr, &row_ptr[1], x, &zero, r);
@@ -737,8 +751,9 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
         resid = cblas_dnrm2(NUMNP, r, 1) / normb;	//compute resid
         //resid = nrm2(NUMNP, r) / normb;
 
-        if(i==1)
+        if(i==1) {
             start_resid = resid;
+        }
 
         if((i%print_iters)==0)
         {
@@ -749,6 +764,7 @@ bool ninja::solve(double *A, double *b, double *x, int *row_ptr, int *col_ind, i
 #endif //NINJA_DEBUG_VERBOSE
 
             residual_percent_complete=100-100*((resid-tol)/(start_resid-tol));
+
             if(residual_percent_complete<residual_percent_complete_old)
                 residual_percent_complete=residual_percent_complete_old;
             if(residual_percent_complete<0.)
@@ -1552,7 +1568,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+27;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==1)   //face node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1581,7 +1597,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+18;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==2)   //edge node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1610,7 +1626,7 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+12;
-			 temp=temp1;
+			             temp=temp1;
                     }else if(type==3)   //corner node
                     {
                          row = k*input.dem.get_nCols()*input.dem.get_nRows()+i*input.dem.get_nCols()+j;
@@ -1629,7 +1645,7 @@ void ninja::discretize()
                                         if(((k+kk)<0)||((k+kk)>(mesh.nlayers-1)))
                                              continue;
 
-					col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
+					                    col = (k+kk)*input.dem.get_nCols()*input.dem.get_nRows()+(i+ii)*input.dem.get_nCols()+(j+jj);
                                         if(col >= row)	//only do if we're on the upper triangular part of SK
                                         {
                                             col_ind[temp1]=col;
@@ -1639,10 +1655,10 @@ void ninja::discretize()
                               }
                          }
                          //temp=temp+8;
-			 temp=temp1;
+			             temp=temp1;
                     }
                     else
-			throw std::logic_error("Error arranging SK array.  Exiting...");
+			             throw std::logic_error("Error arranging SK array.  Exiting...");
                }
           }
      }
@@ -1652,6 +1668,7 @@ void ninja::discretize()
 
     CPLDebug("STABILITY", "input.initializationMethod = %i\n", input.initializationMethod);
     CPLDebug("STABILITY", "input.stabilityFlag = %i\n", input.stabilityFlag);
+
     Stability stb(input);
     alphaVfield.allocate(&mesh);
 
@@ -1760,8 +1777,7 @@ void ninja::discretize()
 	 {
 		 element elem(&mesh);
 		 int pos;  
-                 double alphaV; //used for summing over nodal points below
-		 int ii, jj, kk;
+         double alphaV; //used for summing over nodal points below
 
 #pragma omp for
 		 for(i=0;i<mesh.NUMEL;i++)                    //Start loop over elements
@@ -1774,15 +1790,7 @@ void ninja::discretize()
 			 /*      Ground       =>  normal flux = 0               */
 			 /*-----------------------------------------------------*/
 
-
-
 			 //elem.computeElementStiffnessMatrix(i, u0, v0, w0, alpha);
-
-
-
-
-
-
 
 			 //Given the above parameters, function computes the element stiffness matrix
 
@@ -1803,7 +1811,6 @@ void ninja::discretize()
 
 			 for(j=0;j<elem.NUMQPTV;j++)             //Start loop over quadrature points in the element
 			 {
-
 				 elem.computeJacobianQuadraturePoint(j, i);
 
 				 //Calculate the coefficient H here and the alpha-squared term in front of the second partial of z in governing equation (we are still on element i, quadrature point j)
@@ -1857,31 +1864,13 @@ void ninja::discretize()
 				 //Create element stiffness matrix---------------------------------------------
 				 for(k=0;k<mesh.NNPE;k++)          //Start loop over nodes in the element
 				 {
-					 elem.QE[k]=elem.QE[k]+elem.WT*elem.SFV[0*mesh.NNPE*elem.NUMQPTV+k*elem.NUMQPTV+j]*elem.HVJ*elem.DV;
+					 elem.QE[k] = elem.QE[k] + elem.WT * elem.SFV[0*mesh.NNPE*elem.NUMQPTV + k*elem.NUMQPTV + j] * elem.HVJ * elem.DV;
 					 for(l=0;l<mesh.NNPE;l++)
 					 {
-                                             elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
+                        elem.S[k*mesh.NNPE+l]=elem.S[k*mesh.NNPE+l]+elem.WT*(elem.DNDX[k]*elem.RX*elem.DNDX[l] + elem.DNDY[k]*elem.RY*elem.DNDY[l] + elem.DNDZ[k]*elem.RZ*elem.DNDZ[l])*elem.DV;
 					 }
 				 }                            //End loop over nodes in the element
 			 }                                  //End loop over quadrature points in the element
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 			 //Place completed element matrix in global SK and Q matrices
 
@@ -2210,6 +2199,14 @@ void ninja::prepareOutput()
 {
     VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+
+#ifdef NINJAFOAM
+        if(input.writeTurbulence)
+        {
+            TurbulenceGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), 
+                    input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+        }
+#endif
 	
 	if(!isNullRun)
 		interp_uvw();
@@ -2233,6 +2230,9 @@ void ninja::prepareOutput()
 	//Clip off bounding doughnut if desired
 	VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+#ifdef NINJAFOAM
+	TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+#endif
 
 	//Clip cloud cover grid if it's a wxModel intitialization (since it's gridded)
 	//	if not wxModel initialization, don't clip since it's just one cell anyway
@@ -2242,6 +2242,12 @@ void ninja::prepareOutput()
 	}
 	//change windspeed units back to what is specified by speed units switch
 	velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+#ifdef NINJAFOAM
+        if(input.writeTurbulence)
+        {
+            velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+        }
+#endif
 
 	/*
 	 * Interpolate u, v, w to specific locations if an input_points_file is provided
@@ -2700,6 +2706,94 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
+
+void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_Grid( input.cldFile.c_str(), 1);
+            angGrid.write_Grid( input.angFile.c_str(), 0);
+            velGrid.write_Grid( input.velFile.c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
+            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
+            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
+            angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
+            velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
+        }
+        if (input.ascii4326OutFlag){
+            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
+            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
+            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+        }
+    }
+
+    if (input.asciiUvOutFlag) {
+        writeAsciiUvOutputFiles( angGrid, velGrid);
+    }
+}
+
+// write u,v wind vector output files
+void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+{
+    AsciiGrid<double> uGrid(angGrid);
+    AsciiGrid<double> vGrid(angGrid);
+    setUvGrids( angGrid, velGrid, uGrid, vGrid);
+
+    if (input.asciiAaigridOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
+            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
+            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+        }
+    }
+
+    if (input.asciiJsonOutFlag) {
+        if (input.asciiUtmOutFlag) {
+            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
+            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
+        }
+        if (input.ascii4326OutFlag){
+            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
+            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
+        }
+    }
+}
+
+void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
+{
+    int nRows = angGrid.get_nRows();
+    int nCols = angGrid.get_nCols();
+    double pi180 = M_PI / 180;
+
+    for (int m=0; m<nRows; m++){
+        for (int n=0; n<nCols; n++) {
+            double vel = velGrid.get_cellValue(m,n);
+            double ang = angGrid.get_cellValue(m,n);
+
+            double deg = 270.0 - ang;  // uv angle is ccw from W
+            if (deg < 0) deg += 360;
+            double rad = deg * pi180;
+
+            double u = cos(rad) * vel;
+            double v = sin(rad) * vel;
+
+            uGrid.set_cellValue(m,n,u);
+            vGrid.set_cellValue(m,n,v);
+        }
+    }
+}
+
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
@@ -2712,7 +2806,9 @@ void ninja::writeOutputFiles()
 	if(input.volVTKOutFlag)
 	{
 		try{
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile);
+            // can pick between "ascii" and "binary" format for the vtk write format
+            std::string vtkWriteFormat = "binary";//"binary";//"ascii";
+			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
@@ -2729,23 +2825,25 @@ void ninja::writeOutputFiles()
 	#pragma omp parallel sections
 	{
 
-
 	//write FARSITE files
 	#pragma omp section
 	{
 	try{
-		if(input.asciiOutFlag==true)
+		if(input.asciiOutFlag)
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+                    AsciiGrid<double> *velTempGrid, *angTempGrid;
+                    velTempGrid=NULL;
+                    angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+                    AsciiGrid<double> tempCloud(CloudGrid);
+                    tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
+                    //if output clipping was set by the user, don't buffer to overlap the DEM
+                    if(!input.outputBufferClipping > 0.0)
+                    {
                         //ensure grids cover original DEM extents for FARSITE
                         AsciiGrid<double> demGrid;
                         GDALDatasetH hDS;
@@ -2755,68 +2853,64 @@ void ninja::writeOutputFiles()
                             input.Com->ninjaCom(ninjaComClass::ninjaNone,
                                     "Problem reading DEM during output writing." );
                         }
-
                         GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
                         tempCloud.BufferToOverlapGrid(demGrid);
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
+                    }
 
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
-			#ifdef FRICTION_VELOCITY
-			if(input.frictionVelocityFlag == 1){
-                AsciiGrid<double> *ustarTempGrid;
-                ustarTempGrid=NULL;
+#ifdef FRICTION_VELOCITY
+                    if(input.frictionVelocityFlag == 1){
+                        AsciiGrid<double> *ustarTempGrid;
+                        ustarTempGrid=NULL;
 
-                ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
+                        ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
 
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid=NULL;
-                }
-			}
-			#endif
+                        if(ustarTempGrid)
+                        {
+                            delete ustarTempGrid;
+                            ustarTempGrid=NULL;
+                        }
+                    }
+#endif
+#ifdef EMISSIONS
+                    if(input.dustFlag == 1){
+                        AsciiGrid<double> *dustTempGrid;
+                        dustTempGrid=NULL;
 
-			#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                AsciiGrid<double> *dustTempGrid;
-                dustTempGrid=NULL;
+                        dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                        dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
 
-                dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
+                        if(dustTempGrid)
+                        {
+                            delete dustTempGrid;
+                            dustTempGrid=NULL;
+                        }
+                    }
+#endif
+                    if(angTempGrid)
+                    {
+                            delete angTempGrid;
+                            angTempGrid=NULL;
+                    }
+                    if(velTempGrid)
+                    {
+                            delete velTempGrid;
+                            velTempGrid=NULL;
+                    }
 
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid=NULL;
-                }
-            }
-			#endif
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
+                    //Write .atm file for this run.  Only has one time value in file.
+                    if(input.writeAtmFile)
+                    {
+                        farsiteAtm atmosphere;
+                        atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+                        atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                    }
 		}
 	}catch (exception& e)
 	{
@@ -2895,13 +2989,31 @@ void ninja::writeOutputFiles()
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
+#ifdef NINJAFOAM
+			AsciiGrid<double> *turbTempGrid;
+
+#endif
 			velTempGrid=NULL;
 			angTempGrid=NULL;
+#ifdef NINJAFOAM
+			turbTempGrid=NULL;
+#endif
 
 			KmlVector ninjaKmlFiles;
 
 			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+#ifdef NINJAFOAM
+                        if(input.writeTurbulence)
+                        {
+                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setTurbulenceFlag("true");
+                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        }
+#endif //NINJAFOAM
 
 			#ifdef FRICTION_VELOCITY
 			if(input.frictionVelocityFlag == 1){
@@ -2973,6 +3085,13 @@ void ninja::writeOutputFiles()
 				delete velTempGrid;
 				velTempGrid=NULL;
 			}
+#ifdef NINJAFOAM
+			if(turbTempGrid)
+			{
+				delete turbTempGrid;
+				turbTempGrid=NULL;
+			}
+#endif
 		}
 	}catch (exception& e)
 	{
@@ -3539,6 +3658,11 @@ void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 {
     input.foamAngleGrid = angleGrid;
 }
+
+void ninja::set_writeTurbulenceFlag(bool flag)
+{
+    input.writeTurbulence = flag;
+}
 #endif
 
 void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)
@@ -3975,8 +4099,37 @@ bool ninja::get_diurnalWindFlag()
 void ninja::set_date_time(int const &yr, int const &mo, int const &day, int const &hr,
                           int const &min, int const &sec, std::string const &timeZoneString)
 {
-  input.ninjaTimeZone =
-      globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if (timeZoneString == "auto-detect" || timeZoneString == "") 
+    {
+        double longitude = 0;
+        double latitude = 0;
+        GDALDataset *poDS = (GDALDataset *)GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+        if (poDS == NULL) {
+            GDALClose((GDALDatasetH)poDS);
+            ostringstream os;
+            os << "Could not open datasource " << input.dem.fileName << " in ninja::set_date_time().";
+            throw std::runtime_error(os.str());
+        }
+        GDALGetCenter(poDS, &longitude, &latitude);
+        GDALClose((GDALDatasetH)poDS);
+        std::string tz = FetchTimeZone(longitude, latitude, NULL);
+        if (tz == "") {
+            ostringstream os;
+            os << "Could not detect timezone string with FetchTimeZone() dfY="
+               << latitude << " dfX=" << longitude << " in ninja::set_date_time().";
+            throw std::runtime_error(os.str());
+        } 
+        else 
+        {
+            input.ninjaTimeZone =
+                globalTimeZoneDB.time_zone_from_region(tz);
+        }
+    } 
+    else 
+    {
+        input.ninjaTimeZone =
+            globalTimeZoneDB.time_zone_from_region(timeZoneString);
+    }
     if( NULL ==  input.ninjaTimeZone )
     {
         ostringstream os;
@@ -4581,7 +4734,6 @@ void ninja::set_pdfDEM(std::string dem_file_name)
     input.pdfDEMFileName = dem_file_name;
 }
 
-
 void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
@@ -5019,9 +5171,9 @@ void ninja::checkInputs()
 {
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-    if(s.find_first_of("/\\:;\"'") != std::string::npos){
+    if(s.find_first_of("/\\:;\"") != std::string::npos){
         throw std::runtime_error("The DEM name contains an invalid character."
-                " The DEM name cannot contain the following characters: / \\ : ; \" '.");
+                " The DEM name cannot contain the following characters: / \\ : ; \" .");
     }
 
     //Check base inputs needed for run
@@ -5098,4 +5250,33 @@ void ninja::dumpMemory()
 {
     input.dem.deallocate();
     input.surface.deallocate();
+}
+
+
+// derive a new pathname from the given one, swapping the path (if given) and optionally applying a regex replacement
+std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement) 
+{
+#ifdef WIN32
+    const char fs = '\\';
+#else
+    const char fs = '/';
+#endif
+
+    std::string s = pathname;
+
+    if (newpath) {
+        int i = s.rfind(fs);
+        if (i < 0) { // no path
+            s.insert(0,newpath);
+            s.insert(strlen(newpath), &fs, 1);
+        } else {
+            s.replace(0, i, newpath);
+        }
+    }
+
+    if (pattern && replacement) {
+        s = std::regex_replace(std::string(s), std::regex(pattern), std::string(replacement));
+    }
+
+    return s;
 }

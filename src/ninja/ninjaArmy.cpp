@@ -548,7 +548,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
 
-            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+            if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
                 //Set the ninjafoam solver progress bar to stop at 80% so that
                 //the diurnal solver can contribute too
@@ -561,7 +561,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #ifdef NINJAFOAM
             //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
             //a ninja run to add diurnal flow after the cfd solution is computed
-            if(ninjas[0]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true){
+            if ((ninjas[0]->identify() == "ninjafoam") & ninjas[0]->input.diurnalWinds){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                 ninja* diurnal_ninja = new ninja(*ninjas[0]);
                 //Set the diurnal ninja to have the same com object,
@@ -569,6 +569,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 diurnal_ninja->input.Com = ninjas[0]->input.Com;
                 diurnal_ninja->set_foamVelocityGrid(ninjas[0]->VelocityGrid);
                 diurnal_ninja->set_foamAngleGrid(ninjas[0]->AngleGrid);
+                diurnal_ninja->set_writeTurbulenceFlag(ninjas[0]->input.writeTurbulence);
                 if(ninjas[0]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                 }
@@ -625,7 +626,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
     }
 #ifdef NINJAFOAM
-    else if(ninjas.size() > 1 & ninjas[0]->identify() =="ninjafoam")
+    else if ((ninjas.size() > 1) && (ninjas[0]->identify() =="ninjafoam"))
     {
 #ifdef _OPENMP
         omp_set_num_threads(numProcessors);
@@ -636,7 +637,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
 
-                if(ninjas[i]->identify() == "ninjafoam" & ninjas[0]->input.diurnalWinds == true)
+                if((ninjas[i]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
                 {
                     //Set the ninjafoam solver progress bar to stop at 80% so that
                     //the diurnal solver can contribute too
@@ -648,7 +649,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
                 //a ninja run to add diurnal flow after the cfd solution is computed
-                if(ninjas[i]->identify() == "ninjafoam" & ninjas[i]->input.diurnalWinds == true){
+                if((ninjas[i]->identify() == "ninjafoam") && ninjas[i]->input.diurnalWinds){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
                     ninja* diurnal_ninja = new ninja(*ninjas[i]);
                     //Set the diurnal ninja to have the same com object,
@@ -656,6 +657,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.Com = ninjas[i]->input.Com;
                     diurnal_ninja->set_foamVelocityGrid(ninjas[i]->VelocityGrid);
                     diurnal_ninja->set_foamAngleGrid(ninjas[i]->AngleGrid);
+                    diurnal_ninja->set_writeTurbulenceFlag(ninjas[0]->input.writeTurbulence);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag){
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
                     }
@@ -1212,6 +1214,10 @@ int ninjaArmy::setExistingCaseDirectory( const int nIndex, const std::string dir
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ExistingCaseDirectory( directory ) );
 }
+int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
+}
 #endif
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
@@ -1728,56 +1734,56 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
 }
 const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
 const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputDirectionGrid( );
     }
 }
 const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridProjection( );
     }
 }
 const double ninjaArmy::getOutputGridCellSize( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridCellSize( );
     }
 }
 const double ninjaArmy::getOutputGridxllCorner( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridxllCorner( );
     }
 }
 const double ninjaArmy::getOutputGridyllCorner( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridyllCorner( );
     }
 }
 const int ninjaArmy::getOutputGridnCols( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridnCols( );
     }
 }
 const int ninjaArmy::getOutputGridnRows( const int nIndex, char ** papszOptions )
 {
-    IF_VALID_INDEX( nIndex, ninjas )
+    CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputGridnRows( );
     }
@@ -1916,9 +1922,30 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
 
 int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
 }
+int ninjaArmy::setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiAaigridOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiJsonOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUtmOutFlag( flag ) );
+}
+int ninjaArmy::setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ascii4326OutFlag( flag ) );
+}
+int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUvOutFlag( flag ) );
+}
+
+
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {

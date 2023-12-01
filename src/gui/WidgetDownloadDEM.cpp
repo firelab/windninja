@@ -208,9 +208,19 @@ void WidgetDownloadDEM::saveDEM()
     QVariant mbr = wvGoogleMaps->page()->mainFrame()->evaluateJavaScript("mbr()");
     if(mbr.isNull()) {
         qDebug()<<"no mbr";
+        QMessageBox mbox;
+        mbox.setText("DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.");
+        mbox.exec();
         return;
     }
     QVariantList mbrl = mbr.toList();
+    if(mbrl.size() == 0)
+    {
+        QMessageBox mbox;
+        mbox.setText("DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.");
+        mbox.exec();
+        return;
+    }
     for(int i=0; i < mbrl.size(); i++) {
         qDebug() << mbrl[i];
     }

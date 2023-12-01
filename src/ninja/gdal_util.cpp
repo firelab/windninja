@@ -822,3 +822,132 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
     OGR_DS_Destroy( hDS );
     return bContains;
 }
+
+// PCM - more GDAL utility functions. To distinguish them from the GDAL libs we us a 'gdal' prefix
+
+bool gdalHasGeographicSRS (const char* filename) {
+    bool isGeographic = false;
+    GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename, GA_ReadOnly);
+    CPLAssert(hDS);
+
+    const char *pszPrj = GDALGetProjectionRef(hDS);
+    if (pszPrj == "") {
+      isGeographic = true;
+    }
+    GDALClose(hDS);
+
+    return isGeographic;
+}
+
+// TODO - this is similar to above GDALGetCenter() but handles different axis order so that we don't get twisted lat/lon results.
+// Check if all callers of GDALGetCenter() would agree
+bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
+    bool rc = false;
+
+    if (pDS) {
+        const char *pszPrj = pDS->GetProjectionRef();
+        OGRSpatialReference* pSrcSRS;
+        pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
+        if (pszPrj == "") {
+            OGRSpatialReference tgtSRS;
+
+            tgtSRS.SetWellKnownGeogCS("EPSG:4326");
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+            tgtSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(pSrcSRS, &tgtSRS);
+            if (pCT) {
+                int nX = pDS->GetRasterXSize();
+                int nY = pDS->GetRasterYSize();
+
+                double a[6];
+                pDS->GetGeoTransform(a);
+                double y = a[3] + a[4] * (nX / 2) + a[5] * (nY / 2);
+                double x = a[0] + a[1] * (nX / 2) + a[2] * (nY / 2);
+
+                rc = pCT->Transform(1, &x, &y);
+                if (rc) {
+                    longitude = x;
+                    latitude = y;
+                }
+
+                OGRCoordinateTransformation::DestroyCT(pCT);
+            }
+        }
+    }
+    return rc;
+}
+
+// return UTM zone 1-60 or -1 if illegal input
+int gdalGetUtmZone (double lat, double lon) {
+
+    // handle special cases (Svalbard/Norway)
+    if (lat > 55 && lat < 64 && lon > 2 && lon < 6) {
+        return 32;
+    }
+
+    if (lat > 71) {
+        if (lon >= 6 && lon < 9) {
+            return 31;
+        }
+        if ((lon >= 9 && lon < 12) || (lon >= 18 && lon < 21)) {
+            return 33;
+        }
+        if ((lon >= 21 && lon < 24) || (lon >= 30 && lon < 33)) {
+            return 35;
+        }
+    }
+
+    if (lon >= -180 && lon <= 180) {
+        return ((int)((lon + 180.0) / 6.0) % 60) + 1;
+    } else if (lon > 180 && lon < 360) {
+        return ((int)(lon / 6.0) % 60) + 1;
+    }
+
+    return -1;
+}
+
+// turn provided data set into a GeoTiff with UTM projection
+// returning NULL indicates error
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS) {
+    GDALDataset* pDstDS = NULL;
+
+    double lat, lon;
+    if (pSrcDS && gdalGetCenter( pSrcDS, lon, lat)) {
+        int utmZone = gdalGetUtmZone(lat,lon);
+        GDALDriverH hDriver = GDALGetDriverByName("GTiff"); // built-in
+
+        const char *pszSrcWKT = pSrcDS->GetProjectionRef();
+        if (strlen(pszSrcWKT) > 0) {
+            char *pszDstWKT = NULL;
+
+            OGRSpatialReference oSRS;
+            oSRS.SetUTM(utmZone, lat > 0);
+            oSRS.SetWellKnownGeogCS("WGS84");
+            oSRS.exportToWkt( &pszDstWKT);
+
+            void* hTransformArg = GDALCreateGenImgProjTransformer( pSrcDS, pszSrcWKT, NULL, pszDstWKT, FALSE, 0, 1 );
+            if (hTransformArg) {
+                double adfDstGeoTransform[6];
+                int nPixels = pSrcDS->GetRasterXSize(); 
+                int nLines =  pSrcDS->GetRasterYSize();
+                GDALSuggestedWarpOutput( pSrcDS, GDALGenImgProjTransform, hTransformArg, adfDstGeoTransform, &nPixels, &nLines );
+                GDALDestroyGenImgProjTransformer( hTransformArg );
+
+                GDALDataType eDT = GDALGetRasterDataType(GDALGetRasterBand(pSrcDS,1));
+                pDstDS = (GDALDataset*) GDALCreate( hDriver, filename, nPixels, nLines, GDALGetRasterCount(pSrcDS), eDT, NULL );
+                if (pDstDS) {
+                    pDstDS->SetProjection(pszDstWKT);
+                    pDstDS->SetGeoTransform(adfDstGeoTransform);
+                }
+            }
+        }
+    }
+
+    return pDstDS;
+}
+
+

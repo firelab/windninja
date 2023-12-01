@@ -15,7 +15,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 2.6)
+
+if (APPLE)
+    set(CMAKE_MACOSX_RPATH OFF)
+endif (APPLE)
 
 set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
@@ -24,6 +28,8 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${PROJECT_SOURCE_DIR}/src)
 
 set(NINJA_SOURCES air.cpp
+                  ascii_grid.cpp
+                  Array2D.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp
@@ -136,8 +142,13 @@ if(WIN32)
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
     target_link_libraries(WindNinjadll ${LINK_LIBS})
 else(WIN32)
-    add_library(ninja STATIC SHARED ${NINJA_SOURCES})
+    if(APPLE)
+        add_library(ninja STATIC ${NINJA_SOURCES})
+    else(APPLE)
+       add_library(ninja STATIC SHARED ${NINJA_SOURCES})
+    endif(APPLE)    
 endif(WIN32)
+
 
 target_link_libraries(ninja ${LINK_LIBS})
 

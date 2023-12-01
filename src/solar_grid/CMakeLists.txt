@@ -28,6 +28,11 @@ set(LINK_LIBS ${Boost_LIBRARIES}
               ${NETCDF_LIBRARIES_C})
 
 set(SOLAR_GRID_SRC solar_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/solpos.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/solar.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Elevation.cpp

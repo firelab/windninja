@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 2.6)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/ninja
                     ${NETCDF_INCLUDES}
@@ -29,13 +29,13 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 
-if(WIN32)
+if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
                   ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
-else(WIN32)
+else(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
                   ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
-endif(WIN32)
+endif(WIN32 OR APPLE)
 
 set(TEST_SOURCES test_main.cpp
                  test_contain.cpp

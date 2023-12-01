@@ -30,6 +30,7 @@
 #ifndef NINJA_EXCEPTION_H
 #define NINJA_EXCEPTION_H
 
+#include <string.h>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -50,8 +51,13 @@
 //	WITH ABOVE, REMEMBER TO USE std:: NAMESPACE!!
 
 
-// Below are user-defined exceptions
+#ifdef WIN32
+#define NOEXCEPT 
+#else
+#define NOEXCEPT noexcept
+#endif 
 
+// Below are user-defined exceptions
 class cancelledByUser : public std::runtime_error {
 public:
 	cancelledByUser() : std::runtime_error("Simulation was cancelled by the user.") { }
@@ -74,7 +80,7 @@ class armyException : public std::runtime_error
         armyException(std::vector<std::string> m);
         ~armyException() throw();
         std::vector<std::string> messages;
-        const char* what();
+        const char* what() const NOEXCEPT override;
 };
 
 

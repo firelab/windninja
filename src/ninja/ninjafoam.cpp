@@ -35,6 +35,7 @@ NinjaFoam::NinjaFoam() : ninja()
 {
     pszVrtMem = NULL;
     pszGridFilename = NULL;
+    pszTurbulenceGridFilename = NULL;
 
     boundary_name = "";
     type = "";
@@ -81,6 +82,7 @@ NinjaFoam::NinjaFoam(NinjaFoam const& A ) : ninja(A)
 
 }
 
+
 /**
  * Equals operator.
  * @param A Value to set equal to.
@@ -99,6 +101,7 @@ NinjaFoam::~NinjaFoam()
 {
     CPLFree( (void*)pszVrtMem );
     CPLFree( (void*)pszGridFilename );
+    CPLFree( (void*)pszTurbulenceGridFilename );
 }
 
 void NinjaFoam::set_meshResolution(double resolution, lengthUnits::eLengthUnits units)
@@ -119,6 +122,12 @@ double NinjaFoam::get_meshResolution()
 
 bool NinjaFoam::simulate_wind()
 {
+    if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
+    {
+        CPLDebug("NINJAFOAM", "Writing turbulence output...");
+        set_writeTurbulenceFlag("true");
+    }
+
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
     #endif
@@ -324,8 +333,11 @@ bool NinjaFoam::simulate_wind()
     CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
+    //suppress libXML warnings
+    CPLPushErrorHandler(CPLQuietErrorHandler);
     Sample();
     SampleRawOutput();
+    CPLPopErrorHandler();
 
     #ifdef _OPENMP
     endOutputSampling = omp_get_wtime();
@@ -371,6 +383,7 @@ bool NinjaFoam::simulate_wind()
        CloudGrid.deallocate();
        AngleGrid.deallocate();
        VelocityGrid.deallocate();
+       TurbulenceGrid.deallocate();
     }
 
     if(input.diurnalWinds == true){
@@ -665,7 +678,7 @@ void NinjaFoam::SetFoamPath(const char* pszPath)
 
 int NinjaFoam::GenerateFoamDirectory(std::string demName)
 {
-    std::string t = NinjaRemoveSpaces(std::string(CPLGetBasename(demName.c_str())));
+    std::string t = NinjaSanitizeString(std::string(CPLGetBasename(demName.c_str())));
     pszFoamPath = CPLStrdup(CPLGenerateTempFilename( CPLSPrintf("NINJAFOAM_%s", t.c_str())));
     VSIMkdir( pszFoamPath, 0777 );
 
@@ -1722,15 +1735,19 @@ int NinjaFoam::SanitizeOutput()
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
-    FILE *fin;
+    FILE *fin, *fin2;
     VSILFILE *fout, *fvrt;
     char buf[512];
+    char buf2[512];
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
     const char *pszMem;
-    std::string s;
+    std::string s, s2;
 
+    /*-------------------------------------------------------------------*/
+    /* sanitize the u, v, and k output                                       */
+    /*-------------------------------------------------------------------*/
     pszMem = CPLSPrintf("%s/output.raw", pszFoamPath);
     /* This is a member, hold on to it so we can read it later */
     pszVrtMem = CPLStrdup(CPLSPrintf("%s/output.vrt", pszFoamPath));
@@ -1742,6 +1759,9 @@ int NinjaFoam::SanitizeOutput()
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
             fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+                        pszFoamPath, 
+                        papszOutputSurfacePath[i]), "r");
+            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
             break;
@@ -1759,9 +1779,16 @@ int NinjaFoam::SanitizeOutput()
                                                 "reading." );
         return NINJA_E_FILE_IO;
     }
+    if( !fin2 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "reading." );
+        return NINJA_E_FILE_IO;
+    }
     if( !fout )
     {
         VSIFClose( fin );
+        VSIFClose( fin2 );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
                                                 "writing." );
         return NINJA_E_FILE_IO;
@@ -1769,6 +1796,7 @@ int NinjaFoam::SanitizeOutput()
     if( !fvrt )
     {
         VSIFClose( fin );
+        VSIFClose( fin2 );
         VSIFClose( fout );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
                                                 "writing." );
@@ -1781,34 +1809,49 @@ int NinjaFoam::SanitizeOutput()
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
     buf[0] = '\0';
+    buf2[0] = '\0';
     /*
     ** eat the first line
     */
     VSIFGets( buf, 512, fin );
+    VSIFGets( buf2, 512, fin2 );
     /*
     ** fix the header
     */
     VSIFGets( buf, 512, fin );
+    buf[ strcspn( buf, "\n" ) ] = '\0';
+    VSIFGets( buf2, 512, fin2 );
 
     s = buf;
+    s2 = buf2;
     ReplaceKeys( s, "#", "", 1 );
     ReplaceKeys( s, "  ", "", 1 );
     ReplaceKeys( s, "  ", ",", 5 );
     ReplaceKeys( s, "  ", "", 1 );
+    s = s + ",k\n";
+    
     VSIFWriteL( s.c_str(), s.size(), 1, fout );
     /*
     ** sanitize the data.
     */
+    char **papszTokens = NULL;
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
+        buf[ strcspn( buf, "\n" ) ] = '\0';
         s = buf;
+        VSIFGets( buf2, 512, fin2 );
+        s2 = buf2;
         ReplaceKeys( s, " ", ",", 5 );
+        ReplaceKeys( s2, " ", ",", 5 );
+        papszTokens = CSLTokenizeString2( s2.c_str(), ",", 0);
+        s = s + "," + std::string(papszTokens[CSLCount( papszTokens )-1]); 
         VSIFWriteL( s.c_str(), s.size(), 1, fout );
     }
-    VSIFClose( fin );
-    VSIFCloseL( fout );
 
-    return 0;
+    CSLDestroy( papszTokens );
+    VSIFClose( fin );
+    VSIFClose( fin2 );
+    VSIFCloseL( fout );
 }
 
 static int TransformGeoToPixelSpace( double *adfInvGeoTransform, double dfX,
@@ -1956,7 +1999,7 @@ int NinjaFoam::SampleCloudGrid()
                   "Failed to extract a valid layer for NinjaFoam resampling" );
         return NINJA_E_OTHER;
     }
-    double *padfX, *padfY, *padfU, *padfV;
+    double *padfX, *padfY, *padfU, *padfV, *padfK;
     double *padfData;
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
@@ -1973,13 +2016,15 @@ int NinjaFoam::SampleCloudGrid()
     padfY = (double*)CPLMalloc( sizeof( double ) * nPoints );
     padfU = (double*)CPLMalloc( sizeof( double ) * nPoints );
     padfV = (double*)CPLMalloc( sizeof( double ) * nPoints );
+    padfK = (double*)CPLMalloc( sizeof( double ) * nPoints );
 
     int i = 0;
-    int nUIndex, nVIndex;
+    int nUIndex, nVIndex, nKIndex;
     OGR_L_ResetReading( hLayer );
     hFeatDefn = OGR_L_GetLayerDefn( hLayer );
     nUIndex = OGR_FD_GetFieldIndex( hFeatDefn, "U" );
     nVIndex = OGR_FD_GetFieldIndex( hFeatDefn, "V" );
+    nKIndex = OGR_FD_GetFieldIndex( hFeatDefn, "K" );
     while( (hFeature = OGR_L_GetNextFeature( hLayer )) != NULL )
     {
         hGeometry = OGR_F_GetGeometryRef( hFeature );
@@ -1987,6 +2032,7 @@ int NinjaFoam::SampleCloudGrid()
         padfY[i] = OGR_G_GetY( hGeometry, 0 );
         padfU[i] = OGR_F_GetFieldAsDouble( hFeature, nUIndex );
         padfV[i] = OGR_F_GetFieldAsDouble( hFeature, nVIndex );
+        padfK[i] = OGR_F_GetFieldAsDouble( hFeature, nKIndex );
         i++;
     }
 
@@ -2008,7 +2054,7 @@ int NinjaFoam::SampleCloudGrid()
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
-    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
+    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 3,
                              GDT_Float64, NULL );
     padfData = (double*)CPLMalloc( sizeof( double ) * nXSize * nYSize );
 
@@ -2033,6 +2079,16 @@ int NinjaFoam::SampleCloudGrid()
     rc = GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
                   nXSize, nYSize, GDT_Float64, 0, 0 );
 
+    /* Turbulence field */
+    rc = GDALGridCreate( GGA_NearestNeighbor, (void*)&sOptions, nPoints,
+                         padfX, padfY, padfK, dfXMin, dfXMax, dfYMax, dfYMin,
+                         nXSize, nYSize, GDT_Float64, padfData, NULL, NULL );
+
+    hBand = GDALGetRasterBand( hGriddedDS, 3 );
+    GDALSetRasterNoDataValue( hBand, -9999 );
+    rc = GDALRasterIO( hBand, GF_Write, 0, 0, nXSize, nYSize, padfData,
+                  nXSize, nYSize, GDT_Float64, 0, 0 );
+
     /* Set the projection from the DEM */
     rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
 
@@ -2049,6 +2105,7 @@ int NinjaFoam::SampleCloudGrid()
     CPLFree( (void*)padfY );
     CPLFree( (void*)padfU );
     CPLFree( (void*)padfV );
+    CPLFree( (void*)padfK );
 
     CPLFree( (void*)padfData );
     OGR_G_DestroyGeometry( hGeometry );
@@ -2201,7 +2258,6 @@ void NinjaFoam::SetOutputFilenames()
         input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
 }
 
-
 void NinjaFoam::SampleRawOutput()
 {
     /*-------------------------------------------------------------------*/
@@ -2275,6 +2331,22 @@ void NinjaFoam::SampleRawOutput()
                 "again with a coarser mesh.");
     }
 
+    /*-------------------------------------------------------------------*/
+    /* convert k to average velocity fluctuations (u')                   */
+    /* u' = sqrt(2/3*k)                                                  */
+    /*-------------------------------------------------------------------*/
+    AsciiGrid<double> foamK;
+
+    GDAL2AsciiGrid( (GDALDataset *)hDS, 3, foamK );
+    TurbulenceGrid = foamK;
+
+    for(int i=0; i<foamK.get_nRows(); i++)
+    {
+        for(int j=0; j<foamK.get_nCols(); j++)
+        {
+            TurbulenceGrid(i,j) = std::sqrt(2.0/3.0 * foamK(i,j));
+        }
+    }
     GDALClose( hDS );
 }
 
@@ -2287,9 +2359,17 @@ void NinjaFoam::WriteOutputFiles()
     //Clip off bounding doughnut if desired
     VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    if(input.writeTurbulence)
+    {
+        TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    }
 
     //change windspeed units back to what is specified by speed units switch
     velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+    if(input.writeTurbulence)
+    {
+        velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+    }
 
     //resample to requested output resolutions
     SetOutputResolution();
@@ -2332,20 +2412,23 @@ void NinjaFoam::WriteOutputFiles()
 			AsciiGrid<double> tempCloud(CloudGrid);
 			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
-                        //ensure grids cover original DEM extents for FARSITE
-                        AsciiGrid<double> demGrid;
-                        GDALDatasetH hDS;
-                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                        if( hDS == NULL )
+                        //if output clipping was set by the user, don't buffer to overlap the DEM
+                        if(!input.outputBufferClipping > 0.0)
                         {
-                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                                    "Problem reading DEM during output writing." );
+                            //ensure grids cover original DEM extents for FARSITE
+                            AsciiGrid<double> demGrid;
+                            GDALDatasetH hDS;
+                            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                            if( hDS == NULL )
+                            {
+                                input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                        "Problem reading DEM during output writing." );
+                            }
+                            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                            tempCloud.BufferToOverlapGrid(demGrid);
+                            angTempGrid->BufferToOverlapGrid(demGrid);
+                            velTempGrid->BufferToOverlapGrid(demGrid);
                         }
-
-                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                        tempCloud.BufferToOverlapGrid(demGrid);
-                        angTempGrid->BufferToOverlapGrid(demGrid);
-                        velTempGrid->BufferToOverlapGrid(demGrid);
 
 			tempCloud.write_Grid(input.cldFile.c_str(), 1);
 			angTempGrid->write_Grid(input.angFile.c_str(), 0);
@@ -2433,14 +2516,25 @@ void NinjaFoam::WriteOutputFiles()
 		if(input.googOutFlag==true)
 
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid;
 			velTempGrid=NULL;
 			angTempGrid=NULL;
+			turbTempGrid=NULL;
 
 			KmlVector ninjaKmlFiles;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+                        if(input.writeTurbulence)
+                        {
+                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setTurbulenceFlag("true");
+                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        }
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
 			ninjaKmlFiles.setKmzFile(input.kmzFile);
@@ -2468,6 +2562,11 @@ void NinjaFoam::WriteOutputFiles()
 			{
 				delete velTempGrid;
 				velTempGrid=NULL;
+			}
+			if(turbTempGrid)
+			{
+				delete turbTempGrid;
+				turbTempGrid=NULL;
 			}
 		}
 	}catch (exception& e)
