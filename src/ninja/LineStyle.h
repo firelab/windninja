@@ -47,7 +47,7 @@ public:
 	bool setHexColorRGBA();
 
 	bool printLineStyle();
-	bool writeLineStyle(FILE *fileOut);
+	bool writeLineStyle(VSILFILE *fileOut);
     std::string  asOGRLineStyle();
 
 private:

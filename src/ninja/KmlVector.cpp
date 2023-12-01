@@ -1179,7 +1179,7 @@ bool KmlVector::writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut)
     return true;
 }
 
-bool KmlVector::writeTurbulence(FILE *fileOut)
+bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 {
 	double xPoint, yPoint;
 	double xCenter, yCenter;

@@ -5171,9 +5171,9 @@ void ninja::checkInputs()
 {
     //check for invalid characters in DEM name
     std::string s = std::string(CPLGetBasename(input.dem.fileName.c_str()));
-    if(s.find_first_of("/\\:;\"'") != std::string::npos){
+    if(s.find_first_of("/\\:;\"") != std::string::npos){
         throw std::runtime_error("The DEM name contains an invalid character."
-                " The DEM name cannot contain the following characters: / \\ : ; \" '.");
+                " The DEM name cannot contain the following characters: / \\ : ; \" .");
     }
 
     //Check base inputs needed for run
