@@ -1551,7 +1551,8 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
 
     for(int ex=0; ex<fCount; ex++)
     {
-        hFeature = OGR_L_GetFeature(hLayer, ex);
+        //hFeature = OGR_L_GetFeature(hLayer, ex);  // old method for cycling through the features, the getFeature() by index method is FAILING, fails to read
+        hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
 
         idx1 = OGR_F_GetFieldIndex(hFeature, "STID");
         stid = (OGR_F_GetFieldAsString(hFeature, idx1));
