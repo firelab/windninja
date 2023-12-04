@@ -2897,6 +2897,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             CPLDebug("STATION_FETCH","hFeature is NULL for station: %d, throwing!",ex);
             write_this_station=false;
             stationChecks.push_back(write_this_station);
+            mnetid.push_back(0);  // default bad value of 0, avoids mismatched vector sizes and calls on broken stations. regular value is 1 or 2
         } else  // and skip all the rest of the reading and writing process for this station if it is broken
         {
             
