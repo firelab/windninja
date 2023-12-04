@@ -1517,10 +1517,12 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         outFile<<header<<endl;
     }
 
-    OGRDataSourceH hDS;
+    //OGRDataSourceH hDS;  // for old method, OGROpen()
+    GDALDatasetH hDS;  // for new method, GDALOpenEx()
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
-    hDS=OGROpen(url.c_str(),0,NULL);
+    //hDS=OGROpen(url.c_str(),0,NULL);  // deprecated since gdal 2.0, use GDALOpenEx() with GDALDatasetH instead of OGRDataSourceH
+    hDS = GDALOpenEx( url.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL );
 
     if (hDS==NULL)
     {
@@ -1528,10 +1530,12 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
-    hLayer = OGR_DS_GetLayer(hDS, 0);
+    //hLayer = OGR_DS_GetLayer(hDS,0);   // deprecated since gdal 2.0, use GDALDatasetGetLayer() instead
+    hLayer = GDALDatasetGetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
     int fCount = OGR_L_GetFeatureCount(hLayer, 1);
+    //GIntBig fCount = OGR_L_GetFeatureCount(hLayer, 1); // as of gdal 2.0, returns GIntBig instead of int. still seems to work to use an int though
 
     int idx1 = 0;
     int idx2 = 0;
@@ -1589,7 +1593,8 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
     }
 
     OGR_DS_Destroy(poDS);
-    OGR_DS_Destroy(hDS);
+    //OGR_DS_Destroy(hDS);   // deprecated since gdal 2.0, use GDALClose() instead, for GDALOpenEx() instead of OGROpen()
+    GDALClose(hDS);
 }
 /**
  * @brief pointInitialization::BuildMultiUrl
