@@ -1553,6 +1553,12 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
     {
         //hFeature = OGR_L_GetFeature(hLayer, ex);  // old method for cycling through the features, the getFeature() by index method is FAILING, fails to read
         hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
+        if ( hFeature == NULL )  // check for if input is read, but the feature read function is breaking
+        {
+            CPLDebug("STATION_FETCH","Data fetched successfully, but hFeature returned NULL for station: %d. Skipping this station",ex);
+            OGR_F_Destroy( hFeature );  // using continue to skip instead of an else leads to skipping this step for this loop iteration, add it back in here
+            continue;  // and skip all the rest of the reading and writing process for this station if it is broken
+        }
 
         idx1 = OGR_F_GetFieldIndex(hFeature, "STID");
         stid = (OGR_F_GetFieldAsString(hFeature, idx1));
@@ -2894,7 +2900,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
         if ( hFeature == NULL )  // check for if input is read, but the feature read function is breaking
         {
-            CPLDebug("STATION_FETCH","hFeature is NULL for station: %d, throwing!",ex);
+            CPLDebug("STATION_FETCH","Data fetched successfully, but hFeature returned NULL for station: %d. Skipping this station",ex);
             write_this_station=false;
             stationChecks.push_back(write_this_station);
             mnetid.push_back(0);  // default bad value of 0, avoids mismatched vector sizes and calls on broken stations. regular value is 1 or 2
