@@ -1517,11 +1517,9 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         outFile<<header<<endl;
     }
 
-    //OGRDataSourceH hDS;  // for old method, OGROpen()
-    GDALDatasetH hDS;  // for new method, GDALOpenEx()
+    GDALDatasetH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
-    //hDS=OGROpen(url.c_str(),0,NULL);  // deprecated since gdal 2.0, use GDALOpenEx() with GDALDatasetH instead of OGRDataSourceH
     hDS = GDALOpenEx( url.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL );
 
     if (hDS==NULL)
@@ -1530,13 +1528,11 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         throw std::runtime_error("Bad metadata in the downloaded station file.");
     }
 
-    //hLayer = OGR_DS_GetLayer(hDS,0);   // deprecated since gdal 2.0, use GDALDatasetGetLayer() instead
     hLayer = GDALDatasetGetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
     int fCount = OGR_L_GetFeatureCount(hLayer, 1);
-    //GIntBig fCount = OGR_L_GetFeatureCount(hLayer, 1); // as of gdal 2.0, returns GIntBig instead of int. still seems to work to use an int though
-
+    
     int idx1 = 0;
     int idx2 = 0;
     int idx3 = 0;
@@ -1555,7 +1551,6 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
 
     for(int ex=0; ex<fCount; ex++)
     {
-        //hFeature = OGR_L_GetFeature(hLayer, ex);  // old method for cycling through the features, the getFeature() by index method is FAILING, fails to read
         hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
         if ( hFeature == NULL )  // check for if input is read, but the feature read function is breaking
         {
@@ -1593,7 +1588,6 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
     }
 
     OGR_DS_Destroy(poDS);
-    //OGR_DS_Destroy(hDS);   // deprecated since gdal 2.0, use GDALClose() instead, for GDALOpenEx() instead of OGROpen()
     GDALClose(hDS);
 }
 /**
@@ -2849,12 +2843,10 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
 
 bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest)
 {
-    //OGRDataSourceH hDS;  // for old method, OGROpen()
-    GDALDatasetH hDS;  // for new method, GDALOpenEx()
+    GDALDatasetH hDS;
     OGRLayerH hLayer;
     OGRFeatureH hFeature;
     CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
-    //hDS=OGROpen(URL.c_str(),0,NULL); //open the mesowest url    // deprecated since gdal 2.0, use GDALOpenEx() with GDALDatasetH instead of OGRDataSourceH
     hDS = GDALOpenEx( URL.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL ); //open the mesowest url
 
     if (hDS==NULL) //This is mainly caused by a bad URL, the user enters something wrong
@@ -2866,12 +2858,10 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     }
     //get the data
 
-    //hLayer=OGR_DS_GetLayer(hDS,0);   // deprecated since gdal 2.0, use GDALDatasetGetLayer() instead
     hLayer=GDALDatasetGetLayer(hDS,0);
     OGR_L_ResetReading(hLayer);
 
     int fCount=OGR_L_GetFeatureCount(hLayer,1); // this is the number of weather stations
-    //GIntBig fCount=OGR_L_GetFeatureCount(hLayer,1); // as of gdal 2.0, returns GIntBig instead of int. still seems to work to use an int though
     CPLDebug("STATION_FETCH","Found %i Stations...",fCount);
     std::string csvName; //This is a prefix that generally comes from specifying an out directory or something
 
@@ -2901,7 +2891,6 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         const char* writeID; //C array for storing station IDs
         bool write_this_station = true; //Assume the data is good until proven otherwise
 
-        //hFeature=OGR_L_GetFeature(hLayer,ex);  // old method for cycling through the features, the getFeature() by index method is FAILING, fails to read
         hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
         if ( hFeature == NULL )  // check for if input is read, but the feature read function is breaking
         {
@@ -3186,7 +3175,6 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         }
         OGR_F_Destroy(hFeature);
     }
-    //OGR_DS_Destroy(hDS);   // deprecated since gdal 2.0, use GDALClose() instead, for GDALOpenEx() instead of OGROpen()
     GDALClose(hDS);
     if(stationChecks.size()>=fCount)
     {
