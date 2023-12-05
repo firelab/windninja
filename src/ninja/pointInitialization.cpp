@@ -39,7 +39,7 @@ const std::string pointInitialization::ndvar = "wind_speed,wind_direction,air_te
                                               "solar_radiation,cloud_layer_1_code," //want for
                                               "cloud_layer_2_code,cloud_layer_3_code";//Airport stations
 
-const std::string pointInitialization::baseUrl = "http://api.mesowest.net/v2/stations/"; //API baseurl
+const std::string pointInitialization::baseUrl = "https://api.synopticdata.com/v2/stations/"; //API baseurl
 std::string pointInitialization::rawStationFilename = ""; //make the station name blank at first
 double pointInitialization::stationBuffer; //Buffer
 std::vector<std::string> pointInitialization::stationFiles; //Where the files are stored
@@ -1887,7 +1887,7 @@ vector<std::string> pointInitialization::Split(char* str,const char* delim)
  * Mesowest KMSO page
  * http://mesowest.utah.edu/cgi-bin/droman/meso_base_dyn.cgi?stn=kmso
  * A URL that will download data from KMSO with just cloud data
- * http://api.mesowest.net/v2/stations/timeseries?stid=kmso&vars=cloud_layer_1_code&latest=1440&token=33e3c8ee12dc499c86de1f2076a9e9d4
+ * https://api.synopticdata.com/v2/stations/timeseries?stid=kmso&vars=cloud_layer_1_code&recent=1440&token=33e3c8ee12dc499c86de1f2076a9e9d4
  *
  *
  *
@@ -2485,7 +2485,9 @@ int pointInitialization::checkFetchTimeDuration(std::vector<bpt::ptime> timeList
  * @brief pointInitialization::setCustomAPIKey
  * sets a user specified token to be used in the fetching
  * of station data. See:
- * https://synopticlabs.org/api/mesonet/
+ * https://synopticdata.com/
+ * https://docs.synopticdata.com/services/
+ * https://docs.synopticdata.com/account/data-access-credentials
  * for information on how to get a key
  * this also removes limits place on the buffer size
  * and number of hours downloadable.
