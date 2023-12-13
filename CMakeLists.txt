@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/Modules/")
 
 option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)
@@ -35,7 +35,7 @@ if(FIRELAB_PACKAGE)
 endif(FIRELAB_PACKAGE)
 
 # Generate a current version file derived from VERSION
-file(READ ${CMAKE_SOURCE_DIR}/VERSION V)
+file(READ ${PROJECT_SOURCE_DIR}/VERSION V)
 string(REPLACE "\n" "" V ${V})
 if(V)
     string(REPLACE "." ";" VLIST ${V})
@@ -74,9 +74,9 @@ else(NOT SKIP_GETDATE)
 endif(NOT SKIP_GETDATE)
 
 set(VER_STR ${VER_MAJ}.${VER_MIN}.${VER_PATCH})
-configure_file(${CMAKE_SOURCE_DIR}/src/ninja_version.h.in
-               ${CMAKE_BINARY_DIR}/ninja_version.h)
-include_directories(${CMAKE_BINARY_DIR})
+configure_file(${PROJECT_SOURCE_DIR}/src/ninja_version.h.in
+               ${PROJECT_BINARY_DIR}/ninja_version.h)
+include_directories(${PROJECT_BINARY_DIR})
 set(WINDNINJA_VERSION ${VER_STR})
 set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
@@ -430,9 +430,9 @@ endforeach(f ${share_files})
 
 # Leaflet data
 if(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share)
 else(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 endif(WIN32 AND FIRELAB_PACKAGE)
 
 set(doc_files CLI_instructions.pdf
@@ -454,12 +454,12 @@ foreach(f ${tutorials})
 endforeach(f ${tutorials})
 
 # Install the ninjafoam data
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
 
 # We need the splash screen for pdf output
-install(FILES ${CMAKE_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja)
-install(FILES ${CMAKE_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
-install(FILES ${CMAKE_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
+install(FILES ${PROJECT_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja)
+install(FILES ${PROJECT_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
+install(FILES ${PROJECT_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
 
 set(ZIPFILES "")
 
@@ -472,14 +472,14 @@ if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
         message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
-    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/gui")
-    file(COPY "${CMAKE_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${CMAKE_BINARY_DIR}/src/cli")
+    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/gui")
+    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
 # CPack related scripting
 include(InstallRequiredSystemLibraries)
 set(CPACK_NSIS_PACKAGE_NAME ${WINDNINJA_VERSION_NAME})
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 # version
 set(CPACK_VERSION_MAJOR ${VER_MAJ})
 set(CPACK_VERSION_MINOR ${VER_MIN})
@@ -492,7 +492,7 @@ set(CPACK_PACKAGE_INSTALL_DIRECTORY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
 CMAKE_POLICY(POP)
 set(CPACK_NSIS_DISPLAY_NAME "WindNinja\\\\${WINDNINJA_VERSION_NAME}")
-set(CPACK_NSIS_INSTALLED_ICON_NAME "${CMAKE_SOURCE_DIR}/images/icons/wn-desktop.ico")
+set(CPACK_NSIS_INSTALLED_ICON_NAME "${PROJECT_SOURCE_DIR}/images/icons/wn-desktop.ico")
 
 set(CPACK_CREATE_DESKTOP_LINKS WindNinja)
 set(CPACK_NSIS_MODifY_PATH WindNinja)

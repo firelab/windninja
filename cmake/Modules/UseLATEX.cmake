@@ -901,7 +901,7 @@ FUNCTION(LATEX_COPY_INPUT_FILE file)
         )
       ADD_CUSTOM_COMMAND(OUTPUT ${output_dir}/${file}
         COMMAND ${CMAKE_COMMAND}
-        ARGS ${CMAKE_BINARY_DIR}
+        ARGS ${PROJECT_BINARY_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file}
         )
     ELSE (use_config)
