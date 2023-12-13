@@ -31,10 +31,10 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
 
 if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
+                  ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
 else(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
+                  ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif(WIN32 OR APPLE)
 
 set(TEST_SOURCES test_main.cpp
@@ -320,22 +320,22 @@ if(RUN_CFG_TESTS)
     message(STATUS "Generating cli tests...")
     file(GLOB cfgtests ${PROJECT_SOURCE_DIR}/autotest/config/pass/*.cfg)
     message(STATUS "GLOB: ${cfgtests}")
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config)
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass)
     foreach(cfgtest ${cfgtests})
         get_filename_component(base ${cfgtest} NAME_WE)
-        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
-        file(COPY ${cfgtest} DESTINATION ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
-        message(STATUS "COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
-        execute_process(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
+        file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
+        file(COPY ${cfgtest} DESTINATION ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
+        message(STATUS "COMMAND ${PROJECT_BINARY_DIR}/autotest/pc ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
+        execute_process(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
                                 OUTPUT_VARIABLE ELEV_FILE
                                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(STRIP ${ELEV_FILE} ELEV_FILE)
         file(COPY ${PROJECT_SOURCE_DIR}/data/${ELEV_FILE} DESTINATION
-             ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+             ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
         message(STATUS "Copying elevation file: ${ELEV_FILE}")
-        add_test(NAME cfg_${base} COMMAND ${CMAKE_BINARY_DIR}/src/cli/WindNinja_cli ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
-                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        add_test(NAME cfg_${base} COMMAND ${PROJECT_BINARY_DIR}/src/cli/WindNinja_cli ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
+                 WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
         set_tests_properties(cfg_${base} PROPERTIES ENVIRONMENT
                              "WINDNINJA_DATA=${PROJECT_SOURCE_DIR}/data")
         message(STATUS "Adding CLI test cfg_${base} for ${cfgtest}")
