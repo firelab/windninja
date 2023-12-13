@@ -43,6 +43,10 @@ else(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif(WIN32 OR APPLE)
 
+if (UNIX AND NOT APPLE)
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+endif()
+
 add_executable(WindNinja_cli cmake_cli.cpp)
 
 target_link_libraries(WindNinja_cli ${LINK_LIBS})
