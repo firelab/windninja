@@ -28,6 +28,8 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 set(STL_SOURCES convert_output.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/KmlVector.cpp
