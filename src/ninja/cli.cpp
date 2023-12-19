@@ -215,7 +215,7 @@ int windNinjaCLI(int argc, char* argv[])
         po::options_description config("Simulation options");
         config.add_options()
                 ("num_threads", po::value<int>()->default_value(1), "number of threads to use during simulation")
-                ("elevation_file", po::value<std::string>(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
+                ("elevation_file", po::value<std::string>()->required(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
                 ("fetch_elevation", po::value<std::string>(), "download an elevation file from an internet server and save to path/filename")
                 ("north", po::value<double>(), "north extent of elevation file bounding box to download")
                 ("east", po::value<double>(), "east extent of elevation file bounding box to download")
@@ -227,7 +227,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("y_buffer", po::value<double>(), "y buffer of elevation domain to download (distance in north-south direction from center to edge of domain)")
                 ("buffer_units", po::value<std::string>()->default_value("miles"), "units for x_buffer and y_buffer of  elevation file to download (kilometers, miles)")
                 ("elevation_source", po::value<std::string>()->default_value("us_srtm"), osSurfaceSources.c_str())
-                ("initialization_method", po::value<std::string>()/*->required()*/, "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
+                ("initialization_method", po::value<std::string>()->required(), "initialization method (domainAverageInitialization, pointInitialization, wxModelInitialization)")
                 ("time_zone", po::value<std::string>(), "time zone (common choices are: America/New_York, America/Chicago, America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices are listed in date_time_zonespec.csv)")
                 ("wx_model_type", po::value<std::string>(), osAvailableWx.c_str() )
                 ("forecast_duration", po::value<int>(), "forecast duration to download (in hours)")
@@ -268,7 +268,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_wx_station_csv",po::value<bool>()->default_value(false),"point initialization: write a csv of the interpolated weather data (true,false)")
                 ("input_wind_height", po::value<double>(), "height of input wind speed above the vegetation")
                 ("units_input_wind_height", po::value<std::string>(), "units of input wind height (ft, m)")
-                ("output_wind_height", po::value<double>()/*->required()*/, "height of output wind speed above the vegetation")
+                ("output_wind_height", po::value<double>()->required(), "height of output wind speed above the vegetation")
                 ("units_output_wind_height", po::value<std::string>(), "units of output wind height (ft, m)")
                 ("vegetation", po::value<std::string>(), "dominant type of vegetation (grass, brush, trees)")
                 ("diurnal_winds", po::value<bool>()->default_value(false), "include diurnal winds in simulation (true, false)")
@@ -881,6 +881,8 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
+    
+
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("pointInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("wxModelInitialization") &&
@@ -1043,6 +1045,11 @@ int windNinjaCLI(int argc, char* argv[])
             //Check to be sure that the user specifies right info
             conflicting_options(vm, "fetch_station", "wx_station_filename");
             option_dependency(vm, "fetch_metadata","metadata_filename");
+            if (vm["fetch_type"].as<string>()=="stid")//If fetch_type is sitd, require wx_station_filename
+                { 
+                    option_dependency(vm, "fetch_type","wx_station_filename");
+
+                }
 
             std::vector<boost::posix_time::ptime> timeList;
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy

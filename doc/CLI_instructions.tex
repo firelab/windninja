@@ -43,7 +43,7 @@
     \includegraphics[scale=0.75]{cli-0}
     \vfill
   	{\Huge
-	  3/25/2020 %Date Last Edited
+	  12/13/2023 %Date Last Edited
   	}
     \vfill
 \end{titlepage}
@@ -72,7 +72,7 @@ A cli run must be started from a terminal (or “spawned” or something equival
 \section*{Available Options}
 The available options with descriptions can be viewed by typing:
 \begin{itemize}
-\item[]\texttt{WindNinja\_cli.exe}
+\item[]\texttt{WindNinja\_cli} 
 \end{itemize}
 (note that it is optional to add the file extension “.exe” to “WindNinja\_cli”)
 A list of the available options should be shown and look similar to this:
@@ -84,7 +84,7 @@ A list of the available options should be shown and look similar to this:
 
 Options can be used in any order.  Each option has an associated value that can be a string, integer, or float value depending on the option.  Some of the options have a default value that is used if the option is not specified.  The default value is shown in parenthesis (for example,  the \texttt{--num\_threads} option shown above is defaulted to 1 thread).
 
-Depending on the type of run you are trying to do, certain options are required and some are mutually exclusive (ie. can't both be specified at the same time).  If you specify two mutually exclusive options, or don't specify a required option, a message with information on what you did wrong should be shown.  There are too many possible combinations of options to describe here.  Instead, some example configuration files have been included with the installation to show which options to specify for common types of runs.  We recommend starting with one of these example configuration files and modifying them for your purpose.
+Depending on the type of run you are trying to do, certain options are required and some are mutually exclusive (ie. can't both be specified at the same time).  If you specify two mutually exclusive options, or don't specify a required option, a message with information on what you did wrong should be shown.  There are too many possible combinations of options to describe here, but there is a list of the most basic input requirements for each type of run at the end of this document. Some example configuration files have been included with the installation to show which options to specify for common types of runs.  We recommend starting with one of these example configuration files and modifying them for your purpose.
 \newpage
 \section*{Starting a run using the terminal}
 The terminal can be used to start a run by simply typing “WindNinja\_cli” followed by the option/value pairs separated by a space or “=” like this:
@@ -93,7 +93,7 @@ The terminal can be used to start a run by simply typing “WindNinja\_cli” fo
 \end{itemize}
 
 \section*{Starting a run using a configuration file}
-The configuration files are just text files that list the options and associated values.  The example configuration files provided with the normal WindNinja installation are located in the installation's \say{\textit{etc/windninja/example-files}} directory.  The files are:
+The configuration files are just text files that list the options and associated values.  The example configuration files provided with the normal WindNinja installation are located in the installation's \say{\textit{etc/windninja/example-files}} directory for a Windows install, or the \say{\textit{windninja/data}} directory for a Linux build.  The files are:
 \begin{itemize}
 \item[] \texttt{cli\_domainAverage.cfg}
 \item[] \texttt{cli\_domainAverage\_diurnal.cfg}
@@ -182,5 +182,66 @@ As an example of this, you could use the configuration file shown above but “o
 %
 %where \say{\texttt{XXXX}} represents the rest of the path to the file.
 %Notice the \say{\texttt{@}} character preceding the response file name, which identifies it as a response file.
+
+
+
+\section*{Types of Runs and Required Input Options}
+
+This section outlines the 3 different initialization types for WindNinja runs, along with the most basic required inputs for each type of run. These options can be set in a .cfg file, or specified in the terminal as detiled above. Additional options can be viewed by typing: 
+\begin{itemize}
+\item[]\texttt{WindNinja\_cli} 
+\end{itemize}
+
+
+
+\subsection*{Required inputs for ALL runs}
+
+\textbf{Required Inputs:}
+\begin{itemize}
+    \item \texttt{elevation\_file}
+    \item \texttt{initialization\_method}
+    \item \texttt{output\_wind\_height}
+    \item \texttt{units\_output\_wind\_height}
+    \item \texttt{vegetation}
+    \item Either \texttt{mesh\_resolution} or \texttt{mesh\_choice}
+    \item \texttt{units\_mesh\_resolution} - Required if \texttt{mesh\_resolution} is used
+\end{itemize}
+
+\subsection*{Point Initialization}
+If the fetch type option is included in the Point Initialization run, additional inputs are required:
+
+\begin{itemize}
+    \item If \texttt{fetch\_type} = `Stid' (station ID):
+        \begin{itemize}
+            \item \texttt{wx\_station\_filename}
+        \end{itemize}
+                       
+    \item If \texttt{fetch\_type} = `bbox' (bounding box):
+        \begin{itemize}
+            \item \texttt{fetch\_station} - Should be set to true
+        \end{itemize}
+\end{itemize}
+
+
+
+
+\subsection*{Domain Average Initialization}
+
+\textbf{Required Inputs:}
+\begin{itemize}
+    \item \texttt{input\_speed}
+    \item \texttt{input\_units} 
+    \item \texttt{input\_direction}
+    \item \texttt{input\_wind\_height}
+    \item \texttt{units\_input\_wind\_height} 
+
+
+\subsection*{Weather Model Initialization}
+
+\textbf{Required Inputs:}
+\begin{itemize}
+    \item \texttt{wx\_model\_type} - Type of the weather model (e.g., `NCEP-NAM-12km-SURFACE`)
+    \item \texttt{forecast\_duration} 
+
 
 \end{document}
