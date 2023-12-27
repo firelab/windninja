@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+WindNinja 3.10.0
+---------------
+- Update CLI documentation and example cfg files (#415) 
+
+- Fix issue related to station fetching that was causing point initialization runs to fail (#506) 
+
+- Fix several small miscellaneous issues in the point initialization method (#420)
+
+- Check dependencies/conflicts and improve error messages in the CLI (#238)
+
 WindNinja 3.9.0
 ---------------
 - Re-enable ability to download DEM from point and radius or bbox coordinates (#336)
