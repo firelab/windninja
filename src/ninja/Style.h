@@ -40,7 +40,7 @@ public:
 	~Style();
 
 	bool printStyle();
-	bool writeStyle(FILE *fileOut);
+	bool writeStyle(VSILFILE *fileOut);
     std::string asOGRStyleString();
 
 private:
