@@ -71,7 +71,16 @@ void ninja::readInputFile()
     if(poDataset->GetProjectionRef() != NULL)
     {
         GDALProjRef = poDataset->GetProjectionRef();
-        input.dem.set_prjString(GDALProjRef);
+        
+        //ESRI and OGC WKT are not always identical. Convert the projection string to ESRI WKT to ensure proper opening of 
+        //our output products in ESRI systems. ESRI WKT should be handled by most other GIS systems as well.
+        OGRSpatialReference spatial_ref;
+        char* esri_wkt;
+        spatial_ref.importFromWkt(GDALProjRef.c_str());
+        spatial_ref.morphToESRI();
+        spatial_ref.exportToWkt(&esri_wkt);
+
+        input.dem.set_prjString(esri_wkt);
     }
 
     if (GDALDriverName == "LCP")
@@ -91,6 +100,7 @@ void ninja::readInputFile()
         if( input.dem.checkForNoDataValues() )
             throw std::runtime_error("NO_DATA values found in elevation file.");
     }
+
 }
 
 /**
