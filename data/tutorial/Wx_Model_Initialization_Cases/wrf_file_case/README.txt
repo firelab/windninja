@@ -3,18 +3,17 @@ WindNinja WRF Configuration File README
 This document provides guidance on the use of a specific WindNinja CLI (Command Line Interface) configuration file. The file is tailored for initializing WindNinja simulations using WRF (Weather Research and Forecasting model) data.
 
 
-WRF FILE DOWNLOAD
-
-In order to run this test case, you must download the .nc file hosted here: https://ninjastorm.firelab.org/data/ and include the path of the downloaded file in the .cfg file.
 
 
-RUNNING THE CFG FILE
+RUNNING THE TEST CASE
+(Note: python 3 is or later is required to run the script)
 
-To run, navigate to the location of the WindNinja_CLI.exe and run the following command:
 
-../../data/tutorial/wrf_file_case/bigbutte_wrf_initialization.cfg
+To run this test case, execute the following command in the wrf_case directory:
 
-where ../../ represents the appropriate file path to the data directory. 
+python wrf_case.py
+
+The output will appear in the stability_case directory. 
 
 
 
@@ -45,7 +44,7 @@ vegetation: Sets the type of vegetation cover for the simulation.
 --
 mesh_choice: Determines the resolution of the computational mesh. (A 'fine' mesh means more detailed simulations, but requires more computational power.)
 --
-write_goog_output: If set to true, WindNInja will generate output files that can be viewed in Google Earth.
+write_goog_output: If set to true, WindNinja will generate output files that can be viewed in Google Earth.
 --
 write_shapefile_output: When true, shapefile outputs of the simulation results will be generated.
 --

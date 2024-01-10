@@ -6,7 +6,6 @@ import shutil
 
 def download_file(url, local_filename):
     try:
-           # Create an unverified SSL context
         ssl_context = ssl._create_unverified_context()
 
         with urllib.request.urlopen(url, context=ssl_context) as response, open(local_filename, 'wb') as out_file:
@@ -25,11 +24,10 @@ def download_file(url, local_filename):
 
 
 def run_windninja(cfg_file_path):
-    # Path to the WindNinja executable
-    windninja_executable_path = '../../../../build/src/cli/WindNinja_cli'
+    
 
     # Command to run
-    command = [windninja_executable_path, cfg_file_path]
+    command = ["WindNinja_cli", cfg_file_path]
 
     try:
         # Run the command
@@ -81,11 +79,14 @@ if __name__ == "__main__":
     # Download the file
     download_file(file_url, local_filename)
 
-    # Example usage
-    source_dir = '../../'
+    data_dir = os.environ.get("WINDNINJA_DATA")
+
+    if not data_dir:
+        raise ValueError("WINDNINJA_DATA environment variable not set. Please set it to the WindNinja data directory.")
     destination_dir = './'
+    
     files_to_copy = ['big_butte.tif']
 
-    copy_files(source_dir, destination_dir, files_to_copy)
+    copy_files(data_dir, destination_dir, files_to_copy)
 
     run_windninja("./bigbutte_wrf_initialization.cfg")
