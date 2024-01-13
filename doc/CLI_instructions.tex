@@ -185,6 +185,10 @@ As an example of this, you could use the configuration file shown above but “o
 
 \section*{Tutorial Cases}
 
+Tutorial cases can be found at the following location: 
+
+\href{https://github.com/firelab/windninja/tree/master/data/tutorial}{https://github.com/firelab/windninja/tree/master/data/tutorial}.
+
 The WindNinja tutorials provide a practical way to learn how to effectively use the WindNinja Command Line Interface. Cases are provided for all initialization methods. These tutorials are easy to run and provide instructions and explanations for various  use cases.
 
 \subsection*{   Locating the Tutorial Directory}
@@ -213,6 +217,20 @@ This section outlines the 3 different initialization types for WindNinja runs, a
     \item \texttt{units\_mesh\_resolution} - Required if \texttt{mesh\_resolution} is used
 \end{itemize}
 
+
+
+
+\subsection*{Domain Average Initialization}
+
+\textbf{Required Inputs:}
+\begin{itemize}
+    \item \texttt{input\_speed}
+    \item \texttt{input\_units} 
+    \item \texttt{input\_direction}
+    \item \texttt{input\_wind\_height}
+    \item \texttt{units\_input\_wind\_height} 
+\end{itemize}
+
 \subsection*{Point Initialization}
 If the fetch type option is included in the Point Initialization run, additional inputs are required:
 
@@ -229,17 +247,7 @@ If the fetch type option is included in the Point Initialization run, additional
 \end{itemize}
 
 
-
-
-\subsection*{Domain Average Initialization}
-
-\textbf{Required Inputs:}
-\begin{itemize}
-    \item \texttt{input\_speed}
-    \item \texttt{input\_units} 
-    \item \texttt{input\_direction}
-    \item \texttt{input\_wind\_height}
-    \item \texttt{units\_input\_wind\_height} 
+ 
 
 
 \subsection*{Weather Model Initialization}
