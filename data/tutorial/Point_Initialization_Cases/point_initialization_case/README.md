@@ -1,0 +1,16 @@
+- `num_threads`: Number of threads for parallel processing.
+- `elevation_file`: Path to the elevation data file.
+- `initialization_method`: Initialization method.
+- `match_points`: If 'true', matches points for initialization.
+- `wx_station_filename`: Path to the weather station data file.
+- `write_wx_station_kml`: If 'true', writes KML file for weather stations.
+- `fetch_type`: Type of data fetching method. Use 'bbox' for a specific geographic bounding box or 'stid' for specific weather station IDs.
+- `output_wind_height`: Height at which wind output will be generated.
+- `units_output_wind_height`: Units for the output wind height.
+- `vegetation`: Type of vegetation.
+- `mesh_resolution`: Mesh resolution.
+- `units_mesh_resolution`: Units for the mesh resolution.
+- `write_goog_output`: If 'true', generates Google Earth output.
+- `write_shapefile_output`: If 'true', generates Shapefile output.
+- `write_ascii_output`: If 'true', generates ASCII output.
+- `write_farsite_atm`: If 'true', enables writing FARSITE atmosphere files.
