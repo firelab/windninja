@@ -44,7 +44,7 @@
     \includegraphics[scale=0.35]							{title_fig}
     \vfill
   	{\Huge
-	  3/25/2020 %Date Last Edited
+	  1/15/2024%Date Last Edited
   	}
     \vfill
 \end{titlepage}
@@ -68,7 +68,10 @@ For each simulation, WindNinja reads in all of your weather stations and fills t
 
 \section{Getting Started}
 
-\textbf{\color{red}Start WindNinja by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\ }
+\textbf{\color{red}Windows: Start WindNinja on  by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\  }
+
+\textbf{\color{red}Linux: Start WindNinja by running the command 'WindNinja' in the terminal }
+
 
 \section{Input}
 \subsection{Surface Input}
@@ -79,6 +82,8 @@ For each simulation, WindNinja reads in all of your weather stations and fills t
 In the input panel, load an elevation file or download one.}
 
 If you are just practicing, you can use an elevation file provided in the WindNinja installation.  They can be found by going to Start WindNinja by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\ $\Rightarrow$Example Files  In the file browser that opens, you will see the elevation file called “missoula\_valley.tif”.
+
+If you are using Linux, this tif file is located in the data subdirectory of your WindNinja installation. The path to this file will be .../windninja/data, where '...' represents the path to your WindNinja installation
 
 \textbf{\color{red}Select the dominant vegetation type, mesh resolution, and time zone.}
 
@@ -137,6 +142,12 @@ The folder name containing the downloaded weather stations follows a specific fo
 	\includegraphics[scale=0.45]{FolderDiag_1}
 \end{figure}
 
+\begin{note}
+\textcolor{red}{\textbf{NOTE: WindNinja no longer includes a timezone code as part of the file naming convention. \\ \\This file would now be named
+\texttt{WXSTATIONS-2018-06-21-1339-2018-06-22-1339-missoula\_valley}}}
+\end{note}
+
+
 All of the weather station files are stored in this folder. Each file inside the folder is a unique weather station, and naming follows a similar naming format. For example:
 
 \begin{figure}[H]
@@ -145,7 +156,12 @@ All of the weather station files are stored in this folder. Each file inside the
 	\includegraphics[scale=0.45]{FileDiag_1}
 \end{figure}
 
-\textbf{\color{red}Select the desired weather stations by left clicking \underline{each} file you want to use.}
+\begin{note}
+\textcolor{red}{\textbf{ This file would now be named
+\texttt{PNTM8-2018-06-21\_1339-2018-22\_1339-2.csv}}}
+\end{note}
+
+\textbf{\color{red}\\ \\Select the desired weather stations by left clicking \underline{each} file you want to use.}
 
 \begin{figure}[H]
 	\centering
@@ -287,7 +303,7 @@ In the graphical user interface this is accomplished by going to Tools $\Rightar
 	\includegraphics[scale=1]{api-config}
 \end{figure}
 
-This concludes \textbf{Windinja Tutorial 3: Point Initialization}
+This concludes \textbf{WindNinja Tutorial 3: Point Initialization}
 
 \section*{Acknowledgements}
 The incorporation of weather station downloads in WindNinja was made possible in part due to the data made available by \href{https://synopticlabs.org/api/mesonet/}{MesoWest/SynopticLabs} though the Mesonet API.
