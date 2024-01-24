@@ -53,7 +53,8 @@ void ninja::readInputFile()
 {
     GDALDataset *poDataset;
 
-    std::string GDALDriverName, GDALDriverLongName, GDALProjRef;
+    std::string GDALDriverName, GDALDriverLongName;
+    const char *pszPrj;
 
     std::string ext;
 
@@ -70,17 +71,17 @@ void ninja::readInputFile()
     //check for the prj info...
     if(poDataset->GetProjectionRef() != NULL)
     {
-        GDALProjRef = poDataset->GetProjectionRef();
+        pszPrj = (char*)poDataset->GetProjectionRef();
         
         //ESRI and OGC WKT are not always identical. Convert the projection string to ESRI WKT to ensure proper opening of 
         //our output products in ESRI systems. ESRI WKT should be handled by most other GIS systems as well.
         OGRSpatialReference spatial_ref;
-        char* esri_wkt;
-        spatial_ref.importFromWkt((char**)GDALProjRef.c_str());
+        char* pszPrjEsri;
+        spatial_ref.importFromWkt(&pszPrj);
         spatial_ref.morphToESRI();
-        spatial_ref.exportToWkt(&esri_wkt);
+        spatial_ref.exportToWkt(&pszPrjEsri);
 
-        input.dem.set_prjString(esri_wkt);
+        input.dem.set_prjString(pszPrjEsri);
     }
 
     if (GDALDriverName == "LCP")
