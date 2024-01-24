@@ -54,7 +54,7 @@ void ninja::readInputFile()
     GDALDataset *poDataset;
 
     std::string GDALDriverName, GDALDriverLongName;
-    const char *pszPrj;
+    char *pszPrj;
 
     std::string ext;
 
