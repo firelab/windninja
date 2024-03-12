@@ -434,7 +434,7 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
 
     char *data;
     VSILFILE *fin;
-    fin = VSIFOpen( pszTemplateFile, "r" );
+    fin = VSIFOpenL( pszTemplateFile, "r" );
 
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
@@ -652,8 +652,8 @@ void NinjaFoam::WriteFoamFiles()
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
             pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
-            fin = VSIFOpen( pszInput, "r" );
-            fout = VSIFOpen( pszOutput, "w" );
+            fin = VSIFOpenL( pszInput, "r" );
+            fout = VSIFOpenL( pszOutput, "w" );
 
             if( osFullPath.find("0") == 0){
                 WriteZeroFiles(fin, fout, pszFilename);
