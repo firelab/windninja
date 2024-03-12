@@ -1758,10 +1758,10 @@ int NinjaFoam::SanitizeOutput()
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+            fin = VSIFOpenL(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
-            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
+            fin2 = VSIFOpenL(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
             break;
