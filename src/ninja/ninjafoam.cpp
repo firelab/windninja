@@ -434,7 +434,7 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
 
     char *data;
     VSILFILE *fin;
-    fin = VSIFOpenL( pszTemplateFile, "r" );
+    fin = VSIFOpen( pszTemplateFile, "r" );
 
     vsi_l_offset offset;
     VSIFSeekL(fin, 0, SEEK_END);
@@ -652,8 +652,8 @@ void NinjaFoam::WriteFoamFiles()
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
             pszOutput = CPLFormFilename(pszFoamPath, osFullPath.c_str(), "");
 
-            fin = VSIFOpenL( pszInput, "r" );
-            fout = VSIFOpenL( pszOutput, "w" );
+            fin = VSIFOpen( pszInput, "r" );
+            fout = VSIFOpen( pszOutput, "w" );
 
             if( osFullPath.find("0") == 0){
                 WriteZeroFiles(fin, fout, pszFilename);
@@ -982,8 +982,8 @@ void NinjaFoam::writeBlockMesh()
     VSILFILE *fin;
     VSILFILE *fout;
 
-    fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
+    fin = VSIFOpen( pszInput, "r" );
+    fout = VSIFOpen( pszOutput, "w" );
 
     char *data;
 
@@ -1063,8 +1063,8 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
     pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
 
-    fin = VSIFOpenL( pszInput, "r" );
-    fout = VSIFOpenL( pszOutput, "w" );
+    fin = VSIFOpen( pszInput, "r" );
+    fout = VSIFOpen( pszOutput, "w" );
 
     char *data;
 
@@ -1735,7 +1735,9 @@ int NinjaFoam::SanitizeOutput()
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
-    VSILFILE *fin, *fin2;
+    FILE *fin, *fin2;
+    //VSILFILE *fin, *fin2;
+    //FILE *fout, *fvrt;
     VSILFILE *fout, *fvrt;
     char buf[512];
     char buf2[512];
@@ -1758,10 +1760,10 @@ int NinjaFoam::SanitizeOutput()
     for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
         if(std::string(papszOutputSurfacePath[i]) != "." &&
            std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpenL(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
+            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
-            fin2 = VSIFOpenL(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
+            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
                         pszFoamPath, 
                         papszOutputSurfacePath[i]), "r");
             break;
@@ -1771,8 +1773,8 @@ int NinjaFoam::SanitizeOutput()
         }
     }
 
-    fout = VSIFOpenL( pszMem, "w" );
-    fvrt = VSIFOpenL( pszVrtMem, "w" );
+    fout = VSIFOpen( pszMem, "w" );
+    fvrt = VSIFOpen( pszVrtMem, "w" );
     if( !fin )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
@@ -2681,7 +2683,7 @@ void NinjaFoam::UpdateExistingCase()
     //set meshResolution from log.ninja
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fin;
-    fin = VSIFOpenL(pszInput, "r");
+    fin = VSIFOpen(pszInput, "r");
 
     char *data;
 
@@ -2911,7 +2913,7 @@ void NinjaFoam::WriteNinjaLog()
     //write log.ninja to store info needed for reusing cases
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fout;
-    fout = VSIFOpenL(pszInput, "w");
+    fout = VSIFOpen(pszInput, "w");
     if( !fout ){
         throw std::runtime_error("Error writing log.ninja to case directory.");
     }
