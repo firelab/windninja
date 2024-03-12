@@ -982,8 +982,8 @@ void NinjaFoam::writeBlockMesh()
     VSILFILE *fin;
     VSILFILE *fout;
 
-    fin = VSIFOpen( pszInput, "r" );
-    fout = VSIFOpen( pszOutput, "w" );
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
 
     char *data;
 
@@ -1063,8 +1063,8 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
     pszOutput = CPLFormFilename(pszFoamPath, "0/pointDisplacement", "");
 
-    fin = VSIFOpen( pszInput, "r" );
-    fout = VSIFOpen( pszOutput, "w" );
+    fin = VSIFOpenL( pszInput, "r" );
+    fout = VSIFOpenL( pszOutput, "w" );
 
     char *data;
 
@@ -1773,8 +1773,8 @@ int NinjaFoam::SanitizeOutput()
         }
     }
 
-    fout = VSIFOpen( pszMem, "w" );
-    fvrt = VSIFOpen( pszVrtMem, "w" );
+    fout = VSIFOpenL( pszMem, "w" );
+    fvrt = VSIFOpenL( pszVrtMem, "w" );
     if( !fin )
     {
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
