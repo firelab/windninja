@@ -1735,7 +1735,7 @@ int NinjaFoam::SanitizeOutput()
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
-    FILE *fin, *fin2;
+    VSILFILE *fin, *fin2;
     VSILFILE *fout, *fvrt;
     char buf[512];
     char buf2[512];
