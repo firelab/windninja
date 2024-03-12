@@ -1795,9 +1795,9 @@ int NinjaFoam::SanitizeOutput()
     }
     if( !fvrt )
     {
-        VSIFClose( fin );
-        VSIFClose( fin2 );
-        VSIFClose( fout );
+        VSIFCloseL( fin );
+        VSIFCloseL( fin2 );
+        VSIFCloseL( fout );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
                                                 "writing." );
         return NINJA_E_FILE_IO;
