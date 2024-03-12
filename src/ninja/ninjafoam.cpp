@@ -1787,8 +1787,8 @@ int NinjaFoam::SanitizeOutput()
     }
     if( !fout )
     {
-        VSIFClose( fin );
-        VSIFClose( fin2 );
+        VSIFCloseL( fin );
+        VSIFCloseL( fin2 );
         CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
                                                 "writing." );
         return NINJA_E_FILE_IO;

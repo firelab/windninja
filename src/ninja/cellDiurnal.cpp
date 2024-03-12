@@ -562,6 +562,7 @@ void cellDiurnal::compute_S()
                     ((air.get_rho(airTemp) * air.get_cSubP(airTemp) * airTemp) *
                      (Cd_downslope + entrainment_coeff_downslope))), 1.0/3.0) * 
                     std::pow((1.0 - std::pow(2.71828, -1.0 * hillValleyDist / Le)), 1.0/3.0);
+        S = S * 3.0; //incrase it for testing
     }
 }
 
