@@ -2683,7 +2683,7 @@ void NinjaFoam::UpdateExistingCase()
     //set meshResolution from log.ninja
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fin;
-    fin = VSIFOpen(pszInput, "r");
+    fin = VSIFOpenL(pszInput, "r");
 
     char *data;
 
@@ -2913,7 +2913,7 @@ void NinjaFoam::WriteNinjaLog()
     //write log.ninja to store info needed for reusing cases
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fout;
-    fout = VSIFOpen(pszInput, "w");
+    fout = VSIFOpenL(pszInput, "w");
     if( !fout ){
         throw std::runtime_error("Error writing log.ninja to case directory.");
     }
