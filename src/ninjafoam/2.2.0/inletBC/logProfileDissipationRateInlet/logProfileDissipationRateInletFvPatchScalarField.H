@@ -59,6 +59,7 @@ class logProfileDissipationRateInletFvPatchScalarField
         scalar maxValue_;	 //Scalar Vmax
 
 	scalar UfreeStream_; 	// Free Stream Velocity
+	vector uDirection_;
 	scalar inputWindHeight_Veg_; // Input wind Height on top of Vegetation
 	scalar z0_;    // Roughness Parameters
 	scalar Rd_; //Zero plane displacement height

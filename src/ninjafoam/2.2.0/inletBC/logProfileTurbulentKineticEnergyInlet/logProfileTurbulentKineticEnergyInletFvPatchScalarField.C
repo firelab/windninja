@@ -46,6 +46,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 :
     fixedValueFvPatchScalarField(p, iF),
     UfreeStream_(0.0),
+    uDirection_(0.0,0.0,0.0),
     inputWindHeight_Veg_(0),
     z0_(0),
     Rd_(0),
@@ -64,6 +65,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
     UfreeStream_(ptf.UfreeStream_),
+    uDirection_(ptf.uDirection_),
     inputWindHeight_Veg_(ptf.inputWindHeight_Veg_),
     z0_(ptf.z0_),
     Rd_(ptf.Rd_),
@@ -81,6 +83,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 :
     fixedValueFvPatchScalarField(p, iF),
     UfreeStream_(readScalar(dict.lookup("UfreeStream"))),
+    uDirection_(dict.lookup("uDirection")),
     inputWindHeight_Veg_(readScalar(dict.lookup("inputWindHeight_Veg"))),
     z0_(readScalar(dict.lookup("z0"))),
     Rd_(readScalar(dict.lookup("Rd"))),
@@ -173,6 +176,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField::logProfileTurbulentKine
 :
     fixedValueFvPatchScalarField(fcvpvf, iF),
     UfreeStream_(fcvpvf.UfreeStream_),
+    uDirection_(fcvpvf.uDirection_),
     inputWindHeight_Veg_(fcvpvf.inputWindHeight_Veg_),
     z0_(fcvpvf.z0_),
     Rd_(fcvpvf.Rd_),
@@ -214,6 +218,8 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::write(Ostream& os)
     fvPatchScalarField::write(os);
     os.writeKeyword("UfreeStream")
         << UfreeStream_ << token::END_STATEMENT << nl;
+    os.writeKeyword("uDirection")
+        << uDirection_ << token::END_STATEMENT << nl;
     os.writeKeyword("inputWindHeight_Veg")
         << inputWindHeight_Veg_ << token::END_STATEMENT << nl;
     os.writeKeyword("z0")

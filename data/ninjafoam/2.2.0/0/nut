@@ -44,7 +44,7 @@ boundaryField
     minZ
     {
         type            nutkAtmRoughWallFunction;
-        z0              $z0$;
+        z0              uniform $z0$;
         value           uniform 0.1;    
     }
     maxZ
