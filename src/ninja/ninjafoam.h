@@ -83,6 +83,8 @@ public:
 
     AsciiGrid<double> TurbulenceGrid;
 private:
+    std::string foamVersion;
+    
     static const char *pszFoamPath;
 
     /* OpenFOAM case setup */
