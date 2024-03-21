@@ -125,7 +125,7 @@ double NinjaFoam::get_meshResolution()
 bool NinjaFoam::simulate_wind()
 {
     foamVersion = CPLGetConfigOption("WM_PROJECT_VERSION", "");
-    CPLDebug("NINJAFOAM", CPLSPrintf("foamVersion = \"%s\"",foamVersion));
+    CPLDebug("NINJAFOAM", CPLSPrintf("foamVersion = \"%s\"",foamVersion.c_str()));
     
     if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
     {
