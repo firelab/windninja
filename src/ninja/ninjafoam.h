@@ -173,6 +173,19 @@ private:
     void SetOutputResolution();
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
+    
+    void writeMassMeshVtkOutput();
+    void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                              const double dem_xllCorner, const double dem_yllCorner, 
+                              const int ncols, const int nrows, const int nlayers);
+    void runProbeSample();
+    void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                         const double dem_xllCorner, const double dem_yllCorner, 
+                         const int ncols, const int nrows, const int nlayers, 
+                         wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void fillEmptyProbeVals(const wn_3dArray& z, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;
