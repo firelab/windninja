@@ -2682,9 +2682,12 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
                                       const int ncols, const int nrows, const int nlayers)
 {
     
-    //const char *probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
-    const char *probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
-    
+    const char *probes_filename;
+    if ( foamVersion == "2.2.0" ) {
+        probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
+    } else {
+        probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
+    }
     
     FILE *fout;
     
@@ -2693,26 +2696,50 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
         throw std::runtime_error("probes_filename cannot be opened for writing.");
     
     // Write header stuff
-    fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
-    fprintf(fout, "  =========                 |\n");
-    fprintf(fout, "  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox\n");
-    fprintf(fout, "   \\\\    /   O peration     | Website:  https://openfoam.org\n");
-    fprintf(fout, "    \\\\  /    A nd           | Version:  8\n");
-    fprintf(fout, "     \\\\/     M anipulation  |\n");
-    fprintf(fout, "-------------------------------------------------------------------------------\n");
-    fprintf(fout, "Description\n");
-    fprintf(fout, "    Writes out values of fields interpolated to a specified list of points.\n");
-    fprintf(fout, "    \n");
-    fprintf(fout, "    Found this in /opt/openfoam8/etc/caseDicts/postProcessing/probes/\n");
-    fprintf(fout, "    I was originally going to try to use probes and probes.cfg, of type \"probe\", but that wouldn't do interpolation, \n");
-    fprintf(fout, "    so this file came from combining the internalProbes and internalProbes.cfg files, which are of type \"sets\", \n");
-    fprintf(fout, "    which does the interpolation to the desired points\n");
-    fprintf(fout, "    Looks like the base code for this \"points\" set of type \"sets\" is within /opt/openfoam8/src/sampling/sampledSet/points/\n");
-    fprintf(fout, "    \n");
-    fprintf(fout, "    run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
-    fprintf(fout, "    simpleFoam -postProcess -func probes -latestTime\n");
-    fprintf(fout, "    \n");
-    fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
+    if ( foamVersion == "2.2.0" ) {
+        
+        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
+        fprintf(fout, "| =========                 |                                                 |\n");
+        fprintf(fout, "| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n");
+        fprintf(fout, "|  \\\\    /   O peration     | Version:  2.2.0                                 |\n");
+        fprintf(fout, "|   \\\\  /    A nd           | Web:      www.OpenFOAM.org                      |\n");
+        fprintf(fout, "|    \\\\/     M anipulation  |                                                 |\n");
+        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
+        fprintf(fout, "FoamFile\n");
+        fprintf(fout, "{\n");
+        fprintf(fout, "    version     2.0;\n");
+        fprintf(fout, "    format      ascii;\n");
+        fprintf(fout, "    class       dictionary;\n");
+        fprintf(fout, "    object      sampleDict;\n");
+        fprintf(fout, "}\n");
+        fprintf(fout, "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n");
+        fprintf(fout, "// run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
+        fprintf(fout, "//  sample -latestTime\n");
+        
+    } else {
+        
+        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
+        fprintf(fout, "  =========                 |\n");
+        fprintf(fout, "  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox\n");
+        fprintf(fout, "   \\\\    /   O peration     | Website:  https://openfoam.org\n");
+        fprintf(fout, "    \\\\  /    A nd           | Version:  8\n");
+        fprintf(fout, "     \\\\/     M anipulation  |\n");
+        fprintf(fout, "-------------------------------------------------------------------------------\n");
+        fprintf(fout, "Description\n");
+        fprintf(fout, "    Writes out values of fields interpolated to a specified list of points.\n");
+        fprintf(fout, "    \n");
+        fprintf(fout, "    Found this in /opt/openfoam8/etc/caseDicts/postProcessing/probes/\n");
+        fprintf(fout, "    I was originally going to try to use probes and probes.cfg, of type \"probe\", but that wouldn't do interpolation, \n");
+        fprintf(fout, "    so this file came from combining the internalProbes and internalProbes.cfg files, which are of type \"sets\", \n");
+        fprintf(fout, "    which does the interpolation to the desired points\n");
+        fprintf(fout, "    Looks like the base code for this \"points\" set of type \"sets\" is within /opt/openfoam8/src/sampling/sampledSet/points/\n");
+        fprintf(fout, "    \n");
+        fprintf(fout, "    run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
+        fprintf(fout, "    simpleFoam -postProcess -func probes -latestTime\n");
+        fprintf(fout, "    \n");
+        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
+        
+    }
     
     // Write file contents
     fprintf(fout, "\n");
@@ -2729,7 +2756,9 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "type            sets;\n");
-    fprintf(fout, "libs            (\"libsampling.so\");\n");
+    if ( foamVersion != "2.2.0" ) {
+        fprintf(fout, "libs            (\"libsampling.so\");\n");
+    }
     fprintf(fout, "\n");
     fprintf(fout, "writeControl    writeTime;\n");
     fprintf(fout, "\n");
@@ -2760,7 +2789,11 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "(\n");
     fprintf(fout, "    points\n");
     fprintf(fout, "    {\n");
-    fprintf(fout, "        type    points;\n");
+    if ( foamVersion == "2.2.0" ) {
+        fprintf(fout, "        type    cloud;\n");
+    } else {
+        fprintf(fout, "        type    points;\n");
+    }
     fprintf(fout, "        axis    xyz;\n");
     fprintf(fout, "        ordered yes;\n");
     fprintf(fout, "        points  $points;\n");
@@ -2780,6 +2813,8 @@ void NinjaFoam::runProbeSample()
 {
     int nRet = -1;
     
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.probeSample", ""), "w");
+    
     // increase write precision for this sample
     int oldPrecisionVal = 10;  // /data/ninjafoam/ files have this value set there
     int newPrecisionVal = 20;
@@ -2792,26 +2827,44 @@ void NinjaFoam::runProbeSample()
         CPLSPrintf("timePrecision   %d", oldPrecisionVal),
         CPLSPrintf("timePrecision   %d", newPrecisionVal));
     
-    #ifdef WIN32
-    const char *const papszArgv[] = { "sample", 
-                                      "-case",
-                                      pszFoamPath,
-                                      "-latestTime", 
-                                      NULL };
-    #else
-    const char *const papszArgv[] = { "simpleFoam", 
-                                      "-case",
-                                      pszFoamPath,
-                                      "-postProcess",
-                                      "-func",
-                                      "probes",
-                                      "-latestTime", 
-                                      NULL };
-    #endif
+    if ( foamVersion == "2.2.0" ) {
+        
+        // additional step to swap back and forth between sampleDicts
+        const char *pszInput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+        const char *pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict_surfaces", "");
+        CopyFile(pszInput2, pszOutput2);
+        pszInput2 = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
+        pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+        CopyFile(pszInput2, pszOutput2);
+        
+        const char *const papszArgv[] = { "sample", 
+                                          "-case",
+                                          pszFoamPath,
+                                          "-latestTime", 
+                                          NULL };
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        
+        // swap back to the original sampleDict names
+        pszInput2 = CPLFormFilename(pszFoamPath, "system/sampleDict_surfaces", "");
+        pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+        CopyFile(pszInput2, pszOutput2);
+        
+    } else {
+        
+        const char *const papszArgv[] = { "simpleFoam", 
+                                          "-case",
+                                          pszFoamPath,
+                                          "-postProcess",
+                                          "-func",
+                                          "probes",
+                                          "-latestTime", 
+                                          NULL };
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        
+    }
     
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.probeSample", ""), "w");
-    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
     if(nRet != 0)
         throw std::runtime_error("Error during probeSample().");
     
@@ -2832,9 +2885,14 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                                  wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w )
 {
     
+    const char *probesPostProcessDirname = "probes";
+    if ( foamVersion == "2.2.0" ) {
+        probesPostProcessDirname = "sets";
+    }
+    
     // method from surfaces sampling, to find the time directory for the surfaces file
     char **papszOutputProbeDataPath;
-    papszOutputProbeDataPath = VSIReadDir(CPLSPrintf("%s/postProcessing/probes/", pszFoamPath));
+    papszOutputProbeDataPath = VSIReadDir(CPLSPrintf("%s/postProcessing/%s/", pszFoamPath, probesPostProcessDirname));
     
     const char *probeSampleData_filename;
     const char *timeDir;
@@ -2842,7 +2900,7 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
         if(std::string(papszOutputProbeDataPath[i]) != "." &&
            std::string(papszOutputProbeDataPath[i]) != "..") {
             timeDir = papszOutputProbeDataPath[i];
-            probeSampleData_filename = CPLSPrintf("%s/postProcessing/probes/%s/points_U.xy", pszFoamPath, timeDir);
+            probeSampleData_filename = CPLSPrintf("%s/postProcessing/%s/%s/points_U.xy", pszFoamPath, probesPostProcessDirname, timeDir);
             break;
         }
         else{
