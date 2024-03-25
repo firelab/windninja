@@ -2635,6 +2635,7 @@ void NinjaFoam::WriteOutputFiles()
 	
 	bool writeMassMeshVtk = true;
 	if ( writeMassMeshVtk == true ) {
+	    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
 	    writeMassMeshVtkOutput();
 	}
 	
@@ -2643,10 +2644,39 @@ void NinjaFoam::WriteOutputFiles()
 
 void NinjaFoam::writeMassMeshVtkOutput()
 {
+    
+    std::string massMesh_resChoice = "coarse";  // coarse, medium, or fine. If custom, need to use massMesh_res instead. if using massMesh_res, set this to an empty string ""
+    double massMesh_res = 300.0;  // default value, don't want to start out too fine that it runs slow
+    std::string massMesh_resUnits = "m";
+    
+    
     Mesh massMesh;
     massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-    massMesh.set_meshResChoice(mesh.meshResChoice);
-    massMesh.compute_cellsize(input.dem);
+    if ( massMesh_resChoice == "" )
+    {
+        CPLDebug("NINJAFOAM", "mass mesh set by mesh resolution, %f %s", massMesh_res, massMesh_resUnits.c_str());
+        massMesh.set_meshResolution(massMesh_res, lengthUnits::getUnit(massMesh_resUnits));
+    } else {
+        
+        CPLDebug("NINJAFOAM", "mass mesh set by mesh choice, %s", massMesh_resChoice.c_str());
+        if ( massMesh_resChoice == "coarse" )
+        {
+            massMesh.set_meshResChoice(Mesh::coarse);
+        }
+        else if ( massMesh_resChoice == "medium" )
+        {
+            massMesh.set_meshResChoice(Mesh::medium);
+        }
+        else if ( massMesh_resChoice == "fine" )
+        {
+            massMesh.set_meshResChoice(Mesh::fine);
+        }
+        else
+        {
+            throw std::invalid_argument( "Invalid input '" + massMesh_resChoice + "' in Mesh::set_meshResChoice, called by NinjaFoam::writeMassMeshVtkOutput()" );
+        }
+        massMesh.compute_cellsize(input.dem);
+    }
     massMesh.buildStandardMesh(input);
     
     writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
@@ -2663,6 +2693,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
     
     std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
     try {
+        CPLDebug("NINJAFOAM", "writing vtk file");
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
 		volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat);
@@ -2681,6 +2712,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
                                       const double dem_xllCorner, const double dem_yllCorner, 
                                       const int ncols, const int nrows, const int nlayers)
 {
+    CPLDebug("NINJAFOAM", "writing probes sample file");
     
     const char *probes_filename;
     if ( foamVersion == "2.2.0" ) {
@@ -2688,6 +2720,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     } else {
         probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
     }
+    CPLDebug("NINJAFOAM", "probes sample filename = \"%s\"", probes_filename);
     
     FILE *fout;
     
@@ -2806,7 +2839,6 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     
     fclose(fout);
     
-    
 }
 
 void NinjaFoam::runProbeSample()
@@ -2884,6 +2916,7 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                                  const int ncols, const int nrows, const int nlayers, 
                                  wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w )
 {
+    CPLDebug("NINJAFOAM", "reading in probes sample data");
     
     const char *probesPostProcessDirname = "probes";
     if ( foamVersion == "2.2.0" ) {
@@ -2907,6 +2940,7 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
             continue;
         }
     }
+    CPLDebug("NINJAFOAM", "probes sample data file path = \"%s\"", probeSampleData_filename);
     
     
     // read the full data file into a string separated by "\n" chars for each line
@@ -3075,6 +3109,7 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
                                    const int ncols, const int nrows, const int nlayers, 
                                    wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w)
 {
+    CPLDebug("NINJAFOAM", "filling in probes sample no data vals");
     
     //double noDataVal = -9999;  // make sure this one matches the one used in the readInProbeData() function
     double noDataCheckVal = -9998;  // instead of using the if == noDataVal, use if > noDataCheckVal or if < noDataCheckVal depending on the style of the noDataVal
