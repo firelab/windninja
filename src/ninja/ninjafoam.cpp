@@ -2679,6 +2679,22 @@ void NinjaFoam::writeMassMeshVtkOutput()
     }
     massMesh.buildStandardMesh(input);
     
+    
+    // massMesh.buildStandardMesh() called resample_Grid_in_place for input.dem and input.surface, but did not do so for init->L and init->bl_height
+    // need to resize these to avoid referencing outside the array when filling no data values with the log profile
+    double massMeshResolution = massMesh.meshResolution;
+    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMeshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
+    if(massMeshResolution < meshResolution)  // ninjaFoam meshResolution is the original dem resolution before resizing input.dem.get_cellSize() in massMesh.buildStandardMesh()
+    {
+        init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+    }else if(massMeshResolution > massMeshResolution)
+    {
+        init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+    }
+    
+    
     writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
     
     runProbeSample();
@@ -3140,7 +3156,7 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
                 }
             }
             
-            if ( lowestKnown_zIdx == nlayers ) {
+            if ( lowestKnown_zIdx == nlayers-1 ) {
                 // is a column of no data values, skip it for the log profile part of the fill
                 // also warn because the method for filling no data values past the log profile part hasn't yet been implemented
                 std::cout << "!!! no lowest known zIdx for column of data !!! for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
@@ -3173,7 +3189,7 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
             
             // this one is NOT for debugging purposes, has to be run each and every time to make the code run safely
             if ( lowestKnown_zIdx < firstCellHeight_zIdx ) {
-                //std::cout << "lowestKnown zIdx is less than 1/2 firstCellHeight zIdx for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
+                //std::cout << "lowestKnown zIdx is less than firstCellHeight zIdx for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
                 //std::cout << "old lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
                 lowestKnown_zIdx = firstCellHeight_zIdx;
                 //std::cout << "new lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
