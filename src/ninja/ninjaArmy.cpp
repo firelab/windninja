@@ -1218,6 +1218,48 @@ int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char *
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
 }
+int ninjaArmy::setWriteMassMeshVtkFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeMassMeshVtkFlag( flag ) );
+}
+int ninjaArmy::setMassMeshVtkResolutionChoice( const int nIndex, const std::string choice,
+                                               char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_massMeshVtkResChoice( choice ) );
+}
+int ninjaArmy::setMassMeshVtkResolutionChoice( const int nIndex, const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
+                                               char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_massMeshVtkResChoice( meshChoice ) );
+}
+int ninjaArmy::setMassMeshVtkResolution( const int nIndex, const double resolution,
+                                         const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_massMeshVtkResolution( resolution, units ) );
+}
+int ninjaArmy::setMassMeshVtkResolution( const int nIndex, const double resolution,
+                                         std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_massMeshVtkResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
 #endif
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods

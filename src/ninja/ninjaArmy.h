@@ -372,6 +372,72 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the flag to write massMesh vtk output from a NinjaFOAM run
+    *
+    * \param nIndex index of a ninja
+    * \param  bool flag indicating if massMesh vtk output should be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWriteMassMeshVtkFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the mass mesh vtk output resolution choice from a string for a ninja
+    *  Set the mass mesh vtk output resolution choice given the index of a ninja and
+    *  a proper choice string
+    *
+    *  _Valid choice strings:_
+    *  - "coarse" = Mesh::coarse
+    *  - "medium" = Mesh::medium
+    *  - "fine"   = Mesh::fine
+    *
+    * \param nIndex index of a ninja
+    * \param choice mass mesh vtk output resolution choice
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMassMeshVtkResolutionChoice( const int nIndex, const std::string choice,
+                                        char ** papszOptions=NULL );
+    /**
+    * \brief Set the mass mesh vtk output resolution choice for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param choice mass mesh vtk output resolution choice
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMassMeshVtkResolutionChoice( const int nIndex, const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
+                                        char ** papszOptions=NULL );
+    /**
+    * \brief Set the mass mesh vtk output resolution for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units units of the resolution value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMassMeshVtkResolution( const int nIndex, const double resolution,
+                                  const lengthUnits::eLengthUnits units,
+                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the mass mesh vtk output resolution for a ninja
+    * Set the mass mesh vtk output resolution for a ninja given a resolution
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setMassMeshVtkResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions=NULL );
 
 #endif //NINJAFOAM
 

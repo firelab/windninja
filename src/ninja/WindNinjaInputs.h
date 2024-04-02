@@ -304,6 +304,11 @@ public:
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
     bool writeTurbulence;
+    bool writeMassMeshVtk;
+    eNinjafoamMeshChoice massMeshVtkResChoice; // fine, medium, coarse
+    double massMeshVtkResolution;
+    lengthUnits::eLengthUnits massMeshVtkResolutionUnits;
+    
 #endif
 };
 

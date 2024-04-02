@@ -3663,6 +3663,42 @@ void ninja::set_writeTurbulenceFlag(bool flag)
 {
     input.writeTurbulence = flag;
 }
+
+void ninja::set_writeMassMeshVtkFlag(bool flag)
+{
+    input.writeMassMeshVtk = flag;
+}
+
+void ninja::set_massMeshVtkResChoice( std::string choice )
+{
+    if( choice == "coarse" ){
+        input.massMeshVtkResChoice = WindNinjaInputs::coarse;
+    }
+    else if( choice == "medium" ){
+        input.massMeshVtkResChoice = WindNinjaInputs::medium;
+    }
+    else if( choice == "fine" ){
+        input.massMeshVtkResChoice = WindNinjaInputs::fine;
+    }
+    else{
+        throw std::invalid_argument( "Invalid input '" + choice + "' in ninja::set_massMeshVtkResChoice()");
+    }
+}
+void ninja::set_massMeshVtkResChoice( const WindNinjaInputs::eNinjafoamMeshChoice meshChoice )
+{
+    if( meshChoice == WindNinjaInputs::coarse || meshChoice == WindNinjaInputs::medium || meshChoice == WindNinjaInputs::fine){
+        input.massMeshVtkResChoice = meshChoice;
+    }
+    else{
+        throw std::invalid_argument( "Invalid input meshChoice in ninja::set_massMeshVtkResChoice()");
+    }
+}
+
+void ninja::set_massMeshVtkResolution( double resolution, lengthUnits::eLengthUnits units )
+{
+    input.massMeshVtkResolution = resolution;
+    input.massMeshVtkResolutionUnits = units;
+}
 #endif
 
 void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)

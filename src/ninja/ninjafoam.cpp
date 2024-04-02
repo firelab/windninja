@@ -2633,10 +2633,17 @@ void NinjaFoam::WriteOutputFiles()
 	}
 	
 	
-	bool writeMassMeshVtk = true;
-	if ( writeMassMeshVtk == true ) {
-	    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
-	    writeMassMeshVtkOutput();
+	try{
+		if ( input.writeMassMeshVtk == true )
+		{
+	        writeMassMeshVtkOutput();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mash vtk file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mash vtk file writing: Cannot determine exception type.");
 	}
 	
 }
@@ -2645,35 +2652,35 @@ void NinjaFoam::WriteOutputFiles()
 void NinjaFoam::writeMassMeshVtkOutput()
 {
     
-    std::string massMesh_resChoice = "coarse";  // coarse, medium, or fine. If custom, need to use massMesh_res instead. if using massMesh_res, set this to an empty string ""
-    double massMesh_res = 300.0;  // default value, don't want to start out too fine that it runs slow
-    std::string massMesh_resUnits = "m";
-    
+    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
     
     Mesh massMesh;
     massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-    if ( massMesh_resChoice == "" )
+    if ( input.massMeshVtkResolution != -1.0 )
     {
-        CPLDebug("NINJAFOAM", "mass mesh set by mesh resolution, %f %s", massMesh_res, massMesh_resUnits.c_str());
-        massMesh.set_meshResolution(massMesh_res, lengthUnits::getUnit(massMesh_resUnits));
+        CPLDebug("NINJAFOAM", "mass mesh set by mesh resolution, %f %s", input.massMeshVtkResolution, lengthUnits::getString(input.massMeshVtkResolutionUnits).c_str());
+        massMesh.set_meshResolution(input.massMeshVtkResolution, input.massMeshVtkResolutionUnits);
     } else {
         
-        CPLDebug("NINJAFOAM", "mass mesh set by mesh choice, %s", massMesh_resChoice.c_str());
-        if ( massMesh_resChoice == "coarse" )
+        CPLDebug("NINJAFOAM", "mass mesh set by mesh choice");
+        if ( input.massMeshVtkResChoice == WindNinjaInputs::coarse )
         {
+            CPLDebug("NINJAFOAM", "mass mesh choice is coarse");
             massMesh.set_meshResChoice(Mesh::coarse);
         }
-        else if ( massMesh_resChoice == "medium" )
+        else if ( input.massMeshVtkResChoice == WindNinjaInputs::medium )
         {
+            CPLDebug("NINJAFOAM", "mass mesh choice is medium");
             massMesh.set_meshResChoice(Mesh::medium);
         }
-        else if ( massMesh_resChoice == "fine" )
+        else if ( input.massMeshVtkResChoice == WindNinjaInputs::fine )
         {
+            CPLDebug("NINJAFOAM", "mass mesh choice is fine");
             massMesh.set_meshResChoice(Mesh::fine);
         }
         else
         {
-            throw std::invalid_argument( "Invalid input '" + massMesh_resChoice + "' in Mesh::set_meshResChoice, called by NinjaFoam::writeMassMeshVtkOutput()" );
+            throw std::invalid_argument( "Invalid mass mesh choice in Mesh::set_meshResChoice, called by NinjaFoam::writeMassMeshVtkOutput()" );
         }
         massMesh.compute_cellsize(input.dem);
     }
