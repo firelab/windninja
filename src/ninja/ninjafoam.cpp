@@ -2691,6 +2691,8 @@ void NinjaFoam::writeMassMeshVtkOutput()
     // need to resize these to avoid referencing outside the array when filling no data values with the log profile
     double massMeshResolution = massMesh.meshResolution;
     CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMeshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
+    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
+    CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     if(massMeshResolution < meshResolution)  // ninjaFoam meshResolution is the original dem resolution before resizing input.dem.get_cellSize() in massMesh.buildStandardMesh()
     {
         init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
@@ -2866,6 +2868,8 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
 
 void NinjaFoam::runProbeSample()
 {
+    CPLDebug("NINJAFOAM", "running probes sample");
+    
     int nRet = -1;
     
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.probeSample", ""), "w");
