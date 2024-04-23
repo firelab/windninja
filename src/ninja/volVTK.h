@@ -44,9 +44,13 @@ public:
 
 	volVTK();
     volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
-           wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
-           int i, int j, int k, std::string filename, std::string vtkWriteFormat);
+           wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, double dem_xllCorner, double dem_yllCorner, 
+           int i, int j, int k, std::string filename, std::string vtkWriteFormat, bool vtk_out_as_utm);
 	~volVTK();
+	
+	void convertPointsToUtm( wn_3dArray& x_to_utm, wn_3dArray& y_to_utm, 
+	                         const double dem_xllCorner, const double dem_yllCorner, 
+	                         const int i, const int j, const int k );
 
     bool writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                      wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
