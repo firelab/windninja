@@ -174,6 +174,12 @@ private:
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
     
+    Elevation dem_copy;
+    AsciiGrid<double> Roughness_copy;  // z0
+    AsciiGrid<double> Rough_d_copy;
+    AsciiGrid<double> Rough_h_copy;
+    //AsciiGrid<double> L_copy;   // Monin-Obukhov length
+    //AsciiGrid<double> bl_height_copy;   // atmospheric boundary layer height
     void writeMassMeshVtkOutput();
     void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                               const double dem_xllCorner, const double dem_yllCorner, 

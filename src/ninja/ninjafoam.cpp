@@ -143,6 +143,23 @@ bool NinjaFoam::simulate_wind()
 
     readInputFile();
     set_position();
+    
+    if ( input.writeMassMeshVtk == true )
+	{
+        CPLDebug("NINJAFOAM", "copying dem and ascii grids for mashMesh vtk output");
+        
+        dem_copy = input.dem;
+        Roughness_copy = input.surface.Roughness;
+        Rough_d_copy = input.surface.Rough_h;
+        Rough_h_copy = input.surface.Rough_d;
+        
+        // having trouble copying the other grids, the boost::shared_ptr is not letting copy constructors function as normal
+        // luckily, they are never resampled like the other grids, so probably can just use and resample them as normal without differing resolution errors
+        //L_copy = init->L;
+        //bl_height_copy = init->bl_height;
+        
+        CPLDebug("NINJAFOAM", "finished copying dem and ascii grids");
+    }
 
     SetMeshResolutionAndResampleDem();
 
@@ -2682,13 +2699,19 @@ void NinjaFoam::writeMassMeshVtkOutput()
         {
             throw std::invalid_argument( "Invalid mass mesh choice in Mesh::set_meshResChoice, called by NinjaFoam::writeMassMeshVtkOutput()" );
         }
-        massMesh.compute_cellsize(input.dem);
+        massMesh.compute_cellsize(dem_copy);
     }
-    massMesh.buildStandardMesh(input);
+    // not ideal to use the current simulation wind heights because the mass mesh to replicate comes from a separate simulation, but should be good enough for now
+    double input_inputWindHeight = input.inputWindHeight;
+    double input_outputWindHeight = input.outputWindHeight;
+    massMesh.buildStandardMeshFromDem(dem_copy, input_inputWindHeight, input_outputWindHeight, Rough_h_copy, input);
     
     
     // massMesh.buildStandardMesh() called resample_Grid_in_place for input.dem and input.surface, but did not do so for init->L and init->bl_height
     // need to resize these to avoid referencing outside the array when filling no data values with the log profile
+    // new call to massMesh.buildStandardMeshFromDem() also drops resampling in place for the surface grids, they now need to be resampled here
+    // now resampling the raw copies of the individual grids so that the mesh resolution matches up more correctly with the mass solver runs
+    // trouble making copies of the L and bl_height grids, but luckily they don't get resampled anywhere else, so just using a single resample here without a copy seems to still be okay
     double massMeshResolution = massMesh.meshResolution;
     CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMeshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
     CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
@@ -2697,14 +2720,24 @@ void NinjaFoam::writeMassMeshVtkOutput()
     {
         init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
         init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        //L_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        //bl_height_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        Roughness_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        Rough_d_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
+        Rough_h_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
     }else if(massMeshResolution > massMeshResolution)
     {
         init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
         init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        //L_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        //bl_height_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        Roughness_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        Rough_d_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
+        Rough_h_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
     }
     
     
-    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
+    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, dem_copy.xllCorner, dem_copy.yllCorner, dem_copy.get_nCols(), dem_copy.get_nRows(), massMesh.nlayers );
     
     runProbeSample();
     
@@ -2712,16 +2745,16 @@ void NinjaFoam::writeMassMeshVtkOutput()
     u.allocate(&massMesh);
     v.allocate(&massMesh);
     w.allocate(&massMesh);
-    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, u, v, w );
+    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, dem_copy.xllCorner, dem_copy.yllCorner, dem_copy.get_nCols(), dem_copy.get_nRows(), massMesh.nlayers, u, v, w );
     
-    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, u, v, w );
+    fillEmptyProbeVals( massMesh.ZORD, dem_copy.get_nCols(), dem_copy.get_nRows(), massMesh.nlayers, u, v, w );
     
     std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
     try {
         CPLDebug("NINJAFOAM", "writing vtk file");
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat);
+		volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, dem_copy.get_nCols(), dem_copy.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat);
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
 	} catch (...) {
@@ -3219,9 +3252,11 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
             
             profile.ObukovLength = init->L(rowIdx,colIdx);
             profile.ABL_height = init->bl_height(rowIdx,colIdx);
-            profile.Roughness = input.surface.Roughness(rowIdx,colIdx);
-            double current_rough_h = input.surface.Rough_h(rowIdx,colIdx);
-            double current_rough_d = input.surface.Rough_d(rowIdx,colIdx);
+            //profile.ObukovLength = L_copy(rowIdx,colIdx);
+            //profile.ABL_height = bl_height_copy(rowIdx,colIdx);
+            profile.Roughness = Roughness_copy(rowIdx,colIdx);
+            double current_rough_h = Rough_h_copy(rowIdx,colIdx);
+            double current_rough_d = Rough_d_copy(rowIdx,colIdx);
             profile.Rough_h = current_rough_h;
             profile.Rough_d = current_rough_d;
             

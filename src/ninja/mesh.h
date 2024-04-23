@@ -94,7 +94,7 @@ public:
     void set_targetNumHorizCells(long cells);     //sets the target number of horizontal cells in the mesh and computes the cellsize
     void set_meshResChoice(eMeshChoice choice);               //sets the cellsize based on user selection of coarse, medium, or fine (and returns the cellsize, on error returns cellsize < 0)
     void compute_cellsize(Elevation& dem);                  //utility function to compute the horizontal cellsize given a target number of horizontal cells (and DEM)
-    void compute_domain_height(WindNinjaInputs& input);
+    void compute_domain_height(const Elevation& dem, const double& inputWindHeight, const double& outputWindHeight, const AsciiGrid<double>& Rough_h);
     void set_domainHeight(double height, lengthUnits::eLengthUnits units);
     void set_numVertLayers(long layers);
     void set_vertGrowth(double growth);
@@ -105,6 +105,7 @@ public:
                                  int ncolsWX, int nlayersWX,
                                  double xOffset, double yOffset);		//build a mesh from a 3d weather model file
 	void buildStandardMesh(WindNinjaInputs& input);				//build the "standard" WindNinja mesh using domain top, numbers of cells, grow, etc...
+	void buildStandardMeshFromDem(Elevation& dem, const double& input_inputWindHeight, const double& input_outputWindHeight, const AsciiGrid<double>& Rough_h, WindNinjaInputs& input);   //build the "standard" WindNinja mesh using domain top, numbers of cells, grow, etc..., note that replicating buildStandardMesh leads to domain top having dependencies on a user selected input_inputWindHeight and input_outputWindHeight, not just on surface.Rough_h or a given dem
 
     bool checkInBounds(const Mesh &wnMesh, const int &i, const int &j);  // checks if WX mesh point is within WN x-y extent
 

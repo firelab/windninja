@@ -232,7 +232,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
 
     //If domainHeight wasn't set with set_domainHeight(), set using other parameters (numVertLayers, vertGrowth, etc.)
     if(domainHeight < 0.0)
-        compute_domain_height(input);
+        compute_domain_height(input.dem, input.inputWindHeight, input.outputWindHeight, input.surface.Rough_h);
 
     if(meshResolution < 0.0)
         throw std::out_of_range("The mesh resolution cannot be less than 0.");
@@ -302,6 +302,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
                 {
                     ZORD(i, j, k) = get_z(i, j, k, input.dem(i,j));
                 }
+                //printf("(%.12g,%.12g,%.12g)\n",XORD(i,j,k),YORD(i,j,k),ZORD(i,j,k));
             }
         }
     }
@@ -325,6 +326,135 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of elements = %ld",NUMEL);
     input.Com->ninjaCom(ninjaComClass::ninjaDebug, "--------------------------------");
 #endif //NINJA_DEBUG_VERBOSE
+    //printf("nrows = %d, ncols = %d, nlayers = %d\n",nrows,ncols,nlayers);
+    //printf("meshResolution = %.12g\n",meshResolution);
+    //printf("minX = %.12g, maxX = %.12g, minY = %.12g, maxY = %.12g\n",get_minX(),get_maxX(),get_minY(),get_maxY());
+    //printf("domainHeight = %.12g, numVertLayers = %d, vertGrowth = %.12g, targetNumHorizCells = %d, maxAspectRatio = %.12g\n",domainHeight,numVertLayers,vertGrowth,targetNumHorizCells,maxAspectRatio);
+}
+
+void Mesh::buildStandardMeshFromDem(Elevation& dem, const double& input_inputWindHeight, const double& input_outputWindHeight, const AsciiGrid<double>& Rough_h, WindNinjaInputs& input)
+{
+    int i;   //"i" is row number with 0 being the South row
+    int j;   //"j" is column number with 0 being the West row
+    int k;   //"k" is layer number with 0 being the ground layer
+    double aspect_ratio=0.0, equiangle_skew=0.0;
+    //double minnearwallz=0.0, largenearwallz=0.0;
+
+    int check_aspect_ratio;    //Flag to check aspect ratio of cells:  0=>don't check ratio   1=>check ratio
+    int check_equiangle_skew;  //Flag to check equiangle skew of cells:  0=>don't check skewness   1=>check skewness
+
+#ifdef NINJA_DEBUG
+    check_aspect_ratio=1;    //check
+    check_equiangle_skew=1;  //check
+#else
+    check_aspect_ratio=0;    //don't check
+    check_equiangle_skew=0;  //don't check
+#endif
+
+    //If horizontal cellsize hasn't been set yet.
+    if(meshResolution < 0.0)
+        compute_cellsize(dem);
+
+    //If domainHeight wasn't set with set_domainHeight(), set using other parameters (numVertLayers, vertGrowth, etc.)
+    if(domainHeight < 0.0)
+        compute_domain_height(dem, input_inputWindHeight, input_outputWindHeight, Rough_h);
+
+    if(meshResolution < 0.0)
+        throw std::out_of_range("The mesh resolution cannot be less than 0.");
+    if(domainHeight < dem.get_maxValue())
+        throw std::out_of_range("Domain height is below the elevation of the tallest mountain in Mesh::set_domainHeight().");
+    if(numVertLayers <= 0)
+        throw std::out_of_range("The number of vertical layers in the mesh cannot be less than or equal to 0.");
+    if(vertGrowth < 0.0)
+        throw std::out_of_range("The vertical mesh growth rate cannot be less than 0.");
+    if(maxAspectRatio < 0.0)
+        throw std::out_of_range("maxAspectRatio is less than 0.");
+
+    if(vertGrowth==1)
+        throw std::range_error("Mesh::buildStandardMeshFromDem(Elevation& dem, const double& input_inputWindHeight, const double& input_outputWindHeight, const AsciiGrid<double>& Rough_h) detected a bad \"vertGrowth\" value.");
+
+    //Resample DEM to desired computational resolution
+    //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
+    if(meshResolution < dem.get_cellSize())
+    {
+        dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
+        ////surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
+    }else if(meshResolution > dem.get_cellSize())
+    {
+        dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
+        ////surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
+    }
+
+    nrows = dem.get_nRows();
+    ncols = dem.get_nCols();
+    nlayers = numVertLayers;
+
+    nrowsElem = nrows - 1;
+    ncolsElem = ncols - 1;
+    nlayersElem = nlayers - 1;
+
+    NUMNP=nrows*ncols*nlayers; //number of nodal points
+    NUMEL=(nrows-1)*(ncols-1)*(nlayers-1); //number of elements
+    //hexahedral elements are being used
+    NNPE=8; //number of nodes per element
+
+    XORD.allocate(nrows, ncols, nlayers);
+    YORD.allocate(nrows, ncols, nlayers);
+    ZORD.allocate(nrows, ncols, nlayers);
+
+    //Set xyz coordinates ---------------------------------------------------------------
+    #pragma omp parallel for default(shared) private(i,j,k)
+    for(k=0;k<nlayers;k++)
+    {
+        for(i=0;i<nrows;i++)
+        {
+            for(j=0;j<ncols;j++)
+            {
+                //Note that the XORDs and YORDs are the WindNinja nodal locations.
+                //These are in a coordinate system with xy-location (0,0) at the lower left corner of the DEM.
+                //Since the DEM is cell centered and the XORD/YORD are nodes, the mesh is built with the nodes
+                //on the DEM cell center locations.
+                //So, for example, XORD(0,0,0) = 0.5*cellsize.
+                //These must later be "shifted" to the xllcorner and yllcorner of DEM for output products.
+                //This is done to try to reduce roundoff error in calculations.
+
+                XORD(i, j, k) = (double)j*meshResolution + 0.5*meshResolution;
+                YORD(i, j, k) = (double)i*meshResolution + 0.5*meshResolution;
+                if(k==0)
+                {
+                    ZORD(i, j, k) = dem(i,j);
+                }else
+                {
+                    ZORD(i, j, k) = get_z(i, j, k, dem(i,j));
+                }
+                //printf("(%.12g,%.12g,%.12g)\n",XORD(i,j,k),YORD(i,j,k),ZORD(i,j,k));
+            }
+        }
+    }
+
+    if(check_aspect_ratio==1)
+        aspect_ratio=get_aspect_ratio(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
+    if(check_equiangle_skew==1)
+        equiangle_skew=get_equiangle_skew(NUMEL, NUMNP, XORD, YORD, ZORD, nrows, ncols, nlayers);
+#ifdef NINJA_DEBUG_VERBOSE
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "\n--------MESH INFORMATION--------");
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Ground roughness = %lf",roughness);
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Smallest ground cell = %lf",minnearwallz);
+    //input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest ground cell = %lf",largenearwallz);
+    if(check_aspect_ratio==1)
+        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest aspect ratio = %lf",aspect_ratio);
+    if(check_equiangle_skew==1)
+        input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Largest equiangle skew = %lf",equiangle_skew);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of columns = %d",dem.get_nCols());
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of rows = %d",dem.get_nRows());
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of nodes = %ld",NUMNP);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of elements = %ld",NUMEL);
+    input.Com->ninjaCom(ninjaComClass::ninjaDebug, "--------------------------------");
+#endif //NINJA_DEBUG_VERBOSE
+    //printf("nrows = %d, ncols = %d, nlayers = %d\n",nrows,ncols,nlayers);
+    //printf("meshResolution = %.12g\n",meshResolution);
+    //printf("minX = %.12g, maxX = %.12g, minY = %.12g, maxY = %.12g\n",get_minX(),get_maxX(),get_minY(),get_maxY());
+    //printf("domainHeight = %.12g, numVertLayers = %d, vertGrowth = %.12g, targetNumHorizCells = %d, maxAspectRatio = %.12g\n",domainHeight,numVertLayers,vertGrowth,targetNumHorizCells,maxAspectRatio);
 }
 
 double Mesh::get_z(const int& i, const int& j, const int& k, const double& elev)
@@ -796,6 +926,9 @@ void Mesh::compute_cellsize(Elevation& dem)
     meshResolution=(Xcellsize+Ycellsize)/2;
 
     meshResolutionUnits = lengthUnits::meters;
+    //printf("compute_cellsize():  dem.get_nRows() = %d, dem.get_nCols() = %d, dem.get_cellSize() = %.12g, \n",dem.get_nRows(),dem.get_nCols(),dem.get_cellSize());
+    //printf("dem.get_xllCorner() = %.12g, dem.get_yllCorner() = %.12g, dem.get_xDimension() = %.12g, dem.get_yDimension() = %.12g, \n",dem.get_xllCorner(),dem.get_yllCorner(),dem.get_xDimension(),dem.get_yDimension());
+    //printf("resulting meshResolution = %.12g\n",meshResolution);
 }
 
 /*
@@ -816,19 +949,19 @@ void Mesh::compute_cellsize(Elevation& dem)
 ** DEM value).
 */
 
-void Mesh::compute_domain_height(WindNinjaInputs& input)
+void Mesh::compute_domain_height(const Elevation& dem, const double& inputWindHeight, const double& outputWindHeight, const AsciiGrid<double>& Rough_h)
 {
     double first_cell_ht=meshResolution/maxAspectRatio;
     domainHeight=(first_cell_ht*(std::pow(vertGrowth,double(numVertLayers))-1)/(vertGrowth-1));
-    if(domainHeight < 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue()))
+    if(domainHeight < 3*(outputWindHeight + Rough_h.get_maxValue()))
     {
-        domainHeight = 3*(input.outputWindHeight + input.surface.Rough_h.get_maxValue());
+        domainHeight = 3*(outputWindHeight + Rough_h.get_maxValue());
     }
-    if(domainHeight<3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue()))
+    if(domainHeight<3*(inputWindHeight + Rough_h.get_maxValue()))
     {
-        domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
+        domainHeight = 3*(inputWindHeight + Rough_h.get_maxValue());
     }
-    domainHeight=domainHeight + input.dem.get_maxValue();
+    domainHeight=domainHeight + dem.get_maxValue();
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)
