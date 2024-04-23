@@ -336,7 +336,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
-                ("mashMesh_vtk_output_flag", po::value<bool>()->default_value(false), "write mashMesh vtk output (true, false)")
+                ("massMesh_vtk_output_flag", po::value<bool>()->default_value(false), "write massMesh vtk output (true, false)")
                 ("massMesh_vtk_resChoice", po::value<std::string>(), "massMesh vtk output resolution choice (coarse, medium, fine)")
                 ("massMesh_vtk_resolution", po::value<double>(), "massMesh vtk output resolution")
                 ("massMesh_vtk_resolution_units", po::value<std::string>(), "massMesh vtk output resolution units (ft, m)")
@@ -914,10 +914,10 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
-        option_dependency(vm, "mashMesh_vtk_output_flag", "momentum_flag");
-        option_dependency(vm, "massMesh_vtk_resChoice", "mashMesh_vtk_output_flag");
-        option_dependency(vm, "massMesh_vtk_resolution", "mashMesh_vtk_output_flag");
-        option_dependency(vm, "massMesh_vtk_resolution_units", "mashMesh_vtk_output_flag");
+        option_dependency(vm, "massMesh_vtk_output_flag", "momentum_flag");
+        option_dependency(vm, "massMesh_vtk_resChoice", "massMesh_vtk_output_flag");
+        option_dependency(vm, "massMesh_vtk_resolution", "massMesh_vtk_output_flag");
+        option_dependency(vm, "massMesh_vtk_resolution_units", "massMesh_vtk_output_flag");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1370,10 +1370,10 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm.count("turbulence_output_flag")){
                     windsim.setWriteTurbulenceFlag( i_, vm["turbulence_output_flag"].as<bool>() );
                 }
-                if(vm.count("mashMesh_vtk_output_flag")){
-                    windsim.setWriteMassMeshVtkFlag( i_, vm["mashMesh_vtk_output_flag"].as<bool>() );
+                if(vm.count("massMesh_vtk_output_flag")){
+                    windsim.setWriteMassMeshVtkFlag( i_, vm["massMesh_vtk_output_flag"].as<bool>() );
                 }
-                if(vm["mashMesh_vtk_output_flag"].as<bool>()){
+                if(vm["massMesh_vtk_output_flag"].as<bool>()){
                     conflicting_options(vm, "massMesh_vtk_resChoice", "massMesh_vtk_resolution");
                     if(vm.count("massMesh_vtk_resChoice"))
                     {
@@ -1399,7 +1399,7 @@ int windNinjaCLI(int argc, char* argv[])
                         cout << "massMesh vtk output resolution has not been set.\nUse either 'massMesh_vtk_resChoice' or 'massMesh_vtk_resolution'.\n";
                         return -1;
                     }
-                }  // if(vm["mashMesh_vtk_output_flag"].as<bool>())
+                }  // if(vm["massMesh_vtk_output_flag"].as<bool>())
             }
             #endif //NINJAFOAM
 

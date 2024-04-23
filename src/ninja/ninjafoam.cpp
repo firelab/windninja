@@ -146,7 +146,7 @@ bool NinjaFoam::simulate_wind()
     
     if ( input.writeMassMeshVtk == true )
 	{
-        CPLDebug("NINJAFOAM", "copying dem and ascii grids for mashMesh vtk output");
+        CPLDebug("NINJAFOAM", "copying dem and ascii grids for massMesh vtk output");
         
         dem_copy = input.dem;
         Roughness_copy = input.surface.Roughness;
@@ -2657,10 +2657,10 @@ void NinjaFoam::WriteOutputFiles()
 	    }
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mash vtk file writing: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mesh vtk file writing: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mash vtk file writing: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during mass mesh vtk file writing: Cannot determine exception type.");
 	}
 	
 }
@@ -2861,7 +2861,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// list of probe points for windninja mass solver case\n");
-    fprintf(fout, "// ncols = %i, nrows = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", ncols, nrows, nlayers, dem_xllCorner, dem_yllCorner);
+    fprintf(fout, "// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
     fprintf(fout, "points\n");
     fprintf(fout, "(\n");
     
