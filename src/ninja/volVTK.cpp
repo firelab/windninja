@@ -35,19 +35,28 @@ volVTK::volVTK()
 }
 
 volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
-               wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, 
-               int i, int j, int k, std::string filename, std::string vtkWriteFormat)
+               wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, double dem_xllCorner, double dem_yllCorner, 
+               int i, int j, int k, std::string filename, std::string vtkWriteFormat, bool vtk_out_as_utm)
 {
     // determine byte order of this machine only once
     // sets value of isBigEndian for binary output
     determineEndianness();
     
+    wn_3dArray x_array;
+    wn_3dArray y_array;
+    x_array = x;
+    y_array = y;
+    if ( vtk_out_as_utm == true )
+    {
+        volVTK::convertPointsToUtm( x_array, y_array, dem_xllCorner, dem_yllCorner, i, j, k );
+    }
+    
     if ( vtkWriteFormat == "ascii" )
     {
-        writeVolVTK(u, v, w, x, y, z, i, j, k, filename);
+        writeVolVTK(u, v, w, x_array, y_array, z, i, j, k, filename);
     } else if (vtkWriteFormat == "binary" )
     {
-        writeVolVTK_binary(u, v, w, x, y, z, i, j, k, filename);
+        writeVolVTK_binary(u, v, w, x_array, y_array, z, i, j, k, filename);
     } else
     {
         throw std::runtime_error("vtkWriteFormat must be \"ascii\" or \"binary\".");
@@ -57,6 +66,23 @@ volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalar
 volVTK::~volVTK()
 {
 
+}
+
+void volVTK::convertPointsToUtm( wn_3dArray& x_to_utm, wn_3dArray& y_to_utm, 
+                                 const double dem_xllCorner, const double dem_yllCorner, 
+                                 const int i, const int j, const int k )
+{
+    for(int kk=0; kk<k; kk++)
+    {
+        for(int ii=0; ii<i; ii++)
+        {
+            for(int jj=0; jj<j; jj++)
+            {
+                x_to_utm(kk*i*j + ii*j + jj) = x_to_utm(kk*i*j + ii*j + jj) + dem_xllCorner;
+                y_to_utm(kk*i*j + ii*j + jj) = y_to_utm(kk*i*j + ii*j + jj) + dem_yllCorner;
+            }
+        }
+    }
 }
 
 bool volVTK::writeVolVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
