@@ -252,10 +252,12 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
     if(meshResolution < input.dem.get_cellSize())
     {
+        //printf("buildStandardMesh, make the ascii grids finer\n");
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
     }else if(meshResolution > input.dem.get_cellSize())
     {
+        //printf("buildStandardMesh, make the ascii grids coarser\n");
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
     }
@@ -377,10 +379,12 @@ void Mesh::buildStandardMeshFromDem(Elevation& dem, const double& input_inputWin
     //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
     if(meshResolution < dem.get_cellSize())
     {
+        //printf("buildStandardMeshFromDem, make the ascii grids finer\n");
         dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
         ////surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
     }else if(meshResolution > dem.get_cellSize())
     {
+        //printf("buildStandardMeshFromDem, make the ascii grids coarser\n");
         dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
         ////surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
     }
@@ -962,6 +966,8 @@ void Mesh::compute_domain_height(const Elevation& dem, const double& inputWindHe
         domainHeight = 3*(inputWindHeight + Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + dem.get_maxValue();
+    //printf("compute_domain_height():  meshResolution = %.12g, maxAspectRatio = %.12g, first_cell_ht = %.12g, vertGrowth = %.12g, numVertLayers = %d\n", meshResolution, maxAspectRatio, first_cell_ht, vertGrowth, numVertLayers);
+    //printf("input.outputWindHeight = %.12g, input.inputWindHeight = %.12g, input.surface.Rough_h.get_maxValue() = %.12g, input.dem.get_maxValue() = %.12g, domainHeight = %.12g\n", input.outputWindHeight, input.inputWindHeight, input.surface.Rough_h.get_maxValue(), input.dem.get_maxValue(), domainHeight);
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)

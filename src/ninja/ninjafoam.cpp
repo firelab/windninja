@@ -132,6 +132,33 @@ bool NinjaFoam::simulate_wind()
         CPLDebug("NINJAFOAM", "Writing turbulence output...");
         set_writeTurbulenceFlag("true");
     }
+    
+    bool found_writeMassMeshVtk = CSLTestBoolean(CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE"));  // returns true even if export var=, a blank, still respects export var=FALSE though
+    if(found_writeMassMeshVtk == true)
+    {
+        CPLDebug("NINJAFOAM", "found CPLDebugOption WRITE_FOAM_MASSMESH_VTK set to TRUE, writing foam massMesh vtk output");
+        set_writeMassMeshVtkFlag(found_writeMassMeshVtk);
+        
+        std::string found_massMeshVtkResChoice = CPLGetConfigOption("MASSMESH_VTK_RES_CHOICE","");
+        if( found_massMeshVtkResChoice != "" )
+        {
+            CPLDebug("NINJAFOAM", "CPLConfigOption MASSMESH_VTK_RES_CHOICE is set, making mass mesh set by mesh choice, %s", found_massMeshVtkResChoice.c_str());
+            set_massMeshVtkResChoice(found_massMeshVtkResChoice);
+        }
+        
+        double found_massMeshVtkResolution = atof(CPLGetConfigOption("MASSMESH_VTK_RESOLUTION", "-1.0"));
+        std::string found_massMeshVtkResolutionUnits = CPLGetConfigOption("MASSMESH_VTK_RESOLUTION_UNITS", "");
+        if( found_massMeshVtkResolution > 0.0 )
+        {
+            if( found_massMeshVtkResolutionUnits == "" ){
+                found_massMeshVtkResolutionUnits = "m";  // default value if not set
+            }
+            CPLDebug("NINJAFOAM", "CPLConfigOption MASSMESH_VTK_RESOLUTION is set, making mass mesh set by mesh resolution, %f %s", found_massMeshVtkResolution, found_massMeshVtkResolutionUnits.c_str());
+            set_massMeshVtkResolution(found_massMeshVtkResolution,lengthUnits::getUnit(found_massMeshVtkResolutionUnits));
+        }
+        
+        // if it gets to here without setting anything extra, it runs as the default, which is a massMeshVtkResChoice of "coarse"
+    }
 
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
@@ -2714,10 +2741,11 @@ void NinjaFoam::writeMassMeshVtkOutput()
     // trouble making copies of the L and bl_height grids, but luckily they don't get resampled anywhere else, so just using a single resample here without a copy seems to still be okay
     double massMeshResolution = massMesh.meshResolution;
     CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMeshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
-    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
+    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", dem_copy.get_nRows(), dem_copy.get_nCols(), massMesh.nlayers);
     CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     if(massMeshResolution < meshResolution)  // ninjaFoam meshResolution is the original dem resolution before resizing input.dem.get_cellSize() in massMesh.buildStandardMesh()
     {
+        printf("massMesh, make the ascii grids finer\n");
         init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
         init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
         //L_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
@@ -2727,6 +2755,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
         Rough_h_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
     }else if(massMeshResolution > massMeshResolution)
     {
+        printf("massMesh, make the ascii grids coarser\n");
         init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
         init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
         //L_copy.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
