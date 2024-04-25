@@ -72,6 +72,8 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
+    
+    writeMassMeshVtk = false;
 }
 
 /**
@@ -131,6 +133,10 @@ bool NinjaFoam::simulate_wind()
     {
         CPLDebug("NINJAFOAM", "Writing turbulence output...");
         set_writeTurbulenceFlag("true");
+    }
+    if(CSLTestBoolean(CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE")))
+    {
+        writeMassMeshVtk = CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE");
     }
 
     #ifdef _OPENMP
@@ -2633,10 +2639,17 @@ void NinjaFoam::WriteOutputFiles()
 	}
 	
 	
-	bool writeMassMeshVtk = true;
-	if ( writeMassMeshVtk == true ) {
-	    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
-	    writeMassMeshVtkOutput();
+	try{
+	    if ( writeMassMeshVtk == true ) {
+	        CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
+	        writeMassMeshVtkOutput();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
 	}
 	
 }
@@ -2645,54 +2658,15 @@ void NinjaFoam::WriteOutputFiles()
 void NinjaFoam::writeMassMeshVtkOutput()
 {
     
-    std::string massMesh_resChoice = "coarse";  // coarse, medium, or fine. If custom, need to use massMesh_res instead. if using massMesh_res, set this to an empty string ""
-    double massMesh_res = 300.0;  // default value, don't want to start out too fine that it runs slow
-    std::string massMesh_resUnits = "m";
-    
-    
-    Mesh massMesh;
-    massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-    if ( massMesh_resChoice == "" )
-    {
-        CPLDebug("NINJAFOAM", "mass mesh set by mesh resolution, %f %s", massMesh_res, massMesh_resUnits.c_str());
-        massMesh.set_meshResolution(massMesh_res, lengthUnits::getUnit(massMesh_resUnits));
-    } else {
-        
-        CPLDebug("NINJAFOAM", "mass mesh set by mesh choice, %s", massMesh_resChoice.c_str());
-        if ( massMesh_resChoice == "coarse" )
-        {
-            massMesh.set_meshResChoice(Mesh::coarse);
-        }
-        else if ( massMesh_resChoice == "medium" )
-        {
-            massMesh.set_meshResChoice(Mesh::medium);
-        }
-        else if ( massMesh_resChoice == "fine" )
-        {
-            massMesh.set_meshResChoice(Mesh::fine);
-        }
-        else
-        {
-            throw std::invalid_argument( "Invalid input '" + massMesh_resChoice + "' in Mesh::set_meshResChoice, called by NinjaFoam::writeMassMeshVtkOutput()" );
-        }
-        massMesh.compute_cellsize(input.dem);
-    }
     massMesh.buildStandardMesh(input);
     
     
-    // massMesh.buildStandardMesh() called resample_Grid_in_place for input.dem and input.surface, but did not do so for init->L and init->bl_height
-    // need to resize these to avoid referencing outside the array when filling no data values with the log profile
-    double massMeshResolution = massMesh.meshResolution;
-    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMeshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
-    if(massMeshResolution < meshResolution)  // ninjaFoam meshResolution is the original dem resolution before resizing input.dem.get_cellSize() in massMesh.buildStandardMesh()
-    {
-        init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
-        init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order1); //make the grid finer
-    }else if(massMeshResolution > massMeshResolution)
-    {
-        init->L.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
-        init->bl_height.resample_Grid_in_place(massMeshResolution, AsciiGrid<double>::order0); //coarsen the grid
-    }
+    // no longer need to resize any of the ascii grids, even L and bl_height, as they are already at the mass mesh resolution
+    // after the dem is resampled to the mesh resolution they are set using the dem resolution, 
+    // and the mesh resolution now is expected to always match the mass solver mesh resolution
+    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMesh.meshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
+    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
+    CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     
     
     writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
@@ -2814,7 +2788,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// list of probe points for windninja mass solver case\n");
-    fprintf(fout, "// ncols = %i, nrows = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", ncols, nrows, nlayers, dem_xllCorner, dem_yllCorner);
+    fprintf(fout, "// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
     fprintf(fout, "points\n");
     fprintf(fout, "(\n");
     
@@ -2859,6 +2833,8 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
 
 void NinjaFoam::runProbeSample()
 {
+    CPLDebug("NINJAFOAM", "running probes sample");
+    
     int nRet = -1;
     
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.probeSample", ""), "w");
@@ -3758,6 +3734,16 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
         //default to two rounds of refinement
         nRoundsRefinement = 2; 
     }
+    
+    
+    if ( writeMassMeshVtk == true ) {
+        // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
+        massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
+        CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
+        massMesh.set_meshResolution(meshResolution, meshResolutionUnits);
+        massMesh.compute_domain_height(input);
+    }
+    
 
     //Resample DEM to desired computational resolution
     //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL

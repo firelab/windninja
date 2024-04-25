@@ -174,6 +174,8 @@ private:
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
     
+    bool writeMassMeshVtk;
+    Mesh massMesh;
     void writeMassMeshVtkOutput();
     void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                               const double dem_xllCorner, const double dem_yllCorner, 
