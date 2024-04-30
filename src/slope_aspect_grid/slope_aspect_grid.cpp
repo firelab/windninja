@@ -142,13 +142,13 @@ int main(int argc, char *argv[])
     
     
     //// define the output file names from the path and the cell size
-    const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope.asc");
-    const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect.asc");
+    const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope");
+    const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect");
     if(dfCellSize > 0)
     {
-        pszOutputSlopeFile = CPLSPrintf("%s_%dm", pszOutputSlopeFile, int(dfCellSize));
-        pszOutputAspectFile = CPLSPrintf("%s_%dm", pszOutputAspectFile, int(dfCellSize));
-        const char *pszOutputDemFile = CPLSPrintf("%sdem_%dm", pszOutputPath, int(dfCellSize));
+        pszOutputSlopeFile = CPLSPrintf("%s_%dm.asc", pszOutputSlopeFile, int(dfCellSize));
+        pszOutputAspectFile = CPLSPrintf("%s_%dm.asc", pszOutputAspectFile, int(dfCellSize));
+        const char *pszOutputDemFile = CPLSPrintf("%sdem_%dm.asc", pszOutputPath, int(dfCellSize));
         elev.write_Grid(pszOutputDemFile, nDecimals);
     }
     
