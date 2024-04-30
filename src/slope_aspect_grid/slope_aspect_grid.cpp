@@ -146,11 +146,14 @@ int main(int argc, char *argv[])
     const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect");
     if(dfCellSize > 0)
     {
-        pszOutputSlopeFile = CPLSPrintf("%s_%dm.asc", pszOutputSlopeFile, int(dfCellSize));
-        pszOutputAspectFile = CPLSPrintf("%s_%dm.asc", pszOutputAspectFile, int(dfCellSize));
+        pszOutputSlopeFile = CPLSPrintf("%s_%dm", pszOutputSlopeFile, int(dfCellSize));
+        pszOutputAspectFile = CPLSPrintf("%s_%dm", pszOutputAspectFile, int(dfCellSize));
+        
         const char *pszOutputDemFile = CPLSPrintf("%sdem_%dm.asc", pszOutputPath, int(dfCellSize));
         elev.write_Grid(pszOutputDemFile, nDecimals);
     }
+    pszOutputSlopeFile = CPLSPrintf("%s.asc", pszOutputSlopeFile);
+    pszOutputAspectFile = CPLSPrintf("%s.asc", pszOutputAspectFile);
     
     asp.write_Grid(pszOutputAspectFile, nDecimals);
     slp.write_Grid(pszOutputSlopeFile, nDecimals);
