@@ -317,6 +317,8 @@ endif(NOT WIN32)
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
+mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
 
