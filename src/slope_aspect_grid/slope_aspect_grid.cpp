@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
     
     
     //// define the output file names from the path and the cell size
-    const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope");
-    const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect");
+    const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope.asc");
+    const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect.asc");
     if(dfCellSize > 0)
     {
         pszOutputSlopeFile = CPLSPrintf("%s_%dm", pszOutputSlopeFile, int(dfCellSize));
@@ -152,8 +152,8 @@ int main(int argc, char *argv[])
         elev.write_Grid(pszOutputDemFile, nDecimals);
     }
     
-    asp.write_Grid(pszOutputSlopeFile, nDecimals);
-    slp.write_Grid(pszOutputAspectFile, nDecimals);
+    asp.write_Grid(pszOutputAspectFile, nDecimals);
+    slp.write_Grid(pszOutputSlopeFile, nDecimals);
     
 #ifdef _OPENMP
     endTotal = omp_get_wtime();
