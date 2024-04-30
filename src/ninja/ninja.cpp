@@ -2846,8 +2846,9 @@ void ninja::writeOutputFiles()
                     AsciiGrid<double> tempCloud(CloudGrid);
                     tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
-                    //if output clipping was set by the user, don't buffer to overlap the DEM
-                    if(!input.outputBufferClipping > 0.0)
+                    // if output clipping was set by the user, don't buffer to overlap the DEM
+                    // but only if writing atm file for farsite grids
+                    if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
                     {
                         //ensure grids cover original DEM extents for FARSITE
                         AsciiGrid<double> demGrid;
