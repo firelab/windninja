@@ -4,7 +4,7 @@
  *
  * Project:  WindNinja
  * Purpose:  Application for creating a slope and aspect grid
- * Author:   Jason Forthofer <jaforthofer@fs.fed.us>
+ * Author:   Loren Atwoodr <loren.atwood@usda.gov>
  *
  ******************************************************************************
  *
@@ -118,15 +118,14 @@ int main(int argc, char *argv[])
     // correct the path if it dropped the "/" on the end
     if(pszOutputPath[strlen(pszOutputPath)-1] != "/")
         pszOutputPath = CPLSPrintf("%s/", pszOutputPath);
-        //std::cout << "pszOutputPath = " << pszOutputPath << std::endl;
-    
+
+    CPLDebug("SLOPE_ASPECT", "pszOutputPath = %s", pszOutputPath);
     
     // Read in elevation
     Elevation elev;
     elev.GDALReadGrid(pszInputDemFile, 1);
     if(dfCellSize > 0)
         elev.resample_Grid_in_place(dfCellSize, AsciiGrid<double>::order1);
-    
     
 #ifdef _OPENMP
     omp_set_num_threads(nNumThreads);
@@ -136,12 +135,11 @@ int main(int argc, char *argv[])
     Aspect asp(&elev,nNumThreads);
     Slope slp(&elev,nNumThreads);
     
-    // looks like the prjString is NOT set for the slope and aspect grids, set it manually using the dem prjString
+    // set the prjString from the dem prjString
     asp.set_prjString(elev.prjString);
     slp.set_prjString(elev.prjString);
     
-    
-    //// define the output file names from the path and the cell size
+    // define the output file names from the path and the cell size
     const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope");
     const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect");
     if(dfCellSize > 0)
@@ -163,7 +161,6 @@ int main(int argc, char *argv[])
 #endif
     
     std::cout << "Total time = " << endTotal - startTotal << std::endl;
-    
     
     return 0;
 }
