@@ -946,17 +946,6 @@ void pointInput::updateTimeSteps()
         
         numSteps->setValue(1);
         
-        // additionally, disable gui's ability to edit the values of the start and stop times, and the num steps, it is a single time
-        
-        // Prevent users from using time series with 1 step
-        // enableTimeseries=false;  // this one breaks it
-        startTime->setEnabled(false);
-        stopTime->setEnabled(false);
-        numSteps->setEnabled(false);
-        
-        // looks like the above worked, I was surprised that this didn't need to get set at the very end of direct station traffic instead of here to work, 
-        // using an if statement check on the number of timesteps to trigger if numSteps was ever equal to 1
-        
     } else {
         
         int u_diff = (u_stop - u_start)/(3600); //calculate the number of hours between the start and stop times
