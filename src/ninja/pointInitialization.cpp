@@ -343,12 +343,21 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
      * b: start time is greater than the end time of the data set
      * Both of these will throw exceptions preventing further simulation
      * At least one dataset should be valid to continue simulation (hopefully)
+     * c: if more than one time, but there is somehow more than one time that is the same as the start time
      */
 
     if (start_TL>end_TL)
     {
         cout<<"EXCEPTION CAUGHT: First time step is further in the future than the last, consider changing bounds!"<<endl;
         return false;
+    }
+    
+    if ( timeList.size() > 1 && start_TL == end_TL )
+    {
+        //cout<<"EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!"<<endl;
+        //return false;
+        error_msg="EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!";
+        throw std::runtime_error("EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!");
     }
 
     for(int j=0; j<stationNames.size(); j++)
@@ -2352,13 +2361,6 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     setLocalStartAndStopTimes(start_local,end_local);
     
     
-    //if ( nTimeSteps > 1 && end_UTC == start_UTC )
-    //{
-    //    error_msg = "ERROR: nTimeSteps > 1 with equal start and stop times! Set nTimeSteps to 1 or change the start and stop times!";
-    //    throw std::runtime_error("ERROR: nTimeSteps > 1 with equal start and stop times! Set nTimeSteps to 1 or change the start and stop times!");
-    //}
-    
-    
     // Get Total Time duration of simulation and divide it into time steps
     bpt::time_duration diffTime = end_UTC - start_UTC;
     bpt::time_duration stepTime;
@@ -2380,22 +2382,15 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     // Sets last step to be stop time
     if (nTimeSteps > 1)
     {
-        if ( end_UTC == start_UTC )
+        //If there is only one timestep, just use start_UTC
+        timeOut.push_back(start_UTC);
+        for (int i = 1; i < nTimeSteps-1; i++) //Subtract one to account for indexing beginning early && appending stop/start times
         {
-            std::cout << "nTimeSteps > 1 with equal start and stop times, using 1 nTimeSteps instead" << std::endl;
-            timeOut.push_back(start_UTC);
-        } else
-        {
-            //If there is only one timestep, just use start_UTC
-            timeOut.push_back(start_UTC);
-            for (int i = 1; i < nTimeSteps-1; i++) //Subtract one to account for indexing beginning early && appending stop/start times
-            {
-                bpt::time_duration specTime;
-                specTime = stepTime*i;
-                timeOut.push_back(start_UTC+specTime);
-            }
-            timeOut.push_back(end_UTC);
+            bpt::time_duration specTime;
+            specTime = stepTime*i;
+            timeOut.push_back(start_UTC+specTime);
         }
+        timeOut.push_back(end_UTC);
     } else
     {
         //if it's a single timestep, run the midpoint of start/end
