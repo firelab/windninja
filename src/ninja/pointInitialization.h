@@ -142,7 +142,7 @@ class pointInitialization : public initialize
                                         std::string basePathName,
                                         std::string demFileName,
                                         bool latest);
-        static bool validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
+        static void validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
         static int directTemporalInterpolation(int posIdx, int negIdx);
         static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
 

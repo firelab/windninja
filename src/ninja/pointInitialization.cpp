@@ -314,7 +314,7 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
  * Check to see if the station data is within the range of user desired times
  * If not, throw a tantrum...
  */
-bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<bpt::ptime> timeList)
+void pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<bpt::ptime> timeList)
 {
     vector<bpt::ptime> stationStarts;
     vector<bpt::ptime> stationStops;
@@ -343,21 +343,20 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
      * b: start time is greater than the end time of the data set
      * Both of these will throw exceptions preventing further simulation
      * At least one dataset should be valid to continue simulation (hopefully)
-     * c: if more than one time, but there is somehow more than one time that is the same as the start time
+     * c: if more than one time, but somehow the stop time matches the start time (occurs if single time run as a time series with nTimeSteps > 1, which is NOT allowed)
+     * (note that single times run as a time series with nTimeSteps == 1 IS allowed)
      */
-
+    
     if (start_TL>end_TL)
     {
-        cout<<"EXCEPTION CAUGHT: First time step is further in the future than the last, consider changing bounds!"<<endl;
-        return false;
+        error_msg="First time step is further in the future than the last, consider changing bounds!";
+        throw std::runtime_error("First time step is further in the future than the last, consider changing bounds!");
     }
     
     if ( timeList.size() > 1 && start_TL == end_TL )
     {
-        //cout<<"EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!"<<endl;
-        //return false;
-        error_msg="EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!";
-        throw std::runtime_error("EXCEPTION CAUGHT: nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!");
+        error_msg="nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!";
+        throw std::runtime_error("nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!");
     }
 
     for(int j=0; j<stationNames.size(); j++)
@@ -379,13 +378,13 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
 
     if (startChecks.size() >= stationNames.size() || endChecks.size() >= stationNames.size())
     {
-        CPLDebug("STATION_FETCH","WARNING: NO DATA IS VALID WITHIN PROVIDED TIME RANGE!!");
-        return false;
+        error_msg="NO DATA IS VALID WITHIN PROVIDED TIME RANGE!! User Provided start and stop times are both outside dataset time span!";
+        throw std::runtime_error("NO DATA IS VALID WITHIN PROVIDED TIME RANGE!! User Provided start and stop times are both outside dataset time span!");
     }
     else
     {
         CPLDebug("STATION_FETCH","TIME DATA AND USER BOUNDS ARE AGREEABLE!");
-        return true;
+        //return true;
     }
 }
 /**
@@ -648,14 +647,8 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
         //Not needed for CLI station-fetch runs, but necessary for everything else
         //If it is a CLI station-fetch run, case should be ideal, as timelist and desired times
         //are identical
-        bool stationsCool = validateTimeData(wxVector,timeList);
-        if (stationsCool==false)
-        {
-            //This is bad, kill it with fire!
-            //need informative and concise warning meassages.
-            error_msg="User Provided start and stop times are both outside datasets time span!";
-            throw std::runtime_error("User Provided start and stop times are both outside datasets time span!");
-        }
+        validateTimeData(wxVector,timeList);
+        
         //does all interpolation 
         CPLDebug("STATION_FETCH","User Provided start & Stop times are good..");
         interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList); //Creates a number of wxStation Objects
@@ -2360,6 +2353,19 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     // Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(start_local,end_local);
     
+    
+    // problem occurs with everything after this point if start_UTC > end_UTC or end_UTC < start_UTC, diffTime goes negative
+    // problem is, can't do the check with effective messaging and keeping WindNinja open here, WindNinja would just quit altogether
+    // so I guess return now before all the rest of the stuff, returning a list that will trigger the appropriate checks, messages, and run quitting at the later steps
+    if ( end_UTC < start_UTC )
+    {
+        // note start_UTC > end_UTC, leaving it in that order so later checks should catch this and stop, 
+        // no need to generate more of the timeList as the run should abort and let the user edit their chosen input values accordingly
+        std::vector<bpt::ptime> timeList;
+        timeList.push_back(start_UTC);
+        timeList.push_back(end_UTC);
+        return timeList;
+    }
     
     // Get Total Time duration of simulation and divide it into time steps
     bpt::time_duration diffTime = end_UTC - start_UTC;
