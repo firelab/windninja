@@ -88,7 +88,7 @@
        <property name="sizeAdjustPolicy">
         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
        </property>
-       <item>
+       <!--<item>
         <property name="text">
          <string extracomment="US coverage Shuttle Radar Topography Mission data at 30 meter resolution.  Any existing holes in the data have been filled.">US SRTM (30m)</string>
         </property>
@@ -97,7 +97,7 @@
         <property name="text">
          <string extracomment="World coverage Shuttle Radar Topography Mission data at 90 meter resolution.  Any existing holes in the data have been filled.">WORLD SRTM (90m)</string>
         </property>
-       </item>
+       </item>-->
        <item>
         <property name="text">
          <string extracomment="World coverage Global Multi-resolution Terrain Elevation Data 2010 at 250 meter resolution.">WORLD GMTED (250m)</string>

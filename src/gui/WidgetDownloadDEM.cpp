@@ -94,20 +94,24 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
 #endif
 
 #ifndef HAVE_GMTED
-    this->cbDEMSource->removeItem(2);
+    //this->cbDEMSource->removeItem(2);
+    this->cbDEMSource->removeItem(0);
 #endif 
   
 #ifndef WITH_LCP_CLIENT
-    this->cbDEMSource->removeItem(3);
+    //this->cbDEMSource->removeItem(3);
+    this->cbDEMSource->removeItem(1);
 #endif
 
-    cbDEMSource->setItemData(0, "US coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
-    cbDEMSource->setItemData(1, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 90 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    //cbDEMSource->setItemData(0, "US coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    //cbDEMSource->setItemData(1, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 90 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
 #ifdef HAVE_GMTED
-    cbDEMSource->setItemData(2, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
+    //cbDEMSource->setItemData(2, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
+    cbDEMSource->setItemData(0, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
 #endif
 #ifdef WITH_LCP_CLIENT
-    cbDEMSource->setItemData(3, "Description for LCP goes here.", Qt::ToolTipRole);
+    //cbDEMSource->setItemData(3, "Description for LCP goes here.", Qt::ToolTipRole);
+    cbDEMSource->setItemData(1, "Description for LCP goes here.", Qt::ToolTipRole);
 #endif
     updateDEMSource(cbDEMSource->currentIndex());
 
@@ -253,12 +257,12 @@ void WidgetDownloadDEM::saveDEM()
         demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area. \nClick 'Show Available Data' to view current data bounds.");
         demBoundsError.exec();
     }
-    else if(cbDEMSource->currentIndex()==0 || cbDEMSource->currentIndex()==1)//SRTM sources
-    {
-        QMessageBox dataSourceError;
-        dataSourceError.setText("The US and World SRTM data sources are currently unavailalble due to a change on the server that provides these data. Please try a different data source from the drop down box in the upper left corner of the DEM download window.");
-        dataSourceError.exec();
-    }
+    //else if(cbDEMSource->currentIndex()==0 || cbDEMSource->currentIndex()==1)//SRTM sources
+    //{
+    //    QMessageBox dataSourceError;
+    //    dataSourceError.setText("The US and World SRTM data sources are currently unavailalble due to a change on the server that provides these data. Please try a different data source from the drop down box in the upper left corner of the DEM download window.");
+    //    dataSourceError.exec();
+    //}
     else if((fileSize/1024) > 50)
     {
         QMessageBox demBoundsError;
@@ -371,25 +375,26 @@ int WidgetDownloadDEM::fetchBoundBox(double *boundsBox, const char *fileName, do
 void WidgetDownloadDEM::updateDEMSource(int index)
 {
     switch(index){
-    case 0:
-        //Previously "c:/src/windninja/trunk/data"
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::US_SRTM, FindDataPath("/data"));
-        northDEMBound = us_srtm_northBound;
-        southDEMBound = us_srtm_southBound;
-        currentResolution = (fetcher->GetXRes() * 111325);
-        currentSuffix = "tif";
-        currentSaveAsDesc = "Elevation files (*.tif)";
-        break;
-    case 1:
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_SRTM, FindDataPath("/data"));
-        northDEMBound = world_srtm_northBound;
-        southDEMBound = world_srtm_southBound;
-        currentResolution = (fetcher->GetXRes() * 111325);
-        currentSuffix = "tif";
-        currentSaveAsDesc = "Elevation files (*.tif)";
-        break;
+    //case 0:
+    //    //Previously "c:/src/windninja/trunk/data"
+    //    fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::US_SRTM, FindDataPath("/data"));
+    //    northDEMBound = us_srtm_northBound;
+    //    southDEMBound = us_srtm_southBound;
+    //    currentResolution = (fetcher->GetXRes() * 111325);
+    //    currentSuffix = "tif";
+    //    currentSaveAsDesc = "Elevation files (*.tif)";
+    //    break;
+    //case 1:
+    //    fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_SRTM, FindDataPath("/data"));
+    //    northDEMBound = world_srtm_northBound;
+    //    southDEMBound = world_srtm_southBound;
+    //    currentResolution = (fetcher->GetXRes() * 111325);
+    //    currentSuffix = "tif";
+    //    currentSaveAsDesc = "Elevation files (*.tif)";
+    //    break;
 #ifdef HAVE_GMTED
-    case 2:
+    //case 2:
+    case 0:
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
         northDEMBound = world_gmted_northBound;
         southDEMBound = world_gmted_southBound;
@@ -399,7 +404,8 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         break;
 #endif
 #ifdef WITH_LCP_CLIENT
-    case 3:
+    //case 3:
+    case 1:
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP, FindDataPath("/data"));
         northDEMBound = lcp_northBound;
         southDEMBound = lcp_southBound;
@@ -426,33 +432,35 @@ bool WidgetDownloadDEM::demBoundsCheck()
     //oFile = "/vsizip/" + oFile + "/us_srtm_region.shp";
     const char *pszWkt;
     switch(cbDEMSource->currentIndex()){
+        //case 0:
+        //    wktPoly =
+        //        QString("POLYGON( (%1 %2, %3 %4, ").arg(westBound).arg(northBound).arg(eastBound).arg(northBound) +
+        //        QString("%1 %2, %3 %4, ").arg(eastBound).arg(southBound).arg(westBound).arg(southBound) +
+        //        QString("%1 %2) )").arg(westBound).arg(northBound);
+        //    byteArray = wktPoly.toUtf8();
+        //    pszWkt = byteArray.constData();
+        //    contains = NinjaOGRContain(pszWkt, oFile.c_str(), NULL);
+        //    if(contains)
+        //    {
+        //        return true;
+        //    }
+        //    else
+        //        return false; 
+        //case 1:
+        //    if(northDEMBound < northBound || southDEMBound > southBound)
+        //        return false;
+        //    else
+        //        return true;
+        //break;
+        //case 2:
         case 0:
-            wktPoly =
-                QString("POLYGON( (%1 %2, %3 %4, ").arg(westBound).arg(northBound).arg(eastBound).arg(northBound) +
-                QString("%1 %2, %3 %4, ").arg(eastBound).arg(southBound).arg(westBound).arg(southBound) +
-                QString("%1 %2) )").arg(westBound).arg(northBound);
-            byteArray = wktPoly.toUtf8();
-            pszWkt = byteArray.constData();
-            contains = NinjaOGRContain(pszWkt, oFile.c_str(), NULL);
-            if(contains)
-            {
-                return true;
-            }
+            if(northDEMBound < northBound || southDEMBound > southBound)
+                return false;
             else
-                return false; 
+                return true;
+        break;
+        //case 3:
         case 1:
-            if(northDEMBound < northBound || southDEMBound > southBound)
-                return false;
-            else
-                return true;
-        break;
-        case 2:
-            if(northDEMBound < northBound || southDEMBound > southBound)
-                return false;
-            else
-                return true;
-        break;
-        case 3:
             if(northDEMBound < northBound || southDEMBound > southBound)
                 return false;
             else
