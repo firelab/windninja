@@ -821,6 +821,12 @@ int windNinjaCLI(int argc, char* argv[])
             elevation_file = &vm["fetch_elevation"].as<std::string>();
             //std::cout << "Elevation file download complete." << std::endl;
         }
+        else{
+                if(!vm.count("elevation_file"))
+                {
+                    throw std::runtime_error("elevation_file or fetch_elevation must be set.");
+                }
+            }
 
         /* Fill no data? */
         int bFillNoData =
