@@ -29,8 +29,7 @@
 
 #include "fetch_factory.h"
 
-const std::string FetchFactory::US_SRTM_STR     = "us_srtm";
-const std::string FetchFactory::WORLD_SRTM_STR  = "world_srtm";
+const std::string FetchFactory::SRTM_STR     = "srtm";
 const std::string FetchFactory::RELIEF_STR      = "relief";
 #ifdef HAVE_GMTED
 const std::string FetchFactory::WORLD_GMTED_STR = "gmted";
@@ -47,17 +46,12 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
     std::string p;
     const char* pszPath;
 
-    if(type == US_SRTM || type == WORLD_SRTM || type == WORLD_GMTED )
+    if( type == WORLD_GMTED )
     {
         p = FindDataPath("surface_data.zip");
         pszPath = CPLFormFilename("/vsizip/", p.c_str(), NULL);
-        if(type == US_SRTM)
-            pszPath = CPLFormFilename(pszPath, "us", ".vrt");
-        else if(type == WORLD_SRTM)
-            pszPath = CPLFormFilename(pszPath, "world", ".vrt");
 #ifdef HAVE_GMTED
-        else if(type == WORLD_GMTED)
-            pszPath = CPLFormFilename(pszPath, "gmted", ".vrt");
+        pszPath = CPLFormFilename(pszPath, "gmted", ".vrt");
 #endif
         return new GDALFetch(std::string(pszPath));
     }
@@ -65,6 +59,8 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
     else if(type == LCP)
         return new LandfireClient();
 #endif
+    else if(type == SRTM)
+        return new SRTMClient();
     else if(type == CUSTOM_GDAL)
         return new GDALFetch(path);
     else if( type == RELIEF )
@@ -79,13 +75,9 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
 SurfaceFetch* FetchFactory::GetSurfaceFetch( std::string type, std::string path )
 {
     std::string p;
-    if( type == US_SRTM_STR )
+    if( type == SRTM_STR )
     {
-        return GetSurfaceFetch( US_SRTM );
-    }
-    else if( type == WORLD_SRTM_STR )
-    {
-        return GetSurfaceFetch( WORLD_SRTM );
+        return GetSurfaceFetch( SRTM );
     }
 #ifdef HAVE_GMTED
     else if( type == WORLD_GMTED_STR )

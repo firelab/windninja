@@ -56,21 +56,12 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     double southWest[2];
     double northWest[2];
     
-    
-    fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::US_SRTM,"");
+    fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM,"");
     fetcher->GetCorners(northEast, southEast, southWest, northWest);
     us_srtm_northBound = northEast[1];
     us_srtm_eastBound = northEast[0];
     us_srtm_westBound = southWest[0];
     us_srtm_southBound = southWest[1];
-    delete fetcher;
-    
-    fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_SRTM,"");
-    fetcher->GetCorners(northEast, southEast, southWest, northWest);
-    world_srtm_northBound = northEast[1];
-    world_srtm_eastBound = northEast[0];
-    world_srtm_westBound = southWest[0];
-    world_srtm_southBound = southWest[1];
     delete fetcher;
     
 #ifdef HAVE_GMTED
