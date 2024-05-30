@@ -241,7 +241,7 @@ void WidgetDownloadDEM::saveDEM()
     else if(!demBoundsCheck())
     {
         QMessageBox demBoundsError;
-        demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area. \nClick 'Show Available Data' to view current data bounds.");
+        demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area.");
         demBoundsError.exec();
     }
     else if((fileSize/1024) > 50)
