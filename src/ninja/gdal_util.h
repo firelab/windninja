@@ -65,7 +65,6 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 
 bool gdalHasGeographicSRS (const char* filename);
-bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude);
 int gdalGetUtmZone (double latitude, double longitude);
 GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
 

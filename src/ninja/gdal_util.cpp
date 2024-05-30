@@ -839,48 +839,6 @@ bool gdalHasGeographicSRS (const char* filename) {
     return isGeographic;
 }
 
-// TODO - this is similar to above GDALGetCenter() but handles different axis order so that we don't get twisted lat/lon results.
-// Check if all callers of GDALGetCenter() would agree
-bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude) {
-    bool rc = false;
-
-    if (pDS) {
-        const char *pszPrj = pDS->GetProjectionRef();
-        OGRSpatialReference* pSrcSRS;
-        pSrcSRS = (OGRSpatialReference*) OSRNewSpatialReference(pszPrj);
-        if (pszPrj == "") {
-            OGRSpatialReference tgtSRS;
-
-            tgtSRS.SetWellKnownGeogCS("EPSG:4326");
-#ifdef GDAL_COMPUTE_VERSION
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
-            tgtSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
-#endif /* GDAL_COMPUTE_VERSION */
-
-            OGRCoordinateTransformation *pCT = OGRCreateCoordinateTransformation(pSrcSRS, &tgtSRS);
-            if (pCT) {
-                int nX = pDS->GetRasterXSize();
-                int nY = pDS->GetRasterYSize();
-
-                double a[6];
-                pDS->GetGeoTransform(a);
-                double y = a[3] + a[4] * (nX / 2) + a[5] * (nY / 2);
-                double x = a[0] + a[1] * (nX / 2) + a[2] * (nY / 2);
-
-                rc = pCT->Transform(1, &x, &y);
-                if (rc) {
-                    longitude = x;
-                    latitude = y;
-                }
-
-                OGRCoordinateTransformation::DestroyCT(pCT);
-            }
-        }
-    }
-    return rc;
-}
-
 // return UTM zone 1-60 or -1 if illegal input
 int gdalGetUtmZone (double lat, double lon) {
 
