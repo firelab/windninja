@@ -874,7 +874,6 @@ GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS) {
     GDALDataset* pDstDS = NULL;
     double lat, lon;
     if (pSrcDS != NULL && GDALGetCenter( pSrcDS, &lon, &lat)) {
-        GDALGetCenter( pSrcDS, &lon, &lat);
         int utmZone = gdalGetUtmZone(lat,lon);
         GDALDriverH hDriver = GDALGetDriverByName("GTiff"); // built-in
 
