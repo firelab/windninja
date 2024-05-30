@@ -94,14 +94,10 @@ private:
     double southBound;
     double eastBound;
     double westBound;
-    double us_srtm_southBound;
-    double us_srtm_westBound;
-    double us_srtm_northBound;
-    double us_srtm_eastBound;
-    double world_srtm_southBound;
-    double world_srtm_westBound;
-    double world_srtm_northBound;
-    double world_srtm_eastBound;
+    double srtm_southBound;
+    double srtm_westBound;
+    double srtm_northBound;
+    double srtm_eastBound;
     double world_gmted_southBound;
     double world_gmted_westBound;
     double world_gmted_northBound;
