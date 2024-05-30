@@ -125,8 +125,8 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_BAD_INPUT;
     }
     VSILFILE *fout;
-    //const char *pszFilename = "NINJA_SRTM.tif";
-    fout = VSIFOpenL( filename, "wb" );
+    //fout = VSIFOpenL( filename, "wb" );
+    fout = VSIFOpenL( "NINJA_SRTM.tif", "wb" );
     if( !fout )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -142,9 +142,17 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
      *  Warp to UTM coords
      *-----------------------------------------------------------------------------*/
     CPLDebug( "SRTM_CLIENT", "Warping to UTM..." );
-    GDALDatasetH hDS = (GDALDatasetH) GDALOpen(filename, GA_Update);
-    hDS = gdalWarpToUtm( filename, (GDALDataset *)hDS);
+    GDALDatasetH hDS = (GDALDatasetH) GDALOpen("NINJA_SRTM.tif", GA_ReadOnly);
+    GDALDatasetH hUtmDS;
+    bool rc = GDALWarpToUtm( filename, hDS, hUtmDS);
+    if(rc != true)
+    {
+        return SURF_FETCH_E_IO_ERR;
+    }
+
     GDALClose(hDS);
+    GDALClose(hUtmDS);
+    unlink("NINJA_SRTM.tif");
 
     return SURF_FETCH_E_NONE;
 }

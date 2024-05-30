@@ -869,6 +869,161 @@ int gdalGetUtmZone (double lat, double lon) {
 }
 
 // turn provided data set into a GeoTiff with UTM projection
+//returns true on success
+bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS) 
+{
+    /* parse options */
+    GDALResampleAlg eAlg = GRA_NearestNeighbour;
+
+    CPLSetConfigOption("GTIFF_DIRECT_IO", "YES");
+
+    GDALDriverH hDriver;
+
+    hDriver = GDALGetDriverByName("GTiff");
+
+    const char *pszSrcWKT, *pszDstWKT = NULL;
+    pszSrcWKT = GDALGetProjectionRef(hSrcDS);
+
+    OGRSpatialReference oSrcSRS, oDstSRS;
+
+    oSrcSRS.importFromEPSG(4326);
+
+    double lat, lon;
+    GDALGetCenter( hSrcDS, &lon, &lat);
+    int utmZone = gdalGetUtmZone(lat, lon);
+    int nUtmZone = GetUTMZoneInEPSG(lat, lon);
+
+    oDstSRS.importFromEPSG(nUtmZone);
+    oDstSRS.exportToWkt((char**)&pszDstWKT);
+
+    void *hTransformArg;
+
+    hTransformArg =
+        GDALCreateGenImgProjTransformer(hSrcDS, pszSrcWKT, NULL, pszDstWKT,
+                                        FALSE, 0, 1);
+
+    double adfDstGeoTransform[6];
+    int nPixels=0, nLines=0;
+    CPLErr eErr;
+
+    /* Silence warnings with regard to exceeding limits */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    eErr = GDALSuggestedWarpOutput(hSrcDS, 
+                                   GDALGenImgProjTransform, hTransformArg, 
+                                   adfDstGeoTransform, &nPixels, &nLines);
+    CPLPopErrorHandler();
+    if(eErr != CE_None)
+    {
+        return false;
+    }
+    GDALDestroyGenImgProjTransformer(hTransformArg);
+
+    hDstDS = GDALCreate(hDriver, filename, nPixels, nLines, 
+                        GDALGetRasterCount(hSrcDS), GDT_Float32, NULL);
+
+    if(hDstDS == NULL)
+    {
+        return false;
+    }
+
+    GDALSetProjection(hDstDS, pszDstWKT);
+    GDALSetGeoTransform(hDstDS, adfDstGeoTransform);
+
+    GDALRasterBandH hSrcBand;
+    GDALRasterBandH hDstBand;
+
+    hSrcBand = GDALGetRasterBand(hSrcDS, 1);
+    hDstBand = GDALGetRasterBand(hDstDS, 1);
+
+    int nBandCount = GDALGetRasterCount( hDstDS );
+
+    double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+
+    GDALSetRasterNoDataValue(hDstBand, dfNoData);
+
+    GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->hSrcDS = hSrcDS;
+    psWarpOptions->hDstDS = hDstDS;
+
+    psWarpOptions->nBandCount = 1;
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataReal[0] = dfNoData;
+    psWarpOptions->padfDstNoDataImag[0] = dfNoData;
+    psWarpOptions->panSrcBands = 
+        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
+    psWarpOptions->panSrcBands[0] = 1;
+    psWarpOptions->panDstBands = 
+        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
+    psWarpOptions->panDstBands[0] = 1;
+
+    psWarpOptions->pTransformerArg = 
+        GDALCreateGenImgProjTransformer( hSrcDS, 
+                                         GDALGetProjectionRef(hSrcDS), 
+                                         hDstDS,
+                                         GDALGetProjectionRef(hDstDS), 
+                                         FALSE, 0.0, 1 );
+
+    psWarpOptions->pfnTransformer = GDALGenImgProjTransform;
+
+    psWarpOptions->eResampleAlg = eAlg;
+
+    GDALWarpOperation oOperation;
+
+    oOperation.Initialize( psWarpOptions );
+    eErr = oOperation.ChunkAndWarpImage( 0, 0, 
+                                         GDALGetRasterXSize( hDstDS ), 
+                                         GDALGetRasterYSize( hDstDS ) );
+
+    GDALDestroyGenImgProjTransformer( psWarpOptions->pTransformerArg );
+    GDALDestroyWarpOptions( psWarpOptions );
+
+    if( eErr != CE_None )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp downloaded DEM." );
+        CPLFree((void*)pszDstWKT);
+        GDALClose(hDstDS);
+        GDALClose(hSrcDS);
+        return false;
+    }
+
+    //fill no data from warping
+    int nNoDataCount = 0;
+    if(GDALHasNoData(hDstDS, 1))
+    {
+        nNoDataCount = GDALFillBandNoData(hDstDS, 1, 100);
+    }
+
+    double *padfScanline;
+    padfScanline = (double *) CPLMalloc(sizeof(double)*nPixels);
+    nNoDataCount = 0;
+    for(int i = 0;i < nLines;i++)
+    {
+        GDALRasterIO(hDstBand, GF_Read, 0, i, nPixels, 1, 
+                     padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+        for(int j = 0; j < nPixels;j++)
+        {
+            if(CPLIsEqual(padfScanline[j], dfNoData))
+                nNoDataCount++;
+        }
+    }
+    if(nNoDataCount > 0)
+    {
+        return false;
+    }
+
+    CPLFree((void*)padfScanline);
+    CPLFree((void*)pszDstWKT);
+
+    CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
+
+    return true;
+}
+
+// turn provided data set into a GeoTiff with UTM projection
 // returning NULL indicates error
 GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS) {
     GDALDataset* pDstDS = NULL;
