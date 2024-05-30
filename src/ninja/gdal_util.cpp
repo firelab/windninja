@@ -868,8 +868,18 @@ int gdalGetUtmZone (double lat, double lon) {
     return -1;
 }
 
-// turn provided data set into a GeoTiff with UTM projection
-//returns true on success
+/**
+ * @brief Warp a dataset into a GeoTiff with UTM projection.
+ *
+ * Warp a given GDAL dataset to a GDAL dataset with the appropriate UTM projection and write 
+ * to disk as a GeoTiff with a specified file name.
+ *
+ * @param filename the output filename to be written to disk
+ * @param hSrcDS the source dataset
+ * @param hDstDS the destination dataset
+ * @return true on success, false on failure
+ *
+ */
 bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS) 
 {
     /* parse options */
@@ -884,9 +894,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     const char *pszSrcWKT, *pszDstWKT = NULL;
     pszSrcWKT = GDALGetProjectionRef(hSrcDS);
 
-    OGRSpatialReference oSrcSRS, oDstSRS;
-
-    oSrcSRS.importFromEPSG(4326);
+    OGRSpatialReference oDstSRS;
 
     double lat, lon;
     GDALGetCenter( hSrcDS, &lon, &lat);
