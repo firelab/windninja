@@ -367,8 +367,8 @@ void WidgetDownloadDEM::updateDEMSource(int index)
 #ifdef HAVE_GMTED
     case 1: //GMTED
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
-        //northDEMBound = world_gmted_northBound;
-        //southDEMBound = world_gmted_southBound;
+        northDEMBound = world_gmted_northBound;
+        southDEMBound = world_gmted_southBound;
         currentResolution = (fetcher->GetXRes() * 111325);
         currentSuffix = "tif";
         currentSaveAsDesc = "Elevation files (*.tif)";
