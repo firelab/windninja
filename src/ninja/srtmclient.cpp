@@ -105,8 +105,9 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
      *-----------------------------------------------------------------------------*/
     CPLDebug( "SRTM_CLIENT", "Response: %s", psResult->pabyData );
     if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 ||
-        strstr( (char*)psResult->pabyData, "HTTP error code : 404" ) ||
-        strstr( (char*)psResult->pabyData, "data file is not present" ) )
+        strstr( (char*)psResult->pabyData, "HTTP error code : 401" ) ||
+        strstr( (char*)psResult->pabyData, "HTTP error code : 500" ) ||
+        strstr( (char*)psResult->pabyData, "HTTP error code : 204" ) )
     {
         CPLHTTPDestroyResult( psResult );
         CPLError( CE_Failure, CPLE_AppDefined,
