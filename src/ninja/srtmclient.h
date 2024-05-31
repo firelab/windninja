@@ -31,19 +31,10 @@
 
 #include <string>
 #include <cstdio>
-#if __cplusplus >= 201103
-#include <regex>
-#endif
 
-#include "cpl_port.h"
-#include "cpl_conv.h"
 #include "cpl_http.h"
-#include "cpl_string.h"
-#include "cpl_minixml.h"
-#include "cpl_multiproc.h"
 
 #include "surface_fetch.h"
-#include "ninja_conv.h"
 
 /*-----------------------------------------------------------------------------
  *  REST API", string templates

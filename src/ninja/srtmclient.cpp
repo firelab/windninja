@@ -29,8 +29,6 @@
 
 #include "srtmclient.h"
 
-#define SIZE (1024)
-
 SRTMClient::SRTMClient() : SurfaceFetch()
 {
     xRes = 30.0;
