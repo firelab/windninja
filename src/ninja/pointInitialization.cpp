@@ -314,7 +314,7 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
  * Check to see if the station data is within the range of user desired times
  * If not, throw a tantrum...
  */
-bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<bpt::ptime> timeList)
+void pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxStationData, vector<bpt::ptime> timeList)
 {
     vector<bpt::ptime> stationStarts;
     vector<bpt::ptime> stationStops;
@@ -327,57 +327,106 @@ bool pointInitialization::validateTimeData(vector<vector<preInterpolate> > wxSta
 
         SD_start = wxStationData[i][0].datetime;
         SD_stop = wxStationData[i][wxStationData[i].size()-1].datetime;
+        CPLDebug("STATION_FETCH","i = %d, SD_start = %s, SD_stop = %s", i, boost::posix_time::to_simple_string(SD_start).c_str(), boost::posix_time::to_simple_string(SD_stop).c_str());
         stationStarts.push_back(SD_start);
         stationStops.push_back(SD_stop);
         stationNames.push_back(wxStationData[i][0].stationName);
     }
     bpt::ptime start_TL = timeList[0];
     bpt::ptime end_TL = timeList[timeList.size()-1];
-
-    vector<bool> startChecks; //Check all weather stations against timelist, if at least one station has data, we can run a simulation, if no station are available, throw an exception
-    vector<bool> endChecks;
-
+    CPLDebug("STATION_FETCH","start_TL = %s, end_TL = %s", boost::posix_time::to_simple_string(start_TL).c_str(), boost::posix_time::to_simple_string(end_TL).c_str());
+    
+    
     /*
      * BAD cases:
-     * a: end time is less than the start time of the data set
-     * b: start time is greater than the end time of the data set
-     * Both of these will throw exceptions preventing further simulation
+     * 
+     * A: end run time is less than the start run time (same thing as start run time greater than end run time)
+     * B: if more than one time, but somehow the stop time matches the start time (occurs if single time run as a time series with nTimeSteps > 1, which is NOT allowed)
+     * (note that single times run as a time series with nTimeSteps == 1 IS allowed)
+     * 
+     * a: run start time is greater than the end time of the dataset
+     * b: run start time is less than the start time of the dataset
+     * c: run end time is less than the start time of the dataset
+     * d: run end time is greater than the end time of the dataset
+     * 
+     * each of these will throw exceptions preventing further simulation
+     * 
      * At least one dataset should be valid to continue simulation (hopefully)
      */
-
+    
     if (start_TL>end_TL)
     {
-        cout<<"EXCEPTION CAUGHT: First time step is further in the future than the last, consider changing bounds!"<<endl;
-        return false;
+        error_msg="USER PROVIDED START TIME > USER PROVIDED STOP TIME, consider changing the bounds!";
+        throw std::runtime_error("USER PROVIDED START TIME > USER PROVIDED STOP TIME, consider changing the bounds!");
     }
-
+    
+    if ( timeList.size() > 1 && start_TL == end_TL )
+    {
+        error_msg="USER PROVIDED nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!";
+        throw std::runtime_error("USER PROVIDED nTimes > 1 with equal start and stop times! Set input nTimes to 1 or change the input start and stop times!");
+    }
+    
+    
+    // Check all weather stations against timelist, if at least one station has data, we can run a simulation, if no station are available, throw an exception
+    vector<bool> runStartVsWxEndChecks;
+    vector<bool> runStartVsWxStartChecks;
+    vector<bool> runStopVsWxStartChecks;
+    vector<bool> runStopVsWxEndChecks;
     for(int j=0; j<stationNames.size(); j++)
     {
         if(start_TL>stationStops[j])
         {
-            CPLDebug("STATION_FETCH","Time list start time begins later than all data for %i : %s ",j,stationNames[j].c_str());
-            startChecks.push_back(false);
+            CPLDebug("STATION_FETCH","Time list starts after data ends for %i : %s ",j,stationNames[j].c_str());
+            runStartVsWxEndChecks.push_back(false);
         }
+        if(start_TL<stationStarts[j])
+        {
+            CPLDebug("STATION_FETCH","Time list starts before data starts for %i : %s ",j,stationNames[j].c_str());
+            runStartVsWxStartChecks.push_back(false);
+        }
+        
         if(end_TL<stationStarts[j])
         {
             CPLDebug("STATION_FETCH","Time list ends before data starts for %i : %s ",j,stationNames[j].c_str());
-            endChecks.push_back(false);
+            runStopVsWxStartChecks.push_back(false);
+        }
+        if(end_TL>stationStops[j])
+        {
+            CPLDebug("STATION_FETCH","Time list ends after data ends for %i : %s ",j,stationNames[j].c_str());
+            runStopVsWxEndChecks.push_back(false);
         }
     }
-    CPLDebug("STATION_FETCH","FAILED STARTS: %lu",startChecks.size());
-    CPLDebug("STATION_FETCH","FAILED ENDS: %lu",endChecks.size());
+    CPLDebug("STATION_FETCH","FAILED TIME LIST STARTS AFTER DATA ENDS: %lu",runStartVsWxEndChecks.size());
+    CPLDebug("STATION_FETCH","FAILED TIME LIST STARTS BEFORE DATA STARTS: %lu",runStartVsWxStartChecks.size());
+    CPLDebug("STATION_FETCH","FAILED TIME LIST STOPS BEFORE DATA STARTS: %lu",runStopVsWxStartChecks.size());
+    CPLDebug("STATION_FETCH","FAILED TIME LIST STOPS AFTER DATA ENDS: %lu",runStopVsWxEndChecks.size());
     CPLDebug("STATION_FETCH","NUM STATIONS: %lu",stationNames.size());
 
-    if (startChecks.size() >= stationNames.size() || endChecks.size() >= stationNames.size())
+    if (runStartVsWxEndChecks.size() >= stationNames.size())
     {
-        CPLDebug("STATION_FETCH","WARNING: NO DATA IS VALID WITHIN PROVIDED TIME RANGE!!");
-        return false;
+        error_msg="USER PROVIDED START TIME IS OUTSIDE DATASET TIME SPAN!! Provided start time > dataset end time for all wx stations!";
+        throw std::runtime_error("USER PROVIDED START TIME IS OUTSIDE DATASET TIME SPAN!! Provided start time > dataset end time for all wx stations!");
     }
-    else
+    if (runStartVsWxStartChecks.size() >= stationNames.size())
     {
-        CPLDebug("STATION_FETCH","TIME DATA AND USER BOUNDS ARE AGREEABLE!");
-        return true;
+        error_msg="USER PROVIDED START TIME IS OUTSIDE DATASET TIME SPAN!! Provided start time < dataset start time for all wx stations!";
+        throw std::runtime_error("USER PROVIDED START TIME IS OUTSIDE DATASET TIME SPAN!! Provided start time < dataset start time for all wx stations!");
     }
+    
+    if (runStopVsWxStartChecks.size() >= stationNames.size())
+    {
+        error_msg="USER PROVIDED STOP TIME IS OUTSIDE DATASET TIME SPAN!! Provided stop time < dataset start time for all wx stations!";
+        throw std::runtime_error("USER PROVIDED STOP TIME IS OUTSIDE DATASET TIME SPAN!! Provided stop time < dataset start time for all wx stations!");
+    }
+    if (runStopVsWxEndChecks.size() >= stationNames.size())
+    {
+        error_msg="USER PROVIDED STOP TIME IS OUTSIDE DATASET TIME SPAN!! Provided stop time > dataset end time for all wx stations!";
+        throw std::runtime_error("USER PROVIDED STOP TIME IS OUTSIDE DATASET TIME SPAN!! Provided stop time > dataset end time for all wx stations!");
+    }
+    
+    // if it got here, passed all the checks
+    CPLDebug("STATION_FETCH","TIME DATA AND USER BOUNDS ARE AGREEABLE!");
+    
 }
 /**
  * @brief pointInitialization::generatePointDirectory
@@ -636,17 +685,10 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     else //If its a time series
     {
         //Sanity check, make sure user provided time range is usable with the data the user wants to use
-        //Not needed for CLI station-fetch runs, but necessary for everything else
-        //If it is a CLI station-fetch run, case should be ideal, as timelist and desired times
-        //are identical
-        bool stationsCool = validateTimeData(wxVector,timeList);
-        if (stationsCool==false)
-        {
-            //This is bad, kill it with fire!
-            //need informative and concise warning meassages.
-            error_msg="User Provided start and stop times are both outside datasets time span!";
-            throw std::runtime_error("User Provided start and stop times are both outside datasets time span!");
-        }
+        //currently the best spot to do time checks, for both the cli and the gui, as then the gui still stops a run without closing WindNinja suddenly
+        //getTimeList() is also a spot that can affect time checking, but throwing an error there closes WindNinja suddenly
+        validateTimeData(wxVector,timeList);
+        
         //does all interpolation 
         CPLDebug("STATION_FETCH","User Provided start & Stop times are good..");
         interpolatedDataSet=interpolateTimeData(demFile,wxVector,timeList); //Creates a number of wxStation Objects
@@ -2352,6 +2394,18 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     setLocalStartAndStopTimes(start_local,end_local);
     
     
+    // problem occurs with everything after this point if start_UTC > end_UTC or end_UTC < start_UTC, diffTime goes negative
+    // problem is, can't do the check with effective messaging and keeping WindNinja open here, WindNinja would just quit altogether
+    // so I guess return now before all the rest of the stuff, returning a list that will trigger the appropriate checks, messages, and run quitting at the later steps
+    if ( end_UTC < start_UTC )
+    {
+        // note start_UTC > end_UTC, leaving it in that order so later checks should catch this and stop, 
+        // no need to generate more of the timeList as the run should abort and let the user edit their chosen input values accordingly
+        std::vector<bpt::ptime> timeList;
+        timeList.push_back(start_UTC);
+        timeList.push_back(end_UTC);
+        return timeList;
+    }
     
     // Get Total Time duration of simulation and divide it into time steps
     bpt::time_duration diffTime = end_UTC - start_UTC;

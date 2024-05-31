@@ -1053,12 +1053,6 @@ int windNinjaCLI(int argc, char* argv[])
         {
             //Check to be sure that the user specifies right info
             conflicting_options(vm, "fetch_station", "wx_station_filename");
-            option_dependency(vm, "fetch_metadata","metadata_filename");
-            if (vm["fetch_type"].as<string>()=="stid")//If fetch_type is sitd, require wx_station_filename
-                { 
-                    option_dependency(vm, "fetch_type","wx_station_filename");
-
-                }
 
             std::vector<boost::posix_time::ptime> timeList;
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
@@ -1125,6 +1119,7 @@ int windNinjaCLI(int argc, char* argv[])
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
                 //so that the fetchStationData function knows where to save the data
+                option_dependency(vm,"fetch_station","fetch_type");
                 if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box
                 {
                     bool fetchSuccess = pointInitialization::fetchStationFromBbox(*elevation_file,
@@ -1171,12 +1166,14 @@ int windNinjaCLI(int argc, char* argv[])
 
                 if(vm["fetch_metadata"].as<bool>() == true) //fetches metadata
                 {
+                    option_dependency(vm, "fetch_metadata","metadata_filename");
                     pointInitialization::fetchMetaData(vm["metadata_filename"].as<std::string>(),
                             *elevation_file,true);
                 }
             }
             else if (vm["fetch_station"].as<bool>() == false) //If we aren't fetching, look for on disk files
             {
+                verify_option_set(vm, "wx_station_filename");
                 pointInitialization::SetRawStationFilename(vm["wx_station_filename"].as<std::string>());
                 std::string stationFile=vm["wx_station_filename"].as<std::string>();
                 int stationFormat = wxStation::GetHeaderVersion(stationFile.c_str());

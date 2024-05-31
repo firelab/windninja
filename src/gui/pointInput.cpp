@@ -573,21 +573,85 @@ int pointInput::directStationTraffic(const char* xFileName)
  */
 void pointInput::readStationTime(string start_time, string stop_time, int xSteps)
 {
-    QString time_format = "yyyy-MM-ddTHH:mm:ssZ";
+    QString q_time_format = "yyyy-MM-ddTHH:mm:ssZ";
     QString start_utcX = QString::fromStdString(start_time);
     QString end_utcX = QString::fromStdString(stop_time);
 
-    QDateTime start_qat = QDateTime::fromString(start_utcX,time_format);
-    QDateTime end_qat = QDateTime::fromString(end_utcX,time_format);
+    QDateTime start_qat = QDateTime::fromString(start_utcX,q_time_format);
+    QDateTime end_qat = QDateTime::fromString(end_utcX,q_time_format);
 
     start_qat.setTimeSpec(Qt::UTC);
     end_qat.setTimeSpec(Qt::UTC); //Set the Time to UTC
-
-    QDateTime loc_start_time = start_qat.toLocalTime(); //I hope this is robust
-    QDateTime loc_end_time = end_qat.toLocalTime(); //Uses users local time on PC, rather than DEM time
-//    cout<<"TIME ZONE: "<<pointInput::tzString.toStdString()<<endl;
-//    cout<<"UTC DISK TIME: "<<qat.toString().toStdString()<<endl;
-//    cout<<"LOCAL TIME: "<<lxTime.toString().toStdString()<<endl;
+    
+    
+    //// convert the input start and stop times into boost local date time objects, so convert from UTC time to local time
+    
+    blt::time_zone_ptr tz; // Initialize time zone
+    tz = globalTimeZoneDB.time_zone_from_region(tzString.toStdString()); // Get time zone from database
+    
+    // parse the start time into date and time parts
+    int start_year = start_qat.date().year();
+    int start_month = start_qat.date().month();
+    int start_day = start_qat.date().day();    
+    int start_hour = start_qat.time().hour();
+    int start_minute = start_qat.time().minute();
+    int start_sec = start_qat.time().second();
+    
+    // parse the start time into date and time parts
+    int stop_year = end_qat.date().year();
+    int stop_month = end_qat.date().month();
+    int stop_day = end_qat.date().day();    
+    int stop_hour = end_qat.time().hour();
+    int stop_minute = end_qat.time().minute();
+    int stop_sec = end_qat.time().second();
+    
+    // make intermediate start and stop dates for generating ptime objects
+    bg::date startTime_date(start_year,start_month,start_day);
+    bg::date stopTime_date(stop_year,stop_month,stop_day);
+    bpt::time_duration startTime_duration(start_hour,start_minute,start_sec,0);
+    bpt::time_duration stopTime_duration(stop_hour,stop_minute,stop_sec,0);
+    
+    // these are UTC times
+    bpt::ptime startTime_ptime(startTime_date,startTime_duration);
+    bpt::ptime stopTime_ptime(stopTime_date,stopTime_duration);
+    
+    // this constructor generates local times from UTC times
+    blt::local_date_time boost_local_startTime( startTime_ptime, tz );
+    blt::local_date_time boost_local_stopTime( stopTime_ptime, tz );
+    
+    
+    //// convert the boost local date time objects into QDateTime objects
+    
+    std::string os_time_format = "%Y-%m-%dT%H:%M:%SZ";  // this is the ostringstream format string that replicates the above QDateTime format string
+    
+    blt::local_time_facet* facet;
+    facet = new blt::local_time_facet();
+    
+    facet->format(os_time_format.c_str());
+    
+    
+    // calculate the start_time QDate
+    std::ostringstream os;
+    os.imbue(std::locale(std::locale::classic(), facet));
+    os << boost_local_startTime;
+    QString loc_start_time_qStr = QString::fromStdString( os.str() );
+    os.str("");  // reset for parsing the next time
+    os.clear();
+    QDateTime loc_start_time = QDateTime::fromString(loc_start_time_qStr,q_time_format);
+    
+    // calculate the end_time QDate
+    os.imbue(std::locale(std::locale::classic(), facet));
+    os << boost_local_stopTime;
+    QString loc_end_time_qStr = QString::fromStdString( os.str() );
+    os.str("");  // reset for parsing the next time
+    os.clear();
+    QDateTime loc_end_time = QDateTime::fromString(loc_end_time_qStr,q_time_format);
+    
+    CPLDebug("STATION_FETCH","qdate start_local = %s",loc_start_time.toString(q_time_format).toStdString().c_str());
+    CPLDebug("STATION_FETCH","qdate end_local = %s",loc_end_time.toString(q_time_format).toStdString().c_str());
+    
+    
+    //// now use the final local time QDate start and stop times
     writeToConsole("Start Time (local): "+loc_start_time.toString()); //Tell console what the
     writeToConsole("Stop Time (local): "+loc_end_time.toString()); //Local time is
 
@@ -877,15 +941,23 @@ void pointInput::updateTimeSteps()
     CPLDebug("STATION_FETCH","Updating Suggested Time steps....");
     int u_start = startTime->dateTime().toTime_t();
     int u_stop = stopTime->dateTime().toTime_t();
+    
+    if ( u_start == u_stop ) {
+        
+        numSteps->setValue(1);
+        
+    } else {
+        
+        int u_diff = (u_stop - u_start)/(3600); //calculate the number of hours between the start and stop times
 
-    int u_diff = (u_stop - u_start)/(3600); //calculate the number of hours between the start and stop times
+        if(u_diff<=2) //if its less than 2 hours, make it 2
+        {
+            u_diff = 2;
+        }
 
-    if(u_diff<=2) //if its less than 2 hours, make it 2
-    {
-        u_diff = 2;
+        numSteps->setValue(u_diff);
+    
     }
-
-    numSteps->setValue(u_diff);
 }
 /**
  * @brief pointInput::openStationFetchWidget
