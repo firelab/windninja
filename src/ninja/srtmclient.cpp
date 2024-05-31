@@ -125,7 +125,6 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_BAD_INPUT;
     }
     VSILFILE *fout;
-    //fout = VSIFOpenL( filename, "wb" );
     fout = VSIFOpenL( "NINJA_SRTM.tif", "wb" );
     if( !fout )
     {
@@ -152,7 +151,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     GDALClose(hDS);
     GDALClose(hUtmDS);
-    unlink("NINJA_SRTM.tif");
+    VSIUnlink("NINJA_SRTM.tif");
 
     return SURF_FETCH_E_NONE;
 }
