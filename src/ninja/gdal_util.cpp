@@ -1000,7 +1000,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 
     //fill no data from warping
     int nNoDataCount = 0;
-    if(GDALHasNoData(hDstDS, 1))
+    if(GDALHasNoData((GDALDataset*)hDstDS, 1))
     {
         nNoDataCount = GDALFillBandNoData(hDstDS, 1, 100);
     }
