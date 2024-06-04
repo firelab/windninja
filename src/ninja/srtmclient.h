@@ -61,6 +61,7 @@ private:
 
     CPLHTTPResult *psResult;
     std::string m_JobId;
+    const char* APIKey;
 };
 
 #endif /* SRTM_CLIENT_H_ */

@@ -764,6 +764,13 @@ int windNinjaCLI(int argc, char* argv[])
 
                 nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
                                                      new_elev.c_str(), NULL);
+                                                     
+                if(nSrtmError < 0)
+                {
+                    cerr << "Failed to download elevation data.\n";
+                    VSIUnlink(new_elev.c_str());
+                    exit(1);
+                }
 
             }
             else
