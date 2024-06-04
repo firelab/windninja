@@ -897,7 +897,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     OGRSpatialReference oDstSRS;
 
     double lat, lon;
-    GDALGetCenter( hSrcDS, &lon, &lat);
+    GDALGetCenter( (GDALDataset*)hSrcDS, &lon, &lat);
     int utmZone = gdalGetUtmZone(lat, lon);
     int nUtmZone = GetUTMZoneInEPSG(lat, lon);
 
