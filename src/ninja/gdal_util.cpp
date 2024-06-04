@@ -1002,7 +1002,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     int nNoDataCount = 0;
     if(GDALHasNoData((GDALDataset*)hDstDS, 1))
     {
-        nNoDataCount = GDALFillBandNoData(hDstDS, 1, 100);
+        nNoDataCount = GDALFillBandNoData((GDALDataset*)hDstDS, 1, 100);
     }
 
     double *padfScanline;
