@@ -17,7 +17,7 @@ jobs:
     
     - name: Cache Build Dependencies
       id: cacheDep
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           ${{github.workspace}}/scripts/poppler-0.23.4
