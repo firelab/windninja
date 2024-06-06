@@ -51,10 +51,13 @@
 int main(int argc, char *argv[])
 {
     CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
-    //set a CLI-specific key for CLI runs since this is where users are likely to abuse access
-    CPLSetConfigOption( "SRTM_API_KEY", "3397fdfcddb2730623cf2af20715fa75" );
-    CPLDebug("SRTM_CLIENT", "Setting the CLI SRTM API key");
     NinjaInitialize();
+    //set a different key for the CLI since this is where users are likely to abuse access
+    if(CPLGetConfigOption("NINJA_CLI_SRTM_API_KEY", NULL) != NULL)
+    {
+        CPLSetConfigOption("HAVE_CLI_SRTM_API_KEY", CPLGetConfigOption("NINJA_CLI_SRTM_API_KEY", NULL));
+        CPLDebug("SRTM_CLIENT", "Setting CLI SRTM API key.");
+    }
     int result;
 #ifdef _OPENMP
     omp_init_lock (&netCDF_lock);

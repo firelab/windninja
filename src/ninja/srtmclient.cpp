@@ -36,11 +36,16 @@ SRTMClient::SRTMClient() : SurfaceFetch()
         APIKey = CPLGetConfigOption("CUSTOM_SRTM_API_KEY", NULL);
         CPLDebug("SRTM_CLIENT", "Setting a custom SRTM API key to %s", APIKey);
     }
+    else if(CPLGetConfigOption("HAVE_CLI_SRTM_API_KEY", NULL) != NULL)
+    {
+        APIKey = CPLGetConfigOption("HAVE_CLI_SRTM_API_KEY", NULL);
+        CPLDebug("SRTM_CLIENT", "Setting CLI SRTM API key to %s", APIKey);
+    }
     else
     { 
         //if a custom key wasn't set, use the one set in cmake_cli.cpp for CLI runs or the defalut key for GUI runs
-        APIKey = CPLGetConfigOption("SRTM_API_KEY", "b939a683596989f37b78a930e1199a1c");
-        CPLDebug("SRTM_CLIENT", "Setting SRTM API key to %s", APIKey);
+        APIKey = CPLGetConfigOption("NINJA_GUI_SRTM_API_KEY", NULL);
+        CPLDebug("SRTM_CLIENT", "Setting GUI SRTM API key to %s", APIKey);
     }
     
     xRes = 30.0;
@@ -66,6 +71,13 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     (void)resolution;
     if( NULL == filename )
     {
+        return SURF_FETCH_E_BAD_INPUT;
+    }
+
+    if(APIKey == NULL)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "SRTM download failed. No API key specified.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 

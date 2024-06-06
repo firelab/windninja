@@ -40,8 +40,6 @@
  *  REST API", string templates
  *-----------------------------------------------------------------------------*/
 
-#define API_KEY "b939a683596989f37b78a930e1199a1c"
-
 #define SRTM_REQUEST_TEMPLATE "https://portal.opentopography.org/" \
                               "API/globaldem?demtype=SRTMGL1&" \
                               "south=%lf&north=%lf&west=%lf&east=%lf&outputFormat=GTiff&API_Key=%s"
