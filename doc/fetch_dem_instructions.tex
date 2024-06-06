@@ -54,8 +54,7 @@ is located in \texttt{C://.../WindNinja/WindNinja-2.x.x/bin/}.
 \section{Available options}
 The available options with descriptions can be viewed by typing:
 \begin{verbatim}fetch_dem --help\end{verbatim}
-A list of the available options should be shown and look similar to
-this:
+A list of the available options should be shown and look similar to:
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=5in]{images/fetch_dem_1.png}
@@ -82,7 +81,7 @@ Examples of each are below.\\
 \noindent
 This example will download a DEM that falls within the bounds of the box
 provided.\\
-\texttt{fetch\_dem --bbox 47 -113.5 46.5 -113.75 --–src gmted my\_dem.tif}\\
+\texttt{fetch\_dem --bbox 47 -113.5 46.5 -113.75 --src gmted my\_dem.tif}\\
 
 \noindent
 This example will download a 10x14 kilometer DEM with a center point at the
@@ -117,8 +116,8 @@ Other arguments are listed below:
     \texttt{--r} & near, bilinear & near & Method used to resample the original
                                            data \\ \hline
     \texttt{--src} & us, world, gmted & None & The data source to extract DEM
-                                               data from.  The us and world are
-                                               30 and 90m SRTM data,
+                                               data from.  The world is 30 m resolution (the GL1 product)
+                                               SRTM data,
                                                respectively. GMTED is ~250m
                                                global data.
                                                \\ \hline
