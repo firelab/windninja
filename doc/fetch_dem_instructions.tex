@@ -48,9 +48,9 @@ command line and scripting.
 Most standard users \textbf{will not} use this tool, and will instead use the graphic
 user interface (GUI) version, which is described
 \href{run:./download_elevation_file.pdf}{here}.  This
-command line client downloads geotiff elevation files from
-a USGS server.  The command line tool is called \texttt{fetch\_dem.exe} and
-is located in \texttt{C://.../WindNinja/WindNinja-2.x.x/bin/}.
+command line client downloads geotiff elevation and Landscape files from
+datasets on USGS, OpenTopography, and Fire Lab servers.  The command line tool is called \texttt{fetch\_dem.exe} and
+is located in \texttt{C://.../WindNinja/WindNinja-3.x.x/bin/}.
 \section{Available options}
 The available options with descriptions can be viewed by typing:
 \begin{verbatim}fetch_dem --help\end{verbatim}
@@ -91,12 +91,12 @@ east-west and north-south directions.  So this is half the total size in each
 direction (so 5 and 7 for this example).  Note the order of all parameters are
 always specified in (x, y), so it would be longitude, latitude, east-west buffer
 size, north-south buffer size:\\
-\texttt{fetch\_dem --point -113.5 47.0 5 7 --buf\_units km --src world my\_dem.tif}\\
+\texttt{fetch\_dem --point -113.5 47.0 5 7 --buf\_units km --src srtm my\_dem.tif}\\
 
 \noindent
 This example will download a 20x20 mile DEM with the center at Mackay, ID. It also
 uses the ``buffer'' convention:\\
-\texttt{fetch\_dem --geocode ``Mackay, ID'' 10 10 --buf\_units miles --src us
+\texttt{fetch\_dem --geocode ``Mackay, ID'' 10 10 --buf\_units miles --src srtm
 new\_mackay.tif}\\
 Note the quoted placename.\\
 
@@ -115,11 +115,10 @@ Other arguments are listed below:
                                                   meters \\ \hline
     \texttt{--r} & near, bilinear & near & Method used to resample the original
                                            data \\ \hline
-    \texttt{--src} & us, world, gmted & None & The data source to extract DEM
-                                               data from.  The world is 30 m resolution (the GL1 product)
-                                               SRTM data,
-                                               respectively. GMTED is ~250m
-                                               global data.
+    \texttt{--src} & srtm, gmted, lcp & None & The data source to extract DEM
+                                               data from.  The srtm is 30 m resolution world
+                                               SRTM data.
+                                               gmted is ~250m global data. lcp is a 30 m resolution Landscape file.
                                                \\ \hline
     \texttt{--fill\_no\_data} & true, false & false & fill in the missing values
                                                    (mostly for SRTM shadows).
