@@ -2,7 +2,7 @@ name: Testing
 
 on:
   push:
-    branches: [ "github_-actions_caching_bug" ]
+    branches: [ "master" ]
 
 env:
   BUILD_TYPE: Release
