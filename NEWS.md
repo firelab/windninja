@@ -1,6 +1,33 @@
 Release Notes
 =============
 
+WindNinja 3.11.0
+---------------
+- Re-enable SRTM data source downloads via OpenTopography API (#395)
+
+- Increased default download time for LCP service (#515)
+
+- Fixed timze zone issue in the GUI related to point initialization runs (#516)
+
+- Added additional time zones from Python timezone finder
+
+- Disabled automatic output buffering unless the FARSITE/FlamMap atmosphere file is written (#511)
+WindNinja 3.10.0
+---------------
+- Update CLI documentation, example cfg files, and test data (#415, #434, #270, #252)
+
+- Fix issue related to station fetching that was causing point initialization runs to fail (#506)
+
+- Fix several small miscellaneous issues in the point initialization method (#420)
+
+- Check dependencies/conflicts and improve error messages in the CLI (#238)
+
+- WindNinja can now download station files for time periods prior to the current year
+
+- Fix an issue that was causing output products to be displayed in correctly in ESRI platforms (e.g., ArcMap) (#464, #500)
+
+- Implement better handling of special characters in DEM names (#455)
+
 WindNinja 3.9.0
 ---------------
 - Re-enable ability to download DEM from point and radius or bbox coordinates (#336)
