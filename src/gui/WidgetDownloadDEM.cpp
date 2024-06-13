@@ -238,12 +238,12 @@ void WidgetDownloadDEM::saveDEM()
         noBoundsError2.setText("Please select an area on the map.");
         noBoundsError2.exec();
     }
-    else if(!demBoundsCheck())
-    {
-        QMessageBox demBoundsError;
-        demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area.");
-        demBoundsError.exec();
-    }
+    //else if(!demBoundsCheck())
+    //{
+    //    QMessageBox demBoundsError;
+    //    demBoundsError.setText("Area is outside data bounds. Please select new data Source or new Area.");
+    //    demBoundsError.exec();
+    //}
     else if((fileSize/1024) > 50)
     {
         QMessageBox demBoundsError;
@@ -302,7 +302,7 @@ void WidgetDownloadDEM::updateProgress()
 
         if(result < 0)
         {
-            progressBar->setLabelText("The surface data download failed. \nThis normally happens when the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
+            progressBar->setLabelText("The surface data download failed. \nThis normally happens when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
             progressBar->setRange(0,1);
             progressBar->setValue( 0 );
             progressBar->setCancelButtonText("Close");
