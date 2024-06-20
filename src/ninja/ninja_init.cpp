@@ -27,28 +27,13 @@
  *****************************************************************************/
 
 #include "ninja_init.h"
-#define NINJA_ENABLE_CALL_HOME
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <string>
 #include <iostream>
-#include <string>
-#include <netdb.h> 
+#include <netinet/in.h>
 #include <ctime>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <iphlpapi.h>
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "iphlpapi.lib")
-#else
-#include <unistd.h>
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <arpa/inet.h>
-#endif
-
 #include "cpl_http.h"  
 
 
@@ -145,102 +130,10 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     GDALAllRegister();
     OGRRegisterAll();    
 
-    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
-    if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
-    {
-        CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
-        return 2;
-    }
-    if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszWindNinjaData), "date_time_zonespec.csv", NULL)), NULL))
-    {
-        CPLDebug("WINDNINJA", "Invalid path for WINDNINJA_DATA: %s", pszWindNinjaData);
-        return 2; 
-    }
+    std::cout << "Logging message to console." << std::endl;
 
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
-
-    CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
-    CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
-
-    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
-
-    return 0;
-}
-
-/*
-** Initialize global singletons and environments.
-*/
-int NinjaInitialize()
-{
-    GDALAllRegister();
-    OGRRegisterAll();
-    /*
-    ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
-    ** but that doesn't mean we are in trouble.
-    */
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-	int rc = 0;
-
-    /*
-    ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
-    ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
-    ** >2.1.2. Test with CPL_CURL_VERBOSE.  For #231.
-    **
-    ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
-    */
-    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
-
-#ifdef WIN32
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
-    std::string osGdalData;
-    osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
-    const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
-
-#if defined(FIRELAB_PACKAGE)
-    char szDriverPath[MAX_PATH+1];
-    rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
-    const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
-    CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
-
-    CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
-
-#endif /* defined(FIRELAB_PACKAGE) */
-
-#if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
-    char *pszExecPath;
-    const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
-    const char *pszFoamBinPath = "platforms/linux64mingw-w64DPOpt/bin";
-    const char *pszTmp;
-
-    pszExecPath = (char*)CPLMalloc( 8192 );
-    rc = CPLGetExecPath( pszExecPath, 8192 );
-    /*
-    ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
-    ** and platforms folders
-    */
-    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", CPLGetPath( pszExecPath ) ) );
-
-    /*
-    ** Set the PATH variable to point to the lib and bin folders in the open
-    ** foam installation.
-    */
-    pszTmp = CPLSPrintf( "PATH=%s;%s;%PATH%",
-                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
-                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
-    rc = _putenv( pszTmp );
-    CPLFree( (void*)pszExecPath );
-#endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
-
-
-#endif
-
-
-
-#ifdef NINJA_ENABLE_CALL_HOME
+    
 
 std::string firstLocalIP;
 
@@ -300,6 +193,165 @@ if (!firstLocalIP.empty()) {
     poResult = CPLHTTPFetch(charStr, NULL);
     CPLHTTPDestroyResult(poResult);
 }
+
+
+
+    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+    if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
+    {
+        CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
+        return 2;
+    }
+    if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszWindNinjaData), "date_time_zonespec.csv", NULL)), NULL))
+    {
+        CPLDebug("WINDNINJA", "Invalid path for WINDNINJA_DATA: %s", pszWindNinjaData);
+        return 2; 
+    }
+
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+
+    CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
+    CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
+
+    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+
+    return 0;
+}
+
+/*
+** Initialize global singletons and environments.
+*/
+int NinjaInitialize()
+{
+    GDALAllRegister();
+    OGRRegisterAll();
+    /*
+    ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
+    ** but that doesn't mean we are in trouble.
+    */
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+	int rc = 0;
+
+std::cout << "Logging message to console." << std::endl;
+
+printf("hello");
+
+std::string firstLocalIP;
+
+struct ifaddrs *ifAddrStruct = NULL;
+struct ifaddrs *ifa = NULL;
+void *tmpAddrPtr = NULL;
+
+getifaddrs(&ifAddrStruct);
+
+for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+    if (!ifa->ifa_addr) {
+        continue;
+    }
+
+    if (ifa->ifa_addr->sa_family == AF_INET) { // Check it is IPv4
+        tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+        char addressBuffer[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "127.0.0.1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
+        }
+    } else if (ifa->ifa_addr->sa_family == AF_INET6) { // Check it is IPv6
+        tmpAddrPtr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+        char addressBuffer[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "::1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
+        }
+    }
+}
+
+if (ifAddrStruct != NULL)
+    freeifaddrs(ifAddrStruct);
+
+std::string address = firstLocalIP;
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "https://ninjastorm.firelab.org/stats/?IP=";
+
+std::string full = url + address + "&time=" + cpp_string;
+
+const char *charStr = full.data();
+
+if (!firstLocalIP.empty()) {
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+    
+    poResult = CPLHTTPFetch(charStr, NULL);
+    
+    std::cout << poResult << std::endl;
+    CPLHTTPDestroyResult(poResult);
+}
+
+
+    /*
+    ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
+    ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
+    ** >2.1.2. Test with CPL_CURL_VERBOSE.  For #231.
+    **
+    ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
+    */
+    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+#ifdef WIN32
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
+    std::string osGdalData;
+    osGdalData = FindDataPath( "gdal-data/data/gdalicon.png" );
+    const char *pszGdalData = CPLGetPath( osGdalData.c_str() );
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+
+#if defined(FIRELAB_PACKAGE)
+    char szDriverPath[MAX_PATH+1];
+    rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
+    const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
+    CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
+
+    CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
+
+#endif /* defined(FIRELAB_PACKAGE) */
+
+#if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
+    char *pszExecPath;
+    const char *pszFoamLibPath = "platforms/linux64mingw-w64DPOpt/lib";
+    const char *pszFoamBinPath = "platforms/linux64mingw-w64DPOpt/bin";
+    const char *pszTmp;
+
+    pszExecPath = (char*)CPLMalloc( 8192 );
+    rc = CPLGetExecPath( pszExecPath, 8192 );
+    /*
+    ** Set the WM_PROJECT_DIR.  This should point to the installation, with etc
+    ** and platforms folders
+    */
+    rc = _putenv( CPLSPrintf("WM_PROJECT_DIR=%s", CPLGetPath( pszExecPath ) ) );
+
+    /*
+    ** Set the PATH variable to point to the lib and bin folders in the open
+    ** foam installation.
+    */
+    pszTmp = CPLSPrintf( "PATH=%s;%s;%PATH%",
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamBinPath, NULL ),
+                         CPLFormFilename( CPLGetPath( pszExecPath ), pszFoamLibPath, NULL ) );
+    rc = _putenv( pszTmp );
+    CPLFree( (void*)pszExecPath );
+#endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
+
 
 #endif
 
