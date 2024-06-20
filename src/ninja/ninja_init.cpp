@@ -27,6 +27,30 @@
  *****************************************************************************/
 
 #include "ninja_init.h"
+#define NINJA_ENABLE_CALL_HOME
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <string>
+#include <netdb.h> 
+#include <ctime>
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <iphlpapi.h>
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "iphlpapi.lib")
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#endif
+
+#include "cpl_http.h"  
+
 
 boost::local_time::tz_database globalTimeZoneDB;
 
@@ -73,6 +97,7 @@ char ** NinjaCheckVersion(void) {
   CPLHTTPDestroyResult( poResult );
   return papszTokens;
 }
+
 
 void NinjaCheckThreddsData( void *rc )
 {
@@ -210,19 +235,92 @@ int NinjaInitialize()
     CPLFree( (void*)pszExecPath );
 #endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
+
 #endif
-    /*
-    ** Set windninja data if it isn't set.
-    */
-    if( !CSLTestBoolean( CPLGetConfigOption( "WINDNINJA_DATA", "FALSE" ) ) )
-    {
-        std::string osDataPath;
-        osDataPath = FindDataPath( "tz_world.zip" );
-        if( osDataPath != "" )
-        {
-            CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
+
+
+
+#ifdef NINJA_ENABLE_CALL_HOME
+
+std::string firstLocalIP;
+
+struct ifaddrs *ifAddrStruct = NULL;
+struct ifaddrs *ifa = NULL;
+void *tmpAddrPtr = NULL;
+
+getifaddrs(&ifAddrStruct);
+
+for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+    if (!ifa->ifa_addr) {
+        continue;
+    }
+
+    if (ifa->ifa_addr->sa_family == AF_INET) { // Check it is IPv4
+        tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+        char addressBuffer[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "127.0.0.1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
+        }
+    } else if (ifa->ifa_addr->sa_family == AF_INET6) { // Check it is IPv6
+        tmpAddrPtr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+        char addressBuffer[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "::1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
         }
     }
+}
+
+if (ifAddrStruct != NULL)
+    freeifaddrs(ifAddrStruct);
+
+std::string address = firstLocalIP;
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "http://ninjastorm.firelab.org/windninja/stats/?IP=";
+
+std::string full = url + address + "&time=" + cpp_string;
+
+const char *charStr = full.data();
+
+if (!firstLocalIP.empty()) {
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+
+    poResult = CPLHTTPFetch(charStr, NULL);
+    CPLHTTPDestroyResult(poResult);
+}
+
+#endif
+
+
+
+
+/*
+** Set windninja data if it isn't set.
+*/
+if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
+    std::string osDataPath;
+    osDataPath = FindDataPath("tz_world.zip");
+    if (osDataPath != "") {
+        CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
+    }
+}
+
+
+
+
+
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     CPLPopErrorHandler();
     return 0;
