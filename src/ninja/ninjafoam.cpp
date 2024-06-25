@@ -74,6 +74,7 @@ NinjaFoam::NinjaFoam() : ninja()
     endStlConversion = 0.0;
     
     writeMassMeshVtk = false;
+    writeMassMeshColMax = false;
 }
 
 /**
@@ -138,6 +139,7 @@ bool NinjaFoam::simulate_wind()
     {
         writeMassMeshVtk = CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE");
     }
+    writeMassMeshColMax = true;
 
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
@@ -2653,6 +2655,20 @@ void NinjaFoam::WriteOutputFiles()
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
 	}
 	
+	
+	try{
+	    if ( writeMassMeshColMax == true ) {
+	        CPLDebug("NINJAFOAM", "writing mass mesh col max output for foam simulation.");
+	        writeMassMeshColMaxOutput();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max output file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max output file writing: Cannot determine exception type.");
+	}
+	
 }
 
 
@@ -2670,7 +2686,8 @@ void NinjaFoam::writeMassMeshVtkOutput()
     CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     
     
-    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
+    std::string field = "U";
+    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, field );
     
     runProbeSample();
     
@@ -2706,7 +2723,8 @@ void NinjaFoam::writeMassMeshVtkOutput()
 
 void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                                       const double dem_xllCorner, const double dem_yllCorner, 
-                                      const int ncols, const int nrows, const int nlayers)
+                                      const int ncols, const int nrows, const int nlayers, 
+                                      const std::string field)
 {
     CPLDebug("NINJAFOAM", "writing probes sample file");
     
@@ -2775,7 +2793,8 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "// choice of variables\n");
     //fprintf(fout, "fields  (%s %s);\n", "U", "k");
-    fprintf(fout, "fields  (%s %s %s %s %s);\n", "U", "k", "epsilon", "nut", "p");
+    //fprintf(fout, "fields  (%s %s %s %s %s);\n", "U", "k", "epsilon", "nut", "p");
+    fprintf(fout, "fields  (%s);\n", field.c_str());
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// Sampling and I/O settings\n");
@@ -3221,6 +3240,308 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
     
     
 }
+
+
+void NinjaFoam::writeMassMeshColMaxOutput()
+{
+    
+    double colHeightAGL = 300.0;
+    
+    
+    massMesh.buildStandardMesh(input);
+    
+    
+    // no longer need to resize any of the ascii grids, even L and bl_height, as they are already at the mass mesh resolution
+    // after the dem is resampled to the mesh resolution they are set using the dem resolution, 
+    // and the mesh resolution now is expected to always match the mass solver mesh resolution
+    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMesh.meshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
+    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
+    CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
+    
+    
+    std::string field = "k";
+    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, field );
+    
+    runProbeSample();
+    
+    wn_3dScalarField k;
+    k.allocate(&massMesh);
+    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, k );
+    
+    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, k );
+    
+    
+    AsciiGrid<double> colMaxGrid = generateColMaxGrid( colHeightAGL, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, k );
+    
+    
+    //// for debugging
+    CPLDebug("NINJAFOAM", "writing ascii file");
+    const char *colMaxOutputFile_ascii;
+    colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
+    colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
+    
+    
+    CPLDebug("NINJAFOAM", "deallocating created grids");
+	k.deallocate();
+}
+
+void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                                 const double dem_xllCorner, const double dem_yllCorner, 
+                                 const int ncols, const int nrows, const int nlayers, 
+                                 wn_3dScalarField& k )
+{
+    CPLDebug("NINJAFOAM", "reading in probes sample data");
+    
+    const char *probesPostProcessDirname = "probes";
+    if ( foamVersion == "2.2.0" ) {
+        probesPostProcessDirname = "sets";
+    }
+    
+    // method from surfaces sampling, to find the time directory for the surfaces file
+    char **papszOutputProbeDataPath;
+    papszOutputProbeDataPath = VSIReadDir(CPLSPrintf("%s/postProcessing/%s/", pszFoamPath, probesPostProcessDirname));
+    
+    const char *probeSampleData_filename;
+    const char *timeDir;
+    for(int i = 0; i < CSLCount( papszOutputProbeDataPath ); i++){
+        if(std::string(papszOutputProbeDataPath[i]) != "." &&
+           std::string(papszOutputProbeDataPath[i]) != "..") {
+            timeDir = papszOutputProbeDataPath[i];
+            probeSampleData_filename = CPLSPrintf("%s/postProcessing/%s/%s/points_k.xy", pszFoamPath, probesPostProcessDirname, timeDir);
+            break;
+        }
+        else{
+            continue;
+        }
+    }
+    CPLDebug("NINJAFOAM", "probes sample data file path = \"%s\"", probeSampleData_filename);
+    
+    
+    // read the full data file into a string separated by "\n" chars for each line
+    VSILFILE *fin;
+    fin = VSIFOpenL( probeSampleData_filename, "r" );
+    
+    char *data;
+    
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+    
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    
+    std::string probeSampleData_allLines(data);
+    
+    CPLFree(data);
+    VSIFCloseL( fin );
+    
+    
+    // now go through the data string line by line from where the probe data starts, 
+    // comparing the probe data points with the mesh points to detect whether any data points were silently dropped for being outside the mesh
+    // filling any dropped probe data with NoData vals to be filled at later steps
+    double noDataVal = -9999;
+    int startLinePos = 0;  // data starts right at the first character of the file, so no need to set it by finding a specific spot/character in the file
+    int endLinePos;
+    for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+    {
+        for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+        {
+            for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+            {
+                int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
+                
+                endLinePos = probeSampleData_allLines.find("\n",startLinePos+1);
+                
+                //// .find() returns -1 when it can't find a value, and YES it lets it try for values past the length of the string with this as the return value. So this happens when EOF
+                if ( endLinePos == -1 )
+                {
+                    // EOF, so it's a data point that was quietly dropped during the sample process
+                    
+                    // useful for debugging, see what points were dropped, prints a lot of data though
+                    //std::cout << "EOF. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
+                    
+                    double current_k_pt = noDataVal;
+                    
+                    k(ptIdx) = current_k_pt;
+                    //k(rowIdx,colIdx,layerIdx) = current_k_pt;
+                    
+                } else
+                {
+                    
+                    std::string currentLine = probeSampleData_allLines.substr(startLinePos,endLinePos-startLinePos);
+                    
+                    // now that the current line is found, it is time to process the given line into data values
+                    int valStartSpot = 0;  // no white spaces or anything before the first value, which is x
+                    int valEndSpot = currentLine.find(" ",valStartSpot);  // man, I got lucky, turns out it was a space followed by a tab between each data value. If it were not always this consistently, would have needed to adjust this part and it would be a great pain
+                    std::string current_x_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
+                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
+                    // seems to have an additional unknown number of spaces between data points
+                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
+                        valStartSpot = valStartSpot + 1;
+                    }
+                    valEndSpot = currentLine.find(" ",valStartSpot);
+                    std::string current_y_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
+                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
+                    // seems to have an additional unknown number of spaces between data points
+                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
+                        valStartSpot = valStartSpot + 1;
+                    }
+                    valEndSpot = currentLine.find(" ",valStartSpot);
+                    std::string current_z_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
+                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
+                    // seems to have an additional unknown number of spaces between data points
+                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
+                        valStartSpot = valStartSpot + 1;
+                    }
+                    valEndSpot = currentLine.find("\n",valStartSpot);  // goes to the end of the line, no whitespace after the value, still want to drop the \n part though
+                    std::string current_k_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot-1); // -1 to drop the \n part
+                    // check the read in data, only uncomment this line if debugging as it tends to output a LOT of data
+                    //std::cout << "(\"" << current_x_pt_str << "\",\"" << current_y_pt_str << "\",\"" << current_z_pt_str << "\",\"" << current_k_pt_str << "\")" << std::endl;
+                    
+                    double current_x_pt = atof(current_x_pt_str.c_str());
+                    double current_y_pt = atof(current_y_pt_str.c_str());
+                    double current_z_pt = atof(current_z_pt_str.c_str());
+                    double current_k_pt = atof(current_k_pt_str.c_str());
+                    
+                    
+                    // now to compare the found data points with the current mesh points, 
+                    // if they match then can store the datapoint and increment to go to the next line of probe sample data, 
+                    // otherwise OpenFOAM silently dropped the datapoint and NoDataVal needs stored instead, wait to go to the next line of probe sample data
+                    // need to add back in xllCorner, yllCorner to make the points consistent between the mesh points and the probe sample points
+                    double current_mesh_x_pt = x(ptIdx) + dem_xllCorner;
+                    double current_mesh_y_pt = y(ptIdx) + dem_yllCorner;
+                    double current_mesh_z_pt = z(ptIdx);
+                    //double current_mesh_x_pt = x(rowIdx,colIdx,layerIdx) + dem_xllCorner;
+                    //double current_mesh_y_pt = y(rowIdx,colIdx,layerIdx) + dem_yllCorner;
+                    //double current_mesh_z_pt = z(rowIdx,colIdx,layerIdx);
+                    double tol = 0.0001;
+                    if ( fabs(current_x_pt-current_mesh_x_pt) < tol && fabs(current_y_pt-current_mesh_y_pt) < tol && fabs(current_z_pt-current_mesh_z_pt) < tol )
+                    {
+                        // points match, it's a good data point in the right spot
+                        
+                        //// unit conversion
+                        //// from m^2/s^2 to m/s, velFluct = sqrt(2/3*k)
+                        current_k_pt = std::sqrt(2.0/3.0*current_k_pt);
+                        //// from m/s to mph
+                        current_k_pt = current_k_pt*2.23694;
+                        
+                        k(ptIdx) = current_k_pt;
+                        //k(rowIdx,colIdx,layerIdx) = current_k_pt;
+                        
+                        startLinePos = endLinePos+1;  // found that the data of this line matched, so can finally move on to the next line
+                        
+                        // useful for debugging, see what points were grabbed to compare to the probe data file, with set precision
+                        //printf("(%.20g,%.20g,%.20g,%.20g)\n",current_x_pt,current_y_pt,current_z_pt,current_k_pt);
+                        
+                    } else
+                    {
+                        // useful for debugging, see what points were dropped, prints a lot of data though
+                        //std::cout << "dropped data. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
+                        
+                        // it's a data point that was quietly dropped during the sample process
+                        double current_k_pt = noDataVal;
+                        k(ptIdx) = current_k_pt;
+                        //k(rowIdx,colIdx,layerIdx) = current_k_pt;
+                    }
+                    
+                }  // if ( endLinePos == -1 )  aka EOF check
+        
+            }  // for colIdx 0 to ncols
+        }  // for rowIdx 0 to nrows
+    }  // for layerIdx 0 to nlayers
+    
+}
+
+void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z, 
+                                   const int ncols, const int nrows, const int nlayers, 
+                                   wn_3dScalarField& k)
+{
+    CPLDebug("NINJAFOAM", "filling in probes sample no data vals");
+    
+    //double noDataVal = -9999;  // make sure this one matches the one used in the readInProbeData() function
+    double noDataCheckVal = -9998;  // instead of using the if == noDataVal, use if > noDataCheckVal or if < noDataCheckVal depending on the style of the noDataVal
+    
+    // find the first non nan value for a given column, and fill all values below with that value
+    // so no log profile correction for this dataset
+    
+    for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+    {
+        for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+        {
+            
+            double lowestKnown_zIdx = nlayers;
+            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+            {
+                if ( k(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {
+                    lowestKnown_zIdx = layerIdx;
+                    break;
+                }
+            }
+            
+            if ( lowestKnown_zIdx == nlayers-1 ) {
+                // is a column of no data values, skip it for the log profile part of the fill
+                // also warn because the method for filling no data values past the log profile part hasn't yet been implemented
+                std::cout << "!!! no lowest known zIdx for column of data !!! for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
+                continue;
+            }
+            
+            
+            double lowestKnown_zVal = k(rowIdx,colIdx,lowestKnown_zIdx);
+            
+            for(int zIdx=0; zIdx<lowestKnown_zIdx; zIdx++)
+            {
+                k(rowIdx,colIdx,zIdx) = lowestKnown_zVal;
+            }
+            
+        }
+    }
+    
+    
+}
+
+AsciiGrid<double> NinjaFoam::generateColMaxGrid(const double colHeightAGL, 
+                                                const wn_3dArray& z, 
+                                                const double dem_xllCorner, const double dem_yllCorner, 
+                                                const int ncols, const int nrows, const int nlayers, 
+                                                const double massMeshResolution, std::string prjString, 
+                                                wn_3dScalarField& k) {
+    
+    CPLDebug("NINJAFOAM", "generating col max grid");
+    
+    // now need to go through the data, and get the col max, and put it into an ascii grid
+    AsciiGrid<double> colMaxGrid;
+    colMaxGrid.set_headerData( ncols, nrows, dem_xllCorner, dem_yllCorner, massMeshResolution, -9999.0, -9999.0, prjString );
+    for ( int rowIdx = 0; rowIdx < nrows; rowIdx++ )
+    {
+        for ( int colIdx = 0; colIdx < ncols; colIdx++ )
+        {
+            
+            double current_z_ground = z(rowIdx,colIdx,0);
+            
+            double current_colMaxVal = -999999.0;   // start val for find max, really small val, make sure it is smaller than noDataVal just in case
+            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+            {
+                if ( z(rowIdx,colIdx,layerIdx) - current_z_ground > colHeightAGL ) {
+                    // looked at all values up to the colHeightAGL, move on
+                    break;
+                }
+                if ( current_colMaxVal < k(rowIdx,colIdx,layerIdx) ) {
+                    current_colMaxVal = k(rowIdx,colIdx,layerIdx);
+                }
+                //// for debugging
+                //if ( rowIdx == 0 && colIdx == 0 ) {
+                //    std::cout << "zIdx = " << layerIdx << ", z = " << z(rowIdx,colIdx,layerIdx) << ", z_AGL = " << z(rowIdx,colIdx,layerIdx) - current_z_ground << ", val = " << k(rowIdx,colIdx,layerIdx) << std::endl;
+                //}
+            }
+            
+            colMaxGrid.set_cellValue( rowIdx, colIdx, current_colMaxVal );
+        }
+    }
+    return colMaxGrid;
+}
+
 
 
 void NinjaFoam::UpdateExistingCase()
@@ -3742,7 +4063,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     }
     
     
-    if ( writeMassMeshVtk == true ) {
+    if ( writeMassMeshVtk == true || writeMassMeshColMax == true ) {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
         CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
