@@ -27,6 +27,7 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
+#include <string>
 
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
@@ -82,6 +83,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 #endif
+    WINDNINJADLL_EXPORT std::string NinjaFetchForecast
+    (const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
 
@@ -92,7 +95,7 @@ typedef int  NinjaErr;
         ( NinjaH * ninja, const unsigned int nprocessors );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-        ( NinjaH * ninja, const char * forecastFilename,
+        ( NinjaH ** ninja, const char * forecastFilename,
           const char * timezone,
           int momentumFlag );
 

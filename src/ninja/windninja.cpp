@@ -143,7 +143,41 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         return NINJA_E_NULL_PTR;
     }
 }
+/**
+ * \brief Fetch Forecast file from UCAR/THREDDS server.
+ *
+ * This method will fetch a forecast file from the UCAR/THREDDS server.
+ *
+ * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
+ * \param forecastDuration The number of hours to fetch the forecast for.
+ * \param elevation_file A valid path to an elevation file.
+ *
+ * \return Forecast file name on success, "exception" otherwise.
+ */
 
+WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file)
+{
+    wxModelInitialization *model;
+    try
+        {
+        model = wxModelInitializationFactory::makeWxInitializationFromId( wx_model_type );
+        //set forecastDuration to numNinjas-1 to get the correct number of simulations
+        std::string forecastFileName = model->fetchForecast( elevation_file, numNinjas-2 );
+        return forecastFileName;
+    }
+    catch (exception& e)
+    {
+        cout << "Exception caught: " << e.what() << endl;
+        return "exception";
+    }
+    catch(... )
+    {
+        cout << "'wx_model_type' is not valid" << "\n";
+    }
+    delete model;
+    return "exception";
+    
+}
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
  *
@@ -151,7 +185,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  * the weather forecast file.  One run is done for each timestep in the *.nc
  * file.
  *
- * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param ninja pointer to pointer of opaque NinjaArmy.
  * \param forecastFilename A valid thredds/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
@@ -159,8 +193,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
+#ifndef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-    ( NinjaH * ninja, const char * forecastFilename,
+    ( NinjaH ** ninja, const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
 {
@@ -169,11 +204,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
     {
        try
        {
-           reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
-               ( std::string( forecastFilename ),
-                 std::string( timezone ),
-                 momentumFlag );
-
+            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1) );
+            reinterpret_cast<ninjaArmy*>( *ninja )->makeArmy
+            (   std::string( forecastFilename ),
+                std::string( timezone ),
+                momentumFlag );
            retval = NINJA_SUCCESS;
        }
        catch( armyException & e )
@@ -183,6 +218,33 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
     }
     return retval;
 }
+#endif
+#ifdef NINJAFOAM
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
+    ( NinjaH ** ninja, const char * forecastFilename,
+      const char * timezone,
+      int momentumFlag )
+{
+    NinjaErr retval = NINJA_E_INVALID;
+    if( NULL != ninja )
+    {
+       try
+       {
+            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1,momentumFlag) );
+            reinterpret_cast<ninjaArmy*>( *ninja )->makeArmy
+            (   std::string( forecastFilename ),
+                std::string( timezone ),
+                momentumFlag );
+           retval = NINJA_SUCCESS;
+       }
+       catch( armyException & e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+    }
+    return retval;
+}
+#endif
 
 /**
  * \brief Start the simulations.
@@ -328,6 +390,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaH * ninja, const int nIndex, const char * comType )
 {
+    
     if( NULL != ninja )
     {
         return reinterpret_cast<ninjaArmy*>( ninja )->setNinjaCommunication
