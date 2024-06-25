@@ -258,27 +258,11 @@ const char *charStr = full.data();
     CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
 
     poResult = CPLHTTPFetch(charStr, NULL); 
-        std::cout << "debug" << std::endl;
-
-            std::cout << "121212" << std::endl;
-
-            std::cout << "asd" << std::endl;
 
     if (poResult) {
-            if (poResult->pabyData) {
-                std::cout << "Fetched data:" << std::endl;
-                std::cout.write(reinterpret_cast<char *>(poResult->pabyData), poResult->nDataLen);
-                std::cout << std::endl;
-            } else {
-                std::cerr << "No data fetched." << std::endl;
-                   std::cerr << "Error code: " << poResult->nStatus << std::endl;
-                if (poResult->pszErrBuf) {
-                    std::cerr << "Error message: " << poResult->pszErrBuf << std::endl;
-                }
-            }
             CPLHTTPDestroyResult(poResult);
         } else {
-            std::cerr << "Failed to fetch data." << std::endl;
+            std::cerr << "Fetch data." << std::endl;
         }
 
 
