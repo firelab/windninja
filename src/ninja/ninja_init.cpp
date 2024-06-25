@@ -234,46 +234,6 @@ int NinjaInitialize()
     CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
 
-std::cout << "Logging message to console." << std::endl;
-
-printf("hello");
-
-std::string firstLocalIP;
-
-struct ifaddrs *ifAddrStruct = NULL;
-struct ifaddrs *ifa = NULL;
-void *tmpAddrPtr = NULL;
-
-getifaddrs(&ifAddrStruct);
-
-for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-    if (!ifa->ifa_addr) {
-        continue;
-    }
-
-    if (ifa->ifa_addr->sa_family == AF_INET) { // Check it is IPv4
-        tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-        char addressBuffer[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-        if (strcmp(addressBuffer, "127.0.0.1") != 0) {
-            firstLocalIP = addressBuffer;
-            break;
-        }
-    } else if (ifa->ifa_addr->sa_family == AF_INET6) { // Check it is IPv6
-        tmpAddrPtr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-        char addressBuffer[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-        if (strcmp(addressBuffer, "::1") != 0) {
-            firstLocalIP = addressBuffer;
-            break;
-        }
-    }
-}
-
-if (ifAddrStruct != NULL)
-    freeifaddrs(ifAddrStruct);
-
-std::string address = firstLocalIP;
 
 time_t now = time(0);
 
@@ -283,21 +243,43 @@ char* dt = asctime(gmtm);
 std::string cpp_string(dt);
 
 
-std::string url = "https://ninjastorm.firelab.org/stats/?IP=";
+std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
 
-std::string full = url + address + "&time=" + cpp_string;
+
+std::string full = url + cpp_string;
+
 
 const char *charStr = full.data();
 
-if (!firstLocalIP.empty()) {
     CPLHTTPResult *poResult;
     std::cout << charStr << std::endl;
-    
-    poResult = CPLHTTPFetch(charStr, NULL);
-    
-    std::cout << poResult << std::endl;
-    CPLHTTPDestroyResult(poResult);
-}
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+
+    poResult = CPLHTTPFetch(charStr, NULL); 
+        std::cout << "debug" << std::endl;
+
+            std::cout << "121212" << std::endl;
+
+            std::cout << "asd" << std::endl;
+
+    if (poResult) {
+            if (poResult->pabyData) {
+                std::cout << "Fetched data:" << std::endl;
+                std::cout.write(reinterpret_cast<char *>(poResult->pabyData), poResult->nDataLen);
+                std::cout << std::endl;
+            } else {
+                std::cerr << "No data fetched." << std::endl;
+                   std::cerr << "Error code: " << poResult->nStatus << std::endl;
+                if (poResult->pszErrBuf) {
+                    std::cerr << "Error message: " << poResult->pszErrBuf << std::endl;
+                }
+            }
+            CPLHTTPDestroyResult(poResult);
+        } else {
+            std::cerr << "Failed to fetch data." << std::endl;
+        }
 
 
     /*
