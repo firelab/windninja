@@ -82,6 +82,7 @@ public:
     static void SetFoamPath(const char *pszPath);
 
     AsciiGrid<double> TurbulenceGrid;
+    AsciiGrid<double> colMaxGrid;
 private:
     std::string foamVersion;
     
@@ -191,7 +192,7 @@ private:
                             wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
 
     bool writeMassMeshColMax;
-    void writeMassMeshColMaxOutput();
+    void generateMassMeshColMaxGrid();
     void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
@@ -199,12 +200,12 @@ private:
     void fillEmptyProbeVals(const wn_3dArray& z, 
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& k);
-    AsciiGrid<double> generateColMaxGrid(const double colHeightAGL, 
-                                         const wn_3dArray& z, 
-                                         const double dem_xllCorner, const double dem_yllCorner, 
-                                         const int ncols, const int nrows, const int nlayers, 
-                                         const double massMeshResolution, std::string prjString, 
-                                         wn_3dScalarField& k);
+    void probeDataToColMaxGrid(const double colHeightAGL, 
+                               const wn_3dArray& z, 
+                               const double dem_xllCorner, const double dem_yllCorner, 
+                               const int ncols, const int nrows, const int nlayers, 
+                               const double massMeshResolution, std::string prjString, 
+                               wn_3dScalarField& k);
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;

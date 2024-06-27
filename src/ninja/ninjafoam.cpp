@@ -399,6 +399,7 @@ bool NinjaFoam::simulate_wind()
        AngleGrid.deallocate();
        VelocityGrid.deallocate();
        TurbulenceGrid.deallocate();
+       colMaxGrid.deallocate();
     }
 
     if(input.diurnalWinds == true){
@@ -2380,6 +2381,20 @@ void NinjaFoam::WriteOutputFiles()
     /* prepare output                                                    */
     /*-------------------------------------------------------------------*/
     
+    // prep colMaxGrid
+    try{
+	    if ( writeMassMeshColMax == true ) {
+	        generateMassMeshColMaxGrid();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max ascii data generation: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max ascii data generation: Cannot determine exception type.");
+	}
+
+    
     //Clip off bounding doughnut if desired
     VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
@@ -2387,6 +2402,13 @@ void NinjaFoam::WriteOutputFiles()
     {
         TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     }
+    // is this applicable when it is a massMesh ascii grid? I guess supposed to be at the same resolution as the dem even if not necessarily the same resolution as the output
+    // no, need to resample to the massMesh res, which is the input resolution NOT the output resolution. Leave here just as a reminder just in case
+    // well, resampling to the output resolution later though, the important thing is that the ascii grid is generated with whatever resolution I guess, still seems separate
+    //if(writeMassMeshColMax)
+    //{
+    //    colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    //}
 
     //change windspeed units back to what is specified by speed units switch
     velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
@@ -2394,6 +2416,11 @@ void NinjaFoam::WriteOutputFiles()
     {
         velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
     }
+    // is currently deleting the contents of the file rather than doing the unit conversion
+    //if(writeMassMeshColMax)
+    //{
+    //    velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
+    //}
 
     //resample to requested output resolutions
     SetOutputResolution();
@@ -2541,10 +2568,11 @@ void NinjaFoam::WriteOutputFiles()
 		if(input.googOutFlag==true)
 
 		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid;
+			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
 			velTempGrid=NULL;
 			angTempGrid=NULL;
 			turbTempGrid=NULL;
+			colMaxTempGrid=NULL;
 
 			KmlVector ninjaKmlFiles;
 
@@ -2559,6 +2587,14 @@ void NinjaFoam::WriteOutputFiles()
                             
                             ninjaKmlFiles.setTurbulenceFlag("true");
                             ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                        }
+                        if(writeMassMeshColMax)
+                        {
+                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setColMaxFlag("true");
+                            ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits);
                         }
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
@@ -2592,6 +2628,11 @@ void NinjaFoam::WriteOutputFiles()
 			{
 				delete turbTempGrid;
 				turbTempGrid=NULL;
+			}
+			if(colMaxTempGrid)
+			{
+				delete colMaxTempGrid;
+				colMaxTempGrid=NULL;
 			}
 		}
 	}catch (exception& e)
@@ -2653,20 +2694,6 @@ void NinjaFoam::WriteOutputFiles()
 	}catch (...)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
-	}
-	
-	
-	try{
-	    if ( writeMassMeshColMax == true ) {
-	        CPLDebug("NINJAFOAM", "writing mass mesh col max output for foam simulation.");
-	        writeMassMeshColMaxOutput();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max output file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max output file writing: Cannot determine exception type.");
 	}
 	
 }
@@ -3242,8 +3269,11 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
 }
 
 
-void NinjaFoam::writeMassMeshColMaxOutput()
+void NinjaFoam::generateMassMeshColMaxGrid()
 {
+    
+    CPLDebug("NINJAFOAM", "generating mass mesh col max ascii grid for foam simulation.");
+    
     
     double colHeightAGL = 300.0;
     
@@ -3271,8 +3301,7 @@ void NinjaFoam::writeMassMeshColMaxOutput()
     fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, k );
     
     
-    AsciiGrid<double> colMaxGrid = generateColMaxGrid( colHeightAGL, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, k );
-    
+    probeDataToColMaxGrid( colHeightAGL, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, k );
     
     //// for debugging
     CPLDebug("NINJAFOAM", "writing ascii file");
@@ -3283,6 +3312,8 @@ void NinjaFoam::writeMassMeshColMaxOutput()
     
     CPLDebug("NINJAFOAM", "deallocating created grids");
 	k.deallocate();
+	
+	CPLDebug("NINJAFOAM", "finished generating mass mesh col max ascii grid");
 }
 
 void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
@@ -3421,10 +3452,10 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     {
                         // points match, it's a good data point in the right spot
                         
-                        //// unit conversion
+                        //// tke to velFluct conversion
                         //// from m^2/s^2 to m/s, velFluct = sqrt(2/3*k)
                         current_k_pt = std::sqrt(2.0/3.0*current_k_pt);
-                        //// from m/s to mph
+                        //// from m/s to mph unit conversion
                         current_k_pt = current_k_pt*2.23694;
                         
                         k(ptIdx) = current_k_pt;
@@ -3501,17 +3532,16 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
     
 }
 
-AsciiGrid<double> NinjaFoam::generateColMaxGrid(const double colHeightAGL, 
-                                                const wn_3dArray& z, 
-                                                const double dem_xllCorner, const double dem_yllCorner, 
-                                                const int ncols, const int nrows, const int nlayers, 
-                                                const double massMeshResolution, std::string prjString, 
-                                                wn_3dScalarField& k) {
+void NinjaFoam::probeDataToColMaxGrid(const double colHeightAGL, 
+                                      const wn_3dArray& z, 
+                                      const double dem_xllCorner, const double dem_yllCorner, 
+                                      const int ncols, const int nrows, const int nlayers, 
+                                      const double massMeshResolution, std::string prjString, 
+                                      wn_3dScalarField& k) {
     
-    CPLDebug("NINJAFOAM", "generating col max grid");
+    CPLDebug("NINJAFOAM", "placing probe data into col max ascii grid");
     
     // now need to go through the data, and get the col max, and put it into an ascii grid
-    AsciiGrid<double> colMaxGrid;
     colMaxGrid.set_headerData( ncols, nrows, dem_xllCorner, dem_yllCorner, massMeshResolution, -9999.0, -9999.0, prjString );
     for ( int rowIdx = 0; rowIdx < nrows; rowIdx++ )
     {
@@ -3539,7 +3569,7 @@ AsciiGrid<double> NinjaFoam::generateColMaxGrid(const double colHeightAGL,
             colMaxGrid.set_cellValue( rowIdx, colIdx, current_colMaxVal );
         }
     }
-    return colMaxGrid;
+    
 }
 
 

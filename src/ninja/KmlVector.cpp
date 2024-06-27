@@ -43,6 +43,7 @@ KmlVector::KmlVector()
 	wxModelName = "";
         coordTransform = NULL;
         turbulenceFlag = false; 
+    colMaxFlag = false;
 }
 
 KmlVector::~KmlVector()
@@ -77,6 +78,11 @@ void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVeloc
 	turbulence = turb;
 }
 
+void KmlVector::setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units)
+{
+	speedUnits = units;
+	colMax = columnMax;
+}
 
 #ifdef FRICTION_VELOCITY
 void KmlVector::setUstarGrid(AsciiGrid<double> &ust)
@@ -280,6 +286,14 @@ bool KmlVector::writeKml(std::string cScheme, bool vector_scaling)
                 writeTurbulence(fout);
                 VSIFPrintfL(fout, "</Folder>");
             }
+            
+            if(colMaxFlag)
+            {
+                VSIFPrintfL(fout, "<Folder>");
+                VSIFPrintfL(fout, "\n\t<name>Column Max Velocity Fluctuations</name>\n");
+                writeColMax(fout);
+                VSIFPrintfL(fout, "</Folder>");
+            }
 
             #ifdef FRICTION_VELOCITY
             if(ustarFlag ==true)
@@ -363,6 +377,14 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme,bool vector_s
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
                 writeTurbulence(fout);
+                VSIFPrintfL(fout, "</Folder>");
+            }
+            
+            if(colMaxFlag)
+            {
+                VSIFPrintfL(fout, "<Folder>");
+                VSIFPrintfL(fout, "\n\t<name>Column Max Velocity Fluctuations</name>\n");
+                writeColMax(fout);
                 VSIFPrintfL(fout, "</Folder>");
             }
             
@@ -1302,6 +1324,129 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	return true;
 }
 
+bool KmlVector::writeColMax(VSILFILE *fileOut)
+{
+	double xPoint, yPoint;
+	double xCenter, yCenter;
+	double left_x, right_x, lower_y, upper_y;
+	double u = 0;
+	double cSize;
+	int nR;
+	int nC;
+	double upper, lower, upper_mid, lower_mid, mid;
+	std::string icon;
+
+	colMax_png = "colMax_png.png";
+
+	cSize = colMax.get_cellSize();
+	nR = colMax.get_nRows();
+	nC = colMax.get_nCols();
+
+	lower = colMax.get_minValue();
+	upper = colMax.get_maxValue();
+	lower_mid = lower + (colMax.get_maxValue() - colMax.get_minValue())/4;
+	upper_mid = upper - (colMax.get_maxValue() - colMax.get_minValue())/4;
+	mid = upper_mid - (colMax.get_maxValue() - colMax.get_minValue())/4;
+
+    //---------------make single png for overlay------------------
+    std::string outFilename = "colMax_png.png";
+    std::string scalarLegendFilename = "colMax_legend";
+    std::string legendTitle = "Speed Fluctuation";
+    std::string legendUnits = "";
+    switch(speedUnits)
+    {
+            case velocityUnits::metersPerSecond:	// m/s
+                    legendUnits = "(m/s)";
+                    break;
+            case velocityUnits::milesPerHour:		// mph
+                    legendUnits = "(mph)";
+                    break;
+            case velocityUnits::kilometersPerHour:	// kph
+                    legendUnits = "(kph)";
+                    break;
+            case velocityUnits::knots:	// kts
+                    legendUnits = "(knots)";
+        break;
+            default:				// default is mph
+                    legendUnits = "(mph)";
+                    break;
+    }
+    bool writeLegend = TRUE;
+
+    colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+
+    colMax.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    left_x = xCenter - cSize/2; //west
+    lower_y = yCenter - cSize/2; //south
+    colMax.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    right_x = xCenter + cSize/2; //east
+    upper_y = yCenter + cSize/2;  //north
+
+	coordTransform->Transform(1, &right_x, &upper_y);
+	coordTransform->Transform(1, &left_x, &lower_y);
+	coordTransform->Transform(1, &xCenter, &yCenter);
+
+	int pos;
+	std::string shortName;
+	pos = colMax_png.find_last_of('\\');
+	if(pos == -1)
+	  pos = colMax_png.find_last_of('/');
+
+	shortName = colMax_png.substr(pos + 1, colMax_png.size());
+
+	VSIFPrintfL(fileOut, "<GroundOverlay>");
+	VSIFPrintfL(fileOut, "\n\t<name>Column Max Velocity Fluctuations</name>");
+	VSIFPrintfL(fileOut, "\n\t<ExtendedData>");
+	VSIFPrintfL(fileOut, "\n\t\t<Data name=\"colMax\">");
+	VSIFPrintfL(fileOut, "\n\t\t\t<value>2</value>");
+	VSIFPrintfL(fileOut, "\n\t\t</Data>");
+	VSIFPrintfL(fileOut, "\n\t</ExtendedData>");
+
+	VSIFPrintfL(fileOut, "\n\t<altitude>0</altitude>");
+	VSIFPrintfL(fileOut, "\n\t<altitudeMode>clampToGround</altitudeMode>");
+	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
+
+	VSIFPrintfL(fileOut, "\n\t<Icon>");
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //colMax_png.png
+	VSIFPrintfL(fileOut, "\n\t</Icon>");
+
+	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
+	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
+	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
+
+	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
+
+	//---add legend----------------------------------------------
+        colMax_legend = "./colMax_legend";
+	//int pos;
+	//std::string shortName;
+	pos = colMax_legend.find_last_of('\\');
+	if(pos == -1)
+	  pos = colMax_legend.find_last_of('/');
+
+	shortName = colMax_legend.substr(pos + 1, colMax_legend.size());
+
+	VSIFPrintfL(fileOut, "<ScreenOverlay>");
+	VSIFPrintfL(fileOut, "\n<name>Legend</name>");
+	VSIFPrintfL(fileOut, "\n<visibility>1</visibility>");
+	VSIFPrintfL(fileOut, "\n<color>9bffffff</color>");
+	VSIFPrintfL(fileOut, "\n<Snippet maxLines=\"0\"></Snippet>");
+	VSIFPrintfL(fileOut, "\n<Icon>");
+	VSIFPrintfL(fileOut, "\n<href>%s</href>", shortName.c_str());
+	VSIFPrintfL(fileOut, "\n</Icon>");
+	VSIFPrintfL(fileOut, "\n<overlayXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<screenXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<rotationXY x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n<size x=\"0\" y=\"0\" xunits=\"fraction\" yunits=\"fraction\"/>");
+	VSIFPrintfL(fileOut, "\n</ScreenOverlay>\n");
+
+	return true;
+}
+
 #ifdef FRICTION_VELOCITY
 bool KmlVector::writeUstar(FILE *fileOut)
 {
@@ -1721,6 +1866,14 @@ bool KmlVector::makeKmz()
       filesInZip.push_back(getShortName(turbulence_png));
       filesInZip.push_back(getShortName(turbulence_legend));
   }
+  
+  if(colMaxFlag)
+  {
+      filesToZip.push_back(colMax_png);
+      filesToZip.push_back(colMax_legend);
+      filesInZip.push_back(getShortName(colMax_png));
+      filesInZip.push_back(getShortName(colMax_legend));
+  }
 
   #ifdef FRICTION_VELOCITY
   if(ustarFlag==1)
@@ -1798,6 +1951,13 @@ bool KmlVector::removeKmlFile()
     }
     if(turbulence_legend.c_str() !="")
         VSIUnlink(turbulence_legend.c_str());
+    
+    if(colMax_png.c_str() != ""){
+        VSIUnlink(colMax_png.c_str());
+        VSIUnlink((colMax_png + ".aux.xml").c_str());
+    }
+    if(colMax_legend.c_str() !="")
+        VSIUnlink(colMax_legend.c_str());
     
     #ifdef FRICTION_VELOCITY
     if(ustar_png.c_str() != ""){
