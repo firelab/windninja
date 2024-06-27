@@ -182,8 +182,7 @@ private:
 	bool turbulenceFlag;
 	std::string turbulence_tiff;
 	std::string turbulence_png;
-        std::string turbulence_legend;
-        std::string ustar_legend;
+    std::string turbulence_legend;
     bool colMaxFlag;
 	std::string colMax_tiff;
 	std::string colMax_png;

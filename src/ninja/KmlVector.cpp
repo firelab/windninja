@@ -1213,7 +1213,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	double upper, lower, upper_mid, lower_mid, mid;
 	std::string icon;
 
-	turbulence_png = "turbulence_png.png";
+	turbulence_png = "turbulence.png";
 
 	cSize = turbulence.get_cellSize();
 	nR = turbulence.get_nRows();
@@ -1226,7 +1226,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	mid = upper_mid - (turbulence.get_maxValue() - turbulence.get_minValue())/4;
 
     //---------------make single png for overlay------------------
-    std::string outFilename = "turbulence_png.png";
+    std::string outFilename = "turbulence.png";
     std::string scalarLegendFilename = "turbulence_legend";
     std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "";
@@ -1284,7 +1284,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
 
 	VSIFPrintfL(fileOut, "\n\t<Icon>");
-	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //turbulence_png.png
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //turbulence.png
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
@@ -1336,7 +1336,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	double upper, lower, upper_mid, lower_mid, mid;
 	std::string icon;
 
-	colMax_png = "colMax_png.png";
+	colMax_png = "colMax.png";
 
 	cSize = colMax.get_cellSize();
 	nR = colMax.get_nRows();
@@ -1349,7 +1349,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	mid = upper_mid - (colMax.get_maxValue() - colMax.get_minValue())/4;
 
     //---------------make single png for overlay------------------
-    std::string outFilename = "colMax_png.png";
+    std::string outFilename = "colMax.png";
     std::string scalarLegendFilename = "colMax_legend";
     std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "";
@@ -1407,7 +1407,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
 
 	VSIFPrintfL(fileOut, "\n\t<Icon>");
-	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //colMax_png.png
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //colMax.png
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
@@ -1460,7 +1460,7 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	double upper, lower, upper_mid, lower_mid, mid;
 	std::string icon;
 
-	ustar_png = "ustar_png.png";
+	ustar_png = "ustar.png";
 
 	cSize = ustar.get_cellSize();
 	nR = ustar.get_nRows();
@@ -1473,7 +1473,7 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	mid = upper_mid - (ustar.get_maxValue() - ustar.get_minValue())/4;
 
     //---------------make single png for overlay------------------
-    std::string outFilename = "ustar_png.png";
+    std::string outFilename = "ustar.png";
     std::string scalarLegendFilename = "ustar_legend";
     std::string legendTitle = "Friction Velocity";
     std::string legendUnits = "(m/s)";
@@ -1513,7 +1513,7 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
 
 	VSIFPrintfL(fileOut, "\n\t<Icon>");
-	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //ustar_png.png
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //ustar.png
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
@@ -1578,7 +1578,7 @@ bool KmlVector::writeDust(FILE *fileOut)
 	mid = upper_mid - (dust.get_maxValue() - dust.get_minValue())/4;
 
     //---------------make png for overlay------------------
-    std::string outFilename = "dust_png.png";
+    std::string outFilename = "dust.png";
     std::string scalarLegendFilename = "dust_legend";
     std::string legendTitle = "PM10";
     std::string legendUnits = "(mg/m2/s)";
@@ -1586,7 +1586,7 @@ bool KmlVector::writeDust(FILE *fileOut)
     
     dust.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
 
-    dust_png = "dust_png.png";
+    dust_png = "dust.png";
 
     dust.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
     left_x = xCenter - cSize/2; //west
@@ -1620,7 +1620,7 @@ bool KmlVector::writeDust(FILE *fileOut)
 	//VSIFPrintfL(fileOut, "\n\t\t<color>88ffffff</color>");
 
 	VSIFPrintfL(fileOut, "\n\t<Icon>");
-	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //dust_png.png
+	VSIFPrintfL(fileOut, "\n\t\t<href>%s</href>", shortName.c_str());  //dust.png
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
