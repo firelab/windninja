@@ -19,8 +19,7 @@ cmake_minimum_required(VERSION 2.6)
 
 QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
                         setconfigdialog.ui
-                        stationFetchWidget.ui
-                        mainwindow.ui)
+                        stationFetchWidget.ui)
 
 set(NINJA_GUI_INCLUDES consoleDockWidget.h
                        diurnalInput.h
