@@ -36,6 +36,7 @@
     omp_lock_t netCDF_lock;
 #endif
 
+
 /**
  * \file windninja.cpp
  *
@@ -142,6 +143,92 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
     {
         return NINJA_E_NULL_PTR;
     }
+}
+/**
+ * \brief Fetch DEM file using a point.
+ *
+ * \param adfPoint A pointer to an array of two doubles representing the point. [latitude, longitude]
+ * \param adfBuff length of buffer for x and y
+ * \param units buffer units
+ * \param dfCellSize The resolution of the DEM file in meters.
+ * \param pszDstFile Output file name
+ * \param papszOptions options
+ * 
+ *
+ * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBuff, lengthUnits::eLengthUnits units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
+    if(pszDstFile == NULL)
+    {
+        fprintf(stderr, "Must specify destination file\n");
+        return NINJA_E_INVALID;
+    }
+    SurfaceFetch * fetcher;
+    if (strcmp(fetchType, "srtm") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+    }
+    #ifdef GMTED
+    else if (strcmp(fetchType, "gmted") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+    }
+    #endif
+    else if (strcmp(fetchType, "relief") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+    }
+    else{
+        return NINJA_E_INVALID;
+    }
+    int result = fetcher->FetchPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions);
+    if (result != 0)
+    {
+        return 1;
+    }
+    std::cout <<"Success" << std::endl;
+    return NINJA_SUCCESS;
+}
+/**
+ * \brief Fetch DEM file using a bounding box
+ * 
+ * This method will fetch a DEM file using a bounding box and a resolution from the specified source.
+ *
+ * \param boundsBox A pointer to an array of four doubles representing the bounding box. [north, east, south, west]
+ * \param fileName A valid path to a DEM file.
+ * \param resolution The resolution of the DEM file in meters.
+ * \param fetchType A string representing the source of the DEM file (e.g. "srtm", "gmted", "relief").
+ * 
+ * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fileName, double resolution, char * fetchType){
+    SurfaceFetch * fetcher;
+    if (strcmp(fetchType, "srtm") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+    }
+    #ifdef GMTED
+    else if (strcmp(fetchType, "gmted") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+    }
+    #endif
+    else if (strcmp(fetchType, "relief") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+    }
+    else{
+        return NINJA_E_INVALID;
+    }
+    double northBound = boundsBox[0];
+    double eastBound = boundsBox[1];
+    double southBound = boundsBox[2];
+    double westBound = boundsBox[3];
+    if(northBound == 0.0 || southBound == 0.0 || eastBound == 0.0 || westBound == 0.0)
+    {
+        return 1;
+    }
+    int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+    if (result != 0)
+    {
+        return 1;
+    }
+    std::cout <<"Success" << std::endl;
+    return NINJA_SUCCESS;
 }
 /**
  * \brief Fetch Forecast file from UCAR/THREDDS server.
@@ -1042,14 +1129,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution of the output grid.
+ * \param units The units of resolution of the output grid.
  *
  * \return An array of speed values in mps.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-    ( NinjaH * ninja, const int nIndex )
+    ( NinjaH * ninja, const int nIndex, double resolution , lengthUnits::eLengthUnits units)
 {
     if( NULL != ninja ) {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, resolution, units );
     } else {
         return NULL;
     }
@@ -1065,14 +1154,16 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution of the output grid.
+ * \param units The units of resolution of the output grid.
  *
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex )
+    ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units )
 {
     if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, units );
     } else {
         return NULL;
     }
@@ -1222,6 +1313,27 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
     }
 }
 
+WINDNINJADLL_EXPORT const double * NinjaGetu(NinjaH * ninja, const int nIndex){
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getu( nIndex );
+    } else {
+        return NULL;
+    }
+}
+WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getv( nIndex );
+    } else {
+        return NULL;
+    }
+}
+WINDNINJADLL_EXPORT const double * NinjaGetw(NinjaH * ninja, const int nIndex){
+    if( NULL != ninja ) {
+        return reinterpret_cast<ninjaArmy*>( ninja )->getw( nIndex );
+    } else {
+        return NULL;
+    }
+}
 /**
  * \brief Set the output buffer clipping for a simulation.
  *

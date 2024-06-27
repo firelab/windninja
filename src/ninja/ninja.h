@@ -307,14 +307,17 @@ public:
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
     void set_numberCPUs(int CPUs);
-    double *get_outputSpeedGrid();
-    double *get_outputDirectionGrid();
+    double *get_outputSpeedGrid(double resolution, lengthUnits::eLengthUnits units);
+    double *get_outputDirectionGrid(double resolution, lengthUnits::eLengthUnits units);
     const char* get_outputGridProjection();
     double get_outputGridCellSize();
     double get_outputGridxllCorner();
     double get_outputGridyllCorner();
     int get_outputGridnCols();
     int get_outputGridnRows();
+    double * ninja::get_u();
+    double * ninja::get_v();
+    double * ninja::get_w();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);

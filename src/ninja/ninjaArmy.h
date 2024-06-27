@@ -913,7 +913,7 @@ public:
     * \param nIndex index of a ninja
     * \return Pointer to the output speed array
     */
-    const double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
+    const double* getOutputSpeedGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
 
     /**
     * \brief Get the output direction grid for a ninja
@@ -921,7 +921,7 @@ public:
     * \param nIndex index of a ninja
     * \return Pointer to the output direction array
     */
-    const double* getOutputDirectionGrid( const int nIndex, char ** papszOptions=NULL );
+    const double* getOutputDirectionGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
 
     /**
     * \brief Get the output grid projection string for a ninja
@@ -971,6 +971,9 @@ public:
     */
     const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
     
+    const double * getu( const int nIndex, char ** papszOptions=NULL );
+    const double * getv( const int nIndex, char ** papszOptions=NULL );
+    const double * getw( const int nIndex, char ** papszOptions=NULL );
     /**
     * \brief Set the percent of output buffer clipping for a ninja
     *

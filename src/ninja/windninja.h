@@ -27,6 +27,9 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
+#include "fetch_factory.h"
+#include "gdal_util.h"
+#include "ninjaUnits.h"
 #include <string>
 
 /*-----------------------------------------------------------------------------
@@ -83,6 +86,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 #endif
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
+    (double *boundsBox, const char *fileName, double resolution, char* fetchType);
     WINDNINJADLL_EXPORT std::string NinjaFetchForecast
     (const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
@@ -233,10 +238,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
         ( NinjaH * ninja, const int nIndex, const char * path);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-        ( NinjaH * ninja, const int nIndex );
+        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-        ( NinjaH * ninja, const int nIndex );
+        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
 
     WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
         ( NinjaH * ninja, const int nIndex );
@@ -255,7 +260,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
 
     WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
         ( NinjaH * ninja, const int nIndex );
-
+    WINDNINJADLL_EXPORT const double * NinjaGetu
+        (NinjaH * ninja, const int nIndex);
+    WINDNINJADLL_EXPORT const double * NinjaGetv
+        (NinjaH * ninja, const int nIndex);
+    WINDNINJADLL_EXPORT const double * NinjaGetw
+        (NinjaH * ninja, const int nIndex);
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaH * ninja, const int nIndex, const double percent );
 
