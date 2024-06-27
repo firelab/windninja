@@ -1343,7 +1343,7 @@ WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
     }
 }
 /**
- * \brief Get w values (north postive) 
+ * \brief Get w values (up postive) 
  * 
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
