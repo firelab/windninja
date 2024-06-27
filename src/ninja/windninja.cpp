@@ -1312,7 +1312,14 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
         throw std::runtime_error("no ninjaArmy");
     }
 }
-
+/**
+ * \brief Get u values (east postive) 
+ * 
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * 
+ * \return The u values in m/s
+ */
 WINDNINJADLL_EXPORT const double * NinjaGetu(NinjaH * ninja, const int nIndex){
     if( NULL != ninja ) {
         return reinterpret_cast<ninjaArmy*>( ninja )->getu( nIndex );
@@ -1320,6 +1327,14 @@ WINDNINJADLL_EXPORT const double * NinjaGetu(NinjaH * ninja, const int nIndex){
         return NULL;
     }
 }
+/**
+ * \brief Get v values (north postive) 
+ * 
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * 
+ * \return The v values in m/s
+ */
 WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
     if( NULL != ninja ) {
         return reinterpret_cast<ninjaArmy*>( ninja )->getv( nIndex );
@@ -1327,6 +1342,14 @@ WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
         return NULL;
     }
 }
+/**
+ * \brief Get w values (north postive) 
+ * 
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * 
+ * \return The w values in m/s
+ */
 WINDNINJADLL_EXPORT const double * NinjaGetw(NinjaH * ninja, const int nIndex){
     if( NULL != ninja ) {
         return reinterpret_cast<ninjaArmy*>( ninja )->getw( nIndex );
