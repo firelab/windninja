@@ -191,7 +191,9 @@ private:
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
 
-    bool writeMassMeshColMax;
+    double colHeightAGL;
+    lengthUnits::eLengthUnits colHeightAGL_units;
+    Mesh colMaxMesh;
     void generateMassMeshColMaxGrid();
     void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                          const double dem_xllCorner, const double dem_yllCorner, 
@@ -204,7 +206,7 @@ private:
                                const wn_3dArray& z, 
                                const double dem_xllCorner, const double dem_yllCorner, 
                                const int ncols, const int nrows, const int nlayers, 
-                               const double massMeshResolution, std::string prjString, 
+                               const double colMaxMeshResolution, std::string prjString, 
                                wn_3dScalarField& k);
 
     const char *pszVrtMem;
