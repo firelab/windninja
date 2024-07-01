@@ -1701,33 +1701,19 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
     }
 
-    if(raw_minValue<0)
-    {
-        translation = fabs(raw_minValue)+1.1; //+1.1 since 0 = transparent in color table
-    }
-    else if(raw_minValue<2 && raw_minValue!=0)
-    {
-        translation = raw_minValue+1.1;
-    }
-    else if(raw_minValue!=0)  //since 0 is transparent channel
-    {
-        translation = -raw_minValue-1.1;
-    }
-    if(raw_maxValue>255 || raw_maxValue-raw_minValue<5)
-    {
-        scalingFactor = 254/(raw_maxValue+translation);
-    }
+    // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
+    // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
+    int idxRangeMin = 0;
+    int idxRangeMax = 255;
+    // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
+    int numBins = idxRangeMax - idxRangeMin;
+    double binWidth = (raw_maxValue - raw_minValue)/double(numBins);
     for(int i=0;i<scaledDataGrid.get_nRows();i++)
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
-            {
-                if(scaledDataGrid(i,j)!=0)
-                {
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)+translation;
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)*0.6*scalingFactor; //0.6 is temp fix for scaling issue
-                }
-            }
+            int binIdx = std::round( (scaledDataGrid(i,j) - raw_minValue)/binWidth ) + idxRangeMin;
+            scaledDataGrid(i,j) = binIdx;
         }
     } //scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
 
@@ -1778,8 +1764,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         {
             for (int j=0;j<scaledDataGrid.get_nCols();j++)
             {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
+                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue())
                 {
                     _minValue = scaledDataGrid(i,j);
                 }
@@ -1834,7 +1819,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 	    double minnn = raw_minValue;
         double _brk0 = 0;
         double _brk1 = raw_minValue;
-        double _brk2 = 0.25*(raw_maxValue-raw_minValue)+raw_minValue;
+        double _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
         double _brk4 = raw_maxValue;
         double _brk3 = (_brk4+_brk2)/2;
 

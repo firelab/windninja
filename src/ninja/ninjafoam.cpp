@@ -2417,10 +2417,10 @@ void NinjaFoam::WriteOutputFiles()
         velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
     }
     // is currently deleting the contents of the file rather than doing the unit conversion
-    //if(writeMassMeshColMax)
-    //{
-    //    velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
-    //}
+    if(writeMassMeshColMax)
+    {
+          velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
+    }
 
     //resample to requested output resolutions
     SetOutputResolution();
@@ -2595,6 +2595,10 @@ void NinjaFoam::WriteOutputFiles()
                             
                             ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits);
+                            
+                            //// for debugging
+                            //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
+                            //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
                         }
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
@@ -3304,10 +3308,10 @@ void NinjaFoam::generateMassMeshColMaxGrid()
     probeDataToColMaxGrid( colHeightAGL, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, k );
     
     //// for debugging
-    CPLDebug("NINJAFOAM", "writing ascii file");
-    const char *colMaxOutputFile_ascii;
-    colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
-    colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
+    //CPLDebug("NINJAFOAM", "writing ascii file");
+    //const char *colMaxOutputFile_ascii;
+    //colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
+    //colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
     
     
     CPLDebug("NINJAFOAM", "deallocating created grids");
@@ -3455,8 +3459,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                         //// tke to velFluct conversion
                         //// from m^2/s^2 to m/s, velFluct = sqrt(2/3*k)
                         current_k_pt = std::sqrt(2.0/3.0*current_k_pt);
-                        //// from m/s to mph unit conversion
-                        current_k_pt = current_k_pt*2.23694;
                         
                         k(ptIdx) = current_k_pt;
                         //k(rowIdx,colIdx,layerIdx) = current_k_pt;
