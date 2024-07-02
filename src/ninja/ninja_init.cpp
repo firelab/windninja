@@ -27,6 +27,15 @@
  *****************************************************************************/
 
 #include "ninja_init.h"
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <netinet/in.h>
+#include <ctime>
+#include "cpl_http.h"  
+
 
 boost::local_time::tz_database globalTimeZoneDB;
 
@@ -74,6 +83,7 @@ char ** NinjaCheckVersion(void) {
   return papszTokens;
 }
 
+
 void NinjaCheckThreddsData( void *rc )
 {
     int *r;
@@ -120,6 +130,72 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     GDALAllRegister();
     OGRRegisterAll();    
 
+
+    std::cout << "Logging message to console." << std::endl;
+
+    
+
+std::string firstLocalIP;
+
+struct ifaddrs *ifAddrStruct = NULL;
+struct ifaddrs *ifa = NULL;
+void *tmpAddrPtr = NULL;
+
+getifaddrs(&ifAddrStruct);
+
+for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+    if (!ifa->ifa_addr) {
+        continue;
+    }
+
+    if (ifa->ifa_addr->sa_family == AF_INET) { // Check it is IPv4
+        tmpAddrPtr = &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+        char addressBuffer[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "127.0.0.1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
+        }
+    } else if (ifa->ifa_addr->sa_family == AF_INET6) { // Check it is IPv6
+        tmpAddrPtr = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+        char addressBuffer[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+        if (strcmp(addressBuffer, "::1") != 0) {
+            firstLocalIP = addressBuffer;
+            break;
+        }
+    }
+}
+
+if (ifAddrStruct != NULL)
+    freeifaddrs(ifAddrStruct);
+
+std::string address = firstLocalIP;
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "http://ninjastorm.firelab.org/windninja/stats/?IP=";
+
+std::string full = url + address + "&time=" + cpp_string;
+
+const char *charStr = full.data();
+
+if (!firstLocalIP.empty()) {
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+
+    poResult = CPLHTTPFetch(charStr, NULL);
+    CPLHTTPDestroyResult(poResult);
+}
+
+
+
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
@@ -157,6 +233,38 @@ int NinjaInitialize()
     */
     CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
+
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
+
+
+std::string full = url + cpp_string;
+
+
+const char *charStr = full.data();
+
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+
+    poResult = CPLHTTPFetch(charStr, NULL); 
+
+    if (poResult) {
+            CPLHTTPDestroyResult(poResult);
+        } else {
+            std::cerr << "Fetch data." << std::endl;
+        }
+
 
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
@@ -210,19 +318,27 @@ int NinjaInitialize()
     CPLFree( (void*)pszExecPath );
 #endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
+
 #endif
-    /*
-    ** Set windninja data if it isn't set.
-    */
-    if( !CSLTestBoolean( CPLGetConfigOption( "WINDNINJA_DATA", "FALSE" ) ) )
-    {
-        std::string osDataPath;
-        osDataPath = FindDataPath( "tz_world.zip" );
-        if( osDataPath != "" )
-        {
-            CPLSetConfigOption( "WINDNINJA_DATA", CPLGetPath( osDataPath.c_str() ) );
-        }
+
+
+
+
+/*
+** Set windninja data if it isn't set.
+*/
+if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
+    std::string osDataPath;
+    osDataPath = FindDataPath("tz_world.zip");
+    if (osDataPath != "") {
+        CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
     }
+}
+
+
+
+
+
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     CPLPopErrorHandler();
     return 0;
