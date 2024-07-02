@@ -86,6 +86,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 #endif
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
+    (std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (double *boundsBox, const char *fileName, double resolution, char* fetchType);
     WINDNINJADLL_EXPORT std::string NinjaFetchForecast
@@ -98,7 +100,8 @@ typedef int  NinjaErr;
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
-
+    WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy
+        (NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag);
     WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
         ( NinjaH ** ninja, const char * forecastFilename,
           const char * timezone,

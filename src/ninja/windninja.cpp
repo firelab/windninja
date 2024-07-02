@@ -203,7 +203,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fi
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef GMTED
+    #ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
@@ -264,6 +264,31 @@ WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  un
     delete model;
     return "exception";
     
+}
+/**
+ * \brief Fetch Station forecast files using bbox from elevation file
+ *
+ * \param output_path A valid path to an output directory.
+ * \param elevation_file A valid path to an elevation file.
+ * \param timeList A vector of boost posix time objects representing the times of the forecast.
+ * \param osTimeZone A string representing the timezone of the forecast.
+ * \param fetchLatest A boolean representing whether to fetch the latest forecast.
+ *
+ * \return Forecast file name on success, "exception" otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest){
+    wxStation::SetStationFormat(wxStation::newFormat);
+    std::string  stationPathName = pointInitialization::generatePointDirectory(elevation_file, output_path, fetchLatest);
+    cout << stationPathName.c_str() << endl;
+    pointInitialization::SetRawStationFilename(stationPathName);
+    bool success = pointInitialization::fetchStationFromBbox(elevation_file, timeList, osTimeZone, fetchLatest);
+    if(success){
+        pointInitialization::writeStationLocationFile(stationPathName, elevation_file, fetchLatest);
+        return NINJA_SUCCESS;
+    }
+    else{
+        return NINJA_E_INVALID;
+    }
 }
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
@@ -330,6 +355,68 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
        }
     }
     return retval;
+}
+#endif
+/**
+ * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ *
+ * This method will create a set of runs for windninja based on the contents of
+ * the weather forecast file.  One run is done for each timestep in the *.nc
+ * file.
+ *
+ * \param ninja pointer to pointer of opaque NinjaArmy.
+ * \param tiimeList A vector of boost posix time objects representing the times of the forecast.
+ * \param timezone a timezone string representing a valid timezone
+ * \param stationFileName A valid path to a station directory
+ * \param elevationFile A valid path to an elevation file.
+ * \param matchPoints A boolean representing whether to match the points in the station file to the DEM.
+ *
+ * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
+ */
+#ifndef NINJAFOAM
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy(NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
+    NinjaErr retval = NINJA_E_INVALID;
+    if( NULL != ninja ){
+        try{
+            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
+            reinterpret_cast<ninjaArmy*>( *ninja )->makeStationArmy
+            (   timeList,
+                timeZone,
+                stationFileName,
+                elevationFile,
+                matchPoints,
+                false);
+            retval = NINJA_SUCCESS;
+        }
+        catch( armyException & e ){
+            retval = NINJA_E_INVALID;
+        }
+        }
+    return retval;
+
+}
+#endif
+#ifdef NINJAFOAM
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy(NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
+    NinjaErr retval = NINJA_E_INVALID;
+    if( NULL != ninja ){
+        try{
+            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag));
+            reinterpret_cast<ninjaArmy*>( *ninja )->makeStationArmy
+            (   timeList,
+                timeZone,
+                stationFileName,
+                elevationFile,
+                matchPoints,
+                false);
+            retval = NINJA_SUCCESS;
+        }
+        catch( armyException & e ){
+            retval = NINJA_E_INVALID;
+        }
+        }
+    return retval;
+
 }
 #endif
 
