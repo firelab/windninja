@@ -138,6 +138,7 @@ public:
     AsciiGrid<double>CloudGrid;
 #ifdef NINJAFOAM
     AsciiGrid<double>TurbulenceGrid; //this needs to be a member of ninja since we need to write this for ninjafoam runs with diurnal 
+    AsciiGrid<double> colMaxGrid; // same as for TurbulenceGrid
 #endif
 
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable

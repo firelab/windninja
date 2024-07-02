@@ -81,8 +81,6 @@ public:
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
 
-    AsciiGrid<double> TurbulenceGrid;
-    AsciiGrid<double> colMaxGrid;
 private:
     std::string foamVersion;
     

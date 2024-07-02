@@ -2394,13 +2394,7 @@ void NinjaFoam::SampleRawOutput()
         }
     }
     GDALClose( hDS );
-}
-
-void NinjaFoam::WriteOutputFiles()
-{
-    /*-------------------------------------------------------------------*/
-    /* prepare output                                                    */
-    /*-------------------------------------------------------------------*/
+    
     
     // prep colMaxGrid
     try{
@@ -2414,8 +2408,15 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max ascii data generation: Cannot determine exception type.");
 	}
-
     
+}
+
+void NinjaFoam::WriteOutputFiles()
+{
+    /*-------------------------------------------------------------------*/
+    /* prepare output                                                    */
+    /*-------------------------------------------------------------------*/
+
     //Clip off bounding doughnut if desired
     VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
