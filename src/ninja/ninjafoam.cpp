@@ -387,6 +387,11 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endOutputSampling = omp_get_wtime();
     #endif
+    
+    /*-------------------------------------------------------------------*/
+    /* Generate and Sample mass mesh                                     */
+    /*-------------------------------------------------------------------*/
+    GenerateAndSampleMassMesh();
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -2181,143 +2186,6 @@ const char * NinjaFoam::GetGridFilename()
     return pszGridFilename;
 }
 
-void NinjaFoam::SetOutputResolution()
-{
-    //Set output file resolutions now
-    if( input.kmzResolution <= 0.0 )  //if negative, use DEM resolution
-        input.kmzResolution = input.dem.get_cellSize();
-    if( input.shpResolution <= 0.0 )  //if negative, use DEM resolution
-        input.shpResolution = input.dem.get_cellSize();
-    if( input.velResolution <= 0.0 )  //if negative, use DEMresolution
-        input.velResolution = input.dem.get_cellSize();
-    if( input.angResolution <= 0.0 )  //if negative, use DEM resolution
-        input.angResolution = input.dem.get_cellSize();
-    if( input.pdfResolution <= 0.0 )
-        input.pdfResolution = input.dem.get_cellSize();
-}
-
-void NinjaFoam::SetOutputFilenames()
-{
-    //Do file naming string stuff for all output files
-    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
-        shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
-
-    boost::local_time::local_time_facet* timeOutputFacet;
-    timeOutputFacet = new boost::local_time::local_time_facet();
-    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
-    //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
-    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
-    //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
-
-    std::ostringstream timestream;
-    timestream.imbue(std::locale(std::locale::classic(), timeOutputFacet));
-    timeOutputFacet->format("%m-%d-%Y_%H%M_");
-
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
-        timestream << input.ninjaTime;
-    }
-
-    std::string pathName;
-    std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-
-    if(input.customOutputPath == "!set"){
-        //prepend directory paths to rootFile for wxModel run
-        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
-            pathName = CPLGetPath(input.forecastFilename.c_str());
-            //if it's a .tar, write to directory containing the .tar file
-            if( strstr(pathName.c_str(), ".tar") ){
-                pathName.erase( pathName.rfind("/") );
-            }
-        }else{
-            pathName = CPLGetPath(input.dem.fileName.c_str());
-        }
-    }
-    else{
-        pathName = input.customOutputPath;
-    }
-    
-    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
-
-    /* set the output path member variable */
-    input.outputPath = pathName;
-
-    timeAppend = timestream.str();
-
-    ostringstream wxModelTimestream;
-    boost::local_time::local_time_facet* wxModelOutputFacet;
-    wxModelOutputFacet = new boost::local_time::local_time_facet();
-    wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
-    wxModelOutputFacet->format("%m-%d-%Y_%H%M");
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-    {
-        wxModelTimestream << input.ninjaTime;
-    }
-    wxModelTimeAppend = wxModelTimestream.str();
-    mesh_units = "m";
-    kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
-    shp_mesh_units = lengthUnits::getString( input.shpUnits );
-    ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
-    pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
-
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
-
-    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
-        double tempSpeed = input.inputSpeed;
-        velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-    }
-
-    double meshResolutionTemp = input.dem.get_cellSize();
-    double kmzResolutionTemp = input.kmzResolution;
-    double shpResolutionTemp = input.shpResolution;
-    double velResolutionTemp = input.velResolution;
-    double pdfResolutionTemp = input.pdfResolution;
-
-    lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
-
-    lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
-    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
-    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
-    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
-    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
-
-    os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
-    os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
-    os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
-    os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
-    os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
-
-    fileAppend = os.str();
-    kmz_fileAppend = os_kmz.str();
-    shp_fileAppend = os_shp.str();
-    ascii_fileAppend = os_ascii.str();
-    pdf_fileAppend   = os_pdf.str();
-
-    input.kmlFile = rootFile + kmz_fileAppend + ".kml";
-    input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
-
-    input.shpFile = rootFile + shp_fileAppend + ".shp";
-    input.dbfFile = rootFile + shp_fileAppend + ".dbf";
-
-    input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
-
-    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
-    input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
-    input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
-    input.atmFile = rootFile + ascii_fileAppend + ".atm";
-
-    input.legFile = rootFile + kmz_fileAppend + ".bmp";
-    if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
-        input.dateTimeLegFile = "";
-    else
-        input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
-}
-
 void NinjaFoam::SampleRawOutput()
 {
     /*-------------------------------------------------------------------*/
@@ -2408,337 +2276,7 @@ void NinjaFoam::SampleRawOutput()
         }
     }
     GDALClose( hDS );
-    
-    
-    // generate massMesh if required for other outputs
-    try{
-	    if ( writeMassMesh == true ) {
-	        generateMassMesh();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
-	}
-    
-    
-    // prep colMaxGrid
-    try{
-	    if ( input.writeTurbulence == true ) {
-	        generateColMaxGrid(massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, massMesh_k);
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
-	}
-    
-}
 
-void NinjaFoam::WriteOutputFiles()
-{
-    /*-------------------------------------------------------------------*/
-    /* prepare output                                                    */
-    /*-------------------------------------------------------------------*/
-
-    //Clip off bounding doughnut if desired
-    VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-    AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-    if(input.writeTurbulence)
-    {
-        TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-        // is this applicable when it is a massMesh ascii grid? I don't think so, but leave here just as a reminder just in case
-        //colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-    }
-
-    //change windspeed units back to what is specified by speed units switch
-    velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
-    if(input.writeTurbulence)
-    {
-        velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
-        velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
-    }
-
-    //resample to requested output resolutions
-    SetOutputResolution();
-
-    //set up filenames
-    SetOutputFilenames();
-
-    /*-------------------------------------------------------------------*/
-    /* write output files                                                */
-    /*-------------------------------------------------------------------*/
-
-	try{
-		if(input.asciiOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
-                                                             AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
-                                                             AsciiGrid<double>::order0));
-                        
-                        //Set cloud grid
-                        int longEdge = input.dem.get_nRows();
-                        if(input.dem.get_nRows() < input.dem.get_nCols())
-                            longEdge = input.dem.get_nCols();
-                        double tempCloudCover;
-                        if(input.cloudCover < 0){
-                            tempCloudCover = 0.0;
-                        }
-                        else{
-                            tempCloudCover = input.cloudCover;
-                        }
-
-                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
-                                -9999.0, tempCloudCover, input.dem.prjString);
-
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
-                        // if output clipping was set by the user, don't buffer to overlap the DEM
-                        // but only if writing atm file for farsite grids
-                        if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
-                        {
-                            //ensure grids cover original DEM extents for FARSITE
-                            AsciiGrid<double> demGrid;
-                            GDALDatasetH hDS;
-                            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                            if( hDS == NULL )
-                            {
-                                input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                                        "Problem reading DEM during output writing." );
-                            }
-                            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                            tempCloud.BufferToOverlapGrid(demGrid);
-                            angTempGrid->BufferToOverlapGrid(demGrid);
-                            velTempGrid->BufferToOverlapGrid(demGrid);
-                        }
-
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
-	}
-
-	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
-	try{
-		if(input.txtOutFlag==true)
-			write_compare_output();
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
-	}
-
-	//write shape files
-	try{
-		if(input.shpOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-
-			ShapeVector ninjaShapeFiles;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-
-			ninjaShapeFiles.setDirGrid(*angTempGrid);
-			ninjaShapeFiles.setSpeedGrid(*velTempGrid);
-			ninjaShapeFiles.setDataBaseName(input.dbfFile);
-			ninjaShapeFiles.setShapeFileName(input.shpFile);
-			ninjaShapeFiles.makeShapeFiles();
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
-	}
-
-	//write kmz file
-	try{
-		if(input.googOutFlag==true)
-
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-			turbTempGrid=NULL;
-			colMaxTempGrid=NULL;
-
-			KmlVector ninjaKmlFiles;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, 
-                                    AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
-                                    AsciiGrid<double>::order0));
-                        if(input.writeTurbulence)
-                        {
-                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
-                                        AsciiGrid<double>::order0));
-                            
-                            ninjaKmlFiles.setTurbulenceFlag("true");
-                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
-                            
-                            
-                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
-                                        AsciiGrid<double>::order0));
-                            
-                            ninjaKmlFiles.setColMaxFlag("true");
-                            ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits);
-                            
-                            //// for debugging
-                            //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
-                            //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
-                        }
-
-			ninjaKmlFiles.setKmlFile(input.kmlFile);
-			ninjaKmlFiles.setKmzFile(input.kmzFile);
-			ninjaKmlFiles.setDemFile(input.dem.fileName);
-
-			ninjaKmlFiles.setLegendFile(input.legFile);
-			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
-			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-			ninjaKmlFiles.setDirGrid(*angTempGrid);
-
-            ninjaKmlFiles.setLineWidth(input.googLineWidth);
-			ninjaKmlFiles.setTime(input.ninjaTime);
-
-            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
-			{
-				if(ninjaKmlFiles.makeKmz())
-					ninjaKmlFiles.removeKmlFile();
-			}
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-			if(turbTempGrid)
-			{
-				delete turbTempGrid;
-				turbTempGrid=NULL;
-			}
-			if(colMaxTempGrid)
-			{
-				delete colMaxTempGrid;
-				colMaxTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
-	}
-
-	try{
-		if(input.pdfOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-            OutputWriter output;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-
-			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-            output.setDEMfile(input.pdfDEMFileName);
-            output.setLineWidth(input.pdfLineWidth);
-            output.setDPI(input.pdfDPI);
-            output.setSize(input.pdfWidth, input.pdfHeight);
-            output.write(input.pdfFile, "PDF");
-
-
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-		}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
-	}
-	
-	
-	try{
-	    if ( writeMassMeshVtk == true ) {
-	        writeMassMeshVtkOutput();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
-	}
-	
 }
 
 
@@ -3178,126 +2716,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     
 }
 
-void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z, 
-                                   const int ncols, const int nrows, const int nlayers, 
-                                   wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w)
-{
-    CPLDebug("NINJAFOAM", "filling in probes sample no data vals");
-    
-    //double noDataVal = -9999;  // make sure this one matches the one used in the readInProbeData() function
-    double noDataCheckVal = -9998;  // instead of using the if == noDataVal, use if > noDataCheckVal or if < noDataCheckVal depending on the style of the noDataVal
-    
-    // going to first do a log profile fill for all cells with noData vals up to the lowest known z value for each column, 
-    // then do an ascii grid style nan filling to fill in any remaining noData vals
-    // 
-    // currently, the log profile filling seems to get all the noData vals, but keep in mind the method in case it ever becomes relevant
-    // 
-    // the lowest known z value is the first non noData val in a given column, or the 1stCellHeight value, whichever is higher up in the column
-    // so if values below 1stCellHeight have data, they are also replaced with log profile interpolation
-    
-    windProfile profile;
-    profile.profile_switch = windProfile::monin_obukov_similarity;
-    
-    for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
-    {
-        for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
-        {
-            
-            double lowestKnown_zIdx = nlayers;
-            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
-            {
-                if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {  // they always get set together for the same idx, so only need to check one of them
-                //if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal && v(rowIdx,colIdx,layerIdx) > noDataCheckVal && w(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {
-                    lowestKnown_zIdx = layerIdx;
-                    break;
-                }
-            }
-            
-            if ( lowestKnown_zIdx == nlayers-1 ) {
-                // is a column of no data values, skip it for the log profile part of the fill
-                // also warn because the method for filling no data values past the log profile part hasn't yet been implemented
-                std::cout << "!!! no lowest known zIdx for column of data !!! for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
-                continue;
-            }
-            
-            
-            double current_z_ground = z(rowIdx,colIdx,0);
-            
-            double firstCellHeight_zIdx = 0;
-            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
-            {
-                if ( z(rowIdx,colIdx,layerIdx)-current_z_ground >= finalFirstCellHeight )
-                {
-                    firstCellHeight_zIdx = layerIdx;
-                    break;
-                }
-            }
-            
-            
-            // for debugging purposes, want to know how different the indices and resulting values ended up
-            // turns out to be easier if change back and forth between when/why it is printed rather than printing each instance
-            //if ( lowestKnown_zIdx == firstCellHeight_zIdx ) {
-            //if ( lowestKnown_zIdx > firstCellHeight_zIdx ) {
-            //    std::cout << "rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
-            //    std::cout << "lowestKnown_zIdx = " << lowestKnown_zIdx << ", firstCellHeight_zIdx = " << firstCellHeight_zIdx << std::endl;
-            //    std::cout << "z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
-            //}
-            
-            
-            // this one is NOT for debugging purposes, has to be run each and every time to make the code run safely
-            if ( lowestKnown_zIdx < firstCellHeight_zIdx ) {
-                //std::cout << "lowestKnown zIdx is less than firstCellHeight zIdx for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
-                //std::cout << "old lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
-                lowestKnown_zIdx = firstCellHeight_zIdx;
-                //std::cout << "new lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
-                //std::cout << "new z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", new z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
-                // looks like this is getting triggered a LOT, if not for each and every occurence, hard to tell without commenting it out and printing for the other occurences.
-                // looks like the resulting value is rarely equal to firstCellHeight though, seems to always be just a hint above that value
-            }
-            
-            
-            
-            double z_ref = z(rowIdx,colIdx,lowestKnown_zIdx);
-            double u_ref = u(rowIdx,colIdx,lowestKnown_zIdx);
-            double v_ref = v(rowIdx,colIdx,lowestKnown_zIdx);
-            double w_ref = w(rowIdx,colIdx,lowestKnown_zIdx);
-            
-            
-            profile.ObukovLength = init->L(rowIdx,colIdx);
-            profile.ABL_height = init->bl_height(rowIdx,colIdx);
-            profile.Roughness = input.surface.Roughness(rowIdx,colIdx);
-            double current_rough_h = input.surface.Rough_h(rowIdx,colIdx);
-            double current_rough_d = input.surface.Rough_d(rowIdx,colIdx);
-            profile.Rough_h = current_rough_h;
-            profile.Rough_d = current_rough_d;
-            
-            //this is height above the vegetation
-            profile.inputWindHeight = z_ref - current_z_ground;  // needs to be AGL
-            
-            for(int zIdx=1; zIdx<lowestKnown_zIdx; zIdx++)
-            {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
-                profile.AGL = z(rowIdx,colIdx,zIdx) - current_z_ground + current_rough_h;  // needs to be AGL
-                
-                profile.inputWindSpeed = u_ref;
-                u(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
-                profile.inputWindSpeed = v_ref;
-                v(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
-                profile.inputWindSpeed = w_ref;  // not sure if this is valid or not, but without this, it is still full of all those nans, so I guess just go with it
-                w(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
-            }
-            
-            // the ground z values are all supposed to be zero
-            u(rowIdx,colIdx,0) = 0.0;
-            v(rowIdx,colIdx,0) = 0.0;
-            w(rowIdx,colIdx,0) = 0.0;
-        }
-    }
-    
-    
-}
-
-
 void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                                  const double dem_xllCorner, const double dem_yllCorner, 
                                  const int ncols, const int nrows, const int nlayers, 
@@ -3465,6 +2883,126 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     
 }
 
+
+void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z, 
+                                   const int ncols, const int nrows, const int nlayers, 
+                                   wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w)
+{
+    CPLDebug("NINJAFOAM", "filling in probes sample no data vals");
+    
+    //double noDataVal = -9999;  // make sure this one matches the one used in the readInProbeData() function
+    double noDataCheckVal = -9998;  // instead of using the if == noDataVal, use if > noDataCheckVal or if < noDataCheckVal depending on the style of the noDataVal
+    
+    // going to first do a log profile fill for all cells with noData vals up to the lowest known z value for each column, 
+    // then do an ascii grid style nan filling to fill in any remaining noData vals
+    // 
+    // currently, the log profile filling seems to get all the noData vals, but keep in mind the method in case it ever becomes relevant
+    // 
+    // the lowest known z value is the first non noData val in a given column, or the 1stCellHeight value, whichever is higher up in the column
+    // so if values below 1stCellHeight have data, they are also replaced with log profile interpolation
+    
+    windProfile profile;
+    profile.profile_switch = windProfile::monin_obukov_similarity;
+    
+    for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+    {
+        for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+        {
+            
+            double lowestKnown_zIdx = nlayers;
+            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+            {
+                if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {  // they always get set together for the same idx, so only need to check one of them
+                //if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal && v(rowIdx,colIdx,layerIdx) > noDataCheckVal && w(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {
+                    lowestKnown_zIdx = layerIdx;
+                    break;
+                }
+            }
+            
+            if ( lowestKnown_zIdx == nlayers-1 ) {
+                // is a column of no data values, skip it for the log profile part of the fill
+                // also warn because the method for filling no data values past the log profile part hasn't yet been implemented
+                std::cout << "!!! no lowest known zIdx for column of data !!! for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
+                continue;
+            }
+            
+            
+            double current_z_ground = z(rowIdx,colIdx,0);
+            
+            double firstCellHeight_zIdx = 0;
+            for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+            {
+                if ( z(rowIdx,colIdx,layerIdx)-current_z_ground >= finalFirstCellHeight )
+                {
+                    firstCellHeight_zIdx = layerIdx;
+                    break;
+                }
+            }
+            
+            
+            // for debugging purposes, want to know how different the indices and resulting values ended up
+            // turns out to be easier if change back and forth between when/why it is printed rather than printing each instance
+            //if ( lowestKnown_zIdx == firstCellHeight_zIdx ) {
+            //if ( lowestKnown_zIdx > firstCellHeight_zIdx ) {
+            //    std::cout << "rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
+            //    std::cout << "lowestKnown_zIdx = " << lowestKnown_zIdx << ", firstCellHeight_zIdx = " << firstCellHeight_zIdx << std::endl;
+            //    std::cout << "z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
+            //}
+            
+            
+            // this one is NOT for debugging purposes, has to be run each and every time to make the code run safely
+            if ( lowestKnown_zIdx < firstCellHeight_zIdx ) {
+                //std::cout << "lowestKnown zIdx is less than firstCellHeight zIdx for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
+                //std::cout << "old lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
+                lowestKnown_zIdx = firstCellHeight_zIdx;
+                //std::cout << "new lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
+                //std::cout << "new z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", new z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
+                // looks like this is getting triggered a LOT, if not for each and every occurence, hard to tell without commenting it out and printing for the other occurences.
+                // looks like the resulting value is rarely equal to firstCellHeight though, seems to always be just a hint above that value
+            }
+            
+            
+            
+            double z_ref = z(rowIdx,colIdx,lowestKnown_zIdx);
+            double u_ref = u(rowIdx,colIdx,lowestKnown_zIdx);
+            double v_ref = v(rowIdx,colIdx,lowestKnown_zIdx);
+            double w_ref = w(rowIdx,colIdx,lowestKnown_zIdx);
+            
+            
+            profile.ObukovLength = init->L(rowIdx,colIdx);
+            profile.ABL_height = init->bl_height(rowIdx,colIdx);
+            profile.Roughness = input.surface.Roughness(rowIdx,colIdx);
+            double current_rough_h = input.surface.Rough_h(rowIdx,colIdx);
+            double current_rough_d = input.surface.Rough_d(rowIdx,colIdx);
+            profile.Rough_h = current_rough_h;
+            profile.Rough_d = current_rough_d;
+            
+            //this is height above the vegetation
+            profile.inputWindHeight = z_ref - current_z_ground;  // needs to be AGL
+            
+            for(int zIdx=1; zIdx<lowestKnown_zIdx; zIdx++)
+            {
+                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                profile.AGL = z(rowIdx,colIdx,zIdx) - current_z_ground + current_rough_h;  // needs to be AGL
+                
+                profile.inputWindSpeed = u_ref;
+                u(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
+                profile.inputWindSpeed = v_ref;
+                v(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
+                profile.inputWindSpeed = w_ref;  // not sure if this is valid or not, but without this, it is still full of all those nans, so I guess just go with it
+                w(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
+            }
+            
+            // the ground z values are all supposed to be zero
+            u(rowIdx,colIdx,0) = 0.0;
+            v(rowIdx,colIdx,0) = 0.0;
+            w(rowIdx,colIdx,0) = 0.0;
+        }
+    }
+    
+    
+}
+
 void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z, 
                                    const int ncols, const int nrows, const int nlayers, 
                                    wn_3dScalarField& k)
@@ -3560,6 +3098,479 @@ void NinjaFoam::generateColMaxGrid(const wn_3dArray& z,
     //colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
     
     CPLDebug("NINJAFOAM", "finished generating turbulence column max ascii grid from NINJAFOAM mass mesh");
+}
+
+
+void NinjaFoam::GenerateAndSampleMassMesh()
+{
+    
+    // generate massMesh if required for other outputs
+    try{
+	    if ( writeMassMesh == true ) {
+	        generateMassMesh();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
+	}
+    
+    
+    // prep colMaxGrid
+    try{
+	    if ( input.writeTurbulence == true ) {
+	        generateColMaxGrid(massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, massMesh_k);
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
+	}
+    
+}
+
+
+void NinjaFoam::SetOutputResolution()
+{
+    //Set output file resolutions now
+    if( input.kmzResolution <= 0.0 )  //if negative, use DEM resolution
+        input.kmzResolution = input.dem.get_cellSize();
+    if( input.shpResolution <= 0.0 )  //if negative, use DEM resolution
+        input.shpResolution = input.dem.get_cellSize();
+    if( input.velResolution <= 0.0 )  //if negative, use DEMresolution
+        input.velResolution = input.dem.get_cellSize();
+    if( input.angResolution <= 0.0 )  //if negative, use DEM resolution
+        input.angResolution = input.dem.get_cellSize();
+    if( input.pdfResolution <= 0.0 )
+        input.pdfResolution = input.dem.get_cellSize();
+}
+
+void NinjaFoam::SetOutputFilenames()
+{
+    //Do file naming string stuff for all output files
+    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
+        shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+
+    boost::local_time::local_time_facet* timeOutputFacet;
+    timeOutputFacet = new boost::local_time::local_time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    std::ostringstream timestream;
+    timestream.imbue(std::locale(std::locale::classic(), timeOutputFacet));
+    timeOutputFacet->format("%m-%d-%Y_%H%M_");
+
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
+        timestream << input.ninjaTime;
+    }
+
+    std::string pathName;
+    std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+
+    if(input.customOutputPath == "!set"){
+        //prepend directory paths to rootFile for wxModel run
+        if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag ){
+            pathName = CPLGetPath(input.forecastFilename.c_str());
+            //if it's a .tar, write to directory containing the .tar file
+            if( strstr(pathName.c_str(), ".tar") ){
+                pathName.erase( pathName.rfind("/") );
+            }
+        }else{
+            pathName = CPLGetPath(input.dem.fileName.c_str());
+        }
+    }
+    else{
+        pathName = input.customOutputPath;
+    }
+    
+    rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
+
+    /* set the output path member variable */
+    input.outputPath = pathName;
+
+    timeAppend = timestream.str();
+
+    ostringstream wxModelTimestream;
+    boost::local_time::local_time_facet* wxModelOutputFacet;
+    wxModelOutputFacet = new boost::local_time::local_time_facet();
+    wxModelTimestream.imbue(std::locale(std::locale::classic(), wxModelOutputFacet));
+    wxModelOutputFacet->format("%m-%d-%Y_%H%M");
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+    {
+        wxModelTimestream << input.ninjaTime;
+    }
+    wxModelTimeAppend = wxModelTimestream.str();
+    mesh_units = "m";
+    kmz_mesh_units = lengthUnits::getString( input.kmzUnits );
+    shp_mesh_units = lengthUnits::getString( input.shpUnits );
+    ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
+    pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+
+    if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
+        double tempSpeed = input.inputSpeed;
+        velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
+        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+    }
+
+    double meshResolutionTemp = input.dem.get_cellSize();
+    double kmzResolutionTemp = input.kmzResolution;
+    double shpResolutionTemp = input.shpResolution;
+    double velResolutionTemp = input.velResolution;
+    double pdfResolutionTemp = input.pdfResolution;
+
+    lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
+
+    lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
+    lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
+    lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
+    lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
+    lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
+
+    os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
+    os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
+    os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
+    os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+
+    fileAppend = os.str();
+    kmz_fileAppend = os_kmz.str();
+    shp_fileAppend = os_shp.str();
+    ascii_fileAppend = os_ascii.str();
+    pdf_fileAppend   = os_pdf.str();
+
+    input.kmlFile = rootFile + kmz_fileAppend + ".kml";
+    input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
+
+    input.shpFile = rootFile + shp_fileAppend + ".shp";
+    input.dbfFile = rootFile + shp_fileAppend + ".dbf";
+
+    input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+
+    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
+    input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
+    input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
+    input.atmFile = rootFile + ascii_fileAppend + ".atm";
+
+    input.legFile = rootFile + kmz_fileAppend + ".bmp";
+    if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
+        input.dateTimeLegFile = "";
+    else
+        input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
+}
+
+void NinjaFoam::WriteOutputFiles()
+{
+    /*-------------------------------------------------------------------*/
+    /* prepare output                                                    */
+    /*-------------------------------------------------------------------*/
+
+    //Clip off bounding doughnut if desired
+    VelocityGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    if(input.writeTurbulence)
+    {
+        TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+        // is this applicable when it is a massMesh ascii grid? I don't think so, but leave here just as a reminder just in case
+        //colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+    }
+
+    //change windspeed units back to what is specified by speed units switch
+    velocityUnits::fromBaseUnits(VelocityGrid, input.outputSpeedUnits);
+    if(input.writeTurbulence)
+    {
+        velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+        velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
+    }
+
+    //resample to requested output resolutions
+    SetOutputResolution();
+
+    //set up filenames
+    SetOutputFilenames();
+
+    /*-------------------------------------------------------------------*/
+    /* write output files                                                */
+    /*-------------------------------------------------------------------*/
+
+	try{
+		if(input.asciiOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
+                                                             AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
+                                                             AsciiGrid<double>::order0));
+                        
+                        //Set cloud grid
+                        int longEdge = input.dem.get_nRows();
+                        if(input.dem.get_nRows() < input.dem.get_nCols())
+                            longEdge = input.dem.get_nCols();
+                        double tempCloudCover;
+                        if(input.cloudCover < 0){
+                            tempCloudCover = 0.0;
+                        }
+                        else{
+                            tempCloudCover = input.cloudCover;
+                        }
+
+                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
+                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
+                                -9999.0, tempCloudCover, input.dem.prjString);
+
+			AsciiGrid<double> tempCloud(CloudGrid);
+			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+                        // if output clipping was set by the user, don't buffer to overlap the DEM
+                        // but only if writing atm file for farsite grids
+                        if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                        {
+                            //ensure grids cover original DEM extents for FARSITE
+                            AsciiGrid<double> demGrid;
+                            GDALDatasetH hDS;
+                            hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                            if( hDS == NULL )
+                            {
+                                input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                                        "Problem reading DEM during output writing." );
+                            }
+                            GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                            tempCloud.BufferToOverlapGrid(demGrid);
+                            angTempGrid->BufferToOverlapGrid(demGrid);
+                            velTempGrid->BufferToOverlapGrid(demGrid);
+                        }
+
+			tempCloud.write_Grid(input.cldFile.c_str(), 1);
+			angTempGrid->write_Grid(input.angFile.c_str(), 0);
+			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+
+			//Write .atm file for this run.  Only has one time value in file.
+			if(input.writeAtmFile)
+			{
+			    farsiteAtm atmosphere;
+			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
+			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
+	}
+
+	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
+	try{
+		if(input.txtOutFlag==true)
+			write_compare_output();
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
+	}
+
+	//write shape files
+	try{
+		if(input.shpOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+
+			ShapeVector ninjaShapeFiles;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+
+			ninjaShapeFiles.setDirGrid(*angTempGrid);
+			ninjaShapeFiles.setSpeedGrid(*velTempGrid);
+			ninjaShapeFiles.setDataBaseName(input.dbfFile);
+			ninjaShapeFiles.setShapeFileName(input.shpFile);
+			ninjaShapeFiles.makeShapeFiles();
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+	}
+
+	//write kmz file
+	try{
+		if(input.googOutFlag==true)
+
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+			turbTempGrid=NULL;
+			colMaxTempGrid=NULL;
+
+			KmlVector ninjaKmlFiles;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
+                                    AsciiGrid<double>::order0));
+                        if(input.writeTurbulence)
+                        {
+                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setTurbulenceFlag("true");
+                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                            
+                            
+                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
+                                        AsciiGrid<double>::order0));
+                            
+                            ninjaKmlFiles.setColMaxFlag("true");
+                            ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits);
+                            
+                            //// for debugging
+                            //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
+                            //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
+                        }
+
+			ninjaKmlFiles.setKmlFile(input.kmlFile);
+			ninjaKmlFiles.setKmzFile(input.kmzFile);
+			ninjaKmlFiles.setDemFile(input.dem.fileName);
+
+			ninjaKmlFiles.setLegendFile(input.legFile);
+			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
+			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+			ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+            ninjaKmlFiles.setLineWidth(input.googLineWidth);
+			ninjaKmlFiles.setTime(input.ninjaTime);
+
+            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
+			{
+				if(ninjaKmlFiles.makeKmz())
+					ninjaKmlFiles.removeKmlFile();
+			}
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+			}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+			if(turbTempGrid)
+			{
+				delete turbTempGrid;
+				turbTempGrid=NULL;
+			}
+			if(colMaxTempGrid)
+			{
+				delete colMaxTempGrid;
+				colMaxTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+	}
+
+	try{
+		if(input.pdfOutFlag==true)
+		{
+			AsciiGrid<double> *velTempGrid, *angTempGrid;
+			velTempGrid=NULL;
+			angTempGrid=NULL;
+            OutputWriter output;
+
+			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+			output.setDirGrid(*angTempGrid);
+			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+            output.setDEMfile(input.pdfDEMFileName);
+            output.setLineWidth(input.pdfLineWidth);
+            output.setDPI(input.pdfDPI);
+            output.setSize(input.pdfWidth, input.pdfHeight);
+            output.write(input.pdfFile, "PDF");
+
+
+			if(angTempGrid)
+			{
+				delete angTempGrid;
+				angTempGrid=NULL;
+		}
+			if(velTempGrid)
+			{
+				delete velTempGrid;
+				velTempGrid=NULL;
+			}
+		}
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
+	}
+	
+	
+	try{
+	    if ( writeMassMeshVtk == true ) {
+	        writeMassMeshVtkOutput();
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
+	}
+	
 }
 
 

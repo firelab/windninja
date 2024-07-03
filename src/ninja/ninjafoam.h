@@ -177,6 +177,7 @@ private:
     Mesh massMesh;
     wn_3dScalarField massMesh_u, massMesh_v, massMesh_w;
     wn_3dScalarField massMesh_k;
+    void GenerateAndSampleMassMesh();
     void generateMassMesh();
     void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                               const double dem_xllCorner, const double dem_yllCorner, 
@@ -186,27 +187,27 @@ private:
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
                          wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
-    void fillEmptyProbeVals(const wn_3dArray& z, 
-                            const int ncols, const int nrows, const int nlayers, 
-                            wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
-
-    bool writeMassMeshVtk;
-    void writeMassMeshVtkOutput();
-    
-    double colHeightAGL;
-    lengthUnits::eLengthUnits colHeightAGL_units;
     void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
                          wn_3dScalarField& k);
     void fillEmptyProbeVals(const wn_3dArray& z, 
                             const int ncols, const int nrows, const int nlayers, 
+                            wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void fillEmptyProbeVals(const wn_3dArray& z, 
+                            const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& k);
+
+    double colHeightAGL;
+    lengthUnits::eLengthUnits colHeightAGL_units;
     void generateColMaxGrid(const wn_3dArray& z, 
                             const double dem_xllCorner, const double dem_yllCorner, 
                             const int ncols, const int nrows, const int nlayers, 
                             const double massMeshResolution, std::string prjString, 
                             wn_3dScalarField& k);
+
+    bool writeMassMeshVtk;
+    void writeMassMeshVtkOutput();
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;
