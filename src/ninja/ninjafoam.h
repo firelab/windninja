@@ -172,14 +172,15 @@ private:
     void SetOutputResolution();
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
-    
-    bool writeMassMeshVtk;
+
+    bool writeMassMesh;
     Mesh massMesh;
-    void writeMassMeshVtkOutput();
+    wn_3dScalarField massMesh_u, massMesh_v, massMesh_w;
+    wn_3dScalarField massMesh_k;
+    void generateMassMesh();
     void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                               const double dem_xllCorner, const double dem_yllCorner, 
-                              const int ncols, const int nrows, const int nlayers, 
-                              const std::string field);  // only implementing it to run with a single field for now
+                              const int ncols, const int nrows, const int nlayers);
     void runProbeSample();
     void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                          const double dem_xllCorner, const double dem_yllCorner, 
@@ -189,10 +190,11 @@ private:
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
 
+    bool writeMassMeshVtk;
+    void writeMassMeshVtkOutput();
+    
     double colHeightAGL;
     lengthUnits::eLengthUnits colHeightAGL_units;
-    Mesh colMaxMesh;
-    void generateMassMeshColMaxGrid();
     void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
@@ -200,12 +202,11 @@ private:
     void fillEmptyProbeVals(const wn_3dArray& z, 
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& k);
-    void probeDataToColMaxGrid(const double colHeightAGL, 
-                               const wn_3dArray& z, 
-                               const double dem_xllCorner, const double dem_yllCorner, 
-                               const int ncols, const int nrows, const int nlayers, 
-                               const double colMaxMeshResolution, std::string prjString, 
-                               wn_3dScalarField& k);
+    void generateColMaxGrid(const wn_3dArray& z, 
+                            const double dem_xllCorner, const double dem_yllCorner, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            const double massMeshResolution, std::string prjString, 
+                            wn_3dScalarField& k);
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;

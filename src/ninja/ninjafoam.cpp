@@ -73,6 +73,8 @@ NinjaFoam::NinjaFoam() : ninja()
     startStlConversion = 0.0;
     endStlConversion = 0.0;
     
+    writeMassMesh = false;
+    
     writeMassMeshVtk = false;
     
     colHeightAGL = 300.0;  // default value of 300 m
@@ -161,6 +163,13 @@ bool NinjaFoam::simulate_wind()
         }
         CPLDebug("NINJAFOAM", "Writing turbulence colMax output, using colHeightAGL %f %s",colHeightAGL,lengthUnits::getString(colHeightAGL_units).c_str());
     }
+    
+    
+    if( writeMassMeshVtk == true || input.writeTurbulence == true )
+    {
+        writeMassMesh = true;
+    }
+
 
     #ifdef _OPENMP
     startTotal = omp_get_wtime();
@@ -421,6 +430,11 @@ bool NinjaFoam::simulate_wind()
        VelocityGrid.deallocate();
        TurbulenceGrid.deallocate();
        colMaxGrid.deallocate();
+
+       massMesh_u.deallocate();
+	   massMesh_v.deallocate();
+	   massMesh_w.deallocate();
+       massMesh_k.deallocate();
     }
 
     if(input.diurnalWinds == true){
@@ -2396,17 +2410,31 @@ void NinjaFoam::SampleRawOutput()
     GDALClose( hDS );
     
     
-    // prep colMaxGrid
+    // generate massMesh if required for other outputs
     try{
-	    if ( input.writeTurbulence == true ) {
-	        generateMassMeshColMaxGrid();
+	    if ( writeMassMesh == true ) {
+	        generateMassMesh();
 	    }
 	}catch (exception& e)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max ascii data generation: %s", e.what());
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
 	}catch (...)
 	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh col max ascii data generation: Cannot determine exception type.");
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
+	}
+    
+    
+    // prep colMaxGrid
+    try{
+	    if ( input.writeTurbulence == true ) {
+	        generateColMaxGrid(massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, massMesh_k);
+	    }
+	}catch (exception& e)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
+	}catch (...)
+	{
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
 	}
     
 }
@@ -2701,7 +2729,6 @@ void NinjaFoam::WriteOutputFiles()
 	
 	try{
 	    if ( writeMassMeshVtk == true ) {
-	        CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
 	        writeMassMeshVtkOutput();
 	    }
 	}catch (exception& e)
@@ -2715,8 +2742,10 @@ void NinjaFoam::WriteOutputFiles()
 }
 
 
-void NinjaFoam::writeMassMeshVtkOutput()
+void NinjaFoam::generateMassMesh()
 {
+    CPLDebug("NINJAFOAM", "generating NINJAFOAM mass mesh grid");
+    
     
     massMesh.buildStandardMesh(input);
     
@@ -2729,45 +2758,30 @@ void NinjaFoam::writeMassMeshVtkOutput()
     CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     
     
-    std::string field = "U";
-    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, field );
+    writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
     
     runProbeSample();
     
-    wn_3dScalarField u, v, w;
-    u.allocate(&massMesh);
-    v.allocate(&massMesh);
-    w.allocate(&massMesh);
-    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, u, v, w );
+    massMesh_u.allocate(&massMesh);
+    massMesh_v.allocate(&massMesh);
+    massMesh_w.allocate(&massMesh);
+    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
     
-    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, u, v, w );
+    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
     
-    std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
-    try {
-        CPLDebug("NINJAFOAM", "writing vtk file");
-        bool vtk_out_as_utm = false;
-	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
-        {
-            vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
-        }
-        // can pick between "ascii" and "binary" format for the vtk write format
-        std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
-	} catch (exception& e) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-	} catch (...) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-	}
-
-	u.deallocate();
-	v.deallocate();
-	w.deallocate();
+    
+    massMesh_k.allocate(&massMesh);
+    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
+    
+    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
+    
+	
+	CPLDebug("NINJAFOAM", "finished generating NINJAFOAM mass mesh grid");
 }
 
 void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                                       const double dem_xllCorner, const double dem_yllCorner, 
-                                      const int ncols, const int nrows, const int nlayers, 
-                                      const std::string field)
+                                      const int ncols, const int nrows, const int nlayers)
 {
     CPLDebug("NINJAFOAM", "writing probes sample file");
     
@@ -2835,9 +2849,8 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// choice of variables\n");
-    //fprintf(fout, "fields  (%s %s);\n", "U", "k");
+    fprintf(fout, "fields  (%s %s);\n", "U", "k");
     //fprintf(fout, "fields  (%s %s %s %s %s);\n", "U", "k", "epsilon", "nut", "p");
-    fprintf(fout, "fields  (%s);\n", field.c_str());
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// Sampling and I/O settings\n");
@@ -3285,53 +3298,6 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
 }
 
 
-void NinjaFoam::generateMassMeshColMaxGrid()
-{
-    
-    CPLDebug("NINJAFOAM", "generating mass mesh col max ascii grid for foam simulation.");
-    
-    lengthUnits::toBaseUnits(colHeightAGL, colHeightAGL_units);
-    CPLDebug("NINJAFOAM", "sampling colHeightAGL = %f m",colHeightAGL);
-    
-    
-    colMaxMesh.buildStandardMesh(input);
-    
-    
-    // no longer need to resize any of the ascii grids, even L and bl_height, as they are already at the mass mesh resolution
-    // after the dem is resampled to the mesh resolution they are set using the dem resolution, 
-    // and the mesh resolution now is expected to always match the mass solver mesh resolution
-    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", colMaxMesh.meshResolution, lengthUnits::getString(colMaxMesh.meshResolutionUnits).c_str());
-    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), colMaxMesh.nlayers);
-    CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", colMaxMesh.get_minX(),colMaxMesh.get_maxX(), colMaxMesh.get_minY(), colMaxMesh.get_maxY());
-    
-    
-    std::string field = "k";
-    writeProbeSampleFile( colMaxMesh.XORD, colMaxMesh.YORD, colMaxMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), colMaxMesh.nlayers, field );
-    
-    runProbeSample();
-    
-    wn_3dScalarField k;
-    k.allocate(&colMaxMesh);
-    readInProbeData( colMaxMesh.XORD, colMaxMesh.YORD, colMaxMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), colMaxMesh.nlayers, k );
-    
-    fillEmptyProbeVals( colMaxMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), colMaxMesh.nlayers, k );
-    
-    
-    probeDataToColMaxGrid( colHeightAGL, colMaxMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), colMaxMesh.nlayers, colMaxMesh.meshResolution, input.dem.prjString, k );
-    
-    //// for debugging
-    //CPLDebug("NINJAFOAM", "writing ascii file");
-    //const char *colMaxOutputFile_ascii;
-    //colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
-    //colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
-    
-    
-    CPLDebug("NINJAFOAM", "deallocating created grids");
-	k.deallocate();
-	
-	CPLDebug("NINJAFOAM", "finished generating mass mesh col max ascii grid");
-}
-
 void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                                  const double dem_xllCorner, const double dem_yllCorner, 
                                  const int ncols, const int nrows, const int nlayers, 
@@ -3546,17 +3512,20 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
     
 }
 
-void NinjaFoam::probeDataToColMaxGrid(const double colHeightAGL, 
-                                      const wn_3dArray& z, 
-                                      const double dem_xllCorner, const double dem_yllCorner, 
-                                      const int ncols, const int nrows, const int nlayers, 
-                                      const double colMaxMeshResolution, std::string prjString, 
-                                      wn_3dScalarField& k) {
+
+void NinjaFoam::generateColMaxGrid(const wn_3dArray& z, 
+                                   const double dem_xllCorner, const double dem_yllCorner, 
+                                   const int ncols, const int nrows, const int nlayers, 
+                                   const double massMeshResolution, std::string prjString, 
+                                   wn_3dScalarField& k) {
     
-    CPLDebug("NINJAFOAM", "placing probe data into col max ascii grid");
+    CPLDebug("NINJAFOAM", "generating turbulence column max ascii grid from NINJAFOAM mass mesh");
+    
+    lengthUnits::toBaseUnits(colHeightAGL, colHeightAGL_units);
+    CPLDebug("NINJAFOAM", "sampling colHeightAGL = %f m",colHeightAGL);
     
     // now need to go through the data, and get the col max, and put it into an ascii grid
-    colMaxGrid.set_headerData( ncols, nrows, dem_xllCorner, dem_yllCorner, colMaxMeshResolution, -9999.0, -9999.0, prjString );
+    colMaxGrid.set_headerData( ncols, nrows, dem_xllCorner, dem_yllCorner, massMeshResolution, -9999.0, -9999.0, prjString );
     for ( int rowIdx = 0; rowIdx < nrows; rowIdx++ )
     {
         for ( int colIdx = 0; colIdx < ncols; colIdx++ )
@@ -3584,6 +3553,37 @@ void NinjaFoam::probeDataToColMaxGrid(const double colHeightAGL,
         }
     }
     
+    //// for debugging
+    //CPLDebug("NINJAFOAM", "writing ascii file");
+    //const char *colMaxOutputFile_ascii;
+    //colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
+    //colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
+    
+    CPLDebug("NINJAFOAM", "finished generating turbulence column max ascii grid from NINJAFOAM mass mesh");
+}
+
+
+void NinjaFoam::writeMassMeshVtkOutput()
+{
+    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
+    
+    std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
+    try {
+        CPLDebug("NINJAFOAM", "writing vtk file");
+        bool vtk_out_as_utm = false;
+	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+        {
+            vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
+        }
+        // can pick between "ascii" and "binary" format for the vtk write format
+        std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
+		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+	} catch (exception& e) {
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+	} catch (...) {
+		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+	}
+	
 }
 
 
@@ -4107,20 +4107,12 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     }
     
     
-    if ( writeMassMeshVtk == true ) {
+    if ( writeMassMesh == true ) {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
         CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
         massMesh.set_meshResolution(meshResolution, meshResolutionUnits);
         massMesh.compute_domain_height(input);
-    }
-    
-    if ( input.writeTurbulence == true ) {
-        // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
-        colMaxMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-        CPLDebug("NINJAFOAM", "col max mesh set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
-        colMaxMesh.set_meshResolution(meshResolution, meshResolutionUnits);
-        colMaxMesh.compute_domain_height(input);
     }
     
 
