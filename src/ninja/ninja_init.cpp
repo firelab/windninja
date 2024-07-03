@@ -131,10 +131,7 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     OGRRegisterAll();    
 
 
-    std::cout << "Logging message to console." << std::endl;
-
-
-
+std::cout << "Logging message to console." << std::endl;
 
 
 time_t now = time(0);
@@ -166,17 +163,6 @@ const char *charStr = full.data();
         } else {
             std::cerr << "Fetch data." << std::endl;
         }
-
-	
-
-	
-
-    CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
-
-
-
-
-	
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
@@ -214,7 +200,6 @@ int NinjaInitialize()
     CPLPushErrorHandler(CPLQuietErrorHandler);
 	int rc = 0;
 
-
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
     ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
@@ -223,6 +208,40 @@ int NinjaInitialize()
     ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+std::cout << "Logging message to console." << std::endl;
+
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
+
+
+std::string full = url + cpp_string;
+
+
+const char *charStr = full.data();
+
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+
+    poResult = CPLHTTPFetch(charStr, NULL); 
+
+    if (poResult) {
+            CPLHTTPDestroyResult(poResult);
+        } else {
+            std::cerr << "Fetch data." << std::endl;
+        }
+
 
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
