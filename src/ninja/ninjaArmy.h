@@ -372,6 +372,38 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the column max sampling height AGL for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param colMaxSampleHeightAGL desired column height AGL sample value
+    * \param units units of the colMaxSampleHeightAGL value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                  const lengthUnits::eLengthUnits units,
+                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the column max sampling height AGL for a ninja
+    * Set the column sampling height AGL for a ninja given a column sampling height AGL
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param colMaxSampleHeightAGL desired desired column height AGL sample value
+    * \param units string denoting which units colMaxSampleHeightAGL is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                  std::string units, char ** papszOptions=NULL );
 
 #endif //NINJAFOAM
 

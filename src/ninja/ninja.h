@@ -286,6 +286,7 @@ public:
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
     void set_writeTurbulenceFlag(bool flag);
+    void set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units );
 #endif
 
     void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);

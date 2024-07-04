@@ -3694,6 +3694,12 @@ void ninja::set_writeTurbulenceFlag(bool flag)
 {
     input.writeTurbulence = flag;
 }
+
+void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units )
+{
+    input.colMax_colHeightAGL = colMaxSampleHeightAGL;
+    input.colMax_colHeightAGL_units = units;
+}
 #endif
 
 void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)

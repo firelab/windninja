@@ -198,8 +198,6 @@ private:
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& k);
 
-    double colHeightAGL;
-    lengthUnits::eLengthUnits colHeightAGL_units;
     void generateColMaxGrid(const wn_3dArray& z, 
                             const double dem_xllCorner, const double dem_yllCorner, 
                             const int ncols, const int nrows, const int nlayers, 

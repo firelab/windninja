@@ -76,9 +76,6 @@ NinjaFoam::NinjaFoam() : ninja()
     writeMassMesh = false;
     
     writeMassMeshVtk = false;
-    
-    colHeightAGL = 300.0;  // default value of 300 m
-    colHeightAGL_units = lengthUnits::meters;
 }
 
 /**
@@ -146,22 +143,20 @@ bool NinjaFoam::simulate_wind()
     
     if(input.writeTurbulence == true)
     {
-        if(CSLTestBoolean(CPLGetConfigOption("COLMAX_HEIGHT_AGL", CPLSPrintf("%f",colHeightAGL))))
+        std::string found_colHeightAGL_str = CPLGetConfigOption("COLMAX_HEIGHT_AGL", "");
+        // if read it, but no value, don't want a 0.0 put in, leave it as default value
+        // Well at least it didn't break with a 0.0, just grabbed surf values, but still, want it as the default value unless they specify it with an actual value
+        if( found_colHeightAGL_str != "" )
         {
-            std::string found_colHeightAGL = CPLGetConfigOption("COLMAX_HEIGHT_AGL", CPLSPrintf("%f",colHeightAGL));
-            // if read it, but no value, don't want a 0.0 put in, leave it as default value
-            // Well at least it didn't break with a 0.0, just grabbed surf values, but still, want it as the default value unless they specify it with an actual value
-            if( found_colHeightAGL != "" )
-            {
-                colHeightAGL = atof(found_colHeightAGL.c_str());
-            }
+            double found_colHeightAGL = atof(found_colHeightAGL_str.c_str());
             std::string found_colHeightAGL_units = CPLGetConfigOption("COLMAX_HEIGHT_AGL_UNITS", "m");
             if( found_colHeightAGL_units == "" ){
                 found_colHeightAGL_units = "m";  // default value if not set
             }
-            colHeightAGL_units = lengthUnits::getUnit(found_colHeightAGL_units);
+            std::cout << "found CPL config option COLMAX_HEIGHT_AGL, setting colMax_colHeightAGL to " << found_colHeightAGL << " " << found_colHeightAGL_units << std::endl;
+            set_colMaxSampleHeightAGL( found_colHeightAGL, lengthUnits::getUnit(found_colHeightAGL_units) );
         }
-        CPLDebug("NINJAFOAM", "Writing turbulence colMax output, using colHeightAGL %f %s",colHeightAGL,lengthUnits::getString(colHeightAGL_units).c_str());
+        CPLDebug("NINJAFOAM", "Writing turbulence colMax output, using colHeightAGL %f %s",input.colMax_colHeightAGL,lengthUnits::getString(input.colMax_colHeightAGL_units).c_str());
     }
     
     
@@ -3059,7 +3054,8 @@ void NinjaFoam::generateColMaxGrid(const wn_3dArray& z,
     
     CPLDebug("NINJAFOAM", "generating turbulence column max ascii grid from NINJAFOAM mass mesh");
     
-    lengthUnits::toBaseUnits(colHeightAGL, colHeightAGL_units);
+    double colHeightAGL = input.colMax_colHeightAGL;
+    lengthUnits::toBaseUnits(colHeightAGL, input.colMax_colHeightAGL_units);
     CPLDebug("NINJAFOAM", "sampling colHeightAGL = %f m",colHeightAGL);
     
     // now need to go through the data, and get the col max, and put it into an ascii grid
