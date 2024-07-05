@@ -83,6 +83,7 @@ mainWindow::mainWindow(QWidget *parent)
     sThread = new solveThread;
 
     meshCellSize = 200.0;
+    checkMessages();
 
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
@@ -114,30 +115,17 @@ mainWindow::mainWindow(QWidget *parent)
 ** Check for version updates, or messages from the server.
 */
 void mainWindow::checkMessages(void) {
-    QMessageBox mbox;
-    char **papszMsg = NinjaCheckVersion();
-    if (papszMsg != NULL) {
-      const char *pszVers =
-          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
-      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
-        mbox.setText("A new version of WindNinja is available: " +
-                     QString(pszVers));
-        mbox.exec();
-      }
-      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
-      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
-        mbox.setText(QString(papszUserMsg[i]));
-        mbox.exec();
-      }
-      CSLDestroy(papszUserMsg);
-      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
-        mbox.setText("There is a fatal flaw in Windninja, it must close.");
-        mbox.exec();
-        abort();
-      }
-    }
-    CSLDestroy(papszMsg);
+   QMessageBox mbox;
+   char *papszMsg = NinjaCheckVersion();
+   int i = 0;
+   mbox.setText(papszMsg);
+    
+   mbox.exec();
+
+
+   free(papszMsg);
 }
+
 
 bool mainWindow::okToContinue()
 {

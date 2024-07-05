@@ -57,31 +57,31 @@ boost::local_time::tz_database globalTimeZoneDB;
 **
 ** The returned string list must be freed by the caller using CSLDestroy().
 */
-char ** NinjaCheckVersion(void) {
-  CPLHTTPResult *poResult;
-  char **papszTokens = NULL;
-  char *pszResp = NULL;
-  CPLPushErrorHandler(CPLQuietErrorHandler);
-  poResult = CPLHTTPFetch("http://windninja.org/version/", NULL);
-  CPLPopErrorHandler();
-  if (!poResult || poResult->nStatus != 0 || poResult->nDataLen == 0) {
-    return NULL;
-  }
-  pszResp = (char *)malloc(poResult->nDataLen + 1);
-  if (pszResp == 0) {
-      return NULL;
-  }
-  /*
-  ** Copy the message body into a null terminated string for
-  ** CSLTokenizeString()
-  */
-  memcpy(pszResp, poResult->pabyData, poResult->nDataLen);
-  pszResp[poResult->nDataLen] = '\0';
-  papszTokens = CSLTokenizeString2((const char *)pszResp, ";", 0);
-  free(pszResp);
-  CPLHTTPDestroyResult( poResult );
-  return papszTokens;
+
+char * NinjaCheckVersion(void) {
+       const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
+
+
+       CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+
+
+     if (poResult != NULL) {
+       // Assuming it's text data (plain text file in this case)
+       const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+
+
+       // Print the fetched text content
+       return pszTextContent;
+       // Print or process the fetched HTML content
+       // Release the fetched data when done
+       CPLHTTPDestroyResult(poResult);
+   } else {
+      
+   }
+   return NULL;
 }
+
+
 
 
 void NinjaCheckThreddsData( void *rc )
@@ -209,38 +209,6 @@ int NinjaInitialize()
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
-std::cout << "Logging message to console." << std::endl;
-
-
-time_t now = time(0);
-
-// convert now to tm struct for UTC
-tm *gmtm = gmtime(&now);
-char* dt = asctime(gmtm);
-std::string cpp_string(dt);
-
-
-std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
-        cpp_string.end());
-
-
-std::string full = url + cpp_string;
-
-
-const char *charStr = full.data();
-
-    CPLHTTPResult *poResult;
-    std::cout << charStr << std::endl;
-    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-
-    poResult = CPLHTTPFetch(charStr, NULL); 
-
-    if (poResult) {
-            CPLHTTPDestroyResult(poResult);
-        } else {
-            std::cerr << "Fetch data." << std::endl;
-        }
 
 
 #ifdef WIN32
