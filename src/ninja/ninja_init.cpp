@@ -34,12 +34,16 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <ctime>
+#include <fstream>
 #include "cpl_http.h"  
+#include "ninja_version.h"  
+
 
 
 boost::local_time::tz_database globalTimeZoneDB;
 
 /*
+
 ** Query the windninja.org server and ask for the most up to date version.  The
 ** return value is a set of key value pairs stored in a GDAL string list.
 ** There are three current values:
@@ -57,30 +61,26 @@ boost::local_time::tz_database globalTimeZoneDB;
 **
 ** The returned string list must be freed by the caller using CSLDestroy().
 */
-char ** NinjaCheckVersion(void) {
-  CPLHTTPResult *poResult;
-  char **papszTokens = NULL;
-  char *pszResp = NULL;
-  CPLPushErrorHandler(CPLQuietErrorHandler);
-  poResult = CPLHTTPFetch("http://windninja.org/version/", NULL);
-  CPLPopErrorHandler();
-  if (!poResult || poResult->nStatus != 0 || poResult->nDataLen == 0) {
-    return NULL;
-  }
-  pszResp = (char *)malloc(poResult->nDataLen + 1);
-  if (pszResp == 0) {
-      return NULL;
-  }
-  /*
-  ** Copy the message body into a null terminated string for
-  ** CSLTokenizeString()
-  */
-  memcpy(pszResp, poResult->pabyData, poResult->nDataLen);
-  pszResp[poResult->nDataLen] = '\0';
-  papszTokens = CSLTokenizeString2((const char *)pszResp, ";", 0);
-  free(pszResp);
-  CPLHTTPDestroyResult( poResult );
-  return papszTokens;
+std::string NinjaCheckVersion(void) {
+    const char* str = NINJA_VERSION_STRING;
+    std::ifstream file("../../../windninja/VERSION.txt");
+    if (!file.is_open()) {
+        std::cerr << "Failed to open version file.\n";
+         std::cerr << "Error: " << strerror(errno) << "\n"; // Print detailed error message
+        return "";
+    }
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        
+        if (std::string(str) < line) {
+                file.close();
+
+            return line;
+        }
+    }
+
+    return ""; // Return an empty string if no match is found
 }
 
 
