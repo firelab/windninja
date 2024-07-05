@@ -130,37 +130,40 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     GDALAllRegister();
     OGRRegisterAll();    
 
-    
-    time_t now = time(0);
 
-    // convert now to tm struct for UTC
-    tm *gmtm = gmtime(&now);
-    char* dt = asctime(gmtm);
-    std::string cpp_string(dt);
+std::cout << "Logging message to console." << std::endl;
 
 
-    std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-    cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),cpp_string.end());
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
 
 
-    std::string full = url + cpp_string;
+std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
 
 
-    const char *charStr = full.data();
+std::string full = url + cpp_string;
+
+
+const char *charStr = full.data();
 
     CPLHTTPResult *poResult;
-    CPLDebug("WINDNINJA", strcat("Sending Req to PhoneHome Server: ", charStr));
+    std::cout << charStr << std::endl;
     CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
 
     poResult = CPLHTTPFetch(charStr, NULL); 
 
     if (poResult) {
             CPLHTTPDestroyResult(poResult);
-    } else {
-        CPLDebug("WINDNINJA", "Fetch Request to Phone Home Server Failed");
-    }
-	
-	
+        } else {
+            std::cerr << "Fetch data." << std::endl;
+        }
+
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
         CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
@@ -205,6 +208,40 @@ int NinjaInitialize()
     ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
+
+std::cout << "Logging message to console." << std::endl;
+
+
+time_t now = time(0);
+
+// convert now to tm struct for UTC
+tm *gmtm = gmtime(&now);
+char* dt = asctime(gmtm);
+std::string cpp_string(dt);
+
+
+std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
+
+
+std::string full = url + cpp_string;
+
+
+const char *charStr = full.data();
+
+    CPLHTTPResult *poResult;
+    std::cout << charStr << std::endl;
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+
+    poResult = CPLHTTPFetch(charStr, NULL); 
+
+    if (poResult) {
+            CPLHTTPDestroyResult(poResult);
+        } else {
+            std::cerr << "Fetch data." << std::endl;
+        }
+
 
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
