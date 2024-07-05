@@ -144,7 +144,9 @@ public:
 	void setDirGrid(AsciiGrid<double> &d);
 	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
 	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
-	void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units);
+	double colMax_colHeightAGL;
+	lengthUnits::eLengthUnits colMax_colHeightAGL_units;
+	void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units);
 	void setColMaxFlag(bool inputColMaxFlag){colMaxFlag = inputColMaxFlag;}
 	#ifdef FRICTION_VELOCITY
 	void setUstarGrid(AsciiGrid<double> &ust);

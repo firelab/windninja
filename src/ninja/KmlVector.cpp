@@ -44,6 +44,8 @@ KmlVector::KmlVector()
         coordTransform = NULL;
         turbulenceFlag = false; 
     colMaxFlag = false;
+    colMax_colHeightAGL = -1.0;
+    colMax_colHeightAGL_units = lengthUnits::meters;
 }
 
 KmlVector::~KmlVector()
@@ -78,10 +80,13 @@ void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVeloc
 	turbulence = turb;
 }
 
-void KmlVector::setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units)
+void KmlVector::setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units)
 {
 	speedUnits = units;
 	colMax = columnMax;
+	
+	colMax_colHeightAGL = colHeightAGL;
+	colMax_colHeightAGL_units = colHeightAGL_units;
 }
 
 #ifdef FRICTION_VELOCITY
@@ -1336,7 +1341,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	double upper, lower, upper_mid, lower_mid, mid;
 	std::string icon;
 
-	colMax_png = "colMax.png";
+	colMax_png = CPLSPrintf("colMax_%ld%sColHeightAGL.png", (long) (colMax_colHeightAGL+0.5), lengthUnits::getString(colMax_colHeightAGL_units).c_str());
 
 	cSize = colMax.get_cellSize();
 	nR = colMax.get_nRows();
@@ -1349,7 +1354,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	mid = upper_mid - (colMax.get_maxValue() - colMax.get_minValue())/4;
 
     //---------------make single png for overlay------------------
-    std::string outFilename = "colMax.png";
+    std::string outFilename = CPLSPrintf("colMax_%ld%sColHeightAGL.png", (long) (colMax_colHeightAGL+0.5), lengthUnits::getString(colMax_colHeightAGL_units).c_str());
     std::string scalarLegendFilename = "colMax_legend";
     std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "";
