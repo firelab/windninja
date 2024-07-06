@@ -76,6 +76,7 @@ void Usage()
     printf("          [--buf_units miles/kilometers]\n"                  );
     printf("          [--out_res res]\n"                                 );
     printf("          [--src srtm"                                       );
+    printf("/cop30"                                                      );
 #ifdef HAVE_GMTED
     printf("/gmted"                                                      );
 #endif
@@ -352,6 +353,10 @@ int main(int argc, char *argv[])
     {
         fetch = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM);
     }
+    else if(EQUAL(pszSource, "cop30"))
+    {
+        fetch = FetchFactory::GetSurfaceFetch(FetchFactory::COP30);
+    }
 #ifdef HAVE_GMTED
     else if(EQUAL(pszSource, "gmted"))
     {
@@ -367,9 +372,9 @@ int main(int argc, char *argv[])
 #endif /* WITH_LCP_CLIENT */
     else
     {
-    fprintf(stderr, "Source must be one of 'srtm'");
+    fprintf(stderr, "Source must be one of 'srtm', 'cop30'");
 #ifdef HAVE_GMTED
-        fprintf(stderr, "', gmted'");
+        fprintf(stderr, ", 'gmted'");
 #endif
 #ifdef WITH_LCP_CLIENT
         fprintf(stderr, ", 'lcp' ");

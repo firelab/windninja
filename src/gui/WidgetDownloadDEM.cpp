@@ -85,11 +85,11 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
 #endif
 
 #ifndef HAVE_GMTED
-    this->cbDEMSource->removeItem(1);
+    this->cbDEMSource->removeItem(2);
 #endif 
   
 #ifndef WITH_LCP_CLIENT
-    this->cbDEMSource->removeItem(2);
+    this->cbDEMSource->removeItem(3);
 #endif
 
     //cbDEMSource->setItemData(0, "US coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
@@ -364,8 +364,16 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         currentSuffix = "tif";
         currentSaveAsDesc = "Elevation files (*.tif)";
         break;
+    case 1: //SRTM
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::COP30, FindDataPath("/data"));
+        northDEMBound = srtm_northBound;
+        southDEMBound = srtm_southBound;
+        currentResolution = (fetcher->GetXRes() * 111325);
+        currentSuffix = "tif";
+        currentSaveAsDesc = "Elevation files (*.tif)";
+        break;
 #ifdef HAVE_GMTED
-    case 1: //GMTED
+    case 2: //GMTED
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
         northDEMBound = world_gmted_northBound;
         southDEMBound = world_gmted_southBound;
@@ -375,7 +383,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         break;
 #endif
 #ifdef WITH_LCP_CLIENT
-    case 2: //LCP
+    case 3: //LCP
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP, FindDataPath("/data"));
         northDEMBound = lcp_northBound;
         southDEMBound = lcp_southBound;

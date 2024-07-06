@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Client to download SRTM files
+ * Purpose:  Client to download COP30 files
  * Author:   Sathwik Reddy Chandiri <sathwikreddy56@gmail.com>
  *
  ******************************************************************************
@@ -50,16 +50,16 @@
 class COP30Client : public SurfaceFetch
 {
 public:
-    SRTMClient();
-    ~SRTMClient();
+    COP30Client();
+    ~COP30Client();
     virtual SURF_FETCH_E FetchBoundingBox(double *bbox, double resolution,
                                           const char *filename, char **options);
 private:
-    SRTMClient( SRTMClient &oOther ) { (void)oOther; }
+    COP30Client( COP30Client &oOther ) { (void)oOther; }
 
     CPLHTTPResult *psResult;
     std::string m_JobId;
     const char* APIKey;
 };
 
-#endif /* SRTM_CLIENT_H_ */
+#endif /* COP30_CLIENT_H_ */

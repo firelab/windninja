@@ -30,6 +30,8 @@
 #include "fetch_factory.h"
 
 const std::string FetchFactory::SRTM_STR     = "srtm";
+const std::string FetchFactory::COP30_STR     = "cop30";
+
 const std::string FetchFactory::RELIEF_STR      = "relief";
 #ifdef HAVE_GMTED
 const std::string FetchFactory::WORLD_GMTED_STR = "gmted";
@@ -61,6 +63,8 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
 #endif
     else if(type == SRTM)
         return new SRTMClient();
+    else if(type == COP30)
+        return new COP30Client();
     else if(type == CUSTOM_GDAL)
         return new GDALFetch(path);
     else if( type == RELIEF )
@@ -78,6 +82,10 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch( std::string type, std::string path 
     if( type == SRTM_STR )
     {
         return GetSurfaceFetch( SRTM );
+    }
+    if( type == COP30_STR )
+    {
+        return GetSurfaceFetch( COP30 );
     }
 #ifdef HAVE_GMTED
     else if( type == WORLD_GMTED_STR )

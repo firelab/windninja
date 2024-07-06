@@ -87,6 +87,7 @@ set(NINJA_SOURCES air.cpp
                   solar.cpp
                   solpos.cpp
                   srtmclient.cpp
+                  COP30client.cpp
                   stability.cpp
                   startRuns.cpp
                   stl_create.cpp

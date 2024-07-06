@@ -53,6 +53,7 @@ public:
     enum FetchType
     {
         US_SRTM,
+        COP30,
         WORLD_SRTM,
         WORLD_GMTED,
         CUSTOM_GDAL

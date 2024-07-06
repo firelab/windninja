@@ -95,6 +95,11 @@
        </item>
        <item>
         <property name="text">
+         <string extracomment="World coverage Copernicus Global Digital Surface Model at 30 meter resolution.  Any existing holes in the data have been filled.">WORLD COP 30 (30m)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string extracomment="World coverage Global Multi-resolution Terrain Elevation Data 2010 at 250 meter resolution.">WORLD GMTED (250m)</string>
         </property>
        </item>
