@@ -421,6 +421,7 @@ set(share_files date_time_zonespec.csv
                 map.htm
                 thredds.csv
                 surface_data.zip
+                srtm_region.geojson
                 us_srtm_region.dbf
                 us_srtm_region.prj
                 us_srtm_region.shp
