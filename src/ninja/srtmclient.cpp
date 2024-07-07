@@ -154,6 +154,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     }
 
     //make a temporary file to hold the result of the HTTP request (in lat/lon coordinates)
+    CPLDebug( "SRTM_CLIENT", "Writing temporary file to: %s", CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"));
     VSILFILE *fout;
     fout = VSIFOpenL( CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"), "wb" );
     if( !fout )
