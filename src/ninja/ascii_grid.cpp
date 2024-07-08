@@ -1656,33 +1656,27 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     /* -------------------------------------------------------------------- */
     
     AsciiGrid<T>scaledDataGrid(*this);
-    double translation = 0;
-    double scalingFactor = 1;
 
-    // convert nodata values to 0 (0 is transparent channel in color table)
-    for(int i=0;i<scaledDataGrid.get_nRows();i++)
-    {
-        for(int j=0;j<scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) == 0)
-            {
-                scaledDataGrid(i,j) = epsClr<T>(); //if want to show *real* 0 values in image
-            }
-            if(scaledDataGrid(i,j) == scaledDataGrid.get_noDataValue())
-            {
-                scaledDataGrid(i,j) = 0;
-            }
-        }
-    }//scaledDataGrid.write_Grid("scaled_datagrid", 2);
 
-    // need min value (without 0s) later to make legend
+    //// set a patch of no data vals for debugging
+    //for(int i=0;i<scaledDataGrid.get_nRows();i++)
+    //{
+    //    for(int j=0;j<scaledDataGrid.get_nCols();j++)
+    //    {
+    //        if( i < 10 && j < 10 ) {
+    //            scaledDataGrid(i,j) = scaledDataGrid.get_noDataValue();
+    //        }
+    //    }
+    //}//scaledDataGrid.write_Grid("scaled_datagrid", 2);
+
+
+    // need min value (without no data vals) later to make legend
     double raw_minValue = std::numeric_limits<double>::max();
     for(int i=0; i<scaledDataGrid.get_nRows(); i++)
         {
             for (int j=0;j<scaledDataGrid.get_nCols();j++)
             {
-                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
+                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue())
                 {
                     raw_minValue = scaledDataGrid(i,j);
                 }
@@ -1703,7 +1697,9 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
     // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
-    int idxRangeMin = 0;
+    // oops, need to reserve idx = 0 for the transparent channel in the color table, looks like need to manually convert noData vals to 0
+    // if really want to show *real* 0 values in image, the noData vals, I guess for debugging?, set the noData vals to minIdx instead of to 0
+    int idxRangeMin = 1;
     int idxRangeMax = 255;
     // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
     int numBins = idxRangeMax - idxRangeMin;
@@ -1712,8 +1708,12 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
-            int binIdx = std::round( (scaledDataGrid(i,j) - raw_minValue)/binWidth ) + idxRangeMin;
-            scaledDataGrid(i,j) = binIdx;
+            if( scaledDataGrid(i,j) == get_noDataValue() ){
+                scaledDataGrid(i,j) = 0;
+            } else {
+                int binIdx = std::round( (scaledDataGrid(i,j) - raw_minValue)/binWidth ) + idxRangeMin;
+                scaledDataGrid(i,j) = binIdx;
+            }
         }
     } //scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
 
@@ -1759,12 +1759,13 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
     }
 
+    // need min value without 0s aka without no data vals, to make legend
     double _minValue = std::numeric_limits<double>::max();
     for(int i=nYSize-1;i>=0;i--)
         {
             for (int j=0;j<scaledDataGrid.get_nCols();j++)
             {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue())
+                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() && scaledDataGrid(i,j) != 0)
                 {
                     _minValue = scaledDataGrid(i,j);
                 }
