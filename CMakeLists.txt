@@ -347,6 +347,12 @@ if(SWIG_PYTHON_MODULE)
     add_definitions(-DSWIG_PYTHON_MODULE)
     add_subdirectory(swig/python)
 endif(SWIG_PYTHON_MODULE)
+option (SWIG_JAVA_MODULE "Install Java modules created by SWIG" OFF)
+if(SWIG_JAVA_MODULE)
+    add_definitions(-DSWIG_JAVA_MODULE)
+    add_subdirectory(swig/java)
+endif(SWIG_JAVA_MODULE)
+
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
 mark_as_advanced(PACKAGE_DEBUG)
