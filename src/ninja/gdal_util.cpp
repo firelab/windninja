@@ -902,12 +902,6 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     oDstSRS.importFromEPSG(nUtmZone);
     oDstSRS.exportToWkt((char**)&pszDstWKT);
 
-//#ifdef GDAL_COMPUTE_VERSION
-//#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
-//    OSRSetAxisMappingStrategy(oDstSRS, OAMS_TRADITIONAL_GIS_ORDER);
-//#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
-//#endif /* GDAL_COMPUTE_VERSION */
-
     void *hTransformArg;
 
     hTransformArg =
