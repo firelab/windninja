@@ -70,6 +70,10 @@ NinjaErr handleException()
 
 extern "C"
 {
+    WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle(){
+    NinjaH** ninja = new NinjaH*;
+    return ninja;
+}
 /**
  * \brief Create a new suite of windninja runs.
  *
@@ -306,55 +310,51 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::str
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-    ( NinjaH ** ninja, const char * forecastFilename,
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+    ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
 {
-    NinjaErr retval = NINJA_E_INVALID;
-    if( NULL != ninja )
+    NinjaH* ninja;
+    try
     {
-       try
-       {
-            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1) );
-            reinterpret_cast<ninjaArmy*>( *ninja )->makeArmy
-            (   std::string( forecastFilename ),
-                std::string( timezone ),
-                momentumFlag );
-           retval = NINJA_SUCCESS;
-       }
-       catch( armyException & e )
-       {
-           retval = NINJA_E_INVALID;
-       }
+        ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1) );
+        reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
+        (   std::string( forecastFilename ),
+            std::string( timezone ),
+            momentumFlag );
+        return ninja;
     }
-    return retval;
+    catch( armyException & e )
+    {
+        return NULL;
+    }
+    
+    return NULL;
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-    ( NinjaH ** ninja, const char * forecastFilename,
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+    ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
 {
-    NinjaErr retval = NINJA_E_INVALID;
-    if( NULL != ninja )
+    NinjaH* ninja;
+    try
     {
-       try
-       {
-            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1,momentumFlag) );
-            reinterpret_cast<ninjaArmy*>( *ninja )->makeArmy
-            (   std::string( forecastFilename ),
-                std::string( timezone ),
-                momentumFlag );
-           retval = NINJA_SUCCESS;
-       }
-       catch( armyException & e )
-       {
-           retval = NINJA_E_INVALID;
-       }
+        ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1,momentumFlag) );
+        reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
+        (   std::string( forecastFilename ),
+            std::string( timezone ),
+            momentumFlag );
+        return ninja;
     }
-    return retval;
+    catch( armyException & e )
+    {
+        return NULL;
+    }
+    
+    return NULL;
 }
 #endif
 /**
@@ -374,48 +374,46 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy(NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
-    NinjaErr retval = NINJA_E_INVALID;
-    if( NULL != ninja ){
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
+   NinjaH* ninja;
         try{
-            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
-            reinterpret_cast<ninjaArmy*>( *ninja )->makeStationArmy
+            ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
+            reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
             (   timeList,
                 timeZone,
                 stationFileName,
                 elevationFile,
                 matchPoints,
                 false);
-            retval = NINJA_SUCCESS;
+            return ninja;
         }
         catch( armyException & e ){
-            retval = NINJA_E_INVALID;
+            return NULL;
         }
-        }
-    return retval;
+        
+    return NULL;
 
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy(NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
-    NinjaErr retval = NINJA_E_INVALID;
-    if( NULL != ninja ){
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
+   NinjaH* ninja;
         try{
-            *ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag));
-            reinterpret_cast<ninjaArmy*>( *ninja )->makeStationArmy
+            ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag ));
+            reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
             (   timeList,
                 timeZone,
                 stationFileName,
                 elevationFile,
                 matchPoints,
                 false);
-            retval = NINJA_SUCCESS;
+            return ninja;
         }
         catch( armyException & e ){
-            retval = NINJA_E_INVALID;
+            return NULL;
         }
-        }
-    return retval;
+        
+    return NULL;
 
 }
 #endif
@@ -959,10 +957,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
         return NINJA_E_NULL_PTR;
     }
 }
-
-WINDNINJADLL_EXPORT char ** NinjaGetWxStations
-    ( NinjaH * ninja, const int nIndex );
-
 /**
  * \brief Get the diurnal flag set for a simulation.
  *

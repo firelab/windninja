@@ -86,6 +86,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 #endif
+    WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
     (std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
@@ -100,12 +101,12 @@ typedef int  NinjaErr;
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
-    WINDNINJADLL_EXPORT NinjaErr NinjaMakeStationArmy
-        (NinjaH ** ninja, std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag);
-    WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-        ( NinjaH ** ninja, const char * forecastFilename,
-          const char * timezone,
-          int momentumFlag );
+    WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
+        (std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momentumFlag);
+    WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+        ( const char * forecastFilename,
+        const char * timezone,
+        int momentumFlag );
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
         ( const char *pszGdalData, const char *pszWindNinjaData );
@@ -180,8 +181,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
     WINDNINJADLL_EXPORT NinjaErr NinjaSetNumVertLayers
         ( NinjaH * ninja, const int nIndex, const int nLayers );
 
-    WINDNINJADLL_EXPORT char ** NinjaGetWxStations
-        ( NinjaH * ninja, const int nIndex );
 
     WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
         ( NinjaH * ninja, const int nIndex );
@@ -212,13 +211,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaH * ninja, const int nIndex, const double stability_ );
 
-//#ifdef NINJAFOAM
+#ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFoam Methods
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
         ( NinjaH * ninja, const int nIndex, const int meshCount );
-//#endif //NINJAFOAM
+#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods
