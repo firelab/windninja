@@ -224,7 +224,9 @@ endif(WITH_LCP_CLIENT)
 #disable for exception handling in the GUI and CLI
 option(C_API "Enable WindNinja C API" OFF)
 if(C_API)
+
     add_definitions(-DC_API)
+
 endif(C_API)
 
 # OpenFOAM related options
@@ -340,7 +342,11 @@ option(RUN_CFG_TESTS "Run the cfg file tests in autotest/cfg OFF")
 if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
-
+option(SWIG_PYTHON_MODULE "Install Python modules created by SWIG" OFF)
+if(SWIG_PYTHON_MODULE)
+    add_definitions(-DSWIG_PYTHON_MODULE)
+    add_subdirectory(swig/python)
+endif(SWIG_PYTHON_MODULE)
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
 mark_as_advanced(PACKAGE_DEBUG)
