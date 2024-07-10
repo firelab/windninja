@@ -3279,8 +3279,7 @@ void NinjaFoam::WriteOutputFiles()
     if(input.writeTurbulence)
     {
         TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
-        // is this applicable when it is a massMesh ascii grid? I don't think so, but leave here just as a reminder just in case
-        //colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+        colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
     }
 
     //change windspeed units back to what is specified by speed units switch
