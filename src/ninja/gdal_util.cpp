@@ -94,6 +94,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
@@ -896,10 +897,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 
     OGRSpatialReference oDstSRS;
 
-    double lat, lon;
-    GDALGetCenter( (GDALDataset*)hSrcDS, &lon, &lat);
-    int utmZone = gdalGetUtmZone(lat, lon);
-    int nUtmZone = GetUTMZoneInEPSG(lat, lon);
+    int nUtmZone = GDALGetUtmZone( (GDALDataset*)hSrcDS );
 
     oDstSRS.importFromEPSG(nUtmZone);
     oDstSRS.exportToWkt((char**)&pszDstWKT);
