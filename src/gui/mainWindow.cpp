@@ -28,6 +28,8 @@
  *****************************************************************************/
 
 #include "mainWindow.h"
+#include <iostream>
+#include <fstream>
 
 mainWindow::mainWindow(QWidget *parent) 
 : QMainWindow(parent)
@@ -85,6 +87,7 @@ mainWindow::mainWindow(QWidget *parent)
     meshCellSize = 200.0;
     checkMessages(); 
     
+    
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
@@ -124,6 +127,7 @@ void mainWindow::checkMessages(void) {
       mbox.exec();
       abort();
    }
+   
    else {
 
       char *papszMsg = NinjaQueryServerMessages(false);
@@ -1657,15 +1661,28 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
+
+ std::ofstream outFile("config.cfg");
+
+    // Check if the file was opened successfully
+    if (!outFile) {
+        std::cerr << "Error: Could not open the file for writing!" << std::endl;
+        return 1;
+    }
+  
+
 #ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
 #endif
     //disable the open output path button
     tree->solve->openOutputPathButton->setDisabled( true );
-
+    
     //dem file
     std::string demFile = inputFileName.toStdString();
-    
+        outFile << demFile;
+
+    outFile.close();
+  
 #ifdef NINJAFOAM
     std::string caseFile = existingCaseDir.toStdString();
 #endif
@@ -1758,6 +1775,8 @@ int mainWindow::solve()
         initMethod = WindNinjaInputs::pointInitializationFlag;
     else if( tree->weather->weatherGroupBox->isChecked() )
         initMethod = WindNinjaInputs::wxModelInitializationFlag;
+
+
 
     //input wind height
     double inHeight = tree->wind->metaWind->inputHeightDoubleSpinBox->value();

@@ -30,6 +30,9 @@
 
 #include "cli.h"
 #include <string>
+#include <filesystem>
+#include <iostream>
+#include <fstream>
 
 /**
  * Function used to check that 'opt1' and 'opt2' are not specified
@@ -137,6 +140,8 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
     }
 }
 
+
+
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
  * from an input file.
@@ -166,6 +171,8 @@ int windNinjaCLI(int argc, char* argv[])
     
     // Moved to initializeOptions()
     try {
+
+        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
         // Declare a group of options that will be
         // allowed only on command line
         po::options_description generic("Generic options");
@@ -373,9 +380,10 @@ int windNinjaCLI(int argc, char* argv[])
         po::parsed_options opts_command = po::command_line_parser(argc, argv).
                         options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
 
-        //write out parsed options for debugging
+        
         if(writeParsed)
         {
+
             typedef std::vector< po::basic_option<char> > vec_opt;
             cout << "\n\nParsed command line options:" << endl;
             for(vec_opt::iterator l_itrOpt = opts_command.options.begin();
@@ -394,8 +402,41 @@ int windNinjaCLI(int argc, char* argv[])
                 cout << endl;
             }
         }
+
+        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
+
         store(opts_command, vm);
         //notify(vm);
+        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
+
+      ofstream outFile("config2.cfg");
+    
+    if (!outFile) {
+        cerr << "Error: Could not open the file for writing!" << endl;
+        return;
+    }
+
+    for (const auto& pair : vm) {
+        const string& option_name = pair.first;
+        const boost::program_options::variable_value& option_value = pair.second;
+
+        outFile << "Option '" << option_name << "': ";
+        if (option_value.value().type() == typeid(bool)) {
+            outFile << (option_value.as<bool>() ? "true" : "false") << endl;
+        } else if (option_value.value().type() == typeid(string)) {
+            outFile << option_value.as<string>() << endl;
+        } else {
+            outFile << "Unknown type" << endl;
+        }
+    }
+
+    // This flush is actually optional because close() will flush automatically
+    outFile.flush();
+    outFile.close();
+
+    cout << "File writing complete." << endl;
+
+        
 
         if( argc == 1 )
         {
@@ -1276,10 +1317,10 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "wx_station_filename", "start_day");
                     option_dependency(vm, "wx_station_filename", "start_hour");
                     option_dependency(vm, "wx_station_filename", "start_minute");
-                    option_dependency(vm, "wx_station_filename", "stop_year");
                     option_dependency(vm, "wx_station_filename", "stop_month");
                     option_dependency(vm, "wx_station_filename", "stop_day");
-                    option_dependency(vm, "wx_station_filename", "stop_hour");
+                    option_dependency(vm, "wx_station_ffilename", "stop_year");
+                    option_dependency(vm, "wx_station_ilename", "stop_hour");
                     option_dependency(vm, "wx_station_filename", "stop_minute");
                     option_dependency(vm, "wx_station_filename", "number_time_steps");
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
