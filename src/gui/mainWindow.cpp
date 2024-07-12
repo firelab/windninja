@@ -28,8 +28,15 @@
  *****************************************************************************/
 
 #include "mainWindow.h"
+#include <vector>
+#include <string>
 #include <iostream>
 #include <fstream>
+#include "gdal_util.h"
+#include "cpl_vsi.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal.h"
 
 mainWindow::mainWindow(QWidget *parent) 
 : QMainWindow(parent)
@@ -197,6 +204,8 @@ void mainWindow::writeSettings()
 
   writeToConsole("Settings saved.");
 }
+
+
 
 void mainWindow::readSettings()
 {
@@ -1658,6 +1667,64 @@ void mainWindow::openOutputPath()
                                    QUrl::TolerantMode ) );
     }
 }
+void mainWindow::addFileToZip(const std::string& zipFilePath, const std::string& fileToAdd, const std::string& zipEntryName) {
+   
+    VSILFILE *fin;
+    fin = VSIFOpenL(fileToAdd.c_str(), "r");
+    if (fin == NULL) {
+        std::cerr << "Failed to open file: " << fileToAdd << std::endl;
+        return;
+    }
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+    VSIRewindL(fin);
+
+    char *data = (char*)CPLMalloc(offset * sizeof(char));
+    if (data == NULL) {
+        std::cerr << "Failed to allocate memory for file data." << std::endl;
+        VSIFCloseL(fin);
+        return;
+    }
+    if (VSIFReadL(data, 1, offset, fin) != offset) {
+        std::cerr << "Failed to read file contents: " << fileToAdd << std::endl;
+        CPLFree(data);
+        VSIFCloseL(fin);
+        return;
+    }
+    VSIFCloseL(fin);
+
+    void* zipHandle = CPLCreateZip(zipFilePath.c_str(), NULL);
+    if (zipHandle == NULL) {
+        std::cerr << "Failed to create or open zip file: " << zipFilePath << std::endl;
+        CPLFree(data);
+        return;
+    }
+
+    if (CPLCreateFileInZip(zipHandle, zipEntryName.c_str(), NULL) != CE_None) {
+        std::cerr << "Failed to create file in zip: " << zipEntryName << std::endl;
+        CPLFree(data);
+        CPLCloseZip(zipHandle);
+        return;
+    }
+
+    if (CPLWriteFileInZip(zipHandle, data, static_cast<int>(offset)) != CE_None) {
+        std::cerr << "Failed to write data to file in zip: " << zipEntryName << std::endl;
+    }
+
+    if (CPLCloseFileInZip(zipHandle) != CE_None) {
+        std::cerr << "Failed to close file in zip: " << zipEntryName << std::endl;
+    }
+
+    CPLCloseZip(zipHandle);
+
+    CPLFree(data);
+
+    std::cout << "File added to ZIP: " << zipEntryName << std::endl;
+}
+
+
 
 int mainWindow::solve()
 {
@@ -1679,9 +1746,8 @@ int mainWindow::solve()
     
     //dem file
     std::string demFile = inputFileName.toStdString();
-        outFile << demFile;
+        outFile << "--elevation_file " + demFile;
 
-    outFile.close();
   
 #ifdef NINJAFOAM
     std::string caseFile = existingCaseDir.toStdString();
@@ -1698,6 +1764,7 @@ int mainWindow::solve()
         vegetation = WindNinjaInputs::brush;
     else if( vegIndex == 2 )
         vegetation = WindNinjaInputs::trees;
+      outFile << "--vegetation " + vegetation;
     }
 
     //mesh
@@ -1720,6 +1787,18 @@ int mainWindow::solve()
     else
         meshUnits = lengthUnits::meters;
     }
+        outFile << "--meshchoice " + meshChoice;
+         outFile << "--mesh_resolution " + std::to_string(meshRes);
+
+         outFile << "--units_mesh_resolution " + meshUnits;
+         
+          std::string zipFilePath = "example.zip";
+
+         outFile.close(); 
+
+         addFileToZip(zipFilePath, "config.cfg", "config.cfg"); 
+         
+
 #ifdef NINJAFOAM
     WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
     if(useNinjaFoam){
@@ -2905,6 +2984,8 @@ int mainWindow::checkSpdDirItem()
     }
     return status;
 }
+
+
 int mainWindow::checkPointItem()
 {
     eInputStatus status = blue;
