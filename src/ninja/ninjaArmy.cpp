@@ -1218,6 +1218,10 @@ int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char *
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
 }
+int ninjaArmy::setKeepTurbKmlTiffFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_keepTurbKmlTiffFlag( flag ) );
+}
 int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
                                          const lengthUnits::eLengthUnits units, char ** papszOptions )
 {

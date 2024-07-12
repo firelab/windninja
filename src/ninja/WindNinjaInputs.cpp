@@ -156,6 +156,7 @@ WindNinjaInputs::WindNinjaInputs()
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
     writeTurbulence = false;
+    keepTurbKmlTiff = false;
     colMax_colHeightAGL = 300.0;  // default value of 300 m
     colMax_colHeightAGL_units = lengthUnits::meters;
 #endif
@@ -269,6 +270,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
       writeTurbulence = rhs.writeTurbulence;
+      keepTurbKmlTiff = rhs.keepTurbKmlTiff;
       colMax_colHeightAGL = rhs.colMax_colHeightAGL;
       colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
 #endif

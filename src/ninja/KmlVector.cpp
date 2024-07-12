@@ -46,6 +46,7 @@ KmlVector::KmlVector()
     colMaxFlag = false;
     colMax_colHeightAGL = -1.0;
     colMax_colHeightAGL_units = lengthUnits::meters;
+    keepTurbKmlTiffFlag = false;
 }
 
 KmlVector::~KmlVector()
@@ -1255,7 +1256,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
     }
     bool writeLegend = TRUE;
 
-    turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+    turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
     turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
     left_x = xCenter - cSize/2; //west
@@ -1378,7 +1379,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
     }
     bool writeLegend = TRUE;
 
-    colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+    colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
     colMax.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
     left_x = xCenter - cSize/2; //west
@@ -1483,8 +1484,9 @@ bool KmlVector::writeUstar(FILE *fileOut)
     std::string legendTitle = "Friction Velocity";
     std::string legendUnits = "(m/s)";
     bool writeLegend = TRUE;
+    bool keepTiff = FALSE;
 
-    ustar.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+    ustar.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
     ustar.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
     left_x = xCenter - cSize/2; //west
@@ -1588,8 +1590,9 @@ bool KmlVector::writeDust(FILE *fileOut)
     std::string legendTitle = "PM10";
     std::string legendUnits = "(mg/m2/s)";
     bool writeLegend = true;
+    bool keepTiff = FALSE;
     
-    dust.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend);
+    dust.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
     dust_png = "dust.png";
 

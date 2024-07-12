@@ -142,6 +142,7 @@ public:
 
 	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
 	void setDirGrid(AsciiGrid<double> &d);
+	void setKeepTurbKmlTiffFlag(bool inputKeepTurbKmlTiffFlag){keepTurbKmlTiffFlag = inputKeepTurbKmlTiffFlag;}
 	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
 	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
 	double colMax_colHeightAGL;
@@ -181,6 +182,7 @@ private:
 	std::string legendFile;
 	std::string timeDateLegendFile;
 	std::string wxModelName;
+	bool keepTurbKmlTiffFlag;
 	bool turbulenceFlag;
 	std::string turbulence_tiff;
 	std::string turbulence_png;

@@ -374,6 +374,15 @@ public:
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     
     /**
+    * \brief Set the flag to keep the intermediate tiff as additional output when writing turbulence kml output
+    *
+    * \param nIndex index of a ninja
+    * \param  bool flag indicating if tiff output for turbulence kml output should be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setKeepTurbKmlTiffFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
     * \brief Set the column max sampling height AGL for a ninja
     *
     * \param nIndex index of a ninja

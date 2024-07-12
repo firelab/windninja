@@ -1629,14 +1629,26 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              std::string legendTitle,
                              std::string legendUnits,
                              std::string scalarLegendFilename,
-                             bool writeLegend)
+                             bool writeLegend, bool keepTiff)
 {
+    // png driver doesn't support create(), only createCopy()
+    // so create the image as a tif first, then use createCopy() to create the png from that tif
+
+    std::string base_outFilename = outFilename;
+    int pos = outFilename.find_last_of(".png");
+    //std::cout << "outFilename = " << outFilename.c_str() << std::endl;
+    //std::cout << "pos = " << pos << std::endl;
+    if(pos != -1)
+	    base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+    //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
+    std::string tiff_utm_fileout = base_outFilename + "_utm.tif";
+    std::string tiff_latlon_fileout = base_outFilename + "_latlon.tif";
+
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
     char** papszOptions = NULL;
-    std::string tempFileout = "temp_fileout";
 
-    poDS = tiffDriver->Create(tempFileout.c_str(), get_nCols(), get_nRows(), 1,
+    poDS = tiffDriver->Create(tiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
                    GDT_Byte, papszOptions);
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
@@ -1800,7 +1812,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     const GDALColorEntry psEndColor3 = red;
     GDALCreateColorRamp(poCT, nStartIndex, &psStartColor3,  nEndIndex, &psEndColor3);
 
-    //poBand->SetColorTable(poCT);
+    poBand->SetColorTable(poCT);
 
     /* -------------------------------------------------------------------- */
     /*  Create the optional legend                                          */
@@ -1966,23 +1978,6 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     }
 
     /* -------------------------------------------------------------------- */
-    /*  close and reopen with GDALOpenShared and set color table        */
-    /* -------------------------------------------------------------------- */
-
-    AsciiGrid<T> poDS_grid(poDS, 1);
-    poDS_grid.write_Grid("poDS_grid", 0);
-    
-    GDALDataset *srcDS;
-    //reopen with GDALOpenShared() for GDALAutoCreateWarpedVRT()
-    srcDS = (GDALDataset*)GDALOpenShared( "poDS_grid", GA_ReadOnly );
-    if( srcDS == NULL ) {
-        CPLDebug( "ascii_grid::ascii2png()", "cannot open poDS_grid");
-    }
-
-    GDALRasterBand *srcBand = srcDS->GetRasterBand(1);
-    srcBand->SetColorTable(poCT);
-
-    /* -------------------------------------------------------------------- */
     /*   Warp the image                                                     */
     /* -------------------------------------------------------------------- */
 
@@ -1999,10 +1994,20 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     GDALDataset *wrpDS;
 
-    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
+    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(poDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
                                                    0.0, NULL);
 
+    /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_tiff;
+    
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF dirver data type error
+    poDstDS_tiff = tiffDriver->CreateCopy(tiff_latlon_fileout.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+    
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
     /* -------------------------------------------------------------------- */
@@ -2040,15 +2045,17 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDestroyColorTable((GDALColorTableH) poCT);
 
     GDALClose((GDALDatasetH) poDS);
-    GDALClose((GDALDatasetH) srcDS);
     if( poDstDS != NULL){
         GDALClose((GDALDatasetH) poDstDS);
     }
+    if( poDstDS_tiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_tiff);
+    }
     GDALClose((GDALDatasetH) wrpDS);
 
-    VSIUnlink("poDS_grid");
-    VSIUnlink("poDS_grid.aux.xml");
-    VSIUnlink("temp_fileout");
+    VSIUnlink(tiff_utm_fileout.c_str());
+    if( keepTiff == false )
+        VSIUnlink(tiff_latlon_fileout.c_str());
 
 }
 

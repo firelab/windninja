@@ -2714,7 +2714,7 @@ void ninja::computeDustEmissions()
 
     dust.ComputePM10(UstarGrid, DustGrid);
 
-    //DustGrid.ascii2png("dust_out_shear.png", "pm10", "ug/m3", "legend", false);
+    //DustGrid.ascii2png("dust_out_shear.png", "pm10", "ug/m3", "legend", false, false);
 }
 #endif //EMISISONS
 
@@ -3026,6 +3026,8 @@ void ninja::writeOutputFiles()
 #ifdef NINJAFOAM
                         if(input.writeTurbulence)
                         {
+                            ninjaKmlFiles.setKeepTurbKmlTiffFlag(input.keepTurbKmlTiff);
+                            
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
@@ -3693,6 +3695,11 @@ void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 void ninja::set_writeTurbulenceFlag(bool flag)
 {
     input.writeTurbulence = flag;
+}
+
+void ninja::set_keepTurbKmlTiffFlag(bool flag)
+{
+    input.keepTurbKmlTiff = flag;
 }
 
 void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units )

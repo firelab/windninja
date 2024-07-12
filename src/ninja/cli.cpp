@@ -336,6 +336,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
+                ("turbulence_kml_output_keepTiff_flag", po::value<bool>()->default_value(false), "keep intermediate tiff file as additional output when writing tubulence kml/kmz output (true, false)")
                 ("colMax_colHeightAGL", po::value<double>(), "column max sampling height AGL, default is 300.0 m")
                 ("colMax_colHeightAGL_units", po::value<std::string>(), "column max sampling height AGL units (ft, m)")
                 #endif
@@ -925,6 +926,8 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
+        option_dependency(vm, "turbulence_output_flag", "write_goog_output");
+        option_dependency(vm, "turbulence_kml_output_keepTiff_flag", "turbulence_output_flag");
         option_dependency(vm, "colMax_colHeightAGL", "turbulence_output_flag");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
@@ -1374,6 +1377,9 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 if(vm.count("turbulence_output_flag")){
                     windsim.setWriteTurbulenceFlag( i_, vm["turbulence_output_flag"].as<bool>() );
+                }
+                if(vm.count("turbulence_kml_output_keepTiff_flag")){
+                    windsim.setKeepTurbKmlTiffFlag( i_, vm["turbulence_kml_output_keepTiff_flag"].as<bool>() );
                 }
                 if(vm["turbulence_output_flag"].as<bool>()){
                     // optional colMax_colHeightAGL

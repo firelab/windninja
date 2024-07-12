@@ -3450,6 +3450,8 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
                         if(input.writeTurbulence)
                         {
+                            ninjaKmlFiles.setKeepTurbKmlTiffFlag(input.keepTurbKmlTiff);
+                            
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
@@ -3464,8 +3466,8 @@ void NinjaFoam::WriteOutputFiles()
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                             
                             //// for debugging
-                            //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
-                            //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true);
+                            //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true, false);
+                            //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true, false);
                         }
 
 			ninjaKmlFiles.setKmlFile(input.kmlFile);
