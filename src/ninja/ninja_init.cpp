@@ -27,12 +27,9 @@
  *****************************************************************************/
 
 #include "ninja_init.h"
-#include <ifaddrs.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <string>
 #include <iostream>
-#include <netinet/in.h>
 #include <ctime>
 #include "cpl_http.h"  
 #include <stdarg.h>
