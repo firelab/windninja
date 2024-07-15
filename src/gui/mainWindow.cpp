@@ -116,14 +116,21 @@ mainWindow::mainWindow(QWidget *parent)
 */
 void mainWindow::checkMessages(void) {
    QMessageBox mbox;
-   char *papszMsg = NinjaCheckVersion();
-   int i = 0;
-   mbox.setText(papszMsg);
+   char *papszMsg = NinjaQueryServerMessages(true);
+
+   if (strcmp(papszMsg, "TRUE\n") == 0) {
+      mbox.setText("There is a fatal flaw in Windninja, it must close.");
+      mbox.exec();
+      abort();
+   }
+   
+   else {
+
+      char *papszMsg = NinjaQueryServerMessages(false);
+      mbox.setText(papszMsg);
     
-   mbox.exec();
-
-
-   free(papszMsg);
+      mbox.exec();
+   }
 }
 
 
