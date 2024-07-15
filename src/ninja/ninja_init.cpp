@@ -49,29 +49,6 @@ boost::local_time::tz_database globalTimeZoneDB;
 **            abort() after displaying a message.
 */
 
-<<<<<<< HEAD
-char * NinjaCheckVersion(void) {
-       const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-
-
-       CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
-
-
-     if (poResult != NULL) {
-       // Assuming it's text data (plain text file in this case)
-       const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
-
-
-       // Print the fetched text content
-       return pszTextContent;
-       // Print or process the fetched HTML content
-       // Release the fetched data when done
-       CPLHTTPDestroyResult(poResult);
-   } else {
-      
-   }
-   return NULL;
-=======
 bool rawVersion(char * src, char * dest) {
     bool same = false;
     char src1[256]; 
@@ -150,7 +127,6 @@ char * NinjaQueryServerMessages(bool checkAbort) {
     }
     return NULL;
 
->>>>>>> 2d7e4a49434361200cd53e651df020ecf543e6ee
 }
 
 
@@ -229,8 +205,8 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 ** Initialize global singletons and environments.
 */
 
-int NinjaInitialize(char * typeofrun)
-{
+int NinjaInitialize(const char* typeofrun) {
+
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -249,39 +225,38 @@ int NinjaInitialize(char * typeofrun)
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
-<<<<<<< HEAD
-=======
+    if (strcmp(typeofrun, "") != 0) {
+        
+        time_t now = time(0);
 
-    time_t now = time(0);
-
-    // convert now to tm struct for UTC
-    tm *gmtm = gmtime(&now);
-    char* dt = asctime(gmtm);
-    std::string cpp_string(dt);
-
-
-    std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-    cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
-    cpp_string.end());
+        // convert now to tm struct for UTC
+        tm *gmtm = gmtime(&now);
+        char* dt = asctime(gmtm);
+        std::string cpp_string(dt);
 
 
-    std::string full = url + cpp_string + "&runtype=" + typeofrun;
+        std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+        cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
 
 
-    const char *charStr = full.data();
+        std::string full = url + cpp_string + "&runtype=" + typeofrun;
 
-    CPLHTTPResult *poResult;
-    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-    char **papszOptions = NULL;
 
-    // Fetch the URL with custom headers
-    poResult = CPLHTTPFetch(charStr, papszOptions);
+        const char *charStr = full.data();
 
-    if (poResult) {
-            CPLHTTPDestroyResult(poResult);
+        CPLHTTPResult *poResult;
+        CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+        char **papszOptions = NULL;
 
-        } 
->>>>>>> 2d7e4a49434361200cd53e651df020ecf543e6ee
+        // Fetch the URL with custom headers
+        poResult = CPLHTTPFetch(charStr, papszOptions);
+
+        if (poResult) {
+                CPLHTTPDestroyResult(poResult);
+
+            } 
+    }
 
 
 #ifdef WIN32

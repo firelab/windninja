@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         return result;
     }
 
-    NinjaInitialize();
+    NinjaInitialize("gui");
 
     QApplication app(argc, argv);
 
