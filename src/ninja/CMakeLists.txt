@@ -31,6 +31,7 @@ set(NINJA_SOURCES air.cpp
                   ascii_grid.cpp
                   Array2D.cpp
                   Aspect.cpp
+                  casefile.cpp
                   cellDiurnal.cpp
                   cli.cpp
                   dbfopen.cpp
