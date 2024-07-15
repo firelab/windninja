@@ -223,6 +223,7 @@ int NinjaInitialize(char * typeofrun)
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
+    if (strcmp(typeofrun, "") != 0) {
 
     time_t now = time(0);
 
@@ -253,6 +254,7 @@ int NinjaInitialize(char * typeofrun)
             CPLHTTPDestroyResult(poResult);
 
         } 
+    }
 
 
 #ifdef WIN32
