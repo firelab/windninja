@@ -203,7 +203,7 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 ** Initialize global singletons and environments.
 */
 
-int NinjaInitialize(char * typeofrun = "")
+int NinjaInitialize(char * typeofrun)
 {
 
     GDALAllRegister();
