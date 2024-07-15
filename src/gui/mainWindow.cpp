@@ -83,8 +83,8 @@ mainWindow::mainWindow(QWidget *parent)
     sThread = new solveThread;
 
     meshCellSize = 200.0;
-    checkMessages(); 
-    
+    checkMessages();
+
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
@@ -114,25 +114,17 @@ mainWindow::mainWindow(QWidget *parent)
 /*
 ** Check for version updates, or messages from the server.
 */
-
 void mainWindow::checkMessages(void) {
    QMessageBox mbox;
-   char *papszMsg = NinjaQueryServerMessages(true);
-
-   if (strcmp(papszMsg, "TRUE\n") == 0) {
-      mbox.setText("There is a fatal flaw in Windninja, it must close.");
-      mbox.exec();
-      abort();
-   }
-   else {
-
-      char *papszMsg = NinjaQueryServerMessages(false);
-      mbox.setText(papszMsg);
+   char *papszMsg = NinjaCheckVersion();
+   int i = 0;
+   mbox.setText(papszMsg);
     
-      mbox.exec();
-   }
-}
+   mbox.exec();
 
+
+   free(papszMsg);
+}
 
 
 bool mainWindow::okToContinue()

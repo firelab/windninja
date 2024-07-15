@@ -130,6 +130,8 @@ char * NinjaQueryServerMessages(bool checkAbort) {
 }
 
 
+
+
 void NinjaCheckThreddsData( void *rc )
 {
     int *r;
@@ -203,8 +205,8 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 ** Initialize global singletons and environments.
 */
 
-int NinjaInitialize(char * typeofrun)
-{
+int NinjaInitialize(const char* typeofrun) {
+
 
     GDALAllRegister();
     OGRRegisterAll();
@@ -227,34 +229,35 @@ int NinjaInitialize(char * typeofrun)
 
     time_t now = time(0);
 
-    // convert now to tm struct for UTC
-    tm *gmtm = gmtime(&now);
-    char* dt = asctime(gmtm);
-    std::string cpp_string(dt);
+        // convert now to tm struct for UTC
+        tm *gmtm = gmtime(&now);
+        char* dt = asctime(gmtm);
+        std::string cpp_string(dt);
 
 
-    std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-    cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
-    cpp_string.end());
+        std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+        cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
 
 
-    std::string full = url + cpp_string + "&runtype=" + typeofrun;
+        std::string full = url + cpp_string + "&runtype=" + typeofrun;
 
 
-    const char *charStr = full.data();
+        const char *charStr = full.data();
 
-    CPLHTTPResult *poResult;
-    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-    char **papszOptions = NULL;
+        CPLHTTPResult *poResult;
+        CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+        char **papszOptions = NULL;
 
-    // Fetch the URL with custom headers
-    poResult = CPLHTTPFetch(charStr, papszOptions);
+        // Fetch the URL with custom headers
+        poResult = CPLHTTPFetch(charStr, papszOptions);
 
-    if (poResult) {
-            CPLHTTPDestroyResult(poResult);
+        if (poResult) {
+                CPLHTTPDestroyResult(poResult);
 
-        } 
+        }
     }
+} 
 
 
 #ifdef WIN32
