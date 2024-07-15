@@ -257,7 +257,6 @@ int NinjaInitialize(const char* typeofrun) {
 
         }
     }
-} 
 
 
 #ifdef WIN32
