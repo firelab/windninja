@@ -43,9 +43,9 @@
 #include "boost/date_time/local_time/local_time.hpp"
 #endif
 
-int NinjaInitialize();
+int NinjaInitialize(char *typeofrun = "");
 int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
-char ** NinjaCheckVersion(void);
+char * NinjaQueryServerMessages(bool checkAbort);
 
 #endif /* NINJA_INIT_H_ */
 

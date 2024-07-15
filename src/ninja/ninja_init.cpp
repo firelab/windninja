@@ -27,37 +27,29 @@
  *****************************************************************************/
 
 #include "ninja_init.h"
-#include <ifaddrs.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <string>
 #include <iostream>
-#include <netinet/in.h>
 #include <ctime>
 #include "cpl_http.h"  
-
+#include <stdarg.h>
+#include <stdarg.h>
+#include <sstream>
+#include "ninja_version.h"
 
 boost::local_time::tz_database globalTimeZoneDB;
 
 /*
-** Query the windninja.org server and ask for the most up to date version.  The
-** return value is a set of key value pairs stored in a GDAL string list.
+** Query the ninjastorm.firelab.org/sqlitetest/messages.txt and ask for the most up to date version.
 ** There are three current values:
 **
 ** VERSION -> a semantic version string, comparable with strcmp()
 ** MESSAGE -> One or more messages to display to the user
 ** ABORT   -> There is a fundamental problem with windninja, and it should call
 **            abort() after displaying a message.
-**
-** The response is currently a semi-colon delimeted list of key value pairs as
-** in:
-**
-** VERSION=3.4.0;MESSAGE=some message for the user, may not have
-** semi-colons;ABORT:TRUE
-**
-** The returned string list must be freed by the caller using CSLDestroy().
 */
 
+<<<<<<< HEAD
 char * NinjaCheckVersion(void) {
        const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
 
@@ -79,6 +71,86 @@ char * NinjaCheckVersion(void) {
       
    }
    return NULL;
+=======
+bool rawVersion(char * src, char * dest) {
+    bool same = false;
+    char src1[256]; 
+    char dest1[256]; 
+    int srcIndex = 0;
+    int destIndex = 0;
+    while (*src) {
+        if (*src != '.') {
+            src1[srcIndex++] = *src;
+        }
+        src++;
+    }
+    src1[srcIndex] = '\0'; 
+
+    while (*dest) {
+        if (*dest != '.') {
+            dest1[destIndex++] = *dest;
+        }
+        dest++;
+    }
+    dest1[destIndex] = '\0';
+
+    return strcmp(src1, dest1) == 0;
+
+}
+
+char * NinjaQueryServerMessages(bool checkAbort) { 
+    const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
+
+    CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+
+    if (poResult != NULL) {
+        const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+         std::vector<std::string> lines;
+        std::istringstream iss(pszTextContent);
+        std::string line;
+        int lineCount = 0;
+
+        // Read all lines into the vector
+        while (std::getline(iss, line)) {
+            lines.push_back(line);
+        }
+
+        // Process all lines except the last two
+        std::ostringstream oss;
+        if (checkAbort) {
+            for (size_t i = 0; i < lines.size(); ++i) {
+               if (i == lines.size()-1) { // check final line 
+                    oss << lines[i] << "\n";
+                }
+             }
+        }
+        else {
+            for (size_t i = 0; i < lines.size(); ++i) {
+            if (i == 1) {  
+                if (!rawVersion(const_cast<char*>(lines[i].c_str()), const_cast<char*>(NINJA_VERSION_STRING))) {
+                    oss << "You are using an outdated Ninja version, please update to version: " << lines[i] << "\n";
+                } else {
+                    oss << lines[i] << "\n";
+                }
+            } else if (i < lines.size() - 2) {  
+                oss << lines[i] << "\n";
+            }
+            }
+        }
+
+        std::string result = oss.str();
+        // return as char * 
+        char* returnString = new char[result.length() + 1];
+        std::strcpy(returnString, result.c_str());
+
+        // Clean up
+        CPLHTTPDestroyResult(poResult);
+
+        return returnString;
+    }
+    return NULL;
+
+>>>>>>> 2d7e4a49434361200cd53e651df020ecf543e6ee
 }
 
 
@@ -131,39 +203,6 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     OGRRegisterAll();    
 
 
-std::cout << "Logging message to console." << std::endl;
-
-
-time_t now = time(0);
-
-// convert now to tm struct for UTC
-tm *gmtm = gmtime(&now);
-char* dt = asctime(gmtm);
-std::string cpp_string(dt);
-
-
-std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-  cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
-        cpp_string.end());
-
-
-std::string full = url + cpp_string;
-
-
-const char *charStr = full.data();
-
-    CPLHTTPResult *poResult;
-    std::cout << charStr << std::endl;
-    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-
-    poResult = CPLHTTPFetch(charStr, NULL); 
-
-    if (poResult) {
-            CPLHTTPDestroyResult(poResult);
-        } else {
-            std::cerr << "Fetch data." << std::endl;
-        }
-
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
         CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
@@ -189,8 +228,10 @@ const char *charStr = full.data();
 /*
 ** Initialize global singletons and environments.
 */
-int NinjaInitialize()
+
+int NinjaInitialize(char * typeofrun)
 {
+
     GDALAllRegister();
     OGRRegisterAll();
     /*
@@ -198,8 +239,7 @@ int NinjaInitialize()
     ** but that doesn't mean we are in trouble.
     */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-	int rc = 0;
-
+	int rc = 0; 
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
     ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
@@ -209,6 +249,39 @@ int NinjaInitialize()
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
 
+<<<<<<< HEAD
+=======
+
+    time_t now = time(0);
+
+    // convert now to tm struct for UTC
+    tm *gmtm = gmtime(&now);
+    char* dt = asctime(gmtm);
+    std::string cpp_string(dt);
+
+
+    std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+    cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+    cpp_string.end());
+
+
+    std::string full = url + cpp_string + "&runtype=" + typeofrun;
+
+
+    const char *charStr = full.data();
+
+    CPLHTTPResult *poResult;
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+    char **papszOptions = NULL;
+
+    // Fetch the URL with custom headers
+    poResult = CPLHTTPFetch(charStr, papszOptions);
+
+    if (poResult) {
+            CPLHTTPDestroyResult(poResult);
+
+        } 
+>>>>>>> 2d7e4a49434361200cd53e651df020ecf543e6ee
 
 
 #ifdef WIN32
@@ -270,9 +343,6 @@ if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
         CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
     }
 }
-
-
-
 
 
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
