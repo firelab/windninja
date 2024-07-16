@@ -90,9 +90,8 @@ mainWindow::mainWindow(QWidget *parent)
     sThread = new solveThread;
 
     meshCellSize = 200.0;
-    checkMessages(); 
-    
-    
+    checkMessages();
+
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
@@ -122,7 +121,6 @@ mainWindow::mainWindow(QWidget *parent)
 /*
 ** Check for version updates, or messages from the server.
 */
-
 void mainWindow::checkMessages(void) {
    QMessageBox mbox;
    char *papszMsg = NinjaQueryServerMessages(true);
@@ -141,7 +139,6 @@ void mainWindow::checkMessages(void) {
       mbox.exec();
    }
 }
-
 
 
 bool mainWindow::okToContinue()
