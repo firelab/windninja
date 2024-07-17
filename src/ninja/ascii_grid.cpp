@@ -1929,14 +1929,14 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         colors[9].Alpha = 0;
 
         int cbarWidth = 30;  // pixels;
-        int textHeight = 12;
-        int titleTextHeight = int(1.2 * textHeight);  // increase by a factor, rounded down. For textHeight of 12, this comes out to be int(14.4) = 14
+        int textHeight = 12;  // cbarLabelTextHeight expected/desired value, DrawLine() seems to preserve the value, but DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value
+        int titleTextHeight = int(1.2 * textHeight);  // increase by a factor, rounded down. For textHeight of 12, this comes out to be int(14.4) = 14. Also is expected/desired value, but the exact value isn't as sensitive as it is for textHeight
 
-        double x = 0.05;  // percent of total image width, the empty space to the left of the title box and cbar box regions
-        double y = 0.30;  // percent of total image height, reference point from which to build the cbar region, effectively the bottom of the title region but with various padding thrown in
+        double leftMarginPad = 0.05;  // percent of total image width, the empty space to the left of the title box and cbar box regions
+        double topMarginPad  = 0.10;  // percent of total image height, the empty space to the top of the title box
 
-        int titleX = x * legendWidth;  // top left corner x pixel position for the title box. Note the int rounds it down. For x of 0.05 and a legendWidth of 180, this comes out to be 9
-        int titleY = (y / 3) * legendHeight;  // top left y pixel position for the title box. Note the int rounds it down. For y of 0.30, this comes out to be 0.10 as the percent of total height used for the y position. With these values and a legendHeight of 240, this comes out to be 24
+        int titleX = legendWidth * leftMarginPad;  // top left x pixel position for the title box. Note the int rounds it down. For a legendWidth of 180 and a leftMarginPad of 0.05, this comes out to be 9
+        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.1, this comes out to be 24
 
         int titleYadjust = -10;  // nudge the position of the title string this number of pixels up or down. A value of -10 means nudging it up 10 pixels, into the top margin padding region
         PrintString(legend, legendTitle.c_str() , titleX, titleY+titleYadjust, titleTextHeight, white);
@@ -1951,37 +1951,40 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         int textX;
         int textY;
 
-        double cbarBoxXstart = x+0.1;  // percent of total image width, the 0.1 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 0.1, this comes out to be 0.15
-        double cbarBoxYstart = y-0.03;  // percent of total image height, the -0.03 represents a nudge back up a bit into the title box, probably because the padding gap between the cbar region and the title region was a bit too big. For y of 0.3 and the nudging of -0.03, this comes out to be 0.27
+        double cbarBoxXstart_percent = leftMarginPad + 0.1;  // percent of total image width, the 0.1 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 0.1, this comes out to be 0.15
+        double cbarBoxYstart_percent = 0.27;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave too much space, so it was adjusted back a bit by subtracting 0.03 to get the value of 0.27
+        int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 0.15, this comes out to be 27
+        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.27, this comes out to be int(64.8) = 64
 
         int cbarLabelXpadding = 15;  // number of pixels of empty space to pad between the cbar and the cbar labels
-        int cbarLabelYadjust = -int(textHeight * 0.5) - 8;  // number of pixels to subtract from the final y pixel position of the last drawn color line of the last drawn colorbar, used to estimate the pixel y position of the first drawn color line of the last drawn colorbar. For textHeight of 12, this becomes -int(6) - 8 = -14, as the textHeight is 12 then in theory this pushes the text roughly 2 pixels up from the bottom most portion of the corresponding colorbar, in practice since DrawArc() in PrintString() tends to add 2 to 3 extra pixels to the drawn text in addition to textHeight, the result is the text roughly going from the bottom to the top of the last drawn colorbar with maybe a hint of overlap into the adjacent colorbar regions
+
+        // now the fun part, turns out that while DrawLine() does exact numbers of pixels, DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value. So you would think that a value of 1 above and 1 below would be good, but the gaps came out looking uneven. Turned out that a value of 1 above and 2 below seemed to look the best, with the gaps coming out looking even at least for this case. Note that a value of 2 above and 2 below looked similar to a value of 1 above and 1 below where the gap came out looking uneven, but with a bit more gap. Note that a value of 2 above and 3 below looked good and even just like a value of 1 above and 2 below, but with even more gap. In addition, using gaps 2 above and below or greater starts to add too many color lines overall, running out of space for the cbar
+        int upperLabelPad = 1;
+        int lowerLabelPad = 2;
 
         int labelIdx = 0;
-        double yPos = cbarBoxYstart;
+        int yPos = cbarBoxYstart;  // yPos is the current pixel y position
+        int yStart = yPos;  // yStart is the first pixel y position of the given cbar colorbox
         int nColorsToUse = 10;  // for 4 cbar colors
         //int nColorsToUse = 7;  // for 3 cbar colors
-        int nColorLinesToUse = 20;  // appears to be an estimate with the below method, to get cbar sections about as tall as the cbar label text
         for(int colorIdx = 0; colorIdx < nColorsToUse; colorIdx++)
         {
-            for(int colorLineIdx = 0; colorLineIdx < nColorLinesToUse; colorLineIdx++)
+            yStart = yPos;  // store the first pixel y position of the given cbar colorbox
+            for(int colorLineIdx = 0; colorLineIdx < (upperLabelPad+textHeight+lowerLabelPad); colorLineIdx++)
             {
-                // in this case, x1 is the left x pixel position for the cbar box region. Note the int rounds it down. For a cbarBoxXstart of 0.15 and a legendWidth of 180 this comes out to be 27
-                // y1 is the current y pixel position for the current cbar colored line. Note the int rounds it down.
-                // Interestingly, the conversion from percent to pixel for y1 results in some repeated lines of the same color, just redraws the same thing over itself for those colorLineIdx
-                x1 = int(legendWidth * cbarBoxXstart);
+                x1 = cbarBoxXstart;
                 x2 = x1 + cbarWidth;
-                y1 = int(legendHeight * yPos);
+                y1 = yPos;
                 y2 = y1;
                 DrawLine(legend, x1, y1, x2, y2, colors[colorIdx]);
-                yPos+=0.003;
+                yPos+=1;
             }
 
             // only add labels to the main colors
             if(colorIdx == 0 || colorIdx == 3 || colorIdx == 6 || colorIdx == 9)
             {
                 textX = x2 + cbarLabelXpadding;
-                textY = y2 + cbarLabelYadjust;
+                textY = yStart + upperLabelPad;
                 PrintString(legend, legendStrings[labelIdx].c_str(), textX, textY, textHeight, white);
                 labelIdx+=1;
             }
