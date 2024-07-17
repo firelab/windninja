@@ -1928,20 +1928,19 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         colors[9].Blue = 255;
         colors[9].Alpha = 0;
 
-        int cbarWidth = 30;  // pixels;
+        int cbarWidth = 40;  // pixels;
         int textHeight = 12;  // cbarLabelTextHeight expected/desired value, DrawLine() seems to preserve the value, but DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value
         int titleTextHeight = int(1.2 * textHeight);  // increase by a factor, rounded down. For textHeight of 12, this comes out to be int(14.4) = 14. Also is expected/desired value, but the exact value isn't as sensitive as it is for textHeight
 
         double leftMarginPad = 0.05;  // percent of total image width, the empty space to the left of the title box and cbar box regions
-        double topMarginPad  = 0.10;  // percent of total image height, the empty space to the top of the title box
+        double topMarginPad  = 0.05;  // percent of total image height, the empty space to the top of the title box
 
         int titleX = legendWidth * leftMarginPad;  // top left x pixel position for the title box. Note the int rounds it down. For a legendWidth of 180 and a leftMarginPad of 0.05, this comes out to be 9
-        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.1, this comes out to be 24
+        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.05, this comes out to be 12
 
-        int titleYadjust = -10;  // nudge the position of the title string this number of pixels up or down. A value of -10 means nudging it up 10 pixels, into the top margin padding region
-        PrintString(legend, legendTitle.c_str() , titleX, titleY+titleYadjust, titleTextHeight, white);
+        PrintString(legend, legendTitle.c_str() , titleX, titleY, titleTextHeight, white);
         int unitsX = titleX+5;  // set the unit string X position within the title box. titleX + 5 means to the right 5 pixels from the title X position, so nudging it a bit to the right
-        int unitsY = titleY+15;  // set the unit string Y position within the title box. titleY + 15 means 15 pixels below the title Y position. While titleTextHeight is 14, titleY is adjusted by -10, so it's not just 1 pixel of space between the two strings, but is actually 11 extra pixels of space. You would think that this would lead to a really huge gap between the two strings, but it actually results in barely any spacing. Apparently this is because PrintString() adds a crap ton of extra pixels for the letter p, it also adds a few pixels in general when calling DrawArc() for some of the other letters.
+        int unitsY = titleY+30;  // set the unit string Y position within the title box. titleY + 30 means 30 pixels below the title Y position. For titleTextHeight of 14, this seems excessive, you would think that this would lead to a really huge gap between the two strings, but it actually results in barely any spacing. Apparently this is because PrintString() adds a crap ton of extra pixels for the letter p, it also adds a few pixels in general when calling DrawArc() for some of the other letters
         PrintString(legend, legendUnits.c_str() , unitsX, unitsY, titleTextHeight, white);
 
         // start to end pixel positions at which to the given cbar color line
@@ -1951,10 +1950,10 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         int textX;
         int textY;
 
-        double cbarBoxXstart_percent = leftMarginPad + 0.1;  // percent of total image width, the 0.1 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 0.1, this comes out to be 0.15
-        double cbarBoxYstart_percent = 0.27;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave too much space, so it was adjusted back a bit by subtracting 0.03 to get the value of 0.27
-        int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 0.15, this comes out to be 27
-        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.27, this comes out to be int(64.8) = 64
+        double cbarBoxXstart_percent = leftMarginPad + 5.0/60.0;  // percent of total image width, the 5.0/60.0 = 0.08333333333 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 5.0/60.0 = 0.08333333333, this comes out to be 0.05 + 5.0/60.0 = 0.13333333333. Probably could have used 0.084, let int(legendWidth*cbarBoxXstart_percent) round down to 24, but using 0.05 + 5.0/60.0 specifically divides evenly into the legendHeight of 240 to get 24
+        double cbarBoxYstart_percent = 0.297;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave just a hint too much space, so it was adjusted back a bit
+        int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 5.0/60.0 = 0.08333333333, this comes out to be 24
+        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71
 
         int cbarLabelXpadding = 15;  // number of pixels of empty space to pad between the cbar and the cbar labels
 
