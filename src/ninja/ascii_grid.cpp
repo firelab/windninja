@@ -1631,6 +1631,107 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              std::string scalarLegendFilename,
                              bool writeLegend, bool keepTiff)
 {
+
+    // set color ramp type and number of color breaks to use
+    //std::string colorRampType = "minToMax";  // original
+    std::string colorRampType = "specificVals";  // override with default or own specific values
+
+    // tend to use 4 color breaks for colorRampType "minToMax" and 3 color breaks for colorRampType "specificVals"
+    // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
+    // nvm, forcing it so that colorRampType "minToMax" always expects 4 color breaks
+    int nColorBreaks = 4;
+    //int nColorBreaks = 3;
+
+
+    // default desiredBrk values, note these are ignored unless colorRampType is set to "specificVals"
+    // the default nColorBreaks for colorRampType "specificVals" is expected to be 3, which ignores desiredBrk0
+    double desiredBrk0 = 0.0;
+    double desiredBrk1 = 0.0;
+    double desiredBrk2 = 2.0;
+    double desiredBrk3 = 4.0;
+
+
+    // set manual values to override the default desiredBrk values
+    // make sure to specify values correctly for 3 vs 4 nColorBreaks
+
+    double dataMinVal = get_minValue();
+    double dataMaxVal = get_maxValue();
+
+    /*desiredBrk0 = 3.5;
+    desiredBrk1 = 4.5;
+    desiredBrk2 = 5.5;
+    desiredBrk3 = 6.5;*/
+
+    /*desiredBrk0 = 3.0;
+    desiredBrk1 = 4.0;
+    desiredBrk2 = 5.0;
+    desiredBrk3 = 6.0;*/
+
+    /*desiredBrk0 = 4.0;
+    desiredBrk1 = 5.0;
+    desiredBrk2 = 6.0;
+    desiredBrk3 = 7.0;
+    //desiredBrk3 = 10.0;*/
+
+    // for testing, override desiredBrk values to replicate min to max with 4 color breaks
+    //desiredBrk0 = dataMinVal;
+    //desiredBrk3 = dataMaxVal;
+    //desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
+    //desiredBrk2 = (desiredBrk3+desiredBrk1)/2;
+
+    // for testing, override desiredBrk values to do a from min to max using just the last 3 colors,
+    //  with a dummy diredBrk0 value so that plotting comes out the same for 3 and 4 color breaks
+    // to do this, set it to be the regular min to max ranges and halfway between, after one smaller value, probably 0.0
+    // useful for troubleshooting 3 vs 4 color break methods
+    desiredBrk0 = 0.0;
+    desiredBrk1 = dataMinVal;
+    desiredBrk2 = (dataMinVal+dataMaxVal)/2;
+    desiredBrk3 = dataMaxVal;
+
+
+    if ( colorRampType != "minToMax" && colorRampType != "specificVals" )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input colorRampType \"%s\" is not valid!!!\nvalid values are \"minToMax\" and \"specificVals\"",colorRampType.c_str()));
+    }
+
+    if ( nColorBreaks != 3 && nColorBreaks != 4 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input nColorBreaks %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
+    }
+
+
+    if ( colorRampType == "minToMax" )
+    {
+
+        if ( nColorBreaks != 4 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input colorRampType \"minToMax\" expects nColorBreaks to be set to 4!!!\nnColorBreaks = %d",nColorBreaks));
+        }
+
+    }
+
+    if ( colorRampType != "specificVals" )
+    {
+
+        if ( nColorBreaks == 3 )
+        {
+            if ( desiredBrk1 < desiredBrk0 )
+            {
+                throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 < desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+            }
+        }
+        if ( desiredBrk2 < desiredBrk1 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 < desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+        }
+        if ( desiredBrk3 < desiredBrk2 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 < desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+        }
+
+    }
+
+
     // png driver doesn't support create(), only createCopy()
     // so create the image as a tif first, then use createCopy() to create the png from that tif
 
@@ -1715,15 +1816,39 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     int idxRangeMax = 255;
     // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
     int numBins = idxRangeMax - idxRangeMin;
-    double binWidth = (raw_maxValue - raw_minValue)/double(numBins);
+    double rangeMinVal;
+    double rangeMaxVal;
+
+    if ( colorRampType == "minToMax" )
+    {
+        rangeMinVal = raw_minValue;
+        rangeMaxVal = raw_maxValue;
+    } else // if ( colorRampType == "specificVals" )
+    {
+        if ( nColorBreaks == 4 )
+        {
+            rangeMinVal = desiredBrk0;
+            rangeMaxVal = desiredBrk3;
+        } else // if ( nColorBreaks == 3 )
+        {
+            rangeMinVal = desiredBrk1;
+            rangeMaxVal = desiredBrk3;
+        }
+    }
+
+    double binWidth = (rangeMaxVal - rangeMinVal)/double(numBins);
     for(int i=0;i<scaledDataGrid.get_nRows();i++)
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
             if( scaledDataGrid(i,j) == get_noDataValue() ){
                 scaledDataGrid(i,j) = 0;
+            } else if ( scaledDataGrid(i,j) < rangeMinVal ){
+                scaledDataGrid(i,j) = idxRangeMin;
+            } else if ( scaledDataGrid(i,j) > rangeMaxVal ){
+                scaledDataGrid(i,j) = idxRangeMax;
             } else {
-                int binIdx = std::round( (scaledDataGrid(i,j) - raw_minValue)/binWidth ) + idxRangeMin;
+                int binIdx = std::round( (scaledDataGrid(i,j) - rangeMinVal)/binWidth ) + idxRangeMin;
                 scaledDataGrid(i,j) = binIdx;
             }
         }
@@ -1784,23 +1909,41 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
             }
         }
 
-    brk0 = 0;
-    brk1 = _minValue;
-    brk2 = 0.2*(_maxValue-_minValue)+_minValue;
-    brk4 = _maxValue;
-    brk3 = (brk4+brk2)/2;
+
+    if ( colorRampType == "minToMax" )
+    {
+        brk0 = 0;
+        brk1 = _minValue;
+        brk2 = 0.2*(_maxValue-_minValue)+_minValue;
+        brk4 = _maxValue;
+        brk3 = (brk4+brk2)/2;
+    } else // if ( colorRampType == "specificVals" )
+    {
+        // adapt the percent distances between the brk values to match the locations
+        //  of the desired break values within the desired break value range
+        // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
+        brk0 = 0;
+        brk1 = idxRangeMin;
+        brk4 = idxRangeMax;
+        brk2 = std::round( (desiredBrk1 - rangeMinVal)/binWidth ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
+        brk3 = std::round( (desiredBrk2 - rangeMinVal)/binWidth ) + idxRangeMin;
+    }
 
     poCT->SetColorEntry(brk0, &white);
-    poCT->SetColorEntry(brk1, &blue);
+    if ( nColorBreaks == 4 )
+        poCT->SetColorEntry(brk1, &blue);
     poCT->SetColorEntry(brk2, &green);
     poCT->SetColorEntry(brk3, &yellow);
     poCT->SetColorEntry(brk4, &red);
 
     int nStartIndex = brk1;
     int nEndIndex = brk2;
-    const GDALColorEntry psStartColor1 = blue;
-    const GDALColorEntry psEndColor1 = green;
-    GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    if ( nColorBreaks == 4 )
+    {
+        const GDALColorEntry psStartColor1 = blue;
+        const GDALColorEntry psEndColor1 = green;
+        GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    }
     nStartIndex = brk2;
     nEndIndex = brk3;
     const GDALColorEntry psStartColor2 = green;
@@ -1828,25 +1971,36 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 	    std::string legendStrings[6];
 	    ostringstream os;
 
-	    double maxxx = get_maxValue();
-	    double minnn = raw_minValue;
         double _brk0 = 0;
-        double _brk1 = raw_minValue;
-        double _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
-        double _brk4 = raw_maxValue;
-        double _brk3 = (_brk4+_brk2)/2;
+        double _brk1;
+        double _brk2;
+        double _brk4;
+        double _brk3;
+        if ( colorRampType == "minToMax" )
+        {
+            _brk1 = raw_minValue;
+            _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
+            _brk4 = raw_maxValue;
+            _brk3 = (_brk4+_brk2)/2;
+        } else // if ( colorRampType == "specificVals" )
+        {
+            _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
+            _brk2 = desiredBrk1;
+            _brk3 = desiredBrk2;
+            _brk4 = desiredBrk3;
+        }
 
 	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
 	    {
 		    os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
 		    if(labelIdx == 0)
-			    os << maxxx;
+                os << (double)_brk4;
             else if(labelIdx == 1)
                 os << (double)_brk3;
 		    else if(labelIdx == 2)
 			    os << (double)_brk2;
             else if(labelIdx == 3)
-                os << minnn;
+                os << (double)_brk1;  // ignored when nColorBreaks == 3
 		    else if(labelIdx == 4)
 			    os << "0.00";  // not currently used, but just in case leave it as a stored value
             legendStrings[labelIdx] = os.str();
@@ -1961,11 +2115,18 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         int upperLabelPad = 1;
         int lowerLabelPad = 2;
 
+        int nColorsToUse;
+        if ( nColorBreaks == 4 )
+        {
+            nColorsToUse = 10;  // for 4 cbar colors
+        } else // if ( nColorBreaks == 3 )
+        {
+            nColorsToUse = 7;  // for 3 cbar colors
+        }
+
         int labelIdx = 0;
         int yPos = cbarBoxYstart;  // yPos is the current pixel y position
         int yStart = yPos;  // yStart is the first pixel y position of the given cbar colorbox
-        int nColorsToUse = 10;  // for 4 cbar colors
-        //int nColorsToUse = 7;  // for 3 cbar colors
         for(int colorIdx = 0; colorIdx < nColorsToUse; colorIdx++)
         {
             yStart = yPos;  // store the first pixel y position of the given cbar colorbox
