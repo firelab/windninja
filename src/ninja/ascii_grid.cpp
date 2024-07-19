@@ -2061,6 +2061,11 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         //make bitmap
 	    int legendWidth = 180;
 	    int legendHeight = int(legendWidth / 0.75);  // increase by a factor of 4/3, rounded down. For legendWidth of 180, this comes out to be 240
+        if ( nColorBreaks == 3 )
+        {
+            // override the value (keeps storage still in scope this way)
+            legendHeight = 190;  // specific value for legendWidth of 180
+        }
 	    BMP legend;
 
 	    std::string legendStrings[6];
@@ -2185,7 +2190,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         double topMarginPad  = 0.05;  // percent of total image height, the empty space to the top of the title box
 
         int titleX = legendWidth * leftMarginPad;  // top left x pixel position for the title box. Note the int rounds it down. For a legendWidth of 180 and a leftMarginPad of 0.05, this comes out to be 9
-        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.05, this comes out to be 12
+        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.05, this comes out to be 12. For a legendHeight of 190 and a topMarginPad of 0.05, this comes out to be int(9.5) = 9
 
         PrintString(legend, legendTitle.c_str() , titleX, titleY, titleTextHeight, white);
         int unitsX = titleX+5;  // set the unit string X position within the title box. titleX + 5 means to the right 5 pixels from the title X position, so nudging it a bit to the right
@@ -2201,8 +2206,13 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
         double cbarBoxXstart_percent = leftMarginPad + 5.0/60.0;  // percent of total image width, the 5.0/60.0 = 0.08333333333 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 5.0/60.0 = 0.08333333333, this comes out to be 0.05 + 5.0/60.0 = 0.13333333333. Probably could have used 0.084, let int(legendWidth*cbarBoxXstart_percent) round down to 24, but using 0.05 + 5.0/60.0 specifically divides evenly into the legendHeight of 240 to get 24
         double cbarBoxYstart_percent = 0.297;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave just a hint too much space, so it was adjusted back a bit
+        if ( nColorBreaks == 3 )
+        {
+            // override the value (keeps storage still in scope this way)
+            cbarBoxYstart_percent = 0.365;
+        }
         int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 5.0/60.0 = 0.08333333333, this comes out to be 24
-        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71
+        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71. For a legendHeight of 190 and a cbarBoxYstart_percent of 0.365, this comes out to be int(69.35) = 69
 
         int cbarLabelXpadding = 15;  // number of pixels of empty space to pad between the cbar and the cbar labels
 
