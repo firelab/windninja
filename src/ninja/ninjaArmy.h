@@ -414,6 +414,18 @@ public:
     int setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
                                   std::string units, char ** papszOptions=NULL );
 
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp break values for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    *
+    * \param nIndex index of a ninja
+    * \param nColorBreaks number of color ramp breaks to use; set to 4 if using desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3; set to 3 if only using desiredBrk1, desiredBrk2, desiredBrk3
+    * \param desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 the desired color breaks, in increasing order, setting desiredBrk0 to an ignored value if nColorBreaks is set to 3
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKmlColorRampBreakVals( const int nIndex, const int nColorBreaks, const double desiredBrk0, const double desiredBrk1,
+                                      const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL );
+
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------

@@ -307,6 +307,12 @@ public:
     bool keepTurbKmlTiff;
     double colMax_colHeightAGL;
     lengthUnits::eLengthUnits colMax_colHeightAGL_units;
+    bool override_turbKml_colorBreakVals;
+    int turbKml_colorRamp_nColorBreaks;
+    double turbKml_colorRamp_desiredBrk0;
+    double turbKml_colorRamp_desiredBrk1;
+    double turbKml_colorRamp_desiredBrk2;
+    double turbKml_colorRamp_desiredBrk3;
 #endif
 };
 

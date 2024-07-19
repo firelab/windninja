@@ -3032,6 +3032,10 @@ void ninja::writeOutputFiles()
                             //            AsciiGrid<double>::order0));
                             //
                             //ninjaKmlFiles.setTurbulenceFlag("true");
+                            //if(input.override_turbKml_colorBreakVals) {
+                            //    turbTempGrid->set_ascii2png_colorRamp_breakVals( input.turbKml_colorRamp_nColorBreaks, input.turbKml_colorRamp_desiredBrk0,
+                            //                 input.turbKml_colorRamp_desiredBrk1, input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
+                            //}
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
@@ -3039,6 +3043,10 @@ void ninja::writeOutputFiles()
                                         AsciiGrid<double>::order0));
                             
                             ninjaKmlFiles.setColMaxFlag("true");
+                            if(input.override_turbKml_colorBreakVals) {
+                                colMaxTempGrid->set_ascii2png_colorRamp_breakVals( input.turbKml_colorRamp_nColorBreaks, input.turbKml_colorRamp_desiredBrk0,
+                                               input.turbKml_colorRamp_desiredBrk1, input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
+                            }
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3706,6 +3714,20 @@ void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits
 {
     input.colMax_colHeightAGL = colMaxSampleHeightAGL;
     input.colMax_colHeightAGL_units = units;
+}
+
+void ninja::set_turbKmlColorRampBreakVals( int nColorBreaks, double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 )
+{
+    // make tmp ascii grid to test the vals before setting them to their storage for later use
+    AsciiGrid<double> tmp_turbGrid;
+    tmp_turbGrid.set_ascii2png_colorRamp_breakVals( nColorBreaks, desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 );
+    // if no error stopping the program, good to set the values for general use
+    input.override_turbKml_colorBreakVals = true;
+    input.turbKml_colorRamp_nColorBreaks = nColorBreaks;
+    input.turbKml_colorRamp_desiredBrk0 = desiredBrk0;
+    input.turbKml_colorRamp_desiredBrk1 = desiredBrk1;
+    input.turbKml_colorRamp_desiredBrk2 = desiredBrk2;
+    input.turbKml_colorRamp_desiredBrk3 = desiredBrk3;
 }
 #endif
 

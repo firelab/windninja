@@ -159,6 +159,12 @@ WindNinjaInputs::WindNinjaInputs()
     keepTurbKmlTiff = false;
     colMax_colHeightAGL = 300.0;  // default value of 300 m
     colMax_colHeightAGL_units = lengthUnits::meters;
+    override_turbKml_colorBreakVals = false;
+    turbKml_colorRamp_nColorBreaks = 3;
+    turbKml_colorRamp_desiredBrk0 = 0.0;
+    turbKml_colorRamp_desiredBrk1 = 0.0;
+    turbKml_colorRamp_desiredBrk2 = 0.0;
+    turbKml_colorRamp_desiredBrk3 = 0.0;
 #endif
     
     outputPointsFilename = "!set";
@@ -273,6 +279,12 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       keepTurbKmlTiff = rhs.keepTurbKmlTiff;
       colMax_colHeightAGL = rhs.colMax_colHeightAGL;
       colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
+      override_turbKml_colorBreakVals = rhs.override_turbKml_colorBreakVals;
+      turbKml_colorRamp_nColorBreaks = rhs.turbKml_colorRamp_nColorBreaks;
+      turbKml_colorRamp_desiredBrk0 = rhs.turbKml_colorRamp_desiredBrk0;
+      turbKml_colorRamp_desiredBrk1 = rhs.turbKml_colorRamp_desiredBrk1;
+      turbKml_colorRamp_desiredBrk2 = rhs.turbKml_colorRamp_desiredBrk2;
+      turbKml_colorRamp_desiredBrk3 = rhs.turbKml_colorRamp_desiredBrk3;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;

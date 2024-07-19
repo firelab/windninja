@@ -339,6 +339,12 @@ int windNinjaCLI(int argc, char* argv[])
                 ("turbulence_kml_output_keepTiff_flag", po::value<bool>()->default_value(false), "keep intermediate tiff file as additional output when writing tubulence kml/kmz output (true, false)")
                 ("colMax_colHeightAGL", po::value<double>(), "column max sampling height AGL, default is 300.0 m")
                 ("colMax_colHeightAGL_units", po::value<std::string>(), "column max sampling height AGL units (ft, m)")
+                ("override_turbulence_kml_output_colorBreaks", po::value<bool>()->default_value(false), "override turbulence kml/kmz output color breaks (true, false). Default color breaks are min to max, 4 breaks")
+                ("turbulence_kml_output_nColorBreaks", po::value<int>(), "number of color breaks to use when overriding turbulence kml/kmz output color breaks (3, 4). When using 4 breaks, need to specify turbulence_kml_output_desiredBrk0, turbulence_kml_output_desiredBrk1, turbulence_kml_output_desiredBrk2, turbulence_kml_output_desiredBrk3 in increasing order. When using 3 breaks, just need to specify turbulence_kml_output_desiredBrk1, turbulence_kml_output_desiredBrk2, and turbulence_kml_output_desiredBrk3")
+                ("turbulence_kml_output_desiredBrk0", po::value<double>(), "see turbulence_kml_output_nColorBreaks")
+                ("turbulence_kml_output_desiredBrk1", po::value<double>(), "see turbulence_kml_output_nColorBreaks")
+                ("turbulence_kml_output_desiredBrk2", po::value<double>(), "see turbulence_kml_output_nColorBreaks")
+                ("turbulence_kml_output_desiredBrk3", po::value<double>(), "see turbulence_kml_output_nColorBreaks")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -929,6 +935,12 @@ int windNinjaCLI(int argc, char* argv[])
         option_dependency(vm, "turbulence_output_flag", "write_goog_output");
         option_dependency(vm, "turbulence_kml_output_keepTiff_flag", "turbulence_output_flag");
         option_dependency(vm, "colMax_colHeightAGL", "turbulence_output_flag");
+        option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_output_flag");
+        option_dependency(vm, "turbulence_kml_output_nColorBreaks", "override_turbulence_kml_output_colorBreaks");
+        option_dependency(vm, "turbulence_kml_output_desiredBrk0", "override_turbulence_kml_output_colorBreaks");
+        option_dependency(vm, "turbulence_kml_output_desiredBrk1", "override_turbulence_kml_output_colorBreaks");
+        option_dependency(vm, "turbulence_kml_output_desiredBrk2", "override_turbulence_kml_output_colorBreaks");
+        option_dependency(vm, "turbulence_kml_output_desiredBrk3", "override_turbulence_kml_output_colorBreaks");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1388,6 +1400,26 @@ int windNinjaCLI(int argc, char* argv[])
                         option_dependency(vm, "colMax_colHeightAGL", "colMax_colHeightAGL_units");
                         windsim.setColMaxSampleHeightAGL( i_, vm["colMax_colHeightAGL"].as<double>(), lengthUnits::getUnit(vm["colMax_colHeightAGL_units"].as<std::string>()));
                     }
+                }
+                if(vm["override_turbulence_kml_output_colorBreaks"].as<bool>()){
+                    option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_nColorBreaks");
+                    int found_nColorBreaks = vm["turbulence_kml_output_nColorBreaks"].as<int>();
+                    double found_desiredBrk0 = 0.0;
+                    if( found_nColorBreaks == 3 ){
+                        if( vm.count("turbulence_kml_output_desiredBrk0") ){
+                            std::cout << "turbulence_kml_output_nColorBreaks set to 3, turbulence_kml_output_desiredBrk0 value will be ignored" << std::endl;
+                            //std::cout << "turbulence_kml_output_desiredBrk0 should not be specified as an input unless turbulence_kml_output_nColorBreaks is set to 4, but it is set to 3!!!" << std::endl;
+                            //conflicting_options(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_desiredBrk0");
+                        }
+                    }
+                    if( found_nColorBreaks == 4 ){
+                        option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_desiredBrk0");
+                        found_desiredBrk0 = vm["turbulence_kml_output_desiredBrk0"].as<double>();
+                    }
+                    option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_desiredBrk1");
+                    option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_desiredBrk2");
+                    option_dependency(vm, "override_turbulence_kml_output_colorBreaks", "turbulence_kml_output_desiredBrk3");
+                    windsim.setTurbKmlColorRampBreakVals( i_, found_nColorBreaks, found_desiredBrk0, vm["turbulence_kml_output_desiredBrk1"].as<double>(), vm["turbulence_kml_output_desiredBrk2"].as<double>(), vm["turbulence_kml_output_desiredBrk3"].as<double>() );
                 }
             }
             #endif //NINJAFOAM

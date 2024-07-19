@@ -288,6 +288,7 @@ public:
     void set_writeTurbulenceFlag(bool flag);
     void set_keepTurbKmlTiffFlag(bool flag);
     void set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units );
+    void set_turbKmlColorRampBreakVals( int nColorBreaks, double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 );
 #endif
 
     void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);

@@ -3456,6 +3456,10 @@ void NinjaFoam::WriteOutputFiles()
                             //            AsciiGrid<double>::order0));
                             //
                             //ninjaKmlFiles.setTurbulenceFlag("true");
+                            //if(input.override_turbKml_colorBreakVals) {
+                            //    turbTempGrid->set_ascii2png_colorRamp_breakVals( input.turbKml_colorRamp_nColorBreaks, input.turbKml_colorRamp_desiredBrk0,
+                            //                 input.turbKml_colorRamp_desiredBrk1, input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
+                            //}
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
@@ -3463,6 +3467,10 @@ void NinjaFoam::WriteOutputFiles()
                                         AsciiGrid<double>::order0));
                             
                             ninjaKmlFiles.setColMaxFlag("true");
+                            if(input.override_turbKml_colorBreakVals) {
+                                colMaxTempGrid->set_ascii2png_colorRamp_breakVals( input.turbKml_colorRamp_nColorBreaks, input.turbKml_colorRamp_desiredBrk0,
+                                               input.turbKml_colorRamp_desiredBrk1, input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
+                            }
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                             
                             //// for debugging

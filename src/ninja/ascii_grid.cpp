@@ -43,6 +43,8 @@ AsciiGrid<T>::AsciiGrid()
     yllCorner = 0;
     sortedData = 0;
 
+    set_ascii2png_colorRamp_defaultVals();
+
     #ifdef ASCII_GRID_DEBUG
         std::cout << "Created AsciiGrid using AsciiGrid()" << std::endl;
     #endif
@@ -61,6 +63,8 @@ AsciiGrid<T>::AsciiGrid(const std::string fileName)
 {
     prjString = "";
     sortedData = 0;
+
+    set_ascii2png_colorRamp_defaultVals();
 
     read_Grid(fileName);
 
@@ -82,6 +86,13 @@ AsciiGrid<T>::AsciiGrid(const AsciiGrid &A)
     xllCorner = A.xllCorner;
     yllCorner = A.yllCorner;
     prjString = A.prjString;
+
+    ascii2png_colorRampType = A.ascii2png_colorRampType;
+    ascii2png_nColorBreaks = A.ascii2png_nColorBreaks;
+    ascii2png_desiredBrk0 = A.ascii2png_desiredBrk0;
+    ascii2png_desiredBrk1 = A.ascii2png_desiredBrk1;
+    ascii2png_desiredBrk2 = A.ascii2png_desiredBrk2;
+    ascii2png_desiredBrk3 = A.ascii2png_desiredBrk3;
 
     if(A.sortedData != NULL)
     {
@@ -117,6 +128,8 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
     cellSize = cS;
     xllCorner = xL;
     yllCorner = yL;
+
+    set_ascii2png_colorRamp_defaultVals();
 }
 
 /**
@@ -143,12 +156,18 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
     xllCorner = xL;
     yllCorner = yL;
     data = a;
+
+    set_ascii2png_colorRamp_defaultVals();
 }
 
 template <class T>
 AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band) 
 :data(poDS->GetRasterYSize(), poDS->GetRasterXSize(), poDS->GetRasterBand(band)->GetNoDataValue())
 {
+
+    set_ascii2png_colorRamp_defaultVals();
+
+
     sortedData = nullptr;
 
     int nXSize = poDS->GetRasterXSize();
@@ -1611,7 +1630,80 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     return hDS;
 }
-    
+
+
+/**
+ * set default values for ascii2png() colorRamp methods
+ * 
+ * ascii2png_colorRampType is set to "minToMax"
+ * ascii2png_nColorBreaks is set to 4
+ * 
+ * ascii2png_desiredBrk0 to 3 are used when ascii2png_colorRampType is set to "specificVals", to override the colorRamp with specific color breaks,
+ * the overriding is done by calling set_ascii2png_colorRamp_breakVals(), but the ascii2png_desiredBrk vals still require starting values
+ * the default ascii2png_desiredBrk vals are set as if ascii2png_nColorBreaks were set to 3, where ascii2png_desiredBrk0 would be ignored
+ * 
+ * ascii2png_desiredBrk0 is set to 0.0
+ * ascii2png_desiredBrk1 is set to 0.0
+ * ascii2png_desiredBrk2 is set to 2.0
+ * ascii2png_desiredBrk3 is set to 4.0
+ * 
+ */
+template <class T>
+void AsciiGrid<T>::set_ascii2png_colorRamp_defaultVals()
+{
+    ascii2png_colorRampType = "minToMax";
+    ascii2png_nColorBreaks = 4;
+    ascii2png_desiredBrk0 = 0.0;
+    ascii2png_desiredBrk1 = 0.0;
+    ascii2png_desiredBrk2 = 2.0;
+    ascii2png_desiredBrk3 = 4.0;
+}
+
+/**
+ * function for overriding default ascii2png() colorRamp break values, usually called by inputs
+ * sets ascii2png_colorRampType to "specificVals", overriding ascii2png_colorRampType "minToMax"
+ * uses nColorBreaks to determine whether to use all 4 desiredBrk vals, or just 3 ignoring desiredBrk0
+ * desiredBrk vals are expected to be in increasing order
+ * 
+ * @param nColorBreaks is the number of the desiredBrk vals to use, 3 or 4
+ * @param desiredBrk0 is the min color ramp break value to use when nColorBreaks is 4. If nColorBreaks is 3 then desiredBrk1 
+ *                       is the min color ramp break value to use and desiredBrk0 is ignored
+ * @param desiredBrk1 is the second color ramp break value to use, unless nColorBreaks is 3, then desiredBrk1 is the min color ramp break value to use
+ * @param desiredBrk2 is the third color ramp break value to use, unless nColorBreaks is 3, then desiredBrk1 is the middle color ramp break value to use
+ * @param desiredBrk3 is the max color ramp break value to use
+ * 
+ */
+template <class T>
+void AsciiGrid<T>::set_ascii2png_colorRamp_breakVals( int nColorBreaks, double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 )
+{
+    if ( nColorBreaks != 3 && nColorBreaks != 4 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input nColorBreaks %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
+    }
+
+    if ( nColorBreaks == 4 )
+    {
+        if ( desiredBrk1 <= desiredBrk0 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+        }
+    }
+    if ( desiredBrk2 <= desiredBrk1 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+    }
+    if ( desiredBrk3 <= desiredBrk2 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+    }
+
+    ascii2png_colorRampType = "specificVals";
+    ascii2png_nColorBreaks = nColorBreaks;
+    ascii2png_desiredBrk0 = desiredBrk0;
+    ascii2png_desiredBrk1 = desiredBrk1;
+    ascii2png_desiredBrk2 = desiredBrk2;
+    ascii2png_desiredBrk3 = desiredBrk3;
+}
 
 /**
  * Create a png for an ascii grid.
@@ -1632,30 +1724,33 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              bool writeLegend, bool keepTiff)
 {
 
-    // set color ramp type and number of color breaks to use
-    //std::string colorRampType = "minToMax";  // original
-    std::string colorRampType = "specificVals";  // override with default or own specific values
+    // ascii2png_ part of the variable names just to help keep track of them within the ascii class, 
+    //  drop that part of the varnames for the function
+    std::string colorRampType = ascii2png_colorRampType;
+    int nColorBreaks = ascii2png_nColorBreaks;
+    double desiredBrk0 = ascii2png_desiredBrk0;
+    double desiredBrk1 = ascii2png_desiredBrk1;
+    double desiredBrk2 = ascii2png_desiredBrk2;
+    double desiredBrk3 = ascii2png_desiredBrk3;
 
-    // tend to use 4 color breaks for colorRampType "minToMax" and 3 color breaks for colorRampType "specificVals"
+
+    // some manual overriding color ramp values if needed for debugging
+
+    // set color ramp type and number of color breaks to use
+    ////colorRampType = "minToMax";  // original
+    //colorRampType = "specificVals";  // override with default or own specific values
+
+    // tend to use 4 color breaks for colorRampType "minToMax" and 3 or 4 color breaks for colorRampType "specificVals"
     // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
     // nvm, forcing it so that colorRampType "minToMax" always expects 4 color breaks
-    int nColorBreaks = 4;
-    //int nColorBreaks = 3;
-
-
-    // default desiredBrk values, note these are ignored unless colorRampType is set to "specificVals"
-    // the default nColorBreaks for colorRampType "specificVals" is expected to be 3, which ignores desiredBrk0
-    double desiredBrk0 = 0.0;
-    double desiredBrk1 = 0.0;
-    double desiredBrk2 = 2.0;
-    double desiredBrk3 = 4.0;
-
+    //nColorBreaks = 4;
+    ////nColorBreaks = 3;
 
     // set manual values to override the default desiredBrk values
     // make sure to specify values correctly for 3 vs 4 nColorBreaks
 
-    double dataMinVal = get_minValue();
-    double dataMaxVal = get_maxValue();
+    //double dataMinVal = get_minValue();
+    //double dataMaxVal = get_maxValue();
 
     /*desiredBrk0 = 3.5;
     desiredBrk1 = 4.5;
@@ -1674,19 +1769,19 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //desiredBrk3 = 10.0;*/
 
     // for testing, override desiredBrk values to replicate min to max with 4 color breaks
-    //desiredBrk0 = dataMinVal;
-    //desiredBrk3 = dataMaxVal;
-    //desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
-    //desiredBrk2 = (desiredBrk3+desiredBrk1)/2;
+    /*desiredBrk0 = dataMinVal;
+    desiredBrk3 = dataMaxVal;
+    desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
+    desiredBrk2 = (desiredBrk3+desiredBrk1)/2;*/
 
     // for testing, override desiredBrk values to do a from min to max using just the last 3 colors,
     //  with a dummy diredBrk0 value so that plotting comes out the same for 3 and 4 color breaks
     // to do this, set it to be the regular min to max ranges and halfway between, after one smaller value, probably 0.0
     // useful for troubleshooting 3 vs 4 color break methods
-    desiredBrk0 = 0.0;
+    /*desiredBrk0 = 0.0;
     desiredBrk1 = dataMinVal;
     desiredBrk2 = (dataMinVal+dataMaxVal)/2;
-    desiredBrk3 = dataMaxVal;
+    desiredBrk3 = dataMaxVal;*/
 
 
     if ( colorRampType != "minToMax" && colorRampType != "specificVals" )
@@ -1713,20 +1808,20 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     if ( colorRampType != "specificVals" )
     {
 
-        if ( nColorBreaks == 3 )
+        if ( nColorBreaks == 4 )
         {
-            if ( desiredBrk1 < desiredBrk0 )
+            if ( desiredBrk1 <= desiredBrk0 )
             {
-                throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 < desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+                throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
             }
         }
-        if ( desiredBrk2 < desiredBrk1 )
+        if ( desiredBrk2 <= desiredBrk1 )
         {
-            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 < desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
         }
-        if ( desiredBrk3 < desiredBrk2 )
+        if ( desiredBrk3 <= desiredBrk2 )
         {
-            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 < desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
         }
 
     }
@@ -2248,6 +2343,13 @@ AsciiGrid<T> &AsciiGrid<T>::operator=(const AsciiGrid &A)
         xllCorner = A.xllCorner;
         yllCorner = A.yllCorner;
         prjString = A.prjString;
+
+        ascii2png_colorRampType = A.ascii2png_colorRampType;
+        ascii2png_nColorBreaks = A.ascii2png_nColorBreaks;
+        ascii2png_desiredBrk0 = A.ascii2png_desiredBrk0;
+        ascii2png_desiredBrk1 = A.ascii2png_desiredBrk1;
+        ascii2png_desiredBrk2 = A.ascii2png_desiredBrk2;
+        ascii2png_desiredBrk3 = A.ascii2png_desiredBrk3;
 
         if(A.sortedData == NULL)
         {
