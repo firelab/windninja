@@ -30,8 +30,8 @@
 #include "mainWindow.h"
 #include <vector>
 #include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include "cpl_vsi.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
@@ -1669,10 +1669,13 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
+  CaseFile casefile;  
+      std::string getdir = tree->solve->outputDirectory().toStdString();
+      std::string inputpath = getdir + "/config.cfg";
+   
+      std::ofstream outFile(inputpath);
 
- std::ofstream outFile("config.cfg");
 
-    // Check if the file was opened successfully
     if (!outFile) {
         std::cerr << "Error: Could not open the file for writing!" << std::endl;
         return 1;
@@ -1688,6 +1691,8 @@ int mainWindow::solve()
     //dem file
     std::string demFile = inputFileName.toStdString();
         outFile << "--elevation_file " + demFile;
+  
+
 
   
 #ifdef NINJAFOAM
@@ -1707,7 +1712,6 @@ int mainWindow::solve()
         vegetation = WindNinjaInputs::trees;
       outFile << "--vegetation " + vegetation;
     }
-
     //mesh
     int meshIndex = tree->surface->meshResComboBox->currentIndex();
     Mesh::eMeshChoice meshChoice;
@@ -1728,17 +1732,21 @@ int mainWindow::solve()
     else
         meshUnits = lengthUnits::meters;
     }
-        outFile << "--meshchoice " + meshChoice;
-         outFile << "--mesh_resolution " + std::to_string(meshRes);
 
-         outFile << "--units_mesh_resolution " + meshUnits;
-         
-          std::string zipFilePath = "example.zip";
+        ///outFile << "--meshchoice " + meshChoice;f
+       // outFile << "--mesh_resolution " + std::to_string(meshRes);
 
-         outFile.close(); 
-
-         addFileToZip(zipFilePath, "config.cfg", "config.cfg"); 
-         
+        //outFile << "--units_mesh_resolution " + meshUnits;
+      
+        std::string getfileName = casefile.parse("file", inputFileName.toStdString()); 
+        std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
+          casefile.setdir(getdir); 
+        casefile.setzip(zipFilePath); 
+        outFile.close(); 
+        
+        casefile.addFileToZip(zipFilePath, getdir, getfileName, inputFileName.toStdString()); 
+        casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
+        casefile.deleteFileFromPath(getdir, "config.cfg"); 
 
 #ifdef NINJAFOAM
     WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
@@ -1782,17 +1790,17 @@ int mainWindow::solve()
     std::string timeZone = temp.toString().toStdString();
 
 
-    outFile << "--time_zone " + timeZone;
+    //outFile << "--time_zone " + timeZone;
 
     //diurnal
     bool useDiurnal = tree->diurnal->diurnalGroupBox->isChecked();
 
-    outFile << "--diurnal_winds " + useDiurnal;
+   // outFile << "--diurnal_winds " + useDiurnal;
 
     //stability
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
     
-    outFile << "--non_neutral_stability " + useStability;
+   // outFile << "--non_neutral_stability " + useStability;
     //initialization method
     WindNinjaInputs::eInitializationMethod initMethod;
     if( tree->wind->windGroupBox->isChecked() )

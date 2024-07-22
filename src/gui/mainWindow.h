@@ -185,7 +185,6 @@ class mainWindow : public QMainWindow
   bool getLatLon();
  
   void test();
-  void addFileToZip(const std::string& zipFilePath, const std::string& fileToAdd, const std::string& zipEntryName);
   int solve();
   void cancelSolve();
   int countRuns();

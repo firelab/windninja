@@ -28,12 +28,47 @@
  *****************************************************************************/
 
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 #include "cpl_vsi.h"
 #include "gdal.h"
+#include <cpl_conv.h>
+#include <cpl_string.h>
+#include <cpl_error.h> 
+#include <ctime>
+#include "cpl_minizip_zip.h"
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/date_time/local_time/local_time_io.hpp>
+#include <chrono>
+#include <mutex>
+#include "cpl_error.h"
 
 class CaseFile {
+
+private:
+    static std::string zipfilename;
+
+   static std::string directory;
+
 public:
-    void addFileToZip(const std::string& zipFilePath, const std::string& fileToAdd, const std::string& zipEntryName);
+    CaseFile(); 
+
+void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath);
     void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
+    bool lookforzip(const std::string& zipFilePath, const std::string& directory); 
+    bool isCfgFile(const std::string& filePath); 
+    bool isVTKFile(const std::string& filePath); 
+
+std::string parse(const std::string& type, const std::string& path) ;
+std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime); 
+bool lookfordate(const std::string& date) ;
+
+std::string getTime(); 
+std::string getdir() ; 
+   void setdir(std::string dir); 
+
+   std::string getzip () ; 
+   void setzip(std::string zip); 
+
+
 };
