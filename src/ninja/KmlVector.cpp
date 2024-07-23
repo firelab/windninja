@@ -1209,30 +1209,10 @@ bool KmlVector::writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut)
 
 bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 {
-	double xPoint, yPoint;
-	double xCenter, yCenter;
-	double left_x, right_x, lower_y, upper_y;
-	double u = 0;
-	double cSize;
-	int nR;
-	int nC;
-	double upper, lower, upper_mid, lower_mid, mid;
-	std::string icon;
-
 	turbulence_png = "turbulence.png";
 
-	cSize = turbulence.get_cellSize();
-	nR = turbulence.get_nRows();
-	nC = turbulence.get_nCols();
-
-	lower = turbulence.get_minValue();
-	upper = turbulence.get_maxValue();
-	lower_mid = lower + (turbulence.get_maxValue() - turbulence.get_minValue())/4;
-	upper_mid = upper - (turbulence.get_maxValue() - turbulence.get_minValue())/4;
-	mid = upper_mid - (turbulence.get_maxValue() - turbulence.get_minValue())/4;
-
-    //---------------make single png for overlay------------------
-    std::string outFilename = "turbulence.png";
+	//---------------make single png for overlay------------------
+    std::string outFilename = turbulence_png;
     std::string scalarLegendFilename = "turbulence_legend";
     std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "";
@@ -1258,16 +1238,10 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 
     turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
-    //turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    //left_x = xCenter - cSize/2; //west
-    //lower_y = yCenter - cSize/2; //south
-    //turbulence.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    //right_x = xCenter + cSize/2; //east
-    //upper_y = yCenter + cSize/2;  //north
-    left_x = turbulence.get_xllCorner();
-    lower_y = turbulence.get_yllCorner();
-    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
-    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double left_x = turbulence.get_xllCorner();
+    double lower_y = turbulence.get_yllCorner();
+    double right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    double upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
     double xll = left_x;
     double yll = lower_y;
     double xul = left_x;
@@ -1277,9 +1251,6 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
     double xlr = right_x;
     double ylr = lower_y;
 
-    //coordTransform->Transform(1, &right_x, &upper_y);
-    //coordTransform->Transform(1, &left_x, &lower_y);
-    //coordTransform->Transform(1, &xCenter, &yCenter);
     coordTransform->Transform(1, &xll, &yll);
     coordTransform->Transform(1, &xul, &yul);
     coordTransform->Transform(1, &xur, &yur);
@@ -1316,10 +1287,6 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
     VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
     VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
     VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
@@ -1330,7 +1297,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
 
 	//---add legend----------------------------------------------
-        turbulence_legend = "./turbulence_legend";
+        turbulence_legend = CPLSPrintf("./%s",scalarLegendFilename.c_str());
 	//int pos;
 	//std::string shortName;
 	pos = turbulence_legend.find_last_of('\\');
@@ -1358,30 +1325,10 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 
 bool KmlVector::writeColMax(VSILFILE *fileOut)
 {
-	double xPoint, yPoint;
-	double xCenter, yCenter;
-	double left_x, right_x, lower_y, upper_y;
-	double u = 0;
-	double cSize;
-	int nR;
-	int nC;
-	double upper, lower, upper_mid, lower_mid, mid;
-	std::string icon;
-
 	colMax_png = CPLSPrintf("colMax_%ld%sColHeightAGL.png", (long) (colMax_colHeightAGL+0.5), lengthUnits::getString(colMax_colHeightAGL_units).c_str());
 
-	cSize = colMax.get_cellSize();
-	nR = colMax.get_nRows();
-	nC = colMax.get_nCols();
-
-	lower = colMax.get_minValue();
-	upper = colMax.get_maxValue();
-	lower_mid = lower + (colMax.get_maxValue() - colMax.get_minValue())/4;
-	upper_mid = upper - (colMax.get_maxValue() - colMax.get_minValue())/4;
-	mid = upper_mid - (colMax.get_maxValue() - colMax.get_minValue())/4;
-
-    //---------------make single png for overlay------------------
-    std::string outFilename = CPLSPrintf("colMax_%ld%sColHeightAGL.png", (long) (colMax_colHeightAGL+0.5), lengthUnits::getString(colMax_colHeightAGL_units).c_str());
+	//---------------make single png for overlay------------------
+    std::string outFilename = colMax_png;
     std::string scalarLegendFilename = "colMax_legend";
     std::string legendTitle = "Speed Fluctuation";
     std::string legendUnits = "";
@@ -1407,16 +1354,10 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 
     colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
-    //colMax.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    //left_x = xCenter - cSize/2; //west
-    //lower_y = yCenter - cSize/2; //south
-    //colMax.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    //right_x = xCenter + cSize/2; //east
-    //upper_y = yCenter + cSize/2;  //north
-    left_x = colMax.get_xllCorner();
-    lower_y = colMax.get_yllCorner();
-    right_x = colMax.get_xDimension()+colMax.get_xllCorner();
-    upper_y = colMax.get_yDimension()+colMax.get_yllCorner();
+    double left_x = colMax.get_xllCorner();
+    double lower_y = colMax.get_yllCorner();
+    double right_x = colMax.get_xDimension()+colMax.get_xllCorner();
+    double upper_y = colMax.get_yDimension()+colMax.get_yllCorner();
     double xll = left_x;
     double yll = lower_y;
     double xul = left_x;
@@ -1426,9 +1367,6 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
     double xlr = right_x;
     double ylr = lower_y;
 
-    //coordTransform->Transform(1, &right_x, &upper_y);
-    //coordTransform->Transform(1, &left_x, &lower_y);
-    //coordTransform->Transform(1, &xCenter, &yCenter);
     coordTransform->Transform(1, &xll, &yll);
     coordTransform->Transform(1, &xul, &yul);
     coordTransform->Transform(1, &xur, &yur);
@@ -1465,10 +1403,6 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
     VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
     VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
     VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
@@ -1479,7 +1413,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
 
 	//---add legend----------------------------------------------
-        colMax_legend = "./colMax_legend";
+        colMax_legend = CPLSPrintf("./%s",scalarLegendFilename.c_str());
 	//int pos;
 	//std::string shortName;
 	pos = colMax_legend.find_last_of('\\');
@@ -1508,30 +1442,10 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 #ifdef FRICTION_VELOCITY
 bool KmlVector::writeUstar(FILE *fileOut)
 {
-	double xPoint, yPoint;
-	double xCenter, yCenter;
-	double left_x, right_x, lower_y, upper_y;
-	double u = 0;
-	double cSize;
-	int nR;
-	int nC;
-	double upper, lower, upper_mid, lower_mid, mid;
-	std::string icon;
-
 	ustar_png = "ustar.png";
 
-	cSize = ustar.get_cellSize();
-	nR = ustar.get_nRows();
-	nC = ustar.get_nCols();
-
-	lower = ustar.get_minValue();
-	upper = ustar.get_maxValue();
-	lower_mid = lower + (ustar.get_maxValue() - ustar.get_minValue())/4;
-	upper_mid = upper - (ustar.get_maxValue() - ustar.get_minValue())/4;
-	mid = upper_mid - (ustar.get_maxValue() - ustar.get_minValue())/4;
-
-    //---------------make single png for overlay------------------
-    std::string outFilename = "ustar.png";
+	//---------------make single png for overlay------------------
+    std::string outFilename = ustar_png;
     std::string scalarLegendFilename = "ustar_legend";
     std::string legendTitle = "Friction Velocity";
     std::string legendUnits = "(m/s)";
@@ -1540,16 +1454,10 @@ bool KmlVector::writeUstar(FILE *fileOut)
 
     ustar.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
-    //ustar.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    //left_x = xCenter - cSize/2; //west
-    //lower_y = yCenter - cSize/2; //south
-    //ustar.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    //right_x = xCenter + cSize/2; //east
-    //upper_y = yCenter + cSize/2;  //north
-    left_x = turbulence.get_xllCorner();
-    lower_y = turbulence.get_yllCorner();
-    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
-    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double left_x = turbulence.get_xllCorner();
+    double lower_y = turbulence.get_yllCorner();
+    double right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    double upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
     double xll = left_x;
     double yll = lower_y;
     double xul = left_x;
@@ -1559,9 +1467,6 @@ bool KmlVector::writeUstar(FILE *fileOut)
     double xlr = right_x;
     double ylr = lower_y;
 
-    //coordTransform->Transform(1, &right_x, &upper_y);
-    //coordTransform->Transform(1, &left_x, &lower_y);
-    //coordTransform->Transform(1, &xCenter, &yCenter);
     coordTransform->Transform(1, &xll, &yll);
     coordTransform->Transform(1, &xul, &yul);
     coordTransform->Transform(1, &xur, &yur);
@@ -1598,10 +1503,6 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
     VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
     VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
     VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
@@ -1612,7 +1513,7 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
 
 	//---add legend----------------------------------------------
-    ustar_legend = "./ustar_legend";
+    ustar_legend = CPLSPrintf("./%s",scalarLegendFilename.c_str());
 	//int pos;
 	//std::string shortName;
 	pos = ustar_legend.find_last_of('\\');
@@ -1642,48 +1543,22 @@ bool KmlVector::writeUstar(FILE *fileOut)
 #ifdef EMISSIONS
 bool KmlVector::writeDust(FILE *fileOut)
 {
-	double xPoint, yPoint;
-	double xCenter, yCenter;
-	double left_x, right_x, lower_y, upper_y;
-	double u = 0;
-	double cSize;
-	int nR;
-	int nC;
-	double upper, lower, upper_mid, lower_mid, mid;
-	std::string icon;
-
-	cSize = dust.get_cellSize();
-	nR = dust.get_nRows();
-	nC = dust.get_nCols();
-
-	lower = dust.get_minValue();
-	upper = dust.get_maxValue();
-	lower_mid = lower + (dust.get_maxValue() - dust.get_minValue())/4;
-	upper_mid = upper - (dust.get_maxValue() - dust.get_minValue())/4;
-	mid = upper_mid - (dust.get_maxValue() - dust.get_minValue())/4;
+	dust_png = "dust.png";
 
     //---------------make png for overlay------------------
-    std::string outFilename = "dust.png";
+    std::string outFilename = dust_png;
     std::string scalarLegendFilename = "dust_legend";
     std::string legendTitle = "PM10";
     std::string legendUnits = "(mg/m2/s)";
     bool writeLegend = true;
     bool keepTiff = FALSE;
-    
+
     dust.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
-    dust_png = "dust.png";
-
-    //dust.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    //left_x = xCenter - cSize/2; //west
-    //lower_y = yCenter - cSize/2; //south
-    //dust.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    //right_x = xCenter + cSize/2; //east
-    //upper_y = yCenter + cSize/2;  //north
-    left_x = turbulence.get_xllCorner();
-    lower_y = turbulence.get_yllCorner();
-    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
-    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double left_x = turbulence.get_xllCorner();
+    double lower_y = turbulence.get_yllCorner();
+    double right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    double upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
     double xll = left_x;
     double yll = lower_y;
     double xul = left_x;
@@ -1693,9 +1568,6 @@ bool KmlVector::writeDust(FILE *fileOut)
     double xlr = right_x;
     double ylr = lower_y;
 
-    //coordTransform->Transform(1, &right_x, &upper_y);
-    //coordTransform->Transform(1, &left_x, &lower_y);
-    //coordTransform->Transform(1, &xCenter, &yCenter);
     coordTransform->Transform(1, &xll, &yll);
     coordTransform->Transform(1, &xul, &yul);
     coordTransform->Transform(1, &xur, &yur);
@@ -1731,10 +1603,6 @@ bool KmlVector::writeDust(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
     VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
     VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
     VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
@@ -1745,7 +1613,8 @@ bool KmlVector::writeDust(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n</GroundOverlay>\n");
 
 	//---add legend----------------------------------------------
-    dust_legend = "dust_legend";
+    dust_legend = scalarLegendFilename;
+    //dust_legend = CPLSPrintf("./%s",scalarLegendFilename.c_str());
 	pos = dust_legend.find_last_of('\\');
 	if(pos == -1)
 	  pos = dust_legend.find_last_of('/');
