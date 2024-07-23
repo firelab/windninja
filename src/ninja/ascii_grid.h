@@ -212,7 +212,9 @@ public:
     double ascii2png_desiredBrk2;
     double ascii2png_desiredBrk3;
     void set_ascii2png_colorRamp_defaultVals();
-    void set_ascii2png_colorRamp_breakVals( int nColorBreaks, double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 );
+    void set_ascii2png_colorRampType( std::string colorRampType );
+    void set_ascii2png_nColorBreaks( int nColorBreaks );
+    void set_ascii2png_colorBreakVals( double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 );
     void ascii2png(std::string outFilename,
                    std::string legendTitle,
                    std::string legendUnits,

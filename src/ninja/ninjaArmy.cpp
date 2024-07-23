@@ -1248,15 +1248,48 @@ int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSa
    }
    return retval;
 }
-int ninjaArmy::setTurbKmlColorRampBreakVals( const int nIndex, const int nColorBreaks, const double desiredBrk0, const double desiredBrk1,
-                                             const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL )
+int ninjaArmy::setTurbKml_colorRampType( const int nIndex, const std::string colorRampType, char ** papszOptions=NULL )
 {
    int retval = NINJA_E_INVALID;
    IF_VALID_INDEX( nIndex, ninjas )
    {
        try
        {
-           ninjas[ nIndex ]->set_turbKmlColorRampBreakVals( nColorBreaks, desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 );
+           ninjas[ nIndex ]->set_turbKml_colorRampType( colorRampType );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setTurbKml_nColorBreaks( const int nIndex, const int nColorBreaks, char ** papszOptions=NULL )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       try
+       {
+           ninjas[ nIndex ]->set_turbKml_nColorBreaks( nColorBreaks );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setTurbKml_colorBreakVals( const int nIndex, const double desiredBrk0, const double desiredBrk1, const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       try
+       {
+           ninjas[ nIndex ]->set_turbKml_colorBreakVals( desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 );
            retval = NINJA_SUCCESS;
        }
        catch( std::logic_error &e )
