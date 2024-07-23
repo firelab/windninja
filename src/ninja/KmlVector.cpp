@@ -1258,16 +1258,38 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 
     turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
-    turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    left_x = xCenter - cSize/2; //west
-    lower_y = yCenter - cSize/2; //south
-    turbulence.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    right_x = xCenter + cSize/2; //east
-    upper_y = yCenter + cSize/2;  //north
+    //turbulence.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    //left_x = xCenter - cSize/2; //west
+    //lower_y = yCenter - cSize/2; //south
+    //turbulence.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    //right_x = xCenter + cSize/2; //east
+    //upper_y = yCenter + cSize/2;  //north
+    left_x = turbulence.get_xllCorner();
+    lower_y = turbulence.get_yllCorner();
+    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double xll = left_x;
+    double yll = lower_y;
+    double xul = left_x;
+    double yul = upper_y;
+    double xur = right_x;
+    double yur = upper_y;
+    double xlr = right_x;
+    double ylr = lower_y;
 
-	coordTransform->Transform(1, &right_x, &upper_y);
-	coordTransform->Transform(1, &left_x, &lower_y);
-	coordTransform->Transform(1, &xCenter, &yCenter);
+    //coordTransform->Transform(1, &right_x, &upper_y);
+    //coordTransform->Transform(1, &left_x, &lower_y);
+    //coordTransform->Transform(1, &xCenter, &yCenter);
+    coordTransform->Transform(1, &xll, &yll);
+    coordTransform->Transform(1, &xul, &yul);
+    coordTransform->Transform(1, &xur, &yur);
+    coordTransform->Transform(1, &xlr, &ylr);
+
+    double north = std::max(yul,yur);
+    double south = std::min(yll,ylr);
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    double east = std::max(xlr,xur);
+    double west = std::min(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1294,10 +1316,14 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
+    VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
+    VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
+    VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", west);
     VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
 	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
 
@@ -1381,16 +1407,38 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 
     colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
-    colMax.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    left_x = xCenter - cSize/2; //west
-    lower_y = yCenter - cSize/2; //south
-    colMax.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    right_x = xCenter + cSize/2; //east
-    upper_y = yCenter + cSize/2;  //north
+    //colMax.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    //left_x = xCenter - cSize/2; //west
+    //lower_y = yCenter - cSize/2; //south
+    //colMax.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    //right_x = xCenter + cSize/2; //east
+    //upper_y = yCenter + cSize/2;  //north
+    left_x = colMax.get_xllCorner();
+    lower_y = colMax.get_yllCorner();
+    right_x = colMax.get_xDimension()+colMax.get_xllCorner();
+    upper_y = colMax.get_yDimension()+colMax.get_yllCorner();
+    double xll = left_x;
+    double yll = lower_y;
+    double xul = left_x;
+    double yul = upper_y;
+    double xur = right_x;
+    double yur = upper_y;
+    double xlr = right_x;
+    double ylr = lower_y;
 
-	coordTransform->Transform(1, &right_x, &upper_y);
-	coordTransform->Transform(1, &left_x, &lower_y);
-	coordTransform->Transform(1, &xCenter, &yCenter);
+    //coordTransform->Transform(1, &right_x, &upper_y);
+    //coordTransform->Transform(1, &left_x, &lower_y);
+    //coordTransform->Transform(1, &xCenter, &yCenter);
+    coordTransform->Transform(1, &xll, &yll);
+    coordTransform->Transform(1, &xul, &yul);
+    coordTransform->Transform(1, &xur, &yur);
+    coordTransform->Transform(1, &xlr, &ylr);
+
+    double north = std::max(yul,yur);
+    double south = std::min(yll,ylr);
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    double east = std::max(xlr,xur);
+    double west = std::min(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1417,10 +1465,14 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
+    VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
+    VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
+    VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", west);
     VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
 	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
 
@@ -1488,16 +1540,38 @@ bool KmlVector::writeUstar(FILE *fileOut)
 
     ustar.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
-    ustar.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    left_x = xCenter - cSize/2; //west
-    lower_y = yCenter - cSize/2; //south
-    ustar.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    right_x = xCenter + cSize/2; //east
-    upper_y = yCenter + cSize/2;  //north
+    //ustar.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    //left_x = xCenter - cSize/2; //west
+    //lower_y = yCenter - cSize/2; //south
+    //ustar.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    //right_x = xCenter + cSize/2; //east
+    //upper_y = yCenter + cSize/2;  //north
+    left_x = turbulence.get_xllCorner();
+    lower_y = turbulence.get_yllCorner();
+    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double xll = left_x;
+    double yll = lower_y;
+    double xul = left_x;
+    double yul = upper_y;
+    double xur = right_x;
+    double yur = upper_y;
+    double xlr = right_x;
+    double ylr = lower_y;
 
-	coordTransform->Transform(1, &right_x, &upper_y);
-	coordTransform->Transform(1, &left_x, &lower_y);
-	coordTransform->Transform(1, &xCenter, &yCenter);
+    //coordTransform->Transform(1, &right_x, &upper_y);
+    //coordTransform->Transform(1, &left_x, &lower_y);
+    //coordTransform->Transform(1, &xCenter, &yCenter);
+    coordTransform->Transform(1, &xll, &yll);
+    coordTransform->Transform(1, &xul, &yul);
+    coordTransform->Transform(1, &xur, &yur);
+    coordTransform->Transform(1, &xlr, &ylr);
+
+    double north = std::max(yul,yur);
+    double south = std::min(yll,ylr);
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    double east = std::max(xlr,xur);
+    double west = std::min(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1524,10 +1598,14 @@ bool KmlVector::writeUstar(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
+    VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
+    VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
+    VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", west);
     VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
 	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
 
@@ -1596,17 +1674,38 @@ bool KmlVector::writeDust(FILE *fileOut)
 
     dust_png = "dust.png";
 
-    dust.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
-    left_x = xCenter - cSize/2; //west
-    lower_y = yCenter - cSize/2; //south
-    dust.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
-    right_x = xCenter + cSize/2; //east
-    upper_y = yCenter + cSize/2;  //north
+    //dust.get_cellPosition(0, 0, &xCenter, &yCenter); //sw
+    //left_x = xCenter - cSize/2; //west
+    //lower_y = yCenter - cSize/2; //south
+    //dust.get_cellPosition(nR-1, nC-1, &xCenter, &yCenter); //ne
+    //right_x = xCenter + cSize/2; //east
+    //upper_y = yCenter + cSize/2;  //north
+    left_x = turbulence.get_xllCorner();
+    lower_y = turbulence.get_yllCorner();
+    right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
+    upper_y = turbulence.get_yDimension()+turbulence.get_yllCorner();
+    double xll = left_x;
+    double yll = lower_y;
+    double xul = left_x;
+    double yul = upper_y;
+    double xur = right_x;
+    double yur = upper_y;
+    double xlr = right_x;
+    double ylr = lower_y;
 
+    //coordTransform->Transform(1, &right_x, &upper_y);
+    //coordTransform->Transform(1, &left_x, &lower_y);
+    //coordTransform->Transform(1, &xCenter, &yCenter);
+    coordTransform->Transform(1, &xll, &yll);
+    coordTransform->Transform(1, &xul, &yul);
+    coordTransform->Transform(1, &xur, &yur);
+    coordTransform->Transform(1, &xlr, &ylr);
 
-	coordTransform->Transform(1, &right_x, &upper_y);
-	coordTransform->Transform(1, &left_x, &lower_y);
-	coordTransform->Transform(1, &xCenter, &yCenter);
+    double north = std::max(yul,yur);
+    double south = std::min(yll,ylr);
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    double east = std::max(xlr,xur);
+    double west = std::min(xll,xul);
 
 	std::string shortName;
 	int pos;
@@ -1632,10 +1731,14 @@ bool KmlVector::writeDust(FILE *fileOut)
 	VSIFPrintfL(fileOut, "\n\t</Icon>");
 
 	VSIFPrintfL(fileOut, "\n\t<LatLonBox>");
-	VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
-	VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
-	VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
-	VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", upper_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", lower_y);
+    //VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", right_x);
+    //VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", left_x);
+    VSIFPrintfL(fileOut, "\n\t\t<north>%.10lf</north>", north);
+    VSIFPrintfL(fileOut, "\n\t\t<south>%.10lf</south>", south);
+    VSIFPrintfL(fileOut, "\n\t\t<east>%.10lf</east>", east);
+    VSIFPrintfL(fileOut, "\n\t\t<west>%.10lf</west>", west);
     VSIFPrintfL(fileOut, "\n\t\t<rotation>0</rotation>");
 	VSIFPrintfL(fileOut, "\n\t</LatLonBox>");
 
