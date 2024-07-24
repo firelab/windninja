@@ -1258,9 +1258,14 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 
     double north = std::max(yul,yur);
     double south = std::min(yll,ylr);
-    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
     double east = std::max(xlr,xur);
     double west = std::min(xll,xul);
+    // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+    if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+        east = std::min(xlr,xur);
+    if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+        west = std::max(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1374,9 +1379,14 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
 
     double north = std::max(yul,yur);
     double south = std::min(yll,ylr);
-    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
     double east = std::max(xlr,xur);
     double west = std::min(xll,xul);
+    // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+    if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+        east = std::min(xlr,xur);
+    if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+        west = std::max(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1474,9 +1484,14 @@ bool KmlVector::writeUstar(FILE *fileOut)
 
     double north = std::max(yul,yur);
     double south = std::min(yll,ylr);
-    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
     double east = std::max(xlr,xur);
     double west = std::min(xll,xul);
+    // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+    if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+        east = std::min(xlr,xur);
+    if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+        west = std::max(xll,xul);
 
 	int pos;
 	std::string shortName;
@@ -1575,9 +1590,14 @@ bool KmlVector::writeDust(FILE *fileOut)
 
     double north = std::max(yul,yur);
     double south = std::min(yll,ylr);
-    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees, this will break for that case
+    // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
     double east = std::max(xlr,xur);
     double west = std::min(xll,xul);
+    // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+    if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+        east = std::min(xlr,xur);
+    if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+        west = std::max(xll,xul);
 
 	std::string shortName;
 	int pos;
