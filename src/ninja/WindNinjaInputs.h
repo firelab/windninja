@@ -304,6 +304,18 @@ public:
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
     bool writeTurbulence;
+    bool keepTurbKmlTiff;
+    double colMax_colHeightAGL;
+    lengthUnits::eLengthUnits colMax_colHeightAGL_units;
+    bool override_turbKml_colorRamp_colorRampType;
+    bool override_turbKml_colorRamp_nColorBreaks;
+    bool override_turbKml_colorRamp_colorBreakVals;
+    std::string turbKml_colorRamp_colorRampType;
+    int turbKml_colorRamp_nColorBreaks;
+    double turbKml_colorRamp_desiredBrk0;
+    double turbKml_colorRamp_desiredBrk1;
+    double turbKml_colorRamp_desiredBrk2;
+    double turbKml_colorRamp_desiredBrk3;
 #endif
 };
 

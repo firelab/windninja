@@ -372,6 +372,80 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the flag to keep the intermediate tiff as additional output when writing turbulence kml output
+    *
+    * \param nIndex index of a ninja
+    * \param  bool flag indicating if tiff output for turbulence kml output should be written
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setKeepTurbKmlTiffFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    
+    /**
+    * \brief Set the column max sampling height AGL for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param colMaxSampleHeightAGL desired column height AGL sample value
+    * \param units units of the colMaxSampleHeightAGL value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                  const lengthUnits::eLengthUnits units,
+                                  char ** papszOptions=NULL );
+    /**
+    * \brief Set the column max sampling height AGL for a ninja
+    * Set the column sampling height AGL for a ninja given a column sampling height AGL
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param colMaxSampleHeightAGL desired desired column height AGL sample value
+    * \param units string denoting which units colMaxSampleHeightAGL is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                  std::string units, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp type for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called BEFORE setTurbKml_nColorBreaks() and setTurbKml_colorBreakVals()
+    *
+    * \param nIndex index of a ninja
+    * \param colorRampType the type and style of color ramp to use for a turbulence kml, "minToMax", "minToMax_uniform", or "specificVals"
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_colorRampType( const int nIndex, const std::string colorRampType, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp nColorBreaks for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called AFTER setTurbKml_colorRampType() and BEFORE setTurbKml_colorBreakVals()
+    *
+    * \param nIndex index of a ninja
+    * \param nColorBreaks number of color ramp breaks to use
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_nColorBreaks( const int nIndex, const int nColorBreaks, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp break values for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called AFTER setTurbKml_colorRampType() and setTurbKml_nColorBreaks()
+    *
+    * \param nIndex index of a ninja
+    * \param desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 the desired color breaks, in increasing order, setting desiredBrk0 to an ignored value if nColorBreaks is set to 3
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_colorBreakVals( const int nIndex, const double desiredBrk0, const double desiredBrk1, const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL );
 
 #endif //NINJAFOAM
 

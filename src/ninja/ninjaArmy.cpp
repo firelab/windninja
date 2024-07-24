@@ -1218,6 +1218,87 @@ int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char *
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
 }
+int ninjaArmy::setKeepTurbKmlTiffFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_keepTurbKmlTiffFlag( flag ) );
+}
+int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                         const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_colMaxSampleHeightAGL( colMaxSampleHeightAGL, units ) );
+}
+int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                         std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_colMaxSampleHeightAGL( colMaxSampleHeightAGL, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setTurbKml_colorRampType( const int nIndex, const std::string colorRampType, char ** papszOptions=NULL )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       try
+       {
+           ninjas[ nIndex ]->set_turbKml_colorRampType( colorRampType );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setTurbKml_nColorBreaks( const int nIndex, const int nColorBreaks, char ** papszOptions=NULL )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       try
+       {
+           ninjas[ nIndex ]->set_turbKml_nColorBreaks( nColorBreaks );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setTurbKml_colorBreakVals( const int nIndex, const double desiredBrk0, const double desiredBrk1, const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       try
+       {
+           ninjas[ nIndex ]->set_turbKml_colorBreakVals( desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
 #endif
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods

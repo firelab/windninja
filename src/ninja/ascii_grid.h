@@ -203,11 +203,23 @@ public:
 
     GDALDatasetH ascii2GDAL();
 
+    std::string ascii2png_colorRampType;
+    int ascii2png_nColorBreaks;
+    // note these ascii2png_desiredBrk values are ignored unless colorRampType is set to "specificVals"
+    // when ascii2png_nColorBreaks is set to 3, ascii2png_desiredBrk0 is ignored and ascii2png_desiredBrk1 is used as the first value instead
+    double ascii2png_desiredBrk0;
+    double ascii2png_desiredBrk1;
+    double ascii2png_desiredBrk2;
+    double ascii2png_desiredBrk3;
+    void set_ascii2png_colorRamp_defaultVals();
+    void set_ascii2png_colorRampType( std::string colorRampType );
+    void set_ascii2png_nColorBreaks( int nColorBreaks );
+    void set_ascii2png_colorBreakVals( double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 );
     void ascii2png(std::string outFilename,
                    std::string legendTitle,
                    std::string legendUnits,
                    std::string scalarLegendFilename,
-                   bool writeLegend);
+                   bool writeLegend, bool keepTiff);
 
     void exportToTiff( std::string outFilename, tiffType type = tiffGray );
 
