@@ -1985,7 +1985,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
             } else if ( scaledDataGrid(i,j) > rangeMaxVal ){
                 scaledDataGrid(i,j) = idxRangeMax;
             } else {
-                int binIdx = std::round( (scaledDataGrid(i,j) - rangeMinVal)/binWidth ) + idxRangeMin;
+                // int( val + 0.5 ) here is to make int() behave like round()
+                int binIdx = int( (scaledDataGrid(i,j) - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
                 scaledDataGrid(i,j) = binIdx;
             }
         }
@@ -2077,8 +2078,9 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         brk0 = 0;
         brk1 = idxRangeMin;
         brk4 = idxRangeMax;
-        brk2 = std::round( (desiredBrk1 - rangeMinVal)/binWidth ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
-        brk3 = std::round( (desiredBrk2 - rangeMinVal)/binWidth ) + idxRangeMin;
+        // int( val + 0.5 ) here is to make int() behave like round()
+        brk2 = int( (desiredBrk1 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
+        brk3 = int( (desiredBrk2 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
     }
 
     poCT->SetColorEntry(brk0, &white);
