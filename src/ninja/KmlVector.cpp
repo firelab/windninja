@@ -1238,6 +1238,24 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
 
     turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
 
+    if ( keepTurbKmlTiffFlag == TRUE )
+    {
+        std::string base_outFilename = outFilename;
+        int pos = outFilename.find_last_of(".png");
+        if(pos != -1)
+	        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+        std::string ascii_tiff_filename = base_outFilename + "_latlon.tif";
+        
+        std::string kmz_baseFilename = kmzFile;
+        pos = kmzFile.find_last_of(".kmz");
+        if(pos != -1)
+	        kmz_baseFilename = kmzFile.substr(0, pos - 4 + 1);  // .kmz is 4 letters back, + 1 to go from digit Id to a count
+        std::string kmz_tiff_filename = kmz_baseFilename + "__" + base_outFilename + ".tif";
+        
+        //// now move the keepTiff file to the updated filename
+        CPLMoveFile( kmz_tiff_filename.c_str(), ascii_tiff_filename.c_str() );
+    }
+
     double left_x = turbulence.get_xllCorner();
     double lower_y = turbulence.get_yllCorner();
     double right_x = turbulence.get_xDimension()+turbulence.get_xllCorner();
@@ -1358,6 +1376,24 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
     bool writeLegend = TRUE;
 
     colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
+
+    if ( keepTurbKmlTiffFlag == TRUE )
+    {
+        std::string base_outFilename = outFilename;
+        int pos = outFilename.find_last_of(".png");
+        if(pos != -1)
+	        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+        std::string ascii_tiff_filename = base_outFilename + "_latlon.tif";
+        
+        std::string kmz_baseFilename = kmzFile;
+        pos = kmzFile.find_last_of(".kmz");
+        if(pos != -1)
+	        kmz_baseFilename = kmzFile.substr(0, pos - 4 + 1);  // .kmz is 4 letters back, + 1 to go from digit Id to a count
+        std::string kmz_tiff_filename = kmz_baseFilename + "__" + base_outFilename + ".tif";
+        
+        //// now move the keepTiff file to the updated filename
+        CPLMoveFile( kmz_tiff_filename.c_str(), ascii_tiff_filename.c_str() );
+    }
 
     double left_x = colMax.get_xllCorner();
     double lower_y = colMax.get_yllCorner();
