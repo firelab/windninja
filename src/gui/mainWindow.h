@@ -67,6 +67,7 @@
 
 #include "setconfigdialog.h"
 
+
 class mainWindow : public QMainWindow
 {
   Q_OBJECT
