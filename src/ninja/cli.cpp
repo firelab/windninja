@@ -29,10 +29,6 @@
 *****************************************************************************/
 
 #include "cli.h"
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <fstream>
 
 /**
  * Function used to check that 'opt1' and 'opt2' are not specified
@@ -172,7 +168,7 @@ int windNinjaCLI(int argc, char* argv[])
     // Moved to initializeOptions()
     try {
 
-        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
+
         // Declare a group of options that will be
         // allowed only on command line
         po::options_description generic("Generic options");
@@ -403,41 +399,9 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
 
         store(opts_command, vm);
         //notify(vm);
-        cout << "WindNinja_cli ../../data/cli_wxModelInitialization_diurnal.cfg" << endl;
-
-      ofstream outFile("config2.cfg");
-    
-    if (!outFile) {
-        cerr << "Error: Could not open the file for writing!" << endl;
-        return;
-    }
-
-    for (const auto& pair : vm) {
-        const string& option_name = pair.first;
-        const boost::program_options::variable_value& option_value = pair.second;
-
-        outFile << "Option '" << option_name << "': ";
-        if (option_value.value().type() == typeid(bool)) {
-            outFile << (option_value.as<bool>() ? "true" : "false") << endl;
-        } else if (option_value.value().type() == typeid(string)) {
-            outFile << option_value.as<string>() << endl;
-        } else {
-            outFile << "Unknown type" << endl;
-        }
-    }
-
-    // This flush is actually optional because close() will flush automatically
-    outFile.flush();
-    outFile.close();
-
-    cout << "File writing complete." << endl;
-
-        
-
         if( argc == 1 )
         {
             cout << visible << "\n";
@@ -482,6 +446,60 @@ int windNinjaCLI(int argc, char* argv[])
                 //notify(vm);
             }
         }
+        //helper for casefile output of CLI
+        CaseFile casefile;  
+        std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
+      
+        std::string inputpath = getdir + "/config.cfg";
+        
+        std::ofstream outFile(inputpath);
+        if (!outFile) {
+            cerr << "Error: Could not open the file for writing!" << endl;
+            return;
+        }
+    
+          for (const auto& pair : vm) {
+            const std::string& option_name = pair.first;
+            const po::variable_value& option_value = pair.second;
+
+            outFile << "--" << option_name << " ";
+
+            try {
+                if (option_value.value().type() == typeid(int)) {
+                    outFile << option_value.as<int>() << std::endl;
+                } else if (option_value.value().type() == typeid(bool)) {
+                    outFile << std::boolalpha << option_value.as<bool>() << std::endl;
+                } else if (option_value.value().type() == typeid(std::string)) {
+                    outFile << option_value.as<std::string>() << std::endl;
+                } else if (option_value.value().type() == typeid(double)) {
+                    outFile << option_value.as<double>() << std::endl;
+                } else if (option_value.value().type() == typeid(std::vector<std::string>)) {
+                    const auto& vec = option_value.as<std::vector<std::string>>();
+                    for (const auto& str : vec) {
+                        outFile << str << " ";
+                    }
+                    outFile << std::endl;
+                } else {
+                    outFile << "Unknown type" << std::endl;
+                }
+            } catch (const boost::bad_any_cast& e) {
+                outFile << "Bad cast: " << e.what() << std::endl;
+            }
+        }
+
+        // This flush is actually optional because close() will flush automatically
+
+        std::string getfileName = casefile.parse("file", vm["elevation_file"].as<std::string>());
+        std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
+        casefile.setdir(getdir); 
+        casefile.setzip(zipFilePath); 
+        outFile.flush();
+        outFile.close();
+
+        casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>()); 
+        casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
+        casefile.deleteFileFromPath(getdir, "config.cfg"); 
+    
 
         if (vm.count("help")) {
             cout << visible << "\n";
@@ -1101,8 +1119,9 @@ int windNinjaCLI(int argc, char* argv[])
         {
             //Check to be sure that the user specifies right info
             conflicting_options(vm, "fetch_station", "wx_station_filename");
-
+        
             std::vector<boost::posix_time::ptime> timeList;
+        
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
                 const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
@@ -1186,10 +1205,11 @@ int windNinjaCLI(int argc, char* argv[])
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
-
+                    
                     bool fetchSuccess = pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
+
                     if(fetchSuccess==false) //Fail to download data
                     {
                         pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
@@ -1199,6 +1219,7 @@ int windNinjaCLI(int argc, char* argv[])
                     pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
                     
                 }
+
                 else //If something else bad happens
                 {
                     pointInitialization::removeBadDirectory(stationPathName); //Get rid of generated dir
@@ -1319,8 +1340,8 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "wx_station_filename", "start_minute");
                     option_dependency(vm, "wx_station_filename", "stop_month");
                     option_dependency(vm, "wx_station_filename", "stop_day");
-                    option_dependency(vm, "wx_station_ffilename", "stop_year");
-                    option_dependency(vm, "wx_station_ilename", "stop_hour");
+                    option_dependency(vm, "wx_station_filename", "stop_year");
+                    option_dependency(vm, "wx_station_filename", "stop_hour");
                     option_dependency(vm, "wx_station_filename", "stop_minute");
                     option_dependency(vm, "wx_station_filename", "number_time_steps");
                     timeList = pointInitialization::getTimeList( vm["start_year"].as<int>(),
@@ -1898,7 +1919,7 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
                 std::string pbm = vm["pdf_basemap"].as<std::string>();
                 int pbs = 0;
-                if( pbm == "hillshade" )
+                if( pbm == "" )
                 {
                     pbs = 0;
                 }
