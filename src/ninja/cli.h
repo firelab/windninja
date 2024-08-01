@@ -48,6 +48,7 @@ namespace po = boost::program_options;
 
 #include <iostream>
 #include <iterator>
+#include <fstream>
 
 //#include <QDateTime>
 
