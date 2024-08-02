@@ -3026,19 +3026,10 @@ void ninja::writeOutputFiles()
 #ifdef NINJAFOAM
                         if(input.writeTurbulence)
                         {
-                            ninjaKmlFiles.setKeepTurbKmlTiffFlag(input.keepTurbKmlTiff);
-                            
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
                             //ninjaKmlFiles.setTurbulenceFlag("true");
-                            //if(input.override_turbKml_colorRamp_colorRampType)
-                            //    turbTempGrid->set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-                            //if(input.override_turbKml_colorRamp_nColorBreaks)
-                            //    turbTempGrid->set_ascii2png_nColorBreaks( input.turbKml_colorRamp_nColorBreaks );
-                            //if(input.override_turbKml_colorRamp_colorBreakVals)
-                            //    turbTempGrid->set_ascii2png_colorBreakVals( input.turbKml_colorRamp_desiredBrk0, input.turbKml_colorRamp_desiredBrk1,
-                            //                                                input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
@@ -3046,13 +3037,6 @@ void ninja::writeOutputFiles()
                                         AsciiGrid<double>::order0));
                             
                             ninjaKmlFiles.setColMaxFlag("true");
-                            if(input.override_turbKml_colorRamp_colorRampType)
-                                colMaxTempGrid->set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-                            if(input.override_turbKml_colorRamp_nColorBreaks)
-                                colMaxTempGrid->set_ascii2png_nColorBreaks( input.turbKml_colorRamp_nColorBreaks );
-                            if(input.override_turbKml_colorRamp_colorBreakVals)
-                                colMaxTempGrid->set_ascii2png_colorBreakVals( input.turbKml_colorRamp_desiredBrk0, input.turbKml_colorRamp_desiredBrk1,
-                                                                              input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3711,54 +3695,10 @@ void ninja::set_writeTurbulenceFlag(bool flag)
     input.writeTurbulence = flag;
 }
 
-void ninja::set_keepTurbKmlTiffFlag(bool flag)
-{
-    input.keepTurbKmlTiff = flag;
-}
-
 void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units )
 {
     input.colMax_colHeightAGL = colMaxSampleHeightAGL;
     input.colMax_colHeightAGL_units = units;
-}
-
-void ninja::set_turbKml_colorRampType( std::string colorRampType )
-{
-    // make tmp ascii grid to test the vals before setting them to their storage for later use
-    AsciiGrid<double> tmp_turbGrid;
-    tmp_turbGrid.set_ascii2png_colorRampType( colorRampType );
-    // if no error stopping the program, good to set the values for general use
-    input.override_turbKml_colorRamp_colorRampType = true;
-    input.turbKml_colorRamp_colorRampType = colorRampType;
-}
-
-void ninja::set_turbKml_nColorBreaks( int nColorBreaks )
-{
-    // make tmp ascii grid to test the vals before setting them to their storage for later use
-    AsciiGrid<double> tmp_turbGrid;
-    if(input.override_turbKml_colorRamp_colorRampType)
-        tmp_turbGrid.set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-    tmp_turbGrid.set_ascii2png_nColorBreaks( nColorBreaks );
-    // if no error stopping the program, good to set the values for general use
-    input.override_turbKml_colorRamp_nColorBreaks = true;
-    input.turbKml_colorRamp_nColorBreaks = nColorBreaks;
-}
-
-void ninja::set_turbKml_colorBreakVals( double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 )
-{
-    // make tmp ascii grid to test the vals before setting them to their storage for later use
-    AsciiGrid<double> tmp_turbGrid;
-    if(input.override_turbKml_colorRamp_colorRampType)
-        tmp_turbGrid.set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-    if(input.override_turbKml_colorRamp_nColorBreaks)
-        tmp_turbGrid.set_ascii2png_nColorBreaks( input.turbKml_colorRamp_nColorBreaks );
-    tmp_turbGrid.set_ascii2png_colorBreakVals( desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 );
-    // if no error stopping the program, good to set the values for general use
-    input.override_turbKml_colorRamp_colorBreakVals = true;
-    input.turbKml_colorRamp_desiredBrk0 = desiredBrk0;
-    input.turbKml_colorRamp_desiredBrk1 = desiredBrk1;
-    input.turbKml_colorRamp_desiredBrk2 = desiredBrk2;
-    input.turbKml_colorRamp_desiredBrk3 = desiredBrk3;
 }
 #endif
 

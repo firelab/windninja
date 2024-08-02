@@ -156,18 +156,8 @@ WindNinjaInputs::WindNinjaInputs()
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
     writeTurbulence = false;
-    keepTurbKmlTiff = false;
     colMax_colHeightAGL = 300.0;  // default value of 300 m
     colMax_colHeightAGL_units = lengthUnits::meters;
-    override_turbKml_colorRamp_colorRampType = false;
-    override_turbKml_colorRamp_nColorBreaks = false;
-    override_turbKml_colorRamp_colorBreakVals = false;
-    turbKml_colorRamp_colorRampType = "";
-    turbKml_colorRamp_nColorBreaks = 0;
-    turbKml_colorRamp_desiredBrk0 = -1.0;
-    turbKml_colorRamp_desiredBrk1 = -1.0;
-    turbKml_colorRamp_desiredBrk2 = -1.0;
-    turbKml_colorRamp_desiredBrk3 = -1.0;
 #endif
     
     outputPointsFilename = "!set";
@@ -279,18 +269,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
       writeTurbulence = rhs.writeTurbulence;
-      keepTurbKmlTiff = rhs.keepTurbKmlTiff;
       colMax_colHeightAGL = rhs.colMax_colHeightAGL;
       colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
-      override_turbKml_colorRamp_colorRampType = rhs.override_turbKml_colorRamp_colorRampType;
-      override_turbKml_colorRamp_nColorBreaks = rhs.override_turbKml_colorRamp_nColorBreaks;
-      override_turbKml_colorRamp_colorBreakVals = rhs.override_turbKml_colorRamp_colorBreakVals;
-      turbKml_colorRamp_colorRampType = rhs.turbKml_colorRamp_colorRampType;
-      turbKml_colorRamp_nColorBreaks = rhs.turbKml_colorRamp_nColorBreaks;
-      turbKml_colorRamp_desiredBrk0 = rhs.turbKml_colorRamp_desiredBrk0;
-      turbKml_colorRamp_desiredBrk1 = rhs.turbKml_colorRamp_desiredBrk1;
-      turbKml_colorRamp_desiredBrk2 = rhs.turbKml_colorRamp_desiredBrk2;
-      turbKml_colorRamp_desiredBrk3 = rhs.turbKml_colorRamp_desiredBrk3;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;

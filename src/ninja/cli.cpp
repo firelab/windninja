@@ -336,15 +336,8 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
-                ("turbulence_kml_output_keepTiff_flag", po::value<bool>()->default_value(false), "keep intermediate tiff file as additional output when writing tubulence kml/kmz output (true, false)")
                 ("colMax_colHeightAGL", po::value<double>(), "column max sampling height AGL, default is 300.0 m")
                 ("colMax_colHeightAGL_units", po::value<std::string>(), "column max sampling height AGL units (ft, m)")
-                ("turbulence_kml_output_colorRampType", po::value<std::string>(), "turbulence kml/kmz output color ramp type (\"minToMax\", \"minToMax_uniform\", \"specificVals\"). Default is \"minToMax\"\n\"minToMax\" is always 4 color breaks between min to max at levels 0, 1/5, 3/5, 1. \"minToMax_uniform\" is 3 or 4 color breaks specified by nColorBreaks, between min to max at levels 0, 1/3, 2/3, 1. \"specificVals\" is 3 or 4 color breaks specified by nColorBreaks, the breaks set by desiredBrk0 to 3 in increasing order, the levels auto adjust between 0 and 1 to go with the break")
-                ("turbulence_kml_output_nColorBreaks", po::value<int>(), "number of color breaks to use in the color ramp for turbulence kml/kmz output (3, 4). Default is 4. Note that colorRampType \"minToMax\" requires 4 color breaks")
-                ("turbulence_kml_output_desiredBrk0", po::value<double>(), "used when colorRampType is set to \"specificVals\", but only if nColorBreaks is set to 4. Default value 0.0")
-                ("turbulence_kml_output_desiredBrk1", po::value<double>(), "used when colorRampType is set to \"specificVals\". Default value 2.0")
-                ("turbulence_kml_output_desiredBrk2", po::value<double>(), "used when colorRampType is set to \"specificVals\". Default value 4.0")
-                ("turbulence_kml_output_desiredBrk3", po::value<double>(), "used when colorRampType is set to \"specificVals\". Default value 6.0")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -933,14 +926,7 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
         option_dependency(vm, "turbulence_output_flag", "write_goog_output");
-        option_dependency(vm, "turbulence_kml_output_keepTiff_flag", "turbulence_output_flag");
         option_dependency(vm, "colMax_colHeightAGL", "turbulence_output_flag");
-        option_dependency(vm, "turbulence_kml_output_colorRampType", "turbulence_output_flag");
-        option_dependency(vm, "turbulence_kml_output_nColorBreaks", "turbulence_kml_output_colorRampType");
-        option_dependency(vm, "turbulence_kml_output_desiredBrk0", "turbulence_kml_output_colorRampType");
-        option_dependency(vm, "turbulence_kml_output_desiredBrk1", "turbulence_kml_output_colorRampType");
-        option_dependency(vm, "turbulence_kml_output_desiredBrk2", "turbulence_kml_output_colorRampType");
-        option_dependency(vm, "turbulence_kml_output_desiredBrk3", "turbulence_kml_output_colorRampType");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1390,52 +1376,12 @@ int windNinjaCLI(int argc, char* argv[])
                 if(vm.count("turbulence_output_flag")){
                     windsim.setWriteTurbulenceFlag( i_, vm["turbulence_output_flag"].as<bool>() );
                 }
-                if(vm.count("turbulence_kml_output_keepTiff_flag")){
-                    windsim.setKeepTurbKmlTiffFlag( i_, vm["turbulence_kml_output_keepTiff_flag"].as<bool>() );
-                }
                 if(vm["turbulence_output_flag"].as<bool>()){
                     // optional colMax_colHeightAGL
                     if(vm.count("colMax_colHeightAGL"))
                     {
                         option_dependency(vm, "colMax_colHeightAGL", "colMax_colHeightAGL_units");
                         windsim.setColMaxSampleHeightAGL( i_, vm["colMax_colHeightAGL"].as<double>(), lengthUnits::getUnit(vm["colMax_colHeightAGL_units"].as<std::string>()));
-                    }
-                }
-                if(vm.count("turbulence_kml_output_colorRampType")){
-                    std::string found_colorRampType = vm["turbulence_kml_output_colorRampType"].as<string>();
-                    windsim.setTurbKml_colorRampType( i_, found_colorRampType );
-                    if(vm.count("turbulence_kml_output_nColorBreaks")){
-                        windsim.setTurbKml_nColorBreaks( i_, vm["turbulence_kml_output_nColorBreaks"].as<int>());
-                    }
-                    if( vm.count("turbulence_kml_output_desiredBrk0") || vm.count("turbulence_kml_output_desiredBrk1") || vm.count("turbulence_kml_output_desiredBrk2") || vm.count("turbulence_kml_output_desiredBrk3") )
-                    {
-                        if( found_colorRampType == "specificVals" )
-                        {
-                            double found_desiredBrk0 = 0.0;  // default value, to be ignored if nColorBreaks == 3, to be replaced if nColorBreaks == 4
-                            if( vm["turbulence_kml_output_nColorBreaks"].as<int>() == 4 ){
-                                option_dependency(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk0");
-                                found_desiredBrk0 = vm["turbulence_kml_output_desiredBrk0"].as<double>();
-                            }
-                            option_dependency(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk1");
-                            option_dependency(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk2");
-                            option_dependency(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk3");
-                            if( vm["turbulence_kml_output_nColorBreaks"].as<int>() == 3 ){
-                                if( vm.count("turbulence_kml_output_desiredBrk0") ){
-                                    std::cout << "turbulence_kml_output_nColorBreaks set to 3, turbulence_kml_output_desiredBrk0 value will be ignored" << std::endl;
-                                    //std::cout << "turbulence_kml_output_desiredBrk0 should not be specified as an input unless turbulence_kml_output_nColorBreaks is set to 4, but it is set to 3!!!" << std::endl;
-                                    //conflicting_options(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk0");
-                                }
-                            }
-                            windsim.setTurbKml_colorBreakVals( i_, found_desiredBrk0, vm["turbulence_kml_output_desiredBrk1"].as<double>(), vm["turbulence_kml_output_desiredBrk2"].as<double>(), vm["turbulence_kml_output_desiredBrk3"].as<double>() );
-                        } else // if( found_colorRampType != "specificVals" )
-                        {
-                            //std::cout << "turbulence_kml_output_colorRampType != \"specificVals\", turbulence_kml_output_desiredBrk0 to 3 values will be ignored" << std::endl;
-                            std::cout << "turbulence_kml_output_desiredBrk0 to 3 values should not be specified as input unless turbulence_kml_output_colorRampType is set to \"specificVals\"" << std::endl;
-                            conflicting_options(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk0");
-                            conflicting_options(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk1");
-                            conflicting_options(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk2");
-                            conflicting_options(vm, "turbulence_kml_output_colorRampType", "turbulence_kml_output_desiredBrk3");
-                        }
                     }
                 }
             }

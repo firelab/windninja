@@ -46,7 +46,6 @@ KmlVector::KmlVector()
     colMaxFlag = false;
     colMax_colHeightAGL = -1.0;
     colMax_colHeightAGL_units = lengthUnits::meters;
-    keepTurbKmlTiffFlag = false;
 }
 
 KmlVector::~KmlVector()
@@ -1235,10 +1234,11 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
                     break;
     }
     bool writeLegend = TRUE;
+    bool keepTiff = TRUE;  // always true for turbulence outputs, input.writeTurbulence was already triggered to get here
 
-    turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
+    turbulence.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
-    if ( keepTurbKmlTiffFlag == TRUE )
+    if ( keepTiff == TRUE )
     {
         std::string base_outFilename = outFilename;
         int pos = outFilename.find_last_of(".png");
@@ -1374,10 +1374,11 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
                     break;
     }
     bool writeLegend = TRUE;
+    bool keepTiff = TRUE;  // always true for turbulence outputs, input.writeTurbulence was already triggered to get here
 
-    colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTurbKmlTiffFlag);
+    colMax.ascii2png(outFilename, legendTitle, legendUnits, scalarLegendFilename, writeLegend, keepTiff);
 
-    if ( keepTurbKmlTiffFlag == TRUE )
+    if ( keepTiff == TRUE )
     {
         std::string base_outFilename = outFilename;
         int pos = outFilename.find_last_of(".png");

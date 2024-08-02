@@ -3450,19 +3450,10 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
                         if(input.writeTurbulence)
                         {
-                            ninjaKmlFiles.setKeepTurbKmlTiffFlag(input.keepTurbKmlTiff);
-                            
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
                             //ninjaKmlFiles.setTurbulenceFlag("true");
-                            //if(input.override_turbKml_colorRamp_colorRampType)
-                            //    turbTempGrid->set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-                            //if(input.override_turbKml_colorRamp_nColorBreaks)
-                            //    turbTempGrid->set_ascii2png_nColorBreaks( input.turbKml_colorRamp_nColorBreaks );
-                            //if(input.override_turbKml_colorRamp_colorBreakVals)
-                            //    turbTempGrid->set_ascii2png_colorBreakVals( input.turbKml_colorRamp_desiredBrk0, input.turbKml_colorRamp_desiredBrk1,
-                            //                                                input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
@@ -3470,13 +3461,6 @@ void NinjaFoam::WriteOutputFiles()
                                         AsciiGrid<double>::order0));
                             
                             ninjaKmlFiles.setColMaxFlag("true");
-                            if(input.override_turbKml_colorRamp_colorRampType)
-                                colMaxTempGrid->set_ascii2png_colorRampType( input.turbKml_colorRamp_colorRampType );
-                            if(input.override_turbKml_colorRamp_nColorBreaks)
-                                colMaxTempGrid->set_ascii2png_nColorBreaks( input.turbKml_colorRamp_nColorBreaks );
-                            if(input.override_turbKml_colorRamp_colorBreakVals)
-                                colMaxTempGrid->set_ascii2png_colorBreakVals( input.turbKml_colorRamp_desiredBrk0, input.turbKml_colorRamp_desiredBrk1,
-                                                                              input.turbKml_colorRamp_desiredBrk2, input.turbKml_colorRamp_desiredBrk3 );
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                             
                             //// for debugging

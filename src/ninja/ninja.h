@@ -286,11 +286,7 @@ public:
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
     void set_writeTurbulenceFlag(bool flag);
-    void set_keepTurbKmlTiffFlag(bool flag);
     void set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units );
-    void set_turbKml_colorRampType( std::string colorRampType );
-    void set_turbKml_nColorBreaks( int nColorBreaks );
-    void set_turbKml_colorBreakVals( double desiredBrk0, double desiredBrk1, double desiredBrk2, double desiredBrk3 );
 #endif
 
     void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);
