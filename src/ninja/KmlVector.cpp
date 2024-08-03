@@ -1244,7 +1244,7 @@ bool KmlVector::writeTurbulence(VSILFILE *fileOut)
         int pos = outFilename.find_last_of(".png");
         if(pos != -1)
 	        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
-        std::string ascii_tiff_filename = base_outFilename + "_latlon.tif";
+        std::string ascii_tiff_filename = base_outFilename + ".tif";
         
         std::string kmz_baseFilename = kmzFile;
         pos = kmzFile.find_last_of(".kmz");
@@ -1384,7 +1384,7 @@ bool KmlVector::writeColMax(VSILFILE *fileOut)
         int pos = outFilename.find_last_of(".png");
         if(pos != -1)
 	        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
-        std::string ascii_tiff_filename = base_outFilename + "_latlon.tif";
+        std::string ascii_tiff_filename = base_outFilename + ".tif";
         
         std::string kmz_baseFilename = kmzFile;
         pos = kmzFile.find_last_of(".kmz");

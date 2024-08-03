@@ -1643,6 +1643,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
     std::string tiff_utm_fileout = base_outFilename + "_utm.tif";
     std::string tiff_latlon_fileout = base_outFilename + "_latlon.tif";
+    std::string rawTiff_utm_fileout = base_outFilename + "_raw_utm.tif";
+    std::string rawTiff_latlon_fileout = base_outFilename + ".tif";
 
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
@@ -2071,8 +2073,92 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALClose((GDALDatasetH) wrpDS);
 
     VSIUnlink(tiff_utm_fileout.c_str());
+    VSIUnlink(tiff_latlon_fileout.c_str());
+
+
+    /* -------------------------------------------------------------------- */
+    /*  temporary, create additional raw tiff file                          */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *raw_poDS;
+    GDALDriver *raw_tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    char** raw_papszOptions = NULL;
+
+    raw_poDS = tiffDriver->Create(rawTiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
+                                    GDT_Float64, papszOptions);
+
+    double raw_adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                     get_yllCorner()+(get_nRows()*get_cellSize()),
+                                     0, -(get_cellSize())};
+    raw_poDS->SetGeoTransform(raw_adfGeoTransform);
+    int raw_nXSize = raw_poDS->GetRasterXSize();
+    int raw_nYSize = raw_poDS->GetRasterYSize();
+
+    GDALRasterBand *raw_poBand = raw_poDS->GetRasterBand(1);
+
+    AsciiGrid<T>rawDataGrid(*this);
+
+    double *raw_padfScanline;
+    raw_padfScanline = new double[raw_nXSize];
+
+    for(int i=raw_nYSize-1;i>=0;i--)
+    {
+        for(int j=0;j<raw_nXSize;j++)
+        {
+            raw_padfScanline[j] = rawDataGrid.get_cellValue(raw_nYSize-1-i, j);
+            check(raw_poBand->RasterIO(GF_Write, 0, i, raw_nXSize, 1, raw_padfScanline, raw_nXSize, 1, GDT_Float64, 0, 0));
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*   Warp the image                                                     */
+    /* -------------------------------------------------------------------- */
+
+    OGRSpatialReference raw_oSRS;
+    char *raw_pszSRS_WKT = NULL;
+
+    const char* raw_prj2 = (const char*)prjString.c_str();
+    raw_oSRS.importFromWkt((char **)&raw_prj2);
+    raw_oSRS.exportToWkt(&raw_pszSRS_WKT);
+
+    char *raw_pszDST_WKT = NULL;
+    raw_oSRS.importFromEPSG(4326);
+    raw_oSRS.exportToWkt(&raw_pszDST_WKT);
+
+    GDALDataset *raw_wrpDS;
+
+    raw_wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(raw_poDS, raw_pszSRS_WKT, raw_pszDST_WKT,
+                                                   GRA_NearestNeighbour,
+                                                   0.0, NULL);
+
+    /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_rawTiff;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF driver data type error
+    poDstDS_rawTiff = raw_tiffDriver->CreateCopy(rawTiff_latlon_fileout.c_str(), raw_wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+
+    /* -------------------------------------------------------------------- */
+    /*  clean up                                                            */
+    /* -------------------------------------------------------------------- */
+
+    CPLFree(raw_pszSRS_WKT);
+    CPLFree(raw_pszDST_WKT);
+
+    delete [] raw_padfScanline;
+
+    GDALClose((GDALDatasetH) raw_poDS);
+    if( poDstDS_rawTiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_rawTiff);
+    }
+    GDALClose((GDALDatasetH) raw_wrpDS);
+
+    VSIUnlink(rawTiff_utm_fileout.c_str());
     if( keepTiff == false )
-        VSIUnlink(tiff_latlon_fileout.c_str());
+        VSIUnlink(rawTiff_latlon_fileout.c_str());
 
 }
 
