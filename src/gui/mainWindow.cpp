@@ -117,19 +117,20 @@ mainWindow::mainWindow(QWidget *parent)
 void mainWindow::checkMessages(void) {
    QMessageBox mbox;
    char *papszMsg = NinjaQueryServerMessages(true);
-
-   if (strcmp(papszMsg, "TRUE\n") == 0) {
-      mbox.setText("There is a fatal flaw in Windninja, it must close.");
-      mbox.exec();
-      abort();
-   }
-   
-   else {
-
-      char *papszMsg = NinjaQueryServerMessages(false);
-      mbox.setText(papszMsg);
+   if (papszMsg != NULL) {
+    if (strcmp(papszMsg, "TRUE\n") == 0) {
+        mbox.setText("There is a fatal flaw in Windninja, it must close.");
+        mbox.exec();
+        abort();
+    }
     
-      mbox.exec();
+    else {
+
+        char *papszMsg = NinjaQueryServerMessages(false);
+        mbox.setText(papszMsg);
+      
+        mbox.exec();
+    }
    }
 }
 

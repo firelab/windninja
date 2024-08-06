@@ -77,7 +77,8 @@ bool rawVersion(char * src, char * dest) {
 
 char * NinjaQueryServerMessages(bool checkAbort) { 
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-
+    CPLHTTPResult *poResult = NULL;
+    try{
     CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
 
     if (poResult != NULL) {
@@ -104,7 +105,7 @@ char * NinjaQueryServerMessages(bool checkAbort) {
         else {
             for (size_t i = 0; i < lines.size(); ++i) {
             if (i == 1) {  
-                if (!rawVersion(const_cast<char*>(lines[i].c_str()), const_cast<char*>(NINJA_VERSION_STRING))) {
+                if (rawVersion(const_cast<char*>(lines[i].c_str()), const_cast<char*>(NINJA_VERSION_STRING))) {
                     oss << "You are using an outdated Ninja version, please update to version: " << lines[i] << "\n";
                 } else {
                     oss << lines[i] << "\n";
@@ -124,6 +125,10 @@ char * NinjaQueryServerMessages(bool checkAbort) {
         CPLHTTPDestroyResult(poResult);
 
         return returnString;
+    }
+    }
+    catch (std::exception& e) {
+        std::cout << "can't fetch" << std::endl;
     }
     return NULL;
 
@@ -224,7 +229,7 @@ int NinjaInitialize(const char* typeofrun) {
     ** For now, just skip the SSL verification with GDAL_HTTP_UNSAFESSL.
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
-
+    
     if (strcmp(typeofrun, "") != 0) {
 
     time_t now = time(0);
@@ -250,13 +255,19 @@ int NinjaInitialize(const char* typeofrun) {
         char **papszOptions = NULL;
 
         // Fetch the URL with custom headers
-        poResult = CPLHTTPFetch(charStr, papszOptions);
+        try {
+            poResult = CPLHTTPFetch(charStr, papszOptions);
+        }
+        catch (std::exception& e) {
+            std::cout << "can't fetch" << std::endl;
+        }
 
         if (poResult) {
                 CPLHTTPDestroyResult(poResult);
 
         }
     }
+    
 
 
 #ifdef WIN32
