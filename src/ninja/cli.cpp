@@ -137,6 +137,21 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
 }
 
 
+//split for point initialization in casefile 
+
+std::vector<std::string> split(const std::string &s, const std::string &delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = s.find(delimiter);
+    while (end != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+        end = s.find(delimiter, start);
+    }
+    tokens.push_back(s.substr(start, end));
+    return tokens;
+}
+
 
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
@@ -220,6 +235,7 @@ int windNinjaCLI(int argc, char* argv[])
         // config file
         po::options_description config("Simulation options");
         config.add_options()
+                ("write_casefile", po::value<bool>()->default_value(true), "generate a casefile of the run which will allow a history of your input and output")
                 ("num_threads", po::value<int>()->default_value(1), "number of threads to use during simulation")
                 ("elevation_file", po::value<std::string>(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
                 ("fetch_elevation", po::value<std::string>(), "download an elevation file from an internet server and save to path/filename")
@@ -447,60 +463,83 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
         //helper for casefile output of CLI
-        CaseFile casefile;  
-        std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
-      
-        std::string inputpath = getdir + "/config.cfg";
+
+        if (vm["write_casefile"].as<bool>() == true) {
+            CaseFile casefile;  
+            std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
         
-        std::ofstream outFile(inputpath);
-        if (!outFile) {
-            cerr << "Error: Could not open the file for writing!" << endl;
-            return;
-        }
-    
-          for (const auto& pair : vm) {
-            const std::string& option_name = pair.first;
-            const po::variable_value& option_value = pair.second;
-
-            outFile << "--" << option_name << " ";
-
-            try {
-                if (option_value.value().type() == typeid(int)) {
-                    outFile << option_value.as<int>() << std::endl;
-                } else if (option_value.value().type() == typeid(bool)) {
-                    outFile << std::boolalpha << option_value.as<bool>() << std::endl;
-                } else if (option_value.value().type() == typeid(std::string)) {
-                    outFile << option_value.as<std::string>() << std::endl;
-                } else if (option_value.value().type() == typeid(double)) {
-                    outFile << option_value.as<double>() << std::endl;
-                } else if (option_value.value().type() == typeid(std::vector<std::string>)) {
-                    const auto& vec = option_value.as<std::vector<std::string>>();
-                    for (const auto& str : vec) {
-                        outFile << str << " ";
-                    }
-                    outFile << std::endl;
-                } else {
-                    outFile << "Unknown type" << std::endl;
-                }
-            } catch (const boost::bad_any_cast& e) {
-                outFile << "Bad cast: " << e.what() << std::endl;
+            std::string inputpath = getdir + "/config.cfg";
+            
+            std::ofstream outFile(inputpath);
+            if (!outFile) {
+                cerr << "Error: Could not open the file for writing!" << endl;
+                return;
             }
-        }
+        
+            for (const auto& pair : vm) {
+                const std::string& option_name = pair.first;
+                const po::variable_value& option_value = pair.second;
 
-        // This flush is actually optional because close() will flush automatically
+                outFile << "--" << option_name << " ";
 
-        std::string getfileName = casefile.parse("file", vm["elevation_file"].as<std::string>());
-        std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
-        casefile.setdir(getdir); 
-        casefile.setzip(zipFilePath); 
-        outFile.flush();
-        outFile.close();
+                try {
+                    if (option_value.value().type() == typeid(int)) {
+                        outFile << option_value.as<int>() << std::endl;
+                    } else if (option_value.value().type() == typeid(bool)) {
+                        outFile << std::boolalpha << option_value.as<bool>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::string)) {
+                        outFile << option_value.as<std::string>() << std::endl;
+                    } else if (option_value.value().type() == typeid(double)) {
+                        outFile << option_value.as<double>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::vector<std::string>)) {
+                        const auto& vec = option_value.as<std::vector<std::string>>();
+                        for (const auto& str : vec) {
+                            outFile << str << " ";
+                        }
+                        outFile << std::endl;
+                    } else {
+                        outFile << "Unknown type" << std::endl;
+                    }
+                } catch (const boost::bad_any_cast& e) {
+                    outFile << "Bad cast: " << e.what() << std::endl;
+                }
+            }
 
-        casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>()); 
-        casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
-        casefile.deleteFileFromPath(getdir, "config.cfg"); 
-    
+            // This flush is actually optional because close() will flush automatically
 
+            std::string getfileName = casefile.parse("file", vm["elevation_file"].as<std::string>());
+
+            std::string getconfigname = casefile.parse("file", vm["config_file"].as<std::string>());
+
+            std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
+            casefile.setZipOpen(true); 
+            casefile.setdir(getdir); 
+            casefile.setzip(zipFilePath); 
+            outFile.flush();
+            outFile.close();
+            casefile.addFileToZip(zipFilePath, getdir,  getconfigname, vm["config_file"].as<std::string>());
+            casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>()); 
+            casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
+            casefile.deleteFileFromPath(getdir, "config.cfg"); 
+            if (vm.count("forecast_filename")) {
+                std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());
+                casefile.addFileToZip(zipFilePath, getdir, getweatherFileName, vm["forecast_filename"].as<std::string>()); 
+            }
+            if (vm.count("wx_station_filename")) {
+                    std::vector<std::string> tokens = split(vm["wx_station_filename"].as<std::string>(), "/");
+                    std::string getpointFileName = casefile.parse("file", vm["wx_station_filename"].as<std::string>()); 
+
+                    if (tokens.size() >= 2) {
+                        std::string secondToLastToken =  tokens[tokens.size()-2]; 
+                        if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
+                            getpointFileName = secondToLastToken + "/" + tokens[tokens.size() - 1]; 
+                        }
+                
+                    }
+                
+                casefile.addFileToZip(zipFilePath, getdir, getpointFileName, vm["wx_station_filename"].as<std::string>()); 
+            }
+        } 
         if (vm.count("help")) {
             cout << visible << "\n";
             return 0;
@@ -767,6 +806,7 @@ int windNinjaCLI(int argc, char* argv[])
             
             elevation_file = new string(new_elev);
         }
+        
         #endif //EMISSIONS
 
         if(vm.count("north") || vm.count("south") ||
@@ -1185,6 +1225,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                                                 vm["fetch_current_station_data"].as<bool>());
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
+                std::cout << stationPathName << std::endl; 
                 //so that the fetchStationData function knows where to save the data
                 option_dependency(vm,"fetch_station","fetch_type");
                 if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box

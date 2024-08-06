@@ -37,6 +37,7 @@
 #include <QSpinBox>
 #include <QToolButton>
 
+#include <QCheckBox>
 #include <QVBoxLayout>
 
 #ifdef _OPENMP
@@ -58,7 +59,7 @@ class solvePage : public QWidget
   QString availProcString;
   QLabel *availProcLabel;
   QSpinBox *numProcSpinBox;
-
+  QCheckBox *CaseFIBOX;
   QLabel *outputDirLabel;
   QLineEdit *outputDirLineEdit;
   QToolButton *outputDirToolButton;
@@ -77,6 +78,7 @@ public slots:
 
 private slots:
   void chooseOutputDir();
+  void onCasefileCheckBoxToggled(bool checked);
 };
 
 #endif /* SOLVEPAGE_H */

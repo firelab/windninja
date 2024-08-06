@@ -2,8 +2,12 @@
 
 std::string CaseFile::zipfilename = "";
 std::string CaseFile::directory = "";
-
+bool CaseFile::zipalreadyopened = false;
 std::mutex zipMutex;
+std::vector<boost::local_time::local_date_time> CaseFile::timesforWX; 
+std::vector<double> CaseFile::boundingboxarr; 
+bool CaseFile::downloadedfromdem; 
+std::string CaseFile::elevsource; 
 
 CaseFile::CaseFile() {
 }
@@ -54,6 +58,8 @@ bool CaseFile::lookfordate(const std::string& date) {
 }
 
 
+
+
 std::string CaseFile::parse(const std::string& type, const std::string& path) {
             size_t found = path.find_last_of("/");
             if (found != std::string::npos) {
@@ -70,98 +76,89 @@ std::string CaseFile::parse(const std::string& type, const std::string& path) {
 
 
 void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath) {
-    // Enable CPL logging
-    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue?? not sure I think i busted it
+    // CPL logging enabled here 
+    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
     CPLSetConfigOption("CPL_DEBUG", "ON");
 
-    std::cout << "ZIP File Path: " << zipFilePath << std::endl;
-    std::cout << "Directory Path: " << dirPath << std::endl;
-    std::cout << "File to Add Path: " << usrlocalpath << std::endl;
-    std::cout << "File to Add: " << fileToAdd << std::endl;
+    try {
+        bool foundzip = lookforzip(zipFilePath, dirPath);
 
-    bool foundzip = lookforzip(zipFilePath, dirPath);
-    std::cout << "Found ZIP: " << foundzip << std::endl;
+        if (foundzip) {
+            std::ifstream infile(zipFilePath);
+            if (!infile.good()) {
+                CPLDebug("ZIP", "ZIP file does not exist: %s", zipFilePath.c_str());
+                return;
+            }
+        }
 
-    if (foundzip) {
-        std::ifstream infile(zipFilePath);
-        if (!infile.good()) {
-            std::cerr << "ZIP file does not exist: " << zipFilePath << std::endl;
+        zipFile zip;
+        if (!foundzip) {
+            zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
+        } else {
+            zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_ADDINZIP);
+        }
+
+        if (zip == NULL) {
+            CPLDebug("ZIP", "Could not open ZIP: %s", zipFilePath.c_str());
             return;
         }
-    }
 
-    zipFile zip;
-    if (!foundzip) {
-        zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
-        std::cout << "Creating new ZIP file: " << zipFilePath << std::endl;
-    } else {
-        zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_ADDINZIP);
-        std::cout << "Appending to existing ZIP file: " << zipFilePath << std::endl;
-    }
+        zip_fileinfo zi = {0};
+        if (cpl_zipOpenNewFileInZip(zip, fileToAdd.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK) {
+            CPLDebug("ZIP", "Could not open new file in ZIP: %s", fileToAdd.c_str());
+            cpl_zipClose(zip, nullptr);
+            return;
+        }
 
-    if (zip == NULL) {
-        std::cerr << "Failed to open ZIP file: " << zipFilePath << std::endl;
-        CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open ZIP file %s", zipFilePath.c_str());
-        const char* errMsg = CPLGetLastErrorMsg();
-        std::cerr << "GDAL Error: " << errMsg << std::endl;
-        return;
-    }
+        VSILFILE *file = VSIFOpenL(usrlocalpath.c_str(), "rb");
+        if (file == nullptr) {
+            CPLDebug("VSIL", "Could not open file for reading with VSIL: %s", usrlocalpath.c_str());
+            cpl_zipCloseFileInZip(zip);
+            cpl_zipClose(zip, nullptr);
+            return;
+        }
 
-    zip_fileinfo zi = {0};
-    if (cpl_zipOpenNewFileInZip(zip, fileToAdd.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK) {
-        std::cerr << "Could not open new file in ZIP: " << fileToAdd << std::endl;
-        CPLError(CE_Failure, CPLE_FileIO, "Could not open new file in ZIP %s", fileToAdd.c_str());
-        cpl_zipClose(zip, nullptr);
-        return;
-    }
+        VSIFSeekL(file, 0, SEEK_END);
+        vsi_l_offset fileSize = VSIFTellL(file);
+        VSIFSeekL(file, 0, SEEK_SET);
 
-    VSILFILE *file = VSIFOpenL(usrlocalpath.c_str(), "rb");
-    if (file == nullptr) {
-        std::cerr << "Could not open file for reading with VSIL: " << usrlocalpath << std::endl;
-        CPLError(CE_Failure, CPLE_FileIO, "Could not open file for reading with VSIL %s", usrlocalpath.c_str());
-        cpl_zipCloseFileInZip(zip);
-        cpl_zipClose(zip, nullptr);
-        return;
-    }
+        char *data = (char*)CPLMalloc(fileSize);
+        if (data == nullptr) {
+            CPLDebug("Memory", "Failed to allocate memory for file data.");
+            VSIFCloseL(file);
+            cpl_zipCloseFileInZip(zip);
+            cpl_zipClose(zip, nullptr);
+            return;
+        }
 
-    VSIFSeekL(file, 0, SEEK_END);
-    vsi_l_offset fileSize = VSIFTellL(file);
-    VSIFSeekL(file, 0, SEEK_SET);
+        if (VSIFReadL(data, 1, fileSize, file) != fileSize) {
+            CPLDebug("FileRead", "Failed to read file contents: %s", fileToAdd.c_str());
+            CPLFree(data);
+            VSIFCloseL(file);
+            cpl_zipCloseFileInZip(zip);
+            cpl_zipClose(zip, nullptr);
+            return;
+        }
 
-    char *data = (char*)CPLMalloc(fileSize);
-    if (data == nullptr) {
-        std::cerr << "Failed to allocate memory for file data." << std::endl;
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Failed to allocate memory for file data.");
-        VSIFCloseL(file);
-        cpl_zipCloseFileInZip(zip);
-        cpl_zipClose(zip, nullptr);
-        return;
-    }
+        if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK) {
+            CPLDebug("ZIP", "Error writing data to ZIP file: %s", fileToAdd.c_str());
+        }
 
-    if (VSIFReadL(data, 1, fileSize, file) != fileSize) {
-        std::cerr << "Failed to read file contents: " << fileToAdd << std::endl;
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to read file contents %s", fileToAdd.c_str());
         CPLFree(data);
         VSIFCloseL(file);
         cpl_zipCloseFileInZip(zip);
-        cpl_zipClose(zip, nullptr);
-        return;
-    }
 
-    if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK) {
-        std::cerr << "Error writing data to ZIP file: " << fileToAdd << std::endl;
-        CPLError(CE_Failure, CPLE_FileIO, "Error writing data to ZIP file %s", fileToAdd.c_str());
-    }
+        if (cpl_zipClose(zip, nullptr) != ZIP_OK) {
+            CPLDebug("ZIP", "Error closing ZIP file: %s", zipFilePath.c_str());
+        }
 
-    CPLFree(data);
-    VSIFCloseL(file);
-    cpl_zipCloseFileInZip(zip);
-
-    if (cpl_zipClose(zip, nullptr) != ZIP_OK) {
-        std::cerr << "Error closing ZIP file" << std::endl;
-        CPLError(CE_Failure, CPLE_FileIO, "Error closing ZIP file %s", zipFilePath.c_str());
+    } catch (const std::exception& e) {
+        CPLDebug("Exception", "Caught exception: %s", e.what());
+        CPLError(CE_Failure, CPLE_AppDefined, "Exception caught: %s", e.what());
+    } catch (...) {
+        CPLDebug("Exception", "Caught unknown exception.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Caught unknown exception.");
     }
-    std::cout << "File added to ZIP: " << fileToAdd << std::endl; 
 }
 
 
@@ -202,18 +199,65 @@ void CaseFile::deleteFileFromPath(std::string directoryPath, std::string filenam
     CSLDestroy(papszDir);
     }
 }
-   void CaseFile::setdir(std::string dir) {
-        directory = dir; 
-    }
 
-   std::string CaseFile::getzip() {
-        return zipfilename;
-    }
 
-   void CaseFile::setzip(std::string zip) {
-        zipfilename = zip; 
-    }
 
-   std::string CaseFile::getdir() {
-        return directory;
+void CaseFile::setdir(std::string dir) {
+    directory = dir; 
+}
+
+std::string CaseFile::getzip() {
+    return zipfilename;
+}
+
+void CaseFile::setzip(std::string zip) {
+    zipfilename = zip; 
+}
+
+std::string CaseFile::getdir() {
+    return directory;
+}
+void CaseFile::setZipOpen(bool zipopen) {
+    if (zipopen) {
+        zipalreadyopened = true; 
     }
+    else {
+        zipalreadyopened = false; 
+    }
+}
+
+bool CaseFile::getZipOpen() {
+    return zipalreadyopened;
+}
+    
+void CaseFile::setTimeWX (std::vector<boost::local_time::local_date_time> timeList ) {
+    timesforWX = timeList;
+}
+
+std::vector<boost::local_time::local_date_time>  CaseFile::getWXTIME () {
+    return timesforWX;
+}
+
+
+void CaseFile::setBoundingBox ( std::vector<double> boundingboxarrr) {
+    boundingboxarr = boundingboxarrr; 
+}
+
+void CaseFile::setElevSource (std::string elevsourcee ) {
+    elevsource = elevsourcee; 
+}
+
+void CaseFile::setDownloadedFromDEM (bool downloadedfromdemm) {
+    downloadedfromdem = downloadedfromdemm; 
+}
+
+std::string CaseFile::getElevSource () {
+    return elevsource; 
+}
+bool CaseFile::getDownloadedFromDEM () {
+    return downloadedfromdem; 
+}
+
+std::vector<double> CaseFile::getBoundingBox () {
+    return boundingboxarr; 
+}

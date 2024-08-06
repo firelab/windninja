@@ -60,6 +60,8 @@ void option_dependency(const po::variables_map& vm, const char* for_what, const 
 
 void verify_option_set(const po::variables_map& vm, const char* optn);
 
+std::vector<std::string> split(const std::string &s, const std::string &delimiter); 
+
 // this should be used instead of direct 'variables_map["key"].as<T>()' calls since otherwise a single typo
 // in the key literal results in undefined behavior that can corrupt memory miles away. 
 // Alternatively keys could be defined/used as constants to catch this at compile time

@@ -59,6 +59,7 @@
 #include "cpl_string.h"
 
 #include "ninja_conv.h"
+
 #include "casefile.h"
 #include "constants.h"
 #include "ascii_grid.h"
@@ -480,9 +481,8 @@ private:
     void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
-
-
     std::string converttimetostd(const boost::local_time::local_date_time& ninjaTime) ; 
+
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 

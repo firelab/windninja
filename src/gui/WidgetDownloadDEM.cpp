@@ -28,6 +28,7 @@
  *****************************************************************************/
  
 #include "WidgetDownloadDEM.h"
+#include "casefile.h"
 //#include <vld.h>
 
 WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
@@ -221,6 +222,13 @@ void WidgetDownloadDEM::saveDEM()
     westBound = mbrl[0].toDouble();
     demSelected = true;
 
+    std::vector<double> boundsarr = {northBound, southBound, eastBound, westBound};
+
+    CaseFile casefile; 
+
+    casefile.setDownloadedFromDEM(true);
+    casefile.setBoundingBox(boundsarr);
+    
     QString fileName;
     double boundArray[] = {this->northBound, this->eastBound, this->southBound, this->westBound};
     double *boundBox;
@@ -357,6 +365,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
 {
     switch(index){
     case 0: //SRTM
+        CaseFile::setElevSource("srtm"); 
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM, FindDataPath("/data"));
         northDEMBound = srtm_northBound;
         southDEMBound = srtm_southBound;
@@ -366,6 +375,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         break;
 #ifdef HAVE_GMTED
     case 1: //GMTED
+        CaseFile::setElevSource("gmted"); 
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
         northDEMBound = world_gmted_northBound;
         southDEMBound = world_gmted_southBound;
@@ -376,6 +386,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
 #endif
 #ifdef WITH_LCP_CLIENT
     case 2: //LCP
+        CaseFile::setElevSource("lcp"); 
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP, FindDataPath("/data"));
         northDEMBound = lcp_northBound;
         southDEMBound = lcp_southBound;

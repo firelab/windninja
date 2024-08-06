@@ -47,6 +47,8 @@
 #include "ui_stationFetchWidget.h"
 #include "GoogleMapsInterface.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "pointInitialization.h"
 
 #ifndef PI
@@ -67,8 +69,15 @@ public:
     QString tzString;    
     void updatetz(QString tz);
     void fixTime();
-    std::string removeWhiteSpace(std::string str);
-    
+    std::string removeWhiteSpace(std::string str); 
+    void setActuallyPressed(bool pressed); 
+    bool getActuallyPressed(); 
+    std::string getStationIDS(); 
+    int getBuffer();
+    std::string getBufferUnits();
+    bool getTimeseries(); 
+    std::string getType(); 
+
 protected:
     void closeEvent(QCloseEvent *event);
    
@@ -93,7 +102,7 @@ private:
         //Progress Bar Stuff
         QProgressDialog *stationFetchProgress;
         QFutureWatcher<int> stationFutureWatcher;
-        
+        bool pressedexecute;
 friend class pointInput;
 };
 

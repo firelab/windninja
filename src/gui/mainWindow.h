@@ -47,6 +47,9 @@
 #include <QMutex>
 #include <QDir>
 #include <QDesktopServices>
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 
 #include "gdal_priv.h"
 #include "ogr_srs_api.h"
@@ -67,7 +70,6 @@
 
 #include "setconfigdialog.h"
 
-
 class mainWindow : public QMainWindow
 {
   Q_OBJECT
@@ -87,7 +89,7 @@ class mainWindow : public QMainWindow
 
   QTimer *timer;
 
-  int *runProgress;
+  int *runProgress; 
   int totalProgress;
   std::vector<int> progressLog;
 
@@ -184,14 +186,16 @@ class mainWindow : public QMainWindow
   void treeDoubleClick(QTreeWidgetItem *item, int column);
 
   bool getLatLon();
- 
+
   void test();
+
   int solve();
   void cancelSolve();
   int countRuns();
 
   void openOutputPath();
 
+std::vector<std::string> split(const std::string &s, const std::string &delimiter) ; 
   //functions for checking inputItems
   int checkInputItem();
   int checkSurfaceItem();

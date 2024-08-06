@@ -2794,10 +2794,6 @@ void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, 
     }
 }
 
-/**Writes output files.
- * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
- */
-
 
 
 
@@ -2812,6 +2808,10 @@ std::string ninja::converttimetostd(const boost::local_time::local_date_time& ni
     return result;
 }
 
+
+/**Writes output files.
+ * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
+ */
 
 void ninja::writeOutputFiles()
 {
@@ -2828,41 +2828,38 @@ void ninja::writeOutputFiles()
             }
             // can pick between "ascii" and "binary" format for the vtk write format
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
-
 			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
             CaseFile casefile;
-            std::string directoryPath = get_outputPath();
-            std::string normfile = casefile.parse("file", input.volVTKFile);
-            std::string directoryofVTK = casefile.parse("directory", input.volVTKFile);
-            std::string surfFile = casefile.parse("file", input.volVTKFile).substr(0, casefile.parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile.parse("file", input.volVTKFile).substr(casefile.parse("file", input.volVTKFile).length() - 4, casefile.parse("file", input.volVTKFile).length());
-
-            std::string timestr = "";
-            std:: string getlocaltime = casefile.getTime();
-
-            //std::cout << input.ninjaTime.is_not_a_date_time() << std::endl; 
-            if (input.ninjaTime.is_not_a_date_time()) {
-                timestr = getlocaltime; 
-            }
-            else {            
-                timestr = converttimetostd(input.ninjaTime); 
-
-            }
-            std::cout << timestr << std::endl; 
-
-            std::string getfileName = casefile.parse("file", input.dem.fileName);  
-
-            std::string zipFilePath = casefile.getzip(); 
-            std::cout << zipFilePath << std::endl;
-            std::cout << directoryPath << std::endl;
-
-            std::cout << input.volVTKFile << std::endl;
-            std::cout << normfile << std::endl;
             
-           casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile,  input.volVTKFile);
-           
-           casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile,  directoryofVTK + "/" + surfFile);
-          casefile.deleteFileFromPath(directoryPath , normfile);
-         casefile.deleteFileFromPath(directoryPath , surfFile);
+            if (casefile.getZipOpen()) {
+                std::string directoryPath = get_outputPath();
+                std::string normfile = casefile.parse("file", input.volVTKFile);
+                std::string directoryofVTK = casefile.parse("directory", input.volVTKFile);
+                std::string surfFile = casefile.parse("file", input.volVTKFile).substr(0, casefile.parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile.parse("file", input.volVTKFile).substr(casefile.parse("file", input.volVTKFile).length() - 4, casefile.parse("file", input.volVTKFile).length());
+                
+                std::string timestr = "";
+                std:: string getlocaltime = casefile.getTime();
+
+                //std::cout << input.ninjaTime.is_not_a_date_time() << std::endl; 
+                if (input.ninjaTime.is_not_a_date_time()) {
+                    timestr = getlocaltime; 
+                }
+                else {            
+
+                    timestr = converttimetostd(input.ninjaTime); 
+
+                }
+               
+                std::string getfileName = casefile.parse("file", input.dem.fileName);  
+
+                std::string zipFilePath = casefile.getzip(); 
+                
+                casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile,  input.volVTKFile);
+            
+                casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile,  directoryofVTK + "/" + surfFile);
+                casefile.deleteFileFromPath(directoryPath , normfile);
+                casefile.deleteFileFromPath(directoryPath , surfFile);
+          }
 		}
         catch (exception& e)
 		{
@@ -4828,12 +4825,12 @@ void ninja::set_outputPath(std::string path)
     ** stub, we are using GenerateTempFile to be cross platform.  We are just
     ** using the stub/basename instead of the whole path.
     */
-
     const char *pszTmpName = CPLGetBasename(CPLGenerateTempFilename(0));
     const char *pszTestPath = CPLFormFilename(path.c_str(), pszTmpName, 0);
     int nRet;
     
     if( VSI_ISDIR( sStat.st_mode ) ){
+        //see if we can write to this path
         nRet = VSIMkdir(pszTestPath, 0777);
         if(nRet == 0){
             VSIRmdir(pszTestPath);

@@ -41,34 +41,56 @@
 #include <boost/date_time/local_time/local_time_io.hpp>
 #include <chrono>
 #include <mutex>
-#include "cpl_error.h"
+#include <vector>
 
 class CaseFile {
 
 private:
     static std::string zipfilename;
 
-   static std::string directory;
+    static std::string directory;
+    static bool zipalreadyopened; 
+
+    static std::vector<boost::local_time::local_date_time> timesforWX; 
+    static std::vector<double> boundingboxarr; 
+    static bool downloadedfromdem; 
+    static std::string elevsource; 
 
 public:
     CaseFile(); 
 
-void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath);
+    void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath);
+
     void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
     bool lookforzip(const std::string& zipFilePath, const std::string& directory); 
     bool isCfgFile(const std::string& filePath); 
     bool isVTKFile(const std::string& filePath); 
 
-std::string parse(const std::string& type, const std::string& path) ;
-std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime); 
-bool lookfordate(const std::string& date) ;
+    std::string parse(const std::string& type, const std::string& path) ;
+    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime); 
+    bool lookfordate(const std::string& date) ;
 
-std::string getTime(); 
-std::string getdir() ; 
-   void setdir(std::string dir); 
+    std::string getTime(); 
+    std::string getdir() ; 
+    void setdir(std::string dir); 
 
-   std::string getzip () ; 
-   void setzip(std::string zip); 
+    std::string getzip () ; 
+    void setzip(std::string zip); 
 
+    void setZipOpen(bool zipopen); 
+    bool getZipOpen(); 
+    void setTimeWX(std::vector<boost::local_time::local_date_time> timeList) ; 
+   
+    std::vector<boost::local_time::local_date_time> getWXTIME() ; 
 
+    void setBoundingBox ( std::vector<double> boundingboxarrr); 
+
+    static void setElevSource (std::string elevsourcee ); 
+
+    void setDownloadedFromDEM (bool downloadedfromdemm) ; 
+
+    std::string getElevSource () ; 
+    bool getDownloadedFromDEM () ; 
+
+    std::vector<double> CaseFile::getBoundingBox (); 
 };

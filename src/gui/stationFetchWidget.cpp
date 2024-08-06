@@ -47,7 +47,7 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
 
     currentBox->setVisible(false);
     fetchMetaButton->setVisible(false); //Hide the metadata button from the gui
-
+    pressedexecute = false;        
     stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
     stationFetchProgress->setWindowModality(Qt::ApplicationModal);
     stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
@@ -196,6 +196,7 @@ void stationFetchWidget::updateFetchProgress()
  */
 void stationFetchWidget::executeFetchStation()
 {
+    setActuallyPressed(true); 
     stationFetchProgress->setLabelText("Downloading Station Data!");
     stationFetchProgress->setRange(0,0); //make it bounce back and forth
     stationFetchProgress->setCancelButtonText("Cancel");
@@ -256,6 +257,53 @@ std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the d
 //    std::string demBetter=demRaw.substr(0,lastDot)+"/";
     return demPath;
 }
+
+bool stationFetchWidget::getActuallyPressed() { 
+    return pressedexecute; 
+}
+void stationFetchWidget::setActuallyPressed(bool pressed) { 
+    pressedexecute = pressed;
+}
+
+
+std::string stationFetchWidget::getStationIDS() {
+    return removeWhiteSpace(idLine->text().toStdString()); 
+}
+
+int stationFetchWidget::getBuffer() {
+    if (bufferSpin->text().toDouble() == 0) {
+        return 0; 
+    }
+    return bufferSpin->text().toDouble();
+}
+
+
+
+std::string stationFetchWidget::getBufferUnits() {
+    return buffUnits->currentText().toStdString();
+}
+
+
+bool stationFetchWidget::getTimeseries() {
+     if (timeLoc->currentIndex() == 1) {
+        return false; 
+     }
+     else {
+        return true; 
+     }
+}
+
+std::string stationFetchWidget::getType() {
+     if (geoLoc->currentIndex() == 0) {
+        return "bbox"; 
+     }
+     else {
+        return "stid"; 
+     }
+}
+
+
+
 /**
  * @brief stationFetchWidget::fetchStation
  * Fetches data from the Mesowest API based on GUI request
@@ -278,7 +326,7 @@ int stationFetchWidget::fetchStation()
     std::string demUse=demButcher();
     std::string stationPathName;
     CPLDebug("STATION_FETCH","USING DEM: %s",demUse.c_str());
-
+    
     int terrainPart=geoLoc->currentIndex();
     int timePart=timeLoc->currentIndex();
 
@@ -341,13 +389,14 @@ int stationFetchWidget::fetchStation()
         bufferUnits=buffUnits->currentText().toStdString();
         fetchNow=true;
         
-        //Set the Station Buffer
+        //Set the Station Buffer 
+
         pointInitialization::setStationBuffer(buffer,bufferUnits);
         //Generates the directory to store the file names, because current data is on, don't specify time zone        
         stationPathName=pointInitialization::generatePointDirectory(demFileName.toStdString(),demUse,true);
         pointInitialization::SetRawStationFilename(stationPathName);
+       
         result = pointInitialization::fetchStationFromBbox(demFileName.toStdString(),eTimeList,tzString.toStdString(),fetchNow);
-
         CPLDebug("STATION_FETCH","Return: %i",result);
     }
     //DEM and Time series
@@ -420,7 +469,6 @@ int stationFetchWidget::fetchStation()
         int sY,sMo,sD,sH,sMi;
         int eY,eMo,eD,eH,eMi;
         int numSteps=10; //make up a number for now.... It really doesn't matter at this point
-        
         std::string StartTime=startEdit->text().toStdString();
         std::string EndTime=endEdit->text().toStdString();
                 
