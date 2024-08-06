@@ -106,6 +106,7 @@ ninja::ninja(const ninja &rhs)
 , CloudGrid(rhs.CloudGrid)
 #ifdef NINJAFOAM
 , TurbulenceGrid(rhs.TurbulenceGrid)
+, colMaxGrid(rhs.colMaxGrid)
 #endif
 , outputSpeedArray(rhs.outputSpeedArray)
 , outputDirectionArray(rhs.outputDirectionArray)
@@ -187,6 +188,7 @@ ninja &ninja::operator=(const ninja &rhs)
         CloudGrid = rhs.CloudGrid;
 #ifdef NINJAFOAM
         TurbulenceGrid = rhs.TurbulenceGrid;
+        colMaxGrid = rhs.colMaxGrid;
 #endif
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
@@ -592,6 +594,7 @@ if(input.frictionVelocityFlag == 1){
 	     CloudGrid.deallocate();
 #ifdef NINJAFOAM
              TurbulenceGrid.deallocate();
+             colMaxGrid.deallocate();
 #endif
 	     #ifdef FRICTION_VELOCITY
 	     if(input.frictionVelocityFlag == 1){
@@ -2203,8 +2206,15 @@ void ninja::prepareOutput()
 #ifdef NINJAFOAM
         if(input.writeTurbulence)
         {
-            TurbulenceGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), 
-                    input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+            // um, the only way it ever gets to this point is for a diurnal run on a ninjafoam run, represented by if input.writeTurbulence is set for a mass solver run
+            // BUT, set_headerData() is NOT the appropriate way to deal with the data here, the data already comes in filled. Resampling to the new input resolution 
+            // would be more appropriate, but since the diurnal run defines mesh and dem with the same resolution as the ninjafoam run, they are on the same grid
+            // this is evidenced by not seeing any calls to resample to a different resolution in the foam initialization classes
+            // leave this here as a reminder just in case though, probably should revisit when trying to do a final double check ALL grid consistencies in ALL places
+            //TurbulenceGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), 
+            //        input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+            //colMaxGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), 
+            //        input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
         }
 #endif
 	
@@ -2232,6 +2242,7 @@ void ninja::prepareOutput()
 	AngleGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 #ifdef NINJAFOAM
 	TurbulenceGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
+	colMaxGrid.clipGridInPlaceSnapToCells(input.outputBufferClipping);
 #endif
 
 	//Clip cloud cover grid if it's a wxModel intitialization (since it's gridded)
@@ -2246,6 +2257,7 @@ void ninja::prepareOutput()
         if(input.writeTurbulence)
         {
             velocityUnits::fromBaseUnits(TurbulenceGrid, input.outputSpeedUnits);
+            velocityUnits::fromBaseUnits(colMaxGrid, input.outputSpeedUnits);
         }
 #endif
 
@@ -2702,7 +2714,7 @@ void ninja::computeDustEmissions()
 
     dust.ComputePM10(UstarGrid, DustGrid);
 
-    //DustGrid.ascii2png("dust_out_shear.png", "pm10", "ug/m3", "legend", false);
+    //DustGrid.ascii2png("dust_out_shear.png", "pm10", "ug/m3", "legend", false, false);
 }
 #endif //EMISISONS
 
@@ -2996,13 +3008,14 @@ void ninja::writeOutputFiles()
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
 #ifdef NINJAFOAM
-			AsciiGrid<double> *turbTempGrid;
+			AsciiGrid<double> *turbTempGrid, *colMaxTempGrid;
 
 #endif
 			velTempGrid=NULL;
 			angTempGrid=NULL;
 #ifdef NINJAFOAM
 			turbTempGrid=NULL;
+			colMaxTempGrid=NULL;
 #endif
 
 			KmlVector ninjaKmlFiles;
@@ -3013,11 +3026,18 @@ void ninja::writeOutputFiles()
 #ifdef NINJAFOAM
                         if(input.writeTurbulence)
                         {
-                            turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                            //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                            //            AsciiGrid<double>::order0));
+                            //
+                            //ninjaKmlFiles.setTurbulenceFlag("true");
+                            //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                            
+                            
+                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setTurbulenceFlag("true");
-                            ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
+                            ninjaKmlFiles.setColMaxFlag("true");
+                            ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
 
@@ -3096,6 +3116,11 @@ void ninja::writeOutputFiles()
 			{
 				delete turbTempGrid;
 				turbTempGrid=NULL;
+			}
+			if(colMaxTempGrid)
+			{
+				delete colMaxTempGrid;
+				colMaxTempGrid=NULL;
 			}
 #endif
 		}
@@ -3668,6 +3693,12 @@ void ninja::set_foamAngleGrid(AsciiGrid<double> angleGrid)
 void ninja::set_writeTurbulenceFlag(bool flag)
 {
     input.writeTurbulence = flag;
+}
+
+void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units )
+{
+    input.colMax_colHeightAGL = colMaxSampleHeightAGL;
+    input.colMax_colHeightAGL_units = units;
 }
 #endif
 

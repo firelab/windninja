@@ -423,8 +423,9 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         std::string legendTitle = "tempGrid";
         std::string legendUnits = "(?)";
         bool writeLegend = TRUE;
+        bool keepTiff = FALSE;
 
-        //tempGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
+        //tempGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend, keepTiff );
 
 
         //Make final grids with same header as dem
@@ -437,8 +438,9 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         legendTitle = "temp2Grid";
         legendUnits = "(?)";
         writeLegend = TRUE;
+        keepTiff = FALSE;
         
-        //temp2Grid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );*/
+        //temp2Grid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend, keepTiff );*/
         //=======end testing=================================//
         
        
@@ -743,7 +745,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         }
         testGrid.write_Grid(filename.c_str(), 2);
         //if(k = 10){
-            //testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
+            //testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend, keepTiff );
         //}
 	}
     testGrid.deallocate();*/
@@ -1118,7 +1120,7 @@ void wrf3dInitialization::buildWxMeshes(WindNinjaInputs &input, Mesh const& mesh
         /*if(k == 0){
             testGrid.write_Grid(filename.c_str(), 2);
             testGrid.replaceNan( -9999.0 );
-            //testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend );
+            //testGrid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend, keepTiff );
         }*/
 	//}
     //testGrid.deallocate();  

@@ -106,7 +106,7 @@ char * NinjaQueryServerMessages(bool checkAbort) {
             for (size_t i = 0; i < lines.size(); ++i) {
             if (i == 1) {  
                 if (rawVersion(const_cast<char*>(lines[i].c_str()), const_cast<char*>(NINJA_VERSION_STRING))) {
-                    oss << "You are using an outdated Ninja version, please update to version: " << lines[i] << "\n";
+                    oss << "You are using an outdated WindNinja version, please update to version: " << lines[i] << "\n";
                 } else {
                     oss << lines[i] << "\n";
                 }

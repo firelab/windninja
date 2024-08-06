@@ -1218,6 +1218,32 @@ int ninjaArmy::setWriteTurbulenceFlag( const int nIndex, const bool flag, char *
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_writeTurbulenceFlag( flag ) );
 }
+int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                         const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_colMaxSampleHeightAGL( colMaxSampleHeightAGL, units ) );
+}
+int ninjaArmy::setColMaxSampleHeightAGL( const int nIndex, const double colMaxSampleHeightAGL,
+                                         std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_colMaxSampleHeightAGL( colMaxSampleHeightAGL, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
 #endif
 /*-----------------------------------------------------------------------------
  *  Forecast Model Methods
