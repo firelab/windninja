@@ -101,20 +101,21 @@ char * NinjaQueryServerMessages(bool checkAbort) {
                 }
             }
             else {
-                bool versionisnotuptodate = !NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
-                if (versionisnotuptodate) {
+                bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
+                if (!versionisuptodate) {
                     oss << messages[0] << "\n"; 
                     oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
                 }
-                if (!messages[4].empty()) {
+
+                if (messages[4].empty() == false) {
                     for (size_t i = 3; i < messages.size() - 2; ++i) {
                         if (!messages[i].empty()) {
                             oss << messages[i] << "\n"; 
                         }
                     }
                 }
-                if (messages[4].empty() && !versionisnotuptodate) {
-                    return ""; 
+                if (messages[4].empty() && versionisuptodate) {
+                    return NULL; 
                 }
             }
 

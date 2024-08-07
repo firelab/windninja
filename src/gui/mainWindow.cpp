@@ -130,7 +130,7 @@ void mainWindow::checkMessages(void) {
     
     else {
         char *papszMsg = NinjaQueryServerMessages(false);
-        if (papszMsg != "") {
+        if (papszMsg != NULL) {
           mbox.setText(papszMsg);
       
           mbox.exec();
@@ -138,6 +138,7 @@ void mainWindow::checkMessages(void) {
     }
    }
 }
+
 #endif
 
 bool mainWindow::okToContinue()
