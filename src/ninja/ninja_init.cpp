@@ -49,29 +49,28 @@ boost::local_time::tz_database globalTimeZoneDB;
 **            abort() after displaying a message.
 */
 
-bool rawVersion(char * src, char * dest) {
-    bool same = false;
-    char src1[256]; 
-    char dest1[256]; 
-    int srcIndex = 0;
-    int destIndex = 0;
-    while (*src) {
-        if (*src != '.') {
-            src1[srcIndex++] = *src;
+bool NinjaCheckVersions(char * mostrecentversion, char * localversion) {
+    char comparemostrecentversion[256]; 
+    char comparelocalversion[256]; 
+    int mostrecentversionIndex = 0;
+    int localversionIndex = 0;
+    while (*mostrecentversion) {
+        if (*mostrecentversion != '.') {
+            comparemostrecentversion[mostrecentversionIndex++] = *mostrecentversion;
         }
-        src++;
+        mostrecentversion++;
     }
-    src1[srcIndex] = '\0'; 
+    comparemostrecentversion[mostrecentversionIndex] = '\0'; 
 
-    while (*dest) {
-        if (*dest != '.') {
-            dest1[destIndex++] = *dest;
+    while (*localversion) {
+        if (*localversion != '.') {
+            comparelocalversion[localversionIndex++] = *localversion;
         }
-        dest++;
+        localversion++;
     }
-    dest1[destIndex] = '\0';
 
-    return strcmp(src1, dest1) == 0;
+    comparelocalversion[localversionIndex] = '\0';
+    return strcmp(comparemostrecentversion, comparelocalversion) == 0;
 
 }
 
@@ -79,53 +78,53 @@ char * NinjaQueryServerMessages(bool checkAbort) {
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
     CPLHTTPResult *poResult = NULL;
     try{
-    CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+        CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
 
-    if (poResult != NULL) {
-        const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
-         std::vector<std::string> lines;
-        std::istringstream iss(pszTextContent);
-        std::string line;
-        int lineCount = 0;
+        if (poResult != NULL) {
+            const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+            std::vector<std::string> messages;
+            std::istringstream iss(pszTextContent);
+            std::string message;
 
-        // Read all lines into the vector
-        while (std::getline(iss, line)) {
-            lines.push_back(line);
-        }
-
-        // Process all lines except the last two
-        std::ostringstream oss;
-        if (checkAbort) {
-            for (size_t i = 0; i < lines.size(); ++i) {
-               if (i == lines.size()-1) { // check final line 
-                    oss << lines[i] << "\n";
-                }
-             }
-        }
-        else {
-            for (size_t i = 0; i < lines.size(); ++i) {
-            if (i == 1) {  
-                if (rawVersion(const_cast<char*>(lines[i].c_str()), const_cast<char*>(NINJA_VERSION_STRING))) {
-                    oss << "You are using an outdated WindNinja version, please update to version: " << lines[i] << "\n";
-                } else {
-                    oss << lines[i] << "\n";
-                }
-            } else if (i < lines.size() - 2) {  
-                oss << lines[i] << "\n";
+            // Read all lines into the vector
+            while (std::getline(iss, message)) {
+                messages.push_back(message);
             }
+
+            // Process all lines except the last two
+            std::ostringstream oss;
+            if (checkAbort) {
+                for (size_t i = 0; i < messages.size(); ++i) {
+                if (i == messages.size()-1) { // check final line 
+                        oss << messages[i] << "\n";
+                    }
+                }
             }
+            else {
+                bool versionisnotuptodate = !NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
+                if (versionisnotuptodate) {
+                    oss << messages[0] << "\n"; 
+                    oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
+                }
+                if (!messages[4].empty()) {
+                    for (size_t i = 3; i < messages.size() - 2; ++i) {
+                        if (!messages[i].empty()) {
+                            oss << messages[i] << "\n"; 
+                        }
+                    }
+                }
+                if (messages[4].empty() && !versionisnotuptodate) {
+                    return ""; 
+                }
+            }
+
+            std::string resultingmessage = oss.str();
+            char* returnString = new char[resultingmessage.length() + 1];
+            std::strcpy(returnString, resultingmessage.c_str());
+
+            CPLHTTPDestroyResult(poResult);
+            return returnString;
         }
-
-        std::string result = oss.str();
-        // return as char * 
-        char* returnString = new char[result.length() + 1];
-        std::strcpy(returnString, result.c_str());
-
-        // Clean up
-        CPLHTTPDestroyResult(poResult);
-
-        return returnString;
-    }
     }
     catch (std::exception& e) {
         std::cout << "can't fetch" << std::endl;
@@ -230,9 +229,9 @@ int NinjaInitialize(const char* typeofrun) {
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
     
-    if (strcmp(typeofrun, "") != 0) {
+        if (strcmp(typeofrun, "") != 0) {
 
-    time_t now = time(0);
+        time_t now = time(0);
 
         // convert now to tm struct for UTC
         tm *gmtm = gmtime(&now);

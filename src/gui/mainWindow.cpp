@@ -83,7 +83,10 @@ mainWindow::mainWindow(QWidget *parent)
     sThread = new solveThread;
 
     meshCellSize = 200.0;
+
+#ifdef PHONE_HOME_QUERIES_ENABLED
     checkMessages();
+#endif
 
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
@@ -114,6 +117,7 @@ mainWindow::mainWindow(QWidget *parent)
 /*
 ** Check for version updates, or messages from the server.
 */
+#ifdef PHONE_HOME_QUERIES_ENABLED
 void mainWindow::checkMessages(void) {
    QMessageBox mbox;
    char *papszMsg = NinjaQueryServerMessages(true);
@@ -125,15 +129,16 @@ void mainWindow::checkMessages(void) {
     }
     
     else {
-
         char *papszMsg = NinjaQueryServerMessages(false);
-        mbox.setText(papszMsg);
+        if (papszMsg != "") {
+          mbox.setText(papszMsg);
       
-        mbox.exec();
+          mbox.exec();
+        }
     }
    }
 }
-
+#endif
 
 bool mainWindow::okToContinue()
 {

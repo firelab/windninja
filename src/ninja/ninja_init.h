@@ -46,6 +46,7 @@
 int NinjaInitialize(const char* typeofrun = "");
 int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
 char * NinjaQueryServerMessages(bool checkAbort);
+bool NinjaCheckVersions(char * mostrecentversion, char * localversion); 
 
 #endif /* NINJA_INIT_H_ */
 

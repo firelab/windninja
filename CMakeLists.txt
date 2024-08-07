@@ -227,6 +227,16 @@ if(C_API)
     add_definitions(-DC_API)
 endif(C_API)
 
+# Enable phone home and message server startup
+option(PHONE_HOME_QUERIES "Enable Phone Home Queries" ON)
+
+if (PHONE_HOME_QUERIES)
+    add_definitions(-DPHONE_HOME_QUERIES_ENABLED)
+    message(STATUS "Phone Home Queries are enabled.")
+else()
+    message(STATUS "Phone Home Queries are disabled.")
+endif()
+
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
 if(NINJAFOAM)
