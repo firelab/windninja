@@ -336,8 +336,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
                 ("mesh_count", po::value<int>(), "number of cells in the mesh") 
                 ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
-                ("colMax_colHeightAGL", po::value<double>(), "column max sampling height AGL, default is 300.0 m")
-                ("colMax_colHeightAGL_units", po::value<std::string>(), "column max sampling height AGL units (ft, m)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
                 ("initialization_speed_dampening_ratio", po::value<double>()->default_value(1.0), "initialization speed dampening ratio (0.0 - 1.0)")
@@ -926,7 +924,6 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
         option_dependency(vm, "turbulence_output_flag", "write_goog_output");
-        option_dependency(vm, "colMax_colHeightAGL", "turbulence_output_flag");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif
@@ -1375,14 +1372,6 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 if(vm.count("turbulence_output_flag")){
                     windsim.setWriteTurbulenceFlag( i_, vm["turbulence_output_flag"].as<bool>() );
-                }
-                if(vm["turbulence_output_flag"].as<bool>()){
-                    // optional colMax_colHeightAGL
-                    if(vm.count("colMax_colHeightAGL"))
-                    {
-                        option_dependency(vm, "colMax_colHeightAGL", "colMax_colHeightAGL_units");
-                        windsim.setColMaxSampleHeightAGL( i_, vm["colMax_colHeightAGL"].as<double>(), lengthUnits::getUnit(vm["colMax_colHeightAGL_units"].as<std::string>()));
-                    }
                 }
             }
             #endif //NINJAFOAM
