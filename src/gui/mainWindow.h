@@ -145,7 +145,10 @@ class mainWindow : public QMainWindow
   void mainDiurnalChanged(bool dC);
 
  public slots:
+
+#ifdef PHONE_HOME_QUERIES_ENABLED
   void checkMessages();
+#endif
 #ifdef NINJAFOAM  
   void openExistingCase();
   void updateFileInputForCase(const char* file);

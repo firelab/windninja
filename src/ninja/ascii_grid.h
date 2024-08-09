@@ -207,7 +207,7 @@ public:
                    std::string legendTitle,
                    std::string legendUnits,
                    std::string scalarLegendFilename,
-                   bool writeLegend);
+                   bool writeLegend, bool keepTiff);
 
     void exportToTiff( std::string outFilename, tiffType type = tiffGray );
 

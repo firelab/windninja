@@ -923,6 +923,7 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "input_points_file");
         conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
+        option_dependency(vm, "turbulence_output_flag", "write_goog_output");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif

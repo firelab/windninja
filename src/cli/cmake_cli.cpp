@@ -51,7 +51,7 @@
 int main(int argc, char *argv[])
 {
     CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
-    NinjaInitialize();
+    NinjaInitialize("cli");
     //set a different key for the CLI since this is where users are likely to abuse access
     if(CPLGetConfigOption("NINJA_CLI_SRTM_API_KEY", NULL) != NULL)
     {

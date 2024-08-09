@@ -84,6 +84,10 @@ mainWindow::mainWindow(QWidget *parent)
 
     meshCellSize = 200.0;
 
+#ifdef PHONE_HOME_QUERIES_ENABLED
+    checkMessages();
+#endif
+
     QString v(NINJA_VERSION_STRING);
     v = "Welcome to WindNinja " + v;
 
@@ -113,31 +117,29 @@ mainWindow::mainWindow(QWidget *parent)
 /*
 ** Check for version updates, or messages from the server.
 */
+#ifdef PHONE_HOME_QUERIES_ENABLED
 void mainWindow::checkMessages(void) {
-    QMessageBox mbox;
-    char **papszMsg = NinjaCheckVersion();
-    if (papszMsg != NULL) {
-      const char *pszVers =
-          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
-      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
-        mbox.setText("A new version of WindNinja is available: " +
-                     QString(pszVers));
-        mbox.exec();
-      }
-      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
-      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
-        mbox.setText(QString(papszUserMsg[i]));
-        mbox.exec();
-      }
-      CSLDestroy(papszUserMsg);
-      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
+   QMessageBox mbox;
+   char *papszMsg = NinjaQueryServerMessages(true);
+   if (papszMsg != NULL) {
+    if (strcmp(papszMsg, "TRUE\n") == 0) {
         mbox.setText("There is a fatal flaw in Windninja, it must close.");
         mbox.exec();
         abort();
-      }
     }
-    CSLDestroy(papszMsg);
+    
+    else {
+        char *papszMsg = NinjaQueryServerMessages(false);
+        if (papszMsg != NULL) {
+          mbox.setText(papszMsg);
+      
+          mbox.exec();
+        }
+    }
+   }
 }
+
+#endif
 
 bool mainWindow::okToContinue()
 {
@@ -1223,8 +1225,6 @@ void mainWindow::aboutWindNinja()
                                                "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
                                                "Bret Butler<br/>" \
-                                               "Levi Malott<br/>" \
-                                               "Cody Posey<p/>");
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
