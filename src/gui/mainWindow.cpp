@@ -1225,8 +1225,6 @@ void mainWindow::aboutWindNinja()
                                                "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
                                                "Bret Butler<br/>" \
-                                               "Levi Malott<br/>" \
-                                               "Cody Posey<p/>");
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
