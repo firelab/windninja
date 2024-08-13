@@ -83,6 +83,8 @@ set(NINJA_SOURCES air.cpp
                   Shade.cpp
                   ShapeVector.cpp
                   shpopen.cpp
+                  gcpHandler.cpp
+                  AWSHandler.cpp
                   Slope.cpp
                   solar.cpp
                   solpos.cpp
