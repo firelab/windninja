@@ -1224,7 +1224,7 @@ void mainWindow::aboutWindNinja()
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
                                                "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>" \
+                                               "Bret Butler<br/>"); \
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
