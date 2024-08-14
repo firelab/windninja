@@ -215,12 +215,13 @@ int NinjaInitialize(const char* typeofrun) {
 
     GDALAllRegister();
     OGRRegisterAll();
+
     /*
     ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
     ** but that doesn't mean we are in trouble.
     */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-	int rc = 0; 
+    int rc = 0; 
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
     ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
@@ -239,17 +240,15 @@ int NinjaInitialize(const char* typeofrun) {
         char* dt = asctime(gmtm);
         std::string cpp_string(dt);
 
-
         std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
         cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
         cpp_string.end());
 
-
         std::string full = url + cpp_string + "&runtype=" + typeofrun;
-
 
         const char *charStr = full.data();
 
+#ifdef PHONE_HOME_QUERIES_ENABLED
         CPLHTTPResult *poResult;
         CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
         char **papszOptions = NULL;
@@ -266,9 +265,8 @@ int NinjaInitialize(const char* typeofrun) {
                 CPLHTTPDestroyResult(poResult);
 
         }
+#endif
     }
-    
-
 
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
