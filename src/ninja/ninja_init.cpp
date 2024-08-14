@@ -126,7 +126,7 @@ char * NinjaQueryServerMessages(bool checkAbort) {
 
             std::string resultingmessage = oss.str();
             char* returnString = new char[resultingmessage.length() + 1];
-
+            std::strcpy(returnString, resultingmessage.c_str());
             CPLHTTPDestroyResult(poResult);
             return returnString;
         }
