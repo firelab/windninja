@@ -79,6 +79,11 @@ char * NinjaQueryServerMessages(bool checkAbort) {
     CPLHTTPResult *poResult = NULL;
     try{
         CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+        if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+        {
+            CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+            return NULL;
+        }
 
         if (poResult != NULL) {
             const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
@@ -131,11 +136,7 @@ char * NinjaQueryServerMessages(bool checkAbort) {
         std::cout << "can't fetch" << std::endl;
     }
     return NULL;
-
 }
-
-
-
 
 void NinjaCheckThreddsData( void *rc )
 {
