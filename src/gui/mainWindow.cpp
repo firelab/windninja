@@ -125,15 +125,17 @@ void mainWindow::checkMessages(void) {
     if (strcmp(papszMsg, "TRUE\n") == 0) {
         mbox.setText("There is a fatal flaw in Windninja, it must close.");
         mbox.exec();
+        delete[] papszMsg; 
         abort();
     }
-    
+
     else {
         char *papszMsg = NinjaQueryServerMessages(false);
         if (papszMsg != NULL) {
           mbox.setText(papszMsg);
       
           mbox.exec();
+          delete[] papszMsg; 
         }
     }
    }
