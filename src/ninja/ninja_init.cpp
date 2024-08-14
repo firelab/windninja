@@ -256,16 +256,23 @@ int NinjaInitialize(const char* typeofrun) {
 
         // Fetch the URL with custom headers
         try {
-            poResult = CPLHTTPFetch(charStr, papszOptions);
+            poResult = CPLHTTPFetch(charStr, papszOptions); 
+            if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+            {   
+                CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+                return NULL;
+            }
+            else {
+                if (poResult) {
+                    CPLHTTPDestroyResult(poResult);
+
+                }
+            }
         }
         catch (std::exception& e) {
             std::cout << "can't fetch" << std::endl;
         }
 
-        if (poResult) {
-                CPLHTTPDestroyResult(poResult);
-
-        }
 #endif
     }
 
