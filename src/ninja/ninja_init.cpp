@@ -74,66 +74,61 @@ bool NinjaCheckVersions(char * mostrecentversion, char * localversion) {
 
 }
 
-char * NinjaQueryServerMessages(bool checkAbort) { 
+char * NinjaQueryServerMessages(bool checkAbort)
+{ 
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-    CPLHTTPResult *poResult = NULL;
-    try{
-        CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
-        if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
-        {
-            CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
-            return NULL;
-        }
-
-        if (poResult != NULL) {
-            const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
-            std::vector<std::string> messages;
-            std::istringstream iss(pszTextContent);
-            std::string message;
-
-            // Read all lines into the vector
-            while (std::getline(iss, message)) {
-                messages.push_back(message);
-            }
-
-            // Process all lines except the last two
-            std::ostringstream oss;
-            if (checkAbort) {
-                for (size_t i = 0; i < messages.size(); ++i) {
-                if (i == messages.size()-1) { // check final line 
-                        oss << messages[i] << "\n";
-                    }
-                }
-            }
-            else {
-                bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
-                if (!versionisuptodate) {
-                    oss << messages[0] << "\n"; 
-                    oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
-                }
-
-                if (messages[4].empty() == false) {
-                    for (size_t i = 3; i < messages.size() - 2; ++i) {
-                        if (!messages[i].empty()) {
-                            oss << messages[i] << "\n"; 
-                        }
-                    }
-                }
-                if (messages[4].empty() && versionisuptodate) {
-                    return NULL; 
-                }
-            }
-
-            std::string resultingmessage = oss.str();
-            char* returnString = new char[resultingmessage.length() + 1];
-            std::strcpy(returnString, resultingmessage.c_str());
-            CPLHTTPDestroyResult(poResult);
-            return returnString;
-        }
-    }
-    catch (std::exception& e) {
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+    CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+    if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+    {
         CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+        return NULL;
     }
+
+    const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+    std::vector<std::string> messages;
+    std::istringstream iss(pszTextContent);
+    std::string message;
+
+    // Read all lines into the vector
+    while (std::getline(iss, message)) {
+        messages.push_back(message);
+    }
+
+    // Process all lines except the last two
+    std::ostringstream oss;
+    if (checkAbort) {
+        for (size_t i = 0; i < messages.size(); ++i) {
+        if (i == messages.size()-1) { // check final line 
+                oss << messages[i] << "\n";
+            }
+        }
+    }
+    else {
+        bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
+        if (!versionisuptodate) {
+            oss << messages[0] << "\n"; 
+            oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
+        }
+        if (messages[4].empty() == false) {
+            for (size_t i = 3; i < messages.size() - 2; ++i) {
+                if (!messages[i].empty()) {
+                    oss << messages[i] << "\n"; 
+                }
+            }
+        }
+        if (messages[4].empty() && versionisuptodate) {
+            return NULL; 
+        }
+    }
+
+    std::string resultingmessage = oss.str();
+    char* returnString = new char[resultingmessage.length() + 1];
+    std::strcpy(returnString, resultingmessage.c_str());
+    CPLHTTPDestroyResult(poResult);
+    return returnString;
+
     return NULL;
 }
 
@@ -182,7 +177,6 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     //set GDAL_DATA and WINDNINJA_DATA
     GDALAllRegister();
     OGRRegisterAll();    
-
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
@@ -246,7 +240,6 @@ int NinjaInitialize(const char* typeofrun)
     CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
 
     CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
-
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
@@ -309,26 +302,21 @@ int NinjaInitialize(const char* typeofrun)
         const char *charStr = full.data();
 
         CPLHTTPResult *poResult;
-        CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
         char **papszOptions = NULL;
 
+        CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
         // Fetch the URL with custom headers
-        try {
-            poResult = CPLHTTPFetch(charStr, papszOptions); 
-            if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
-            {   
-                CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
-                return 0;
-            }
-            else {
-                if (poResult) {
-                    CPLHTTPDestroyResult(poResult);
-                }
-            }
-        }
-        catch (std::exception& e) {
+        poResult = CPLHTTPFetch(charStr, papszOptions); 
+        CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+        if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+        {   
             CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
             return 0;
+        }
+        else {
+            if (poResult) {
+                CPLHTTPDestroyResult(poResult);
+            }
         }
     }
 #endif
