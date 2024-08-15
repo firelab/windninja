@@ -12,6 +12,9 @@ WindNinja 3.11.0
 - Added additional time zones from Python timezone finder
 
 - Disabled automatic output buffering unless the FARSITE/FlamMap atmosphere file is written (#511)
+
+- Re-enable server communications (#295, #450, #481)
+
 WindNinja 3.10.0
 ---------------
 - Update CLI documentation, example cfg files, and test data (#415, #434, #270, #252)

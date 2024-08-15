@@ -125,15 +125,17 @@ void mainWindow::checkMessages(void) {
     if (strcmp(papszMsg, "TRUE\n") == 0) {
         mbox.setText("There is a fatal flaw in Windninja, it must close.");
         mbox.exec();
+        delete[] papszMsg; 
         abort();
     }
-    
+
     else {
         char *papszMsg = NinjaQueryServerMessages(false);
         if (papszMsg != NULL) {
           mbox.setText(papszMsg);
       
           mbox.exec();
+          delete[] papszMsg; 
         }
     }
    }
@@ -1224,7 +1226,7 @@ void mainWindow::aboutWindNinja()
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
                                                "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>" \
+                                               "Bret Butler<br/>"); \
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");

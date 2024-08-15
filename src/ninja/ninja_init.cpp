@@ -74,68 +74,63 @@ bool NinjaCheckVersions(char * mostrecentversion, char * localversion) {
 
 }
 
-char * NinjaQueryServerMessages(bool checkAbort) { 
+char * NinjaQueryServerMessages(bool checkAbort)
+{ 
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-    CPLHTTPResult *poResult = NULL;
-    try{
-        CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+    CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+    if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+    {
+        CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+        return NULL;
+    }
 
-        if (poResult != NULL) {
-            const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
-            std::vector<std::string> messages;
-            std::istringstream iss(pszTextContent);
-            std::string message;
+    const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+    std::vector<std::string> messages;
+    std::istringstream iss(pszTextContent);
+    std::string message;
 
-            // Read all lines into the vector
-            while (std::getline(iss, message)) {
-                messages.push_back(message);
+    // Read all lines into the vector
+    while (std::getline(iss, message)) {
+        messages.push_back(message);
+    }
+
+    // Process all lines except the last two
+    std::ostringstream oss;
+    if (checkAbort) {
+        for (size_t i = 0; i < messages.size(); ++i) {
+        if (i == messages.size()-1) { // check final line 
+                oss << messages[i] << "\n";
             }
-
-            // Process all lines except the last two
-            std::ostringstream oss;
-            if (checkAbort) {
-                for (size_t i = 0; i < messages.size(); ++i) {
-                if (i == messages.size()-1) { // check final line 
-                        oss << messages[i] << "\n";
-                    }
-                }
-            }
-            else {
-                bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
-                if (!versionisuptodate) {
-                    oss << messages[0] << "\n"; 
-                    oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
-                }
-
-                if (messages[4].empty() == false) {
-                    for (size_t i = 3; i < messages.size() - 2; ++i) {
-                        if (!messages[i].empty()) {
-                            oss << messages[i] << "\n"; 
-                        }
-                    }
-                }
-                if (messages[4].empty() && versionisuptodate) {
-                    return NULL; 
-                }
-            }
-
-            std::string resultingmessage = oss.str();
-            char* returnString = new char[resultingmessage.length() + 1];
-            std::strcpy(returnString, resultingmessage.c_str());
-
-            CPLHTTPDestroyResult(poResult);
-            return returnString;
         }
     }
-    catch (std::exception& e) {
-        std::cout << "can't fetch" << std::endl;
+    else {
+        bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING)); 
+        if (!versionisuptodate) {
+            oss << messages[0] << "\n"; 
+            oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
+        }
+        if (messages[4].empty() == false) {
+            for (size_t i = 3; i < messages.size() - 2; ++i) {
+                if (!messages[i].empty()) {
+                    oss << messages[i] << "\n"; 
+                }
+            }
+        }
+        if (messages[4].empty() && versionisuptodate) {
+            return NULL; 
+        }
     }
+
+    std::string resultingmessage = oss.str();
+    char* returnString = new char[resultingmessage.length() + 1];
+    std::strcpy(returnString, resultingmessage.c_str());
+    CPLHTTPDestroyResult(poResult);
+    return returnString;
+
     return NULL;
-
 }
-
-
-
 
 void NinjaCheckThreddsData( void *rc )
 {
@@ -183,7 +178,6 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     GDALAllRegister();
     OGRRegisterAll();    
 
-
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
         CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
@@ -210,17 +204,18 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 ** Initialize global singletons and environments.
 */
 
-int NinjaInitialize(const char* typeofrun) {
-
-
+int NinjaInitialize(const char* typeofrun) 
+{
     GDALAllRegister();
     OGRRegisterAll();
+
     /*
     ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
     ** but that doesn't mean we are in trouble.
     */
     CPLPushErrorHandler(CPLQuietErrorHandler);
-	int rc = 0; 
+    int rc = 0; 
+
     /*
     ** Setting the CURL_CA_BUNDLE variable through GDAL doesn't seem to work,
     ** but could be investigated in the future.  CURL_CA_BUNDLE can only be set in GDAL
@@ -230,46 +225,6 @@ int NinjaInitialize(const char* typeofrun) {
     */
     CPLSetConfigOption( "GDAL_HTTP_UNSAFESSL", "YES");
     
-        if (strcmp(typeofrun, "") != 0) {
-
-        time_t now = time(0);
-
-        // convert now to tm struct for UTC
-        tm *gmtm = gmtime(&now);
-        char* dt = asctime(gmtm);
-        std::string cpp_string(dt);
-
-
-        std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
-        cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
-        cpp_string.end());
-
-
-        std::string full = url + cpp_string + "&runtype=" + typeofrun;
-
-
-        const char *charStr = full.data();
-
-        CPLHTTPResult *poResult;
-        CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-        char **papszOptions = NULL;
-
-        // Fetch the URL with custom headers
-        try {
-            poResult = CPLHTTPFetch(charStr, papszOptions);
-        }
-        catch (std::exception& e) {
-            std::cout << "can't fetch" << std::endl;
-        }
-
-        if (poResult) {
-                CPLHTTPDestroyResult(poResult);
-
-        }
-    }
-    
-
-
 #ifdef WIN32
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
     std::string osGdalData;
@@ -285,7 +240,6 @@ int NinjaInitialize(const char* typeofrun) {
     CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
 
     CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
-
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
@@ -313,25 +267,59 @@ int NinjaInitialize(const char* typeofrun) {
     CPLFree( (void*)pszExecPath );
 #endif /* defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)*/
 
+#endif /* defined(WIN32) */
 
-#endif
-
-
-
-
-/*
-** Set windninja data if it isn't set.
-*/
-if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
-    std::string osDataPath;
-    osDataPath = FindDataPath("tz_world.zip");
-    if (osDataPath != "") {
-        CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
+    /*
+    ** Set windninja data if it isn't set.
+    */
+    if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
+        std::string osDataPath;
+        osDataPath = FindDataPath("tz_world.zip");
+        if (osDataPath != "") {
+            CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
+        }
     }
-}
-
 
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
     CPLPopErrorHandler();
+
+#ifdef PHONE_HOME_QUERIES_ENABLED
+    if (strcmp(typeofrun, "") != 0) {
+
+        time_t now = time(0);
+
+        // convert now to tm struct for UTC
+        tm *gmtm = gmtime(&now);
+        char* dt = asctime(gmtm);
+        std::string cpp_string(dt);
+
+        std::string url = "https://ninjastorm.firelab.org/sqlitetest/?time=";
+        cpp_string.erase(std::remove_if(cpp_string.begin(), cpp_string.end(), ::isspace),
+        cpp_string.end());
+
+        std::string full = url + cpp_string + "&runtype=" + typeofrun;
+
+        const char *charStr = full.data();
+
+        CPLHTTPResult *poResult;
+        char **papszOptions = NULL;
+
+        CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
+        // Fetch the URL with custom headers
+        poResult = CPLHTTPFetch(charStr, papszOptions); 
+        CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+        if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+        {   
+            CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+            return 0;
+        }
+        else {
+            if (poResult) {
+                CPLHTTPDestroyResult(poResult);
+            }
+        }
+    }
+#endif
+
     return 0;
 }
