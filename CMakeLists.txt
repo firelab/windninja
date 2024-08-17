@@ -319,6 +319,8 @@ option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL fi
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
 option(BUILD_WRF_TO_KMZ "Build a standalone command line interface for converting wrf output runs to kmz, without running full WindNinja" OFF )
 mark_as_advanced(BUILD_WRF_TO_KMZ)
+option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converting hrrr output runs to kmz, without running full WindNinja" OFF )
+mark_as_advanced(BUILD_HRRR_TO_KMZ)
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
