@@ -1114,6 +1114,71 @@ void AsciiGrid<T>::clipGridInPlaceSnapToCells(double percentClip)
 }
 
 template <class T>
+void AsciiGrid<T>::clipGridInPlaceSnapToCells(double west, double east, double south, double north)
+{
+    if(west > east || south > north)
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid is improperly set to west,east,south,north " << west << "," << east << ", " << south << "," << north << ".  bbox should be east > west and north > south.";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    if( check_inBounds( west, south ) == false || check_inBounds( east, north ) == false )
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid extends outside the bounds of the data!!";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    int westIdx = 0;
+    int eastIdx = 0;
+    int southIdx = 0;
+    int northIdx = 0;
+    // the get_cellIndex function, if in between cells, tends to round down rather than to round up
+    // this means slightly bigger than the bounding box for south and west, but slightly smaller than the bounding box for north and east
+    get_cellIndex(west, south, &southIdx, &westIdx);
+    get_cellIndex(east, north, &northIdx, &eastIdx);
+
+    //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+
+    if ( westIdx == eastIdx && southIdx == northIdx )
+    {
+        // if there is zero clipping to be done, just return without doing anything
+    } else
+    {
+        int newNumCols, newNumRows;
+        int xClipCells, yClipCells;
+        double newXllCorner, newYllCorner;
+
+        xClipCells = westIdx;
+        yClipCells = southIdx;
+
+        newNumCols = eastIdx - westIdx;
+        newNumRows = northIdx - southIdx;
+        //std::cout << "xClipCells,yClipCells = " << xClipCells << "," << yClipCells << std::endl;
+        //std::cout << "newNumCols,newNumRows = " << newNumCols << "," << newNumRows << std::endl;
+        //std::cout << "xClipCells+newNumCols,yClipCells+newNumRows = " << xClipCells+newNumCols << "," << yClipCells+newNumRows << std::endl;
+
+        newXllCorner = xllCorner + xClipCells*cellSize;
+        newYllCorner = yllCorner + yClipCells*cellSize;
+        //std::cout << "newXllCorner,newXllCorner+newNumCols*cellSize = " << newXllCorner << "," << newXllCorner+newNumCols*cellSize << std::endl;
+        //std::cout << "newYllCorner,newYllCorner+newNumRows*cellSize = " << newYllCorner << "," << newYllCorner+newNumRows*cellSize << std::endl;
+
+        AsciiGrid<T>A(newNumCols, newNumRows, newXllCorner, newYllCorner, cellSize, data.getNoDataValue(), data.getNoDataValue(), prjString);
+
+        for(int i=0; i<A.get_nRows(); i++)
+        {
+            for(int j=0; j<A.get_nCols(); j++)
+            {
+                A.set_cellValue(i,j,get_cellValue(i+yClipCells, j+xClipCells));
+            }
+        }
+
+        *this = A;
+    }
+}
+
+template <class T>
 AsciiGrid<T> AsciiGrid<T>::normalize_Grid(T lowBound, T highBound)
 {
   AsciiGrid<T>A(*this);
