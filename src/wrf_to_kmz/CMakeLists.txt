@@ -28,7 +28,6 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 set(WRF_TO_KMZ_SRC wrf_to_kmz.cpp
-
                 ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp

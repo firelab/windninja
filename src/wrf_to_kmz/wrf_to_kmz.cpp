@@ -27,9 +27,6 @@
  *
  *****************************************************************************/
 
-// got many of these functions from wxModelInitialization.cpp and wrfSurfInitialization.cpp
-
-
 #include "ninja_init.h"
 #include "ninja_conv.h"
 
@@ -40,8 +37,6 @@
 
 #include "ninjaUnits.h"
 #include "KmlVector.h"
-
-
 
 /**
 * Static identifier to determine if the netcdf file is a WRF forecast.
@@ -122,7 +117,6 @@ void checkForValidData( std::string wxModelFileName )
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
-        //std::cout << "temp = \"" << temp.c_str() << "\"" << std::endl;
 
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
@@ -132,7 +126,6 @@ void checkForValidData( std::string wxModelFileName )
 
         // Get total bands (time steps)
         nBands = srcDS->GetRasterCount();
-        //std::cout << "nBands = " << nBands << std::endl;
         nBands = srcDS->GetRasterCount();
         int nXSize, nYSize;
         GDALRasterBand *poBand;
@@ -142,9 +135,6 @@ void checkForValidData( std::string wxModelFileName )
 
         nXSize = srcDS->GetRasterXSize();
         nYSize = srcDS->GetRasterYSize();
-
-        //std::cout << "nXsize = " << nXSize << std::endl;
-        //std::cout << "nYsize = " << nYSize << std::endl;
 
         // loop over all bands for this variable (bands are time steps)
         for(int j = 1; j <= nBands; j++)
@@ -220,7 +210,7 @@ void checkForValidData( std::string wxModelFileName )
 * @param cenLat The center latitude value of the dataset to be filled.
 * @param cenLon The center longitude value of the dataset to be filled.
 * @param projString The projection string of the dataset to be filled.
-* note that there are additional wrf netcdf file global attributes that are accessed and used to get and process the projection string, 
+* Note: there are additional wrf netcdf file global attributes that are accessed and used to get and process the projection string, 
 * but are not used outside this function, so they are not returned. These include mapProj, moadCenLat, standLon, trueLat1, trueLat2.
 */
 void getNcGlobalAttributes( const std::string &wxModelFileName, float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString )
@@ -257,10 +247,8 @@ void getNcGlobalAttributes( const std::string &wxModelFileName, float &dx, float
     else {
         status = nc_get_att_int( ncid, NC_GLOBAL, "MAP_PROJ", &mapProj );
     }
-    //std::cout << "MAP_PROJ = " << mapProj << std::endl;
 
     // Get global attributes DX, DY
-    ////float dx, dy;  // these are function inputs, to be filled
     status = nc_inq_att( ncid, NC_GLOBAL, "DX", &type, &len );
     if( status != NC_NOERR ){
         ostringstream os;
@@ -283,7 +271,6 @@ void getNcGlobalAttributes( const std::string &wxModelFileName, float &dx, float
     }
 
     // Get global attributes CEN_LAT, CEN_LON
-    //float cenLat, cenLon;  // these are function inputs, to be filled
     status = nc_inq_att( ncid, NC_GLOBAL, "CEN_LAT", &type, &len );
     if( status != NC_NOERR ){
         ostringstream os;
@@ -406,9 +393,7 @@ void getNcGlobalAttributes( const std::string &wxModelFileName, float &dx, float
                                Forecast file must be in a projected coordinate system.");
     }
     else throw badForecastFile("Cannot determine projection from the forecast file information.");
-
 }
-
 
 /**
 * Gets a time zone name string corresponding to a latitude and longitude point
@@ -430,7 +415,6 @@ std::string getTimeZoneString( const double &lat, const double &lon )
     return timeZoneString;
 }
 
-
 /**
  * Fetch the list of times that the wrf file holds. It is assumed that
  * the time variable is "Times" and the units string is "units". If this
@@ -445,7 +429,6 @@ std::string getTimeZoneString( const double &lat, const double &lon )
 std::vector<blt::local_date_time>
 getTimeList( const std::string &timeZoneString, const std::string &wxModelFileName )
 {
-
     const char *pszVariable = NULL;
 
     boost::local_time::time_zone_ptr timeZonePtr;
@@ -459,7 +442,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
     }
 
     std::vector<blt::local_date_time>timeList;
-
 
     int status, ncid, ndims, nvars, ngatts, unlimdimid;
     nc_type vartype;
@@ -476,10 +458,8 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         throw std::runtime_error( os.str() );
     }
 
-
     // note that "Times" is the time variable name found in wrf files, this variable is usually set to "time" for many of the other weather model file types
     std::string timename = "Times";
-
 
     // If we can't get simple data from the file, return false
     status = nc_inq(ncid, &ndims, &nvars, &ngatts, &unlimdimid);
@@ -501,7 +481,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         throw std::runtime_error( os.str() );
     }
 
-
     //==============The forecast is WRF, parse Times============================
 
     // Check to see if we can read Times variable
@@ -515,7 +494,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         throw std::runtime_error( os.str() );
     }
 
-
     // Get varid for U10 --> use this to get length of time dimension
     status = nc_inq_varid( ncid, "U10", &varid );
     if( status != NC_NOERR ) {
@@ -524,7 +502,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         << wxModelFileName << " cannot be read\n";
         throw std::runtime_error( os.str() );
     }
-
 
     // Get dimid for Time in U10
     int dimid;
@@ -537,7 +514,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         throw std::runtime_error( os.str() );
     }
 
-
     // Get length of the time dimension in U10
     size_t time_len;
     status = nc_inq_dimlen( ncid, dimid, &time_len );
@@ -549,7 +525,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
     }
 
     // Reset varid to 'Times'
-    //int varid;  // already set into the scope above
     status = nc_inq_varid( ncid, timename.c_str(), &varid );
     if( status != NC_NOERR ) {
         ostringstream os;
@@ -559,9 +534,7 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
     }
 
     // Get dimid for DateStrLen
-    //int dimid;  // already set into the scope above
     status = nc_inq_dimid(ncid, "DateStrLen", &dimid );
-    //std::cout << "dimid =" << dimid << std::endl;
     if( status != NC_NOERR ) {
         ostringstream os;
         os << "The dimension \"DateStrLen\" "
@@ -584,7 +557,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
 
         // Get value for one Times variable
         char* tp = new char[t_len + 1];
-        //char tp[t_len + 1];
         for (int i=0; i<t_len; i++){
             const size_t varindex[] = {t,static_cast<size_t>(i)};  // where to get value from
             status = nc_get_var1_text( ncid, varid, varindex, tp+i );
@@ -606,7 +578,6 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
         if( refString.find( "_" ) != refString.npos ) {
             pos = refString.find( "_" );
             refString.replace(pos, 1, 1, 'T');
-            //refString.erase( pos, 1 );
         }
         while( refString.find( "-" ) != refString.npos ) {
             pos = refString.find( "-" );
@@ -631,10 +602,8 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
 
     } // end for loop
 
-
     return timeList;
 }
-
 
 /**
 * Sets the surface grids based on a WRF (surface only!) forecast.
@@ -653,9 +622,7 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
 void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx, const float &dx, const float &dy, const float &cenLat, const float &cenLon, const std::string &projString, AsciiGrid<double> &airGrid, AsciiGrid<double> &cloudGrid, AsciiGrid<double> &uGrid, AsciiGrid<double> &vGrid, AsciiGrid<double> &wGrid )
 {
 
-    // looks like the bands go in the same order as the timeList, the past function looped through to find the idx that corresponded to an input time
     int bandNum = timeBandIdx+1;  // timeIdx is 0 to N-1, bandNum is 1 to N.
-
 
     GDALDataset* poDS;
     CPLPushErrorHandler(&CPLQuietErrorHandler);
@@ -667,7 +634,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     else {
         GDALClose((GDALDatasetH) poDS ); // close original wxModel file
     }
-
 
     // open ds one by one, set geotranform, set projection, then write to grid
     GDALDataset *srcDS;
@@ -685,18 +651,13 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
             throw badForecastFile("Cannot open forecast file in setSurfaceGrids()");
         }
 
-        //std::cout << "varList[" << i << "] = " << varList[i].c_str() << std::endl;
-
         // Set up spatial reference stuff for setting projections
         // and geotransformations
-
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
         char* prj2 = (char*)projString.c_str();
         oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
-
-        //std::cout << "srcWKT = " << srcWKT << std::endl;
 
         poLatLong = oSRS.CloneGeogCS();
         char *dstWkt = NULL;
@@ -722,12 +683,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
             throw std::runtime_error("Transformation of lat/lon center to dataset coordinate system failed!");
 
-        //std::cout << "xCenter = " << xCenter << ", yCenter = " << yCenter << std::endl;
-
         // Set the geostransform for the WRF file
         // upper corner is calculated from transformed x, y
         // (in WRF space)
-
         double ncols, nrows;
         int nXSize = srcDS->GetRasterXSize();
         int nYSize = srcDS->GetRasterYSize();
@@ -738,34 +696,23 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                                     (yCenter+(nrows*dy)),
                                     0, -(dy)};
 
-        //std::cout << "ulcornerX, ulcornerY = " << xCenter-(ncols*dx) << ", " << yCenter+(nrows*dy) << std::endl;
-        //std::cout << "nXSize, nYsize = " << nXSize << ", " << nYSize << std::endl;
-        //std::cout << "dx = " << dx << std::endl;
-
         srcDS->SetGeoTransform(adfGeoTransform);
 
         // get the noDataValue from the current band
-
         GDALRasterBand *poBand = srcDS->GetRasterBand( bandNum );
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue( &pbSuccess );
 
         int nBandCount = srcDS->GetRasterCount();
 
-        //std::cout << "band count = " << nBandCount << std::endl;
-
         if( pbSuccess == false )
             dfNoData = -9999.0;
 
         // set the dataset projection
-
         int rc = srcDS->SetProjection( projString.c_str() );
 
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
-
-        //std::cout << "band number to write = " << bandNum << std::endl;
-
-        // data should already in programming units, can just feed them in without a unit conversion
+        // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             if( CPLIsNan( dfNoData ) ) {
@@ -814,7 +761,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     wGrid = 0.0;
 }
 
-
 /**
 * write the ascii grids to kmz for a wrf surface forecast
 * @param forecastFilename The input forecast filename from which data were read from, to get the output path from.
@@ -827,7 +773,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 {
 
     // make speed and direction grids from u,v components
-    
     AsciiGrid<double> speedInitializationGrid_wxModel( uGrid_wxModel );
     AsciiGrid<double> dirInitializationGrid_wxModel( uGrid_wxModel );
 
@@ -846,7 +791,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
         }
     }
 
-
     // get path from input forecast filename
     std::string path = CPLGetPath(forecastFilename.c_str());
 
@@ -863,20 +807,16 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
     // don't forget the to output units unit conversion
     velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, outputSpeedUnits);
 
-
     // now do the kmz preparation and writing stuff
-
     KmlVector ninjaKmlFiles;
 
     ninjaKmlFiles.setKmlFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kml") );
     ninjaKmlFiles.setKmzFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kmz") );
-    ////ninjaKmlFiles.setDemFile(dem_filename);  // turns out to be redundant and doesn't do anything, which is good because don't want this dependency
 
     ninjaKmlFiles.setLegendFile( CPLFormFilename(path.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
-    //ninjaKmlFiles.setLineWidth(1.0);  // input.googLineWidth value
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
     std::string dateTimewxModelLegFileTemp = CPLFormFilename(path.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
@@ -890,7 +830,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 			ninjaKmlFiles.removeKmlFile();
 	}
 }
-
 
 int main( int argc, char* argv[] )
 {
@@ -907,13 +846,10 @@ int main( int argc, char* argv[] )
     std::cout << "input_wrf_filename = \"" << input_wrf_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
 
-
     NinjaInitialize();  // needed for GDALAllRegister()
-
 
     // test and set units
     velocityUnits::eVelocityUnits outputSpeedUnits = velocityUnits::getUnit(outputSpeedUnits_str);
-
 
     // check dataset to verify it is a wrf dataset, and to verify it is readable
     if ( identify( input_wrf_filename ) == false )
@@ -922,9 +858,7 @@ int main( int argc, char* argv[] )
     }
     checkForValidData( input_wrf_filename );
 
-
     // now start processing the data
-
     float dx;
     float dy;
     float cenLat;
@@ -937,7 +871,6 @@ int main( int argc, char* argv[] )
     std::vector<boost::local_time::local_date_time> timeList = getTimeList( timeZoneString, input_wrf_filename );
 
     for(unsigned int timeIdx = 0; timeIdx < timeList.size(); timeIdx++)
-    //for(unsigned int timeIdx = 0; timeIdx < 1; timeIdx++)  // if just want first time
     {
         boost::local_time::local_date_time forecastTime = timeList[timeIdx];
 
@@ -952,14 +885,5 @@ int main( int argc, char* argv[] )
         writeWxModelGrids( input_wrf_filename, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
-
     return 0;
 }
-
-
-
-
-
-
-
-
