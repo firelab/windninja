@@ -884,13 +884,13 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
 /**
 * write the ascii grids to kmz for a wrf surface forecast
-* @param forecastFilename The input forecast filename from which data were read from, to get the output path from.
+* @param outputPath The output path to save the output files to.
 * @param forecastTime The boost::local_time::local_date_time corresponding to the data to be plotted, corresponding to a specific time from getTimeList().
 * @param outputSpeedUnits The speed units to write the output kmz speed data to.
 * @param uGrid The u velocity grid to be plotted.
 * @param vGrid The v velocity grid to be plotted.
 */
-void writeWxModelGrids( const std::string &forecastFilename, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
+void writeWxModelGrids( const std::string &outputPath, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
 {
 
     // make speed and direction grids from u,v components
@@ -912,9 +912,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
         }
     }
 
-    // get path from input forecast filename
-    std::string path = CPLGetPath(forecastFilename.c_str());
-
     // setup filename parts from the forecastIdentifier and using the forecast time
     ostringstream wxModelTimestream;
     blt::local_time_facet* wxModelOutputFacet;
@@ -931,15 +928,15 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
     // now do the kmz preparation and writing stuff
     KmlVector ninjaKmlFiles;
 
-    ninjaKmlFiles.setKmlFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kml") );
-    ninjaKmlFiles.setKmzFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kmz") );
+    ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
+    ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
 
-    ninjaKmlFiles.setLegendFile( CPLFormFilename(path.c_str(), rootname.c_str(), "bmp") );
+    ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
-    std::string dateTimewxModelLegFileTemp = CPLFormFilename(path.c_str(), (rootname+"_date_time").c_str(), "bmp");
+    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
     ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
@@ -952,20 +949,71 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 	}
 }
 
+void Usage()
+{
+    printf("wrf_to_kmz [--osu/output_speed_units mph/mps/kph/kts]\n"
+           "           [--op/output_path path]\n"
+           "           input_wrf_filename\n"
+           "\n"
+           "Defaults:\n"
+           "    --output_speed_units mps\n"
+           "    --output_path \".\"\n");
+    exit(1);
+}
+
 int main( int argc, char* argv[] )
 {
+    std::string input_wrf_filename = "";
+    std::string outputSpeedUnits_str = "mps";
+    std::string output_path = ".";
+    
     // parse input arguments
-    if( argc != 3 )
+    int i = 1;
+    while( i < argc )
     {
-        std::cout << "Invalid arguments!" << std::endl;
-        std::cout << "wrf_to_kmz [input_wrf_filename] [output_speed_units mph/mps/kph/kts]" << std::endl;
-        return 1;
+        if( EQUAL(argv[i], "--output_speed_units") || EQUAL(argv[i], "--osu") )
+        {
+            outputSpeedUnits_str = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--output_path") || EQUAL(argv[i], "--op") )
+        {
+            output_path = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h") || EQUAL(argv[i], "-help") || EQUAL(argv[i], "-h") )
+        {
+            Usage();
+        } else if( input_wrf_filename == "" )
+        {
+            input_wrf_filename = argv[i];
+        } else
+        {
+            printf("Invalid argument: \"%s\"\n", argv[i]);
+            Usage();
+        }
+        i++;
     }
-    std::string input_wrf_filename = std::string( argv[1] );
-    std::string outputSpeedUnits_str = std::string( argv[2] );
+
+    if( input_wrf_filename == "" )
+    {
+        std::cout << "please enter a valid input_wrf_filename" << std::endl;
+        Usage();
+    }
+    int isValidFile = CPLCheckForFile(input_wrf_filename.c_str(),NULL);
+    if( isValidFile != 1 )
+    {
+        printf("input_wrf_filename \"%s\" file does not exist!!\n", input_wrf_filename.c_str());
+        exit(1);
+    }
+    VSIDIR *pathDir;
+    pathDir = VSIOpenDir( output_path.c_str(), 0, NULL);
+    if( pathDir == NULL )
+    {
+        printf("output_path \"%s\" is not a valid path!!\n", output_path.c_str());
+        exit(1);
+    }
+    VSICloseDir(pathDir);
 
     std::cout << "input_wrf_filename = \"" << input_wrf_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
+    std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
 
     NinjaInitialize();  // needed for GDALAllRegister()
 
@@ -1003,7 +1051,7 @@ int main( int argc, char* argv[] )
 
         setSurfaceGrids( input_wrf_filename, timeIdx, dx, dy, cenLat, cenLon, projString, airGrid, cloudGrid, uGrid, vGrid, wGrid );
 
-        writeWxModelGrids( input_wrf_filename, forecastTime, outputSpeedUnits, uGrid, vGrid );
+        writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
     return 0;
