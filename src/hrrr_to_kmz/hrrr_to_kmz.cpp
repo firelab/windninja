@@ -585,16 +585,16 @@ int main( int argc, char* argv[] )
     std::string output_path = ".";
 
     bool isBbox = false;
-    double north = 47.18597932702905;  // I guess default to a clip box over Missoula
-    double south = 46.54752767224308;
-    double east = -113.45031738281251;
-    double west = -114.49401855468751;
+    double north = 0.0;
+    double south = 0.0;
+    double east = 0.0;
+    double west = 0.0;
 
     bool isPoint = false;
-    double cenLat = (south+north)/2;
-    double cenLon = (west+east)/2;
-    double lat_buff = north-cenLat;
-    double lon_buff = east-cenLon;
+    double cenLat = 0.0;
+    double cenLon = 0.0;
+    double lat_buff = 0.0;
+    double lon_buff = 0.0;
 
     // parse input arguments
     int i = 1;
@@ -666,30 +666,87 @@ int main( int argc, char* argv[] )
     if( isValidFile != 1 )
     {
         printf("input_hrrr_filename \"%s\" file does not exist!!\n", input_hrrr_filename.c_str());
-        exit(1);
+        Usage();
     }
     VSIDIR *pathDir;
     pathDir = VSIOpenDir( output_path.c_str(), 0, NULL);
     if( pathDir == NULL )
     {
         printf("output_path \"%s\" is not a valid path!!\n", output_path.c_str());
-        exit(1);
+        Usage();
     }
     VSICloseDir(pathDir);
+
+    if( isBbox == true )
+    {
+        if( north < -90.0 || north > 90.0 )
+        {
+            printf("input --bbox north %f value does not go between -90 to 90!!\n",north);
+            Usage();
+        }
+        if( south < -90.0 || south > 90.0 )
+        {
+            printf("input --bbox south %f value does not go between -90 to 90!!\n",south);
+            Usage();
+        }
+        if( west < -180.0 || west > 180.0 )
+        {
+            printf("input --bbox west %f value does not go between -180 to 180!!\n",west);
+            Usage();
+        }
+        if( east < -180.0 || east > 180.0 )
+        {
+            printf("input --bbox east %f value does not go between -180 to 180!!\n",east);
+            Usage();
+        }
+    }
+    if( isPoint == true )
+    {
+        if( cenLat < -90.0 || cenLat > 90.0 )
+        {
+            printf("input --p/point cenLat %f value does not go between -90 to 90!!\n",cenLat);
+            Usage();
+        }
+        if( cenLon < -180.0 || cenLon > 180.0 )
+        {
+            printf("input --p/point cenLon %f value does not go between -180 to 180!!\n",cenLon);
+            Usage();
+        }
+        if( lat_buff < 0.0 )
+        {
+            printf("input --p/point lat_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff < 0.0 )
+        {
+            printf("input --p/point lon_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lat_buff >= 90.0 )
+        {
+            printf("input --p/point lat_buff %f value is >= 90, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff >= 180.0 )
+        {
+            printf("input --p/point lon_buff %f value is >= 180, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+    }
 
     std::cout << "input_hrrr_filename = \"" << input_hrrr_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
     std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
     if( isBbox == true )
     {
-        std::cout << "north south east west = " << north << " " << south << " " << east << " " << west << std::endl;
-        std::cout << "  resulting cenLat cenLon = " << cenLat << " " << cenLon << std::endl;
-        std::cout << "  resulting lat_buff lon_buff = " << lat_buff << " " << lon_buff << std::endl;
+        printf("north south east west = %f %f %f %f\n", north, south, east, west);
+        printf("  resulting cenLat cenLon = %f %f\n", cenLat, cenLon);
+        printf("  resulting lat_buff lon_buff = %f %f\n", lat_buff, lon_buff);
     }
     if( isPoint == true )
     {
-        std::cout << "cenLat cenLon lat_buff lon_buff = " << cenLat << " " << cenLon << " " << lat_buff << " " << lon_buff << std::endl;
-        std::cout << "  resulting north south east west = " << north << " " << south << " " << east << " " << west << std::endl;
+        printf("cenLat cenLon lat_buff lon_buff = %f %f %f %f\n", cenLat, cenLon, lat_buff, lon_buff);
+        printf("  resulting north south east west = %f %f %f %f\n", north, south, east, west);
     }
 
 
