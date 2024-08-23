@@ -375,7 +375,20 @@ do
 /*  CHECK FOR "NULL" RUN                    */
 /*  ----------------------------------------*/
 		if(checkForNullRun())	//if it's a run with all zero velocity...
+	    {
+	        // still need to set initial values and sizing of u,v,w for output volVtk
+	        // Note that u,v,w are allocated normally for diurnal runs
+	        u.allocate(&mesh);  //u is positive toward East
+	        v.allocate(&mesh);  //v is positive toward North
+	        w.allocate(&mesh);  //w is positive up
+	        for(int i=0;i<mesh.NUMNP;i++)
+            {
+                 u(i)=0.;
+                 v(i)=0.;
+                 w(i)=0.;
+            }
 			break;
+		}
 
 /*  ----------------------------------------*/
 /*  BUILD "A" ARRAY OF AX=B                 */
