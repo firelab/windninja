@@ -293,49 +293,53 @@ bool NinjaFoam::simulate_wind()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     int status = 0;
-    if(!SimpleFoam()){
-        if(input.existingCaseDirectory == "!set"){
-            //no coarsening if this is an existing case
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
-                    "mesh for existing case directory. Try again without using an existing case.");
-            return false;
-        }
-        //try solving with previous mesh iterations (less refinement)
-        while(latestTime > 50){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
-            CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
-            NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
-            if(input.numberCPUs > 1){
-                for(int n=0; n<input.numberCPUs; n++){
-                    NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
+    // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
+    if( input.inputSpeed != 0 )
+    {
+        if(!SimpleFoam()){
+            if(input.existingCaseDirectory == "!set"){
+                //no coarsening if this is an existing case
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
+                        "mesh for existing case directory. Try again without using an existing case.");
+                return false;
+            }
+            //try solving with previous mesh iterations (less refinement)
+            while(latestTime > 50){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
+                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
+                NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
+                if(input.numberCPUs > 1){
+                    for(int n=0; n<input.numberCPUs; n++){
+                        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
+                    }
+                }
+                latestTime -= 1;
+                meshResolution *= 2.0;
+                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+
+                /* update simpleFoam controlDict writeInterval */
+                UpdateSimpleFoamControlDict();
+
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
+
+                ApplyInit();
+
+                if(input.numberCPUs > 1){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
+                    DecomposePar();
+                }
+                status = SimpleFoam();
+                if(status == true){
+                    break;
                 }
             }
-            latestTime -= 1;
-            meshResolution *= 2.0;
-            CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
-
-            /* update simpleFoam controlDict writeInterval */
-            UpdateSimpleFoamControlDict();
-
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
-
-            ApplyInit();
-
-            if(input.numberCPUs > 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-                DecomposePar();
+            //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
+            if( status == false & latestTime == 50 ){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
+                return false;
             }
-            status = SimpleFoam();
-            if(status == true){
-                break;
-            }
-        }
-        //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
-        if( status == false & latestTime == 50 ){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
-            return false;
-        }
-    }
+        }  // if(!SimpleFoam())
+    }  // if( input.inputSpeed != 0 )
     CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
     if(input.numberCPUs > 1){
