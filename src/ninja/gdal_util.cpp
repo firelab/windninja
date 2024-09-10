@@ -593,7 +593,7 @@ int GDALFillBandNoData(GDALDataset *poDS, int nBand, int nSearchPixels)
 
     poBand = poDS->GetRasterBand(1);
 
-    GDALFillNodata(poBand, NULL, 100, 0, 0, NULL, NULL, NULL);
+    GDALFillNodata(poBand, NULL, 120, 0, 0, NULL, NULL, NULL);
 
     double dfNoData = poBand->GetNoDataValue(NULL);
 
