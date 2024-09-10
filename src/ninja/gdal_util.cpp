@@ -920,6 +920,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput failed." );
         return false;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
@@ -929,6 +930,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 
     if(hDstDS == NULL)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to create gdal dataset." );
         return false;
     }
 
@@ -1018,6 +1020,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     }
     if(nNoDataCount > 0)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to fill all no data values." );
         return false;
     }
 
