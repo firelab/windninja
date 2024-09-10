@@ -192,12 +192,12 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
     // Caluculate Input Wind Height
     scalarField Kp(patch().Cf().size(), scalar(0));
 
-    //const RASModel& rasModel = db().lookupObject<RASModel>("RASProperties");
+    ////const RASModel& rasModel = db().lookupObject<RASModel>("RASProperties");  // RASModel does not name a type
     //const incompressible::RASModel& rasModel = db().lookupObject<incompressible::RASModel>("RASProperties");
 
-    //const scalar Cmu = rasModel.coeffDict().lookupOrDefault<scalar>("Cmu", 0.09);
-    //scalar Cmu = readScalar(rasModel.coeffDict().lookup("Cmu"));
-    //scalar kappa = rasModel.kappa().value();
+    //const scalar Cmu = rasModel.coeffDict().lookupOrDefault<scalar>("Cmu", 0.09);  // seemed to work
+    //scalar Cmu = readScalar(rasModel.coeffDict().lookup("Cmu"));  // seemed to work
+    ////scalar kappa = rasModel.kappa().value();  // Foam::incompressible::RASModel’ has no member named ‘kappa’
     //scalar Cmu = 0.09;  // original, this is for regular k epsilon models
     scalar Cmu = 0.085;  // for RNG k epsilon models
 
