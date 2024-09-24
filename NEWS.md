@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+WindNinja 3.11.1
+---------------
+- Fix issue causing diurnal wind component to be arbitrarily increased (#532)
+
 WindNinja 3.11.0
 ---------------
 - Re-enable SRTM data source downloads via OpenTopography API (#395)
