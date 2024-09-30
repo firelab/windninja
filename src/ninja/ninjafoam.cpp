@@ -294,8 +294,9 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     int status = 0;
     // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
-    if( input.inputSpeed != 0 )
+    if( input.inputSpeed != 0.0 )
     {
+        std::cout << "in here" << std::endl;
         if(!SimpleFoam()){
             if(input.existingCaseDirectory == "!set"){
                 //no coarsening if this is an existing case
@@ -340,6 +341,7 @@ bool NinjaFoam::simulate_wind()
             }
         }  // if(!SimpleFoam())
     }  // if( input.inputSpeed != 0 )
+    std::cout << "out here" << std::endl;
     CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
     if(input.numberCPUs > 1){
