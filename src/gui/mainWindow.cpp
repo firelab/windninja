@@ -2864,13 +2864,13 @@ int mainWindow::checkSpdDirItem()
     if( tree->wind->windGroupBox->isChecked() ) {
     if(checkSurfaceItem() != red) {
         if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == false) {
-        tree->spdDirItem->setIcon(0, tree->cross);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, diurnal is not active");
-        status = red;
+        tree->spdDirItem->setIcon(0, tree->caution);
+        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 without using diurnal");
+        status = amber;
         }
         else if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == true) {
         tree->spdDirItem->setIcon(0, tree->caution);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0");
+        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
         status = amber;
         }
         else {
