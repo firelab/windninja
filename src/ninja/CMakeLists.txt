@@ -156,3 +156,5 @@ target_link_libraries(ninja ${LINK_LIBS})
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
 install(FILES WindNinjaInputs.h ninja.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 
+
+
