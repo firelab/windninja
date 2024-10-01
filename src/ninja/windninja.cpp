@@ -396,7 +396,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time:
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momentumFlag){
    NinjaH* ninja;
         try{
             ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag ));
