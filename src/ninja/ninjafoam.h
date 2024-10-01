@@ -204,7 +204,6 @@ private:
                             const double massMeshResolution, std::string prjString, 
                             wn_3dScalarField& k);
 
-    bool writeMassMeshVtk;
     void writeMassMeshVtkOutput();
 
     const char *pszVrtMem;
@@ -220,6 +219,7 @@ private:
     double startWriteOut, endWriteOut;
     double startFoamFileWriting, endFoamFileWriting;
     double startOutputSampling, endOutputSampling;
+    double startGenerateAndSampleMassMesh, endGenerateAndSampleMassMesh;
     double startStlConversion, endStlConversion;
     
 #ifdef NINJA_BUILD_TESTING

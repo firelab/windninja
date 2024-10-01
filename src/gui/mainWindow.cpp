@@ -3567,12 +3567,12 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         
-        tree->vtk->ninjafoamConflictLabel->setHidden( false );
-        tree->vtk->vtkLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setHidden( true );
-        tree->vtk->vtkGroupBox->setChecked( false );
+        tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setCheckable(false);
+        tree->vtk->ninjafoamConflictLabel->setHidden( false );
+        tree->vtk->vtkGroupBox->setHidden( false );
+        tree->vtk->vtkGroupBox->setCheckable(true);
+        tree->vtk->vtkGroupBox->setChecked( false );
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
@@ -3593,9 +3593,9 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
         
-        tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkLabel->setHidden( false );
         tree->vtk->vtkWarningLabel->setHidden( false );
+        tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkGroupBox->setHidden( false );
         tree->vtk->vtkGroupBox->setCheckable( true );
         tree->vtk->vtkGroupBox->setChecked( false );

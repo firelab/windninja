@@ -74,8 +74,6 @@ NinjaFoam::NinjaFoam() : ninja()
     endStlConversion = 0.0;
     
     writeMassMesh = false;
-    
-    writeMassMeshVtk = false;
 }
 
 /**
@@ -140,10 +138,6 @@ bool NinjaFoam::simulate_wind()
         CPLDebug("NINJAFOAM", "Writing turbulence output...");
         set_writeTurbulenceFlag("true");
     }
-    if(CSLTestBoolean(CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE")))
-    {
-        writeMassMeshVtk = CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE");
-    }
     
     if(input.writeTurbulence == true)
     {
@@ -164,7 +158,7 @@ bool NinjaFoam::simulate_wind()
     }
     
     
-    if( writeMassMeshVtk == true || input.writeTurbulence == true )
+    if( input.volVTKOutFlag == true || input.writeTurbulence == true )
     {
         writeMassMesh = true;
     }
@@ -296,7 +290,6 @@ bool NinjaFoam::simulate_wind()
     // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
     if( input.inputSpeed != 0.0 )
     {
-        std::cout << "in here" << std::endl;
         if(!SimpleFoam()){
             if(input.existingCaseDirectory == "!set"){
                 //no coarsening if this is an existing case
@@ -341,7 +334,6 @@ bool NinjaFoam::simulate_wind()
             }
         }  // if(!SimpleFoam())
     }  // if( input.inputSpeed != 0 )
-    std::cout << "out here" << std::endl;
     CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
     if(input.numberCPUs > 1){
@@ -396,7 +388,14 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* Generate and Sample mass mesh                                     */
     /*-------------------------------------------------------------------*/
+    #ifdef _OPENMP
+    startGenerateAndSampleMassMesh = omp_get_wtime();
+    #endif
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating and sampling mass mesh...");
     GenerateAndSampleMassMesh();
+    #ifdef _OPENMP
+    endGenerateAndSampleMassMesh = omp_get_wtime();
+    #endif
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -427,6 +426,7 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output sampling time was %lf seconds.", endOutputSampling-startOutputSampling);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "generate and sample mass mesh time was %lf seconds.", endGenerateAndSampleMassMesh-startGenerateAndSampleMassMesh);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
     #endif
@@ -3270,6 +3270,8 @@ void NinjaFoam::SetOutputFilenames()
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
 
+    input.volVTKFile = rootFile + fileAppend + ".vtk";
+
     input.legFile = rootFile + kmz_fileAppend + ".bmp";
     if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
         input.dateTimeLegFile = "";
@@ -3565,7 +3567,7 @@ void NinjaFoam::WriteOutputFiles()
 	
 	
 	try{
-	    if ( writeMassMeshVtk == true ) {
+	    if ( input.volVTKOutFlag == true ) {
 	        writeMassMeshVtkOutput();
 	    }
 	}catch (exception& e)
@@ -3583,9 +3585,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
 {
     CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
     
-    std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
     try {
-        CPLDebug("NINJAFOAM", "writing vtk file");
         bool vtk_out_as_utm = false;
 	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
         {
@@ -3593,7 +3593,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
 	} catch (...) {

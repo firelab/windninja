@@ -42,14 +42,19 @@ vtkOutput::vtkOutput(QWidget *parent) : QWidget(parent)
   //writeVolumeCheckBox = new QCheckBox(tr("Volume File"), this); 
   //writeSurfaceCheckBox = new QCheckBox(tr("Surface File"), this);
   
-  ninjafoamConflictLabel = new QLabel(tr("*.vtk files are not written for the"
-   " mometum solver output. Instead, the\n"
-   " OpenFOAM case directory is left behind in the same directory as your DEM.\n"
+  ninjafoamConflictLabel = new QLabel(tr("*.vtk files of the full momentum solver case are not written for the\n"
+   " momentum solver output. Instead, the OpenFOAM case directory is left\n"
+   " behind in the same directory as your DEM.\n"
    " This case directory (NINJAFOAM_*) contains the 3-D files which can be\n"
    " viewed in a program called ParaView. See the OpenFOAM documentation for\n"
    " more details.\n"
-   " \nNote that these files are for advanced users and are rarely used by fire\n"
-   "managers/modelers.\n"
+   " \n"
+   " however, *vtk files of the corresponding mass solver mesh are now output\n"
+   " for momentum solver runs, these are sampled using the corresponding\n"
+   " mass solver mesh points\n"
+   " \n"
+   " Note that these files are for advanced users and are rarely used by fire\n"
+   " managers/modelers.\n"
    ), this);
   ninjafoamConflictLabel->setHidden(true);
   
