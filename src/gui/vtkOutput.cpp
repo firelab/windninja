@@ -36,28 +36,15 @@ vtkOutput::vtkOutput(QWidget *parent) : QWidget(parent)
   vtkGroupBox->setCheckable(true);
   vtkGroupBox->setChecked(false);
 
-  vtkLabel = new QLabel(tr("Write VTK surface and volume files"), this);
-  vtkWarningLabel = new QLabel(tr("*vtk files are for advanced users and are\n   rarely used by fire managers/modelers."), this);
-  vtkWarningLabel->setDisabled(true);
-  //writeVolumeCheckBox = new QCheckBox(tr("Volume File"), this); 
-  //writeSurfaceCheckBox = new QCheckBox(tr("Surface File"), this);
-  
-  ninjafoamConflictLabel = new QLabel(tr("*.vtk files of the full momentum solver case are not written for the\n"
-   " momentum solver output. Instead, the OpenFOAM case directory is left\n"
-   " behind in the same directory as your DEM.\n"
-   " This case directory (NINJAFOAM_*) contains the 3-D files which can be\n"
-   " viewed in a program called ParaView. See the OpenFOAM documentation for\n"
-   " more details.\n"
+  vtkLabel = new QLabel(tr(" Write VTK surface and volume files\n"
    " \n"
-   " however, *vtk files of the corresponding mass solver mesh are now output\n"
-   " for momentum solver runs, these are sampled using the corresponding\n"
-   " mass solver mesh points\n"
-   " \n"
-   " Note that these files are for advanced users and are rarely used by fire\n"
-   " managers/modelers.\n"
+   " Note that *vtk files are for advanced users and \n"
+   "    are rarely used by fire managers/modelers.\n"
    ), this);
-  ninjafoamConflictLabel->setHidden(true);
-  
+
+  //writeVolumeCheckBox = new QCheckBox(tr("Volume File"), this);
+  //writeSurfaceCheckBox = new QCheckBox(tr("Surface File"), this);
+
   //vtkLayout = new QVBoxLayout;
   //vtkLayout->addWidget(vtkLabel);
   //vtkLayout->addWidget(writeVolumeCheckBox);
@@ -70,8 +57,6 @@ vtkOutput::vtkOutput(QWidget *parent) : QWidget(parent)
 
   layout->addWidget(vtkGroupBox);
   layout->addWidget(vtkLabel);
-  layout->addWidget(vtkWarningLabel);
-  layout->addWidget(ninjafoamConflictLabel);
   layout->addStretch();
   setLayout(layout);
   //layout->addStretch();

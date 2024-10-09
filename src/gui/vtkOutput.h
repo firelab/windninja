@@ -45,13 +45,11 @@ class vtkOutput : public QWidget
 
   QGroupBox *vtkGroupBox;
   QLabel *vtkLabel;
-  QLabel *vtkWarningLabel;
   QCheckBox *writeVolumeCheckBox;
   QCheckBox *writeSurfaceCheckBox;
 
   QVBoxLayout *vtkLayout;
   QVBoxLayout *layout;
-  QLabel *ninjafoamConflictLabel;
 };
 
 #endif /* VTKOUTPUT_H */
