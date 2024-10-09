@@ -560,11 +560,14 @@ void mainWindow::createConnections()
        this, SLOT( selectNinjafoamSolver( bool ) ) );
 #endif
 
-  //connect the speed and direction in the first row to the checkers
-  connect(tree->wind->windTable->speed[0], SIGNAL(valueChanged(double)), this,
-      SLOT(checkAllItems()));
-  connect(tree->wind->windTable->dir[0], SIGNAL(valueChanged(int)), this,
-      SLOT(checkAllItems()));
+  //connect the speed and direction in each row to the checkers
+  for(int i=0;i<tree->wind->windTable->nRuns;i++)
+  {
+    connect(tree->wind->windTable->speed[i], SIGNAL(valueChanged(double)), this,
+       SLOT(checkAllItems()));
+    connect(tree->wind->windTable->dir[i], SIGNAL(valueChanged(int)), this,
+       SLOT(checkAllItems()));
+  }
 
   //connect the initialization check boxes to checkers
   connect(tree->wind->windGroupBox, SIGNAL(toggled(bool)),
@@ -2615,9 +2618,13 @@ int mainWindow::countRuns()
 {
   int runs = 0;
 
-  while(tree->wind->windTable->speed[runs]->value() != 0 ||
-    tree->wind->windTable->dir[runs]->value() != 0)
-      runs++;
+  for(int i=0; i < tree->wind->windTable->nRuns; i++)
+  {
+     if(tree->wind->windTable->speed[i]->value() != 0 || tree->wind->windTable->dir[i]->value() != 0)
+     {
+        runs = i+1;  // i goes from 0 to N-1, runs goes from 1 to N
+     }
+  }
 
   return runs;
 }
@@ -2873,20 +2880,27 @@ int mainWindow::checkSpdDirItem()
         tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
         status = amber;
         }
-        else if(runs == 1 && tree->diurnal->diurnalGroupBox->isChecked() == false && tree->wind->windTable->speed[0]->value() == 0.0) {
-        tree->spdDirItem->setIcon(0, tree->cross);
-        tree->spdDirItem->setToolTip(0, "1 run has been added with 0.0 wind speed, but diurnal is not active");
-        status = red;
-        }
-        else if(runs == 1 && tree->diurnal->diurnalGroupBox->isChecked() == true && tree->wind->windTable->speed[0]->value() == 0.0) {
-        tree->spdDirItem->setIcon(0, tree->caution);
-        tree->spdDirItem->setToolTip(0, "1 run has been added, one run with 0.0 wind speed will be done while using diurnal");
-        status = amber;
-        }
         else {
         tree->spdDirItem->setIcon(0, tree->check);
         tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs");
         status = green;
+        // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
+        for(int i=0;i<runs;i++)
+        {
+            if(tree->wind->windTable->speed[i]->value() == 0.0)
+            {
+                if(tree->diurnal->diurnalGroupBox->isChecked() == false) {
+                tree->spdDirItem->setIcon(0, tree->cross);
+                tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active");
+                status = red;
+                } else {
+                tree->spdDirItem->setIcon(0, tree->caution);
+                tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs");
+                status = amber;
+                }
+                break;
+            }
+        }
         }
     }
     else {
