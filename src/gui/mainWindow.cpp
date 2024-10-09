@@ -2864,13 +2864,23 @@ int mainWindow::checkSpdDirItem()
     if( tree->wind->windGroupBox->isChecked() ) {
     if(checkSurfaceItem() != red) {
         if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == false) {
-        tree->spdDirItem->setIcon(0, tree->caution);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 without using diurnal");
-        status = amber;
+        tree->spdDirItem->setIcon(0, tree->cross);
+        tree->spdDirItem->setToolTip(0, "No runs have been added, diurnal is not active");
+        status = red;
         }
         else if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == true) {
         tree->spdDirItem->setIcon(0, tree->caution);
         tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+        status = amber;
+        }
+        else if(runs == 1 && tree->diurnal->diurnalGroupBox->isChecked() == false && tree->wind->windTable->speed[0]->value() == 0.0) {
+        tree->spdDirItem->setIcon(0, tree->cross);
+        tree->spdDirItem->setToolTip(0, "1 run has been added with 0.0 wind speed, but diurnal is not active");
+        status = red;
+        }
+        else if(runs == 1 && tree->diurnal->diurnalGroupBox->isChecked() == true && tree->wind->windTable->speed[0]->value() == 0.0) {
+        tree->spdDirItem->setIcon(0, tree->caution);
+        tree->spdDirItem->setToolTip(0, "1 run has been added, one run with 0.0 wind speed will be done while using diurnal");
         status = amber;
         }
         else {
