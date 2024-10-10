@@ -3031,9 +3031,19 @@ void NinjaFoam::GenerateAndSampleMassMesh()
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}catch (...)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}
     
     
@@ -3045,9 +3055,19 @@ void NinjaFoam::GenerateAndSampleMassMesh()
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}catch (...)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}
     
 }
