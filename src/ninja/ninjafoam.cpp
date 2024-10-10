@@ -3526,6 +3526,11 @@ void NinjaFoam::writeMassMeshVtkOutput()
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "binary";//"binary";//"ascii";
+        std::string found_vtkWriteFormat = CPLGetConfigOption("VTK_OUT_FORMAT", "binary");
+        if(found_vtkWriteFormat != "")
+        {
+            vtkWriteFormat = found_vtkWriteFormat;
+        }
 		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
