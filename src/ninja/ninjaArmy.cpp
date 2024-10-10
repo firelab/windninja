@@ -253,7 +253,9 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
 void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
+    
     tz = timeZone;
+    
     //for a list of paths forecast files
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
@@ -262,7 +264,6 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
                   std::string(" cannot be opened."));
         }
         while(1){
-            
             const char* f = CPLReadLine(fcastList);
             if(f == NULL){
                 break;
@@ -273,7 +274,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
         
         model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
         
-        setSize(wxList.size(), momentumFlag);
+        ninjas.resize(wxList.size());
         
         for(unsigned int i = 0; i < wxList.size(); i++)
         {
@@ -305,6 +306,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
     //Factory function that identifies the type of forecast file and makes appropriate class.
     else{
         model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
+
         try
         {
             model->checkForValidData();
@@ -318,8 +320,22 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std
         if(times.size() > 0) {
           timeList = times;
         }
-        setSize(timeList.size(), momentumFlag);
+        ninjas.resize(timeList.size());
         //reallocate ninjas after resizing
+        for(unsigned int i = 0; i < timeList.size(); i++)
+        {
+#ifdef NINJAFOAM
+            if(momentumFlag == true){
+                ninjas[i] = new NinjaFoam();
+            }
+            else{
+                 ninjas[i] = new ninja();
+            }
+#else
+            ninjas[i] = new ninja();
+#endif
+        }
+
 
         for(unsigned int i = 0; i < timeList.size(); i++)
         //int i = 0;
@@ -785,6 +801,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     
                     delete model;
                 }
+
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
 
@@ -872,7 +889,6 @@ bool ninjaArmy::startRuns(int numProcessors)
 #ifdef _OPENMP
         NinjaRethrowThreadedException( anErrors, asMessages, numProcessors );
 #endif
-        
         try{
             //write farsite atmosphere file
             if(writeFarsiteAtmFile)
@@ -901,6 +917,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw;
         }
     }
+    
     return status;
 }
 
@@ -1051,7 +1068,7 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
 
 int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
                            char ** papszOptions )
-{   
+{
     int retval = NINJA_E_INVALID;
     IF_VALID_INDEX( nIndex, ninjas )
     {
@@ -1715,18 +1732,18 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions  )
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ]->get_outputSpeedGrid(resolution, units);
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
-const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions )
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ]->get_outputDirectionGrid(resolution, units );
+        return ninjas[ nIndex ]->get_outputDirectionGrid( );
     }
 }
 const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
@@ -1771,28 +1788,6 @@ const int ninjaArmy::getOutputGridnRows( const int nIndex, char ** papszOptions 
         return ninjas[ nIndex ]->get_outputGridnRows( );
     }
 }
-const double * ninjaArmy::getu( const int nIndex, char ** papszOptions )
-{
-    CHECK_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_u();
-    }
-}
-const double * ninjaArmy::getv( const int nIndex, char ** papszOptions )
-{
-    CHECK_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_v();
-    }
-}
-const double * ninjaArmy::getw( const int nIndex, char ** papszOptions )
-{
-    CHECK_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_w();
-    }
-}
-
 int ninjaArmy::setOutputBufferClipping( const int nIndex, const double percent,
                                         char ** papszOptions )
 {

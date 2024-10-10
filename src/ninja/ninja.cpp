@@ -602,9 +602,6 @@ if(input.frictionVelocityFlag == 1){
 	 deleteDynamicMemory();
 	 if(!input.keepOutGridsInMemory)
 	 {
-        u.deallocate();
-        v.deallocate();
-        w.deallocate();
 	     AngleGrid.deallocate();
          VelocityGrid.deallocate();
 	     CloudGrid.deallocate();
@@ -2851,7 +2848,9 @@ void ninja::writeOutputFiles()
 		}
 	}
 
-
+	u.deallocate();
+	v.deallocate();
+	w.deallocate();
 
 	#pragma omp parallel sections
 	{
@@ -4559,30 +4558,26 @@ void ninja::set_numberCPUs(int CPUs)
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
 
-double* ninja::get_outputSpeedGrid(double resolution, lengthUnits::eLengthUnits units)
+double* ninja::get_outputSpeedGrid()
 {
-    lengthUnits::toBaseUnits(resolution, units);
-    AsciiGrid<double> *velTempGrid;
-    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
-    outputSpeedArray = new double[velTempGrid->get_arraySize()];
-    for(int i=0; i<velTempGrid->get_nRows(); i++){
-        for(int j=0; j<velTempGrid->get_nCols(); j++){
-            outputSpeedArray[i * velTempGrid->get_nCols() + j] = velTempGrid->get_cellValue(i,j);
+    outputSpeedArray = new double[VelocityGrid.get_arraySize()];
+
+    for(int i=0; i<VelocityGrid.get_nRows(); i++){
+        for(int j=0; j<VelocityGrid.get_nCols(); j++){
+            outputSpeedArray[i * VelocityGrid.get_nCols() + j] = VelocityGrid(i,j);
         }
     }
 
     return outputSpeedArray;
 }
 
-double* ninja::get_outputDirectionGrid(double resolution, lengthUnits::eLengthUnits units)
+double* ninja::get_outputDirectionGrid()
 {
-    lengthUnits::toBaseUnits(resolution, units);
-    AsciiGrid<double> *dirTempGrid;
-    dirTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
-    outputDirectionArray = new double[dirTempGrid->get_arraySize()];
-    for(int i=0; i<dirTempGrid->get_nRows(); i++){
-        for(int j=0; j<dirTempGrid->get_nCols(); j++){
-            outputDirectionArray[i * dirTempGrid->get_nCols() + j] = dirTempGrid->get_cellValue(i,j);
+    outputDirectionArray = new double[AngleGrid.get_arraySize()];
+
+    for(int i=0; i<AngleGrid.get_nRows(); i++){
+        for(int j=0; j<AngleGrid.get_nCols(); j++){
+            outputDirectionArray[i * AngleGrid.get_nCols() + j] = AngleGrid(i,j);
         }
     }
 
@@ -4650,51 +4645,6 @@ int ninja::get_outputGridnCols()
 int ninja::get_outputGridnRows()
 {
     return input.dem.get_nRows();
-}
-double * ninja::get_u()
-{
-    double * outputArray = new double[mesh.nrows * mesh.ncols*mesh.nlayers];
-    for (int i = 0; i < mesh.nrows; i++)
-    {
-        for (int j = 0; j < mesh.ncols; j++)
-        {
-            for (int k = 0; k < mesh.nlayers; k++)
-            {   
-                outputArray[i * mesh.ncols * mesh.nlayers + j * mesh.nlayers + k] = u(i,j,k);
-            }
-        }
-    }
-    return outputArray;
-}
-double * ninja::get_v()
-{
-    double * outputArray = new double[mesh.nrows * mesh.ncols*mesh.nlayers];
-    for (int i = 0; i < mesh.nrows; i++)
-    {
-        for (int j = 0; j < mesh.ncols; j++)
-        {
-            for (int k = 0; k < mesh.nlayers; k++)
-            {
-                outputArray[i * mesh.ncols * mesh.nlayers + j * mesh.nlayers + k] = v(i,j,k);
-            }
-        }
-    }
-    return outputArray;
-}
-double * ninja::get_w()
-{
-    double * outputArray = new double[mesh.nrows * mesh.ncols*mesh.nlayers];
-    for (int i = 0; i < mesh.nrows; i++)
-    {
-        for (int j = 0; j < mesh.ncols; j++)
-        {
-            for (int k = 0; k < mesh.nlayers; k++)
-            {
-                outputArray[i * mesh.ncols * mesh.nlayers + j * mesh.nlayers + k] = w(i,j,k);
-            }
-        }
-    }
-    return outputArray;
 }
 
 void ninja::set_outputBufferClipping(double percent)

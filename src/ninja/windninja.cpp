@@ -36,7 +36,6 @@
     omp_lock_t netCDF_lock;
 #endif
 
-
 /**
  * \file windninja.cpp
  *
@@ -70,10 +69,6 @@ NinjaErr handleException()
 
 extern "C"
 {
-    WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle(){
-    NinjaH** ninja = new NinjaH*;
-    return ninja;
-}
 /**
  * \brief Create a new suite of windninja runs.
  *
@@ -148,152 +143,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         return NINJA_E_NULL_PTR;
     }
 }
-/**
- * \brief Fetch DEM file using a point.
- *
- * \param adfPoint A pointer to an array of two doubles representing the point. [latitude, longitude]
- * \param adfBuff length of buffer for x and y
- * \param units buffer units
- * \param dfCellSize The resolution of the DEM file in meters.
- * \param pszDstFile Output file name
- * \param papszOptions options
- * 
- *
- * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
- */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBuff, lengthUnits::eLengthUnits units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
-    if(pszDstFile == NULL)
-    {
-        fprintf(stderr, "Must specify destination file\n");
-        return NINJA_E_INVALID;
-    }
-    SurfaceFetch * fetcher;
-    if (strcmp(fetchType, "srtm") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-    }
-    #ifdef GMTED
-    else if (strcmp(fetchType, "gmted") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-    }
-    #endif
-    else if (strcmp(fetchType, "relief") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-    }
-    else{
-        return NINJA_E_INVALID;
-    }
-    int result = fetcher->FetchPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions);
-    if (result != 0)
-    {
-        return 1;
-    }
-    std::cout <<"Success" << std::endl;
-    return NINJA_SUCCESS;
-}
-/**
- * \brief Fetch DEM file using a bounding box
- * 
- * This method will fetch a DEM file using a bounding box and a resolution from the specified source.
- *
- * \param boundsBox A pointer to an array of four doubles representing the bounding box. [north, east, south, west]
- * \param fileName A valid path to a DEM file.
- * \param resolution The resolution of the DEM file in meters.
- * \param fetchType A string representing the source of the DEM file (e.g. "srtm", "gmted", "relief").
- * 
- * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
- */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fileName, double resolution, char * fetchType){
-    SurfaceFetch * fetcher;
-    if (strcmp(fetchType, "srtm") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-    }
-    #ifdef HAVE_GMTED
-    else if (strcmp(fetchType, "gmted") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-    }
-    #endif
-    else if (strcmp(fetchType, "relief") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-    }
-    else{
-        return NINJA_E_INVALID;
-    }
-    double northBound = boundsBox[0];
-    double eastBound = boundsBox[1];
-    double southBound = boundsBox[2];
-    double westBound = boundsBox[3];
-    if(northBound == 0.0 || southBound == 0.0 || eastBound == 0.0 || westBound == 0.0)
-    {
-        return 1;
-    }
-    int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-    if (result != 0)
-    {
-        return 1;
-    }
-    std::cout <<"Success" << std::endl;
-    return NINJA_SUCCESS;
-}
-/**
- * \brief Fetch Forecast file from UCAR/THREDDS server.
- *
- * This method will fetch a forecast file from the UCAR/THREDDS server.
- *
- * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
- * \param forecastDuration The number of hours to fetch the forecast for.
- * \param elevation_file A valid path to an elevation file.
- *
- * \return Forecast file name on success, "exception" otherwise.
- */
 
-WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file)
-{
-    wxModelInitialization *model;
-    try
-        {
-        model = wxModelInitializationFactory::makeWxInitializationFromId( wx_model_type );
-        //set forecastDuration to numNinjas-1 to get the correct number of simulations
-        std::string forecastFileName = model->fetchForecast( elevation_file, numNinjas-2 );
-        return forecastFileName;
-    }
-    catch (exception& e)
-    {
-        cout << "Exception caught: " << e.what() << endl;
-        return "exception";
-    }
-    catch(... )
-    {
-        cout << "'wx_model_type' is not valid" << "\n";
-    }
-    delete model;
-    return "exception";
-    
-}
-/**
- * \brief Fetch Station forecast files using bbox from elevation file
- *
- * \param output_path A valid path to an output directory.
- * \param elevation_file A valid path to an elevation file.
- * \param timeList A vector of boost posix time objects representing the times of the forecast.
- * \param osTimeZone A string representing the timezone of the forecast.
- * \param fetchLatest A boolean representing whether to fetch the latest forecast.
- *
- * \return Forecast file name on success, "exception" otherwise.
- */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest){
-    wxStation::SetStationFormat(wxStation::newFormat);
-    std::string  stationPathName = pointInitialization::generatePointDirectory(elevation_file, output_path, fetchLatest);
-    cout << stationPathName.c_str() << endl;
-    pointInitialization::SetRawStationFilename(stationPathName);
-    bool success = pointInitialization::fetchStationFromBbox(elevation_file, timeList, osTimeZone, fetchLatest);
-    if(success){
-        pointInitialization::writeStationLocationFile(stationPathName, elevation_file, fetchLatest);
-        return NINJA_SUCCESS;
-    }
-    else{
-        return NINJA_E_INVALID;
-    }
-}
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
  *
@@ -301,7 +151,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::str
  * the weather forecast file.  One run is done for each timestep in the *.nc
  * file.
  *
- * \param ninja pointer to pointer of opaque NinjaArmy.
+ * \param ninja An opaque handle to a valid ninjaArmy.
  * \param forecastFilename A valid thredds/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
@@ -309,114 +159,30 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::str
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-#ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
-    ( const char * forecastFilename,
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
+    ( NinjaH * ninja, const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
 {
-    NinjaH* ninja;
-    try
+    NinjaErr retval = NINJA_E_INVALID;
+    if( NULL != ninja )
     {
-        ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1) );
-        reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
-        (   std::string( forecastFilename ),
-            std::string( timezone ),
-            momentumFlag );
-        return ninja;
-    }
-    catch( armyException & e )
-    {
-        return NULL;
-    }
-    
-    return NULL;
-}
-#endif
-#ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
-    ( const char * forecastFilename,
-      const char * timezone,
-      int momentumFlag )
-{
-    NinjaH* ninja;
-    try
-    {
-        ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1,momentumFlag) );
-        reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
-        (   std::string( forecastFilename ),
-            std::string( timezone ),
-            momentumFlag );
-        return ninja;
-    }
-    catch( armyException & e )
-    {
-        return NULL;
-    }
-    
-    return NULL;
-}
-#endif
-/**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
- *
- * This method will create a set of runs for windninja based on the contents of
- * the weather forecast file.  One run is done for each timestep in the *.nc
- * file.
- *
- * \param ninja pointer to pointer of opaque NinjaArmy.
- * \param tiimeList A vector of boost posix time objects representing the times of the forecast.
- * \param timezone a timezone string representing a valid timezone
- * \param stationFileName A valid path to a station directory
- * \param elevationFile A valid path to an elevation file.
- * \param matchPoints A boolean representing whether to match the points in the station file to the DEM.
- *
- * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
- */
-#ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momementumFlag){
-   NinjaH* ninja;
-        try{
-            ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
-            reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
-            (   timeList,
-                timeZone,
-                stationFileName,
-                elevationFile,
-                matchPoints,
-                false);
-            return ninja;
-        }
-        catch( armyException & e ){
-            return NULL;
-        }
-        
-    return NULL;
+       try
+       {
+           reinterpret_cast<ninjaArmy*>( ninja )->makeArmy
+               ( std::string( forecastFilename ),
+                 std::string( timezone ),
+                 momentumFlag );
 
+           retval = NINJA_SUCCESS;
+       }
+       catch( armyException & e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+    }
+    return retval;
 }
-#endif
-#ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momentumFlag){
-   NinjaH* ninja;
-        try{
-            ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag ));
-            reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
-            (   timeList,
-                timeZone,
-                stationFileName,
-                elevationFile,
-                matchPoints,
-                false);
-            return ninja;
-        }
-        catch( armyException & e ){
-            return NULL;
-        }
-        
-    return NULL;
-
-}
-#endif
 
 /**
  * \brief Start the simulations.
@@ -562,7 +328,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaH * ninja, const int nIndex, const char * comType )
 {
-    
     if( NULL != ninja )
     {
         return reinterpret_cast<ninjaArmy*>( ninja )->setNinjaCommunication
@@ -957,6 +722,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
         return NINJA_E_NULL_PTR;
     }
 }
+
+WINDNINJADLL_EXPORT char ** NinjaGetWxStations
+    ( NinjaH * ninja, const int nIndex );
+
 /**
  * \brief Get the diurnal flag set for a simulation.
  *
@@ -1210,16 +979,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param resolution The resolution of the output grid.
- * \param units The units of resolution of the output grid.
  *
  * \return An array of speed values in mps.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-    ( NinjaH * ninja, const int nIndex, double resolution , lengthUnits::eLengthUnits units)
+    ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja ) {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, resolution, units );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     } else {
         return NULL;
     }
@@ -1235,16 +1002,14 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param resolution The resolution of the output grid.
- * \param units The units of resolution of the output grid.
  *
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units )
+    ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, units );
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
     } else {
         return NULL;
     }
@@ -1393,51 +1158,7 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
         throw std::runtime_error("no ninjaArmy");
     }
 }
-/**
- * \brief Get u values (east postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The u values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetu(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getu( nIndex );
-    } else {
-        return NULL;
-    }
-}
-/**
- * \brief Get v values (north postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The v values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getv( nIndex );
-    } else {
-        return NULL;
-    }
-}
-/**
- * \brief Get w values (up postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The w values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetw(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getw( nIndex );
-    } else {
-        return NULL;
-    }
-}
+
 /**
  * \brief Set the output buffer clipping for a simulation.
  *
