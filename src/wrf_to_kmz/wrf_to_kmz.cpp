@@ -38,6 +38,94 @@
 #include "ninjaUnits.h"
 #include "KmlVector.h"
 
+
+/**
+* function for converting the read in netcdf units to WindNinja units
+* specifically for WindNinja velocityUnits
+* throws an error if the input unit_string does not yet have a conversion written in the code
+* if the input string is "", implies the units were not available for read in, the default units will be returned with a warning
+* @param unit_string The read in netcdf unit string to be converted to a WindNinja velocityUnit
+* @return spd_units The corresponding WindNinja velocityUnit enum to the input unit_string
+*/
+velocityUnits::eVelocityUnits processVelocityUnits( std::string unit_string )
+{
+    velocityUnits::eVelocityUnits spd_units;
+    spd_units = velocityUnits::metersPerSecond;
+
+    if ( unit_string == "" )
+    {
+        std::cout << "processVelocityUnits warning, input unit_string is empty implying the last read in netcdf band had no units to read in"
+                  << "\n returning default velocityUnits \"" << velocityUnits::getString(spd_units).c_str() << "\"" << std::endl;
+        return spd_units;
+    }
+
+    if ( unit_string == "m s-1" || unit_string == "mps" || unit_string == "m/s" )
+    {
+        spd_units = velocityUnits::metersPerSecond;
+    } else if ( unit_string == "mi hr-1" || unit_string == "mph" || unit_string == "mi/hr" )
+    {
+        spd_units = velocityUnits::milesPerHour;
+    } else if ( unit_string == "km hr-1" || unit_string == "kph" || unit_string == "km/hr" )
+    {
+        spd_units = velocityUnits::kilometersPerHour;
+    } else if ( unit_string == "kts" || unit_string == "knots" )
+    {
+        spd_units = velocityUnits::knots;
+    } else
+    {
+        ostringstream os;
+        os << "unknown unit_string \"" << unit_string << "\" input to processVelocityUnits\n"
+           << " need to update units processing code for input velocityUnit\n";
+        throw std::runtime_error( os.str() );
+    }
+
+    return spd_units;
+}
+
+/**
+* function for converting the read in netcdf units to WindNinja units
+* specifically for WindNinja temperatureUnits
+* throws an error if the input unit_string does not yet have a conversion written in the code
+* if the input string is "", implies the units were not available for read in, the default units will be returned with a warning
+* @param unit_string The read in netcdf unit string to be converted to a WindNinja temperatureUnits
+* @return T_units The corresponding WindNinja temperatureUnits enum to the input unit_string
+*/
+temperatureUnits::eTempUnits processTemperatureUnits( std::string unit_string )
+{
+    temperatureUnits::eTempUnits T_units;
+    T_units = temperatureUnits::K;
+
+    if ( unit_string == "" )
+    {
+        std::cout << "processTemperatureUnits warning, input unit_string is empty implying the last read in netcdf band had no units to read in"
+                  << "\n returning default temperatureUnits \"" << temperatureUnits::getString(T_units).c_str() << "\"" << std::endl;
+        return T_units;
+    }
+
+    if ( unit_string == "K" || unit_string == "degK" || unit_string == "deg K" )
+    {
+        T_units = temperatureUnits::K;
+    } else if ( unit_string == "C" || unit_string == "degC" || unit_string == "deg C" )
+    {
+        T_units = temperatureUnits::C;
+    } else if ( unit_string == "R" || unit_string == "degR" || unit_string == "degR" )
+    {
+        T_units = temperatureUnits::R;
+    } else if ( unit_string == "F" || unit_string == "degF" || unit_string == "deg F" )
+    {
+        T_units = temperatureUnits::F;
+    } else
+    {
+        ostringstream os;
+        os << "unknown unit_string \"" << unit_string << "\" input to processTemperatureUnits\n"
+           << " need to update units processing code for input temperatureUnits\n";
+        throw std::runtime_error( os.str() );
+    }
+
+    return T_units;
+}
+
+
 /**
 * Static identifier to determine if the netcdf file is a WRF forecast.
 * Uses netcdf c api.
@@ -112,6 +200,9 @@ void checkForValidData( std::string wxModelFileName )
     bool noDataValueExists;
     bool noDataIsNan;
 
+    velocityUnits::eVelocityUnits spd_units = velocityUnits::metersPerSecond;  // initialize to default units
+    temperatureUnits::eTempUnits T_units = temperatureUnits::K;
+
     std::vector<std::string> varList = getVariableList();
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
@@ -151,43 +242,57 @@ void checkForValidData( std::string wxModelFileName )
                 noDataIsNan = CPLIsNan(dfNoData);
             }
 
+            const char * poBand_units = poBand->GetUnitType();
+            if( varList[i] == "T2" )
+            {
+                T_units = processTemperatureUnits( poBand_units );
+            }
+            if( varList[i] == "V10" || varList[i] == "U10" )
+            {
+                spd_units = processVelocityUnits( poBand_units );
+            }
+
             // set the data
             padfScanline = new double[nXSize*nYSize];
             poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize,
                     GDT_Float64, 0, 0);
             for(int k = 0;k < nXSize*nYSize; k++)
             {
+                double current_val = padfScanline[k];
                 // Check if value is no data (if no data value was defined in file)
                 if(noDataValueExists)
                 {
                     if(noDataIsNan)
                     {
-                        if(CPLIsNan(padfScanline[k]))
+                        if(CPLIsNan(current_val))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
-                        if(padfScanline[k] == dfNoData)
+                        if(current_val == dfNoData)
                             throw badForecastFile("Forecast file contains no_data values.");
                     }
                 }
-                if( varList[i] == "T2" )   // units are Kelvin
+                if( varList[i] == "T2" )   // usual units are Kelvin
                 {
-                    if(padfScanline[k] < 180.0 || padfScanline[k] > 340.0)  // these are near the most extreme temperatures ever recored on earth
+                    temperatureUnits::toBaseUnits( current_val, T_units );  // convert to Kelvin if not in Kelvin
+                    if(current_val < 180.0 || current_val > 340.0)  // these are near the most extreme temperatures ever recored on earth
                         throw badForecastFile("Temperature is out of range in forecast file.");
                 }
-                else if( varList[i] == "V10" )  // units are m/s
+                else if( varList[i] == "V10" )  // usual units are m/s
                 {
-                    if(std::abs(padfScanline[k]) > 220.0)
+                    velocityUnits::toBaseUnits( current_val, spd_units );  // convert to m/s if not in m/s
+                    if(std::abs(current_val) > 220.0)
                         throw badForecastFile("V-velocity is out of range in forecast file.");
                 }
-                else if( varList[i] == "U10" )  // units are m/s
+                else if( varList[i] == "U10" )  // usual units are m/s
                 {
-                    if(std::abs(padfScanline[k]) > 220.0)
+                    velocityUnits::toBaseUnits( current_val, spd_units );  // convert to m/s if not in m/s
+                    if(std::abs(current_val) > 220.0)
                         throw badForecastFile("U-velocity is out of range in forecast file.");
                 }
-                else if( varList[i] == "QCLOUD" )  // units are kg/kg
+                else if( varList[i] == "QCLOUD" )  // usual units are kg/kg
                 {
-                    if(padfScanline[k] < -0.0001 || padfScanline[k] > 100.0)
+                    if(current_val < -0.0001 || current_val > 100.0)
                         throw badForecastFile("Total cloud cover is out of range in forecast file.");
                 }
             }
@@ -640,6 +745,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     std::string temp;
     std::vector<std::string> varList = getVariableList();
 
+    velocityUnits::eVelocityUnits spd_units = velocityUnits::metersPerSecond;  // initialize to default units
+    temperatureUnits::eTempUnits T_units = temperatureUnits::K;
+
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
@@ -708,6 +816,16 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         if( pbSuccess == false )
             dfNoData = -9999.0;
 
+        const char * poBand_units = poBand->GetUnitType();
+        if( varList[i] == "T2" )
+        {
+            T_units = processTemperatureUnits( poBand_units );
+        }
+        if( varList[i] == "V10" || varList[i] == "U10" )
+        {
+            spd_units = processVelocityUnits( poBand_units );
+        }
+
         // set the dataset projection
         int rc = srcDS->SetProjection( projString.c_str() );
 
@@ -715,6 +833,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
+            temperatureUnits::toBaseUnits( airGrid, T_units );
             if( CPLIsNan( dfNoData ) ) {
                 airGrid.set_noDataValue(-9999.0);
                 airGrid.replaceNan( -9999.0 );
@@ -722,6 +841,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         }
         else if( varList[i] == "V10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, vGrid );
+            velocityUnits::toBaseUnits( vGrid, spd_units );
             if( CPLIsNan( dfNoData ) ) {
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
@@ -729,6 +849,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         }
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, uGrid );
+            velocityUnits::toBaseUnits( uGrid, spd_units );
             if( CPLIsNan( dfNoData ) ) {
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
@@ -763,13 +884,13 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
 /**
 * write the ascii grids to kmz for a wrf surface forecast
-* @param forecastFilename The input forecast filename from which data were read from, to get the output path from.
+* @param outputPath The output path to save the output files to.
 * @param forecastTime The boost::local_time::local_date_time corresponding to the data to be plotted, corresponding to a specific time from getTimeList().
 * @param outputSpeedUnits The speed units to write the output kmz speed data to.
 * @param uGrid The u velocity grid to be plotted.
 * @param vGrid The v velocity grid to be plotted.
 */
-void writeWxModelGrids( const std::string &forecastFilename, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
+void writeWxModelGrids( const std::string &outputPath, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
 {
 
     // make speed and direction grids from u,v components
@@ -791,9 +912,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
         }
     }
 
-    // get path from input forecast filename
-    std::string path = CPLGetPath(forecastFilename.c_str());
-
     // setup filename parts from the forecastIdentifier and using the forecast time
     ostringstream wxModelTimestream;
     blt::local_time_facet* wxModelOutputFacet;
@@ -810,15 +928,15 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
     // now do the kmz preparation and writing stuff
     KmlVector ninjaKmlFiles;
 
-    ninjaKmlFiles.setKmlFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kml") );
-    ninjaKmlFiles.setKmzFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kmz") );
+    ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
+    ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
 
-    ninjaKmlFiles.setLegendFile( CPLFormFilename(path.c_str(), rootname.c_str(), "bmp") );
+    ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
-    std::string dateTimewxModelLegFileTemp = CPLFormFilename(path.c_str(), (rootname+"_date_time").c_str(), "bmp");
+    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
     ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
@@ -831,20 +949,71 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 	}
 }
 
+void Usage()
+{
+    printf("wrf_to_kmz [--osu/output_speed_units mph/mps/kph/kts]\n"
+           "           [--op/output_path path]\n"
+           "           input_wrf_filename\n"
+           "\n"
+           "Defaults:\n"
+           "    --output_speed_units mps\n"
+           "    --output_path \".\"\n");
+    exit(1);
+}
+
 int main( int argc, char* argv[] )
 {
+    std::string input_wrf_filename = "";
+    std::string outputSpeedUnits_str = "mps";
+    std::string output_path = ".";
+    
     // parse input arguments
-    if( argc != 3 )
+    int i = 1;
+    while( i < argc )
     {
-        std::cout << "Invalid arguments!" << std::endl;
-        std::cout << "wrf_to_kmz [input_wrf_filename] [output_speed_units mph/mps/kph/kts]" << std::endl;
-        return 1;
+        if( EQUAL(argv[i], "--output_speed_units") || EQUAL(argv[i], "--osu") )
+        {
+            outputSpeedUnits_str = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--output_path") || EQUAL(argv[i], "--op") )
+        {
+            output_path = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h") || EQUAL(argv[i], "-help") || EQUAL(argv[i], "-h") )
+        {
+            Usage();
+        } else if( input_wrf_filename == "" )
+        {
+            input_wrf_filename = argv[i];
+        } else
+        {
+            printf("Invalid argument: \"%s\"\n", argv[i]);
+            Usage();
+        }
+        i++;
     }
-    std::string input_wrf_filename = std::string( argv[1] );
-    std::string outputSpeedUnits_str = std::string( argv[2] );
+
+    if( input_wrf_filename == "" )
+    {
+        std::cout << "please enter a valid input_wrf_filename" << std::endl;
+        Usage();
+    }
+    int isValidFile = CPLCheckForFile(input_wrf_filename.c_str(),NULL);
+    if( isValidFile != 1 )
+    {
+        printf("input_wrf_filename \"%s\" file does not exist!!\n", input_wrf_filename.c_str());
+        exit(1);
+    }
+    VSIDIR *pathDir;
+    pathDir = VSIOpenDir( output_path.c_str(), 0, NULL);
+    if( pathDir == NULL )
+    {
+        printf("output_path \"%s\" is not a valid path!!\n", output_path.c_str());
+        exit(1);
+    }
+    VSICloseDir(pathDir);
 
     std::cout << "input_wrf_filename = \"" << input_wrf_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
+    std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
 
     NinjaInitialize();  // needed for GDALAllRegister()
 
@@ -882,7 +1051,7 @@ int main( int argc, char* argv[] )
 
         setSurfaceGrids( input_wrf_filename, timeIdx, dx, dy, cenLat, cenLon, projString, airGrid, cloudGrid, uGrid, vGrid, wGrid );
 
-        writeWxModelGrids( input_wrf_filename, forecastTime, outputSpeedUnits, uGrid, vGrid );
+        writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
     return 0;

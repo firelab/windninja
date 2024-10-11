@@ -483,13 +483,13 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
 /**
 * write the ascii grids to kmz for a wrf surface forecast
-* @param forecastFilename The input forecast filename from which data were read from, to get the output path from.
+* @param outputPath The output path to save the output files to.
 * @param forecastTime The boost::local_time::local_date_time corresponding to the data to be plotted, corresponding to a specific time from getTimeList().
 * @param outputSpeedUnits The speed units to write the output kmz speed data to.
 * @param uGrid The u velocity grid to be plotted.
 * @param vGrid The v velocity grid to be plotted.
 */
-void writeWxModelGrids( const std::string &forecastFilename, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
+void writeWxModelGrids( const std::string &outputPath, const boost::local_time::local_date_time &forecastTime, const velocityUnits::eVelocityUnits &outputSpeedUnits, const AsciiGrid<double> &uGrid_wxModel, const AsciiGrid<double> &vGrid_wxModel )
 {
 
     // make speed and direction grids from u,v components
@@ -513,9 +513,6 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
     }
 
 
-    // get path from input forecast filename
-    std::string path = CPLGetPath(forecastFilename.c_str());
-
     // setup filename parts from the forecastIdentifier and using the forecast time
     ostringstream wxModelTimestream;
     blt::local_time_facet* wxModelOutputFacet;
@@ -535,17 +532,17 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 
     KmlVector ninjaKmlFiles;
 
-    ninjaKmlFiles.setKmlFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kml") );
-    ninjaKmlFiles.setKmzFile( CPLFormFilename(path.c_str(), rootname.c_str(), "kmz") );
+    ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
+    ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
     ////ninjaKmlFiles.setDemFile(dem_filename);  // turns out to be redundant and doesn't do anything, which is good because don't want this dependency
 
-    ninjaKmlFiles.setLegendFile( CPLFormFilename(path.c_str(), rootname.c_str(), "bmp") );
+    ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     //ninjaKmlFiles.setLineWidth(1.0);  // input.googLineWidth value
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
-    std::string dateTimewxModelLegFileTemp = CPLFormFilename(path.c_str(), (rootname+"_date_time").c_str(), "bmp");
+    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
     ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
@@ -558,30 +555,199 @@ void writeWxModelGrids( const std::string &forecastFilename, const boost::local_
 	}
 }
 
+void Usage()
+{
+    printf("hrrr_to_kmz [--osu/output_speed_units mph/mps/kph/kts]\n"
+           "            [--op/output_path path]\n"
+           "            [--bbox north south east west]\n"
+           "            [--p/point cenLat cenLon lat_buff lon_buff]\n"
+           "            input_hrrr_filename\n"
+           "Defaults:\n"
+           "    --output_speed_units mps\n"
+           "    --output_path \".\"\n"
+           "Note, the bbox and point clipping box inputs have to be in units of lat/lon\n");
+    exit(1);
+}
+
+void checkArgs( int argIdx, int nSubArgs, char* arg, int argc )
+{
+    if( (argIdx+nSubArgs) >= argc )
+    {
+        std::cout << "not enough args for input " << arg << ", input " << arg << " requires " << nSubArgs << " args" << std::endl;
+        Usage();
+    }
+}
 
 int main( int argc, char* argv[] )
 {
-    /*  parse input arguments  */
-    if( argc != 3 )
+    std::string input_hrrr_filename = "";
+    std::string outputSpeedUnits_str = "mps";
+    std::string output_path = ".";
+
+    bool isBbox = false;
+    double north = 0.0;
+    double south = 0.0;
+    double east = 0.0;
+    double west = 0.0;
+
+    bool isPoint = false;
+    double cenLat = 0.0;
+    double cenLon = 0.0;
+    double lat_buff = 0.0;
+    double lon_buff = 0.0;
+
+    // parse input arguments
+    int i = 1;
+    while( i < argc )
     {
-        std::cout << "Invalid arguments!" << std::endl;
-        std::cout << "hrrr_to_kmz [input_hrrr_filename] [output_speed_units mph/mps/kph/kts]" << std::endl;
-        //std::cout << "hrrr_to_kmz [input_hrrr_filename] [output_speed_units mph/mps/kph/kts] [--bbox north south east west] [--point x y x_buf y_buf] [--buf_units mi/km/ft/m]" << std::endl;
-        return 1;
+        if( EQUAL(argv[i], "--output_speed_units") || EQUAL(argv[i], "--osu") )
+        {
+            checkArgs( i, 1, argv[i], argc );
+            outputSpeedUnits_str = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--output_path") || EQUAL(argv[i], "--op") )
+        {
+            checkArgs( i, 1, argv[i], argc );
+            output_path = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--bbox") )
+        {
+            checkArgs( i, 4, argv[i], argc );
+            isBbox = true;
+            north = CPLAtof( argv[++i] );
+            south = CPLAtof( argv[++i] );
+            east = CPLAtof( argv[++i] );
+            west = CPLAtof( argv[++i] );
+            cenLat = (south+north)/2;
+            cenLon = (west+east)/2;
+            lat_buff = north-cenLat;
+            lon_buff = east-cenLon;
+        } else if( EQUAL(argv[i], "--point") || EQUAL(argv[i], "--p") )
+        {
+            checkArgs( i, 4, argv[i], argc );
+            isPoint = true;
+            cenLat = CPLAtof( argv[++i] );
+            cenLon = CPLAtof( argv[++i] );
+            lat_buff = CPLAtof( argv[++i] );
+            lon_buff = CPLAtof( argv[++i] );
+            north = cenLat + lat_buff;
+            south = cenLat - lat_buff;
+            east = cenLon + lon_buff;
+            west = cenLon - lon_buff;
+        } else if( EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h") || EQUAL(argv[i], "-help") || EQUAL(argv[i], "-h") )
+        {
+            Usage();
+        } else if( input_hrrr_filename == "" )
+        {
+            input_hrrr_filename = argv[i];
+        } else
+        {
+            printf("Invalid argument: \"%s\"\n", argv[i]);
+            Usage();
+        }
+        i++;
     }
-    std::string input_hrrr_filename = std::string( argv[1] );
-    std::string outputSpeedUnits_str = std::string( argv[2] );
+
+    if( input_hrrr_filename == "" )
+    {
+        std::cout << "please enter a valid input_hrrr_filename" << std::endl;
+        Usage();
+    }
+    if( isBbox == false && isPoint == false )
+    {
+        std::cout << "No clipping box specified, must supply --bbox or --p/point" << std::endl;
+        Usage();
+    }
+    if( isBbox == true && isPoint == true )
+    {
+        std::cout << "Too many clipping box options specified, must supply --bbox OR --p/point not BOTH" << std::endl;
+        Usage();
+    }
+
+    int isValidFile = CPLCheckForFile(input_hrrr_filename.c_str(),NULL);
+    if( isValidFile != 1 )
+    {
+        printf("input_hrrr_filename \"%s\" file does not exist!!\n", input_hrrr_filename.c_str());
+        Usage();
+    }
+    VSIDIR *pathDir;
+    pathDir = VSIOpenDir( output_path.c_str(), 0, NULL);
+    if( pathDir == NULL )
+    {
+        printf("output_path \"%s\" is not a valid path!!\n", output_path.c_str());
+        Usage();
+    }
+    VSICloseDir(pathDir);
+
+    if( isBbox == true )
+    {
+        if( north < -90.0 || north > 90.0 )
+        {
+            printf("input --bbox north %f value does not go between -90 to 90!!\n",north);
+            Usage();
+        }
+        if( south < -90.0 || south > 90.0 )
+        {
+            printf("input --bbox south %f value does not go between -90 to 90!!\n",south);
+            Usage();
+        }
+        if( west < -180.0 || west > 180.0 )
+        {
+            printf("input --bbox west %f value does not go between -180 to 180!!\n",west);
+            Usage();
+        }
+        if( east < -180.0 || east > 180.0 )
+        {
+            printf("input --bbox east %f value does not go between -180 to 180!!\n",east);
+            Usage();
+        }
+    }
+    if( isPoint == true )
+    {
+        if( cenLat < -90.0 || cenLat > 90.0 )
+        {
+            printf("input --p/point cenLat %f value does not go between -90 to 90!!\n",cenLat);
+            Usage();
+        }
+        if( cenLon < -180.0 || cenLon > 180.0 )
+        {
+            printf("input --p/point cenLon %f value does not go between -180 to 180!!\n",cenLon);
+            Usage();
+        }
+        if( lat_buff < 0.0 )
+        {
+            printf("input --p/point lat_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff < 0.0 )
+        {
+            printf("input --p/point lon_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lat_buff >= 90.0 )
+        {
+            printf("input --p/point lat_buff %f value is >= 90, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff >= 180.0 )
+        {
+            printf("input --p/point lon_buff %f value is >= 180, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+    }
 
     std::cout << "input_hrrr_filename = \"" << input_hrrr_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
-
-    double north = 47.18597932702905;
-    double south = 46.54752767224308;
-    double east = -113.45031738281251;
-    double west = -114.49401855468751;
-
-    double cenLon = (west+east)/2;
-    double cenLat = (south+north)/2;
+    std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
+    if( isBbox == true )
+    {
+        printf("north south east west = %f %f %f %f\n", north, south, east, west);
+        printf("  resulting cenLat cenLon = %f %f\n", cenLat, cenLon);
+        printf("  resulting lat_buff lon_buff = %f %f\n", lat_buff, lon_buff);
+    }
+    if( isPoint == true )
+    {
+        printf("cenLat cenLon lat_buff lon_buff = %f %f %f %f\n", cenLat, cenLon, lat_buff, lon_buff);
+        printf("  resulting north south east west = %f %f %f %f\n", north, south, east, west);
+    }
 
 
     NinjaInitialize();  // needed for GDALAllRegister()
@@ -614,7 +780,7 @@ int main( int argc, char* argv[] )
 
         setSurfaceGrids( input_hrrr_filename, timeIdx, timeList, airGrid, cloudGrid, uGrid, vGrid, wGrid, west, east, south, north );
 
-        writeWxModelGrids( input_hrrr_filename, forecastTime, outputSpeedUnits, uGrid, vGrid );
+        writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
 
