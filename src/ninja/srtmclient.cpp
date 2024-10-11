@@ -177,6 +177,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     bool rc = GDALWarpToUtm( filename, hDS, hUtmDS);
     if(rc != true)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, download failed." );
         return SURF_FETCH_E_IO_ERR;
     }
 

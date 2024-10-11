@@ -78,8 +78,8 @@ char * NinjaQueryServerMessages(bool checkAbort)
 { 
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", "5" );
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
     if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
     {
         CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
