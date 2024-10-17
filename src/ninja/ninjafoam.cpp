@@ -1512,42 +1512,77 @@ void NinjaFoam::UpdateSimpleFoamControlDict()
 void NinjaFoam::TopoSet()
 {
     int nRet = -1;
-       
-    const char *const papszArgv[] = { "topoSet",
-                                    "-case",
-                                    pszFoamPath,
-                                    "-dict",
-                                    "system/topoSetDict",
-                                    "-latestTime",
-                                    NULL };
-
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
     
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    if(nRet != 0)
-        throw std::runtime_error("Error during topoSet().");
+    if( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "topoSet",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-latestTime",
+                                        NULL };
 
-    VSIFCloseL(fout);
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during topoSet().");
+
+        VSIFCloseL(fout);
+    } else
+    {
+        const char *const papszArgv[] = { "topoSet",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-dict",
+                                        "system/topoSetDict",
+                                        "-latestTime",
+                                        NULL };
+
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during topoSet().");
+
+        VSIFCloseL(fout);
+    }
 }
 
 void NinjaFoam::RefineMesh()
 {
     int nRet = -1;
     
-    const char *const papszArgv[] = { "refineMesh",
-                                    "-case",
-                                    pszFoamPath,
-                                    "-dict",
-                                    "system/refineMeshDict", 
-                                    NULL };
+    if ( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "refineMesh",
+                                        "-case",
+                                        pszFoamPath,
+                                        NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
-    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    if(nRet != 0)
-        throw std::runtime_error("Error during refineMesh().");
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during refineMesh().");
 
-    VSIFCloseL(fout);
+        VSIFCloseL(fout);
+    } else
+    {
+        const char *const papszArgv[] = { "refineMesh",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-dict",
+                                        "system/refineMeshDict", 
+                                        NULL };
+
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during refineMesh().");
+
+        VSIFCloseL(fout);
+    }
 }
 
 void NinjaFoam::BlockMesh()
