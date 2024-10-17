@@ -1033,12 +1033,19 @@ void NinjaFoam::writeBlockMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
 
-    pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
+    if( foamVersion == "9" ) {
+        pszInput = CPLFormFilename(pszArchive, "system/blockMeshDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/blockMeshDict", "");
+    } else {
+        pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
+    }
 
     VSILFILE *fin;
     VSILFILE *fout;
