@@ -126,7 +126,7 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Copy constructor
+        /*//- Copy constructor
         logProfileTurbulentKineticEnergyInletFvPatchScalarField
         (
             const logProfileTurbulentKineticEnergyInletFvPatchScalarField&
@@ -139,7 +139,7 @@ public:
             (
                 new logProfileTurbulentKineticEnergyInletFvPatchScalarField(*this)
             );
-        }
+        }*/
 
         //- Copy constructor setting internal field reference
         logProfileTurbulentKineticEnergyInletFvPatchScalarField

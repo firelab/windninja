@@ -126,7 +126,7 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Copy constructor
+        /*//- Copy constructor
         logProfileDissipationRateInletFvPatchScalarField
         (
             const logProfileDissipationRateInletFvPatchScalarField&
@@ -139,7 +139,7 @@ public:
             (
                 new logProfileDissipationRateInletFvPatchScalarField(*this)
             );
-        }
+        }*/
 
         //- Copy constructor setting internal field reference
         logProfileDissipationRateInletFvPatchScalarField

@@ -126,7 +126,7 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Copy constructor
+        /*//- Copy constructor
         logProfileVelocityInletFvPatchVectorField
         (
             const logProfileVelocityInletFvPatchVectorField&
@@ -139,7 +139,7 @@ public:
             (
                 new logProfileVelocityInletFvPatchVectorField(*this)
             );
-        }
+        }*/
 
         //- Copy constructor setting internal field reference
         logProfileVelocityInletFvPatchVectorField

@@ -126,7 +126,7 @@ nutkAtmRoughWallFunctionFvPatchScalarField
 {}
 
 
-nutkAtmRoughWallFunctionFvPatchScalarField::
+/*nutkAtmRoughWallFunctionFvPatchScalarField::
 nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const nutkAtmRoughWallFunctionFvPatchScalarField& rwfpsf
@@ -134,7 +134,7 @@ nutkAtmRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(rwfpsf),
     z0_(rwfpsf.z0_)
-{}
+{}*/
 
 
 nutkAtmRoughWallFunctionFvPatchScalarField::

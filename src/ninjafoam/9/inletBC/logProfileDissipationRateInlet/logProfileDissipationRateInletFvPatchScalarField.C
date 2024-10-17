@@ -234,7 +234,7 @@ logProfileDissipationRateInletFvPatchScalarField
     firstCellHeight_(ptf.firstCellHeight_)
 {}
 
-//- Copy constructor
+/*//- Copy constructor
 Foam::logProfileDissipationRateInletFvPatchScalarField::
 logProfileDissipationRateInletFvPatchScalarField
 (
@@ -249,7 +249,7 @@ logProfileDissipationRateInletFvPatchScalarField
     Rd_(ptf.Rd_),
     relativeHeight_(ptf.relativeHeight_),
     firstCellHeight_(ptf.firstCellHeight_)
-{}
+{}*/
 
 //- Construct and return a clone
 // done in the .H file

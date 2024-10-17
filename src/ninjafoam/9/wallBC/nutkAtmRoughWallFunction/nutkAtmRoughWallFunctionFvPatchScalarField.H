@@ -139,7 +139,7 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Copy constructor
+        /*//- Copy constructor
         nutkAtmRoughWallFunctionFvPatchScalarField
         (
             const nutkAtmRoughWallFunctionFvPatchScalarField&
@@ -152,7 +152,7 @@ public:
             (
                 new nutkAtmRoughWallFunctionFvPatchScalarField(*this)
             );
-        }
+        }*/
 
         //- Copy constructor setting internal field reference
         nutkAtmRoughWallFunctionFvPatchScalarField
