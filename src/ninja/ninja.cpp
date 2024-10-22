@@ -4515,19 +4515,20 @@ void ninja::set_numberCPUs(int CPUs)
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
 
-double* ninja::get_outputSpeedGrid(double resolution, lengthUnits::eLengthUnits units)
-{
+double* getOutputSpeedArray(double resolution, lengthUnits::eLengthUnits units) {
     lengthUnits::toBaseUnits(resolution, units);
-    AsciiGrid<double> *velTempGrid;
-    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
-    outputSpeedArray = new double[velTempGrid->get_arraySize()];
-    for(int i=0; i<velTempGrid->get_nRows(); i++){
-        for(int j=0; j<velTempGrid->get_nCols(); j++){
-            outputSpeedArray[i * velTempGrid->get_nCols() + j] = velTempGrid->get_cellValue(i,j);
+    auto velTempGrid = std::make_unique<AsciiGrid<double>>(VelocityGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
+    std::vector<double> outputSpeedArray(velTempGrid->get_arraySize());
+
+    for (int i = 0; i < velTempGrid->get_nRows(); ++i) {
+        for (int j = 0; j < velTempGrid->get_nCols(); ++j) {
+            outputSpeedArray[i * velTempGrid->get_nCols() + j] = velTempGrid->get_cellValue(i, j);
         }
     }
 
-    return outputSpeedArray;
+    double* outputArray = new double[outputSpeedArray.size()];
+    std::copy(outputSpeedArray.begin(), outputSpeedArray.end(), outputArray);
+    return outputArray; // Caller is responsible for deleting this memory
 }
 
 double* ninja::get_outputDirectionGrid(double resolution, lengthUnits::eLengthUnits units)

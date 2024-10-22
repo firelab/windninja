@@ -234,6 +234,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fi
     std::cout <<"Success" << std::endl;
     return NINJA_SUCCESS;
 }
+
 /**
  * \brief Fetch Forecast file from UCAR/THREDDS server.
  *
@@ -1210,16 +1211,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param resolution The resolution of the output grid.
- * \param units The units of resolution of the output grid.
+ * \param papszOptions first element is the resolution of the output grid as a c style string, second element is the units of the resolution of the output grid ("ft", "m", ...).
  *
  * \return An array of speed values in mps.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-    ( NinjaH * ninja, const int nIndex, double resolution , lengthUnits::eLengthUnits units)
+    ( NinjaH * ninja, const int nIndex, const char** papszOptions)
 {
     if( NULL != ninja ) {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, resolution, units );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, papszOptions );
     } else {
         return NULL;
     }
@@ -1241,10 +1241,10 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units )
+    ( NinjaH * ninja, const int nIndex, const char**papszOptions)
 {
     if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, units );
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, papszOptions );
     } else {
         return NULL;
     }

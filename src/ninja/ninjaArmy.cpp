@@ -1715,17 +1715,25 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions  )
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, const char** papszOptions)
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ]->get_outputSpeedGrid(resolution, units);
+        if (papszOptions == nullptr) {
+            return ninjas[ nIndex ]->get_outputSpeedGrid();
+        } else {
+            double resolution = std::stod(papszOptions[0]);
+            lengthUnits::eLengthUnits units = lengthUnits::getUnit(std::string(papszOptions[1]));
+            return ninjas[ nIndex ]->get_outputSpeedGrid(resolution, units);
+        }
     }
 }
-const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions )
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, const char** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
+        double resolution = std::stod(papszOptions[0]);
+        lengthUnits::eLengthUnits units = lengthUnits::getUnit(papszOptions[1]);
         return ninjas[ nIndex ]->get_outputDirectionGrid(resolution, units );
     }
 }

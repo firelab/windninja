@@ -913,7 +913,7 @@ public:
     * \param nIndex index of a ninja
     * \return Pointer to the output speed array
     */
-    const double* getOutputSpeedGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    const double* getOutputSpeedGrid( const int nIndex, const char** papszOptions );
 
     /**
     * \brief Get the output direction grid for a ninja
@@ -921,7 +921,7 @@ public:
     * \param nIndex index of a ninja
     * \return Pointer to the output direction array
     */
-    const double* getOutputDirectionGrid( const int nIndex, double resolution, lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    const double* getOutputDirectionGrid( const int nIndex, const char** papszOptions );
 
     /**
     * \brief Get the output grid projection string for a ninja

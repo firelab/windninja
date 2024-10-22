@@ -240,10 +240,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
         ( NinjaH * ninja, const int nIndex, const char * path);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
+        ( NinjaH * ninja, const int nIndex, const char**papszOptions = nullptr );
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
+        ( NinjaH * ninja, const int nIndex, const char**papszOptions =nullptr );
 
     WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
         ( NinjaH * ninja, const int nIndex );
