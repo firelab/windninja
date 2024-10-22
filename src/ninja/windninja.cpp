@@ -161,6 +161,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
+/*
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBuff, lengthUnits::eLengthUnits units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
     if(pszDstFile == NULL)
     {
@@ -190,6 +191,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBu
     std::cout <<"Success" << std::endl;
     return NINJA_SUCCESS;
 }
+*/
 /**
  * \brief Fetch DEM file using a bounding box
  * 
@@ -202,6 +204,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBu
  * 
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
+/*
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fileName, double resolution, char * fetchType){
     SurfaceFetch * fetcher;
     if (strcmp(fetchType, "srtm") == 0){
@@ -234,7 +237,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fi
     std::cout <<"Success" << std::endl;
     return NINJA_SUCCESS;
 }
-
+*/
 /**
  * \brief Fetch Forecast file from UCAR/THREDDS server.
  *
@@ -247,6 +250,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fi
  * \return Forecast file name on success, "exception" otherwise.
  */
 
+/*
 WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file)
 {
     wxModelInitialization *model;
@@ -270,6 +274,7 @@ WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  un
     return "exception";
     
 }
+*/
 /**
  * \brief Fetch Station forecast files using bbox from elevation file
  *
@@ -281,6 +286,7 @@ WINDNINJADLL_EXPORT std::string NinjaFetchForecast(const char*wx_model_type,  un
  *
  * \return Forecast file name on success, "exception" otherwise.
  */
+/*
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest){
     wxStation::SetStationFormat(wxStation::newFormat);
     std::string  stationPathName = pointInitialization::generatePointDirectory(elevation_file, output_path, fetchLatest);
@@ -295,6 +301,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(std::string output_path, std::str
         return NINJA_E_INVALID;
     }
 }
+*/
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
  *
@@ -1202,6 +1209,54 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
 }
 
 /**
+ * \brief Set the output speed grid resolution.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution of the output speed grid.
+ * \param units The units of the resolution of the output speed grid.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedGridResolution
+    ( NinjaH * ninja, const int nIndex, const double resolution, const char * units )
+{
+    if( NULL != ninja && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setOutputSpeedGridResolution
+            ( nIndex, resolution, std::string( units ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the output direction grid resolution.
+ *
+ * \param ninja An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution of the output direction grid.
+ * \param units The units of the resolution of the output direction grid.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputDirectionGridResolution
+    ( NinjaH * ninja, const int nIndex, const double resolution, const char * units )
+{
+    if( NULL != ninja && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( ninja )->setOutputDirectionGridResolution
+            ( nIndex, resolution, std::string( units ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Get the output speed grid from a simulation.
  *
  * \see NinjaGetOutputGridProjection
@@ -1216,10 +1271,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
  * \return An array of speed values in mps.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-    ( NinjaH * ninja, const int nIndex, const char** papszOptions)
+    ( NinjaH * ninja, const int nIndex)
 {
     if( NULL != ninja ) {
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, papszOptions );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     } else {
         return NULL;
     }
@@ -1241,10 +1296,10 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex, const char**papszOptions)
+    ( NinjaH * ninja, const int nIndex )
 {
     if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, papszOptions );
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex );
     } else {
         return NULL;
     }

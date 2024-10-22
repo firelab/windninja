@@ -4514,35 +4514,40 @@ void ninja::set_numberCPUs(int CPUs)
     //	}
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
-
-double* getOutputSpeedArray(double resolution, lengthUnits::eLengthUnits units) {
+void ninja::set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units) {
     lengthUnits::toBaseUnits(resolution, units);
-    auto velTempGrid = std::make_unique<AsciiGrid<double>>(VelocityGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
-    std::vector<double> outputSpeedArray(velTempGrid->get_arraySize());
+    outputSpeedArrayResolution = resolution;
+}
 
+void ninja::set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units) {
+    lengthUnits::toBaseUnits(resolution, units);
+    outputDirectionArrayResolution = resolution;
+}
+
+double* ninja::get_outputSpeedGrid() {
+    AsciiGrid<double> * velTempGrid;
+    velTempGrid = new AsciiGrid<double>(VelocityGrid.resample_Grid(outputSpeedArrayResolution, AsciiGrid<double>::order0));
+    outputSpeedArray = new double[velTempGrid->get_arraySize()];
     for (int i = 0; i < velTempGrid->get_nRows(); ++i) {
         for (int j = 0; j < velTempGrid->get_nCols(); ++j) {
             outputSpeedArray[i * velTempGrid->get_nCols() + j] = velTempGrid->get_cellValue(i, j);
         }
     }
-
-    double* outputArray = new double[outputSpeedArray.size()];
-    std::copy(outputSpeedArray.begin(), outputSpeedArray.end(), outputArray);
-    return outputArray; // Caller is responsible for deleting this memory
+    delete velTempGrid;
+    return outputSpeedArray; // Caller is responsible for deleting this memory
 }
 
-double* ninja::get_outputDirectionGrid(double resolution, lengthUnits::eLengthUnits units)
+double* ninja::get_outputDirectionGrid()
 {
-    lengthUnits::toBaseUnits(resolution, units);
     AsciiGrid<double> *dirTempGrid;
-    dirTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(resolution, AsciiGrid<double>::order0));
+    dirTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(outputDirectionArrayResolution, AsciiGrid<double>::order0));
     outputDirectionArray = new double[dirTempGrid->get_arraySize()];
     for(int i=0; i<dirTempGrid->get_nRows(); i++){
         for(int j=0; j<dirTempGrid->get_nCols(); j++){
             outputDirectionArray[i * dirTempGrid->get_nCols() + j] = dirTempGrid->get_cellValue(i,j);
         }
     }
-
+    delete dirTempGrid;
     return outputDirectionArray;
 }
 

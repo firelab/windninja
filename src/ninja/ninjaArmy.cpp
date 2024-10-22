@@ -28,7 +28,6 @@
 *****************************************************************************/
 
 #include "ninjaArmy.h"
-
 /**
 * @brief Default constructor.
 *
@@ -1471,6 +1470,8 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
    return retval;
 }
 
+
+
 int ninjaArmy::setDiurnalWinds( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_diurnalWinds( flag ) );
@@ -1715,26 +1716,78 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, const char** papszOptions)
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                            const lengthUnits::eLengthUnits units,
+                                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, units ) );
+}
+
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 const lengthUnits::eLengthUnits units,
+                                                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, units ) );
+}
+
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char** papszOptions)
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        if (papszOptions == nullptr) {
-            return ninjas[ nIndex ]->get_outputSpeedGrid();
-        } else {
-            double resolution = std::stod(papszOptions[0]);
-            lengthUnits::eLengthUnits units = lengthUnits::getUnit(std::string(papszOptions[1]));
-            return ninjas[ nIndex ]->get_outputSpeedGrid(resolution, units);
-        }
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
-const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, const char** papszOptions )
+
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        double resolution = std::stod(papszOptions[0]);
-        lengthUnits::eLengthUnits units = lengthUnits::getUnit(papszOptions[1]);
-        return ninjas[ nIndex ]->get_outputDirectionGrid(resolution, units );
+        return ninjas[nIndex]->get_outputDirectionGrid( );
     }
 }
 const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )

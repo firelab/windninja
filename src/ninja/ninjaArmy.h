@@ -49,6 +49,7 @@
 #endif
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
+#include <memory>
 
 namespace blt = boost::local_time;
 namespace bpt = boost::posix_time;
@@ -908,12 +909,38 @@ public:
                                  char ** papszOptions=NULL );
 
     /**
+     * \brief Set the output speed grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      const lengthUnits::eLengthUnits units,
+                                      char ** papszOptions=NULL );
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      std::string units, char ** papszOptions=NULL );
+    /**
+     * \brief Set the output direction grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          const lengthUnits::eLengthUnits units,
+                                          char ** papszOptions=NULL );
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          std::string units, char ** papszOptions=NULL );
+    /**
     * \brief Get the output speed grid for a ninja
     *
     * \param nIndex index of a ninja
     * \return Pointer to the output speed array
     */
-    const double* getOutputSpeedGrid( const int nIndex, const char** papszOptions );
+    const double* getOutputSpeedGrid( const int nIndex, char ** papszOptions=NULL );
 
     /**
     * \brief Get the output direction grid for a ninja
@@ -921,7 +948,7 @@ public:
     * \param nIndex index of a ninja
     * \return Pointer to the output direction array
     */
-    const double* getOutputDirectionGrid( const int nIndex, const char** papszOptions );
+    const double* getOutputDirectionGrid( const int nIndex, char ** papszOptions=NULL );
 
     /**
     * \brief Get the output grid projection string for a ninja
