@@ -16,12 +16,9 @@
 #                -v $HOME/MyWindNinjaRuns:/data:z \
 #                --env="QT_X11_NO_MITSHM=1" \
 #                --security-opt label=type:container_runtime_t \
-#                windninja:3.7.5 
+#                windninja:3.11.1 
 #
 FROM ubuntu:20.04
-
-MAINTAINER Kyle Shannon <kyle@pobox.com>
-
 USER root
 ADD . /opt/src/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
@@ -34,6 +31,7 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive && \
                        pkg-config g++ libboost-program-options-dev \
                        libboost-date-time-dev libboost-test-dev python3-pip && \
     cd /opt/src && \
+    sed -i -e 's/\r$//' ./windninja/scripts/build_deps_ubuntu_2004.sh && \
     DEBIAN_FRONTEND=noninteractive ./windninja/scripts/build_deps_ubuntu_2004.sh && \
     rm -rf /var/lib/apt/lists
 
@@ -46,18 +44,20 @@ RUN cd  /opt/src/windninja && \
     make install && \
     ldconfig && \
     cd /opt/src/windninja && \
+    sed -i -e 's/\r$//' scripts/build_libs.sh && \
     /usr/bin/bash -c scripts/build_libs.sh
 
 RUN mkdir -p $FOAM_RUN/../applications && \
 cp -r /opt/src/windninja/src/ninjafoam/* $FOAM_RUN/../applications && \
 cd $FOAM_RUN/../applications/8 && \
-mkdir /openfoam && \
-cp -r /opt/openfoam8/* /openfoam/ &&\
+sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam8/etc/bashrc && \
+sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam8|export WM_PROJECT_DIR=/opt/openfoam8|g" /opt/openfoam8/etc/bashrc && \
 . /opt/openfoam8/etc/bashrc && \
 wmake libso && \
 cd utility/applyInit && \
 wmake 
-
+# pip3 install numpy
+ 
 CMD /usr/bin/bash -c /usr/local/bin/WindNinja
 VOLUME /data
 WORKDIR /data
