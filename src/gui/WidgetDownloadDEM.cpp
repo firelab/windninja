@@ -33,6 +33,32 @@
 WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     : QWidget(parent)
 {
+
+// qt_certs_bundle.pem generated on a windows system with the latest windows version of openssl installed
+// open command prompt not as an administrator
+// certutil -generateSSTFromWU roots.sst
+// type NUL > qt_certs_bundle.pem
+// for %f in (*.crt) do (openssl x509 -inform der -in "%f" -out temp.pem && type temp.pem >> qt_certs_bundle.pem && del temp.pem)
+// del *.crt
+// might still be a few leftover files to delete, but the huge bulky .crt files list are gone at least
+#ifdef WIN32
+    // for debugging on working systems, try disabling system certificates for testing, set it to an empty list of certificates
+    //QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
+    // add the data folder SSL Ca certificates to the certificates list
+    std::string pathToSslCerts = FindDataPath("qt_certs_bundle.pem");
+    QString pathToCerts = QString::fromStdString(pathToSslCerts);
+    QSslSocket::addDefaultCaCertificates( pathToCerts, QSsl::Pem, QRegExp::FixedString);
+#else
+    // for debugging on working systems, try disabling system certificates for testing, set it to an empty list of certificates
+    //QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
+    // add the data folder SSL Ca certificates to the certificates list
+    const char *pszPath;
+    pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
+    std::string pathToSslCerts = CPLSPrintf("%s/qt_certs_bundle.pem", pszPath);
+    QString pathToCerts = QString::fromStdString(pathToSslCerts);
+    QSslSocket::addDefaultCaCertificates( pathToCerts, QSsl::Pem, QRegExp::FixedString);
+#endif
+
     demSelected = false;
     
     setupUi(this);

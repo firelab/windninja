@@ -149,7 +149,7 @@ option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
     include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
+    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtNetwork REQUIRED)
     include(${QT_USE_FILE})
     add_definitions(-DNINJA_GUI)
     if(WIN32)
@@ -429,6 +429,7 @@ set(share_files date_time_zonespec.csv
                 tz_world.zip
                 landfire.zip
                 map.htm
+                qt_certs_bundle.pem
                 thredds.csv
                 surface_data.zip
                 srtm_region.geojson
