@@ -34,13 +34,13 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     : QWidget(parent)
 {
 
-// qt_certs_bundle.pem generated on a windows system with the latest windows version of openssl installed
-// open command prompt not as an administrator
-// certutil -generateSSTFromWU roots.sst
-// certutil -split -f roots.sst
-// type NUL > qt_certs_bundle.pem
-// for %f in (*.crt) do (openssl x509 -inform der -in "%f" -out temp.pem && type temp.pem >> qt_certs_bundle.pem && del temp.pem)
-// del *.crt
+    //------------provide updated SSL certs in case system ones are outdated--------------------------------//
+    // qt_certs_bundle.pem generated on a windows system with the latest windows version of openssl installed
+    // certutil -generateSSTFromWU roots.sst
+    // certutil -split -f roots.sst
+    // type NUL > qt_certs_bundle.pem
+    // for %f in (*.crt) do (openssl x509 -inform der -in "%f" -out temp.pem && type temp.pem >> qt_certs_bundle.pem && del temp.pem)
+    // del *.crt
     // for debugging on working systems, try disabling system certificates for testing, set it to an empty list of certificates
     //QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
     // add the data folder SSL Ca certificates to the certificates list
