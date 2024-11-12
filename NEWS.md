@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+WindNinja 3.11.2
+---------------
+- Fix Qt SSL issue causing the DEM download widget map not to load for some users (#535)
+
+- Update Tutorial 1 with details regarding requirement for north "up" projections
+
 WindNinja 3.11.1
 ---------------
 - Fix issue causing diurnal wind component to be arbitrarily increased (#532)
