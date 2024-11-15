@@ -21,7 +21,7 @@ sudo apt install -y libfontconfig1-dev \
 
 
 # Install Poppler for PDF support in GDAL
-wget http://poppler.freedesktop.org/$POPPLER.tar.xz
+wget https://poppler.freedesktop.org/$POPPLER.tar.xz
 tar -xvf $POPPLER.tar.xz
 cd $POPPLER/
 mkdir build
@@ -36,7 +36,7 @@ sudo make install
 cd ../..
 
 # Install PROJ
-wget http://download.osgeo.org/proj/$PROJ.tar.gz
+wget https://download.osgeo.org/proj/$PROJ.tar.gz
 tar xvfz $PROJ.tar.gz
 cd $PROJ
 ./configure --prefix=$PREFIX
@@ -46,7 +46,7 @@ sudo make install
 cd ..
 
 # Install GDAL with Poppler support
-wget http://download.osgeo.org/gdal/${GDAL:5}/$GDAL.tar.gz
+wget https://download.osgeo.org/gdal/${GDAL:5}/$GDAL.tar.gz
 tar -xvf $GDAL.tar.gz
 cd $GDAL/
 ./configure --prefix=$PREFIX --with-poppler=$PREFIX
