@@ -89,6 +89,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
     (std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (double *boundsBox, const char *fileName, double resolution, char* fetchType);
     WINDNINJADLL_EXPORT std::string NinjaFetchForecast
