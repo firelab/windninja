@@ -88,7 +88,7 @@ typedef int  NinjaErr;
 #endif
     WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
-    (std::string output_path, std::string elevation_file, std::vector<boost::posix_time::ptime> timeList, std::string osTimeZone, bool fetchLatest);
+    (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, int timeListSize, const char* osTimeZone, bool fetchLatest);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (double *boundsBox, const char *fileName, double resolution, char* fetchType);
@@ -103,7 +103,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
-        (std::vector<boost::posix_time::ptime>timeList, std::string timeZone, std::string stationFileName, std::string elevationFile, bool matchPoints, int momentumFlag);
+        (int* year, int*month, int*day, int*hour, int timeListSize, char** timeZone, char** stationFileName, char** elevationFile, bool matchPoints, int momementumFlag);
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
         ( const char * forecastFilename,
         const char * timezone,
