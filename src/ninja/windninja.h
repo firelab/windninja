@@ -29,8 +29,6 @@
 #include "ninja_errors.h"
 #include "fetch_factory.h"
 #include "gdal_util.h"
-#include "ninjaUnits.h"
-#include <string>
 
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
@@ -241,10 +239,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
         ( NinjaH * ninja, const int nIndex, const char * path);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
+        ( NinjaH * ninja, const int nIndex, double resolution, char* units );
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units );
+        ( NinjaH * ninja, const int nIndex, double resolution, char* units );
 
     WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
         ( NinjaH * ninja, const int nIndex );

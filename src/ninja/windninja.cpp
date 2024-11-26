@@ -1182,10 +1182,11 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex, double resolution, lengthUnits::eLengthUnits units )
+    ( NinjaH * ninja, const int nIndex, double resolution, char* units )
 {
     if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, units );
+        lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, unitsEnum );
     } else {
         return NULL;
     }
