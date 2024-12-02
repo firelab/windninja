@@ -2040,8 +2040,22 @@ int mainWindow::solve()
             }
             try{ //Try to run windninja
                 army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
-            }
-            catch(...){ //catch all exceptions and tell the user, prevent segfaults
+            }catch (exception& e)
+            {
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in makeStationArmy() - OldFormat! This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again - Error Info: "+QString(e.what()),
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor); //Restart everything
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
+            }catch(...){ //catch all exceptions and tell the user, prevent segfaults
 
                 QMessageBox::critical(this,tr("Failure."),
                                       "An error occured in makeStationArmy() - OldFormat! This is "
@@ -2096,8 +2110,22 @@ int mainWindow::solve()
 
                     try{ //try running with timelist
                         army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
+                    }catch (exception& e)
+                    {
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - timeSeries! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(e.what()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }catch(...){ //catch any and all exceptions and tell the user
 
                         QMessageBox::critical(this,tr("Failure."),
                                               "An error occured in makeStationArmy() - timeSeries! This is "
@@ -2129,8 +2157,22 @@ int mainWindow::solve()
                     pointInitialization::storeFileNames(pointFileList);
                     try{ //try making the army with current data
                         army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
+                    }catch (exception& e)
+                    {
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makeStationArmy() - currentwxdata! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(e.what()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }catch(...){ //catch any and all exceptions and tell the user
 
                         QMessageBox::critical(this,tr("Failure."),
                                               "An error occured in makeStationArmy() - currentwxdata! This is "

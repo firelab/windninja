@@ -800,6 +800,16 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
+            if( !EQUAL( pszDatum, "WGS84" ) && !EQUAL( pszDatum, "NAD83" ) && !EQUAL( pszDatum, "NAD27" ) )
+            {
+                oErrorString = "Invalid datum: ";
+                oErrorString += poFeature->GetFieldAsString( 2 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                error_msg = oErrorString;
+                throw( std::domain_error( oErrorString ) );
+            }
+
             oStation.lat=poFeature->GetFieldAsDouble(3); //set the lat/lon coordinates
             oStation.lon=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
@@ -810,6 +820,16 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             CPLDebug("STATION_FETCH","PROJCS FOUND!");
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
+            if( !EQUAL( pszDatum, "WGS84" ) )
+            {
+                std::string oWarnString = "ignoring datum: ";
+                oWarnString += poFeature->GetFieldAsString( 2 );
+                oWarnString += " for PROJCS at station: ";
+                oWarnString += oStationName;
+                oWarnString += " and using datum WGS84";
+                std::cout << oWarnString << std::endl;
+            }
+
             oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
             oStation.lon=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type

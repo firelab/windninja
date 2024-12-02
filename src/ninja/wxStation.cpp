@@ -296,6 +296,9 @@ void wxStation::set_stationName( std::string Name )
 void wxStation::set_location_projected( double Xord, double Yord,
                     std::string demFile )
 {
+    coordType = PROJCS;
+    datumType = WGS84;  // always use WGS84 for the datum for PROJCS regardless of the input datum type
+
     projXord = Xord;
     projYord = Yord;
 
@@ -330,8 +333,6 @@ void wxStation::set_location_projected( double Xord, double Yord,
     double laty = projYord;
 
     GDALPointToLatLon( lonx, laty, poDS, "WGS84" );
-    datumType = WGS84;
-    coordType = PROJCS;
 
     lon = lonx;
     lat = laty;
@@ -351,6 +352,21 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
                                       const std::string demFile,
                       const char *datum )
 {
+    if( EQUAL( datum, "WGS84" ) )
+        datumType = WGS84;
+    else if( EQUAL( datum, "NAD83" ) )
+        datumType = NAD83;
+    else if ( EQUAL( datum, "NAD27" ) )
+        datumType = NAD27;
+    else
+    {
+        std::string oErrorString = "wxStation::set_location_LatLong() input datum \"";
+        oErrorString += datum;
+        oErrorString += "\" is not valid! options are \"WGS84\", \"NAD83\", \"NAD27\"";
+        throw std::runtime_error( oErrorString );
+    }
+    coordType = GEOGCS;
+
     lon = Lon;
     lat = Lat;
 
@@ -386,15 +402,6 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
 
     xord = projXord - llx;
     yord = projYord - lly;
-
-    if( EQUAL( datum, "WGS84" ) )
-        datumType = WGS84;
-    else if( EQUAL( datum, "NAD83" ) )
-        datumType = NAD83;
-    else if ( EQUAL( datum, "NAD27" ) )
-        datumType = NAD27;
-
-    coordType = GEOGCS;
 
     GDALClose( (GDALDatasetH)poDS );
 }
