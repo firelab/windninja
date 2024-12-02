@@ -768,6 +768,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         //LAT LON COORDINATES
         if( EQUAL( pszKey, "geogcs" ) )
         {
+            CPLDebug("STATION_FETCH","GEOGCS FOUND!");
+
             //check for valid latitude in degrees
             dfTempValue = poFeature->GetFieldAsDouble( 3 );
 
@@ -798,15 +800,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
-            oStation.lat=poFeature->GetFieldAsDouble(3);
+            oStation.lat=poFeature->GetFieldAsDouble(3); //set the lat/lon coordinates
             oStation.lon=poFeature->GetFieldAsDouble(4);
-            oStation.datumType=pszDatum;
-            oStation.coordType=pszKey;
-
+            oStation.datumType=pszDatum; //Set the datum type
+            oStation.coordType=pszKey; //set the coord type
         }
         else if( EQUAL( pszKey, "projcs" ) )
         {
             CPLDebug("STATION_FETCH","PROJCS FOUND!");
+
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
             oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
             oStation.lon=poFeature->GetFieldAsDouble(4);
@@ -904,7 +906,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         //WIND DIRECTION
         dfTempValue = poFeature->GetFieldAsDouble( 9 );
 
-        if( dfTempValue > 360.1 || dfTempValue < 0.0 )
+        if( dfTempValue > 360.0 || dfTempValue < 0.0 )
         {
             oErrorString = "Invalid value for direction: ";
             oErrorString += poFeature->GetFieldAsString( 9 );
@@ -917,20 +919,21 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         //TEMPERATURE
         pszKey = poFeature->GetFieldAsString( 11 );
+        dfTempValue = poFeature->GetFieldAsDouble( 10 );
 
         if( EQUAL(pszKey, "f" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::F;
         }
         else if( EQUAL( pszKey, "c" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::C;
         }
         else if( EQUAL( pszKey, "k" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::K;
         }
         else
