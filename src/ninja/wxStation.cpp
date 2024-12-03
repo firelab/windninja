@@ -287,11 +287,13 @@ void wxStation::set_stationName( std::string Name )
 }
 
 /**
- * Set the location of the station in lat/lon based on projected coordinates
- * @param Xord x coordinate in system
- * @param Yord y coordinate in system
- * @param demFile name of the dem file to create the coordinate transformation
- * from
+ * Set the location of the station in lat/lon coordinates and in ninja coordinates, from dem projection coordinates,
+ * using the projection from the dem
+ * Note that the datum for this transformation is always assumed to be WGS84, the datum of the dem
+ * This function expects to be used for input wxStations with Coordinate System type PROJCS
+ * @param Xord x coordinate in projection system coordinates (dem projection coordinates)
+ * @param Yord y coordinate in projection system coordinates (dem projection coordinates)
+ * @param demFile name of the dem file used to create the coordinate transformation
  */
 void wxStation::set_location_projected( double Xord, double Yord,
                     std::string demFile )
@@ -341,12 +343,14 @@ void wxStation::set_location_projected( double Xord, double Yord,
 }
 
 /**
- * Set location of the station based on latitude and longitude.  Datum
- * transformation info may need to occur
+ * Set location of the station in projection system coordinates (dem projection coordinates)
+ * and in ninja coordinates, from lat/lon coordinates, using the projection from the dem,
+ * and the datum input for the wxStation
+ * This function expects to be used for input wxStations with Coordinate System type GEOGCS
  * @param Lat latitude of the station
  * @param Lon longitude of the station
  * @param demFile file name of the input dem, for coord tranformation
- * @param datum datum to convert to.
+ * @param datum datum to convert to
  */
 void wxStation::set_location_LatLong( double Lat, double Lon,
                                       const std::string demFile,

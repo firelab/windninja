@@ -810,8 +810,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 throw( std::domain_error( oErrorString ) );
             }
 
-            oStation.lat=poFeature->GetFieldAsDouble(3); //set the lat/lon coordinates
-            oStation.lon=poFeature->GetFieldAsDouble(4);
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are Lat/Lon
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
             oStation.coordType=pszKey; //set the coord type
         }
@@ -830,8 +830,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 std::cout << oWarnString << std::endl;
             }
 
-            oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
-            oStation.lon=poFeature->GetFieldAsDouble(4);
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are XCoord/YCoord, in the projection of the dem
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
             oStation.coordType=pszKey; //set the coord type
         }
@@ -1244,13 +1244,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         {
             //This has not been tested, I have no idea if this works or not
             CPLDebug("STATION_FETCH","USING PROJCS!");
-            subDat.set_location_projected(stationDataList[i][0].lon,stationDataList[i][0].lat,demFile);
-//            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
+            subDat.set_location_projected(stationDataList[i][0].coord_x,stationDataList[i][0].coord_y,demFile);
+//            subDat.set_location_projected(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,demFile);
         }
         else //GEOGCS!
         {
             CPLDebug("STATION_FETCH","USING GEOGCS!");
-            subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
+            subDat.set_location_LatLong(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,
                     demFile,Datum.c_str());
         }
 
@@ -1376,8 +1376,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpol.cloudCover = cloudCover;
             interpol.direction = angle;
 			
-            interpol.lat = sts[k][0].lat;
-            interpol.lon = sts[k][0].lon;
+            interpol.coord_x = sts[k][0].coord_x;
+            interpol.coord_y = sts[k][0].coord_y;
             interpol.datumType = sts[k][0].datumType;
             interpol.coordType = sts[k][0].coordType;
             interpol.height = sts[k][0].height;
