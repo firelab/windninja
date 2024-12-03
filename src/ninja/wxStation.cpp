@@ -120,8 +120,8 @@ void wxStation::initialize()
 {
     stationName = "";
     lat = lon = 0.0;
-    datumType = wxStation::WGS84;
-    coordType = wxStation::GEOGCS;
+    projXord = projYord = 0.0;
+    xord = yord = 0.0;
     heightUnits = lengthUnits::meters;
     inputSpeedUnits = velocityUnits::metersPerSecond;
     w_speed = 0.0;
@@ -304,14 +304,21 @@ void wxStation::set_location_projected( double Xord, double Yord,
     projXord = Xord;
     projYord = Yord;
 
-    if( demFile.empty() || demFile == "" )
+    if( demFile.empty() || demFile == "" ){
+        xord = Xord;
+        yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
+    }
 
     //get llcorner to subtract
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( poDS == NULL ){
         xord = Xord;
         yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
     }
 
@@ -320,6 +327,8 @@ void wxStation::set_location_projected( double Xord, double Yord,
     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
         xord = Xord;
         yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
     }
 
@@ -374,12 +383,22 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     lon = Lon;
     lat = Lat;
 
-    if( demFile.empty() || demFile == "" )
+    if( demFile.empty() || demFile == "" ){
+        projXord = Lon;
+        projYord = Lat;
+        xord = Lon;
+        yord = Lat;
         return;
+    }
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
 
-    if( poDS == NULL )
+    if( poDS == NULL ){
+        projXord = Lon;
+        projYord = Lat;
+        xord = Lon;
+        yord = Lat;
         return;
+    }
 
     double projX = lon;
     double projY = lat;
@@ -394,8 +413,7 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     double lly = 0.0;
     double adfGeoTransform[6];
 
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None )
-    {
+    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ){
         xord = projXord;
         yord = projYord;
         return;
