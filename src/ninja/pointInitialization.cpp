@@ -746,7 +746,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     OGR_L_ResetReading(hLayer);
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    CPLDebug("STATION_FETCH", "Reading csvName: %s", stationLoc.c_str());
+    CPLDebug("STATION_FETCH", "Reading csv file: %s", stationLoc.c_str());
 
     poLayer->ResetReading();
 
@@ -765,7 +765,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oStation.stationName=oStationName;
         pszKey = poFeature->GetFieldAsString( 1 );
 
-        //LAT LON COORDINATES
+        //COORDINATES STUFF
         if( EQUAL( pszKey, "geogcs" ) )
         {
             CPLDebug("STATION_FETCH","GEOGCS FOUND!");

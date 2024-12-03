@@ -312,7 +312,6 @@ void wxStation::set_location_projected( double Xord, double Yord,
         return;
     }
 
-    //get llcorner to subtract
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( poDS == NULL ){
         xord = Xord;
@@ -322,6 +321,7 @@ void wxStation::set_location_projected( double Xord, double Yord,
         return;
     }
 
+    //get llcorner to subtract
     double adfGeoTransform[6];
 
     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
@@ -332,10 +332,8 @@ void wxStation::set_location_projected( double Xord, double Yord,
         return;
     }
 
-    double llx = 0.0;
-    double lly = 0.0;
-    llx = adfGeoTransform[0];
-    lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
+    double llx = adfGeoTransform[0];
+    double lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
 
     xord = Xord - llx;
     yord = Yord - lly;
@@ -390,8 +388,8 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
         yord = Lat;
         return;
     }
-    GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
 
+    GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( poDS == NULL ){
         projXord = Lon;
         projYord = Lat;
@@ -408,9 +406,7 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     projXord = projX;
     projYord = projY;
 
-    //still assume dem is projected.
-    double llx = 0.0;
-    double lly = 0.0;
+    //get llcorner to subtract
     double adfGeoTransform[6];
 
     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ){
@@ -419,8 +415,8 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
         return;
     }
 
-    llx = adfGeoTransform[0];
-    lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
+    double llx = adfGeoTransform[0];
+    double lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
 
     xord = projXord - llx;
     yord = projYord - lly;
