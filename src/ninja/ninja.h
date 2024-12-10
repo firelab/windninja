@@ -317,9 +317,9 @@ public:
     double get_outputGridyllCorner();
     int get_outputGridnCols();
     int get_outputGridnRows();
-    double * ninja::get_u();
-    double * ninja::get_v();
-    double * ninja::get_w();
+    double * get_u();
+    double * get_v();
+    double * get_w();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);

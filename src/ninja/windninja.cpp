@@ -198,7 +198,6 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(const char*wx_model_type,  un
     return ninjaArmy::fetchForecast(wx_model_type, numNinjas, elevation_file);
     
 }
-*/
 /**
  * \brief Fetch Station forecast files using bbox from elevation file
  *
@@ -210,7 +209,7 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(const char*wx_model_type,  un
  *
  * \return Forecast file name on success, "exception" otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(int* year, int* month, int*day, int* hour, int timeListSize, const char* output_path, const char* elevation_file, int timeListSize, const char* osTimeZone, bool fetchLatest){
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, const char* osTimeZone, bool fetchLatest){
     std::vector <boost::posix_time::ptime> timeList;
     for(int i=0; i<timeListSize; i++){
         timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(year[i], month[i], day[i]), boost::posix_time::hours(hour[i])));
@@ -228,7 +227,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(int* year, int* month, int*day, i
         return NINJA_E_INVALID;
     }
 }
-*/
+
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
  *
@@ -335,7 +334,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day,
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int* month, int* day, int* hour, int timeListSize, char** timeZone, char** stationFileName, char** elevationFile, bool matchPoints, int momentumFlag){
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int* month, int* day, int* hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, bool matchPoints, int momentumFlag){
     NinjaH* ninja;
           try{
                 std::vector <boost::posix_time::ptime> timeList;
@@ -345,7 +344,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int* month, int* da
                 ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1, momentumFlag ));
                 reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
                 (   timeList,
-                     timeZone,
+                     std::string(timeZone),
                      stationFileName,
                      elevationFile,
                      matchPoints,
@@ -1158,8 +1157,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedGridResolution
 {
     if( NULL != ninja && NULL != units )
     {
+        
+        lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
+
         return reinterpret_cast<ninjaArmy*>( ninja )->setOutputSpeedGridResolution
-            ( nIndex, resolution, std::string( units ) );
+            ( nIndex, resolution, unitsEnum );
     }
     else
     {
@@ -1182,8 +1184,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputDirectionGridResolution
 {
     if( NULL != ninja && NULL != units )
     {
+        lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
         return reinterpret_cast<ninjaArmy*>( ninja )->setOutputDirectionGridResolution
-            ( nIndex, resolution, std::string( units ) );
+            ( nIndex, resolution, unitsEnum );
     }
     else
     {
@@ -1206,12 +1209,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputDirectionGridResolution
  * \return An array of speed values in mps.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-    ( NinjaH * ninja, const int nIndex, double resolution , char* units)
+    ( NinjaH * ninja, const int nIndex)
 {
     if( NULL != ninja ) {
-            lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
-
-           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex, resolution, unitsEnum );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     } else {
         return NULL;
     }
@@ -1233,11 +1234,10 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  * \return An array of direction values.
  */
 WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-    ( NinjaH * ninja, const int nIndex, double resolution, char* units )
+    ( NinjaH * ninja, const int nIndex)
 {
     if( NULL != ninja ) {
-        lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
-        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex, resolution, unitsEnum );
+        return reinterpret_cast<ninjaArmy*>( ninja )->getOutputDirectionGrid( nIndex);
     } else {
         return NULL;
     }

@@ -241,7 +241,7 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
   return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
-int ninjaArmy:fetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType){
+int ninjaArmy::fetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType){
     if (pszDstFile == NULL)
     {
         return NINJA_E_INVALID;
@@ -263,7 +263,7 @@ int ninjaArmy:fetchDEMPoint(const double * adfPoint, const double *adfBuff, cons
         delete fetcher;
         return NINJA_E_INVALID;
     }
-    LengthUnits::eLengthUnits ninjaUnits = LengthUnits::getUnit(std::string(units));
+    lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
     int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
     if (result != 0)
     {
@@ -286,7 +286,6 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
 {
         SURF_FETCH_E retval = SURF_FETCH_E_NONE;
         SurfaceFetch * fetcher;
-        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
         if (strcmp(fetchType, "srtm") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
         }
@@ -298,10 +297,7 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         else if (strcmp(fetchType, "relief") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
         }
-        else{
-            delete fetcher;
-            return NINJA_E_INVALID;
-        }
+        
         double northBound = boundsBox[0];
         double eastBound = boundsBox[1];
         double southBound = boundsBox[2];

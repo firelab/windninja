@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninjaUnits.h"
 #include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"

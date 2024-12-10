@@ -86,7 +86,7 @@ typedef int  NinjaErr;
 #endif
     WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
-    (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, int timeListSize, const char* osTimeZone, bool fetchLatest);
+    (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, const char* osTimeZone, bool fetchLatest);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (double *boundsBox, const char *fileName, double resolution, char* fetchType);
@@ -101,7 +101,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
-        (int* year, int*month, int*day, int*hour, int timeListSize, char** timeZone, char** stationFileName, char** elevationFile, bool matchPoints, int momementumFlag);
+        (int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, bool matchPoints, int momementumFlag);
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
         ( const char * forecastFilename,
         const char * timezone,
@@ -239,10 +239,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
         ( NinjaH * ninja, const int nIndex, const char * path);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, char* units );
+        ( NinjaH * ninja, const int nIndex);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
-        ( NinjaH * ninja, const int nIndex, double resolution, char* units );
+        ( NinjaH * ninja, const int nIndex );
 
     WINDNINJADLL_EXPORT const char* NinjaGetOutputGridProjection
         ( NinjaH * ninja, const int nIndex );
