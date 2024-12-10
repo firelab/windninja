@@ -241,6 +241,97 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
   return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
+int ninjaArmy:fetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType){
+    if (pszDstFile == NULL)
+    {
+        return NINJA_E_INVALID;
+    }
+    SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+    SurfaceFetch * fetcher;
+    if (strcmp(fetchType, "srtm") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+    }
+    #ifdef GMTED
+    else if (strcmp(fetchType, "gmted") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+    }
+    #endif
+    else if (strcmp(fetchType, "relief") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+    }
+    else{
+        delete fetcher;
+        return NINJA_E_INVALID;
+    }
+    LengthUnits::eLengthUnits ninjaUnits = LengthUnits::getUnit(std::string(units));
+    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
+    if (result != 0)
+    {
+        delete fetcher;
+        return NINJA_E_INVALID;
+    }
+    delete fetcher;
+    return NINJA_SUCCESS;
+}
+/**
+ * @brief Fetches a DEM using bounding box.
+ * 
+ * @param boundsBox Bounding box in the form of north, east, south, west.
+ * @param fileName Name of DEM file.
+ * @param resolution Resolution of DEM file.
+ * @param fetchType Type of DEM file to fetch.
+ * 
+ */
+int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType)
+{
+        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+        SurfaceFetch * fetcher;
+        if( ninjas[0]->input.pdfBaseType == WindNinjaInputs::TOPOFIRE )
+        if (strcmp(fetchType, "srtm") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+        }
+        #ifdef GMTED
+        else if (strcmp(fetchType, "gmted") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+        }
+        #endif
+        else if (strcmp(fetchType, "relief") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+        }
+        else{
+            delete fetcher;
+            return NINJA_E_INVALID;
+        }
+        double northBound = boundsBox[0];
+        double eastBound = boundsBox[1];
+        double southBound = boundsBox[2];
+        double westBound = boundsBox[3];
+        int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+        if (result != 0)
+        {
+            delete fetcher;
+            return NINJA_E_INVALID;
+        }
+        delete fetcher;
+        return NINJA_SUCCESS;
+        
+}
+
+const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
+{
+    wxModelInitialization *model;
+    try
+    {
+        model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
+        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
+        delete model;
+        return forecastFileName.c_str();
+    }
+    catch(armyException &e)
+    {
+        return "exception";
+    }
+}
 /**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
