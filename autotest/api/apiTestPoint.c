@@ -1,11 +1,10 @@
-
 /******************************************************************************
  *
  * Project:  WindNinja
  * Purpose:  C API testing
- * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
+ * Author:   Nicholas Kim <nicknc410@gmail.com>
  *
- * gcc -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
+ * g++ -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
  *
  ******************************************************************************
  *
@@ -27,13 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  *
  *****************************************************************************/
-
-#include "windninja.h"
-#include <stdio.h>
-
-#include "gdal.h"
-#include "cpl_conv.h"
-
 #include "windninja.h"
  
 int main()
@@ -52,7 +44,7 @@ int main()
     char * fetch_type = "gmted";
     int resolution = 30; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
-    int err = NinjaFetchDEMBBox(boundsBox, demFile, resolution, fetch_type);
+    err = NinjaFetchDEMBBox(boundsBox, demFile, resolution, fetch_type);
     if (err != NINJA_SUCCESS)
     {
         printf("Error in NinjaFetchDEMBBox");
@@ -69,29 +61,40 @@ int main()
     const char * timeZone = "America/Denver";
     int momentumFlag = 0; //we're using the conservation of mass solver
     int numNinjas = 2; //two ninjas in the ninjaArmy
-    const char * wxmodel_type = "NOMADS-HRRR-CONUS-3-KM"; // specifying which weather model to fetch forecast from
-    const char * forecastFileName = NinjaFetchForecast(wxmodel_type, numNinjas, demFile);
-    if(forecastFileName.empty())
+    const char * stationPath = "/home/user/capi/stationDirectory";
+    const char * elevationFile = "output.tif";
+    int fetchLatest = 1;
+    const char * ostimeZone = "America/Denver";
+    const int year[5] = {2024, 2024, 2024, 2024, 2024};
+    const int month[5] = {11, 11, 11, 11, 11};
+    const int day[5] = {26, 26, 26, 26, 26};
+    const int hour[5] = {0, 1, 2, 3, 4};
+    const int timeListSize = 5;
+    err = NinjaFetchStation(year, month, day, hour, timeListSize, stationPath, elevationFile, ostimeZone, fetchLatest);
+    if (err != NINJA_SUCCESS)
     {
-    printf("Error in NinjaFetchForecast");
+        printf("Error in NinjaFetchStation");
     }
-    printf("Forecast file name: %s\n", forecastFileName.c_str());
-    err = NinjaMakeArmy(&ninjaArmy, forecastFileName.c_str(), timeZone, momentumFlag);
-    if(err != NINJA_SUCCESS)
+    ninjaArmy = NinjaMakeStationArmy(year, month, day, hour, timeListSize, ostimeZone, stationPath, elevationFile, 0, 0);
+    if(ninjaArmy == NULL)
     {
-    printf("NinjaMakeArmy: err = %d\n", err);
+        printf("NinjaMakeStationArmy: err = %d\n", NULL);
     }
-    for (unsigned int i = 0; i < numNinjas; i++)
-        {
-        err = NinjaSetCommunication(ninjaArmy, i, comType);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetCommunication: err = %d\n", err);
-        }
+    for (unsigned int i = 0; i < timeListSize -1; i++){
         err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod);
         if(err != NINJA_SUCCESS)
         {
             printf("NinjaSetInitializationMethod: err = %d\n", err);
+        }
+        err = NinjaSetWxStationFilename(ninjaArmy, i, stationPath);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetWxStationFilename: err = %d\n", err);
+        }
+        err = NinjaSetCommunication(ninjaArmy, i, comType);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetCommunication: err = %d\n", err);
         }
         err = NinjaSetGoogOutFlag(ninjaArmy, i, 1);
         if(err != NINJA_SUCCESS)
@@ -138,26 +141,29 @@ int main()
         {
             printf("NinjaSetOutputWindHeight: err = %d\n", err);
         }
-        err = NinjaSetOutputPath(ninjaArmy, i, "/.");
+        err = NinjaSetOutputPath(ninjaArmy, i, "/home/nicholas/Firelab/WindNew/windninja/src/examples/");
         if(err != NINJA_SUCCESS)
         {
             printf("NinjaSetOutputPath: err = %d\n", err);
         }
-        }
+    }
     /* start the runs */
     err = NinjaStartRuns(ninjaArmy, nCPUs);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
+    int nIndex= 0;
+    const char* prj = NinjaGetOutputGridProjection(ninjaArmy, nIndex);
+    const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
+    const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
+    const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
+    const int nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
+    const int nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
     /* get the output wind speed and direction data */
     const double* outputSpeedGrid = NULL;
     const double* outputDirectionGrid = NULL;
     const char* outputGridProjection = NULL;
-    const int nCols = 0;
-    const int nRows = 0;
-    const int nIndex = 0;
-    
     outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
     if( NULL == outputSpeedGrid )
     {
@@ -175,13 +181,10 @@ int main()
     {
         printf("Error in NinjaGetOutputGridProjection");
     }
+
+
     
-    const char* prj = NinjaGetOutputGridProjection(ninjaArmy, nIndex);
-    const double cellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex);
-    const double xllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex);
-    const double yllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex);
-    const int nCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex);
-    const int nRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex);
+
         /* clean up */
     err = NinjaDestroyArmy(ninjaArmy);
     if(err != NINJA_SUCCESS)
