@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Nicholas Kim <nicknc410@gmail.com>
  *
- * g++ -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
+ * gcc -g -Wall -o apiTestInMemoryDem apiTestInMemoryDem.c -lninja -lgdal
  *
  ******************************************************************************
  *
