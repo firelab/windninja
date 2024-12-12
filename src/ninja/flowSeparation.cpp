@@ -71,8 +71,6 @@ bool flowSeparation::compute_gridSeparation()
     {
         if(phi <= 0.0)	//if separation angle is below horizon
         {
-            cout<<"PHI = "<<phi<<endl;
-            cout<<"TEST............"<<endl;
             for(int i = 0; i < get_nRows(); i++)
             {
                 for(int j = 0; j < get_nCols(); j++)
