@@ -85,9 +85,9 @@ bool flowSeparation::compute_gridSeparation()
         flagMap = new AsciiGrid<double>(elevation->get_nCols(), elevation->get_nRows(),
         elevation->get_xllCorner(), elevation->get_yllCorner(),
         elevation->get_cellSize(), elevation->get_noDataValue(), 1.0);
-        flagMap->set_cellSize(1);
-        flagMap->set_xllCorner(0);
-        flagMap->set_yllCorner(0);
+        flagMap->set_cellSize(1.);
+        flagMap->set_xllCorner(0.);
+        flagMap->set_yllCorner(0.);
         // make new elevation grid that is "normalized" to cellsize so that horizontal and vertical units are in "cellsize", this helps indexing computations later
         elevation_norm = new AsciiGrid<double> (*elevation);
         for(int i = 0; i < (elevation_norm->get_nRows()); i++)
@@ -97,9 +97,9 @@ bool flowSeparation::compute_gridSeparation()
                 (*elevation_norm)(i,j) = (*elevation_norm)(i,j) / elevation_norm->get_cellSize();
             }
         }
-        elevation_norm->set_cellSize(1);
-        elevation_norm->set_xllCorner(0);
-        elevation_norm->set_yllCorner(0);
+        elevation_norm->set_cellSize(1.);
+        elevation_norm->set_xllCorner(0.);
+        elevation_norm->set_yllCorner(0.);
 
         double thetaXY;
         //convert theta to an "xy" math type angle to do trig math on
@@ -284,18 +284,15 @@ bool flowSeparation::track_along_ray(double px, double py, int *X, int *Y) //fun
         py -= y_wind;  //negative because "y_wind" is vector FROM the inlet, but we track TOWARD the inlet
 
         // check if we've reached the boundary, if so, mark as attached
-        if(px < (0 - smalll) || px >= (elevation_norm->get_nCols() - 1 + smalll) || py < (0 - smalll) || py >= (elevation_norm->get_nRows() -1 + smalll))
+        if(px < (0. - smalll) || px >= (elevation_norm->get_nCols() - 1. + smalll) || py < (0. - smalll) || py >= (elevation_norm->get_nRows() -1. + smalll))
         {
-            (*flagMap)(*Y,*X) = -1;
+            (*flagMap)(*Y,*X) = -1.;
             data(*Y,*X) = false; //mark as attached
             break;
         }
 
         // calculate interpolated values
-
-        // get interpolated height and flagMap value (using nearest neighbor interpolation)
         interpolatedHeight = elevation_norm->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order1);	//add 0.5 here because interpolateGrid() works on original "cell" based grid and px,py is in node based grid
-        //interpolatedFlagMap = flagMap->interpolateGrid(px + 0.5, py + 0.5, AsciiGrid<double>::order0);
 
         //use a bilinear interpolation for flagMap; 0 order can induce artifacts along the edge of shadows
         //if within outermost two rows or columns use 0 order interpolation
@@ -377,17 +374,17 @@ bool flowSeparation::track_along_ray(double px, double py, int *X, int *Y) //fun
                 j3 = j0;
             }
 
-            u = (py + 0.5 - ((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner())) /
+            u = (py + 0.5 - ((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.)) + flagMap->get_yllCorner())) /
 
-                    ((((i3) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_yllCorner()) -
+                    ((((i3) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.)) + flagMap->get_yllCorner()) -
 
-                     (((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_yllCorner()));
+                     (((i0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.))) + flagMap->get_yllCorner()));
 
-            t = (px + 0.5 - ((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner())) /
+            t = (px + 0.5 - ((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.)) + flagMap->get_xllCorner())) /
 
-                    ((((j1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2)) + flagMap->get_xllCorner()) -
+                    ((((j1) * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.)) + flagMap->get_xllCorner()) -
 
-                     (((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2))) + flagMap->get_xllCorner()));
+                     (((j0 * flagMap->get_cellSize() + (flagMap->get_cellSize() / 2.))) + flagMap->get_xllCorner()));
 
 
             val0 = flagMap->get_cellValue(i0, j0);
@@ -403,10 +400,10 @@ bool flowSeparation::track_along_ray(double px, double py, int *X, int *Y) //fun
                 val2 = 0.0;
             if(val3 <= 0.0f)
                 val3 = 0.0;
-            interpolatedFlagMap = (1 - t) * (1 - u) * val0
-                    + t * (1 - u) * val1
+            interpolatedFlagMap = (1. - t) * (1. - u) * val0
+                    + t * (1. - u) * val1
                     + t * u * val2
-                    + (1 - t) * u * val3;
+                    + (1. - t) * u * val3;
         }
 
         //if a 0 order interpolation gave us -1, set to 0
