@@ -12,3 +12,6 @@ gcc -g -Wall -o test_capi_domain_average_wind test_capi_domain_average_wind.c -l
 gcc -g -Wall -o test_capi_fetching test_capi_fetching.c -lninja
 ./test_capi_fetching
 
+3. TODO: create a test for weather model intialization run
+
+4. TODO: create a test for point model intialization run (look inside apiTestPoint.c for starter code)
