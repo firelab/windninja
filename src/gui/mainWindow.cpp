@@ -2324,8 +2324,19 @@ int mainWindow::solve()
 
     std::string outputDir = tree->solve->outputDirectory().toStdString();
     if( outputDir == "" ) {
-      // This should never happen, so if it does, fix it.
-      throw( "no output directory specified in solve page" );
+        // This should never happen, so if it does, fix it.
+        progressDialog->cancel();
+        progressDialog->hide();
+        QMessageBox::critical(
+            this, tr("Failure."),
+            tr("no output directory specified in solve page"),
+            QMessageBox::Ok | QMessageBox::Default);
+        disconnect(progressDialog, SIGNAL(canceled()), this,
+                SLOT(cancelSolve()));
+        setCursor(Qt::ArrowCursor);
+        tree->weather->checkForModelData();
+        delete army;
+        return false;
     }
 
     //fill in the values
