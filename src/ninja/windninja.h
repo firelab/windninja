@@ -84,11 +84,11 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
     (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, const char* osTimeZone, int fetchLatestFlag);
-    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaH * ninja, const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
-    (double *boundsBox, const char *fileName, double resolution, char* fetchType);
-    // WINDNINJADLL_EXPORT std::string NinjaFetchForecast
-    // (const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
+    (NinjaH * ninja, double *boundsBox, const char *fileName, double resolution, char* fetchType);
+    WINDNINJADLL_EXPORT const char* NinjaFetchForecast
+    (NinjaH * ninja, const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
 

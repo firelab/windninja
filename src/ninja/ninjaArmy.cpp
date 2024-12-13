@@ -297,6 +297,9 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         else if (strcmp(fetchType, "relief") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
         }
+        if (fetcher == NULL) {
+            return NINJA_E_INVALID;  
+        }
         
         double northBound = boundsBox[0];
         double eastBound = boundsBox[1];

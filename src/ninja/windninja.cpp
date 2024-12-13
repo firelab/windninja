@@ -161,8 +161,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
-    return ninjaArmy::fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions, fetchType);
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(NinjaH * ninja, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
+    return reinterpret_cast<ninjaArmy*>( ninja )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions, fetchType);
 }
 /**
  * \brief Fetch DEM file using a bounding box
@@ -177,8 +177,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(double * adfPoint, double *adfBu
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fileName, double resolution, char * fetchType){
-    return ninjaArmy::fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(NinjaH * ninja, double *boundsBox, const char *fileName, double resolution, char * fetchType){
+    return reinterpret_cast<ninjaArmy*>( ninja )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
 }
 
 /**
@@ -187,15 +187,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(double *boundsBox, const char *fi
  * This method will fetch a forecast file from the UCAR/THREDDS server.
  *
  * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
- * \param forecastDuration The number of hours to fetch the forecast for.
+ * \param numNinjas Number of Ninjas
  * \param elevation_file A valid path to an elevation file.
  *
  * \return Forecast file name on success, "exception" otherwise.
  */
 
-WINDNINJADLL_EXPORT const char* NinjaFetchForecast(const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file)
+WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaH * ninja, const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file)
 {
-    return ninjaArmy::fetchForecast(wx_model_type, numNinjas, elevation_file);
+    return reinterpret_cast<ninjaArmy*>( ninja )->fetchForecast(wx_model_type, numNinjas, elevation_file);
     
 }
 /**
@@ -1175,7 +1175,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedGridResolution
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param resolution The resolution of the output direction grid.
- * \param units The units of the resolution of the output direction grid.
+ * \param units The units of the resolution of the output direction grid. (look at getUnit inside ninjaUnits.cpp)
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
