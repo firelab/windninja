@@ -50,16 +50,16 @@ int main()
     if (err != NINJA_SUCCESS){
         printf("NinjaFetchDEMBBox: err = %d\n", err);
     }
-    fetch_type = "srtm";
-    err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFile, resolution, fetch_type);
-    if (err != NINJA_SUCCESS){
-        printf("NinjaFetchDEMBBox: err = %d\n", err);
-    }
-    fetch_type = "relief";
-    err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFile, resolution, fetch_type);
-    if (err != NINJA_SUCCESS){
-        printf("NinjaFetchDEMBBox: err = %d\n", err);
-    }
+    // fetch_type = "srtm";
+    // err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFile, resolution, fetch_type);
+    // if (err != NINJA_SUCCESS){
+    //     printf("NinjaFetchDEMBBox: err = %d\n", err);
+    // }
+    // fetch_type = "relief";
+    // err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFile, resolution, fetch_type);
+    // if (err != NINJA_SUCCESS){
+    //     printf("NinjaFetchDEMBBox: err = %d\n", err);
+    // }
     const char*wx_model_type = "NOMADS-HRRR-CONUS-3-KM";
     int numNinjas = 2;
     const char* forecastFilename = NinjaFetchForecast(ninjaArmy, wx_model_type, numNinjas, demFile);
@@ -74,7 +74,7 @@ int main()
     
     - Implement exhaustive tests for all wx_model_types for NinjaFetchForecast
 
-    - Implement tests for NinjaFetchDemPoint and NinjaFetchStation
+    - Implement tests for NinjaFetchDemPoint (example code in apiTestPoint.c) and NinjaFetchStation
     */
 
 
