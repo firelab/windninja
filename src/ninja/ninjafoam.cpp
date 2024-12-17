@@ -2656,6 +2656,25 @@ void NinjaFoam::WriteOutputFiles()
 }
 
 
+
+const std::string NinjaFoam::get_outputPath() const
+{
+    return input.outputPath;
+}
+
+std::string NinjaFoam::converttimetostdfoam(const boost::local_time::local_date_time& ninjaTime) {
+    std::ostringstream ss;
+    
+    ss.imbue(std::locale(std::cout.getloc(), new boost::local_time::local_time_facet("%Y%m%d%H%M%S")));
+    
+    ss << ninjaTime;
+    
+    std::string result = ss.str().substr(0, 4) + "-" +  ss.str().substr(4, 2) + "-" + ss.str().substr(6, 2) + " " + ss.str().substr(8,2) + ":" + ss.str().substr(10, 2) + ":" + ss.str().substr(12, 2);
+    return result;
+}
+
+
+
 void NinjaFoam::writeMassMeshVtkOutput()
 {
     
@@ -2692,7 +2711,41 @@ void NinjaFoam::writeMassMeshVtkOutput()
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+		std::cerr << "hello" << std::endl; 
+
+        volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+        CaseFile casefile;
+        
+        if (casefile.getZipOpen()) {
+            std::string directoryPath = get_outputPath();
+            std::string normfile = casefile.parse("file", input.volVTKFile);
+            std::string directoryofVTK = casefile.parse("directory", input.volVTKFile);
+            std::string surfFile = casefile.parse("file", input.volVTKFile).substr(0, casefile.parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile.parse("file", input.volVTKFile).substr(casefile.parse("file", input.volVTKFile).length() - 4, casefile.parse("file", input.volVTKFile).length());
+            
+            std::string timestr = "";
+            std:: string getlocaltime = casefile.getTime();
+
+            //std::cout << input.ninjaTime.is_not_a_date_time() << std::endl; 
+            if (input.ninjaTime.is_not_a_date_time()) {
+                timestr = getlocaltime; 
+            }
+            else {            
+
+                timestr = converttimetostdfoam(input.ninjaTime); 
+
+            }
+            
+            std::string getfileName = casefile.parse("file", input.dem.fileName);  
+
+            std::string zipFilePath = casefile.getzip(); 
+            
+            casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile,  input.volVTKFile);
+        
+            casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile,  directoryofVTK + "/" + surfFile);
+            casefile.deleteFileFromPath(directoryPath , normfile);
+            casefile.deleteFileFromPath(directoryPath , surfFile);
+        }
+
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
 	} catch (...) {
