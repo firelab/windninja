@@ -125,15 +125,17 @@ void mainWindow::checkMessages(void) {
     if (strcmp(papszMsg, "TRUE\n") == 0) {
         mbox.setText("There is a fatal flaw in Windninja, it must close.");
         mbox.exec();
+        delete[] papszMsg; 
         abort();
     }
-    
+
     else {
         char *papszMsg = NinjaQueryServerMessages(false);
         if (papszMsg != NULL) {
           mbox.setText(papszMsg);
       
           mbox.exec();
+          delete[] papszMsg; 
         }
     }
    }
@@ -558,11 +560,14 @@ void mainWindow::createConnections()
        this, SLOT( selectNinjafoamSolver( bool ) ) );
 #endif
 
-  //connect the speed and direction in the first row to the checkers
-  connect(tree->wind->windTable->speed[0], SIGNAL(valueChanged(double)), this,
-      SLOT(checkAllItems()));
-  connect(tree->wind->windTable->dir[0], SIGNAL(valueChanged(int)), this,
-      SLOT(checkAllItems()));
+  //connect the speed and direction in each row to the checkers
+  for(int i=0;i<tree->wind->windTable->nRuns;i++)
+  {
+    connect(tree->wind->windTable->speed[i], SIGNAL(valueChanged(double)), this,
+       SLOT(checkAllItems()));
+    connect(tree->wind->windTable->dir[i], SIGNAL(valueChanged(int)), this,
+       SLOT(checkAllItems()));
+  }
 
   //connect the initialization check boxes to checkers
   connect(tree->wind->windGroupBox, SIGNAL(toggled(bool)),
@@ -1224,7 +1229,7 @@ void mainWindow::aboutWindNinja()
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
                                                "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>" \
+                                               "Bret Butler<br/>"); \
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
@@ -2613,9 +2618,13 @@ int mainWindow::countRuns()
 {
   int runs = 0;
 
-  while(tree->wind->windTable->speed[runs]->value() != 0 ||
-    tree->wind->windTable->dir[runs]->value() != 0)
-      runs++;
+  for(int i=0; i < tree->wind->windTable->nRuns; i++)
+  {
+     if(tree->wind->windTable->speed[i]->value() != 0 || tree->wind->windTable->dir[i]->value() != 0)
+     {
+        runs = i+1;  // i goes from 0 to N-1, runs goes from 1 to N
+     }
+  }
 
   return runs;
 }
@@ -2868,13 +2877,30 @@ int mainWindow::checkSpdDirItem()
         }
         else if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == true) {
         tree->spdDirItem->setIcon(0, tree->caution);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0");
+        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
         status = amber;
         }
         else {
         tree->spdDirItem->setIcon(0, tree->check);
         tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs");
         status = green;
+        // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
+        for(int i=0;i<runs;i++)
+        {
+            if(tree->wind->windTable->speed[i]->value() == 0.0)
+            {
+                if(tree->diurnal->diurnalGroupBox->isChecked() == false) {
+                tree->spdDirItem->setIcon(0, tree->cross);
+                tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active");
+                status = red;
+                } else {
+                tree->spdDirItem->setIcon(0, tree->caution);
+                tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs");
+                status = amber;
+                }
+                break;
+            }
+        }
         }
     }
     else {
@@ -3565,12 +3591,10 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->foamCaseGroupBox->setHidden( false );
         tree->surface->timeZoneGroupBox->setHidden( false );
         
-        tree->vtk->ninjafoamConflictLabel->setHidden( false );
-        tree->vtk->vtkLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setHidden( true );
+        tree->vtk->vtkLabel->setHidden( false );
+        tree->vtk->vtkGroupBox->setHidden( false );
+        tree->vtk->vtkGroupBox->setCheckable(true);
         tree->vtk->vtkGroupBox->setChecked( false );
-        tree->vtk->vtkWarningLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setCheckable(false);
     }
     else{
         tree->diurnal->diurnalGroupBox->setCheckable( true );
@@ -3591,9 +3615,7 @@ void mainWindow::enableNinjafoamOptions(bool enable)
         tree->surface->timeZoneGroupBox->setHidden( false );
         tree->surface->meshResComboBox->addItem("Custom", 4);
         
-        tree->vtk->ninjafoamConflictLabel->setHidden( true );
         tree->vtk->vtkLabel->setHidden( false );
-        tree->vtk->vtkWarningLabel->setHidden( false );
         tree->vtk->vtkGroupBox->setHidden( false );
         tree->vtk->vtkGroupBox->setCheckable( true );
         tree->vtk->vtkGroupBox->setChecked( false );

@@ -165,11 +165,16 @@ public:
 
         // Attributes
 
-            //- Return true: this patch field is altered by assignment
-            virtual bool assignable() const
-            {
-                return true;
-            }
+            // for some odd reason, having this function here, which is an artifact of replicating how stuff 
+            // was done in other BC function code examples for OpenFOAM 8 code, causes WindNinja simulations 
+            // to blow up in many if not most complex terrain cases. This function still remains in the other 
+            // inlet BC functions with no problems. My guess, it somehow triggers different constructors, 
+            // hard to even imagine what the heck uses it that breaks the code, but it breaks the code.
+            ////- Return true: this patch field is altered by assignment
+            //virtual bool assignable() const
+            //{
+            //    return true;
+            //}
 
 
         // Access

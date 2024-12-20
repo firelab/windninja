@@ -149,7 +149,7 @@ option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
     include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
+    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtNetwork REQUIRED)
     include(${QT_USE_FILE})
     add_definitions(-DNINJA_GUI)
     if(WIN32)
@@ -327,6 +327,10 @@ endif(NOT WIN32)
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+option(BUILD_WRF_TO_KMZ "Build a standalone command line interface for converting WRF output to kmz" OFF )
+mark_as_advanced(BUILD_WRF_TO_KMZ)
+option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converting hrrr output runs to kmz, without running full WindNinja" OFF )
+mark_as_advanced(BUILD_HRRR_TO_KMZ)
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
@@ -429,6 +433,7 @@ set(share_files date_time_zonespec.csv
                 tz_world.zip
                 landfire.zip
                 map.htm
+                qt_certs_bundle.pem
                 thredds.csv
                 surface_data.zip
                 srtm_region.geojson

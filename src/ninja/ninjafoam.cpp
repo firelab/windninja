@@ -74,8 +74,6 @@ NinjaFoam::NinjaFoam() : ninja()
     endStlConversion = 0.0;
     
     writeMassMesh = false;
-    
-    writeMassMeshVtk = false;
 }
 
 /**
@@ -140,10 +138,6 @@ bool NinjaFoam::simulate_wind()
         CPLDebug("NINJAFOAM", "Writing turbulence output...");
         set_writeTurbulenceFlag("true");
     }
-    if(CSLTestBoolean(CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE")))
-    {
-        writeMassMeshVtk = CPLGetConfigOption("WRITE_FOAM_MASSMESH_VTK", "FALSE");
-    }
     
     if(input.writeTurbulence == true)
     {
@@ -164,7 +158,7 @@ bool NinjaFoam::simulate_wind()
     }
     
     
-    if( writeMassMeshVtk == true || input.writeTurbulence == true )
+    if( input.volVTKOutFlag == true || input.writeTurbulence == true )
     {
         writeMassMesh = true;
     }
@@ -293,49 +287,53 @@ bool NinjaFoam::simulate_wind()
 
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
     int status = 0;
-    if(!SimpleFoam()){
-        if(input.existingCaseDirectory == "!set"){
-            //no coarsening if this is an existing case
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
-                    "mesh for existing case directory. Try again without using an existing case.");
-            return false;
-        }
-        //try solving with previous mesh iterations (less refinement)
-        while(latestTime > 50){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
-            CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
-            NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
-            if(input.numberCPUs > 1){
-                for(int n=0; n<input.numberCPUs; n++){
-                    NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
+    // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
+    if( input.inputSpeed != 0.0 )
+    {
+        if(!SimpleFoam()){
+            if(input.existingCaseDirectory == "!set"){
+                //no coarsening if this is an existing case
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
+                        "mesh for existing case directory. Try again without using an existing case.");
+                return false;
+            }
+            //try solving with previous mesh iterations (less refinement)
+            while(latestTime > 50){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
+                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
+                NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
+                if(input.numberCPUs > 1){
+                    for(int n=0; n<input.numberCPUs; n++){
+                        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
+                    }
+                }
+                latestTime -= 1;
+                meshResolution *= 2.0;
+                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+
+                /* update simpleFoam controlDict writeInterval */
+                UpdateSimpleFoamControlDict();
+
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
+
+                ApplyInit();
+
+                if(input.numberCPUs > 1){
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
+                    DecomposePar();
+                }
+                status = SimpleFoam();
+                if(status == true){
+                    break;
                 }
             }
-            latestTime -= 1;
-            meshResolution *= 2.0;
-            CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
-
-            /* update simpleFoam controlDict writeInterval */
-            UpdateSimpleFoamControlDict();
-
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
-
-            ApplyInit();
-
-            if(input.numberCPUs > 1){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-                DecomposePar();
+            //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
+            if( status == false & latestTime == 50 ){
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
+                return false;
             }
-            status = SimpleFoam();
-            if(status == true){
-                break;
-            }
-        }
-        //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
-        if( status == false & latestTime == 50 ){
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
-            return false;
-        }
-    }
+        }  // if(!SimpleFoam())
+    }  // if( input.inputSpeed != 0 )
     CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
     if(input.numberCPUs > 1){
@@ -390,7 +388,14 @@ bool NinjaFoam::simulate_wind()
     /*-------------------------------------------------------------------*/
     /* Generate and Sample mass mesh                                     */
     /*-------------------------------------------------------------------*/
+    #ifdef _OPENMP
+    startGenerateAndSampleMassMesh = omp_get_wtime();
+    #endif
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating and sampling mass mesh...");
     GenerateAndSampleMassMesh();
+    #ifdef _OPENMP
+    endGenerateAndSampleMassMesh = omp_get_wtime();
+    #endif
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -421,6 +426,7 @@ bool NinjaFoam::simulate_wind()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Initialization time was %lf seconds.",endInit-startInit);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solver time was %lf seconds.",endSolve-startSolve);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output sampling time was %lf seconds.", endOutputSampling-startOutputSampling);
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "generate and sample mass mesh time was %lf seconds.", endGenerateAndSampleMassMesh-startGenerateAndSampleMassMesh);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Output writing time was %lf seconds.",endWriteOut-startWriteOut);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Total simulation time was %lf seconds.",endTotal-startTotal);
     #endif
@@ -2281,23 +2287,14 @@ void NinjaFoam::SampleRawOutput()
 
 void NinjaFoam::generateMassMesh()
 {
-    CPLDebug("NINJAFOAM", "generating NINJAFOAM mass mesh grid");
-    
     
     massMesh.buildStandardMesh(input);
-    
-    
-    // no longer need to resize any of the ascii grids, even L and bl_height, as they are already at the mass mesh resolution
-    // after the dem is resampled to the mesh resolution they are set using the dem resolution, 
-    // and the mesh resolution now is expected to always match the mass solver mesh resolution
-    CPLDebug("NINJAFOAM", "mass mesh resolution = %f %s", massMesh.meshResolution, lengthUnits::getString(massMesh.meshResolutionUnits).c_str());
-    CPLDebug("NINJAFOAM", "mass mesh nrows = %d, ncols = %d, nlayers = %d", input.dem.get_nRows(), input.dem.get_nCols(), massMesh.nlayers);
-    CPLDebug("NINJAFOAM", "mass mesh minX = %f, maxX = %f, minY = %f, maxY = %f", massMesh.get_minX(), massMesh.get_maxX(), massMesh.get_minY(), massMesh.get_maxY());
     
     
     writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
     
     runProbeSample();
+    
     
     massMesh_u.allocate(&massMesh);
     massMesh_v.allocate(&massMesh);
@@ -2312,8 +2309,6 @@ void NinjaFoam::generateMassMesh()
     
     fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
     
-	
-	CPLDebug("NINJAFOAM", "finished generating NINJAFOAM mass mesh grid");
 }
 
 void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
@@ -2328,7 +2323,6 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     } else {
         probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
     }
-    CPLDebug("NINJAFOAM", "probes sample filename = \"%s\"", probes_filename);
     
     FILE *fout;
     
@@ -2387,13 +2381,11 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "// choice of variables\n");
     fprintf(fout, "fields  (%s %s);\n", "U", "k");
-    //fprintf(fout, "fields  (%s %s %s %s %s);\n", "U", "k", "epsilon", "nut", "p");
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "// Sampling and I/O settings\n");
     fprintf(fout, "interpolationScheme cellPoint;\n");
     fprintf(fout, "setFormat  raw;\n");
-    //fprintf(fout, "setFormat  vtk;\n");
     fprintf(fout, "\n");
     fprintf(fout, "\n");
     fprintf(fout, "type            sets;\n");
@@ -2412,13 +2404,12 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     
     for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
     {
-        for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
         {
-            for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+            for(int colIdx=0; colIdx<ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
                 fprintf( fout, "    (%0.20lf %0.20lf %0.20lf)\n",  x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx)  );
-                //fprintf( fout, "    (%0.20lf %0.20lf %0.20lf)\n",  x(rowIdx,colIdx,layerIdx)+dem_xllCorner, y(rowIdx,colIdx,layerIdx)+dem_yllCorner, z(rowIdx,colIdx,layerIdx)  );
             }
         }
     }
@@ -2550,7 +2541,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
             continue;
         }
     }
-    CPLDebug("NINJAFOAM", "probes sample data file path = \"%s\"", probeSampleData_filename);
     
     
     // read the full data file into a string separated by "\n" chars for each line
@@ -2582,9 +2572,9 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     int endLinePos;
     for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
     {
-        for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
         {
-            for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+            for(int colIdx=0; colIdx<ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
                 
@@ -2595,9 +2585,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                 {
                     // EOF, so it's a data point that was quietly dropped during the sample process
                     
-                    // useful for debugging, see what points were dropped, prints a lot of data though
-                    //std::cout << "EOF. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
-                    
                     double current_ux_pt = noDataVal;
                     double current_uy_pt = noDataVal;
                     double current_uz_pt = noDataVal;
@@ -2605,9 +2592,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     u(ptIdx) = current_ux_pt;
                     v(ptIdx) = current_uy_pt;
                     w(ptIdx) = current_uz_pt;
-                    //u(rowIdx,colIdx,layerIdx) = current_ux_pt;
-                    //v(rowIdx,colIdx,layerIdx) = current_uy_pt;
-                    //w(rowIdx,colIdx,layerIdx) = current_uz_pt;
                     
                 } else
                 {
@@ -2653,8 +2637,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     }
                     valEndSpot = currentLine.find("\n",valStartSpot);  // goes to the end of the line, no whitespace after the value, still want to drop the \n part though
                     std::string current_uz_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot-1); // -1 to drop the \n part
-                    // check the read in data, only uncomment this line if debugging as it tends to output a LOT of data
-                    //std::cout << "(\"" << current_x_pt_str << "\",\"" << current_y_pt_str << "\",\"" << current_z_pt_str << "\",\"" << current_ux_pt_str << "\",\"" << current_uy_pt_str << "\",\"" << current_uz_pt_str << "\")" << std::endl;
                     
                     double current_x_pt = atof(current_x_pt_str.c_str());
                     double current_y_pt = atof(current_y_pt_str.c_str());
@@ -2671,9 +2653,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     double current_mesh_x_pt = x(ptIdx) + dem_xllCorner;
                     double current_mesh_y_pt = y(ptIdx) + dem_yllCorner;
                     double current_mesh_z_pt = z(ptIdx);
-                    //double current_mesh_x_pt = x(rowIdx,colIdx,layerIdx) + dem_xllCorner;
-                    //double current_mesh_y_pt = y(rowIdx,colIdx,layerIdx) + dem_yllCorner;
-                    //double current_mesh_z_pt = z(rowIdx,colIdx,layerIdx);
                     double tol = 0.0001;
                     if ( fabs(current_x_pt-current_mesh_x_pt) < tol && fabs(current_y_pt-current_mesh_y_pt) < tol && fabs(current_z_pt-current_mesh_z_pt) < tol )
                     {
@@ -2681,20 +2660,11 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                         u(ptIdx) = current_ux_pt;
                         v(ptIdx) = current_uy_pt;
                         w(ptIdx) = current_uz_pt;
-                        //u(rowIdx,colIdx,layerIdx) = current_ux_pt;
-                        //v(rowIdx,colIdx,layerIdx) = current_uy_pt;
-                        //w(rowIdx,colIdx,layerIdx) = current_uz_pt;
                         
                         startLinePos = endLinePos+1;  // found that the data of this line matched, so can finally move on to the next line
                         
-                        // useful for debugging, see what points were grabbed to compare to the probe data file, with set precision
-                        //printf("(%.20g,%.20g,%.20g,%.20g,%.20g,%.20g)\n",current_x_pt,current_y_pt,current_z_pt,current_ux_pt,current_uy_pt,current_uz_pt);
-                        
                     } else
                     {
-                        // useful for debugging, see what points were dropped, prints a lot of data though
-                        //std::cout << "dropped data. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
-                        
                         // it's a data point that was quietly dropped during the sample process
                         double current_ux_pt = noDataVal;
                         double current_uy_pt = noDataVal;
@@ -2702,9 +2672,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                         u(ptIdx) = current_ux_pt;
                         v(ptIdx) = current_uy_pt;
                         w(ptIdx) = current_uz_pt;
-                        //u(rowIdx,colIdx,layerIdx) = current_ux_pt;
-                        //v(rowIdx,colIdx,layerIdx) = current_uy_pt;
-                        //w(rowIdx,colIdx,layerIdx) = current_uz_pt;
                     }
                     
                 }  // if ( endLinePos == -1 )  aka EOF check
@@ -2744,7 +2711,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
             continue;
         }
     }
-    CPLDebug("NINJAFOAM", "probes sample data file path = \"%s\"", probeSampleData_filename);
     
     
     // read the full data file into a string separated by "\n" chars for each line
@@ -2776,9 +2742,9 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     int endLinePos;
     for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
     {
-        for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
         {
-            for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+            for(int colIdx=0; colIdx<ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
                 
@@ -2789,13 +2755,9 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                 {
                     // EOF, so it's a data point that was quietly dropped during the sample process
                     
-                    // useful for debugging, see what points were dropped, prints a lot of data though
-                    //std::cout << "EOF. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
-                    
                     double current_k_pt = noDataVal;
                     
                     k(ptIdx) = current_k_pt;
-                    //k(rowIdx,colIdx,layerIdx) = current_k_pt;
                     
                 } else
                 {
@@ -2827,8 +2789,6 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     }
                     valEndSpot = currentLine.find("\n",valStartSpot);  // goes to the end of the line, no whitespace after the value, still want to drop the \n part though
                     std::string current_k_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot-1); // -1 to drop the \n part
-                    // check the read in data, only uncomment this line if debugging as it tends to output a LOT of data
-                    //std::cout << "(\"" << current_x_pt_str << "\",\"" << current_y_pt_str << "\",\"" << current_z_pt_str << "\",\"" << current_k_pt_str << "\")" << std::endl;
                     
                     double current_x_pt = atof(current_x_pt_str.c_str());
                     double current_y_pt = atof(current_y_pt_str.c_str());
@@ -2843,35 +2803,24 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     double current_mesh_x_pt = x(ptIdx) + dem_xllCorner;
                     double current_mesh_y_pt = y(ptIdx) + dem_yllCorner;
                     double current_mesh_z_pt = z(ptIdx);
-                    //double current_mesh_x_pt = x(rowIdx,colIdx,layerIdx) + dem_xllCorner;
-                    //double current_mesh_y_pt = y(rowIdx,colIdx,layerIdx) + dem_yllCorner;
-                    //double current_mesh_z_pt = z(rowIdx,colIdx,layerIdx);
                     double tol = 0.0001;
                     if ( fabs(current_x_pt-current_mesh_x_pt) < tol && fabs(current_y_pt-current_mesh_y_pt) < tol && fabs(current_z_pt-current_mesh_z_pt) < tol )
                     {
                         // points match, it's a good data point in the right spot
                         
-                        //// tke to velFluct conversion
-                        //// from m^2/s^2 to m/s, velFluct = sqrt(2/3*k)
+                        // tke to velFluct conversion
+                        // from m^2/s^2 to m/s, velFluct = sqrt(2/3*k)
                         current_k_pt = std::sqrt(2.0/3.0*current_k_pt);
                         
                         k(ptIdx) = current_k_pt;
-                        //k(rowIdx,colIdx,layerIdx) = current_k_pt;
                         
                         startLinePos = endLinePos+1;  // found that the data of this line matched, so can finally move on to the next line
                         
-                        // useful for debugging, see what points were grabbed to compare to the probe data file, with set precision
-                        //printf("(%.20g,%.20g,%.20g,%.20g)\n",current_x_pt,current_y_pt,current_z_pt,current_k_pt);
-                        
                     } else
                     {
-                        // useful for debugging, see what points were dropped, prints a lot of data though
-                        //std::cout << "dropped data. ptIdx = " << ptIdx << ", layerIdx = " << layerIdx << ", colIdx = " << colIdx << ", rowIdx = " << rowIdx << std::endl;
-                        
                         // it's a data point that was quietly dropped during the sample process
                         double current_k_pt = noDataVal;
                         k(ptIdx) = current_k_pt;
-                        //k(rowIdx,colIdx,layerIdx) = current_k_pt;
                     }
                     
                 }  // if ( endLinePos == -1 )  aka EOF check
@@ -2903,16 +2852,15 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
     windProfile profile;
     profile.profile_switch = windProfile::monin_obukov_similarity;
     
-    for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+    for(int rowIdx=0; rowIdx<nrows; rowIdx++)
     {
-        for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+        for(int colIdx=0; colIdx<ncols; colIdx++)
         {
             
             double lowestKnown_zIdx = nlayers;
             for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
             {
-                if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {  // they always get set together for the same idx, so only need to check one of them
-                //if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal && v(rowIdx,colIdx,layerIdx) > noDataCheckVal && w(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {
+                if ( u(rowIdx,colIdx,layerIdx) > noDataCheckVal ) {  // the values for each component are always set together for a given idx, so only need to check one of them
                     lowestKnown_zIdx = layerIdx;
                     break;
                 }
@@ -2938,35 +2886,18 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
                 }
             }
             
-            
-            // for debugging purposes, want to know how different the indices and resulting values ended up
-            // turns out to be easier if change back and forth between when/why it is printed rather than printing each instance
-            //if ( lowestKnown_zIdx == firstCellHeight_zIdx ) {
-            //if ( lowestKnown_zIdx > firstCellHeight_zIdx ) {
-            //    std::cout << "rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
-            //    std::cout << "lowestKnown_zIdx = " << lowestKnown_zIdx << ", firstCellHeight_zIdx = " << firstCellHeight_zIdx << std::endl;
-            //    std::cout << "z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
-            //}
-            
-            
-            // this one is NOT for debugging purposes, has to be run each and every time to make the code run safely
+            // this needs run each and every time to make the code run safely
+            // if lowest known z idx is less than firstCellHeight z idx, use the firstCellHeight z idx as the lowest known value
+            // tends to be true more often than not
             if ( lowestKnown_zIdx < firstCellHeight_zIdx ) {
-                //std::cout << "lowestKnown zIdx is less than firstCellHeight zIdx for rowIdx = " << rowIdx << ", colIdx = " << colIdx << std::endl;
-                //std::cout << "old lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
                 lowestKnown_zIdx = firstCellHeight_zIdx;
-                //std::cout << "new lowestKnown_zIdx = " << lowestKnown_zIdx << std::endl;
-                //std::cout << "new z_ASL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx) << ", current_z_ground = " << current_z_ground << ", new z_AGL[lowestKnown_zIdx] = " << z(rowIdx,colIdx,lowestKnown_zIdx)-current_z_ground << ", firstCellHeight z = " << finalFirstCellHeight << std::endl;
-                // looks like this is getting triggered a LOT, if not for each and every occurence, hard to tell without commenting it out and printing for the other occurences.
-                // looks like the resulting value is rarely equal to firstCellHeight though, seems to always be just a hint above that value
             }
-            
             
             
             double z_ref = z(rowIdx,colIdx,lowestKnown_zIdx);
             double u_ref = u(rowIdx,colIdx,lowestKnown_zIdx);
             double v_ref = v(rowIdx,colIdx,lowestKnown_zIdx);
             double w_ref = w(rowIdx,colIdx,lowestKnown_zIdx);
-            
             
             profile.ObukovLength = init->L(rowIdx,colIdx);
             profile.ABL_height = init->bl_height(rowIdx,colIdx);
@@ -2976,19 +2907,21 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
             profile.Rough_h = current_rough_h;
             profile.Rough_d = current_rough_d;
             
-            //this is height above the vegetation
+            // this is height above the vegetation
             profile.inputWindHeight = z_ref - current_z_ground;  // needs to be AGL
             
             for(int zIdx=1; zIdx<lowestKnown_zIdx; zIdx++)
             {
-                //this is height above THE GROUND!! (not "z=0" for the log profile)
+                // this is height above THE GROUND!! (not "z=0" for the log profile)
                 profile.AGL = z(rowIdx,colIdx,zIdx) - current_z_ground + current_rough_h;  // needs to be AGL
                 
                 profile.inputWindSpeed = u_ref;
                 u(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
                 profile.inputWindSpeed = v_ref;
                 v(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
-                profile.inputWindSpeed = w_ref;  // not sure if this is valid or not, but without this, it is still full of all those nans, so I guess just go with it
+                // not sure if this is valid or not, usually just do u and v not w, but without this, it is still full of all those nans, so I guess just go with it
+                // seems to be working out all right
+                profile.inputWindSpeed = w_ref;
                 w(rowIdx,colIdx,zIdx) = profile.getWindSpeed();
             }
             
@@ -2998,7 +2931,6 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
             w(rowIdx,colIdx,0) = 0.0;
         }
     }
-    
     
 }
 
@@ -3014,9 +2946,9 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
     // find the first non nan value for a given column, and fill all values below with that value
     // so no log profile correction for this dataset
     
-    for(int rowIdx=0; rowIdx<nrows; rowIdx++)  // i is nrows
+    for(int rowIdx=0; rowIdx<nrows; rowIdx++)
     {
-        for(int colIdx=0; colIdx<ncols; colIdx++)  // j is ncols
+        for(int colIdx=0; colIdx<ncols; colIdx++)
         {
             
             double lowestKnown_zIdx = nlayers;
@@ -3046,7 +2978,6 @@ void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z,
         }
     }
     
-    
 }
 
 
@@ -3068,7 +2999,6 @@ void NinjaFoam::generateColMaxGrid(const wn_3dArray& z,
     {
         for ( int colIdx = 0; colIdx < ncols; colIdx++ )
         {
-            
             double current_z_ground = z(rowIdx,colIdx,0);
             
             double current_colMaxVal = -999999.0;   // start val for find max, really small val, make sure it is smaller than noDataVal just in case
@@ -3081,23 +3011,12 @@ void NinjaFoam::generateColMaxGrid(const wn_3dArray& z,
                 if ( current_colMaxVal < k(rowIdx,colIdx,layerIdx) ) {
                     current_colMaxVal = k(rowIdx,colIdx,layerIdx);
                 }
-                //// for debugging
-                //if ( rowIdx == 0 && colIdx == 0 ) {
-                //    std::cout << "zIdx = " << layerIdx << ", z = " << z(rowIdx,colIdx,layerIdx) << ", z_AGL = " << z(rowIdx,colIdx,layerIdx) - current_z_ground << ", val = " << k(rowIdx,colIdx,layerIdx) << std::endl;
-                //}
             }
             
             colMaxGrid.set_cellValue( rowIdx, colIdx, current_colMaxVal );
         }
     }
     
-    //// for debugging
-    //CPLDebug("NINJAFOAM", "writing ascii file");
-    //const char *colMaxOutputFile_ascii;
-    //colMaxOutputFile_ascii = CPLSPrintf("%s/colMax.asc", pszFoamPath);
-    //colMaxGrid.write_Grid(colMaxOutputFile_ascii, 5);
-    
-    CPLDebug("NINJAFOAM", "finished generating turbulence column max ascii grid from NINJAFOAM mass mesh");
 }
 
 
@@ -3112,9 +3031,19 @@ void NinjaFoam::GenerateAndSampleMassMesh()
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}catch (...)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}
     
     
@@ -3126,9 +3055,19 @@ void NinjaFoam::GenerateAndSampleMassMesh()
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}catch (...)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
+		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+		input.writeTurbulence = false;
+		if(input.diurnalWinds == false){
+		    input.volVTKOutFlag = false;
+	    }
 	}
     
 }
@@ -3263,6 +3202,8 @@ void NinjaFoam::SetOutputFilenames()
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
+
+    input.volVTKFile = rootFile + fileAppend + ".vtk";
 
     input.legFile = rootFile + kmz_fileAppend + ".bmp";
     if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
@@ -3559,7 +3500,7 @@ void NinjaFoam::WriteOutputFiles()
 	
 	
 	try{
-	    if ( writeMassMeshVtk == true ) {
+	    if ( input.volVTKOutFlag == true ) {
 	        writeMassMeshVtkOutput();
 	    }
 	}catch (exception& e)
@@ -3577,17 +3518,20 @@ void NinjaFoam::writeMassMeshVtkOutput()
 {
     CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
     
-    std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
     try {
-        CPLDebug("NINJAFOAM", "writing vtk file");
         bool vtk_out_as_utm = false;
 	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
         {
             vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
         }
         // can pick between "ascii" and "binary" format for the vtk write format
-        std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+        std::string vtkWriteFormat = "binary";//"binary";//"ascii";
+        std::string found_vtkWriteFormat = CPLGetConfigOption("VTK_OUT_FORMAT", "binary");
+        if(found_vtkWriteFormat != "")
+        {
+            vtkWriteFormat = found_vtkWriteFormat;
+        }
+		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
 	} catch (...) {
@@ -4120,7 +4064,6 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     if ( writeMassMesh == true ) {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-        CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
         massMesh.set_meshResolution(meshResolution, meshResolutionUnits);
         massMesh.compute_domain_height(input);
     }
