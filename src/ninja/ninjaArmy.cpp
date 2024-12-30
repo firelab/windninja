@@ -251,7 +251,7 @@ int ninjaArmy::fetchDEMPoint(const double * adfPoint, const double *adfBuff, con
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef GMTED
+    #ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
@@ -289,7 +289,7 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         if (strcmp(fetchType, "srtm") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
         }
-        #ifdef GMTED
+        #ifdef HAVE_GMTED
         else if (strcmp(fetchType, "gmted") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
         }
@@ -324,7 +324,9 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
         model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
         std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
         delete model;
-        return forecastFileName.c_str();
+        char* cstr = new char[forecastFileName.length() + 1];
+        std::strcpy(cstr, forecastFileName.c_str());
+        return cstr;
     }
     catch(armyException &e)
     {

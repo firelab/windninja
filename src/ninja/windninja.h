@@ -84,7 +84,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
     (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, const char* osTimeZone, int fetchLatestFlag);
-    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaH * ninja, const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaH * ninja, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType);
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (NinjaH * ninja, double *boundsBox, const char *fileName, double resolution, char* fetchType);
     WINDNINJADLL_EXPORT const char* NinjaFetchForecast
@@ -98,7 +98,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
-        (int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag);
+    ( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag);
     WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
         ( const char * forecastFilename,
         const char * timezone,

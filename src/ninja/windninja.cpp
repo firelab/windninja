@@ -161,7 +161,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDemPoint(NinjaH * ninja, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaH * ninja, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType){
     return reinterpret_cast<ninjaArmy*>( ninja )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions, fetchType);
 }
 /**
@@ -308,7 +308,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day, int*hour, int timeListSize, char** timeZone, char** stationFileName, char** elevationFile, int matchPointsFlag, int momementumFlag){
+WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag){
    NinjaH* ninja;
         try{
             std::vector <boost::posix_time::ptime> timeList;
@@ -318,9 +318,9 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day,
             ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
             reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
             (   timeList,
-                timeZone,
-                stationFileName,
-                elevationFile,
+                std::string(timeZone),
+                std::string(stationFileName),
+                std::string(elevationFile),
                 matchPointsFlag,
                 false);
             return ninja;
