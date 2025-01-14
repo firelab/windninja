@@ -16,4 +16,4 @@ https://ninjastorm.firelab.org/windninja-website/faq.html
 [WindNinja Tutorials](https://ninjastorm.firelab.org/windninja-website/tutorials/)
 
 ### Developer Documentation
-[API Tutorial](https://ninjastorm.firelab.org/windninjaapi/md_doc_doxygen_api_example.html)
+[API Tutorial](https://ninjastorm.firelab.org/windninja_api/md_doc_doxygen_api_example.html)
