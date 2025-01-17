@@ -140,7 +140,7 @@ public:
                           std::string timeZone,std::string stationFileName,
                           std::string demFile,bool matchPoints,bool override );
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    int fetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType);
+    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType);
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
     const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);

@@ -241,7 +241,20 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
   return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
-int ninjaArmy::fetchDEMPoint(const double * adfPoint, const double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char ** papszOptions, const char* fetchType){
+/**
+ * @brief Fetches a DEM using a point.
+ * 
+ * @param adfPoint a x,y point in WGS 84 longitude, latitude
+ * @param adfBuff length of a buffer in the x and y directions
+ * @param units Units of buffer.
+ * @param dfCellSize Cell size of DEM.
+ * @param pszDstFile Destination file.
+ * @param papszOptions Options for fetching DEM.
+ * @param fetchType Type of DEM to fetch.
+ * 
+ * 
+ */
+int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType){
     if (pszDstFile == NULL)
     {
         return NINJA_E_INVALID;
@@ -306,16 +319,24 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         double southBound = boundsBox[2];
         double westBound = boundsBox[3];
         int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+        delete fetcher;
         if (result != 0)
         {
-            delete fetcher;
             return NINJA_E_INVALID;
         }
-        delete fetcher;
         return NINJA_SUCCESS;
         
 }
 
+/**
+ * @brief Fetches a forecast file from UCAR/THREDDS server.
+ * 
+ * @param wx_model_type Type of weather model.
+ * @param numNinjas Number of ninjas.
+ * @param elevation_file Name of elevation file.
+ * 
+ * @return Name of forecast file.
+ */
 const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
 {
     wxModelInitialization *model;

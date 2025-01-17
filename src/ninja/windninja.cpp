@@ -201,11 +201,15 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaH * ninja, const char*wx
 /**
  * \brief Fetch Station forecast files using bbox from elevation file
  *
+ * \param year A pointer to an array of years.
+ * \param month A pointer to an array of months.
+ * \param day A pointer to an array of days.
+ * \param hour A pointer to an array of hours.
+ * \param timeListSize The size of the time list.
  * \param output_path A valid path to an output directory.
  * \param elevation_file A valid path to an elevation file.
- * \param timeList A vector of boost posix time objects representing the times of the forecast.
- * \param osTimeZone A string representing the timezone of the forecast.
- * \param fetchLatestFlag A int representing whether to fetch the latest forecast.
+ * \param osTimeZone A string representing a valid timezone.
+ * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
  *
  * \return Forecast file name on success, "exception" otherwise.
  */
@@ -216,16 +220,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month
     }
     wxStation::SetStationFormat(wxStation::newFormat);
     std::string stationPathName = pointInitialization::generatePointDirectory(elevation_file, output_path, fetchLatestFlag);
-    std::cout << stationPathName.c_str() << std::endl;
     pointInitialization::SetRawStationFilename(stationPathName);
     bool success = pointInitialization::fetchStationFromBbox(elevation_file, timeList, osTimeZone, fetchLatestFlag);
-    if(success){
-        pointInitialization::writeStationLocationFile(stationPathName, elevation_file, fetchLatestFlag);
-        return NINJA_SUCCESS;
-    }
-    else{
+    if(!success){
         return NINJA_E_INVALID;
     }
+    pointInitialization::writeStationLocationFile(stationPathName, elevation_file, fetchLatestFlag);
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -235,11 +236,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month
  * the weather forecast file.  One run is done for each timestep in the *.nc
  * file.
  *
- * \param ninja pointer to pointer of opaque NinjaArmy.
  * \param forecastFilename A valid thredds/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
  *                 See WINDNINJA_DATA/date_time_zonespec.csv
+ * \param momentumFlag A flag representing whether to use momentum or not.
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
@@ -298,37 +299,40 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
  * the weather forecast file.  One run is done for each timestep in the *.nc
  * file.
  *
- * \param ninja pointer to pointer of opaque NinjaArmy.
- * \param tiimeList A vector of boost posix time objects representing the times of the forecast.
- * \param timezone a timezone string representing a valid timezone
- * \param stationFileName A valid path to a station directory
+ * \param year A pointer to an array of years.
+ * \param month A pointer to an array of months.
+ *  \param day A pointer to an array of days.
+ * \param hour A pointer to an array of hours.
+ * \param timeListSize The size of the time list.
+ * \param timeZone a timezone string representing a valid timezone
+ * \param stationFileName A valid path to a station file.
  * \param elevationFile A valid path to an elevation file.
- * \param matchPointsFlag A integer representing whether to match the points in the station file to the DEM.
+ * \param matchPointsFlag A flag representing whether to match points or not.
+ * \param momentumFlag A flag representing whether to use momentum or not.
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag){
-   NinjaH* ninja;
-        try{
-            std::vector <boost::posix_time::ptime> timeList;
-            for(int i=0; i<timeListSize; i++){
-                timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(year[i], month[i], day[i]), boost::posix_time::hours(hour[i])));
-            }
-            ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
-            reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
-            (   timeList,
-                std::string(timeZone),
-                std::string(stationFileName),
-                std::string(elevationFile),
-                matchPointsFlag,
-                false);
-            return ninja;
+    NinjaH* ninja;
+    try{
+        std::vector <boost::posix_time::ptime> timeList;
+        for(int i=0; i<timeListSize; i++){
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(year[i], month[i], day[i]), boost::posix_time::hours(hour[i])));
         }
-        catch( armyException & e ){
-            return NULL;
-        }
-        
+        ninja= reinterpret_cast<NinjaH*>( new ninjaArmy(1 ));
+        reinterpret_cast<ninjaArmy*>( ninja )->makeStationArmy
+        (   timeList,
+            std::string(timeZone),
+            std::string(stationFileName),
+            std::string(elevationFile),
+            matchPointsFlag,
+            false);
+        return ninja;
+    }
+    catch( armyException & e ){
+        return NULL;
+    }
     return NULL;
 
 }
