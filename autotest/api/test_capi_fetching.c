@@ -32,8 +32,6 @@
 int main()
 {
     NinjaH* ninjaArmy = NULL; 
-    const char * comType = "cli"; //communication type is always set to "cli"
-    const int nCPUs = 1;
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
     err = NinjaInit(); //must be called for any simulation
@@ -72,7 +70,7 @@ int main()
     int day[] = {10};
     int hour[] = {12};
     int timeListSize = 1;
-    const char* output_path = "./stationpath";
+    const char* output_path = "./station";
     const char* elevation_file = "output.tif";
     const char* osTimeZone = "UTC";
     int fetchLatestFlag = 1;
@@ -96,7 +94,7 @@ int main()
     */
 
     double adfPoint[] = {40.07, -104.0}; // Point coordinates (latitude, longitude)
-    double adfBuff[] = {5, 5}; // Buffer to store the elevation value
+    double adfBuff[] = {30, 30}; // Buffer to store the elevation value
     const char* units = "mi";
     double dfCellSize = 30.0; // Cell size in meters
     char* pszDstFile = "dem_point_output.tif";
