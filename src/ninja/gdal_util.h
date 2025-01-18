@@ -46,6 +46,7 @@ double GDALGetMax( GDALDataset *poDS );
 double GDALGetMin( GDALDataset *poDS );
 bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude );
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
+bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );

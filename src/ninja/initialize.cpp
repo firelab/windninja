@@ -34,6 +34,7 @@ initialize::initialize()
     //make sure rough_h is set to zero if profile switch is 0 or 2
     //switch that detemines what profile is used...
     profile.profile_switch = windProfile::monin_obukov_similarity;
+    angleFromNorth = 0.0;
 }
 
 initialize::~initialize()
@@ -48,6 +49,11 @@ initialize::~initialize()
     cloudCoverGrid.deallocate();
     speedInitializationGrid.deallocate();
     dirInitializationGrid.deallocate();
+}
+
+void initialize::setAngleFromNorth(double angle)
+{
+    angleFromNorth = angle;
 }
 
 void initialize::initializeWindToZero( Mesh const& mesh,

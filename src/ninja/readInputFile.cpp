@@ -91,6 +91,19 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
+    //compute angle from north
+    double angleFromNorth = 0.0;
+    if(GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
+    {
+        cout<<"angleFromNorth = "<<angleFromNorth<<endl;
+        //set the value for angleFromNorth member in initialize class 
+    }
+    else
+    {
+        CPLDebug("WINDNINJA", "Unable to calculate angle departure from north for the DEM.");   
+    }
+    cout<<"angleFromNorth = "<<angleFromNorth<<endl;
+
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);
 
@@ -101,7 +114,6 @@ void ninja::readInputFile()
         if( input.dem.checkForNoDataValues() )
             throw std::runtime_error("NO_DATA values found in elevation file.");
     }
-
 }
 
 /**
@@ -537,4 +549,5 @@ void ninja::importGeoTIFF(GDALDataset* poDataset)
     //try filling nodata here
     if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
         throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
+
 }
