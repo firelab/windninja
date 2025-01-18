@@ -28,6 +28,7 @@
  *****************************************************************************/
 #include "windninja.h"
 #include <stdio.h> //for printf and strcmp
+#include <string.h>
 
 int main()
 {
@@ -93,7 +94,7 @@ int main()
         NinjaFetchStation: err = 2
     */
 
-    double adfPoint[] = {40.07, -104.0}; // Point coordinates (latitude, longitude)
+    double adfPoint[] = {104.0, 40.07}; // Point coordinates (longitude, latitude)
     double adfBuff[] = {30, 30}; // Buffer to store the elevation value
     const char* units = "mi";
     double dfCellSize = 30.0; // Cell size in meters
