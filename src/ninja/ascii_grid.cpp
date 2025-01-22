@@ -1584,11 +1584,46 @@ void AsciiGrid<T>::divide_gridData(double *d, int splits)
 {
     if(!sortedData)
         sort_grid();
-    int x = int(floor((double)(data.size() / splits)));;
+
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            T current_cellValue = get_cellValue(i,j);
+            if( current_cellValue == get_noDataValue() || cplIsNan(current_cellValue) || std::isnan(current_cellValue) || std::isinf(current_cellValue) )
+            {
+                numNoDataValues++;
+            }
+        }
+    }
+    int nValsLeft = data.size() - numNoDataValues;
+    T* sortedData_droppedNans = new T[nValsLeft];
+    int appendCount = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            T current_cellValue = get_cellValue(i,j);
+            if( current_cellValue == get_noDataValue() || cplIsNan(current_cellValue) || std::isnan(current_cellValue) || std::isinf(current_cellValue) )
+            {
+                continue;
+            }
+            // get_cellValue(int m, int n) const {return data(m,n);
+            // operator()(unsigned row, unsigned col)
+            // int idx = row * cols + col;
+            int idx = i * j + j;
+            sortedData_droppedNans[appendCount] = sortedData[idx];
+            appendCount++;
+        }
+    }
+    int x = int(floor((double)(nValsLeft / splits)));;
     for(int i = 0;i < splits;i++)
     {
-        d[i] = sortedData[i * x];
+        d[i] = sortedData_droppedNans[i * x];
     }
+    delete[] sortedData_droppedNans;
+    sortedData_droppedNans = NULL;
 }
 
 template<class T>
