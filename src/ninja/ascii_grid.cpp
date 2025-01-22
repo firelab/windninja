@@ -1586,6 +1586,8 @@ void AsciiGrid<T>::divide_gridData(double *d, int splits)
         sort_grid();
 
     int numNoDataValues = 0;
+    T badNanValue = 0.0;  // if changed, bad values include this updated value
+    T badInfValue = 0.0;  // if changed, bad values include this updated value
     for(int i = 0;i < data.get_numRows();i++)
     {
         for(int j = 0;j < data.get_numCols();j++)
@@ -1594,10 +1596,26 @@ void AsciiGrid<T>::divide_gridData(double *d, int splits)
             if( current_cellValue == get_noDataValue() || cplIsNan(current_cellValue) || std::isnan(current_cellValue) || std::isinf(current_cellValue) )
             {
                 numNoDataValues++;
+                if( badNanValue == 0.0 )
+                {
+                    if( cplIsNan(current_cellValue) || std::isnan(current_cellValue) )
+                    {
+                        badNanValue = current_cellValue;
+                    }
+                }
+                if( badInfValue == 0.0 && std::isinf(current_cellValue) )
+                {
+                    badInfValue = current_cellValue;
+                }
             }
         }
     }
     int nValsLeft = data.size() - numNoDataValues;
+    // add back in a single nan/inf value if it occurs
+    if( badNanValue != 0.0 || badInfValue != 0.0 )
+    {
+        nValsLeft = nValsLeft + 1;
+    }
     T* sortedData_droppedNans = new T[nValsLeft];
     int appendCount = 0;
     for(int i = 0;i < data.get_numRows();i++)
@@ -1616,6 +1634,20 @@ void AsciiGrid<T>::divide_gridData(double *d, int splits)
             sortedData_droppedNans[appendCount] = sortedData[idx];
             appendCount++;
         }
+    }
+    if( badNanValue != 0.0 || badInfValue != 0.0 )
+    {
+        if( badInfValue != 0.0 )
+        {
+            sortedData_droppedNans[appendCount] = badInfValue;
+        } else if( badNanValue != 0.0 )
+        {
+            sortedData_droppedNans[appendCount] = badNanValue;
+        } else
+        {
+            sortedData_droppedNans[appendCount] = get_noDataValue();
+        }
+        appendCount++;
     }
     int x = int(floor((double)(nValsLeft / splits)));;
     for(int i = 0;i < splits;i++)
