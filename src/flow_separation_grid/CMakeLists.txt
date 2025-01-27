@@ -15,37 +15,27 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.6)
 
-add_subdirectory(ninja)
+include_directories(${PROJECT_SOURCE_DIR}/src/ninja
+                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR})
 
-if(NINJA_QTGUI)
-    add_subdirectory(gui)
-endif(NINJA_QTGUI)
-if(NINJA_CLI)
-    add_subdirectory(cli)
-endif(NINJA_CLI)
-if(BUILD_FETCH_DEM)
-    add_subdirectory(fetch_dem)
-endif(BUILD_FETCH_DEM)
-if(BUILD_SLOPE_ASPECT_GRID)
-    add_subdirectory(slope_aspect_grid)
-endif(BUILD_SLOPE_ASPECT_GRID)
-if(BUILD_FLOW_SEPARATION_GRID)
-    add_subdirectory(flow_separation_grid)
-endif(BUILD_FLOW_SEPARATION_GRID)
-if(BUILD_SOLAR_GRID)
-    add_subdirectory(solar_grid)
-endif(BUILD_SOLAR_GRID)
-if(BUILD_STL_CONVERTER)
-    add_subdirectory(stl_converter)
-endif(BUILD_STL_CONVERTER)
-if(BUILD_CONVERT_OUTPUT)
-    add_subdirectory(output_converter)
-endif(BUILD_CONVERT_OUTPUT)
-if(BUILD_WRF_TO_KMZ)
-    add_subdirectory(wrf_to_kmz)
-endif(BUILD_WRF_TO_KMZ)
-if(BUILD_HRRR_TO_KMZ)
-    add_subdirectory(hrrr_to_kmz)
-endif(BUILD_HRRR_TO_KMZ)
+set(LINK_LIBS ${GDAL_LIBRARY})
+
+set(FLOW_SEPARATION_GRID_SRC flow_separation_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/Elevation.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/flowSeparation.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp)
+
+add_executable(flow_separation_grid ${FLOW_SEPARATION_GRID_SRC})
+
+target_link_libraries(flow_separation_grid ${LINK_LIBS})
+
+install(TARGETS flow_separation_grid DESTINATION bin COMPONENT apps)
+

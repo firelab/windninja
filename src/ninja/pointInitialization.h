@@ -51,12 +51,8 @@ class pointInitialization : public initialize
         struct preInterpolate
         {
             std::string stationName;
-            double lat;
-            double lon;
-            double projXord;
-            double projYord;
-            double xord;
-            double yord;
+            double coord_x;  //coords are Lat/Lon for coordType GEOGCS, and XCoord/YCoord in the projection of the dem for coordType PROJCS
+            double coord_y;
             double height;
             double speed;
             double direction;

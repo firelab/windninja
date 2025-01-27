@@ -43,6 +43,7 @@ set(NINJA_SOURCES air.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
+                  flowSeparation.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp

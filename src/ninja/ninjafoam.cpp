@@ -1277,6 +1277,7 @@ void NinjaFoam::MoveDynamicMesh()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
                                       "moveDynamicMesh",
                                       "-case",
                                       pszFoamPath,
@@ -1664,6 +1665,7 @@ bool NinjaFoam::SimpleFoam()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
                                       "simpleFoam",
                                       "-case",
                                       pszFoamPath,
@@ -2427,7 +2429,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
         fprintf(fout, "        type    points;\n");
     }
     fprintf(fout, "        axis    xyz;\n");
-    fprintf(fout, "        ordered yes;\n");
+    fprintf(fout, "        ordered no;\n");
     fprintf(fout, "        points  $points;\n");
     fprintf(fout, "    }\n");
     fprintf(fout, ");\n");

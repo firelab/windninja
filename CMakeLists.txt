@@ -343,6 +343,8 @@ option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converti
 mark_as_advanced(BUILD_HRRR_TO_KMZ)
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
+option(BUILD_FLOW_SEPARATION_GRID "Build an application for building flow separation" OFF)
+mark_as_advanced(BUILD_FLOW_SEPARATION_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
 
