@@ -450,17 +450,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
         return NINJA_E_NULL_PTR;
     }
 }
-
-WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
-    ( const char *pszGdalData, const char *pszWindNinjaData )
-
-{
-    NinjaErr retval = NINJA_E_INVALID;
-
-    retval = NinjaInitialize(pszGdalData, pszWindNinjaData);
-
-    return retval;
-}
         
 WINDNINJADLL_EXPORT NinjaErr NinjaInit
     ( )
