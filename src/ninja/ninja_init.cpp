@@ -170,13 +170,13 @@ void NinjaCheckThreddsData( void *rc )
     return;
 }
 /*
-** Initialize global singletons and environments.
+** Initialize global time zone database. Environment required to be set outside of WindNinja
 */
 int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 {
     //set GDAL_DATA and WINDNINJA_DATA
-    GDALAllRegister();
-    OGRRegisterAll();    
+    //GDALAllRegister();
+    //OGRRegisterAll();    
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
@@ -189,11 +189,11 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
         return 2; 
     }
 
-    CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
-    CPLSetConfigOption( "GDAL_DATA", pszGdalData );
+    //CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
+   // CPLSetConfigOption( "GDAL_DATA", pszGdalData );
 
-    CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
-    CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
+    //CPLDebug( "WINDNINJA", "Setting WINDNINJA_DATA:%s", pszWindNinjaData );
+    //CPLSetConfigOption( "WINDNINJA_DATA", pszWindNinjaData );
 
     globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
 
