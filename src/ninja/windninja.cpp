@@ -271,6 +271,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaInitializeNoRegister(
+    const char *pszGdalData, const char *pszWindNinjaData) 
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaInitializeNoRegister(pszGdalData, pszWindNinjaData);
+
+    return retval;
+}
+
 WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
     ( const char *pszGdalData, const char *pszWindNinjaData )
 
