@@ -355,6 +355,8 @@ if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
 
+option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" ON)
+
 # Recurse into subdirectories
 add_subdirectory(src)
 
@@ -406,6 +408,16 @@ if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
 
+if(FIRE_BEHAVIOR_DATA_INSTALL)
+    #FireBehaviorModels only requires date_time_zonespec.csv and tz_world.zip
+    message("Only installing data files necessary for FireBehaviorModels")
+    set(fire_behavior_model_files date_time_zonespec.csv tz_world.zip)
+    foreach(f ${fire_behavior_model_files})
+        install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+                share/windninja COMPONENT apps)
+    endforeach(f ${fire_behavior_model_files})
+
+else(FIRE_BEHAVIOR_DATA_INSTALL)
 # install target related files
 set(etc_files missoula_valley.tif
                   example_lcp.tif
@@ -623,3 +635,4 @@ CPACK_ADD_COMPONENT(includes
                     #GROUP Development
                     )
 
+endif(FIRE_BEHAVIOR_DATA_INSTALL)
