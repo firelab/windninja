@@ -96,7 +96,7 @@ typedef int  NinjaErr;
           const char * timezone,
           int momentumFlag );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaInitializeNoRegister
+    WINDNINJADLL_EXPORT NinjaErr NinjaInitNoRegister
            ( const char *pszGdalData, const char *pszWindNinjaData);
 
 
