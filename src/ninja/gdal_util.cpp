@@ -218,6 +218,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     }
 
     x2 = x1;
+
     //add 1/4 size of the DEM extent in y direction
     if(!GDALGetBounds( poDS, boundsLonLat ))
     {

@@ -91,7 +91,7 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
-    //compute angle between N-S grid lines in the datase and true north
+    //compute angle between N-S grid lines in the dataset and true north
     double angleFromNorth = 0.0;
     if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
     {
