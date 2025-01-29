@@ -51,11 +51,6 @@ initialize::~initialize()
     dirInitializationGrid.deallocate();
 }
 
-void initialize::setAngleFromNorth(double angle)
-{
-    angleFromNorth = angle;
-}
-
 void initialize::initializeWindToZero( Mesh const& mesh,
                                     wn_3dScalarField& u0,
                                     wn_3dScalarField& v0,

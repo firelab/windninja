@@ -91,18 +91,19 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
-    //compute angle from north
+    //compute angle between N-S grid lines in the datase and true north
     double angleFromNorth = 0.0;
-    if(GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
+    if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
     {
-        cout<<"angleFromNorth = "<<angleFromNorth<<endl;
-        //set the value for angleFromNorth member in initialize class 
-    }
-    else
-    {
+        //TODO: issue a warning here but don't throw an error
         CPLDebug("WINDNINJA", "Unable to calculate angle departure from north for the DEM.");   
     }
+
+    //set the value for angleFromNorth member in the Elevation class
     cout<<"angleFromNorth = "<<angleFromNorth<<endl;
+    input.dem.setAngleFromNorth(angleFromNorth);
+    //just a temporary check for debugging:
+    cout<<"input.dem.angleFromNorth = "<<input.dem.getAngleFromNorth()<<endl;
 
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);

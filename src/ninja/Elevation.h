@@ -65,7 +65,11 @@ public:
 	eElevDistanceUnits elevationUnits;	//these are the vertical units, ALL HORIZONTAL UNITS MUST ALWAYS BE IN METERS, INCLUDING WHEN THEY ARE READ IN!
         GDALDatasetH hDS; //in-memory dataset for DEM for API
 	bool grid_made;	
-	
+        void setAngleFromNorth(double angle);
+        double getAngleFromNorth();
+
+private:
+        double angleFromNorth; //N-S grid line angle departe from true north in the DEM projection
 };
 
 #endif	//ELEVATION_H

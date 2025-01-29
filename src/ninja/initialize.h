@@ -49,8 +49,6 @@ class initialize
         initialize();
         virtual ~initialize(); 
         
-        void setAngleFromNorth(double angle);
-
         //Pure virtual function for initializing volume wind fields.
         virtual void initializeFields(WindNinjaInputs &input,
                         Mesh const& mesh,

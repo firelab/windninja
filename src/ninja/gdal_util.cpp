@@ -28,8 +28,11 @@
  *****************************************************************************/
 
 #include "gdal_util.h"
-
 #include "ninja_conv.h"
+
+#ifndef PI
+#define PI 3.14159
+#endif
 
 /** Fetch the max value of a dataset.
  * Fetch the max value from any valid GDAL dataset
@@ -198,33 +201,41 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
     return true;
 }
 
-/** Calculate the angle from true north for center point of the DS.
+/** Calculate the angle between the N-S grid lines in the DS and true north for the center point of the DS.
  * @param poDS a pointer to a valid GDALDataset
  * @param angle the computed angle from north
  * @return true on success false on failure.
  */
 bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 {
-    angleFromNorth = 0.0;
-
     double x1, y1; //center point of DEM in lat/lon
     double x2, y2; //point due north of center point in lat/lon
-    double boundsLonLat[4];
+    double boundsLonLat[4]; //bounds of the DS in lat/lon
 
-    if(GDALGetCenter( poDS, &x1, &y1 ))
+    if(!GDALGetCenter( poDS, &x1, &y1 ))
     {
-        x2 = x1;
-        //add 1/4 size of the DEM extent in y direction
-        if(GDALGetBounds( poDS, boundsLonLat ))
-        {
-            y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
-        }
-        else
-        {
-            return false;
-        }
+        return false;
     }
-    else
+
+    x2 = x1;
+    //add 1/4 size of the DEM extent in y direction
+    if(!GDALGetBounds( poDS, boundsLonLat ))
+    {
+        return false;
+    }
+
+    y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
+
+    cout<<"x1, y1 = "<<x1<<", "<<y1<<endl;
+    cout<<"x2, y2 = "<<x2<<", "<<y2<<endl;
+
+    //project the two lat/lon points to projected DEM coordinates
+    if(!GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
+    {
+        return false;
+    }
+
+    if(!GDALPointFromLatLon(x2, y2, poDS, "WGS84"))
     {
         return false;
     }
@@ -232,47 +243,27 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     cout<<"x1, y1 = "<<x1<<", "<<y1<<endl;
     cout<<"x2, y2 = "<<x2<<", "<<y2<<endl;
 
-    //project the two lat/lon points to projected DEM coordinates
-    if(GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
-    {
-        cout<<"x1, y1 = "<<x1<<", "<<y1<<endl;
-    }
-    else
-    {
-        return false;
-    }
-
-    if(GDALPointFromLatLon(x2, y2, poDS, "WGS84"))
-    {
-        cout<<"x2, y2 = "<<x2<<", "<<y2<<endl;
-    }
-    else
-    {
-        return false;
-    }
-
     //compute angle of line formed between projected x1,y1 and x2,y2 and north
-    //let's call the line parallel to north in the projected CRS "a", line formed by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
+    //call the line parallel to north in the projected CRS "a", line formed by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
 
-    double ax, ay, bx, by;
-    double adotb;
-    double mag_a, mag_b;
+    double ax, ay, bx, by; //denote x,y locations for endpoints of lines "a" and "b"
+    double adotb; //a dot b
+    double mag_a, mag_b; //|a| and |b|
     ax = x1;
-    ay = y2;
+    ay = y2; // assign "a" same y value as "b"
     bx = x2;
     by = y2; 
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
 
-    angleFromNorth = acos(adotb/(mag_a * mag_b));
+    angleFromNorth = acos(adotb/(mag_a * mag_b)); //compute angle in radians
     cout<<"angleFromNorth in radians = "<<angleFromNorth<<endl;
     //convert the result from radians to degrees
-    angleFromNorth *= 180.0 / M_PI;
-    cout<<"M_PI = "<<M_PI<<endl;
+    angleFromNorth *= 180.0 / PI;
     cout<<"angleFromNorth in degrees = "<<angleFromNorth<<endl;
 
     return true;

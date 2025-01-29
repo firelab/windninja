@@ -49,7 +49,6 @@ void domainAverageInitialization::initializeFields(WindNinjaInputs &input,
 {
     setGridHeaderData(input, cloud);
 
-    cout<<"angleFromNorth in domainAvgInit = "<<angleFromNorth<<endl;
     setInitializationGrids(input);
 
     initializeWindToZero(mesh, u0, v0, w0);
@@ -86,7 +85,7 @@ void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
     //set initialization grids
     speedInitializationGrid = input.inputSpeed;
-    dirInitializationGrid = input.inputDirection;
+    dirInitializationGrid = input.inputDirection + input.dem.getAngleFromNorth(); //account for projection rotation from north
     airTempGrid = input.airTemp;
     setCloudCover(input);
 
