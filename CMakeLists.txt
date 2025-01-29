@@ -151,7 +151,7 @@ if(WIN32)
 endif(WIN32)
 
 # Ninja executables
-option(NINJA_QTGUI "Build Qt GUI" ON)
+option(NINJA_QTGUI "Build Qt GUI" OFF)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
     include(FindQt4)
