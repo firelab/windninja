@@ -125,6 +125,12 @@ if(NINJA_QT5GUI)
     add_subdirectory(src/gui/ui)
 endif(NINJA_QT5GUI)
 
+option(NINJA_QT6GUI "build Qt6 experimental GUI" ON)
+if(NINJA_QT6GUI)
+    message("building qt6 gui")
+    add_subdirectory(src/gui/qt6)
+endif(NINJA_QT6GUI)
+
 if(WIN32)
     if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
         set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
