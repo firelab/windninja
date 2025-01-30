@@ -117,7 +117,6 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     //check that we are within the SRTM bounds
     std::string osDataPath = FindDataPath( "srtm_region.geojson" );
-    osDataPath = osDataPath;
     const char *pszGeom;
     pszGeom = CPLSPrintf( "POLYGON((%lf %lf,%lf %lf,%lf %lf,%lf %lf,%lf %lf))",
                            buffered_bbox[1], buffered_bbox[0], buffered_bbox[3], buffered_bbox[0],
