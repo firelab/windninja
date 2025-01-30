@@ -110,10 +110,10 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     // the buffered bbox is used to download the raw data before warping and final clipping
     double buffered_bbox[4];
-    buffered_bbox[0] = bbox[0] + Ly;  // north
-    buffered_bbox[1] = bbox[1] + Lx;  // east
-    buffered_bbox[2] = bbox[2] - Ly;  // south
-    buffered_bbox[3] = bbox[3] - Lx;  // west
+    buffered_bbox[0] = bbox[0] + buffer_y;  // north
+    buffered_bbox[1] = bbox[1] + buffer_x;  // east
+    buffered_bbox[2] = bbox[2] - buffer_y;  // south
+    buffered_bbox[3] = bbox[3] - buffer_x;  // west
 
     //check that we are within the SRTM bounds
     std::string osDataPath = FindDataPath( "srtm_region.geojson" );
