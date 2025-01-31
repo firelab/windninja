@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
-
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
  *-----------------------------------------------------------------------------*/
@@ -82,6 +81,14 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaH* NinjaCreateArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
 #endif
+    WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle();
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
+    (const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* output_path, const char* elevation_file, const char* osTimeZone, int fetchLatestFlag);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaH * ninja, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char ** papszOptions, char* fetchType);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
+    (NinjaH * ninja, double *boundsBox, const char *fileName, double resolution, char* fetchType);
+    WINDNINJADLL_EXPORT const char* NinjaFetchForecast
+    (NinjaH * ninja, const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaH * ninja );
 
@@ -90,18 +97,12 @@ typedef int  NinjaErr;
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
-        ( NinjaH * ninja, const char * forecastFilename,
-          const char * timezone,
-          int momentumFlag );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaInitNoRegister
-           ( const char *pszGdalData, const char *pszWindNinjaData);
-
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetEnvironment
-            ( const char *pszGdalData, const char *pszWindNinjaData );
+    WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
+    ( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag);
+    WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+        ( const char * forecastFilename,
+        const char * timezone,
+        int momentumFlag );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaInit
         ( );
@@ -234,7 +235,7 @@ typedef int  NinjaErr;
         ( NinjaH * ninja, const int nIndex, const char * path);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
-        ( NinjaH * ninja, const int nIndex );
+        ( NinjaH * ninja, const int nIndex);
 
     WINDNINJADLL_EXPORT const double* NinjaGetOutputDirectionGrid
         ( NinjaH * ninja, const int nIndex );

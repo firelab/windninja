@@ -309,6 +309,8 @@ public:
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
     void set_numberCPUs(int CPUs);
+    void set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units);
+    void set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units);
     double *get_outputSpeedGrid();
     double *get_outputDirectionGrid();
     const char* get_outputGridProjection();
@@ -317,6 +319,9 @@ public:
     double get_outputGridyllCorner();
     int get_outputGridnCols();
     int get_outputGridnRows();
+    double * get_u();
+    double * get_v();
+    double * get_w();
     void set_outputBufferClipping(double percent);
     void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
@@ -399,6 +404,8 @@ private:
 
     double* outputSpeedArray; //output speed array returned in the API
     double* outputDirectionArray; //output direction array returned in the API
+    double outputSpeedArrayResolution;
+    double outputDirectionArrayResolution;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
@@ -485,7 +492,6 @@ private:
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 
-private:
     void setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid);
     void writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
     void writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);

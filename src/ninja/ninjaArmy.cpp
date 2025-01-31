@@ -28,7 +28,6 @@
 *****************************************************************************/
 
 #include "ninjaArmy.h"
-
 /**
 * @brief Default constructor.
 *
@@ -242,6 +241,119 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
   return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
+/**
+ * @brief Fetches a DEM using a point.
+ * 
+ * @param adfPoint a x,y point in WGS 84 longitude, latitude
+ * @param adfBuff length of a buffer in the x and y directions
+ * @param units Units of buffer.
+ * @param dfCellSize Cell size of DEM.
+ * @param pszDstFile Destination file.
+ * @param papszOptions Options for fetching DEM.
+ * @param fetchType Type of DEM to fetch.
+ * 
+ * 
+ */
+int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType){
+    if (pszDstFile == NULL)
+    {
+        return NINJA_E_INVALID;
+    }
+    SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+    SurfaceFetch * fetcher;
+    if (strcmp(fetchType, "srtm") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+    }
+    #ifdef HAVE_GMTED
+    else if (strcmp(fetchType, "gmted") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+    }
+    #endif
+    else if (strcmp(fetchType, "relief") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+    }
+    else{
+        delete fetcher;
+        return NINJA_E_INVALID;
+    }
+    lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
+    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
+    if (result != 0)
+    {
+        delete fetcher;
+        return NINJA_E_INVALID;
+    }
+    delete fetcher;
+    return NINJA_SUCCESS;
+}
+/**
+ * @brief Fetches a DEM using bounding box.
+ * 
+ * @param boundsBox Bounding box in the form of north, east, south, west.
+ * @param fileName Name of DEM file.
+ * @param resolution Resolution of DEM file.
+ * @param fetchType Type of DEM file to fetch.
+ * 
+ */
+int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType)
+{
+        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
+        SurfaceFetch * fetcher;
+        if (strcmp(fetchType, "srtm") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
+        }
+        #ifdef HAVE_GMTED
+        else if (strcmp(fetchType, "gmted") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
+        }
+        #endif
+        else if (strcmp(fetchType, "relief") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
+        }
+        if (fetcher == NULL) {
+            return NINJA_E_INVALID;  
+        }
+        
+        double northBound = boundsBox[0];
+        double eastBound = boundsBox[1];
+        double southBound = boundsBox[2];
+        double westBound = boundsBox[3];
+        int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+        delete fetcher;
+        if (result != 0)
+        {
+            return NINJA_E_INVALID;
+        }
+        return NINJA_SUCCESS;
+        
+}
+
+/**
+ * @brief Fetches a forecast file from UCAR/THREDDS server.
+ * 
+ * @param wx_model_type Type of weather model.
+ * @param numNinjas Number of ninjas.
+ * @param elevation_file Name of elevation file.
+ * 
+ * @return Name of forecast file.
+ */
+const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
+{
+    wxModelInitialization *model;
+    try
+    {
+        model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
+        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
+        delete model;
+        char* cstr = new char[forecastFileName.length() + 1];
+        std::strcpy(cstr, forecastFileName.c_str());
+        return cstr;
+    }
+    catch(armyException &e)
+    {
+        return "exception";
+    }
+}
 /**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
@@ -1488,6 +1600,8 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
    return retval;
 }
 
+
+
 int ninjaArmy::setDiurnalWinds( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_diurnalWinds( flag ) );
@@ -1732,18 +1846,79 @@ int ninjaArmy::setOutputPath( const int nIndex, std::string path,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_outputPath( path ) );
 }
-const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                            const lengthUnits::eLengthUnits units,
+                                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, units ) );
+}
+
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 const lengthUnits::eLengthUnits units,
+                                                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, units ) );
+}
+
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char** papszOptions)
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputSpeedGrid( );
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
-const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
+
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ]->get_outputDirectionGrid( );
+        return ninjas[nIndex]->get_outputDirectionGrid( );
     }
 }
 const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
