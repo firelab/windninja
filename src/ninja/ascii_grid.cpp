@@ -1114,6 +1114,71 @@ void AsciiGrid<T>::clipGridInPlaceSnapToCells(double percentClip)
 }
 
 template <class T>
+void AsciiGrid<T>::clipGridInPlaceSnapToCells(double west, double east, double south, double north)
+{
+    if(west > east || south > north)
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid is improperly set to west,east,south,north " << west << "," << east << ", " << south << "," << north << ".  bbox should be east > west and north > south.";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    if( check_inBounds( west, south ) == false || check_inBounds( east, north ) == false )
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid extends outside the bounds of the data!!";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    int westIdx = 0;
+    int eastIdx = 0;
+    int southIdx = 0;
+    int northIdx = 0;
+    // the get_cellIndex function, if in between cells, tends to round down rather than to round up
+    // this means slightly bigger than the bounding box for south and west, but slightly smaller than the bounding box for north and east
+    get_cellIndex(west, south, &southIdx, &westIdx);
+    get_cellIndex(east, north, &northIdx, &eastIdx);
+
+    //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+
+    if ( westIdx == eastIdx && southIdx == northIdx )
+    {
+        // if there is zero clipping to be done, just return without doing anything
+    } else
+    {
+        int newNumCols, newNumRows;
+        int xClipCells, yClipCells;
+        double newXllCorner, newYllCorner;
+
+        xClipCells = westIdx;
+        yClipCells = southIdx;
+
+        newNumCols = eastIdx - westIdx;
+        newNumRows = northIdx - southIdx;
+        //std::cout << "xClipCells,yClipCells = " << xClipCells << "," << yClipCells << std::endl;
+        //std::cout << "newNumCols,newNumRows = " << newNumCols << "," << newNumRows << std::endl;
+        //std::cout << "xClipCells+newNumCols,yClipCells+newNumRows = " << xClipCells+newNumCols << "," << yClipCells+newNumRows << std::endl;
+
+        newXllCorner = xllCorner + xClipCells*cellSize;
+        newYllCorner = yllCorner + yClipCells*cellSize;
+        //std::cout << "newXllCorner,newXllCorner+newNumCols*cellSize = " << newXllCorner << "," << newXllCorner+newNumCols*cellSize << std::endl;
+        //std::cout << "newYllCorner,newYllCorner+newNumRows*cellSize = " << newYllCorner << "," << newYllCorner+newNumRows*cellSize << std::endl;
+
+        AsciiGrid<T>A(newNumCols, newNumRows, newXllCorner, newYllCorner, cellSize, data.getNoDataValue(), data.getNoDataValue(), prjString);
+
+        for(int i=0; i<A.get_nRows(); i++)
+        {
+            for(int j=0; j<A.get_nCols(); j++)
+            {
+                A.set_cellValue(i,j,get_cellValue(i+yClipCells, j+xClipCells));
+            }
+        }
+
+        *this = A;
+    }
+}
+
+template <class T>
 AsciiGrid<T> AsciiGrid<T>::normalize_Grid(T lowBound, T highBound)
 {
   AsciiGrid<T>A(*this);
@@ -1611,7 +1676,7 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     return hDS;
 }
-    
+
 
 /**
  * Create a png for an ascii grid.
@@ -1629,14 +1694,28 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              std::string legendTitle,
                              std::string legendUnits,
                              std::string scalarLegendFilename,
-                             bool writeLegend)
+                             bool writeLegend, bool keepTiff)
 {
+    // png driver doesn't support create(), only createCopy()
+    // so create the image as a tif first, then use createCopy() to create the png from that tif
+
+    std::string base_outFilename = outFilename;
+    int pos = outFilename.find_last_of(".png");
+    //std::cout << "outFilename = " << outFilename.c_str() << std::endl;
+    //std::cout << "pos = " << pos << std::endl;
+    if(pos != -1)
+	    base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+    //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
+    std::string tiff_utm_fileout = base_outFilename + "_utm.tif";
+    std::string tiff_latlon_fileout = base_outFilename + "_latlon.tif";
+    std::string rawTiff_utm_fileout = base_outFilename + "_raw_utm.tif";
+    std::string rawTiff_latlon_fileout = base_outFilename + ".tif";
+
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
     char** papszOptions = NULL;
-    std::string tempFileout = "temp_fileout";
 
-    poDS = tiffDriver->Create(tempFileout.c_str(), get_nCols(), get_nRows(), 1,
+    poDS = tiffDriver->Create(tiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
                    GDT_Byte, papszOptions);
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
@@ -1656,33 +1735,27 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     /* -------------------------------------------------------------------- */
     
     AsciiGrid<T>scaledDataGrid(*this);
-    double translation = 0;
-    double scalingFactor = 1;
 
-    // convert nodata values to 0 (0 is transparent channel in color table)
-    for(int i=0;i<scaledDataGrid.get_nRows();i++)
-    {
-        for(int j=0;j<scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) == 0)
-            {
-                scaledDataGrid(i,j) = epsClr<T>(); //if want to show *real* 0 values in image
-            }
-            if(scaledDataGrid(i,j) == scaledDataGrid.get_noDataValue())
-            {
-                scaledDataGrid(i,j) = 0;
-            }
-        }
-    }//scaledDataGrid.write_Grid("scaled_datagrid", 2);
 
-    // need min value (without 0s) later to make legend
+    //// set a patch of no data vals for debugging
+    //for(int i=0;i<scaledDataGrid.get_nRows();i++)
+    //{
+    //    for(int j=0;j<scaledDataGrid.get_nCols();j++)
+    //    {
+    //        if( i < 10 && j < 10 ) {
+    //            scaledDataGrid(i,j) = scaledDataGrid.get_noDataValue();
+    //        }
+    //    }
+    //}//scaledDataGrid.write_Grid("scaled_datagrid", 2);
+
+
+    // need min value (without no data vals) later to make legend
     double raw_minValue = std::numeric_limits<double>::max();
     for(int i=0; i<scaledDataGrid.get_nRows(); i++)
         {
             for (int j=0;j<scaledDataGrid.get_nCols();j++)
             {
-                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
+                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue())
                 {
                     raw_minValue = scaledDataGrid(i,j);
                 }
@@ -1701,32 +1774,29 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
     }
 
-    if(raw_minValue<0)
-    {
-        translation = fabs(raw_minValue)+1.1; //+1.1 since 0 = transparent in color table
-    }
-    else if(raw_minValue<2 && raw_minValue!=0)
-    {
-        translation = raw_minValue+1.1;
-    }
-    else if(raw_minValue!=0)  //since 0 is transparent channel
-    {
-        translation = -raw_minValue-1.1;
-    }
-    if(raw_maxValue>255 || raw_maxValue-raw_minValue<5)
-    {
-        scalingFactor = 254/(raw_maxValue+translation);
-    }
+    // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
+    // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
+    // oops, need to reserve idx = 0 for the transparent channel in the color table, looks like need to manually convert noData vals to 0
+    // if really want to show *real* 0 values in image, the noData vals, I guess for debugging?, set the noData vals to minIdx instead of to 0
+    int idxRangeMin = 1;
+    int idxRangeMax = 255;
+    // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
+    int numBins = idxRangeMax - idxRangeMin;
+    double binWidth = (raw_maxValue - raw_minValue)/double(numBins);
     for(int i=0;i<scaledDataGrid.get_nRows();i++)
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
-            {
-                if(scaledDataGrid(i,j)!=0)
-                {
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)+translation;
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)*0.6*scalingFactor; //0.6 is temp fix for scaling issue
-                }
+            if( scaledDataGrid(i,j) == get_noDataValue() ){
+                scaledDataGrid(i,j) = 0;
+            } else if ( scaledDataGrid(i,j) < raw_minValue ){
+                scaledDataGrid(i,j) = idxRangeMin;
+            } else if ( scaledDataGrid(i,j) > raw_maxValue ){
+                scaledDataGrid(i,j) = idxRangeMax;
+            } else {
+                // int( val + 0.5 ) here is to make int() behave like round()
+                int binIdx = int( (scaledDataGrid(i,j) - raw_minValue)/binWidth + 0.5 ) + idxRangeMin;
+                scaledDataGrid(i,j) = binIdx;
             }
         }
     } //scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
@@ -1773,13 +1843,13 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
     }
 
+    // need min value without 0s aka without no data vals, to make legend
     double _minValue = std::numeric_limits<double>::max();
     for(int i=nYSize-1;i>=0;i--)
         {
             for (int j=0;j<scaledDataGrid.get_nCols();j++)
             {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
+                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() && scaledDataGrid(i,j) != 0)
                 {
                     _minValue = scaledDataGrid(i,j);
                 }
@@ -1790,7 +1860,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     brk1 = _minValue;
     brk2 = 0.2*(_maxValue-_minValue)+_minValue;
     brk4 = _maxValue;
-    brk3 = (brk4+brk2)/2;
+    brk3 = (brk4+brk2)/2.0;
 
     poCT->SetColorEntry(brk0, &white);
     poCT->SetColorEntry(brk1, &blue);
@@ -1814,7 +1884,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     const GDALColorEntry psEndColor3 = red;
     GDALCreateColorRamp(poCT, nStartIndex, &psStartColor3,  nEndIndex, &psEndColor3);
 
-    //poBand->SetColorTable(poCT);
+    poBand->SetColorTable(poCT);
 
     /* -------------------------------------------------------------------- */
     /*  Create the optional legend                                          */
@@ -1824,34 +1894,32 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     {
         //make bitmap
 	    int legendWidth = 180;
-	    int legendHeight = int(legendWidth / 0.75);
-	    BMP legend;
+	    int legendHeight = int(legendWidth / 0.75);  // increase by a factor of 4/3, rounded down. For legendWidth of 180, this comes out to be 240
+        BMP legend;
 
 	    std::string legendStrings[6];
 	    ostringstream os;
 
-	    double maxxx = get_maxValue();
-	    double minnn = raw_minValue;
         double _brk0 = 0;
         double _brk1 = raw_minValue;
-        double _brk2 = 0.25*(raw_maxValue-raw_minValue)+raw_minValue;
+        double _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
         double _brk4 = raw_maxValue;
-        double _brk3 = (_brk4+_brk2)/2;
+        double _brk3 = (_brk4+_brk2)/2.0;
 
-	    for(int i = 0;i < 5;i++)
+	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
 	    {
 		    os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
-		    if(i == 0)
-			    os << maxxx;
-            else if (i==1)
+		    if(labelIdx == 0)
+                os << (double)_brk4;
+            else if(labelIdx == 1)
                 os << (double)_brk3;
-		    else if(i == 2)
+		    else if(labelIdx == 2)
 			    os << (double)_brk2;
-            else if(i == 3)
-                os << minnn;
-		    else if(i == 4)
-			    os << "0.00";
-            legendStrings[i] = os.str();
+            else if(labelIdx == 3)
+                os << (double)_brk1;
+		    else if(labelIdx == 4)
+			    os << "0.00";  // not currently used, but just in case leave it as a stored value
+            legendStrings[labelIdx] = os.str();
 		    os.str("");
 	    }
 
@@ -1871,11 +1939,11 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
 
 	    //for white text
-	    RGBApixel w;
-	    w.Red = 255;
-	    w.Green = 255;
-	    w.Blue = 255;
-	    w.Alpha = 0;
+	    RGBApixel white;
+	    white.Red = 255;
+	    white.Green = 255;
+	    white.Blue = 255;
+	    white.Alpha = 0;
 
 	    RGBApixel colors[10];
 
@@ -1930,71 +1998,68 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         colors[9].Blue = 255;
         colors[9].Alpha = 0;
 
-        int arrowLength = 30;	//pixels;
-        int textHeight = 12;
-        int titleTextHeight = int(1.2 * textHeight);
-        int titleX, titleY;
+        int cbarWidth = 40;  // pixels;
+        int textHeight = 12;  // cbarLabelTextHeight expected/desired value, DrawLine() seems to preserve the value, but DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value
+        int titleTextHeight = int(1.2 * textHeight);  // increase by a factor, rounded down. For textHeight of 12, this comes out to be int(14.4) = 14. Also is expected/desired value, but the exact value isn't as sensitive as it is for textHeight
 
+        double leftMarginPad = 0.05;  // percent of total image width, the empty space to the left of the title box and cbar box regions
+        double topMarginPad  = 0.05;  // percent of total image height, the empty space to the top of the title box
+
+        int titleX = legendWidth * leftMarginPad;  // top left x pixel position for the title box. Note the int rounds it down. For a legendWidth of 180 and a leftMarginPad of 0.05, this comes out to be 9
+        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.05, this comes out to be 12
+
+        PrintString(legend, legendTitle.c_str() , titleX, titleY, titleTextHeight, white);
+        int unitsX = titleX+5;  // set the unit string X position within the title box. titleX + 5 means to the right 5 pixels from the title X position, so nudging it a bit to the right
+        int unitsY = titleY+30;  // set the unit string Y position within the title box. titleY + 30 means 30 pixels below the title Y position. For titleTextHeight of 14, this seems excessive, you would think that this would lead to a really huge gap between the two strings, but it actually results in barely any spacing. Apparently this is because PrintString() adds a crap ton of extra pixels for the letter p, it also adds a few pixels in general when calling DrawArc() for some of the other letters
+        PrintString(legend, legendUnits.c_str() , unitsX, unitsY, titleTextHeight, white);
+
+        // start to end pixel positions at which to the given cbar color line
         int x1, x2;
-        double x;
         int y1, y2;
-        double y;
+        // top left pixel position at which to draw the cbar label text
         int textX;
         int textY;
 
-        x = 0.05;
-        y = 0.30;
+        double cbarBoxXstart_percent = leftMarginPad + 5.0/60.0;  // percent of total image width, the 5.0/60.0 = 0.08333333333 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 5.0/60.0 = 0.08333333333, this comes out to be 0.05 + 5.0/60.0 = 0.13333333333. Probably could have used 0.084, let int(legendWidth*cbarBoxXstart_percent) round down to 24, but using 0.05 + 5.0/60.0 specifically divides evenly into the legendWidth of 180 to get 24
+        double cbarBoxYstart_percent = 0.297;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave just a hint too much space, so it was adjusted back a bit
+        int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 5.0/60.0 = 0.08333333333, this comes out to be 24
+        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71
 
-        titleX = x * legendWidth;
-        titleY = (y / 3) * legendHeight;
+        int cbarLabelXpadding = 15;  // number of pixels of empty space to pad between the cbar and the cbar labels
 
-        PrintString(legend, legendTitle.c_str() , titleX, titleY-10, titleTextHeight, w);
-        PrintString(legend, legendUnits.c_str() , titleX+5, titleY+15, titleTextHeight, w);
+        // now the fun part, turns out that while DrawLine() does exact numbers of pixels, DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value. So you would think that a value of 1 above and 1 below would be good, but the gaps came out looking uneven. Turned out that a value of 1 above and 2 below seemed to look the best, with the gaps coming out looking even at least for this case. Note that a value of 2 above and 2 below looked similar to a value of 1 above and 1 below where the gap came out looking uneven, but with a bit more gap. Note that a value of 2 above and 3 below looked good and even just like a value of 1 above and 2 below, but with even more gap. In addition, using gaps 2 above and below or greater starts to add too many color lines overall, running out of space for the cbar
+        int upperLabelPad = 1;
+        int lowerLabelPad = 2;
 
-        x1 = int(legendWidth * x);
-        x2 = x1 + arrowLength;
-        y1 = int(legendHeight * y);
-        y2 = y1;
-        int k = -1;
+        int nColorsToUse = 10;  // for 4 cbar colors
 
-        for(int i=0;i < 10;i++)
+        int labelIdx = 0;
+        int yPos = cbarBoxYstart;  // yPos is the current pixel y position
+        int yStart = yPos;  // yStart is the first pixel y position of the given cbar colorbox
+        for(int colorIdx = 0; colorIdx < nColorsToUse; colorIdx++)
         {
-            for(int j=0; j<20; j++)
+            yStart = yPos;  // store the first pixel y position of the given cbar colorbox
+            for(int colorLineIdx = 0; colorLineIdx < (upperLabelPad+textHeight+lowerLabelPad); colorLineIdx++)
             {
-                x1 = int(legendWidth * (x+0.1));
-                x2 = x1 + arrowLength;
-                y1 = int(legendHeight * (y-0.03));
+                x1 = cbarBoxXstart;
+                x2 = x1 + cbarWidth;
+                y1 = yPos;
                 y2 = y1;
-                DrawLine(legend, x1, y1, x2, y2, colors[i]);
-                y+=0.003;
+                DrawLine(legend, x1, y1, x2, y2, colors[colorIdx]);
+                yPos+=1;
             }
-            if(i==0 || i==3 || i==6 || i==9)
+
+            // only add labels to the main colors
+            if(colorIdx == 0 || colorIdx == 3 || colorIdx == 6 || colorIdx == 9)
             {
-                k+=1;
-                textX = x2 + 15;
-                textY = y2 - int(textHeight * 0.5) - 8;
-                PrintString(legend, legendStrings[k].c_str(), textX, textY, textHeight, w);
+                textX = x2 + cbarLabelXpadding;
+                textY = yStart + upperLabelPad;
+                PrintString(legend, legendStrings[labelIdx].c_str(), textX, textY, textHeight, white);
+                labelIdx+=1;
             }
         }
         legend.WriteToFile(scalarLegendFilename.c_str());
     }
-
-    /* -------------------------------------------------------------------- */
-    /*  close and reopen with GDALOpenShared and set color table        */
-    /* -------------------------------------------------------------------- */
-
-    AsciiGrid<T> poDS_grid(poDS, 1);
-    poDS_grid.write_Grid("poDS_grid", 0);
-    
-    GDALDataset *srcDS;
-    //reopen with GDALOpenShared() for GDALAutoCreateWarpedVRT()
-    srcDS = (GDALDataset*)GDALOpenShared( "poDS_grid", GA_ReadOnly );
-    if( srcDS == NULL ) {
-        CPLDebug( "ascii_grid::ascii2png()", "cannot open poDS_grid");
-    }
-
-    GDALRasterBand *srcBand = srcDS->GetRasterBand(1);
-    srcBand->SetColorTable(poCT);
 
     /* -------------------------------------------------------------------- */
     /*   Warp the image                                                     */
@@ -2013,10 +2078,20 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     GDALDataset *wrpDS;
 
-    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
+    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(poDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
                                                    0.0, NULL);
 
+    /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_tiff;
+    
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF dirver data type error
+    poDstDS_tiff = tiffDriver->CreateCopy(tiff_latlon_fileout.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+    
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
     /* -------------------------------------------------------------------- */
@@ -2054,15 +2129,101 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDestroyColorTable((GDALColorTableH) poCT);
 
     GDALClose((GDALDatasetH) poDS);
-    GDALClose((GDALDatasetH) srcDS);
     if( poDstDS != NULL){
         GDALClose((GDALDatasetH) poDstDS);
     }
+    if( poDstDS_tiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_tiff);
+    }
     GDALClose((GDALDatasetH) wrpDS);
 
-    VSIUnlink("poDS_grid");
-    VSIUnlink("poDS_grid.aux.xml");
-    VSIUnlink("temp_fileout");
+    VSIUnlink(tiff_utm_fileout.c_str());
+    VSIUnlink(tiff_latlon_fileout.c_str());
+
+
+    /* -------------------------------------------------------------------- */
+    /*  temporary, create additional raw tiff file                          */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *raw_poDS;
+    GDALDriver *raw_tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    char** raw_papszOptions = NULL;
+
+    raw_poDS = tiffDriver->Create(rawTiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
+                                    GDT_Float64, papszOptions);
+
+    double raw_adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                     get_yllCorner()+(get_nRows()*get_cellSize()),
+                                     0, -(get_cellSize())};
+    raw_poDS->SetGeoTransform(raw_adfGeoTransform);
+    int raw_nXSize = raw_poDS->GetRasterXSize();
+    int raw_nYSize = raw_poDS->GetRasterYSize();
+
+    GDALRasterBand *raw_poBand = raw_poDS->GetRasterBand(1);
+
+    AsciiGrid<T>rawDataGrid(*this);
+
+    double *raw_padfScanline;
+    raw_padfScanline = new double[raw_nXSize];
+
+    for(int i=raw_nYSize-1;i>=0;i--)
+    {
+        for(int j=0;j<raw_nXSize;j++)
+        {
+            raw_padfScanline[j] = rawDataGrid.get_cellValue(raw_nYSize-1-i, j);
+            check(raw_poBand->RasterIO(GF_Write, 0, i, raw_nXSize, 1, raw_padfScanline, raw_nXSize, 1, GDT_Float64, 0, 0));
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*   Warp the image                                                     */
+    /* -------------------------------------------------------------------- */
+
+    OGRSpatialReference raw_oSRS;
+    char *raw_pszSRS_WKT = NULL;
+
+    const char* raw_prj2 = (const char*)prjString.c_str();
+    raw_oSRS.importFromWkt((char **)&raw_prj2);
+    raw_oSRS.exportToWkt(&raw_pszSRS_WKT);
+
+    char *raw_pszDST_WKT = NULL;
+    raw_oSRS.importFromEPSG(4326);
+    raw_oSRS.exportToWkt(&raw_pszDST_WKT);
+
+    GDALDataset *raw_wrpDS;
+
+    raw_wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(raw_poDS, raw_pszSRS_WKT, raw_pszDST_WKT,
+                                                   GRA_NearestNeighbour,
+                                                   0.0, NULL);
+
+    /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_rawTiff;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF driver data type error
+    poDstDS_rawTiff = raw_tiffDriver->CreateCopy(rawTiff_latlon_fileout.c_str(), raw_wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+
+    /* -------------------------------------------------------------------- */
+    /*  clean up                                                            */
+    /* -------------------------------------------------------------------- */
+
+    CPLFree(raw_pszSRS_WKT);
+    CPLFree(raw_pszDST_WKT);
+
+    delete [] raw_padfScanline;
+
+    GDALClose((GDALDatasetH) raw_poDS);
+    if( poDstDS_rawTiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_rawTiff);
+    }
+    GDALClose((GDALDatasetH) raw_wrpDS);
+
+    VSIUnlink(rawTiff_utm_fileout.c_str());
+    if( keepTiff == false )
+        VSIUnlink(rawTiff_latlon_fileout.c_str());
 
 }
 

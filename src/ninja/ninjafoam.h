@@ -81,7 +81,6 @@ public:
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
 
-    AsciiGrid<double> TurbulenceGrid;
 private:
     std::string foamVersion;
     
@@ -173,10 +172,13 @@ private:
     void SetOutputResolution();
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
-    
-    bool writeMassMeshVtk;
+
+    bool writeMassMesh;
     Mesh massMesh;
-    void writeMassMeshVtkOutput();
+    wn_3dScalarField massMesh_u, massMesh_v, massMesh_w;
+    wn_3dScalarField massMesh_k;
+    void GenerateAndSampleMassMesh();
+    void generateMassMesh();
     void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
                               const double dem_xllCorner, const double dem_yllCorner, 
                               const int ncols, const int nrows, const int nlayers);
@@ -185,9 +187,24 @@ private:
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
                          wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                         const double dem_xllCorner, const double dem_yllCorner, 
+                         const int ncols, const int nrows, const int nlayers, 
+                         wn_3dScalarField& k);
     void fillEmptyProbeVals(const wn_3dArray& z, 
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void fillEmptyProbeVals(const wn_3dArray& z, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            wn_3dScalarField& k);
+
+    void generateColMaxGrid(const wn_3dArray& z, 
+                            const double dem_xllCorner, const double dem_yllCorner, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            const double massMeshResolution, std::string prjString, 
+                            wn_3dScalarField& k);
+
+    void writeMassMeshVtkOutput();
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;
@@ -202,6 +219,7 @@ private:
     double startWriteOut, endWriteOut;
     double startFoamFileWriting, endFoamFileWriting;
     double startOutputSampling, endOutputSampling;
+    double startGenerateAndSampleMassMesh, endGenerateAndSampleMassMesh;
     double startStlConversion, endStlConversion;
     
 #ifdef NINJA_BUILD_TESTING

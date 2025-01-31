@@ -104,52 +104,63 @@ if(WIN32)
     endif(USE_GIS_INTERNALS)
 endif(WIN32)
 
-include(FindNetCDF)
-include(FindGDAL)
-if(WIN32)
-    if(NOT GIS_INTERNALS_HOME)
+option(USE_VCPKG "Use VCPKG for boost and GDAL" )
+if(USE_VCPKG)
+    message("Using VCPKG")
+    find_package(GDAL CONFIG REQUIRED)
+    find_package(NETCDF CONFIG REQUIRED)
+#    target_link_libraries(main PRIVATE GDAL::GDAL)
+ELSE(USE_VCPKG)
+    include(FindNetCDF)
+    include(FindGDAL)
+    if(WIN32)
+        if(NOT GIS_INTERNALS_HOME)
+            find_package(NetCDF REQUIRED)
+            find_package(GDAL REQUIRED)
+        else(NOT GIS_INTERNALS_HOME)
+            find_package(NetCDF)
+            find_package(GDAL)
+        endif(NOT GIS_INTERNALS_HOME)
+    else(WIN32)
         find_package(NetCDF REQUIRED)
         find_package(GDAL REQUIRED)
-    else(NOT GIS_INTERNALS_HOME)
-        find_package(NetCDF)
-        find_package(GDAL)
-    endif(NOT GIS_INTERNALS_HOME)
-else(WIN32)
-    find_package(NetCDF REQUIRED)
-    find_package(GDAL REQUIRED)
-endif(WIN32)
-
+    endif(WIN32)
+endif(USE_VCPKG)
 option(NINJA_QT5GUI "build Qt5 experimental GUI" OFF)
 if(NINJA_QT5GUI)
     message("building qt5 gui")
     add_subdirectory(src/gui/ui)
 endif(NINJA_QT5GUI)
 
-if(WIN32)
-    if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-        set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-        set(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
-        set(NETCDF_LIBRARIES_C ${GIS_INTERNALS_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
-        set(NETCDF_INCLUDES-FOUND TRUE)
-        set(NETCDF_LIBRARIES_C-FOUND TRUE)
-   endif(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-endif(WIN32)
-
-if(WIN32)
-    if(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-        set(GDAL_INCLUDE_DIR ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-        set(GDAL_LIBRARY ${GIS_INTERNALS_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
-        set(GDAL_INCLUDE_DIR-FOUND TRUE)
-        set(GDAL_LIBRARY-FOUND TRUE)
-    endif(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-endif(WIN32)
+if(USE_VCPKG)
+    set(GDAL_LIBRARY GDAL::GDAL)
+    set(NETCDF_LIBRARIES_C netCDF::netcdf)
+ELSE(USE_VCPKG)
+    if(WIN32)
+        if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
+            set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
+            set(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
+            set(NETCDF_LIBRARIES_C ${GIS_INTERNALS_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
+            set(NETCDF_INCLUDES-FOUND TRUE)
+            set(NETCDF_LIBRARIES_C-FOUND TRUE)
+       endif(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
+    endif(WIN32)
+    if(WIN32)
+        if(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
+            set(GDAL_INCLUDE_DIR ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
+            set(GDAL_LIBRARY ${GIS_INTERNALS_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
+            set(GDAL_INCLUDE_DIR-FOUND TRUE)
+            set(GDAL_LIBRARY-FOUND TRUE)
+        endif(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
+    endif(WIN32)
+ENDIF(USE_VCPKG)
 
 # Ninja executables
 option(NINJA_QTGUI "Build Qt GUI" ON)
 if(NINJA_QTGUI)
     set(QT_USE_QTMAIN_LIBRARY 1)
     include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit REQUIRED)
+    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtNetwork REQUIRED)
     include(${QT_USE_FILE})
     add_definitions(-DNINJA_GUI)
     if(WIN32)
@@ -224,10 +235,18 @@ endif(WITH_LCP_CLIENT)
 #disable for exception handling in the GUI and CLI
 option(C_API "Enable WindNinja C API" OFF)
 if(C_API)
-
     add_definitions(-DC_API)
-
 endif(C_API)
+
+# Enable phone home and message server startup
+option(PHONE_HOME_QUERIES "Enable Phone Home Queries" ON)
+
+if (PHONE_HOME_QUERIES)
+    add_definitions(-DPHONE_HOME_QUERIES_ENABLED)
+    message(STATUS "Phone Home Queries are enabled.")
+else()
+    message(STATUS "Phone Home Queries are disabled.")
+endif()
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
@@ -319,8 +338,14 @@ endif(NOT WIN32)
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+option(BUILD_WRF_TO_KMZ "Build a standalone command line interface for converting WRF output to kmz" OFF )
+mark_as_advanced(BUILD_WRF_TO_KMZ)
+option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converting hrrr output runs to kmz, without running full WindNinja" OFF )
+mark_as_advanced(BUILD_HRRR_TO_KMZ)
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
+option(BUILD_FLOW_SEPARATION_GRID "Build an application for building flow separation" OFF)
+mark_as_advanced(BUILD_FLOW_SEPARATION_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
 
@@ -329,6 +354,8 @@ mark_as_advanced(NINJA_GDAL_OUTPUT)
 if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
+
+option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" ON)
 
 # Recurse into subdirectories
 add_subdirectory(src)
@@ -342,16 +369,6 @@ option(RUN_CFG_TESTS "Run the cfg file tests in autotest/cfg OFF")
 if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
-option(SWIG_PYTHON_MODULE "Install Python modules created by SWIG" OFF)
-if(SWIG_PYTHON_MODULE)
-    add_definitions(-DSWIG_PYTHON_MODULE)
-    add_subdirectory(swig/python)
-endif(SWIG_PYTHON_MODULE)
-option (SWIG_JAVA_MODULE "Install Java modules created by SWIG" OFF)
-if(SWIG_JAVA_MODULE)
-    add_definitions(-DSWIG_JAVA_MODULE)
-    add_subdirectory(swig/java)
-endif(SWIG_JAVA_MODULE)
 
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
@@ -391,6 +408,16 @@ if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
 
+if(FIRE_BEHAVIOR_DATA_INSTALL)
+    #FireBehaviorModels only requires date_time_zonespec.csv and tz_world.zip
+    message("Only installing data files necessary for FireBehaviorModels")
+    set(fire_behavior_model_files date_time_zonespec.csv tz_world.zip)
+    foreach(f ${fire_behavior_model_files})
+        install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
+                share/windninja COMPONENT apps)
+    endforeach(f ${fire_behavior_model_files})
+
+else(FIRE_BEHAVIOR_DATA_INSTALL)
 # install target related files
 set(etc_files missoula_valley.tif
                   example_lcp.tif
@@ -431,8 +458,10 @@ set(share_files date_time_zonespec.csv
                 tz_world.zip
                 landfire.zip
                 map.htm
+                qt_certs_bundle.pem
                 thredds.csv
                 surface_data.zip
+                srtm_region.geojson
                 us_srtm_region.dbf
                 us_srtm_region.prj
                 us_srtm_region.shp
@@ -606,3 +635,4 @@ CPACK_ADD_COMPONENT(includes
                     #GROUP Development
                     )
 
+endif(FIRE_BEHAVIOR_DATA_INSTALL)

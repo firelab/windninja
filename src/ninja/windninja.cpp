@@ -36,7 +36,6 @@
     omp_lock_t netCDF_lock;
 #endif
 
-
 /**
  * \file windninja.cpp
  *
@@ -70,10 +69,6 @@ NinjaErr handleException()
 
 extern "C"
 {
-    WINDNINJADLL_EXPORT NinjaH** NinjaCreateHandle(){
-    NinjaH** ninja = new NinjaH*;
-    return ninja;
-}
 /**
  * \brief Create a new suite of windninja runs.
  *
@@ -245,7 +240,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
     ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
@@ -497,7 +492,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaH * ninja, const int nIndex, const char * comType )
 {
-    
     if( NULL != ninja )
     {
         return reinterpret_cast<ninjaArmy*>( ninja )->setNinjaCommunication
@@ -892,6 +886,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
         return NINJA_E_NULL_PTR;
     }
 }
+
+WINDNINJADLL_EXPORT char ** NinjaGetWxStations
+    ( NinjaH * ninja, const int nIndex );
+
 /**
  * \brief Get the diurnal flag set for a simulation.
  *
@@ -1206,6 +1204,7 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
 {
     if( NULL != ninja ) {
            return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
+           return reinterpret_cast<ninjaArmy*>( ninja )->getOutputSpeedGrid( nIndex );
     } else {
         return NULL;
     }
@@ -1221,8 +1220,6 @@ WINDNINJADLL_EXPORT const double* NinjaGetOutputSpeedGrid
  *
  * \param ninja An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param resolution The resolution of the output grid.
- * \param units The units of resolution of the output grid.
  *
  * \return An array of direction values.
  */
@@ -1379,51 +1376,7 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
         throw std::runtime_error("no ninjaArmy");
     }
 }
-/**
- * \brief Get u values (east postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The u values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetu(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getu( nIndex );
-    } else {
-        return NULL;
-    }
-}
-/**
- * \brief Get v values (north postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The v values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetv(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getv( nIndex );
-    } else {
-        return NULL;
-    }
-}
-/**
- * \brief Get w values (up postive) 
- * 
- * \param ninja An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * 
- * \return The w values in m/s
- */
-WINDNINJADLL_EXPORT const double * NinjaGetw(NinjaH * ninja, const int nIndex){
-    if( NULL != ninja ) {
-        return reinterpret_cast<ninjaArmy*>( ninja )->getw( nIndex );
-    } else {
-        return NULL;
-    }
-}
+
 /**
  * \brief Set the output buffer clipping for a simulation.
  *

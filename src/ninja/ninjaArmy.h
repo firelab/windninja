@@ -1002,9 +1002,6 @@ public:
     */
     const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
     
-    const double * getu( const int nIndex, char ** papszOptions=NULL );
-    const double * getv( const int nIndex, char ** papszOptions=NULL );
-    const double * getw( const int nIndex, char ** papszOptions=NULL );
     /**
     * \brief Set the percent of output buffer clipping for a ninja
     *

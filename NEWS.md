@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+WindNinja 3.11.2
+---------------
+- Fix Qt SSL issue causing the DEM download widget map not to load for some users (#535)
+
+- Update Tutorial 1 with details regarding requirement for north "up" projections
+
+WindNinja 3.11.1
+---------------
+- Fix issue causing diurnal wind component to be arbitrarily increased (#532)
+
 WindNinja 3.11.0
 ---------------
 - Re-enable SRTM data source downloads via OpenTopography API (#395)
@@ -12,6 +22,9 @@ WindNinja 3.11.0
 - Added additional time zones from Python timezone finder
 
 - Disabled automatic output buffering unless the FARSITE/FlamMap atmosphere file is written (#511)
+
+- Re-enable server communications (#295, #450, #481)
+
 WindNinja 3.10.0
 ---------------
 - Update CLI documentation, example cfg files, and test data (#415, #434, #270, #252)

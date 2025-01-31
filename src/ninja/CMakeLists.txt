@@ -43,6 +43,7 @@ set(NINJA_SOURCES air.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
+                  flowSeparation.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp
@@ -153,7 +154,8 @@ endif()
 target_link_libraries(ninja ${LINK_LIBS})
 
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
+if(WIN32)
+    install(TARGETS WindNinjadll DESTINATION ${lib_dest})
+endif(WIN32)
 install(FILES WindNinjaInputs.h ninja.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
-
-
 

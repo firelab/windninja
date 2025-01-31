@@ -304,6 +304,8 @@ public:
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
     bool writeTurbulence;
+    double colMax_colHeightAGL;
+    lengthUnits::eLengthUnits colMax_colHeightAGL_units;
 #endif
 };
 

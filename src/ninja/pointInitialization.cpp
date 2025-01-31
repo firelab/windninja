@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * $Id$
  *
@@ -746,7 +746,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     OGR_L_ResetReading(hLayer);
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    CPLDebug("STATION_FETCH", "Reading csvName: %s", stationLoc.c_str());
+    CPLDebug("STATION_FETCH", "Reading csv file: %s", stationLoc.c_str());
 
     poLayer->ResetReading();
 
@@ -765,9 +765,11 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oStation.stationName=oStationName;
         pszKey = poFeature->GetFieldAsString( 1 );
 
-        //LAT LON COORDINATES
+        //COORDINATES STUFF
         if( EQUAL( pszKey, "geogcs" ) )
         {
+            CPLDebug("STATION_FETCH","GEOGCS FOUND!");
+
             //check for valid latitude in degrees
             dfTempValue = poFeature->GetFieldAsDouble( 3 );
 
@@ -798,18 +800,38 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
-            oStation.lat=poFeature->GetFieldAsDouble(3);
-            oStation.lon=poFeature->GetFieldAsDouble(4);
-            oStation.datumType=pszDatum;
-            oStation.coordType=pszKey;
+            if( !EQUAL( pszDatum, "WGS84" ) && !EQUAL( pszDatum, "NAD83" ) && !EQUAL( pszDatum, "NAD27" ) )
+            {
+                oErrorString = "Invalid datum: ";
+                oErrorString += poFeature->GetFieldAsString( 2 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                error_msg = oErrorString;
+                throw( std::domain_error( oErrorString ) );
+            }
 
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are Lat/Lon
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
+            oStation.datumType=pszDatum; //Set the datum type
+            oStation.coordType=pszKey; //set the coord type
         }
         else if( EQUAL( pszKey, "projcs" ) )
         {
             CPLDebug("STATION_FETCH","PROJCS FOUND!");
+
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
-            oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
-            oStation.lon=poFeature->GetFieldAsDouble(4);
+            if( !EQUAL( pszDatum, "WGS84" ) )
+            {
+                std::string oWarnString = "ignoring datum: ";
+                oWarnString += poFeature->GetFieldAsString( 2 );
+                oWarnString += " for PROJCS at station: ";
+                oWarnString += oStationName;
+                oWarnString += " and using datum WGS84";
+                std::cout << oWarnString << std::endl;
+            }
+
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are XCoord/YCoord, in the projection of the dem
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
             oStation.coordType=pszKey; //set the coord type
         }
@@ -904,7 +926,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         //WIND DIRECTION
         dfTempValue = poFeature->GetFieldAsDouble( 9 );
 
-        if( dfTempValue > 360.1 || dfTempValue < 0.0 )
+        if( dfTempValue > 360.0 || dfTempValue < 0.0 )
         {
             oErrorString = "Invalid value for direction: ";
             oErrorString += poFeature->GetFieldAsString( 9 );
@@ -917,20 +939,21 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         //TEMPERATURE
         pszKey = poFeature->GetFieldAsString( 11 );
+        dfTempValue = poFeature->GetFieldAsDouble( 10 );
 
         if( EQUAL(pszKey, "f" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::F;
         }
         else if( EQUAL( pszKey, "c" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::C;
         }
         else if( EQUAL( pszKey, "k" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::K;
         }
         else
@@ -1221,13 +1244,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         {
             //This has not been tested, I have no idea if this works or not
             CPLDebug("STATION_FETCH","USING PROJCS!");
-            subDat.set_location_projected(stationDataList[i][0].lon,stationDataList[i][0].lat,demFile);
-//            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
+            subDat.set_location_projected(stationDataList[i][0].coord_x,stationDataList[i][0].coord_y,demFile);
+//            subDat.set_location_projected(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,demFile);
         }
         else //GEOGCS!
         {
             CPLDebug("STATION_FETCH","USING GEOGCS!");
-            subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
+            subDat.set_location_LatLong(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,
                     demFile,Datum.c_str());
         }
 
@@ -1353,8 +1376,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpol.cloudCover = cloudCover;
             interpol.direction = angle;
 			
-            interpol.lat = sts[k][0].lat;
-            interpol.lon = sts[k][0].lon;
+            interpol.coord_x = sts[k][0].coord_x;
+            interpol.coord_y = sts[k][0].coord_y;
             interpol.datumType = sts[k][0].datumType;
             interpol.coordType = sts[k][0].coordType;
             interpol.height = sts[k][0].height;

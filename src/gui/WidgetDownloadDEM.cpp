@@ -33,6 +33,21 @@
 WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     : QWidget(parent)
 {
+
+    //------------provide updated SSL certs in case system ones are outdated--------------------------------//
+    // qt_certs_bundle.pem generated on a windows system with the latest windows version of openssl installed
+    // certutil -generateSSTFromWU roots.sst
+    // certutil -split -f roots.sst
+    // type NUL > qt_certs_bundle.pem
+    // for %f in (*.crt) do (openssl x509 -inform der -in "%f" -out temp.pem && type temp.pem >> qt_certs_bundle.pem && del temp.pem)
+    // del *.crt
+    // for debugging on working systems, try disabling system certificates for testing, set it to an empty list of certificates
+    //QSslSocket::setDefaultCaCertificates(QList<QSslCertificate>());
+    // add the data folder SSL Ca certificates to the certificates list
+    std::string pathToSslCerts = FindDataPath("qt_certs_bundle.pem");
+    QString pathToCerts = QString::fromStdString(pathToSslCerts);
+    QSslSocket::addDefaultCaCertificates( pathToCerts, QSsl::Pem, QRegExp::FixedString);
+
     demSelected = false;
     
     setupUi(this);
@@ -302,7 +317,7 @@ void WidgetDownloadDEM::updateProgress()
 
         if(result < 0)
         {
-            progressBar->setLabelText("The surface data download failed. \nThis normally happens when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
+            progressBar->setLabelText("The surface data download failed. \nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
             progressBar->setRange(0,1);
             progressBar->setValue( 0 );
             progressBar->setCancelButtonText("Close");
@@ -360,7 +375,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM, FindDataPath("/data"));
         northDEMBound = srtm_northBound;
         southDEMBound = srtm_southBound;
-        currentResolution = (fetcher->GetXRes() * 111325);
+        currentResolution = fetcher->GetXRes();
         currentSuffix = "tif";
         currentSaveAsDesc = "Elevation files (*.tif)";
         break;

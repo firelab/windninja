@@ -173,6 +173,7 @@ public:
                                double interpDistPower);
 
     void clipGridInPlaceSnapToCells(double percentClip);
+    void clipGridInPlaceSnapToCells(double north, double east, double south, double west);
 
     AsciiGrid<T> normalize_Grid(T lowBound, T highBound);
 
@@ -207,7 +208,7 @@ public:
                    std::string legendTitle,
                    std::string legendUnits,
                    std::string scalarLegendFilename,
-                   bool writeLegend);
+                   bool writeLegend, bool keepTiff);
 
     void exportToTiff( std::string outFilename, tiffType type = tiffGray );
 

@@ -174,6 +174,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetNumVertLayers
         ( NinjaH * ninja, const int nIndex, const int nLayers );
 
+    WINDNINJADLL_EXPORT char ** NinjaGetWxStations
+        ( NinjaH * ninja, const int nIndex );
 
     WINDNINJADLL_EXPORT int NinjaGetDiurnalWindFlag
         ( NinjaH * ninja, const int nIndex );
@@ -204,13 +206,13 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaH * ninja, const int nIndex, const double stability_ );
 
-#ifdef NINJAFOAM
+//#ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFoam Methods
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
         ( NinjaH * ninja, const int nIndex, const int meshCount );
-#endif //NINJAFOAM
+//#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods
@@ -255,12 +257,7 @@ typedef int  NinjaErr;
 
     WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
         ( NinjaH * ninja, const int nIndex );
-    WINDNINJADLL_EXPORT const double * NinjaGetu
-        (NinjaH * ninja, const int nIndex);
-    WINDNINJADLL_EXPORT const double * NinjaGetv
-        (NinjaH * ninja, const int nIndex);
-    WINDNINJADLL_EXPORT const double * NinjaGetw
-        (NinjaH * ninja, const int nIndex);
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaH * ninja, const int nIndex, const double percent );
 

@@ -305,7 +305,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
-                ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false)")
+                ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false). For momentum solver runs, this is NOT of the full openfoam case but is actually of a corresponding mass solver mesh")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
                 ("pdf_out_resolution", po::value<double>()->default_value(-1.0), "resolution of pdf output file (-1 to use mesh resolution)")
@@ -921,8 +921,8 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
         conflicting_options(vm, "momentum_flag", "input_points_file");
-        conflicting_options(vm, "momentum_flag", "write_vtk_output");
         option_dependency(vm, "turbulence_output_flag", "momentum_flag");
+        option_dependency(vm, "turbulence_output_flag", "write_goog_output");
         #ifdef FRICTION_VELOCITY
         conflicting_options(vm, "momentum_flag", "compute_friction_velocity");
         #endif

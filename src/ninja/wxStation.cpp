@@ -120,8 +120,8 @@ void wxStation::initialize()
 {
     stationName = "";
     lat = lon = 0.0;
-    datumType = wxStation::WGS84;
-    coordType = wxStation::GEOGCS;
+    projXord = projYord = 0.0;
+    xord = yord = 0.0;
     heightUnits = lengthUnits::meters;
     inputSpeedUnits = velocityUnits::metersPerSecond;
     w_speed = 0.0;
@@ -287,41 +287,53 @@ void wxStation::set_stationName( std::string Name )
 }
 
 /**
- * Set the location of the station in lat/lon based on projected coordinates
- * @param Xord x coordinate in system
- * @param Yord y coordinate in system
- * @param demFile name of the dem file to create the coordinate transformation
- * from
+ * Set the location of the station in lat/lon coordinates and in ninja coordinates, from dem projection coordinates,
+ * using the projection from the dem
+ * Note that the datum for this transformation is always assumed to be WGS84, the datum of the dem
+ * This function expects to be used for input wxStations with Coordinate System type PROJCS
+ * @param Xord x coordinate in projection system coordinates (dem projection coordinates)
+ * @param Yord y coordinate in projection system coordinates (dem projection coordinates)
+ * @param demFile name of the dem file used to create the coordinate transformation
  */
 void wxStation::set_location_projected( double Xord, double Yord,
                     std::string demFile )
 {
+    coordType = PROJCS;
+    datumType = WGS84;  // always use WGS84 for the datum for PROJCS regardless of the input datum type
+
     projXord = Xord;
     projYord = Yord;
 
-    if( demFile.empty() || demFile == "" )
+    if( demFile.empty() || demFile == "" ){
+        xord = Xord;
+        yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
+    }
 
-    //get llcorner to subtract
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
     if( poDS == NULL ){
         xord = Xord;
         yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
     }
 
+    //get llcorner to subtract
     double adfGeoTransform[6];
 
     if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
         xord = Xord;
         yord = Yord;
+        lon = Xord;
+        lat = Yord;
         return;
     }
 
-    double llx = 0.0;
-    double lly = 0.0;
-    llx = adfGeoTransform[0];
-    lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
+    double llx = adfGeoTransform[0];
+    double lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
 
     xord = Xord - llx;
     yord = Yord - lly;
@@ -330,8 +342,6 @@ void wxStation::set_location_projected( double Xord, double Yord,
     double laty = projYord;
 
     GDALPointToLatLon( lonx, laty, poDS, "WGS84" );
-    datumType = WGS84;
-    coordType = PROJCS;
 
     lon = lonx;
     lat = laty;
@@ -340,26 +350,53 @@ void wxStation::set_location_projected( double Xord, double Yord,
 }
 
 /**
- * Set location of the station based on latitude and longitude.  Datum
- * transformation info may need to occur
+ * Set location of the station in projection system coordinates (dem projection coordinates)
+ * and in ninja coordinates, from lat/lon coordinates, using the projection from the dem,
+ * and the datum input for the wxStation
+ * This function expects to be used for input wxStations with Coordinate System type GEOGCS
  * @param Lat latitude of the station
  * @param Lon longitude of the station
  * @param demFile file name of the input dem, for coord tranformation
- * @param datum datum to convert to.
+ * @param datum datum to convert to
  */
 void wxStation::set_location_LatLong( double Lat, double Lon,
                                       const std::string demFile,
                       const char *datum )
 {
+    if( EQUAL( datum, "WGS84" ) )
+        datumType = WGS84;
+    else if( EQUAL( datum, "NAD83" ) )
+        datumType = NAD83;
+    else if ( EQUAL( datum, "NAD27" ) )
+        datumType = NAD27;
+    else
+    {
+        std::string oErrorString = "wxStation::set_location_LatLong() input datum \"";
+        oErrorString += datum;
+        oErrorString += "\" is not valid! options are \"WGS84\", \"NAD83\", \"NAD27\"";
+        throw std::runtime_error( oErrorString );
+    }
+    coordType = GEOGCS;
+
     lon = Lon;
     lat = Lat;
 
-    if( demFile.empty() || demFile == "" )
+    if( demFile.empty() || demFile == "" ){
+        projXord = Lon;
+        projYord = Lat;
+        xord = Lon;
+        yord = Lat;
         return;
-    GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+    }
 
-    if( poDS == NULL )
+    GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+    if( poDS == NULL ){
+        projXord = Lon;
+        projYord = Lat;
+        xord = Lon;
+        yord = Lat;
         return;
+    }
 
     double projX = lon;
     double projY = lat;
@@ -369,32 +406,20 @@ void wxStation::set_location_LatLong( double Lat, double Lon,
     projXord = projX;
     projYord = projY;
 
-    //still assume dem is projected.
-    double llx = 0.0;
-    double lly = 0.0;
+    //get llcorner to subtract
     double adfGeoTransform[6];
 
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None )
-    {
+    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ){
         xord = projXord;
         yord = projYord;
         return;
     }
 
-    llx = adfGeoTransform[0];
-    lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
+    double llx = adfGeoTransform[0];
+    double lly = adfGeoTransform[3] + ( adfGeoTransform[5] * poDS->GetRasterYSize() );
 
     xord = projXord - llx;
     yord = projYord - lly;
-
-    if( EQUAL( datum, "WGS84" ) )
-        datumType = WGS84;
-    else if( EQUAL( datum, "NAD83" ) )
-        datumType = NAD83;
-    else if ( EQUAL( datum, "NAD27" ) )
-        datumType = NAD27;
-
-    coordType = GEOGCS;
 
     GDALClose( (GDALDatasetH)poDS );
 }

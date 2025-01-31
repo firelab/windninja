@@ -138,6 +138,7 @@ public:
     AsciiGrid<double>CloudGrid;
 #ifdef NINJAFOAM
     AsciiGrid<double>TurbulenceGrid; //this needs to be a member of ninja since we need to write this for ninjafoam runs with diurnal 
+    AsciiGrid<double> colMaxGrid; // same as for TurbulenceGrid
 #endif
 
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
@@ -285,6 +286,7 @@ public:
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
     void set_writeTurbulenceFlag(bool flag);
+    void set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units );
 #endif
 
     void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);

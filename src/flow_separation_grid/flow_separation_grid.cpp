@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Application for creating a slope and aspect grid
- * Author:   Loren Atwood <loren.atwood@usda.gov>
+ * Purpose:  Application for creating a flow separation grid
+ * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
  ******************************************************************************
  *
@@ -29,20 +29,19 @@
 
 #include "Elevation.h"
 #include "ascii_grid.h"
-#include "Aspect.h"
-#include "Slope.h"
+#include "flowSeparation.h"
 #include "ninja_conv.h"
 #include "ninja_init.h"
 
 
 void Usage(const char *pszError)
 {
-    printf("slope_aspect_grid [--c/--output-cell-size size]\n"
+    printf("flow_separation_grid [--c/--output-cell-size size]\n"
            "           [--nd/--ndecimals-out-precision ndecimals]\n"
 #ifdef _OPENMP
            "           [--n/--num-threads n]\n"
 #endif
-           "           input_dem_file output_path\n"
+           "           input_dem_file input_wind_direction separation_angle output_path\n"
            "\n"
            "Defaults:\n"
            "    --nd/--ndecimals 2\n"
@@ -66,8 +65,10 @@ int main(int argc, char *argv[])
 
     int nNumThreads = 1;
     int nDecimals = 2;
-    double dfCellSize = -1;
+    double dfCellSize = -1.;
     const char *pszInputDemFile = NULL;
+    double dfInputWindDirection = -1.;
+    double dfSeparationAngle = -1.;
     const char *pszOutputPath = NULL;
     
     int i = 1;
@@ -93,6 +94,14 @@ int main(int argc, char *argv[])
         {
             pszInputDemFile = argv[i];
         }
+        else if(dfInputWindDirection < 0.)
+        {
+            dfInputWindDirection = atof(argv[i]);
+        }
+        else if(dfSeparationAngle < 0.)
+        {
+            dfSeparationAngle = atof(argv[i]);
+        }
         else if(pszOutputPath == NULL)
         {
             pszOutputPath = argv[i];
@@ -103,13 +112,10 @@ int main(int argc, char *argv[])
         }
         i++;
     }
-    if(pszInputDemFile == NULL || pszOutputPath == NULL)
+    if(pszInputDemFile == NULL || dfInputWindDirection < 0. || dfSeparationAngle < 0. || pszOutputPath == NULL)
     {
-        Usage("Please Enter a valid input dem file and output path");
+        Usage("Please Enter a valid input dem file, input wind direction, flow separation angle, and output path");
     }
-    //if(dfCellSize <= 0)
-    //    Usage("Invalid value for output-cell-size");
-    //else if(nDecimals <= 0)
     if(nDecimals <= 0)
         Usage("Invalid value for ndecimals-out-precision");
     else if(nNumThreads <= 0)
@@ -119,12 +125,12 @@ int main(int argc, char *argv[])
     if(pszOutputPath[strlen(pszOutputPath)-1] != "/")
         pszOutputPath = CPLSPrintf("%s/", pszOutputPath);
 
-    CPLDebug("SLOPE_ASPECT", "pszOutputPath = %s", pszOutputPath);
+    CPLDebug("FLOW_SEPARATION", "pszOutputPath = %s", pszOutputPath);
     
     // Read in elevation
     Elevation elev;
     elev.GDALReadGrid(pszInputDemFile, 1);
-    if(dfCellSize > 0)
+    if(dfCellSize > 0.)
         elev.resample_Grid_in_place(dfCellSize, AsciiGrid<double>::order1);
     
 #ifdef _OPENMP
@@ -132,29 +138,23 @@ int main(int argc, char *argv[])
 #endif
     
     // make aspect and slope grids
-    Aspect asp(&elev,nNumThreads);
-    Slope slp(&elev,nNumThreads);
+    flowSeparation sep(&elev, dfInputWindDirection, dfSeparationAngle, nNumThreads);
     
     // set the prjString from the dem prjString
-    asp.set_prjString(elev.prjString);
-    slp.set_prjString(elev.prjString);
+    sep.set_prjString(elev.prjString);
     
     // define the output file names from the path and the cell size
-    const char *pszOutputSlopeFile = CPLSPrintf("%s%s", pszOutputPath, "slope");
-    const char *pszOutputAspectFile = CPLSPrintf("%s%s", pszOutputPath, "aspect");
+    const char *pszOutputSeparationFile = CPLSPrintf("%s%s", pszOutputPath, "flow_separation");
     if(dfCellSize > 0)
     {
-        pszOutputSlopeFile = CPLSPrintf("%s_%dm", pszOutputSlopeFile, int(dfCellSize));
-        pszOutputAspectFile = CPLSPrintf("%s_%dm", pszOutputAspectFile, int(dfCellSize));
+        pszOutputSeparationFile = CPLSPrintf("%s_%dm", pszOutputSeparationFile, int(dfCellSize));
         
         const char *pszOutputDemFile = CPLSPrintf("%sdem_%dm.asc", pszOutputPath, int(dfCellSize));
         elev.write_Grid(pszOutputDemFile, nDecimals);
     }
-    pszOutputSlopeFile = CPLSPrintf("%s.asc", pszOutputSlopeFile);
-    pszOutputAspectFile = CPLSPrintf("%s.asc", pszOutputAspectFile);
+    pszOutputSeparationFile = CPLSPrintf("%s.asc", pszOutputSeparationFile);
     
-    asp.write_Grid(pszOutputAspectFile, nDecimals);
-    slp.write_Grid(pszOutputSlopeFile, nDecimals);
+    sep.write_Grid(pszOutputSeparationFile, nDecimals);
     
 #ifdef _OPENMP
     endTotal = omp_get_wtime();
