@@ -355,7 +355,7 @@ if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
 
-option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" ON)
+option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" OFF)
 
 # Recurse into subdirectories
 add_subdirectory(src)
