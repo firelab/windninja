@@ -354,7 +354,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(nNoDataCount > 0)
     {
-        std::string oErrorString = "SRTMClient::fetchBoundingBox() after downloading, warping, and clipping, found noDataValues!!! nNoDataCount = "+std::to_string(nNoDataCount);
+        std::string oErrorString = "SRTMClient::fetchBoundingBox() after downloading, warping, and clipping, found noDataValues!!!";
         CPLError( CE_Failure, CPLE_AppDefined, oErrorString.c_str() );
         return false;
     }
