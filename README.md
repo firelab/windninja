@@ -6,7 +6,7 @@ WindNinja
 WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
 
 Web:
-http://firelab.org/project/windninja
+https://research.fs.usda.gov/firelab/products/dataandtools/software/windninja
 
 Source & wiki:
 https://github.com/firelab/windninja
