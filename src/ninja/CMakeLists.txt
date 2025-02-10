@@ -147,7 +147,7 @@ else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
     else()
-        add_library(ninja STATIC SHARED ${NINJA_SOURCES})  # Correct for Linux
+        add_library(ninja SHARED ${NINJA_SOURCES})  # Linux
     endif()
 endif()
 
