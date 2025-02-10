@@ -233,7 +233,7 @@ The ASCII file output from WindNinja will have three separate files: filename an
 Gabriel Abreu Vigil, RMRS, Fire Sciences Lab, Missoula, MT, \href{mailto:gabriel.abreuvigil@usda.gov}{gabriel.abreuvigil@usda.gov}.
 \end{centering}
 
-When displaying the WindNinja-derived wind direction-speed shapefile information in ArcGIS Pro, the warning displayed in Figure~\ref{fig:Figure16} will often occur. This is because the default number of records to be displayed in ArcGIS Pro is the \textbf{First 10,000 Records} regardless of the distribution and spatial location of the data. Depending on the output file resolution size selected in the WindNinja software and the landscape extent, this number can easily be exceeded. As a consequence, not all records in the shapefile will be used during display of the wind speed values. Additionally, within ArcGIS Pro your choice of \textbf{Classification Method} and the number of \textbf{Classes} will also affect the displayed ranges of information.
+When displaying the WindNinja-derived wind direction-speed shapefile information in ArcGIS Pro, the warning displayed in Figure~\ref{fig:Figure16} will often occur. This is because the default number of records to be displayed in ArcGIS Pro is the first 10,000 regardless of the distribution and spatial location of the data. Depending on the output file resolution size selected in WindNinja and the landscape extent, this number can easily be exceeded. As a consequence, not all records in the shapefile will be used during display of the wind speed values. Additionally, within ArcGIS Pro, your choice of \textbf{Classification Method} and the number of \textbf{Classes} will also affect the displayed ranges of information.
 
 \begin{figure}[H]
 	\centering
@@ -242,7 +242,7 @@ When displaying the WindNinja-derived wind direction-speed shapefile information
 \label{fig:Figure16}
 \end{figure}
 
-Because only the first 10,000 records are used, not all of the information will be used in defining the ranges of wind speed during the rotation process. This can lead to a misunderstanding of what the actual maximum and minimum wind speed values are. For example, in Figure~\ref{subfig:s16} the maximum wind speed value displayed is 7.3 mph while in Figure~\ref{subfig:s17} the maximum wind speed value displayed is 18.4 mph. These statistics are based on the total number of records used as limited by the \textbf{Number of Records} used.
+Because only 10,000 records are used, not all of the information will be used in defining the ranges of wind speed during the rotation process. This can lead to a misunderstanding of what the actual maximum and minimum wind speed values are. For example, in Figure~\ref{subfig:s16} the maximum wind speed value displayed is 7.3 mph while in Figure~\ref{subfig:s17} the maximum wind speed value displayed is 18.4 mph. These statistics are based on the total number of records used as limited by the \textbf{Number of Records} used.
 
 \begin{figure}[H]
 \centering
@@ -268,7 +268,7 @@ To change the number of records used for the shapefile is easy. This is not a un
 \label{fig:Figure18}
 \end{figure}
 
-In the \textbf{Statistics} table you can see the number of records used (Count), minimum and maximum, mean, and standard deviation. All of these values will change based on the \textbf{Data Sampling} method selected; in this case, the number of values is the default value of \textbf{First 10,000 records}.  
+In the \textbf{Statistics} table you can see the number of records used (Count), minimum and maximum, mean, and standard deviation. All of these values will change based on the \textbf{Data Sampling} method selected; in this case, count is the default value of 10,000.  
 
 \textbf{Note}: The number of records or sampling method chosen here does not affect summary or statistical operations performed on the data fields within the shapefile attribute table. Operations performed on the shapefile attribute table will use all of the records available for the selected data field unless a subset of the records has been selected. 
 
@@ -281,7 +281,7 @@ To change the \textbf{Maximum sampling size}, select the \textbf{Advanced Symbol
 \label{fig:Figure19}
 \end{figure}
 
-Under \textbf{Sample Size}, you will need to change the Maximum sample size input used from 10,000 to a larger value (Figure~\ref{fig:Figure18}). After changing the \textbf{Maximum Sample Size}, you should be able to exist \textbf{Symbology} tab. For most shapefiles, changing this value to 100,000 should ensure that all records are being used. However, the number of records included in any one shapefile is determined by the size of the landscape as well as the output resolution selected in the WindNinja software. Because of this, you may need to set this value higher in specific cases.
+Under \textbf{Sample Size}, you will need to change the \textbf{Maximum sample size} input used from 10,000 to a larger value (Figure~\ref{fig:Figure18}). After changing the \textbf{Maximum Sample Size}, you should be able to exist \textbf{Symbology} tab. For most shapefiles, changing this value to 100,000 should ensure that all records are being used. However, the number of records included in any one shapefile is determined by the size of the landscape as well as the output resolution selected in WindNinja. Because of this, you may need to set this value higher in specific cases.
 
 \pagebreak
 
