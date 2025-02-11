@@ -500,8 +500,28 @@ bool KmlVector::writeRegion(VSILFILE *fileOut)
 
 	if(coordTransform != 0)
 	{
-		coordTransform->Transform(1, &westExtent, &southExtent);
-		coordTransform->Transform(1, &eastExtent, &northExtent);
+		double xll = westExtent;
+        double yll = southExtent;
+        double xul = westExtent;
+        double yul = northExtent;
+        double xur = eastExtent;
+        double yur = northExtent;
+        double xlr = eastExtent;
+        double ylr = southExtent;
+        coordTransform->Transform(1, &xll, &yll);
+        coordTransform->Transform(1, &xul, &yul);
+        coordTransform->Transform(1, &xur, &yur);
+        coordTransform->Transform(1, &xlr, &ylr);
+        northExtent = std::max(yul,yur);
+        southExtent = std::min(yll,ylr);
+        // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
+        eastExtent = std::max(xlr,xur);
+        westExtent = std::min(xll,xul);
+        // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+        if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+            eastExtent = std::min(xlr,xur);
+        if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+            westExtent = std::max(xll,xul);
 	}
 
     VSIFPrintfL(fileOut, "\n<Region>");
