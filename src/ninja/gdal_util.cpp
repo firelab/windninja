@@ -250,13 +250,13 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
 
-    double ax, ay, bx, by; //denote x,y locations for endpoints of lines "a" and "b"
+    double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
     double adotb; //a dot b
     double mag_a, mag_b; //|a| and |b|
-    ax = x1;
-    ay = y2; // assign "a" same y value as "b"
-    bx = x2;
-    by = y2; 
+    ax = x1 - x1;
+    ay = y2 - y1;
+    bx = x2 - x1;
+    by = y2 - y1;
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
