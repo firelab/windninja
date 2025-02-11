@@ -240,7 +240,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaCreateForecastArmy
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateForecastArmy
     ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
@@ -263,6 +263,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCreateForecastArmy
     return NULL;
 }
 #endif
+
 #ifdef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaH* NinjaCreateForecastArmy
     ( const char * forecastFilename,
@@ -286,7 +287,8 @@ WINDNINJADLL_EXPORT NinjaH* NinjaCreateForecastArmy
     
     return NULL;
 }
-#endif
+#endif //NINJAFOAM
+
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
  *
