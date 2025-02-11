@@ -108,7 +108,7 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
     double inwindw=0.0;		//input w wind component
 
     //Set inwindu and inwindv
-    wind_sd_to_uv(input.inputSpeed, input.inputDirection, &inwindu, &inwindv);
+    wind_sd_to_uv(input.inputSpeed, input.inputDirection + input.dem.getAngleFromNorth(), &inwindu, &inwindv); //account for projection rotation from north
 
     if(input.diurnalWinds == true)
     {
