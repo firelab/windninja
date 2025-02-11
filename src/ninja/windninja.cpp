@@ -240,7 +240,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaCreateForecastArmy
     ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
@@ -264,7 +264,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeArmy
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateForecastArmy
     ( const char * forecastFilename,
       const char * timezone,
       int momentumFlag )
@@ -308,7 +308,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 #ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag){
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateStationArmy( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag){
     NinjaH* ninja;
     try{
         std::vector <boost::posix_time::ptime> timeList;
@@ -333,7 +333,7 @@ WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int*month, int*day,
 }
 #endif
 #ifdef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy( int* year, int* month, int* day, int* hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momentumFlag){
+WINDNINJADLL_EXPORT NinjaH* NinjaCreateStationArmy( int* year, int* month, int* day, int* hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momentumFlag){
     NinjaH* ninja;
           try{
                 std::vector <boost::posix_time::ptime> timeList;

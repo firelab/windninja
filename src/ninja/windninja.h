@@ -97,9 +97,9 @@ typedef int  NinjaErr;
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         ( NinjaH * ninja, const unsigned int nprocessors );
-    WINDNINJADLL_EXPORT NinjaH* NinjaMakeStationArmy
+    WINDNINJADLL_EXPORT NinjaH* NinjaCreateStationArmy
     ( int* year, int*month, int*day, int*hour, int timeListSize, char* timeZone, char* stationFileName, char* elevationFile, int matchPointsFlag, int momementumFlag);
-    WINDNINJADLL_EXPORT NinjaH* NinjaMakeArmy
+    WINDNINJADLL_EXPORT NinjaH* NinjaCreateForecastArmy
         ( const char * forecastFilename,
         const char * timezone,
         int momentumFlag );
