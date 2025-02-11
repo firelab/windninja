@@ -17,7 +17,8 @@ https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
 IRC:
 irc://irc.freenode.net/#windninja
 
-[Building on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
+[Building GUI and CLI on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-GUI)
+[Building CLI on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-CLI)
 
 [Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
 
