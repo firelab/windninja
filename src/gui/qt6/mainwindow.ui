@@ -6,12 +6,148 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1066</width>
-    <height>537</height>
+    <width>1081</width>
+    <height>638</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>300</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="baseSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>60</red>
+        <green>60</green>
+        <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>WindNinja</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -26,45 +162,1987 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <widget class="QWidget" name="verticalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>30</y>
-      <width>461</width>
-      <height>111</height>
-     </rect>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <property name="leftMargin">
+     <number>0</number>
     </property>
-    <layout class="QHBoxLayout" name="titleBarLayout" stretch="0,0">
-     <property name="sizeConstraint">
-      <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
-     </property>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QWidget" name="widget" native="true">
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QSplitter" name="mainWindowSplitter">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>1081</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::NoFrame</enum>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="handleWidth">
+       <number>15</number>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="verticalLayoutWidget">
+       <layout class="QVBoxLayout" name="inputLayout" stretch="2,3,0">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="sizeConstraint">
+         <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+        </property>
+        <property name="leftMargin">
+         <number>5</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QTreeWidget" name="treeWidget">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>250</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>250</height>
+           </size>
+          </property>
+          <property name="palette">
+           <palette>
+            <active>
+             <colorrole role="Base">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>60</red>
+                <green>60</green>
+                <blue>60</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </active>
+            <inactive>
+             <colorrole role="Base">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>60</red>
+                <green>60</green>
+                <blue>60</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </inactive>
+            <disabled/>
+           </palette>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="autoExpandDelay">
+           <number>0</number>
+          </property>
+          <property name="uniformRowHeights">
+           <bool>false</bool>
+          </property>
+          <property name="itemsExpandable">
+           <bool>true</bool>
+          </property>
+          <property name="allColumnsShowFocus">
+           <bool>false</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="expandsOnDoubleClick">
+           <bool>true</bool>
+          </property>
+          <attribute name="headerVisible">
+           <bool>false</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Configuration</string>
+           </property>
+          </column>
+          <item>
+           <property name="text">
+            <string>Solver Methodology</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Conservation of Mass</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Conservation of Mass and Momentum</string>
+            </property>
+           </item>
+          </item>
+          <item>
+           <property name="text">
+            <string>Inputs</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Surface Input</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Diurnal Input</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Stability Input</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Wind Input</string>
+            </property>
+            <item>
+             <property name="text">
+              <string>Domain Average Wind</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Point Initialization</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Weather Model</string>
+             </property>
+            </item>
+           </item>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <widget class="QStackedWidget" name="stackedInputPage">
+          <property name="frameShape">
+           <enum>QFrame::Shape::NoFrame</enum>
+          </property>
+          <property name="currentIndex">
+           <number>5</number>
+          </property>
+          <widget class="QWidget" name="blankPage"/>
+          <widget class="QWidget" name="solverPage">
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QTextEdit" name="textEdit_7">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="html">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;A solution requires the selection of one (1) Solver Methodology:&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;    1. Conservation of Mass (faster, less accurate)&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;    2. Conservation of Mass and Momentum (slower, more accurate)&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Select either option for more detail.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="comPage">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="comGroupBox">
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="useCOM">
+                 <property name="text">
+                  <string>Use Conservation of Mass</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="comTextEdit">
+              <property name="font">
+               <font>
+                <pointsize>8</pointsize>
+               </font>
+              </property>
+              <property name="html">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;This is the native WindNinja solver. It solves a conservation of mass equation, but not a conservation of momentum equation. This solver is fast-running, but may give less accurate wind predictions in regions where momentum effects are important, for example on the lee side of terrain obstacles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="commPage">
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="commGroupBox">
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_10">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="useCOMM">
+                 <property name="text">
+                  <string>Use Conservation of Mass and Momentum</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="commTextEdit">
+              <property name="font">
+               <font>
+                <pointsize>8</pointsize>
+               </font>
+              </property>
+              <property name="html">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;This solver conserves both mass and momentum. It is based on the OpenFOAM CFD toolbox. This solver should give more accurate wind predictions in regions where momentum effects are important, such as on the lee side of terrain obstacles. Because this solver is more computationally intensive than the conservation of mass solver, simulation times will be longer. Typical simulation times for this solver range from 10-30 minutes, but will depend on your domain, resolution, and computational resources. Note that some options (e.g., point initialization and non-neutral stability) are not available for this solver at this time. We plan to make these options available in future releases.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="inputPage"/>
+          <widget class="QWidget" name="surfaceInputPage">
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QGroupBox" name="elevInFileBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Elevation Input File</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <item>
+                <widget class="QLineEdit" name="elevFilePath">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="openFileButton">
+                 <property name="text">
+                  <string>Open File</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="getFromMapButton">
+                 <property name="text">
+                  <string>Get From Map</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_3">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="vegBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Vegetation</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout">
+               <item>
+                <widget class="QComboBox" name="comboBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Grass</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Brush</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Trees</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="meshResBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Mesh Resolution</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <item>
+                <widget class="QComboBox" name="comboBox_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Coarse</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Medium</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Fine</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Custom</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioButton">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Meters</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioButton_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Feet</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="timeZoneBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Time Zone</string>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0,0,0,0" rowminimumheight="0,0">
+               <item row="0" column="1">
+                <widget class="QCheckBox" name="checkBox">
+                 <property name="text">
+                  <string>Show All Zones</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QComboBox" name="comboBox_3">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <widget class="QCheckBox" name="checkBox_2">
+                 <property name="text">
+                  <string>Display Time Zone Details</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="3">
+                <spacer name="horizontalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="1" column="0" colspan="4">
+                <widget class="QTextEdit" name="textEdit">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="diurnalInputPage">
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="diurnalBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_6">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="useDiurnalWind">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Use Diurnal Wind</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_5">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="stabilityInputPage">
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="stabilityBox">
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_7">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="useStability">
+                 <property name="text">
+                  <string>Use Stability</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_6">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="windInputPage"/>
+          <widget class="QWidget" name="domainAvgWndPage">
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QGroupBox" name="domainAvgWindBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string/>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_8">
+               <property name="spacing">
+                <number>0</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QCheckBox" name="useDomainAvgWind">
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <property name="text">
+                  <string>Domain Average Wind</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_9">
+                 <property name="topMargin">
+                  <number>10</number>
+                 </property>
+                </layout>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="inputWindHeight">
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
+                 <property name="title">
+                  <string>Input Wind Height</string>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_11">
+                  <property name="spacing">
+                   <number>10</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QComboBox" name="windHeightBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>20ft-US</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>10m-SI</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Custom</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="windHeightBox2">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QRadioButton" name="windHeightFeet">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Feet</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QRadioButton" name="windHeightMeters">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>Meters</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="horizontalSpacer_7">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QPushButton" name="windHeightClear">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="layoutDirection">
+                    <enum>Qt::LayoutDirection::RightToLeft</enum>
+                   </property>
+                   <property name="text">
+                    <string>Clear</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_9">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QScrollArea" name="scrollArea">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>600</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>8</pointsize>
+                  </font>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::Shape::NoFrame</enum>
+                 </property>
+                 <property name="widgetResizable">
+                  <bool>true</bool>
+                 </property>
+                 <widget class="QWidget" name="scrollAreaWidgetContents">
+                  <property name="geometry">
+                   <rect>
+                    <x>0</x>
+                    <y>0</y>
+                    <width>517</width>
+                    <height>647</height>
+                   </rect>
+                  </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>8</pointsize>
+                   </font>
+                  </property>
+                  <layout class="QVBoxLayout" name="verticalLayout">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <layout class="QGridLayout" name="gridLayout">
+                     <property name="spacing">
+                      <number>5</number>
+                     </property>
+                     <item row="20" column="5">
+                      <widget class="QSpinBox" name="spinBox_57"/>
+                     </item>
+                     <item row="11" column="1">
+                      <widget class="QSpinBox" name="spinBox_30"/>
+                     </item>
+                     <item row="14" column="5">
+                      <widget class="QSpinBox" name="spinBox_39"/>
+                     </item>
+                     <item row="16" column="1">
+                      <widget class="QSpinBox" name="spinBox_43"/>
+                     </item>
+                     <item row="15" column="1">
+                      <widget class="QSpinBox" name="spinBox_40"/>
+                     </item>
+                     <item row="21" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_21"/>
+                     </item>
+                     <item row="19" column="5">
+                      <widget class="QSpinBox" name="spinBox_54"/>
+                     </item>
+                     <item row="7" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_6"/>
+                     </item>
+                     <item row="13" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_13"/>
+                     </item>
+                     <item row="18" column="5">
+                      <widget class="QSpinBox" name="spinBox_51"/>
+                     </item>
+                     <item row="10" column="1">
+                      <widget class="QSpinBox" name="spinBox_25"/>
+                     </item>
+                     <item row="21" column="3">
+                      <widget class="QDateEdit" name="dateEdit_20"/>
+                     </item>
+                     <item row="8" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_8"/>
+                     </item>
+                     <item row="4" column="4">
+                      <widget class="QSpinBox" name="spinBox_8"/>
+                     </item>
+                     <item row="3" column="5">
+                      <widget class="QSpinBox" name="spinBox_6"/>
+                     </item>
+                     <item row="22" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_22"/>
+                     </item>
+                     <item row="13" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_12"/>
+                     </item>
+                     <item row="5" column="3">
+                      <widget class="QDateEdit" name="dateEdit_4"/>
+                     </item>
+                     <item row="16" column="4">
+                      <widget class="QSpinBox" name="spinBox_44"/>
+                     </item>
+                     <item row="20" column="1">
+                      <widget class="QSpinBox" name="spinBox_55"/>
+                     </item>
+                     <item row="5" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
+                     </item>
+                     <item row="6" column="3">
+                      <widget class="QDateEdit" name="dateEdit_5"/>
+                     </item>
+                     <item row="9" column="3">
+                      <widget class="QDateEdit" name="dateEdit_8"/>
+                     </item>
+                     <item row="7" column="1">
+                      <widget class="QSpinBox" name="spinBox_16"/>
+                     </item>
+                     <item row="8" column="4">
+                      <widget class="QSpinBox" name="spinBox_20"/>
+                     </item>
+                     <item row="9" column="4">
+                      <widget class="QSpinBox" name="spinBox_23"/>
+                     </item>
+                     <item row="16" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_16"/>
+                     </item>
+                     <item row="16" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_15"/>
+                     </item>
+                     <item row="0" column="4">
+                      <widget class="QTextEdit" name="textEdit_5">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>100</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Cloud Cover (%)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="21" column="5">
+                      <widget class="QSpinBox" name="spinBox_60"/>
+                     </item>
+                     <item row="3" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_2"/>
+                     </item>
+                     <item row="13" column="5">
+                      <widget class="QSpinBox" name="spinBox_36"/>
+                     </item>
+                     <item row="19" column="3">
+                      <widget class="QDateEdit" name="dateEdit_18"/>
+                     </item>
+                     <item row="10" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_9"/>
+                     </item>
+                     <item row="0" column="3">
+                      <widget class="QTextEdit" name="textEdit_4">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Date&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="14" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_13"/>
+                     </item>
+                     <item row="13" column="3">
+                      <widget class="QDateEdit" name="dateEdit_12"/>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QSpinBox" name="spinBox"/>
+                     </item>
+                     <item row="22" column="5">
+                      <widget class="QSpinBox" name="spinBox_63"/>
+                     </item>
+                     <item row="2" column="3">
+                      <widget class="QDateEdit" name="dateEdit"/>
+                     </item>
+                     <item row="5" column="4">
+                      <widget class="QSpinBox" name="spinBox_11"/>
+                     </item>
+                     <item row="19" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_19"/>
+                     </item>
+                     <item row="12" column="1">
+                      <widget class="QSpinBox" name="spinBox_31"/>
+                     </item>
+                     <item row="22" column="3">
+                      <widget class="QDateEdit" name="dateEdit_21"/>
+                     </item>
+                     <item row="22" column="4">
+                      <widget class="QSpinBox" name="spinBox_62"/>
+                     </item>
+                     <item row="15" column="3">
+                      <widget class="QDateEdit" name="dateEdit_14"/>
+                     </item>
+                     <item row="1" column="5">
+                      <widget class="QComboBox" name="comboBox_5">
+                       <item>
+                        <property name="text">
+                         <string>F</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>C</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item row="4" column="1">
+                      <widget class="QSpinBox" name="spinBox_9"/>
+                     </item>
+                     <item row="12" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_11"/>
+                     </item>
+                     <item row="19" column="4">
+                      <widget class="QSpinBox" name="spinBox_53"/>
+                     </item>
+                     <item row="20" column="3">
+                      <widget class="QDateEdit" name="dateEdit_19"/>
+                     </item>
+                     <item row="14" column="4">
+                      <widget class="QSpinBox" name="spinBox_38"/>
+                     </item>
+                     <item row="17" column="3">
+                      <widget class="QDateEdit" name="dateEdit_16"/>
+                     </item>
+                     <item row="7" column="4">
+                      <widget class="QSpinBox" name="spinBox_17"/>
+                     </item>
+                     <item row="19" column="1">
+                      <widget class="QSpinBox" name="spinBox_52"/>
+                     </item>
+                     <item row="16" column="5">
+                      <widget class="QSpinBox" name="spinBox_45"/>
+                     </item>
+                     <item row="5" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_4"/>
+                     </item>
+                     <item row="7" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_7"/>
+                     </item>
+                     <item row="9" column="1">
+                      <widget class="QSpinBox" name="spinBox_22"/>
+                     </item>
+                     <item row="15" column="5">
+                      <widget class="QSpinBox" name="spinBox_42"/>
+                     </item>
+                     <item row="18" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_18"/>
+                     </item>
+                     <item row="16" column="3">
+                      <widget class="QDateEdit" name="dateEdit_15"/>
+                     </item>
+                     <item row="14" column="1">
+                      <widget class="QSpinBox" name="spinBox_37"/>
+                     </item>
+                     <item row="6" column="4">
+                      <widget class="QSpinBox" name="spinBox_14"/>
+                     </item>
+                     <item row="17" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_17"/>
+                     </item>
+                     <item row="15" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_15"/>
+                     </item>
+                     <item row="2" column="2">
+                      <widget class="QTimeEdit" name="timeEdit"/>
+                     </item>
+                     <item row="20" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_20"/>
+                     </item>
+                     <item row="10" column="4">
+                      <widget class="QSpinBox" name="spinBox_26"/>
+                     </item>
+                     <item row="4" column="5">
+                      <widget class="QSpinBox" name="spinBox_7"/>
+                     </item>
+                     <item row="15" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_14"/>
+                     </item>
+                     <item row="11" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_10"/>
+                     </item>
+                     <item row="17" column="5">
+                      <widget class="QSpinBox" name="spinBox_48"/>
+                     </item>
+                     <item row="18" column="4">
+                      <widget class="QSpinBox" name="spinBox_50"/>
+                     </item>
+                     <item row="6" column="5">
+                      <widget class="QSpinBox" name="spinBox_13"/>
+                     </item>
+                     <item row="13" column="4">
+                      <widget class="QSpinBox" name="spinBox_35"/>
+                     </item>
+                     <item row="21" column="4">
+                      <widget class="QSpinBox" name="spinBox_59"/>
+                     </item>
+                     <item row="6" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_6"/>
+                     </item>
+                     <item row="20" column="4">
+                      <widget class="QSpinBox" name="spinBox_56"/>
+                     </item>
+                     <item row="3" column="4">
+                      <widget class="QSpinBox" name="spinBox_5"/>
+                     </item>
+                     <item row="20" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_19"/>
+                     </item>
+                     <item row="8" column="1">
+                      <widget class="QSpinBox" name="spinBox_21"/>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QTextEdit" name="textEdit_2">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Direction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="11" column="4">
+                      <widget class="QSpinBox" name="spinBox_29"/>
+                     </item>
+                     <item row="9" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_9"/>
+                     </item>
+                     <item row="9" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_8"/>
+                     </item>
+                     <item row="15" column="4">
+                      <widget class="QSpinBox" name="spinBox_41"/>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QComboBox" name="comboBox_4">
+                       <item>
+                        <property name="text">
+                         <string>mph</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>m/s</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>kph</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>kts</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item row="17" column="4">
+                      <widget class="QSpinBox" name="spinBox_47"/>
+                     </item>
+                     <item row="7" column="5">
+                      <widget class="QSpinBox" name="spinBox_18"/>
+                     </item>
+                     <item row="18" column="1">
+                      <widget class="QSpinBox" name="spinBox_49"/>
+                     </item>
+                     <item row="4" column="3">
+                      <widget class="QDateEdit" name="dateEdit_3"/>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+                     </item>
+                     <item row="22" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_21"/>
+                     </item>
+                     <item row="7" column="3">
+                      <widget class="QDateEdit" name="dateEdit_6"/>
+                     </item>
+                     <item row="3" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+                     </item>
+                     <item row="14" column="3">
+                      <widget class="QDateEdit" name="dateEdit_13"/>
+                     </item>
+                     <item row="0" column="5">
+                      <widget class="QTextEdit" name="textEdit_6">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Air Temp&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="10" column="3">
+                      <widget class="QDateEdit" name="dateEdit_9"/>
+                     </item>
+                     <item row="18" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_17"/>
+                     </item>
+                     <item row="21" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_20"/>
+                     </item>
+                     <item row="9" column="5">
+                      <widget class="QSpinBox" name="spinBox_24"/>
+                     </item>
+                     <item row="2" column="4">
+                      <widget class="QSpinBox" name="spinBox_2"/>
+                     </item>
+                     <item row="8" column="3">
+                      <widget class="QDateEdit" name="dateEdit_7"/>
+                     </item>
+                     <item row="22" column="1">
+                      <widget class="QSpinBox" name="spinBox_61"/>
+                     </item>
+                     <item row="4" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+                     </item>
+                     <item row="10" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_10"/>
+                     </item>
+                     <item row="11" column="5">
+                      <widget class="QSpinBox" name="spinBox_28"/>
+                     </item>
+                     <item row="12" column="5">
+                      <widget class="QSpinBox" name="spinBox_33"/>
+                     </item>
+                     <item row="21" column="1">
+                      <widget class="QSpinBox" name="spinBox_58"/>
+                     </item>
+                     <item row="3" column="3">
+                      <widget class="QDateEdit" name="dateEdit_2"/>
+                     </item>
+                     <item row="12" column="3">
+                      <widget class="QDateEdit" name="dateEdit_11"/>
+                     </item>
+                     <item row="11" column="3">
+                      <widget class="QDateEdit" name="dateEdit_10"/>
+                     </item>
+                     <item row="2" column="5">
+                      <widget class="QSpinBox" name="spinBox_3"/>
+                     </item>
+                     <item row="3" column="1">
+                      <widget class="QSpinBox" name="spinBox_4"/>
+                     </item>
+                     <item row="17" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_16"/>
+                     </item>
+                     <item row="17" column="1">
+                      <widget class="QSpinBox" name="spinBox_46"/>
+                     </item>
+                     <item row="19" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_18"/>
+                     </item>
+                     <item row="13" column="1">
+                      <widget class="QSpinBox" name="spinBox_34"/>
+                     </item>
+                     <item row="12" column="4">
+                      <widget class="QSpinBox" name="spinBox_32"/>
+                     </item>
+                     <item row="4" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_3"/>
+                     </item>
+                     <item row="12" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_12"/>
+                     </item>
+                     <item row="5" column="5">
+                      <widget class="QSpinBox" name="spinBox_12"/>
+                     </item>
+                     <item row="6" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_5"/>
+                     </item>
+                     <item row="10" column="5">
+                      <widget class="QSpinBox" name="spinBox_27"/>
+                     </item>
+                     <item row="11" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_11"/>
+                     </item>
+                     <item row="5" column="1">
+                      <widget class="QSpinBox" name="spinBox_10"/>
+                     </item>
+                     <item row="18" column="3">
+                      <widget class="QDateEdit" name="dateEdit_17"/>
+                     </item>
+                     <item row="8" column="5">
+                      <widget class="QSpinBox" name="spinBox_19"/>
+                     </item>
+                     <item row="8" column="2">
+                      <widget class="QTimeEdit" name="timeEdit_7"/>
+                     </item>
+                     <item row="6" column="1">
+                      <widget class="QSpinBox" name="spinBox_15"/>
+                     </item>
+                     <item row="0" column="0">
+                      <widget class="QTextEdit" name="textSpeed">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Speed&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QTextEdit" name="textEdit_3">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="html">
+                        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Sans Serif'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="14" column="0">
+                      <widget class="QDoubleSpinBox" name="doubleSpinBox_14"/>
+                     </item>
+                     <item row="4" column="6">
+                      <spacer name="horizontalSpacer_8">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </widget>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="pointInitPage"/>
+          <widget class="QWidget" name="weatherModelPage"/>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="solveButtonLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="solveButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LayoutDirection::LeftToRight</enum>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">#solveButton {
+	padding: 0;
+	width: 100px;
+	text-align: center;
+	padding: 5px;
+}</string>
+            </property>
+            <property name="text">
+             <string>Solve</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="mapPanelWidget" native="true">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
       </widget>
-     </item>
-    </layout>
-   </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1081</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QMenuBar {
+	background-color: #818181
+}
+QMenu::item:selected {
+    background: #3c3c3c;
+}</string>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Project"/>
+    <addaction name="actionOpen_Project"/>
+    <addaction name="actionExport_Solution"/>
+    <addaction name="actionClose_Project"/>
+    <addaction name="actionExit_WindNinja"/>
+   </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionConsole_Output"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionWrite_blank_station_file"/>
+    <addaction name="actionSet_configuration_option"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <widget class="QMenu" name="menuDisplaying_Shapefiles">
+     <property name="title">
+      <string>Displaying Shapefiles</string>
+     </property>
+     <addaction name="actionHow_to_Display_Shapefiles_in_ArcMap"/>
+    </widget>
+    <widget class="QMenu" name="menuTutorials">
+     <property name="title">
+      <string>Tutorials</string>
+     </property>
+     <addaction name="actionTutorial_1_The_Basics"/>
+     <addaction name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability"/>
+     <addaction name="actionTutorial_3_Point_Initialization"/>
+     <addaction name="actionTutorial_4_Weather_Model_Initialization"/>
+    </widget>
+    <widget class="QMenu" name="menuInstructions">
+     <property name="title">
+      <string>Instructions</string>
+     </property>
+     <addaction name="actionDEM_Downlaod"/>
+     <addaction name="actionfetch_dem_Instructions"/>
+     <addaction name="actionCommand_Line_Interface"/>
+    </widget>
+    <addaction name="menuDisplaying_Shapefiles"/>
+    <addaction name="menuTutorials"/>
+    <addaction name="menuInstructions"/>
+    <addaction name="actionAbout_WindNinja"/>
+    <addaction name="actionCitation"/>
+    <addaction name="actionEmail_Us"/>
+    <addaction name="actionSubmit_Bug_Report"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuOptions"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <action name="actionConsole_Output">
+   <property name="text">
+    <string>Console Output</string>
+   </property>
+  </action>
+  <action name="actionWrite_blank_station_file">
+   <property name="text">
+    <string>Write blank station file</string>
+   </property>
+  </action>
+  <action name="actionSet_configuration_option">
+   <property name="text">
+    <string>Set configuration option</string>
+   </property>
+  </action>
+  <action name="actionDEM_Download_Instructions">
+   <property name="text">
+    <string>Displaying Shapefiles</string>
+   </property>
+  </action>
+  <action name="actionHow_to_Display_Shapefiles_in_ArcMap">
+   <property name="text">
+    <string>How to Display Shapefiles in ArcMap</string>
+   </property>
+  </action>
+  <action name="actionTutorial_1_The_Basics">
+   <property name="text">
+    <string>Tutorial 1: The Basics</string>
+   </property>
+  </action>
+  <action name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability">
+   <property name="text">
+    <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
+   </property>
+  </action>
+  <action name="actionTutorial_3_Point_Initialization">
+   <property name="text">
+    <string>Tutorial 3: Point Initialization</string>
+   </property>
+  </action>
+  <action name="actionTutorial_4_Weather_Model_Initialization">
+   <property name="text">
+    <string>Tutorial 4: Weather Model Initialization</string>
+   </property>
+  </action>
+  <action name="actionDEM_Downlaod">
+   <property name="text">
+    <string>DEM Download</string>
+   </property>
+  </action>
+  <action name="actionfetch_dem_Instructions">
+   <property name="text">
+    <string>fetch_dem Instructions</string>
+   </property>
+  </action>
+  <action name="actionCommand_Line_Interface">
+   <property name="text">
+    <string>Command Line Interface</string>
+   </property>
+  </action>
+  <action name="actionAbout_WindNinja">
+   <property name="text">
+    <string>About WindNinja</string>
+   </property>
+  </action>
+  <action name="actionCitation">
+   <property name="text">
+    <string>Citation</string>
+   </property>
+  </action>
+  <action name="actionEmail_Us">
+   <property name="text">
+    <string>Email Us</string>
+   </property>
+  </action>
+  <action name="actionSubmit_Bug_Report">
+   <property name="text">
+    <string>Submit Bug Report</string>
+   </property>
+  </action>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionOpen_Project">
+   <property name="text">
+    <string>Open Project</string>
+   </property>
+  </action>
+  <action name="actionExport_Solution">
+   <property name="text">
+    <string>Export Solution</string>
+   </property>
+  </action>
+  <action name="actionClose_Project">
+   <property name="text">
+    <string>Close Project</string>
+   </property>
+  </action>
+  <action name="actionExit_WindNinja">
+   <property name="text">
+    <string>Exit WindNinja</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
