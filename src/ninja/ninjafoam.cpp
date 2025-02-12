@@ -979,6 +979,13 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
     nCells.push_back(int( (bbox[4] - bbox[1]) / (blockMeshResolution))); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / (blockMeshResolution))); // Nz1
 
+// try making cell height taller, val > 1.0, shorter would be val < 1.0, no change would be val == 1.0. val == 0.0 is a BAD idea
+// note, the results of val 0.9 and val 1.1 were definitely a small nudge in overall cell height at the bottom of the domain if anything, larger differences at the top of the domain
+// but the resulting solution, all this on bell_steep.tif, fine, brush, 5 mph at 270 degrees, seemed to have differences in the solution. In particular, the wake stopped being symmetrical
+// so, leaving this as value 1.0 for no modification for now
+    double cellHeightModifier = 1.0;
+    bbox[5] = input.dem.get_maxValue() + blockMeshDz*cellHeightModifier; //zmax
+
     //we need several cells on all sides of the blockMesh
     //the blockMesh is at least twice as coarse as the refined mesh (meshResolution)
     if(nCells[0] < 10 || nCells[1] < 10 || nCells[2] < 10)
