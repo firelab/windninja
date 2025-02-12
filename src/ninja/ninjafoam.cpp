@@ -1277,7 +1277,7 @@ void NinjaFoam::MoveDynamicMesh()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
-                                      "--allow-run-as-root",
+                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "moveDynamicMesh",
                                       "-case",
                                       pszFoamPath,
@@ -1315,7 +1315,9 @@ void NinjaFoam::MoveDynamicMesh()
         
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
-            //do something
+            // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+            // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+            throw std::runtime_error("Error during moveDynamicMesh().");
         }
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
@@ -1361,7 +1363,9 @@ void NinjaFoam::MoveDynamicMesh()
         
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
-            //do something
+            // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+            // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+            throw std::runtime_error("Error during moveDynamicMesh().");
         }
     }
     
@@ -1665,7 +1669,7 @@ bool NinjaFoam::SimpleFoam()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
-                                      "--allow-run-as-root",
+                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "simpleFoam",
                                       "-case",
                                       pszFoamPath,
@@ -1698,7 +1702,9 @@ bool NinjaFoam::SimpleFoam()
                 return false;
         } else {
             if(nRet != 0){
-                //do something
+                // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+                // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+                return false;
             }
         }
     }
@@ -1732,7 +1738,9 @@ bool NinjaFoam::SimpleFoam()
                 return false;
         } else {
             if(nRet != 0){
-                //do something
+                // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+                // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+                return false;
             }
         }
     }
