@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninjaUnits.h"
 #include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
@@ -49,6 +50,7 @@
 #endif
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
+#include <memory>
 
 namespace blt = boost::local_time;
 namespace bpt = boost::posix_time;
@@ -137,7 +139,10 @@ public:
     void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
                           std::string demFile,bool matchPoints,bool override );
-    static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
+    std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
+    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType);
+    int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
+    const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     void set_writeFarsiteAtmFile(bool flag);
@@ -907,6 +912,32 @@ public:
     int setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions=NULL );
 
+    /**
+     * \brief Set the output speed grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      const lengthUnits::eLengthUnits units,
+                                      char ** papszOptions=NULL );
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      std::string units, char ** papszOptions=NULL );
+    /**
+     * \brief Set the output direction grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          const lengthUnits::eLengthUnits units,
+                                          char ** papszOptions=NULL );
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          std::string units, char ** papszOptions=NULL );
     /**
     * \brief Get the output speed grid for a ninja
     *
