@@ -175,14 +175,25 @@ bool NinjaFoam::simulate_wind()
     readInputFile();
     set_position();
 
-    // if troubles, try smoothing the dem before the whole process
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file...");
-    double startTimer = omp_get_wtime();
-    int smoothDist = 1;
-    //int smoothDist = 2;
-    input.dem.smooth_elevation(smoothDist);
-    double endTimer = omp_get_wtime();
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
+    // if troubles, try smoothing the dem before the whole process, BEFORE resampling to mesh resolution
+    std::string found_smoothMethod = CPLGetConfigOption("DEM_SMOOTH_METHOD", "");
+    if( found_smoothMethod == "PRE_DEM_RESAMPLE_TO_MESH_RES" )
+    {
+        CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_METHOD = \"PRE_DEM_RESAMPLE_TO_MESH_RES\"");
+        int smoothDist = 1;
+        std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
+        if( found_smoothDist_str != "" )
+        {
+            CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_DIST, setting smoothDist to \"%s\"",found_smoothDist_str.c_str());
+            smoothDist = atof(found_smoothDist_str.c_str());
+        }
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, PRE resampling dem to mesh res, smoothDist = %d ...",smoothDist);
+        double startTimer = omp_get_wtime();
+        input.dem.smooth_elevation(smoothDist);
+        double endTimer = omp_get_wtime();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
+    }
 
     SetMeshResolutionAndResampleDem();
 
@@ -993,6 +1004,17 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
 // but the resulting solution, all this on bell_steep.tif, fine, brush, 5 mph at 270 degrees, seemed to have differences in the solution. In particular, the wake stopped being symmetrical
 // so, leaving this as value 1.0 for no modification for now
     double cellHeightModifier = 1.0;
+    std::string found_cellHeightModifier_str = CPLGetConfigOption("FOAM_CELL_HEIGHT_MODIFIER", "");
+    if( found_cellHeightModifier_str != "" )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "found CPL config option FOAM_CELL_HEIGHT_MODIFIER, setting foam_cellHeightModifier to \"%s\"",found_cellHeightModifier_str.c_str());
+        cellHeightModifier = atof(found_cellHeightModifier_str.c_str());
+        if( cellHeightModifier <= 0.0 )
+        {
+            throw std::runtime_error("input FOAM_CELL_HEIGHT_MODIFIER aka foam_cellHeightModifier cannot be <= 0.0 !!!");
+        }
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "modifying foam blockMeshDz to indirectly modify foam cell height...");
+    }
     bbox[5] = input.dem.get_maxValue() + blockMeshDz*cellHeightModifier; //zmax
 
     //we need several cells on all sides of the blockMesh
@@ -4109,6 +4131,26 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution,
                 AsciiGrid<double>::order0); //coarsen the grids
+    }
+
+    // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
+    std::string found_smoothMethod = CPLGetConfigOption("DEM_SMOOTH_METHOD", "");
+    if( found_smoothMethod == "POST_DEM_RESAMPLE_TO_MESH_RES" )
+    {
+        CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_METHOD = \"POST_DEM_RESAMPLE_TO_MESH_RES\"");
+        int smoothDist = 1;
+        std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
+        if( found_smoothDist_str != "" )
+        {
+            CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_DIST, setting smoothDist to \"%s\"",found_smoothDist_str.c_str());
+            smoothDist = atof(found_smoothDist_str.c_str());
+        }
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, POST resampling dem to mesh res, smoothDist = %d ...",smoothDist);
+        double startTimer = omp_get_wtime();
+        input.dem.smooth_elevation(smoothDist);
+        double endTimer = omp_get_wtime();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
     }
 }
 

@@ -188,18 +188,18 @@ void Elevation::smooth_elevation(const int smoothDist)
             {
                 imin = 0;
             }
-            if( imax > dem.get_nRows() )
+            if( imax > dem.get_nRows()-1 )
             {
-                imax = dem.get_nRows();
+                imax = dem.get_nRows()-1;
             }
 
             if( jmin < 0 )
             {
                 jmin = 0;
             }
-            if( jmax > dem.get_nCols() )
+            if( jmax > dem.get_nCols()-1 )
             {
-                jmax = dem.get_nCols();
+                jmax = dem.get_nCols()-1;
             }
 
             for(int ii = imin; ii <= imax; ii++)
