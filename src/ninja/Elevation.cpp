@@ -156,3 +156,63 @@ Elevation &Elevation::operator=(const Elevation &rhs)
     }
     return *this;
 }
+
+/**
+ * @brief smooth entire dem using a simple non-weighted average, using a convolution window of size smoothDist out from each given cell
+ *
+ * @param smoothDist, number of cells out from the given cell, from which to get values for the averaging
+ */
+void Elevation::smooth_elevation(const int smoothDist)
+{
+    if( smoothDist < 1 )
+    {
+        throw std::runtime_error("input smoothDist "+std::to_string(smoothDist)+" for Elevation::smooth_elevation() is not 1 or greater!");
+    }
+
+    Elevation dem;  // make a temporary copy to keep the calculation values the same
+    dem = *this;
+
+    for(int i = 0; i < dem.get_nRows(); i++)
+    {
+        for(int j = 0; j < dem.get_nCols(); j++)
+        {
+            int count = 0;
+            double sum = 0.0;
+
+            int imin = i - smoothDist;
+            int imax = i + smoothDist;
+            int jmin = j - smoothDist;
+            int jmax = j + smoothDist;
+
+            if( imin < 0 )
+            {
+                imin = 0;
+            }
+            if( imax > dem.get_nRows() )
+            {
+                imax = dem.get_nRows();
+            }
+
+            if( jmin < 0 )
+            {
+                jmin = 0;
+            }
+            if( jmax > dem.get_nCols() )
+            {
+                jmax = dem.get_nCols();
+            }
+
+            for(int ii = imin; ii <= imax; ii++)
+            {
+                for( int jj = jmin; jj <= jmax; jj++)
+                {
+                    sum = sum + dem.get_cellValue(ii, jj);
+                    count = count + 1;
+                }
+            }
+            double avg = sum / float(count);
+
+            this->set_cellValue(i,j,avg);
+        }
+    }
+}

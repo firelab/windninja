@@ -175,6 +175,15 @@ bool NinjaFoam::simulate_wind()
     readInputFile();
     set_position();
 
+    // if troubles, try smoothing the dem before the whole process
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file...");
+    double startTimer = omp_get_wtime();
+    int smoothDist = 1;
+    //int smoothDist = 2;
+    input.dem.smooth_elevation(smoothDist);
+    double endTimer = omp_get_wtime();
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
+
     SetMeshResolutionAndResampleDem();
 
     checkInputs();
