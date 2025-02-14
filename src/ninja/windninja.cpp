@@ -131,10 +131,17 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreateWeatherModelArmy
     {
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
 
+#ifdef NINJAFOAM
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timezone ),
             momentumFlag );
+#else
+        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
+        (   std::string( forecastFilename ),
+            std::string( timezone ),
+            false );
+#endif
         return army;
     }
     catch( armyException & e )
@@ -160,7 +167,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreateWeatherModelArmy
  * \param stationFileName A valid path to a station file.
  * \param elevationFile A valid path to an elevation file.
  * \param matchPointsFlag A flag representing whether to match points or not.
- * \param momentumFlag A flag representing whether to use the momentum solver or not.
+ * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in Point Initializations).
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
@@ -182,7 +189,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreatePointArmy
             std::string(stationFileName),
             std::string(elevationFile),
             matchPointsFlag,
-            momentumFlag);
+            false);
         return army;
     }
     catch( armyException & e ){

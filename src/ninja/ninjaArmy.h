@@ -135,7 +135,7 @@ public:
 
     void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
-                          std::string demFile,bool matchPoints,bool override );
+                          std::string demFile,bool matchPoints, bool momentumFlag );
     
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);

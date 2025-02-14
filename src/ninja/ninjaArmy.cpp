@@ -111,7 +111,7 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
  */
 void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
-                             string demFile, bool matchPoints, bool override)
+                             string demFile, bool matchPoints, bool momentumFlag)
 {
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;

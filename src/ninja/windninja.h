@@ -72,14 +72,9 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-#ifndef NINJAFOAM
-    WINDNINJADLL_EXPORT NinjaArmyH * NinjaCreateDomainAverageArmy
-        ( unsigned int numNinjas, char ** papszOptions  );
-#endif
-#ifdef NINJAFOAM
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaCreateDomainAverageArmy
         ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  );
-#endif
+
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaCreatePointArmy
         ( int * year, int * month, int * day, int * hour, int timeListSize, char * timeZone, char * stationFileName, char * elevationFile, int matchPointsFlag, int momementumFlag, char ** papszOptions );
 
@@ -209,13 +204,11 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double stability_ );
 
-//#ifdef NINJAFOAM
     /*-----------------------------------------------------------------------------
      *  NinjaFoam Methods
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int meshCount );
-//#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods
