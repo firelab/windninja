@@ -1009,9 +1009,9 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "found CPL config option FOAM_CELL_HEIGHT_MODIFIER, setting foam_cellHeightModifier to \"%s\"",found_cellHeightModifier_str.c_str());
         cellHeightModifier = atof(found_cellHeightModifier_str.c_str());
-        if( cellHeightModifier <= 0.0 )
+        if( cellHeightModifier <= 0.05 )  // has to avoid making bbox[5] lower than bbox[2], 0.05 is multiplied into blockMeshDz for zmin but not for zmax
         {
-            throw std::runtime_error("input FOAM_CELL_HEIGHT_MODIFIER aka foam_cellHeightModifier cannot be <= 0.0 !!!");
+            throw std::runtime_error("input FOAM_CELL_HEIGHT_MODIFIER aka foam_cellHeightModifier cannot be <= 0.05 !!!");
         }
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "modifying foam blockMeshDz to indirectly modify foam cell height...");
     }
@@ -1024,7 +1024,13 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
         throw std::runtime_error("The requested mesh resolution is too coarse.");
     }
 
-    initialFirstCellHeight = blockMeshResolution; //height of first cell
+    // original unmodified formula
+    //initialFirstCellHeight = blockMeshResolution; //height of first cell
+    double old_bbox_5 = input.dem.get_maxValue() + blockMeshDz;
+    double nCells_dbl = (old_bbox_5 - bbox[2]) / (blockMeshResolution);
+    initialFirstCellHeight = (bbox[5] - bbox[2]) / (nCells_dbl); //height of first cell
+    // the following formula is the same as the above, SPECIFIC to the current bbox[5] and bbox[2] definitions
+    //initialFirstCellHeight = blockMeshResolution * ( (cellHeightModifier - 0.05) / (1 - 0.05) ); //height of first cell
 
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
