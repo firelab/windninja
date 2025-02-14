@@ -116,11 +116,6 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-#ifdef NINJAFOAM
-    ninjaArmy(int numNinjas, bool momentumFlag);
-#else
-    ninjaArmy(int numNinjas);
-#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
@@ -136,15 +131,18 @@ public:
         ncepGfsSurf
     };
 
-    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
+    void makeDomainAverageArmy( int nRuns, bool momentumFlag );
+
+    void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
                           std::string demFile,bool matchPoints,bool override );
+    
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType);
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
     const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
-    void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
-    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
@@ -159,14 +157,6 @@ public:
     //int getSize() const { return ninjas.size(); }
 
     int getSize();
-
-    /**
-    * \brief Set the number of ninja in the army
-    *
-    * \param nRuns number of ninjas to create
-    * \return
-    */
-    void setSize( int nRuns, bool momentumFlag);
 
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods

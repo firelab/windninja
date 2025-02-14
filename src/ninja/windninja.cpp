@@ -87,35 +87,26 @@ extern "C"
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 
-#ifndef NINJAFOAM
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreateDomainAverageArmy
-    ( unsigned int numNinjas, char ** papszOptions  )
-{
-    try
-    {
-        return reinterpret_cast<NinjaArmyH*>( new ninjaArmy( numNinjas ) );
-    }
-    catch( bad_alloc& )
-    {
-        return NULL;
-    }
-}
-#endif
-
-#ifdef NINJAFOAM
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreateDomainAverageArmy
     ( unsigned int numNinjas, int momentumFlag, char ** papszOptions  )
 {
+    NinjaArmyH* army;
+
     try
     {
-        return reinterpret_cast<NinjaArmyH*>( new ninjaArmy( numNinjas, momentumFlag ) );
+        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
+#ifdef NINJAFOAM
+        reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
+#else
+        reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, false);
+#endif
+        return army;
     }
     catch( bad_alloc& )
     {
         return NULL;
     }
 }
-#endif
 
 /**
  * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
@@ -138,12 +129,9 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreateWeatherModelArmy
     NinjaArmyH* army;
     try
     {
-#ifdef NINJAFOAM
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy(1, momentumFlag) );
-#else
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy(1) );
-#endif //NINJAFOAM
-        reinterpret_cast<ninjaArmy*>( army )->makeArmy
+        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
+
+        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timezone ),
             momentumFlag );
@@ -185,12 +173,10 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaCreatePointArmy
         for(int i=0; i<timeListSize; i++){
             timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(year[i], month[i], day[i]), boost::posix_time::hours(hour[i])));
         }
-#ifdef NINJAFOAM
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy(1, momentumFlag ) );
-#else
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy(1 ) );
-#endif //NINJAFOAM
-        reinterpret_cast<ninjaArmy*>( army )->makeStationArmy
+
+        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
+
+        reinterpret_cast<ninjaArmy*>( army )->makePointArmy
         (   timeList,
             std::string(timeZone),
             std::string(stationFileName),

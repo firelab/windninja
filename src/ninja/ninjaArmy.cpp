@@ -35,51 +35,9 @@
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
-    ninjas.push_back(new ninja());
+//    ninjas.push_back(new ninja());
     initLocalData();
 }
-
-/**
-* @brief Constructor that allocates numNinjas of ninjas or ninjafoams.
-*
-* @param numNinjas Number of ninjas to allocate.
-* @param momentumFlag flag inidicating if it is a NinjaFoam run
-*/
-#ifdef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        if(momentumFlag == true){
-            ninjas[i] = new NinjaFoam();
-        }
-        else{
-             ninjas[i] = new ninja();
-        }
-    }
-    initLocalData();
-}
-#endif
-
-/**
-* @brief Constructor that allocates numNinjas of ninjas.
-*
-* @param numNinjas Number of ninjas to allocate.
-*/
-#ifndef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        ninjas[i] = new ninja();
-    }
-    initLocalData();
-}
-#endif
 
 /**
 * @brief Copy constructor.
@@ -130,15 +88,28 @@ int ninjaArmy::getSize()
     return ninjas.size();
 }
 
+void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
+{
+    int i;
+    for( i=0; i < ninjas.size();i ++) 
+        delete ninjas[i];
+    ninjas.resize( nSize );
+    for( i = 0; i < nSize; i++ ){
+        if(momentumFlag)
+            ninjas[i] = new NinjaFoam();
+        else
+            ninjas[i] = new ninja();
+    }
+}
 
 /**
- * @brief ninjaArmy::makeStationArmy Makes an army (array) of ninjas for a Point Initialization run.
+ * @brief ninjaArmy::makePointArmy Makes an army (array) of ninjas for a Point Initialization run.
  * @param timeList vector of simulation times
  * @param timeZone
  * @param stationFileName
  * @param demFile
  */
-void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
+void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool override)
 {
@@ -236,9 +207,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
+void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
 {
-  return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
+  return makeWeatherModelArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
 /**
@@ -362,7 +333,7 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
  * @param times a vector of times to run from the forecast.  If the vector is
  *        empty, run all of the times in the forecast
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
+void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
     
@@ -1145,24 +1116,6 @@ void ninjaArmy::setAtmFlags()
                 ninjas[i]->set_writeAtmFile(true);
             }
         }
-    }
-}
-
-void ninjaArmy::setSize( int nSize, bool momentumFlag )
-{
-    int i;
-    for( i=0; i < ninjas.size();i ++) 
-        delete ninjas[i];
-    ninjas.resize( nSize );
-    for( i = 0; i < nSize; i++ ){
-#ifdef NINJAFOAM
-        if(momentumFlag)
-            ninjas[i] = new NinjaFoam();
-        else
-            ninjas[i] = new ninja();
-#else
-        ninjas[i] = new ninja();
-#endif
     }
 }
 
