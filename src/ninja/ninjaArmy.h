@@ -140,7 +140,7 @@ public:
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType);
+    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions);
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
     const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void set_writeFarsiteAtmFile(bool flag);

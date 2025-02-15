@@ -225,7 +225,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
  * 
  * 
  */
-int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, char ** papszOptions, const char* fetchType){
+int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions){
     if (pszDstFile == NULL)
     {
         return NINJA_E_INVALID;
