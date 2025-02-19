@@ -191,6 +191,23 @@ bool NinjaFoam::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, PRE resampling dem to mesh res, smoothDist = %d ...",smoothDist);
         double startTimer = omp_get_wtime();
         input.dem.smooth_elevation(smoothDist);
+
+        if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
+        {
+            std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+            std::string pathName;
+            if(input.customOutputPath == "!set")
+            {
+                pathName = CPLGetPath(input.dem.fileName.c_str());
+            } else
+            {
+                pathName = input.customOutputPath;
+            }
+            std::string demFilename_tif = pathName+"/"+baseName+"_pre-smooth"+std::to_string(smoothDist)+".tif";
+            std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
+            input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
+        }
+
         double endTimer = omp_get_wtime();
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
     }
@@ -4139,6 +4156,22 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 AsciiGrid<double>::order0); //coarsen the grids
     }
 
+    if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
+    {
+        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+        std::string pathName;
+        if(input.customOutputPath == "!set")
+        {
+            pathName = CPLGetPath(input.dem.fileName.c_str());
+        } else
+        {
+            pathName = input.customOutputPath;
+        }
+        std::string demFilename_tif = pathName+"/"+baseName+"_resampled.tif";
+        std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
+        input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
+    }
+
     // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
     std::string found_smoothMethod = CPLGetConfigOption("DEM_SMOOTH_METHOD", "");
     if( found_smoothMethod == "POST_DEM_RESAMPLE_TO_MESH_RES" )
@@ -4155,6 +4188,23 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, POST resampling dem to mesh res, smoothDist = %d ...",smoothDist);
         double startTimer = omp_get_wtime();
         input.dem.smooth_elevation(smoothDist);
+
+        if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
+        {
+            std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
+            std::string pathName;
+            if(input.customOutputPath == "!set")
+            {
+                pathName = CPLGetPath(input.dem.fileName.c_str());
+            } else
+            {
+                pathName = input.customOutputPath;
+            }
+            std::string demFilename_tif = pathName+"/"+baseName+"_post-smooth"+std::to_string(smoothDist)+".tif";
+            std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
+            input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
+        }
+
         double endTimer = omp_get_wtime();
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
     }
