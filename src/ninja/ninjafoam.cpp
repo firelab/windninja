@@ -175,43 +175,6 @@ bool NinjaFoam::simulate_wind()
     readInputFile();
     set_position();
 
-    // if troubles, try smoothing the dem before the whole process, BEFORE resampling to mesh resolution
-    std::string found_smoothMethod = CPLGetConfigOption("DEM_SMOOTH_METHOD", "");
-    if( found_smoothMethod == "PRE_DEM_RESAMPLE_TO_MESH_RES" )
-    {
-        CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_METHOD = \"PRE_DEM_RESAMPLE_TO_MESH_RES\"");
-        int smoothDist = 1;
-        std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
-        if( found_smoothDist_str != "" )
-        {
-            CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_DIST, setting smoothDist to \"%s\"",found_smoothDist_str.c_str());
-            smoothDist = atof(found_smoothDist_str.c_str());
-        }
-
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, PRE resampling dem to mesh res, smoothDist = %d ...",smoothDist);
-        double startTimer = omp_get_wtime();
-        input.dem.smooth_elevation(smoothDist);
-
-        if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
-        {
-            std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-            std::string pathName;
-            if(input.customOutputPath == "!set")
-            {
-                pathName = CPLGetPath(input.dem.fileName.c_str());
-            } else
-            {
-                pathName = input.customOutputPath;
-            }
-            std::string demFilename_tif = pathName+"/"+baseName+"_pre-smooth"+std::to_string(smoothDist)+".tif";
-            std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
-            input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
-        }
-
-        double endTimer = omp_get_wtime();
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
-    }
-
     SetMeshResolutionAndResampleDem();
 
     checkInputs();
@@ -1016,24 +979,6 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
     nCells.push_back(int( (bbox[4] - bbox[1]) / (blockMeshResolution))); // Ny1
     nCells.push_back(int( (bbox[5] - bbox[2]) / (blockMeshResolution))); // Nz1
 
-// try making cell height taller, val > 1.0, shorter would be val < 1.0, no change would be val == 1.0. val == 0.0 is a BAD idea
-// note, the results of val 0.9 and val 1.1 were definitely a small nudge in overall cell height at the bottom of the domain if anything, larger differences at the top of the domain
-// but the resulting solution, all this on bell_steep.tif, fine, brush, 5 mph at 270 degrees, seemed to have differences in the solution. In particular, the wake stopped being symmetrical
-// so, leaving this as value 1.0 for no modification for now
-    double cellHeightModifier = 1.0;
-    std::string found_cellHeightModifier_str = CPLGetConfigOption("FOAM_CELL_HEIGHT_MODIFIER", "");
-    if( found_cellHeightModifier_str != "" )
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "found CPL config option FOAM_CELL_HEIGHT_MODIFIER, setting foam_cellHeightModifier to \"%s\"",found_cellHeightModifier_str.c_str());
-        cellHeightModifier = atof(found_cellHeightModifier_str.c_str());
-        if( cellHeightModifier <= 0.05 )  // has to avoid making bbox[5] lower than bbox[2], 0.05 is multiplied into blockMeshDz for zmin but not for zmax
-        {
-            throw std::runtime_error("input FOAM_CELL_HEIGHT_MODIFIER aka foam_cellHeightModifier cannot be <= 0.05 !!!");
-        }
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "modifying foam blockMeshDz to indirectly modify foam cell height...");
-    }
-    bbox[5] = input.dem.get_maxValue() + blockMeshDz*cellHeightModifier; //zmax
-
     //we need several cells on all sides of the blockMesh
     //the blockMesh is at least twice as coarse as the refined mesh (meshResolution)
     if(nCells[0] < 10 || nCells[1] < 10 || nCells[2] < 10)
@@ -1041,13 +986,7 @@ void NinjaFoam::SetBlockMeshParametersFromDem()
         throw std::runtime_error("The requested mesh resolution is too coarse.");
     }
 
-    // original unmodified formula
-    //initialFirstCellHeight = blockMeshResolution; //height of first cell
-    double old_bbox_5 = input.dem.get_maxValue() + blockMeshDz;
-    double nCells_dbl = (old_bbox_5 - bbox[2]) / (blockMeshResolution);
-    initialFirstCellHeight = (bbox[5] - bbox[2]) / (nCells_dbl); //height of first cell
-    // the following formula is the same as the above, SPECIFIC to the current bbox[5] and bbox[2] definitions
-    //initialFirstCellHeight = blockMeshResolution * ( (cellHeightModifier - 0.05) / (1 - 0.05) ); //height of first cell
+    initialFirstCellHeight = blockMeshResolution; //height of first cell
 
     //firstCellheight will be used when decomposing domain for moveDynamicMesh
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
@@ -4168,20 +4107,17 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
             pathName = input.customOutputPath;
         }
         std::string demFilename_tif = pathName+"/"+baseName+"_resampled.tif";
-        std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "writing file \"%s\"",demFilename_tif.c_str());
         input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
     }
 
     // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
-    std::string found_smoothMethod = CPLGetConfigOption("DEM_SMOOTH_METHOD", "");
-    if( found_smoothMethod == "POST_DEM_RESAMPLE_TO_MESH_RES" )
+    if( CSLTestBoolean(CPLGetConfigOption("SMOOTH_DEM", "FALSE")) )
     {
-        CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_METHOD = \"POST_DEM_RESAMPLE_TO_MESH_RES\"");
         int smoothDist = 1;
         std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
         if( found_smoothDist_str != "" )
         {
-            CPLDebug("NINJAFOAM", "found CPL config option DEM_SMOOTH_DIST, setting smoothDist to \"%s\"",found_smoothDist_str.c_str());
             smoothDist = atof(found_smoothDist_str.c_str());
         }
 
@@ -4201,7 +4137,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 pathName = input.customOutputPath;
             }
             std::string demFilename_tif = pathName+"/"+baseName+"_post-smooth"+std::to_string(smoothDist)+".tif";
-            std::cout << "writing file \"" << demFilename_tif << "\"" << std::endl;
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "writing file \"%s\"",demFilename_tif.c_str());
             input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
         }
 
