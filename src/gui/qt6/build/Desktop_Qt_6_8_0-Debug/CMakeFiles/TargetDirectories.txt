@@ -1,9 +1,0 @@
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/qt6_application.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/edit_cache.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/rebuild_cache.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/list_install_components.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/install.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/install/local.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/install/strip.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/qt6_application_autogen_timestamp_deps.dir
-/home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/CMakeFiles/qt6_application_autogen.dir

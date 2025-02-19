@@ -1,2 +1,0 @@
-set(__QT_DEPLOY_TARGET_qt6_application_FILE /home/austenharrell/school/2025_Spring/windninja/src/gui/qt6/build/Desktop_Qt_6_8_0-Debug/qt6_application)
-set(__QT_DEPLOY_TARGET_qt6_application_TYPE EXECUTABLE)
