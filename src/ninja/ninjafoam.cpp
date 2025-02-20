@@ -4095,22 +4095,6 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 AsciiGrid<double>::order0); //coarsen the grids
     }
 
-    if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
-    {
-        std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-        std::string pathName;
-        if(input.customOutputPath == "!set")
-        {
-            pathName = CPLGetPath(input.dem.fileName.c_str());
-        } else
-        {
-            pathName = input.customOutputPath;
-        }
-        std::string demFilename_tif = pathName+"/"+baseName+"_resampled.tif";
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "writing file \"%s\"",demFilename_tif.c_str());
-        input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
-    }
-
     // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
     if( CSLTestBoolean(CPLGetConfigOption("SMOOTH_DEM", "FALSE")) )
     {
@@ -4121,28 +4105,8 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
             smoothDist = atof(found_smoothDist_str.c_str());
         }
 
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, POST resampling dem to mesh res, smoothDist = %d ...",smoothDist);
-        double startTimer = omp_get_wtime();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, smoothDist = %d ...",smoothDist);
         input.dem.smooth_elevation(smoothDist);
-
-        if( CSLTestBoolean(CPLGetConfigOption("WRITE_INTERMEDIATE_DEMS", "FALSE")) )
-        {
-            std::string baseName(CPLGetBasename(input.dem.fileName.c_str()));
-            std::string pathName;
-            if(input.customOutputPath == "!set")
-            {
-                pathName = CPLGetPath(input.dem.fileName.c_str());
-            } else
-            {
-                pathName = input.customOutputPath;
-            }
-            std::string demFilename_tif = pathName+"/"+baseName+"_post-smooth"+std::to_string(smoothDist)+".tif";
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "writing file \"%s\"",demFilename_tif.c_str());
-            input.dem.exportToTiff(demFilename_tif.c_str(), AsciiGrid<double>::tiffType::tiffGray);
-        }
-
-        double endTimer = omp_get_wtime();
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file time was %lf seconds.", endTimer-startTimer);
     }
 }
 

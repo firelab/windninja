@@ -172,17 +172,23 @@ void Elevation::smooth_elevation(const int smoothDist)
     Elevation dem;  // make a temporary copy to keep the calculation values the same
     dem = *this;
 
+    int count;
+    double sum;
+    int imin, imax, jmin, jmax;
+    double avg;
+
     for(int i = 0; i < dem.get_nRows(); i++)
     {
+        imin = i - smoothDist;
+        imax = i + smoothDist;
+
         for(int j = 0; j < dem.get_nCols(); j++)
         {
-            int count = 0;
-            double sum = 0.0;
+            count = 0;
+            sum = 0.0;
 
-            int imin = i - smoothDist;
-            int imax = i + smoothDist;
-            int jmin = j - smoothDist;
-            int jmax = j + smoothDist;
+            jmin = j - smoothDist;
+            jmax = j + smoothDist;
 
             if( imin < 0 )
             {
@@ -204,13 +210,13 @@ void Elevation::smooth_elevation(const int smoothDist)
 
             for(int ii = imin; ii <= imax; ii++)
             {
-                for( int jj = jmin; jj <= jmax; jj++)
+                for(int jj = jmin; jj <= jmax; jj++)
                 {
                     sum = sum + dem.get_cellValue(ii, jj);
                     count = count + 1;
                 }
             }
-            double avg = sum / float(count);
+            avg = sum / float(count);
 
             this->set_cellValue(i,j,avg);
         }
