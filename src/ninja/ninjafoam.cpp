@@ -72,7 +72,9 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
-    
+
+    smoothDist = 0;
+
     writeMassMesh = false;
 }
 
@@ -247,7 +249,6 @@ bool NinjaFoam::simulate_wind()
     int nTries = 3;
     Elevation dem_copy = input.dem;
 
-    int smoothDist;
     double startRestartVal;
     double endRestartVal;
 
@@ -321,8 +322,9 @@ bool NinjaFoam::simulate_wind()
                     return false;
                 }
                 // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
+                // initial value of smoothDist is either the constructor value of 0, or the value set during smoothing if the dem was manually smoothed from the start
                 tryIdx++;
-                smoothDist = tryIdx;
+                smoothDist = smoothDist + 1;
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh..., smoothDist = %d",smoothDist);
 
                 input.dem = dem_copy;
@@ -411,8 +413,9 @@ bool NinjaFoam::simulate_wind()
                 return false;
             }
             // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
+            // initial value of smoothDist is either the constructor value of 0, or the value set during smoothing if the dem was manually smoothed from the start
             tryIdx++;
-            smoothDist = tryIdx;
+            smoothDist = smoothDist + 1;
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh..., smoothDist = %d",smoothDist);
 
             input.dem = dem_copy;
@@ -4187,7 +4190,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
     if( CSLTestBoolean(CPLGetConfigOption("SMOOTH_DEM", "FALSE")) )
     {
-        int smoothDist = 1;
+        smoothDist = 1;
         std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
         if( found_smoothDist_str != "" )
         {
