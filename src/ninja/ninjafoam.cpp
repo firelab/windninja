@@ -248,11 +248,18 @@ bool NinjaFoam::simulate_wind()
     Elevation dem_copy = input.dem;
 
     int smoothDist;
+    double startRestartVal;
+    double endRestartVal;
 
     // try 0 is the initial try, 1 to nTries are dem smoothing attempts
     int tryIdx = 0;
     while( status == false && tryIdx <= nTries )
     {
+        #ifdef _OPENMP
+        startRestartVal = omp_get_wtime();
+        startRestart.push_back( startRestartVal );
+        #endif
+
         /*------------------------------------------*/
         /*  write OpenFOAM files                    */
         /*------------------------------------------*/
@@ -341,6 +348,11 @@ bool NinjaFoam::simulate_wind()
                 // thankfully, the meshResolution remains unchanged as just firstCellHeight was altered at each previous step
                 CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
+                #ifdef _OPENMP
+                endRestartVal = omp_get_wtime();
+                endRestart.push_back( endRestartVal );
+                #endif
+
                 continue;
 
             }  // if(!SimpleFoam())
@@ -426,6 +438,11 @@ bool NinjaFoam::simulate_wind()
             // thankfully, the meshResolution remains unchanged as just firstCellHeight was altered at each previous step
             CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
+            #ifdef _OPENMP
+            endRestartVal = omp_get_wtime();
+            endRestart.push_back( endRestartVal );
+            #endif
+
             continue;
 
         }  // if(!SampleRawOutput())
@@ -479,6 +496,15 @@ bool NinjaFoam::simulate_wind()
     /*----------------------------------------*/
 
     #ifdef _OPENMP
+    for( int t = 0; t < endRestart.size(); t++ )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "try %d time was %lf seconds.", t, endRestart[t]-startRestart[t]);
+    }
+    if( endRestart.size() > 0 )
+    {
+        int t = endRestart.size();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "try %d time was %lf seconds.", t, endTotal-startRestart[t]);
+    }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);

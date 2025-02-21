@@ -221,6 +221,7 @@ private:
     double startOutputSampling, endOutputSampling;
     double startGenerateAndSampleMassMesh, endGenerateAndSampleMassMesh;
     double startStlConversion, endStlConversion;
+    std::vector<double> startRestart, endRestart;
     
 #ifdef NINJA_BUILD_TESTING
 public:
