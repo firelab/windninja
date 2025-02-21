@@ -291,7 +291,7 @@ bool NinjaFoam::simulate_wind()
     if( input.inputSpeed != 0.0 )
     {
         if(!SimpleFoam()){
-            if(input.existingCaseDirectory == "!set"){
+            if(input.existingCaseDirectory != "!set"){
                 //no coarsening if this is an existing case
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
                         "mesh for existing case directory. Try again without using an existing case.");
