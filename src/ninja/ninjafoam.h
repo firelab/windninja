@@ -167,7 +167,7 @@ private:
 
     /* Output */
     Elevation outputSampleGrid;
-    void SampleRawOutput();
+    bool SampleRawOutput();
     void WriteOutputFiles();
     void SetOutputResolution();
     void SetOutputFilenames();
