@@ -292,43 +292,58 @@ bool NinjaFoam::simulate_wind()
     {
         if(!SimpleFoam()){
             if(input.existingCaseDirectory != "!set"){
-                //no coarsening if this is an existing case
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
-                        "mesh for existing case directory. Try again without using an existing case.");
+                // no smoothing of the dem if this is an existing case
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't generate new mesh from smoothed elevation file "
+                        "for existing case directory. Try again without using an existing case.");
                 return false;
             }
-            //try solving with previous mesh iterations (less refinement)
-            while(latestTime > 50){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
-                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
-                NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
-                if(input.numberCPUs > 1){
-                    for(int n=0; n<input.numberCPUs; n++){
-                        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
-                    }
-                }
-                latestTime -= 1;
-                meshResolution *= 2.0;
-                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+            // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
+            Elevation dem_copy = input.dem;
+            int nTries = 3;
+            for(int t = 1; t <= nTries; t++)
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh..., smoothDist = %d",t);
 
-                /* update simpleFoam controlDict writeInterval */
-                UpdateSimpleFoamControlDict();
+                input.dem = dem_copy;
+                input.dem.smooth_elevation(t);
+
+                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
+                NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
+                CPLDebug("NINJAFOAM", "generating new NINJAFOAM directory");
+                // force temp dir to DEM location
+                CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+                CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+                CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
+                status = GenerateFoamDirectory(input.dem.fileName);
+                if(status != 0){
+                    throw std::runtime_error("Error generating the NINJAFOAM directory.");
+                }
+
+                // reset to original values
+                latestTime = 0;
+                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+                // very important, without this the simulations go on past 300 iterations for simpleFoam
+                simpleFoamEndTime = 1000;
+                // thankfully, the meshResolution remains unchanged as just firstCellHeight was altered at each previous step
+                CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
+
+                GenerateNewCase();
 
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
-
                 ApplyInit();
 
                 if(input.numberCPUs > 1){
                     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
                     DecomposePar();
                 }
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
                 status = SimpleFoam();
                 if(status == true){
                     break;
                 }
             }
-            //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
-            if( status == false & latestTime == 50 ){
+            // if the solver fails with nTries smoothDist increments, we're done
+            if( status == false ){
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
                 return false;
             }
