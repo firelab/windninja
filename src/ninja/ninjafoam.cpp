@@ -241,8 +241,8 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "input.nIterations = %d", input.nIterations);
 
     // start the foam file writing, run, and sample processes, where if it fails at any point, then restart and
-    // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
-    // except for if it is an already existing case, then just throw an error, as we don't want to edit the existing case mesh files
+    // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem as needed.
+    // Don't smooth existing cases, just throw an error, as we don't want to edit the existing case mesh files.
 
     int status = 0;
 
