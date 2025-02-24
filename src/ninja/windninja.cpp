@@ -81,19 +81,21 @@ extern "C"
  *                             None
  *
  * \param numNinjas The number of runs to create.
+ * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
+ * \param timeList List of times to simulate (only needed if diurnal or stability is used).
  * \param options Key, value option pairs from the options listed above.
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
-    ( unsigned int numNinjas, bool momentumFlag, char ** options )
+    ( unsigned int numNinjas, bool momentumFlag, char * timeList, char ** options )
 {
 
 #ifndef NINJAFOAM
     if(momentumFlag == true)
     {
-        throw std::runtime_error("bMomentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
     }
 #endif
 
@@ -101,6 +103,10 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 
     try
     {
+        // Construct a ptime from a string with the format "YYYY-MM-DD HH:MM:SS"
+        //     std::string date_time_str = "2025-02-18 14:30:00";
+        //         boost::posix_time::ptime time = boost::posix_time::time_from_string(date_time_str);
+        //
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
 
@@ -160,13 +166,15 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
  * \brief Automatically allocate and generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
- * a weather station file.  
+ * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
+ * where the ith element of each array specifies a datetime within range of datetimes contained
+ * in the weather station file. 
  *
- * \param year A pointer to an array of years.
- * \param month A pointer to an array of months.
- * \param day A pointer to an array of days.
- * \param hour A pointer to an array of hours.
- * \param timeListSize The size of the time list.
+ * \param yearList A pointer to an array of years.
+ * \param monthList A pointer to an array of months.
+ * \param dayList A pointer to an array of days.
+ * \param hourList A pointer to an array of hours.
+ * \param MinuteList A pointer to an array of hours.
  * \param timeZone a timezone string representing a valid timezone
  * \param stationFileName A valid path to a station file or list of station files.
  * \param elevationFile A valid path to an elevation file.
@@ -176,18 +184,30 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
-    ( int * yearList, int * monthList, int * dayList, int * hourList, int timeListSize, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
+    ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
     if(momentumFlag == true)
     {
         throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
     }
 
+    //Get the number of elements in the arrays
+    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+
+    if(!(length1 == length2 == length3 == length4 == length5))
+    {
+        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList must be the same length!");
+    }
+
     NinjaArmyH* army;
     try{
         std::vector <boost::posix_time::ptime> timeList;
-        for(int i=0; i<timeListSize; i++){
-            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::hours(hourList[i])));
+        for(size_t i=0; i<length1; i++){
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
         }
 
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
