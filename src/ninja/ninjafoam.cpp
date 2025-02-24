@@ -240,21 +240,19 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "Rough_h = %f", input.surface.Rough_h.get_meanValue());
     CPLDebug("NINJAFOAM", "input.nIterations = %d", input.nIterations);
 
-    // start the foam file writing, run, and sample processes, where if it fails at any point, then restart and
-    // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem as needed.
+    // start the foam file writing, run, and sample processes, where if it fails at any point, then restart and try smoothing the dem
     // Don't smooth existing cases, just throw an error, as we don't want to edit the existing case mesh files.
 
-    int status = 0;
+    bool solutionStatus = false;
 
     int nTries = 3;
-    Elevation dem_copy = input.dem;
 
     double startRestartVal;
     double endRestartVal;
 
     // try 0 is the initial try, 1 to nTries are dem smoothing attempts
     int tryIdx = 0;
-    while( status == false && tryIdx <= nTries )
+    while( solutionStatus == false && tryIdx <= nTries )
     {
         #ifdef _OPENMP
         startRestartVal = omp_get_wtime();
@@ -312,8 +310,8 @@ bool NinjaFoam::simulate_wind()
         // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
         if( input.inputSpeed != 0.0 )
         {
-            status = SimpleFoam();
-            if( status == false )
+            solutionStatus = SimpleFoam();
+            if( solutionStatus == false )
             {
                 if(input.existingCaseDirectory != "!set"){
                     // no smoothing of the dem if this is an existing case
@@ -321,14 +319,13 @@ bool NinjaFoam::simulate_wind()
                             "for existing case directory. Try again without using an existing case.");
                     return false;
                 }
-                // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
+                // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
                 // initial value of smoothDist is either the constructor value of 0, or the value set during smoothing if the dem was manually smoothed from the start
                 tryIdx++;
                 smoothDist = smoothDist + 1;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh..., smoothDist = %d",smoothDist);
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh..., equivalent smoothDist = %d",smoothDist);
 
-                input.dem = dem_copy;
-                input.dem.smooth_elevation(smoothDist);
+                input.dem.smooth_elevation(1);
 
                 CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
                 NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
@@ -337,8 +334,8 @@ bool NinjaFoam::simulate_wind()
                 CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
                 CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
                 CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
-                status = GenerateFoamDirectory(input.dem.fileName);
-                if(status != 0){
+                int retval = GenerateFoamDirectory(input.dem.fileName);
+                if(retval != 0){
                     throw std::runtime_error("Error generating the NINJAFOAM directory.");
                 }
 
@@ -403,8 +400,8 @@ bool NinjaFoam::simulate_wind()
         //suppress libXML warnings
         CPLPushErrorHandler(CPLQuietErrorHandler);
         Sample();
-        status = SampleRawOutput();
-        if( status == false )
+        solutionStatus = SampleRawOutput();
+        if( solutionStatus == false )
         {
             if(input.existingCaseDirectory != "!set"){
                 // no smoothing of the dem if this is an existing case
@@ -412,14 +409,13 @@ bool NinjaFoam::simulate_wind()
                         "for existing case directory. Try again without using an existing case.");
                 return false;
             }
-            // try smoothing the dem, incrementing the smoothDist a few times on a fresh copy of the resampled dem if that continues to not work
+            // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
             // initial value of smoothDist is either the constructor value of 0, or the value set during smoothing if the dem was manually smoothed from the start
             tryIdx++;
             smoothDist = smoothDist + 1;
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh..., smoothDist = %d",smoothDist);
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh..., equivalent smoothDist = %d",smoothDist);
 
-            input.dem = dem_copy;
-            input.dem.smooth_elevation(smoothDist);
+            input.dem.smooth_elevation(1);
 
             CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
             NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
@@ -428,8 +424,8 @@ bool NinjaFoam::simulate_wind()
             CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
             CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
             CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
-            status = GenerateFoamDirectory(input.dem.fileName);
-            if(status != 0){
+            int retval = GenerateFoamDirectory(input.dem.fileName);
+            if(retval != 0){
                 throw std::runtime_error("Error generating the NINJAFOAM directory.");
             }
 
@@ -470,8 +466,8 @@ bool NinjaFoam::simulate_wind()
         // update the tryIdx for the next loop
         tryIdx++;
 
-    } // while( status == false && tryIdx <= nTries )
-    if( status == false ){
+    } // while( solutionStatus == false && tryIdx <= nTries )
+    if( solutionStatus == false ){
         CPLError( CE_Failure, CPLE_AppDefined, "Error during simpleFoam() or other foam processes (sampling foam files). The flow solution failed.");
         return false;
     }
