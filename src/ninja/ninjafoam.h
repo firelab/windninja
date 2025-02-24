@@ -223,8 +223,6 @@ private:
     double startStlConversion, endStlConversion;
     std::vector<double> startRestart, endRestart;
 
-    int smoothDist;
-
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
