@@ -156,6 +156,10 @@ extern "C" {
 ** not yet implemented (or may never be) are marked with XXX.
 **
 ** XXX: Do not forget commas after the constants defined above!!! XXX
+**
+** NOTES:
+** Turn on the environment variable CPL_CURL_VERBOSE = ON for troubleshooting
+** %2F refers to the symbol / when writing your dir value
 */
 
 #define NOMADS_NAME                 0
@@ -628,10 +632,10 @@ static const char *apszNomadsKeys[][11] =
      "national_blend_models",
      "filter_blend.pl",
      "blend.t%02dz.core.f%03d.co.grib2",
-     "blend.%s",
+     "blend.%s/%02d/core",
      NOMADS_GENERIC_DATE,
-     "0:36:1",
      "0:23:1",
+     "1:264:1",
      "TCDC,TMP,WDIR,WIND",
      "2_m_above_ground,10_m_above_ground",
      "2.5 km",
