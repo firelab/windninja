@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8">
+<head>
+ <style>
+ body {
+   padding: 0 ;
+   margin:  0 ;
+ }
+ html, body {
+    height: 100% ;
+    width:  100% ;
+ }
+ #map {
+    height: 70% ;
+    width: 100% ;
+ }
+ .option_hdr {
+   font-size: 0.9em ;
+ }
+ .option_hdr2 {
+   font-size: 0.7em ;
+ }
+ label, input {
+   font-size: 0.8em;
+ }
+ #helpBlock {
+       font-size: x-small;
+         display: block;
+ }
+ .input-help {
+       vertical-align: top;
+         display: inline-block;
+ }
+ .adjust-line-height {
+       line-height: 0em;
+ }
+
+
+ </style>
+    <title>Leaflet.draw drawing and editing tools</title>
+
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
+
+    <!-- TODO(kyle): prune dependencies -->
+    <script src="./leaflet/leaflet-src.js"></script>
+
+    <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
+    <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
+
+    <script src="./leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
+
+    <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
+
+    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+
+    <script src="./leaflet/draw/src/Control.Draw.js"></script>
+    <script src="./leaflet/draw/src/Tooltip.js"></script>
+    <script src="./leaflet/draw/src/Toolbar.js"></script>
+
+    <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+</head>
+<body>
+ <div id="map" style="border: 1px solid #ccc"></div>
+<script>
+    // Get a valid key from our server
+    var apiKey = "";
+    function getKey() {
+     // don't call this
+     return
+     xhr = new XMLHttpRequest();
+     var url = "https://windninja.org/mapkey/";
+     xhr.open("GET", url, true);
+     xhr.onreadystatechange = function () {
+     // readyState == HEADER_RECEIVED or DONE is fine (2 or 4)
+     // We need to read the return on the api call, and report a valid
+     // error.  These are worthless.
+      if (xhr.readyState == 4 && xhr.status == 200) {
+       apiKey = JSON.parse(xhr.responseText).key;
+       alert(apiKey);
+      } else {
+       console.log("failed");
+      }
+     }
+     xhr.send(null);
+    }
+    getKey();
+
+    // invalidate the key, use this static one for now.
+    apiKey = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
+
+    mbAtt = 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+     '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+     'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>'
+
+
+    mbl = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ', {
+     tileSize: 512,
+     maxZoom: 18,
+     zoomOffset: -1,
+     // attribution: mbAtt,
+     id: 'mapbox/streets-v11'
+    })
+    var map = new L.Map('map', {layers: [mbl], center: new L.LatLng(43.62455, -113.2971), zoom: 8});
+    var mbrLayer = new L.FeatureGroup();
+    map.addLayer(mbrLayer);
+    var txtboxLayer = new L.FeatureGroup();
+    map.addLayer(txtboxLayer) ;
+
+    var drawControl = new L.Control.Draw({
+        position: 'topright',
+        draw: {
+            polyline: false,
+            polygon: false,
+            circle: false,
+            marker: false,
+            circlemarker: false,
+            rectangle: true
+        }
+    });
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.DRAWSTART, function (e) {
+        mbrLayer.clearLayers();
+        txtboxLayer.clearLayers();
+    });
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+          var b = e.layer._bounds;
+          var bounds = fix_bounds([b._southWest.lng, b._northEast.lng, b._southWest.lat, b._northEast.lat]);
+
+          disable_listeners() ;
+          //set the input boxes at the bottom
+          document.getElementById("west_lon").value = bounds[0];
+          document.getElementById("east_lon").value = bounds[1];
+          document.getElementById("south_lat").value = bounds[2];
+          document.getElementById("north_lat").value = bounds[3];
+          enable_listeners() ; 
+
+          //draw the rectangle
+          clear_center_radius();
+          update_rectangle();
+          console.log(bounds);
+    });
+
+    L.control.scale().addTo(map);
+
+
+
+    // the function evaluated by the C++ code to retrieve the selected box
+    function mbr() {
+      var b = [
+          document.getElementById("west_lon").valueAsNumber,
+          document.getElementById("east_lon").valueAsNumber,
+          document.getElementById("south_lat").valueAsNumber,
+          document.getElementById("north_lat").valueAsNumber
+      ];
+      console.log(b);
+      return fix_bounds(b);
+    }
+
+    function fix_bounds(bounds) {
+      // make shallow copy of array
+      // element ordering should be west, east, south, north
+      var b = bounds.slice(0) ;
+
+      // normalize longitudes to -180 - 180.
+      b[0] = b[0] % 360;
+      if(b[0] < -180) {
+        b[0] += 360;
+      }
+      b[1] = b[1] % 360;
+      if(b[1] < -180) {
+        b[1] += 360;
+      }
+      // switch to negative longitudes if needed
+      if(b[0] > 180){
+        b[0] -= 360;
+      }
+      if(b[1] > 180){
+        b[1] -= 360;
+      }
+      return b;
+    }
+
+    function clear_center_radius() {
+        console.log("clear_center_radius")
+        disable_listeners();
+        //set the input boxes at the bottom
+        document.getElementById("center_lat").value =  null ;
+        document.getElementById("center_lon").value =  null ;
+        document.getElementById("radius").value = null ;
+        enable_listeners() ; 
+    }
+
+    function update_text_bounds() {
+        console.log("update_text_bounds") ; 
+        clear_center_radius() ; 
+        update_rectangle() ;
+    }
+
+
+    function update_rectangle() {
+      console.log("update_rectangle") ; 
+      var bounds = [ [ document.getElementById("south_lat").valueAsNumber,
+                       document.getElementById("west_lon").valueAsNumber],
+                     [ document.getElementById("north_lat").valueAsNumber,
+                       document.getElementById("east_lon").valueAsNumber] ];
+
+      // if any of the text boxes are empty, disregard.
+      for (var i = 0; i < bounds.length; i++) {
+          var corner = bounds[i];
+          for (var j = 0; j < corner.length; j++) { 
+             if (isNaN(corner[j])) {
+                 return null ;
+             }
+          }
+      }
+
+      // draw the box
+      txtboxLayer.clearLayers() ;
+      L.rectangle(bounds).addTo(txtboxLayer);
+    }
+
+    function update_center() { 
+        console.log("update_center");
+        var center_lat = document.getElementById("center_lat").valueAsNumber;
+        var center_lon = document.getElementById("center_lon").valueAsNumber;
+        var radius = document.getElementById("radius").valueAsNumber;
+
+        // if any boxes empty, skip
+        if (isNaN(center_lat)) return null ;
+        if (isNaN(center_lon)) return null ;
+        if (isNaN(radius)) return null ; 
+
+
+        // crude spherical earth distance calculation.
+        var delta_lat = radius / ( 2 * Math.PI * 3958.7613 / 360.);
+        var lat_rad = 3958.7613 * Math.cos(center_lat * Math.PI/180) ;
+        var delta_lon = radius / ( 2 * Math.PI * lat_rad / 360.);
+
+        console.log([delta_lat, delta_lon, lat_rad]);
+
+        //set the input boxes at the bottom
+        disable_listeners();
+        document.getElementById("west_lon").value = center_lon - delta_lon;
+        document.getElementById("east_lon").value = center_lon + delta_lon;
+        document.getElementById("south_lat").value = center_lat - delta_lat;
+        document.getElementById("north_lat").value = center_lat + delta_lat;
+        enable_listeners();
+
+        update_rectangle();
+    } 
+
+    function enable_listeners() {
+        // draw a new box whenever user types in coordinates
+        document.getElementById("west_lon").addEventListener("input", update_text_bounds);
+        document.getElementById("east_lon").addEventListener("input", update_text_bounds);
+        document.getElementById("south_lat").addEventListener("input", update_text_bounds);
+        document.getElementById("north_lat").addEventListener("input", update_text_bounds);
+    
+        // calculate new bounds whenever user types in center and radius
+        document.getElementById("center_lat").addEventListener("input", update_center);
+        document.getElementById("center_lon").addEventListener("input", update_center);
+        document.getElementById("radius").addEventListener("input", update_center);
+    }
+    function disable_listeners() {
+        // draw a new box whenever user types in coordinates
+        document.getElementById("west_lon").removeEventListener("input", update_text_bounds);
+        document.getElementById("east_lon").removeEventListener("input", update_text_bounds);
+        document.getElementById("south_lat").removeEventListener("input", update_text_bounds);
+        document.getElementById("north_lat").removeEventListener("input", update_text_bounds);
+    
+        // calculate new bounds whenever user types in center and radius
+        document.getElementById("center_lat").removeEventListener("input", update_center);
+        document.getElementById("center_lon").removeEventListener("input", update_center);
+        document.getElementById("radius").removeEventListener("input", update_center);
+    }
+</script>
+
+<div id="data_entry" style="border: 1px solid #ccc">
+  <form id="center_radius" style="border-style: solid;">
+    <div class="adjust-line-height">
+    <p class="option_hdr">Point and Radius:</p>
+    <p style="color: grey" class="option_hdr2"> Enter lat, lon, and radius, then choose Data Source and click Download File</p>
+    </div>
+    <label for="center_lat">Center Lat</label>
+    <span class="input-help">
+    <input type="number" placeholder="44.334" id="center_lat" name="center_lat" />
+    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., 44.334</small>
+    </span>
+    <label for="center_lon">Center Lon</label>
+    <span class="input-help">
+    <input type="number" placeholder="-112.555" id="center_lon" name="center_lon" />
+    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., -112.555</small>
+    </span>
+    <label for="radius">Radius (miles)</label>
+    <span class="input-help">
+    <input type="number" placeholder="10" id="radius" name="radius" />
+    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., 10 </small>
+    </span>
+  </form>
+  <form id="bounds" style="border-style: solid">
+    <p class="option_hdr">Bounding Box Coordinates:</p>
+    <label for="north_lat">North</label>
+    <input type="number" placeholder="44.334" id="north_lat" name="north_lat" />
+    <label for="south_lat">South</label>
+    <input type="number" placeholder="43.532" id="south_lat" name="south_lat" />
+    <label for="east_lon">East</label>
+    <input type="number" placeholder="-112.555" id="east_lon" name="east_lon" />
+    <label for="west_lon">West</label>
+    <input type="number" placeholder="-113.058" id="west_lon" name="west_lon" />
+  </form>
+</div>
+
+<script>
+  enable_listeners();
+</script>
+</body>
+</html>
