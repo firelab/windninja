@@ -39,7 +39,7 @@ doxy.tag
 *.swp
 *~
 
-# Qt Creator files
+# Qt Creator files & user files
 *.config
 *.creator*
 *.files
