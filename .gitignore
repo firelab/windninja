@@ -29,6 +29,7 @@
 
 # Build folder
 debug*
+build*
 
 # Doxygen
 doxy.tag
@@ -38,11 +39,13 @@ doxy.tag
 *.swp
 *~
 
-# Qt Creator files
+# Qt Creator files & user files
 *.config
 *.creator*
 *.files
 *.includes
+*.user
+*.user*
 
 # Weather model files
 *UCAR*

@@ -37,12 +37,17 @@ Thumbs.db
 
 # qtcreator generated files
 *.pro.user*
+*.txt.user*
+*:Zone*
 
 # xemacs temporary files
 *.flc
 
 # Vim temporary files
 .*.swp
+
+# Build
+/build/
 
 # Visual Studio generated files
 *.ib_pdb_index
