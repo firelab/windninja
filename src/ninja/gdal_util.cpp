@@ -257,11 +257,19 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
+    std::cout << "a = (" << ax << "," << ay << "), b = (" << bx << "," << by << ")" << std::endl;
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
 
     angleFromNorth = acos(adotb/(mag_a * mag_b)); //compute angle in radians
+    // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
+    // if bx is positive, then the angle is going clockwise from true north, and the dataset rotated counter clockwise, so the angleFromNorth is added as a corrector
+    // if bx is negative, then the angle is going counter clockwise from true north, and the dataset rotated clockwise, so the angleFromNorth is subtracted as a corrector
+    if( bx < 0 )
+    {
+        angleFromNorth = -1*angleFromNorth;
+    }
     cout<<"angleFromNorth in radians = "<<angleFromNorth<<endl;
     //convert the result from radians to degrees
     angleFromNorth *= 180.0 / PI;
