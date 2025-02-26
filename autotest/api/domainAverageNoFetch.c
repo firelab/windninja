@@ -1,11 +1,10 @@
-
 /******************************************************************************
  *
  * Project:  WindNinja
  * Purpose:  C API testing
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
- * gcc -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
+ * gcc -g -Wall -DNINJAFOAM -o domainAverageNoFetch domainAverageNoFetch.c -lninja -lgdal
  *
  ******************************************************************************
  *
@@ -29,8 +28,6 @@
  *****************************************************************************/
 
 #include "windninja.h"
-#include <stdio.h>
-
 #include "gdal.h"
 #include "cpl_conv.h"
 
@@ -45,8 +42,8 @@ int main()
     /* inputs that apply to the whole army (must be the same for all ninjas) */
     const int nCPUs = 1;
     int momentumFlag = 0;
-    const char* demFile = "/home/natalie/src/windninja/api_testing/big_butte_small.tif";
-    const char* outputPath = "/home/natalie/src/windninja/api_testing/";
+    const char* demFile = "/home/admin/Firelab/windninja/autotest/api/output.tif";
+    const char* outputPath = "/home/admin/Firelab/windninja/autotest/api/";
     const char* initializationMethod = "domain_average";
     const int diurnalFlag = 0;
     const char* meshChoice = "coarse";
@@ -106,7 +103,7 @@ int main()
     hBand = GDALGetRasterBand( hDataset, 1 );
     
     padfScanline = (double *) CPLMalloc(sizeof(double)*nXSize);
-    demValues = new double[nXSize * nYSize];
+    demValues = (double *)malloc(nXSize * nYSize * sizeof(double));
 
     for(int i = nYSize - 1; i >= 0; i--)
     {
@@ -250,13 +247,25 @@ int main()
     }
 
     /*-------------get the output wind speed and direction data-------------*/
-    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
-    if( NULL == outputSpeedGrid )
-    {
-        printf("Error in NinjaGetOutputSpeedGrid");
-    }
 
+    err = NinjaSetOutputSpeedGridResolution(ninjaArmy, nIndex, 10, "mi");
+    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex);
+    int numEntries = 0;
+    while (outputSpeedGrid !=NULL){
+      numEntries++;
+      outputSpeedGrid++;
+      printf("outputSpeedGrid = %f\n", *outputSpeedGrid);
+    }
+    printf("numEntries in speed grid= %d\n", numEntries);
+
+    err = NinjaSetOutputDirectionGridResolution(ninjaArmy, nIndex, 5, "mi");
     outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex);
+    numEntries = 0;
+    while (outputDirectionGrid !=NULL){
+      numEntries++;
+      outputDirectionGrid++;
+    }
+    printf("numEntries in direction grid= %d\n", numEntries);
     if( NULL == outputDirectionGrid )
     {
         printf("Error in NinjaGetOutputDirectionGrid");
@@ -289,7 +298,7 @@ int main()
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
 
-    delete [] demValues;
+    free(demValues);
     demValues = NULL;
     CPLFree( padfScanline );
     GDALClose( hDataset );

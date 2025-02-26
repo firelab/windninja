@@ -4078,6 +4078,10 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
         const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
         VSILFILE *fin;
         fin = VSIFOpenL(pszInput, "r");
+        if(fin == NULL)
+        {
+            throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
+        }
 
         char *data;
 
