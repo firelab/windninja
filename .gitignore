@@ -29,6 +29,7 @@
 
 # Build folder
 debug*
+build*
 
 # Doxygen
 doxy.tag
@@ -43,6 +44,9 @@ doxy.tag
 *.creator*
 *.files
 *.includes
+*.user
+*.user*
+CMakeLists.txt.user
 
 # Weather model files
 *UCAR*
