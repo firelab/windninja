@@ -46,7 +46,6 @@ doxy.tag
 *.includes
 *.user
 *.user*
-CMakeLists.txt.user
 
 # Weather model files
 *UCAR*
