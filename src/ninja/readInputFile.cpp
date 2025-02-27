@@ -93,10 +93,13 @@ void ninja::readInputFile()
 
     //compute angle between N-S grid lines in the dataset and true north
     double angleFromNorth = 0.0;
-    if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
+    if( CSLTestBoolean(CPLGetConfigOption("OVERRIDE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
-        //TODO: issue a warning here but don't throw an error
-        CPLDebug("WINDNINJA", "Unable to calculate angle departure from north for the DEM.");   
+        if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
+        {
+            //TODO: issue a warning here but don't throw an error
+            CPLDebug("WINDNINJA", "Unable to calculate angle departure from north for the DEM.");
+        }
     }
 
     //set the value for angleFromNorth member in the Elevation class
