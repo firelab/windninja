@@ -637,7 +637,8 @@ static const char *apszNomadsKeys[][11] =
      "0:23:1",
      "1:264:1",
      "TCDC,TMP,WDIR,WIND",
-     "2_m_above_ground,10_m_above_ground",
+     "2_m_above_ground,10_m_above_ground," \
+     "high_cloud_layer",
      "2.5 km",
      "National Blend of Models" },
 #ifdef NOMADS_EXPER_FORECASTS
