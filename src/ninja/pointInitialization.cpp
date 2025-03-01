@@ -442,9 +442,6 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     std::string xDem;
     std::string fullPath;
    
-//    xDem = demFile.substr(0,demFile.find(".",0));
-//    std::size_t found = xDem.find_last_of("/");
-//    subDem=xDem.substr(found+1);
     subDem = std::string(CPLGetBasename(demFile.c_str())); //Use cross platform stuff to avoid weird errors
 
     //NEW WAY
@@ -466,19 +463,25 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
-//        cout<<start_and_stop_times[0].local_time()<<endl;
-//        cout<<start_and_stop_times[1].local_time()<<endl;
-
         timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     
     std::string newDirPart = "WXSTATIONS-"+timeComponent+"-"+subDem;
-    fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
+    if(outPath != "")
+    {
+        fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
+    }
+    else
+    {
+        fullPath = std::string(newDirPart.c_str());
+    }
     CPLDebug("STATION_FETCH","Generating Directory: %s",fullPath.c_str());    
     VSIMkdir(fullPath.c_str(),0777);
     return fullPath;
-}/**
+}
+
+/**
  * @brief pointInitialization::removeBadDirectory
  * FOR CLI runs, remove the directory because the downloader failed to download the stations
  * probably because there are not stations available for the user specified reqs
