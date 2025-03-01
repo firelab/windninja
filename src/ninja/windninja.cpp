@@ -73,23 +73,37 @@ extern "C"
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
- * number of runs for the input type.
+ * number of runs for the input type. 
  *
  * \see NinjaMakeWeatherModelArmy
+ * \see NinjaMakePointArmy
  *
  * Avaliable Creation Options:
  *                             None
  *
  * \param numNinjas The number of runs to create.
  * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
- * \param timeList List of times to simulate (only needed if diurnal or stability is used).
- * \param options Key, value option pairs from the options listed above.
+ * \param speedList List of wind speeds to simulate.
+ * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "knots").
+ * \param directionList List of wind directions to simulate in degrees.
+ * \param yearList List of years to simulate (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param monthList List of months to simulate (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param dayList List of days to simulate (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param hourList List of hours to simulate (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param minuteList List of minutes to simulate (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param timeZone A string representing a valid timezone.
+ * \param airTempList List of air temperatures (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param airTempUnits String indicating air temperature units ("F", "C", or "K"), can be NULL.
+ * \param cloudCoverList List of cloud covers (only needed if diurnal or stability is going to be used), can be NULL.
+ * \param cloudCoverUnits String indicating cloud cover units ("fraction" or "percent"), can be NULL.
+ * \param options Key, value option pairs from the options listed above, can be NULL.
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
-    ( unsigned int numNinjas, bool momentumFlag, char * timeList, char ** options )
+    ( unsigned int numNinjas, bool momentumFlag, double * speedList, char * speedUnits, double * directionList, int * yearList, int * monthList, int * dayList, int * hourList, 
+      int * minuteList, char * timeZone, double * airTempList, char * airTempUnits, double * cloudCoverList, char * cloudCoverUnits, char ** options )
 {
 
 #ifndef NINJAFOAM
@@ -99,16 +113,39 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
     }
 #endif
 
+    //Get the number of elements in the arrays
+    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+    size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+
+    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+    {
+        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+    }
+
     NinjaArmyH* army;
 
     try
     {
-        // Construct a ptime from a string with the format "YYYY-MM-DD HH:MM:SS"
-        //     std::string date_time_str = "2025-02-18 14:30:00";
-        //         boost::posix_time::ptime time = boost::posix_time::time_from_string(date_time_str);
-        //
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
+
+        for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++) 
+        {
+            reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            
+            reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
+
+            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+
+            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            
+            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+        }
 
         return army;
     }
@@ -119,56 +156,15 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
- *
- * This method will create a set of runs for windninja based on the contents of
- * the weather forecast file.  One run is done for each timestep in the forecast 
- * file.
- *
- * \param forecastFilename A valid NOMADS/UCAR based weather model file.
- * \param timezone a timezone string representing a valid timezone, e.g.
- *                 America/Boise.
- *                 See WINDNINJA_DATA/date_time_zonespec.csv
- * \param bMomentumFlag A flag representing whether to use the momentum solver or not.
- *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
- */
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
-    ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options )
-{
-#ifndef NINJAFOAM
-    if(momentumFlag == true)
-    {
-        throw std::runtime_error("bMomentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
-    }
-#endif
-
-    NinjaArmyH* army;
-    try
-    {
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
-
-        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
-        (   std::string( forecastFilename ),
-            std::string( timezone ),
-            momentumFlag );
-        return army;
-    }
-    catch( armyException & e )
-    {
-        return NULL;
-    }
-    
-    return NULL;
-}
-
-/**
  * \brief Automatically allocate and generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
  * where the ith element of each array specifies a datetime within range of datetimes contained
  * in the weather station file. 
+ *
+ * Avaliable Creation Options:
+ *                             None
  *
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
@@ -178,13 +174,14 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
  * \param timeZone a timezone string representing a valid timezone
  * \param stationFileName A valid path to a station file or list of station files.
  * \param elevationFile A valid path to an elevation file.
- * \param matchPointsFlag A flag representing whether to match points or not.
- * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in point initializations).
+ * \param matchPointsFlag A flag representing whether to match points or not. Default is true.
+ * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in point initializations). Default is false.
+ * \param options Key, value option pairs from the options listed above, can be NULL.
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
-    ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
+    (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
     if(momentumFlag == true)
     {
@@ -224,6 +221,55 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
     catch( armyException & e ){
         return NULL;
     }
+    return NULL;
+}
+
+/**
+ * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ *
+ * This method will create a set of runs for windninja based on the contents of
+ * the weather forecast file.  One run is done for each timestep in the forecast 
+ * file.
+ *
+ * Avaliable Creation Options:
+ *                             None
+ *                             TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
+ *
+ * \param forecastFilename A valid NOMADS/UCAR based weather model file.
+ * \param timezone a timezone string representing a valid timezone, e.g.
+ *                 America/Boise.
+ *                 See WINDNINJA_DATA/date_time_zonespec.csv
+ * \param momentumFlag A flag representing whether to use the momentum solver or not.
+ * \param options Key, value option pairs from the options listed above, can be NULL.
+ *
+ * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
+    ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options )
+{
+#ifndef NINJAFOAM
+    if(momentumFlag == true)
+    {
+        throw std::runtime_error("bMomentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+    }
+#endif
+
+    NinjaArmyH* army;
+    try
+    {
+        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
+
+        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
+        (   std::string( forecastFilename ),
+            std::string( timezone ),
+            momentumFlag );
+        return army;
+    }
+    catch( armyException & e )
+    {
+        return NULL;
+    }
+    
     return NULL;
 }
 
@@ -308,31 +354,53 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
 /**
  * \brief Fetch Station forecast files using bbox from elevation file
  *
- * \param year A pointer to an array of years.
- * \param month A pointer to an array of months.
- * \param day A pointer to an array of days.
- * \param hour A pointer to an array of hours.
- * \param timeListSize The size of the time list.
- * \param output_path A valid path to an output directory.
+ * Avaliable Creation Options:
+ *                             None
+ *
+ * \param yearList A pointer to an array of years.
+ * \param monthList A pointer to an array of months.
+ * \param dayList A pointer to an array of days.
+ * \param hourList A pointer to an array of hours.
+ * \param minuteList A pointer to an array of minutes.
  * \param elevation_file A valid path to an elevation file.
  * \param osTimeZone A string representing a valid timezone.
  * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
+ * \param output_path An optional valid path to a custom output directory, can be NULL.
+ * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return Forecast file name on success, "exception" otherwise.
+ * \return Station file name on success, "exception" otherwise.
+ * TODO: This function currently doesn't return a the path to a station file, need to determine what the proper behavior is
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* year, const int* month, const int*day, const int* hour,const int timeListSize, const char* outputPath, const char* elevationFile, const char* timeZone, bool fetchLatestFlag, char ** options){
-    std::vector <boost::posix_time::ptime> timeList;
-    for(int i=0; i<timeListSize; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(year[i], month[i], day[i]), boost::posix_time::hours(hour[i])));
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, 
+                                               const char* elevationFile, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+{
+    //Get the number of elements in the arrays
+    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+
+    if(!(length1 == length2 == length3 == length4 == length5))
+    {
+        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, must be the same length!");
     }
+
+    std::vector <boost::posix_time::ptime> timeList;
+    for(size_t i=0; i<length1; i++){
+        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
+    }
+
     wxStation::SetStationFormat(wxStation::newFormat);
-    std::string stationPathName = pointInitialization::generatePointDirectory(elevationFile, outputPath, fetchLatestFlag);
+
+    //Generate a directory to store downloaded station data
+    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
     pointInitialization::SetRawStationFilename(stationPathName);
-    bool success = pointInitialization::fetchStationFromBbox(elevationFile, timeList, timeZone, fetchLatestFlag);
+    bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
     if(!success){
         return NINJA_E_INVALID;
     }
-    pointInitialization::writeStationLocationFile(stationPathName, elevationFile, fetchLatestFlag);
+    pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
     return NINJA_SUCCESS;
 }
 

@@ -73,11 +73,12 @@ typedef int  NinjaErr;
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeDomainAverageArmy
-        ( unsigned int numNinjas, bool momentumFlag, char * timeList=NULL, char ** options=NULL );
+        ( unsigned int numNinjas, bool momentumFlag, double * speedList, char * speedUnits, double * directionList, int * yearList=NULL, int * monthList=NULL, int * dayList=NULL, 
+          int * hourList=NULL, int * minuteList=NULL, char * timeZone=NULL, double * airTempList=NULL, char* airTempUnits=NULL, double * cloudCoverList=NULL, char * cloudCoverUnits=NULL, char ** options=NULL );
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakePointArmy
-        ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options=NULL );
+        ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag=true, bool momentumFlag=false ,char ** options=NULL );
 
     //TODO: add helper function to get first and last timesteps in a forecast file
     //TODO: add helper function to get list of times in a forecast file
@@ -86,7 +87,7 @@ typedef int  NinjaErr;
         ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options=NULL );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
-        (const int * year, const int * month, const int * day, const int * hour, const int timeListSize, const char * outputPath, const char * elevationFile, const char * timeZone, bool fetchLatestFlag, char ** options=NULL );
+        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList,  const char * elevationFile, const char * timeZone, bool fetchLatestFlag, const char * outputPath=NULL, char ** options=NULL );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
         (NinjaArmyH * ninjaArmy, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options=NULL );
