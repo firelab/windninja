@@ -66,8 +66,7 @@ pointInitialization::~pointInitialization()
 
 void pointInitialization::SetRawStationFilename(std::string filename)
 {
-    std::string a="wxStation";
-    rawStationFilename =filename;
+    rawStationFilename = filename;
 }
 
 /**
