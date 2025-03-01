@@ -468,7 +468,7 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     }
     
     std::string newDirPart = "WXSTATIONS-"+timeComponent+"-"+subDem;
-    if(outPath != "")
+    if(outPath.c_str() != NULL && outPath != "")
     {
         fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
     }
