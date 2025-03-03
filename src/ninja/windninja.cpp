@@ -356,6 +356,7 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *
  * Avaliable Creation Options:
  *                             None
+ *                             TODO: Add option parameter to specify a buffer to use in station fetching
  *
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
