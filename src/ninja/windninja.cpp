@@ -371,6 +371,14 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *
  * \return Station file name on success, "exception" otherwise.
  * TODO: This function currently doesn't return a the path to a station file, need to determine what the proper behavior is
+ *       Note: the pointInitialization class currently only has static public functions. We should consider if this is the best 
+ *             approach or if the class should be refactored. For example, I was going to add a function to return a path to
+ *             the stationLocationFilename (the path on disk to the list of station files that the user will need). But right
+ *             now this isn't possible since that path is created by a static function, writeStationLocationFile. If we change 
+ *             these functions to non-static to enhance functionality, we'll need to add accessor functions in ninja/ninjaArmy to access 
+ *             functions on the pointInitialziation object. Another option for this immediate use case is to just change writeStationLocationFile
+ *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
+ *             
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, 
                                                const char* elevationFile, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
