@@ -1111,7 +1111,8 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = meanDir;
+    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1158,6 +1159,26 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 #endif
 
     interpolateWxGridsToNinjaGrids(input);
+
+    //set average speed
+    //mostly for debugging purposes, it isn't used directly by the mass solver
+    input.inputSpeed = speedInitializationGrid.get_meanValue();
+
+    //average u and v components
+    double meanU;
+    double meanV;
+    meanU = uInitializationGrid.get_meanValue();
+    meanV = vInitializationGrid.get_meanValue();
+
+    double meanSpd;
+    double meanDir;
+
+    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
+
+    //set average direction
+    //mostly for debugging purposes, it isn't used directly by the mass solver
+    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
 
     //Write wx model grids
     writeWxModelGrids(input);
@@ -1211,6 +1232,10 @@ void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &inpu
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
             wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
                     &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
+            dirInitializationGrid(i,j) = dirInitializationGrid(i,j) + input.dem.getAngleFromNorth(); //account for projection rotation from north
+            // need to recalculate the u and v initialization grids from the corrected dirInitializationGrid
+            wind_sd_to_uv(speedInitializationGrid(i,j), dirInitializationGrid(i,j),
+                    &(uInitializationGrid)(i,j), &(vInitializationGrid)(i,j));
         }
     }
 

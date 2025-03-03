@@ -63,6 +63,26 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 
     setInitializationGrids(input);
 
+    //set average speed
+    //mostly for debugging purposes, it isn't used directly by the mass solver
+    input.inputSpeed = speedInitializationGrid.get_meanValue();
+
+    //average u and v components
+    double meanU;
+    double meanV;
+    meanU = uInitializationGrid.get_meanValue();
+    meanV = vInitializationGrid.get_meanValue();
+
+    double meanSpd;
+    double meanDir;
+
+    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
+
+    //set average direction
+    //mostly for debugging purposes, it isn't used directly by the mass solver
+    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
+
     initializeWindToZero(mesh, u0, v0, w0);
 
     initializeBoundaryLayer(input);
@@ -104,7 +124,8 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = meanDir;
+    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
 
     initializeBoundaryLayer(input);
 
@@ -160,6 +181,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
         for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
+            inputAngleGrid(i,j) = inputAngleGrid(i,j) + input.dem.getAngleFromNorth(); //account for projection rotation from north
             wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
                     &(inputUGrid)(i,j), &(inputVGrid)(i,j));
         }
