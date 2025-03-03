@@ -2783,7 +2783,6 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     pathName = CPLGetPath(demFile.c_str());
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);    
 
-//    cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
     std::string nameComponent = baseName+ "_" + "stations_" + statLen.str() + ".csv";
     cName = std::string(CPLFormFilename(stationPath.c_str(),nameComponent.c_str(),".csv"));
 
@@ -2797,11 +2796,11 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     {
         outFile<<"Station_File_List,"<<endl;
     }
-//    outFile<<"Station_File_List,"<<endl;
     for(int i=0;i<stationFiles.size();i++){
-//        outFile<<stationFiles[i]<<endl;
         outFile<<CPLGetFilename(stationFiles[i].c_str())<<endl;
     }
+
+    outFile.close();
 }
 /**
  * @brief pointInitialization::parseStationHeight
