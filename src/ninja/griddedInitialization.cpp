@@ -80,8 +80,8 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
 
     //set average direction
     //mostly for debugging purposes, it isn't used directly by the mass solver
-    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
+    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     initializeWindToZero(mesh, u0, v0, w0);
 
@@ -124,8 +124,8 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = meanDir - input.dem.getAngleFromNorth(); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << input.inputDirection + input.dem.getAngleFromNorth() << std::endl;
+    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     initializeBoundaryLayer(input);
 
@@ -181,7 +181,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
         for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
-            inputAngleGrid(i,j) = inputAngleGrid(i,j) + input.dem.getAngleFromNorth(); //account for projection rotation from north
+            inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
             wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
                     &(inputUGrid)(i,j), &(inputVGrid)(i,j));
         }

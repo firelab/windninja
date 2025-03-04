@@ -85,7 +85,8 @@ void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
     //set initialization grids
     speedInitializationGrid = input.inputSpeed;
-    dirInitializationGrid = input.inputDirection + input.dem.getAngleFromNorth(); //account for projection rotation from north
+    dirInitializationGrid = wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ); //account for projection rotation from north
+    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
     airTempGrid = input.airTemp;
     setCloudCover(input);
 
@@ -108,7 +109,8 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
     double inwindw=0.0;		//input w wind component
 
     //Set inwindu and inwindv
-    wind_sd_to_uv(input.inputSpeed, input.inputDirection + input.dem.getAngleFromNorth(), &inwindu, &inwindv); //account for projection rotation from north
+    wind_sd_to_uv(input.inputSpeed, wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ), &inwindu, &inwindv); //account for projection rotation from north
+    std::cout << "initialize boundary layer, input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     if(input.diurnalWinds == true)
     {

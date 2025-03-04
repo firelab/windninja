@@ -335,7 +335,7 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
     double dir;
     for(unsigned int ii=0; ii<input.stations.size(); ii++)
     {
-        dir = (input.stations[ii].get_direction() + input.dem.getAngleFromNorth()); //account for projection rotation from north
+        dir = wrap0to360( input.stations[ii].get_direction() + input.dem.getAngleFromNorth() ); //account for projection rotation from north
         input.stationsScratch[ii].update_direction(dir,dataIndex);
         input.stationsOldInput[ii].update_direction(dir,dataIndex);
         input.stationsOldOutput[ii].update_direction(dir,dataIndex);
@@ -2484,7 +2484,7 @@ bool ninja::matched(int iter)
             try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
-			wind_sd_to_uv(input.stations[i].get_speed(), (input.stations[i].get_direction() + input.dem.getAngleFromNorth()), &true_u, &true_v);
+			wind_sd_to_uv(input.stations[i].get_speed(), wrap0to360( input.stations[i].get_direction() + input.dem.getAngleFromNorth() ), &true_u, &true_v);
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance
