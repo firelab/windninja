@@ -2,7 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
+#include "ui_mainwindow.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -18,7 +20,10 @@ public:
   ~MainWindow();
 
 private:
-  Ui::MainWindow *ui;
-  QWebEngineView *webView;
+  void onTreeItemClicked(QTreeWidgetItem *item, int column);
+
+
+Ui::MainWindow *ui;
+QWebEngineView *webView;
 };
 #endif // MAINWINDOW_H
