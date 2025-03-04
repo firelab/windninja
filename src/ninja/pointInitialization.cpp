@@ -133,7 +133,7 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
         {
             maxStationHeight = input.stationsScratch[ii].get_height();
         }
-        sd_to_uv(input.stationsScratch[ii].get_speed(), (input.stationsScratch[ii].get_direction() + input.dem.getAngleFromNorth()), &u[ii], &v[ii]);
+        sd_to_uv(input.stationsScratch[ii].get_speed(), input.stationsScratch[ii].get_direction(), &u[ii], &v[ii]);
         T[ii] = input.stationsScratch[ii].get_temperature();
         cc[ii] = input.stationsScratch[ii].get_cloudCover();
         X[ii] = input.stationsScratch[ii].get_projXord();
