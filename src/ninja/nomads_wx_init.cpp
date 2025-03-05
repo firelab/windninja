@@ -808,6 +808,8 @@ noCloudOK:
 
     wGrid = 0.0;
 
+    speedGrid.deallocate();
+    directionGrid.deallocate();
     GDALDestroyWarpOptions( psWarpOptions );
 }
 
