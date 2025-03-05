@@ -1279,7 +1279,8 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0)
-{ 
+{
+//TODO: account for projection rotation from north for 3d data
     int kk;
     int i, j, k;
     double tempGradient;
