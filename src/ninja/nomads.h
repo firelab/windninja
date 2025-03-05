@@ -625,9 +625,9 @@ static const char *apszNomadsKeys[][11] =
       NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
       "32 km",
       "RAP North America" },
-        /*
-        ** National Blend of Models
-        */
+    /*
+    ** National Blend of Models
+    */
     {
      "nbm_conus",
      "filter_blend.pl",
