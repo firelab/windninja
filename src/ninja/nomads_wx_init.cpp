@@ -787,7 +787,7 @@ noCloudOK:
     cloudGrid /= 100.0;
     airGrid += 273.15;
 
-    if(EQUAL(pszKey, "national_blend_models")) {
+    if(EQUAL(pszKey, "nbm_conus")) {
       uGrid.set_headerData(speedGrid);
       vGrid.set_headerData(speedGrid);
       wGrid.set_headerData(speedGrid);
