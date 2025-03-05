@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Nicholas Kim <kim.n.j@wustl.edu>
  *
- * gcc -g -Wall -o test_capi_domain_average_wind test_capi_domain_average_wind.c -lninja
+ * g++ -g -Wall -o api_capi_point test_capi_point_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -54,7 +54,7 @@ int main()
 
     const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/data/big_butte_small.tif"; 
     double outputResolution = 100; 
-    const char * initializationMethod = "domain_average";
+    const char * initializationMethod = "point";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
@@ -72,7 +72,18 @@ int main()
     /* 
      * Create the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    int year[1] = {2023};
+    int month[1] = {10};
+    int day[1] = {10};
+    int hour[1] = {12};
+    int minute[1] = {60};
+    char* station_path = "./station";
+    char* elevation_file = "output.tif";
+    char* osTimeZone = "UTC";
+    bool matchPointFlag = 1;
+    bool momemtumFlag = 0;
+    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
+    
     if( NULL == ninjaArmy )
     {
         printf("NinjaCreateArmy: ninjaArmy = NULL\n");
@@ -171,40 +182,5 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-    /* 
-     * Get the outputs
-     */
-    const double* outputSpeedGrid = NULL;
-    const double* outputDirectionGrid = NULL;
-    const char* outputGridProjection = NULL;
-    const int nIndex = 0;
-    const char* units = "m";
-    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputSpeedGrid )
-    {
-        printf("Error in NinjaGetOutputSpeedGrid");
-    }
-    
-    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputDirectionGrid )
-    {
-        printf("Error in NinjaGetOutputDirectionGrid");
-    }
-    
-    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputGridProjection )
-    {
-        printf("Error in NinjaGetOutputGridProjection");
-    }
-    
-    /* 
-     * Clean up
-     */
-    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-    if(err != NINJA_SUCCESS)
-    {
-        printf("NinjaDestroyRuns: err = %d\n", err);
-    }
- 
     return NINJA_SUCCESS;
 }

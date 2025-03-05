@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Nicholas Kim <kim.n.j@wustl.edu>
  *
- * gcc -g -Wall -o test_capi_domain_average_wind test_capi_domain_average_wind.c -lninja
+ * gcc -g -Wall -o test_capi_weather_model_initialization_wind test_capi_weather_model_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -30,6 +30,8 @@
 #include <stdio.h> //for printf
 #include <stdbool.h>
 
+// Run works successfully
+// Set functions are returning err = 2, need to check why (could be because weather initialization does not need them?)
 
 
 int main()
@@ -49,12 +51,12 @@ int main()
     }
 
     /* 
-     * Set up domain average run 
+     * Set up Weather Model Initialization run 
      */
 
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/data/big_butte_small.tif"; 
+    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/output.tif"; 
     double outputResolution = 100; 
-    const char * initializationMethod = "domain_average";
+    const char * initializationMethod = "wxmodel";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
@@ -65,14 +67,15 @@ int main()
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
     
     /* inputs that can vary among ninjas in an army */
-    const double speedList[2] = {5.5, 5.5};
     const char * speedUnits = "mps";
-    const double directionList[2] = {220, 300};
 
     /* 
      * Create the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    const char * forecast = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/NOMADS-HRRR-CONUS-3-KM-output.tif/20250305T2000/20250305T2000/hrrr.t20z.wrfsfcf00.grib2";
+    const char * osTimeZone = "UTC";
+
+    ninjaArmy = NinjaMakeWeatherModelArmy(forecast, osTimeZone, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
         printf("NinjaCreateArmy: ninjaArmy = NULL\n");
@@ -171,7 +174,7 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-    /* 
+        /* 
      * Get the outputs
      */
     const double* outputSpeedGrid = NULL;
