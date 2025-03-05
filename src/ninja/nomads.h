@@ -629,18 +629,18 @@ static const char *apszNomadsKeys[][11] =
         ** National Blend of Models
         */
     {
-     "national_blend_models",
+     "nbm_conus",
      "filter_blend.pl",
      "blend.t%02dz.core.f%03d.co.grib2",
      "blend.%s/%02d/core",
      NOMADS_GENERIC_DATE,
      "0:23:1",
-     "1:264:1",
+     "1:36:1",
      "TCDC,TMP,WDIR,WIND",
      "2_m_above_ground,10_m_above_ground," \
      "high_cloud_layer",
      "2.5 km",
-     "National Blend of Models" },
+     "NBM Conus" },
 #ifdef NOMADS_EXPER_FORECASTS
     /*
     ** NARRE
