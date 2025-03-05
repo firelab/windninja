@@ -1,4 +1,4 @@
-Authors: Natalie Wagenbrenner, Nicholas Kim
+Authors: Natalie Wagenbrenner, Nicholas Kim, Mason Willman
 
 These document tests to run for the C API.
 
@@ -7,11 +7,17 @@ These document tests to run for the C API.
 gcc -g -Wall -o test_capi_domain_average_wind test_capi_domain_average_wind.c -lninja
 ./test_capi_domain_average_wind
 
-2. Tests for NinjaFetchDEMBBox, NinjaFetchForecast, NinjaFetchDemPoint, and NinjaFetchStation
+2. Tests for NinjaFetchDEMBBox, NinjaFetchForecast, NinjaFetchDemPoint, and NinjaFetchStation (currently FetchStation is not working)
 
 gcc -g -Wall -o test_capi_fetching test_capi_fetching.c -lninja
 ./test_capi_fetching
 
-3. TODO: create a test for weather model intialization run
+3. Test for simple weather model intialization run 
 
-4. TODO: create a test for point model intialization run (look inside apiTestPoint.c for starter code)
+gcc -g -Wall -o test_capi_weather_model_initialization_wind test_capi_weather_model_initialization_wind.c -lninja
+./test_capi_weather_model_initialization_wind
+
+4. Test for simple point model intialization run 
+
+gcc -g -Wall -o test_capi_point_initialization_wind test_capi_point_initialization_wind.c -lninja
+./test_capi_point_initialization_wind
