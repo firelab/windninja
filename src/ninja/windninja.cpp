@@ -102,8 +102,9 @@ extern "C"
  */
 
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
-    ( unsigned int numNinjas, bool momentumFlag, double * speedList, char * speedUnits, double * directionList, int * yearList, int * monthList, int * dayList, int * hourList, 
-      int * minuteList, char * timeZone, double * airTempList, char * airTempUnits, double * cloudCoverList, char * cloudCoverUnits, char ** options )
+    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
+//    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, 
+//      const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
 
 #ifndef NINJAFOAM
@@ -114,18 +115,22 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 #endif
 
     //Get the number of elements in the arrays
-    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
-    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
-    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
-    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
-    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
-    size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
-    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
-
-    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
-    {
-        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
-    }
+    size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+    size_t length2 = sizeof(directionList) / sizeof(directionList[0]);
+//    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+//    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+//    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+//    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+//    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+//    size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+//    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+//
+//    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+    if(!(length1 == length2 ))
+//    {
+//        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+        throw std::runtime_error("speedList and directionList must be the same length!");
+//    }
 
     NinjaArmyH* army;
 
@@ -140,11 +145,11 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
             
             reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
 
-            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
-
-            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
-            
-            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+//            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+//
+//            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+//            
+//            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
         }
 
         return army;
