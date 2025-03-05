@@ -200,7 +200,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
     size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
     size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
 
-    if(!(length1 == length2 == length3 == length4 == length5))
+    if (length1 != length2 || length1 != length3 || length1 != length4 || length1 != length5)    
     {
         throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList must be the same length!");
     }
@@ -395,13 +395,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * 
     size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
     size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
 
-    if(!(length1 == length2 == length3 == length4 == length5))
+    if (length1 != length2 || length1 != length3 || length1 != length4 || length1 != length5)    
     {
         throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, must be the same length!");
     }
-
+ 
     std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<length1; i++){
+    for(size_t i=0; i<1; i++){
         timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
     }
 
