@@ -143,14 +143,13 @@ if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
     target_link_libraries(WindNinjadll ${LINK_LIBS})
-else(WIN32)
+else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
-    else(APPLE)
-       add_library(ninja STATIC SHARED ${NINJA_SOURCES})
-    endif(APPLE)    
-endif(WIN32)
-
+    else()
+        add_library(ninja SHARED ${NINJA_SOURCES})  # Linux
+    endif()
+endif()
 
 target_link_libraries(ninja ${LINK_LIBS})
 
