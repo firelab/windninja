@@ -31,21 +31,28 @@
 #include <string.h>
 #include <stdbool.h>
 
-// FetchStation we will always have "yearList, monthList, dayList, hourList, minuteList must be the same length!" error message thrown
-// Comment the FetchStation section and the program will runwithout error (still needs more testing)
+/*TODO: 
+ * Implement exhaustive tests for all wx_model_types for NinjaFetchForecast
+ * Implement tests for NinjaFetchDemPoint (example code in apiTestPoint.c) and NinjaFetchStation
+ */
 
 int main()
 {
+    /* 
+     * Setting up NinjaArmy
+     */
     NinjaArmyH* ninjaArmy = NULL; 
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
-    err = NinjaInit(papszOptions); //must be called for any simulation
+    err = NinjaInit(papszOptions); // must be called for fetching and simulations 
     if(err != NINJA_SUCCESS)
     {
       printf("NinjaInit: err = %d\n", err);
     }
-
-    const char * demFile = "output.tif"; // output file name
+    /*
+     * Testing fetching from a DEM bounding box  
+     */
+    const char * demFile = "data/output.tif"; // output file name
     char * fetch_type = "gmted";
     double resolution = 30; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
@@ -54,6 +61,9 @@ int main()
         printf("NinjaFetchDEMBBox: err = %d\n", err);
     }
     
+    /*
+     * Testing fetching for a Forecast file (wx_model_type are the names listed in the weather station download in WindNinja)
+     */
     const char*wx_model_type = "NOMADS-HRRR-CONUS-3-KM";
     int numNinjas = 2;
     const char* forecastFilename = NinjaFetchForecast(ninjaArmy, wx_model_type, numNinjas, demFile, papszOptions);
@@ -64,21 +74,19 @@ int main()
         printf("NinjaFetchForecast: forecastFilename = %s\n", forecastFilename);
     }
 
-    /*TODO: 
-    
-    - Implement exhaustive tests for all wx_model_types for NinjaFetchForecast
-
-    - Implement tests for NinjaFetchDemPoint (example code in apiTestPoint.c) and NinjaFetchStation
-    */
+    /*
+     * Testing fetching station data from a geotiff file.  
+     */
     int year[1] = {2023};
     int month[1] = {10};
     int day[1] = {10};
     int hour[1] = {12};
     int minute[1] = {60};
-    const char* output_path = "./station";
-    const char* elevation_file = "output.tif";
+    const char* output_path = "";
+    const char* elevation_file = "data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 1;
+
     err = NinjaFetchStation(year, month, day, hour, minute, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
     if (err != NINJA_SUCCESS) {
         printf("NinjaFetchStation: err = %d\n", err);
@@ -86,11 +94,14 @@ int main()
         printf("NinjaFetchStation: success\n");
     }
 
+    /*
+     * Testing fetching from a DEM point
+     */
     double adfPoint[] = {104.0, 40.07}; // Point coordinates (longitude, latitude)
     double adfBuff[] = {30, 30}; // Buffer to store the elevation value
     const char* units = "mi";
     double dfCellSize = 30.0; // Cell size in meters
-    char* pszDstFile = "dem_point_output.tif";
+    char* pszDstFile = "data/dem_point_output.tif";
     char* fetchType = "gmted";
     err = NinjaFetchDEMPoint(ninjaArmy, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
     if (err != NINJA_SUCCESS) {
