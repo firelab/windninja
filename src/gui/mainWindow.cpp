@@ -1675,6 +1675,7 @@ int mainWindow::solve()
 
     CaseFile casefile;  
     std::string getdir = tree->solve->outputDirectory().toStdString();
+    
     std::string inputpath = getdir + "/config.cfg";
     std::string stationCSVFILEPATH = getdir + "/selectedstations.csv";
     std::string getfileName = casefile.parse("file", inputFileName.toStdString()); 
@@ -1701,7 +1702,11 @@ int mainWindow::solve()
     if (!writeCF) { 
         outFile.close();
         stationCSVFILE.close(); 
+
         casefile.setZipOpen(false);
+        casefile.deleteFileFromPath(getdir, "config.cfg"); 
+
+        casefile.deleteFileFromPath(getdir, "selectedstations.csv"); 
     }
     else {
         casefile.setZipOpen(true);
@@ -2899,12 +2904,43 @@ if (writeCF) {
       throw( "no output directory specified in solve page" );
     }
 
-    //fill in the values
     for(int i = 0;i < army->getSize(); i++) 
     {
+          CPLSetConfigOption("CPL_DEBUG", "ON");
 
           std::string domaininputpath = getdir + "/domainrun" + std::to_string(i) + ".cfg";
+
+                
           std::ofstream domainRUNS(domaininputpath);
+
+        // add runs to files
+        if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
+        {
+              if (writeCF) {
+                
+                domainRUNS << "--input_speed " << tree->wind->windTable->speed[i]->value() << "\n";   
+                
+                domainRUNS << "--input_direction  " <<  tree->wind->windTable->dir[i]->value() << "\n"; 
+
+                domainRUNS << "--year " << tree->wind->windTable->date[i]->date().year() << "\n"; 
+
+
+                domainRUNS << "--month " <<tree->wind->windTable->date[i]->date().month() << "\n"; 
+            
+                domainRUNS << "--day " << tree->wind->windTable->date[i]->date().day() << "\n"; 
+            
+                domainRUNS << "--hour " <<tree->wind->windTable->time[i]->time().hour() << "\n"; 
+    
+                domainRUNS << "--minute " << tree->wind->windTable->time[i]->time().minute() << "\n"; 
+              
+                domainRUNS << "--uni_air_temp " << tree->wind->windTable->airTemp[i]->value() << "\n"; 
+                domainRUNS << "--uni_cloud_cover " <<tree->wind->windTable->cloudCover[i]->value()<< "\n" ;  
+            
+                domainRUNS << "--cloud_cover_units percent" << "\n" ;   
+            }  
+
+        }
+
 
         army->setDEM( i, demFile );
 #ifdef NINJAFOAM
@@ -2943,7 +2979,7 @@ if (writeCF) {
 
         if (writeCF) {
             outFile << "--input_direction " <<std::to_string(tree->wind->windTable->dir[i]->value()) <<"\n";  }
-          
+            
             army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
 
             army->setInputWindHeight ( i, inHeight, inHeightUnits );
@@ -2961,23 +2997,17 @@ if (writeCF) {
         army->setOutputPath( i, outputDir.c_str() );
 
         //diurnal, if needed
-        army->setDiurnalWinds( i, useDiurnal );
+        army->setDiurnalWinds( i, useDiurnal );  
+
+
+
+
+
         if( useDiurnal == true ) 
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
 
-              if (writeCF) {
-                domainRUNS << "--year " << tree->wind->windTable->date[i]->date().year() << "\n"; 
-
-                domainRUNS << "--month " <<tree->wind->windTable->date[i]->date().month() << "\n"; 
-            
-                domainRUNS << "--day " << tree->wind->windTable->date[i]->date().day() << "\n"; 
-            
-                domainRUNS << "--hour " <<tree->wind->windTable->time[i]->time().hour() << "\n"; 
-
-                domainRUNS << "--minute " << tree->wind->windTable->time[i]->time().minute() << "\n"; 
-              }
             army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
@@ -2988,12 +3018,6 @@ if (writeCF) {
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
             
-            if (writeCF) {
-                domainRUNS << "--uni_air_temp " << tree->wind->windTable->airTemp[i]->value() << "\n"; 
-                domainRUNS << "--uni_cloud_cover " <<tree->wind->windTable->cloudCover[i]->value()<< "\n" ;  
-            
-                domainRUNS << "--cloud_cover_units percent" << "\n" ;   
-            }
             army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
@@ -3018,20 +3042,7 @@ if (writeCF) {
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
-              if (writeCF) {
-            
-                domainRUNS << "--year " <<tree->wind->windTable->date[i]->date().year() <<"\n"; 
-
-                domainRUNS << "--month " <<tree->wind->windTable->date[i]->date().month() <<"\n"; 
-            
-                domainRUNS << "--day " <<tree->wind->windTable->date[i]->date().day() <<"\n"; 
-                
-                domainRUNS << "--hour " <<
-                                    tree->wind->windTable->time[i]->time().hour()<< "\n"; 
-
-                domainRUNS << "--minute "<< tree->wind->windTable->time[i]->time().minute()<<"\n"; 
           
-              }
             army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
@@ -3042,12 +3053,7 @@ if (writeCF) {
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
             
-          if (writeCF) {
-            domainRUNS << "--uni_cloud_cover " <<tree->wind->windTable->cloudCover[i]->value() << "\n";   
-            
-            domainRUNS << "--uni_air_temp " <<tree->wind->windTable->airTemp[i]->value() << "\n";
-            domainRUNS << "--cloud_cover_units percent\n";  
-          }
+         
             army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
@@ -3132,21 +3138,20 @@ if (writeCF) {
         //army.setOutputFilenames();
         army->setNinjaComNumRuns( i, nRuns );
 
-
-
         //add different input to config 
         domainRUNS.close(); 
         
         std::string domainaveragepath = "DomainAverage/run " +  std::to_string(i) + ".cfg"; 
         std::string domainaveragedeletion = "domainrun" + std::to_string(i) + ".cfg"; 
-        
+        std::cout << domainaveragepath << std::endl; 
+        std::cout << domainaveragedeletion << std::endl; 
         if (writeCF) {
           if (initMethod == WindNinjaInputs::domainAverageInitializationFlag) {
               casefile.addFileToZip(zipFilePath, getdir, domainaveragepath,  domaininputpath ); 
           }
-
-        casefile.deleteFileFromPath(getdir, domainaveragedeletion ); 
         }
+        casefile.deleteFileFromPath(getdir, domainaveragedeletion ); 
+
     }
 
     //set Casefile Directory and Input
@@ -3155,9 +3160,7 @@ if (writeCF) {
       outFile.close(); 
       casefile.addFileToZip(zipFilePath, getdir, getfileName, inputFileName.toStdString()); 
       casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
-      casefile.deleteFileFromPath(getdir, "config.cfg"); 
 
-      casefile.deleteFileFromPath(getdir, "selectedstations.csv"); 
     }
 
 

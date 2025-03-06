@@ -67,6 +67,7 @@
 #include "ninjaUnits.h"
 #include "ninjaArmy.h"
 #include "ninja_conv.h"
+#include "cpl_conv.h"  // For CPLSetConfigOption
 
 #include "setconfigdialog.h"
 

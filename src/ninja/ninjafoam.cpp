@@ -30,11 +30,12 @@
 #include "ninjafoam.h"
 
 const char* NinjaFoam::pszFoamPath = NULL;
+ std::string casefilenamefoam = "";
 
 NinjaFoam::NinjaFoam() : ninja()
 {
     foamVersion = "";
-    
+    casefilenamefoam = ""; 
     pszVrtMem = NULL;
     pszGridFilename = NULL;
     pszTurbulenceGridFilename = NULL;
@@ -2165,6 +2166,8 @@ void NinjaFoam::SetOutputFilenames()
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
 
+    
+
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
     //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
@@ -2205,6 +2208,7 @@ void NinjaFoam::SetOutputFilenames()
     input.outputPath = pathName;
 
     timeAppend = timestream.str();
+    
 
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
@@ -2223,6 +2227,8 @@ void NinjaFoam::SetOutputFilenames()
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    std::ostringstream os_case;
+    os_case << rootFile << "_" << timeAppend << "_FOAM";
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
@@ -2232,7 +2238,12 @@ void NinjaFoam::SetOutputFilenames()
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_case << "_DA";
+    }       
+    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ 
+        os_case << "_WxModel"; 
     }
+
 
     double meshResolutionTemp = input.dem.get_cellSize();
     double kmzResolutionTemp = input.kmzResolution;
@@ -2253,12 +2264,26 @@ void NinjaFoam::SetOutputFilenames()
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+     
+
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+    
+    os_case << "_munit" << mesh_units; 
+
+    os_case << "_kmz" << (long)(kmzResolutionTemp + 0.5) << kmz_mesh_units
+            << "_shp" << (long)(shpResolutionTemp + 0.5) << shp_mesh_units
+            << "_ascii" << (long)(velResolutionTemp + 0.5) <<  ascii_mesh_units 
+            << "_pdf" << (long)(pdfResolutionTemp + 0.5) << pdf_mesh_units;
+
+
+
+    // Assign final casefilenam
+    casefilenamefoam = os_case.str();
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -2645,6 +2670,12 @@ void NinjaFoam::WriteOutputFiles()
 	        CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
 	        writeMassMeshVtkOutput();
 	    }
+        CaseFile casefile;
+        // write mass mesh if casefile is turned on - casefile always needs a vtk
+        if (writeMassMeshVtk != true && casefile.getZipOpen()) {
+            CPLDebug("NINJAFOAM", "TRY to write mass mesh vtk output for foam simulation.");
+            writeMassMeshVtkOutput();
+        }
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
@@ -2680,7 +2711,6 @@ void NinjaFoam::writeMassMeshVtkOutput()
     
     massMesh.buildStandardMesh(input);
     
-    
     // no longer need to resize any of the ascii grids, even L and bl_height, as they are already at the mass mesh resolution
     // after the dem is resampled to the mesh resolution they are set using the dem resolution, 
     // and the mesh resolution now is expected to always match the mass solver mesh resolution
@@ -2711,16 +2741,16 @@ void NinjaFoam::writeMassMeshVtkOutput()
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-		std::cerr << "hello" << std::endl; 
 
         volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
         CaseFile casefile;
         
         if (casefile.getZipOpen()) {
+            casefile.rename(casefilenamefoam);
             std::string directoryPath = get_outputPath();
-            std::string normfile = casefile.parse("file", input.volVTKFile);
-            std::string directoryofVTK = casefile.parse("directory", input.volVTKFile);
-            std::string surfFile = casefile.parse("file", input.volVTKFile).substr(0, casefile.parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile.parse("file", input.volVTKFile).substr(casefile.parse("file", input.volVTKFile).length() - 4, casefile.parse("file", input.volVTKFile).length());
+            std::string normfile = casefile.parse("file", massMeshVtkFilename);
+            std::string directoryofVTK = casefile.parse("directory", massMeshVtkFilename);
+            std::string surfFile = casefile.parse("file", massMeshVtkFilename).substr(0, casefile.parse("file", massMeshVtkFilename).length() - 4) + "_surf" + casefile.parse("file", massMeshVtkFilename).substr(casefile.parse("file", massMeshVtkFilename).length() - 4, casefile.parse("file", massMeshVtkFilename).length());
             
             std::string timestr = "";
             std:: string getlocaltime = casefile.getTime();
@@ -2739,7 +2769,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
 
             std::string zipFilePath = casefile.getzip(); 
             
-            casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile,  input.volVTKFile);
+            casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile,  massMeshVtkFilename);
         
             casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile,  directoryofVTK + "/" + surfFile);
             casefile.deleteFileFromPath(directoryPath , normfile);

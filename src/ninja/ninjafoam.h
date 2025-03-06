@@ -59,6 +59,9 @@
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
 
+
+extern std::string casefilenamefoam;  
+
 /**
  * \brief Main interface to OpenFOAM solver runs.
  *

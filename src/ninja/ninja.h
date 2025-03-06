@@ -118,6 +118,9 @@
 
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
+extern std::string casefilename;   
+
+
 
 class ninja
 {

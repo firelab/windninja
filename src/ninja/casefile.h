@@ -71,6 +71,7 @@ public:
     bool lookfordate(const std::string& date) ;
 
     std::string getTime(); 
+    void rename(std::string newname); 
     std::string getdir() ; 
     void setdir(std::string dir); 
 

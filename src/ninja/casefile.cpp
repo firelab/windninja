@@ -175,6 +175,20 @@ std::string CaseFile::getTime() {
             return oss.str();
 }
 
+void CaseFile::rename(std::string newname) {
+
+    std::string directory = getdir();  
+    std::string oldFilePath = zipfilename;
+    std::string newFilePath = newname ;
+
+    if (VSIRename(oldFilePath.c_str(), newFilePath.c_str()) == 0) {
+        CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", oldFilePath.c_str(), newFilePath.c_str());
+        zipfilename = newname;  
+    } else {
+        CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", oldFilePath.c_str(), newFilePath.c_str());
+    }
+}
+
 
 void CaseFile::deleteFileFromPath(std::string directoryPath, std::string filename) {
      
@@ -209,6 +223,7 @@ void CaseFile::setdir(std::string dir) {
 std::string CaseFile::getzip() {
     return zipfilename;
 }
+
 
 void CaseFile::setzip(std::string zip) {
     zipfilename = zip; 
