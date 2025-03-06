@@ -401,9 +401,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * 
     }
  
     std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<1; i++){
+    for(size_t i=0; i<length1; i++){
         timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
     }
+
 
     wxStation::SetStationFormat(wxStation::newFormat);
 
