@@ -1112,7 +1112,6 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
     //set average direction
     input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1159,26 +1158,6 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 #endif
 
     interpolateWxGridsToNinjaGrids(input);
-
-    //set average speed
-    //mostly for debugging purposes, it isn't used directly by the mass solver
-    input.inputSpeed = speedInitializationGrid.get_meanValue();
-
-    //average u and v components
-    double meanU;
-    double meanV;
-    meanU = uInitializationGrid.get_meanValue();
-    meanV = vInitializationGrid.get_meanValue();
-
-    double meanSpd;
-    double meanDir;
-
-    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
-
-    //set average direction
-    //mostly for debugging purposes, it isn't used directly by the mass solver
-    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     //Write wx model grids
     writeWxModelGrids(input);

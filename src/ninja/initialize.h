@@ -120,8 +120,6 @@ class initialize
 
         windProfile profile;
 
-        double angleFromNorth; //angle to add to get wind direction properly aligned with DEM grid
-
     private:
 };
 

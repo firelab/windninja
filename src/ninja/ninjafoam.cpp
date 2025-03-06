@@ -235,7 +235,8 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
     CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
-    CPLDebug("NINJAFOAM", "input corrected direction = %lf", wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() )); //account for projection rotation from north
+    CPLDebug("NINJAFOAM", "angleFromNorth = %lf", input.dem.getAngleFromNorth());
+    CPLDebug("NINJAFOAM", "corrected input direction = %lf", wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() )); //account for projection rotation from north
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());

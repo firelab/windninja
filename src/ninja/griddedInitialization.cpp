@@ -37,7 +37,6 @@ griddedInitialization::griddedInitialization() : initialize()
 griddedInitialization::~griddedInitialization()
 {
     CPLDebug("NINJA", "Starting a griddedInitialization run.");
-	
 }
 
 /**
@@ -62,26 +61,6 @@ void griddedInitialization::initializeFields(WindNinjaInputs &input,
     setGridHeaderData(input, cloud);
 
     setInitializationGrids(input);
-
-    //set average speed
-    //mostly for debugging purposes, it isn't used directly by the mass solver
-    input.inputSpeed = speedInitializationGrid.get_meanValue();
-
-    //average u and v components
-    double meanU;
-    double meanV;
-    meanU = uInitializationGrid.get_meanValue();
-    meanV = vInitializationGrid.get_meanValue();
-
-    double meanSpd;
-    double meanDir;
-
-    wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
-
-    //set average direction
-    //mostly for debugging purposes, it isn't used directly by the mass solver
-    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     initializeWindToZero(mesh, u0, v0, w0);
 
@@ -125,7 +104,6 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
     //set average direction
     input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-    std::cout << "input.inputSpeed = " << input.inputSpeed << ", input.inputDirection = " << input.inputDirection << ", input corrected direction = " << wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() ) << std::endl;
 
     initializeBoundaryLayer(input);
 

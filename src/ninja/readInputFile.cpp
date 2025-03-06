@@ -97,16 +97,12 @@ void ninja::readInputFile()
     {
         if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
         {
-            //TODO: issue a warning here but don't throw an error
-            CPLDebug("WINDNINJA", "Unable to calculate angle departure from north for the DEM.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
     }
 
     //set the value for angleFromNorth member in the Elevation class
-    cout<<"angleFromNorth = "<<angleFromNorth<<endl;
     input.dem.setAngleFromNorth(angleFromNorth);
-    //just a temporary check for debugging:
-    cout<<"input.dem.angleFromNorth = "<<input.dem.getAngleFromNorth()<<endl;
 
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);

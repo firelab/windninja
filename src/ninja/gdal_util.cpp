@@ -227,8 +227,8 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
     y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
 
-    cout<<"x1, y1 = "<<x1<<", "<<y1<<endl;
-    cout<<"x2, y2 = "<<x2<<", "<<y2<<endl;
+    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
     //project the two lat/lon points to projected DEM coordinates
     if(!GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
@@ -241,11 +241,12 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
         return false;
     }
 
-    cout<<"x1, y1 = "<<x1<<", "<<y1<<endl;
-    cout<<"x2, y2 = "<<x2<<", "<<y2<<endl;
+    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
     //compute angle of line formed between projected x1,y1 and x2,y2 and north
-    //call the line parallel to north in the projected CRS "a", line formed by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
+    //call the line parallel to north in the projected CRS "a", the line formed
+    //by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
@@ -257,7 +258,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
-    std::cout << "a = (" << ax << "," << ay << "), b = (" << bx << "," << by << ")" << std::endl;
+    CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
@@ -270,10 +271,10 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     {
         angleFromNorth = -1*angleFromNorth;
     }
-    cout<<"angleFromNorth in radians = "<<angleFromNorth<<endl;
+    CPLDebug( "WINDNINJA", "angleFromNorth in radians = %lf", angleFromNorth );
     //convert the result from radians to degrees
     angleFromNorth *= 180.0 / PI;
-    cout<<"angleFromNorth in degrees = "<<angleFromNorth<<endl;
+    CPLDebug( "WINDNINJA", "angleFromNorth in degrees = %lf", angleFromNorth );
 
     return true;
 }
