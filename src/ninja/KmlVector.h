@@ -141,7 +141,8 @@ public:
 	void setInputDirFile(std::string fileName){inputDirFile = fileName;}
 
 	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
-	void setDirGrid(AsciiGrid<double> &d);
+	double angleFromNorth;
+	void setDirGrid(AsciiGrid<double> &d, const double angFromNorth);
 	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
 	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
 	double colMax_colHeightAGL;

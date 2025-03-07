@@ -3120,7 +3120,7 @@ void ninja::writeOutputFiles()
 			ninjaKmlFiles.setLegendFile(input.legFile);
 			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-			ninjaKmlFiles.setDirGrid(*angTempGrid);
+			ninjaKmlFiles.setDirGrid(*angTempGrid, input.dem.getAngleFromNorth());
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
 			ninjaKmlFiles.setTime(input.ninjaTime);

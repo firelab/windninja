@@ -42,6 +42,7 @@ KmlVector::KmlVector()
 	timeDateLegendFile = "";
 	wxModelName = "";
         coordTransform = NULL;
+    angleFromNorth = 0.0;
         turbulenceFlag = false; 
     colMaxFlag = false;
     colMax_colHeightAGL = -1.0;
@@ -69,9 +70,10 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
 	spd = s;
 }
 
-void KmlVector::setDirGrid(AsciiGrid<double> &d)
+void KmlVector::setDirGrid(AsciiGrid<double> &d, const double angFromNorth)
 {
 	dir = d;
+	angleFromNorth = angFromNorth;
 }
 
 void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units)
@@ -1746,7 +1748,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 		{
 			yScale = 0.5;
 			s = spd(i,j);
-			geTheta = dir(i,j);
+			geTheta = wrap0to360( dir(i,j) - angleFromNorth );
 			theta = dir(i,j) + 180.0;
 
 			if(s <= splitValue[1])
