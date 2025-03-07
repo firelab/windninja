@@ -1315,6 +1315,24 @@ int windNinjaCLI(int argc, char* argv[])
                 }
             }
         }
+        if(vm["initialization_method"].as<std::string>() == string("domainAverageInitialization"))
+        {
+#ifdef NINJAFOAM
+                windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
+#else
+                windsim.makeDomainAverageArmy(1, false);
+#endif
+        }
+        if(vm["initialization_method"].as<std::string>() == string("griddedInitalization"))
+        {
+            //TODO: double check proper construction of gridded initialization now that we have modified the ninjaArmy 
+            //contructors and added new functions for builiding armies.
+#ifdef NINJAFOAM
+                windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
+#else
+                windsim.makeDomainAverageArmy(1, false);
+#endif
+        }
 //STATION_FETCH
 
         /*
@@ -1451,12 +1469,6 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "input_wind_height", "units_input_wind_height");
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
 
-#ifdef NINJAFOAM
-                windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
-#else
-
-                windsim.makeDomainAverageArmy(1, false);
-#endif
 
                 windsim.setInitializationMethod( i_,
                         WindNinjaInputs::domainAverageInitializationFlag);
