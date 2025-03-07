@@ -93,7 +93,7 @@ void ninja::readInputFile()
 
     //compute angle between N-S grid lines in the dataset and true north
     double angleFromNorth = 0.0;
-    if( CSLTestBoolean(CPLGetConfigOption("OVERRIDE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
         if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
         {
