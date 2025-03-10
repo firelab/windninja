@@ -116,8 +116,11 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
+
     int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
-    
+
+    pointInitialization::SetRawStationFilename(stationFileName);
+
     if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
     {
         stationList = pointInitialization::readWxStations(demFile,timeZone);

@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Nicholas Kim <kim.n.j@wustl.edu>
  *
- * g++ -g -Wall -o api_capi_point test_capi_point_initialization_wind.c -lninja
+ * gcc -g -Wall -o api_capi_point test_capi_point_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -30,13 +30,11 @@
 #include <stdio.h> //for printf
 #include <stdbool.h>
 
-
-
 int main()
 {
     /* 
      * Setting up the simulation
-     */
+    */
     NinjaArmyH* ninjaArmy = NULL; 
     const char * comType = "cli"; //communication type is always set to "cli"
     const int nCPUs = 1;
@@ -47,13 +45,12 @@ int main()
     {
       printf("NinjaInit: err = %d\n", err);
     }
-
+    
     /* 
-     * Set up domain average run 
+     * Set up point initialization run 
      */
-
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/data/big_butte_small.tif"; 
-    double outputResolution = 100; 
+    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/missoula_valley.tif"; 
+    //double outputResolution = 100; 
     const char * initializationMethod = "point";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -61,28 +58,27 @@ int main()
     const int diurnalFlag = 0; //diurnal slope wind parameterization not used
     const double height = 10.0;
     const char * heightUnits = "m";
+    const char * speedUnits = "mps";
     bool momentumFlag = 0; //we're using the conservation of mass solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
     
     /* inputs that can vary among ninjas in an army */
-    const double speedList[2] = {5.5, 5.5};
-    const char * speedUnits = "mps";
-    const double directionList[2] = {220, 300};
-
+    
     /* 
      * Create the army
      */
-    int year[1] = {2023};
-    int month[1] = {10};
-    int day[1] = {10};
-    int hour[1] = {12};
-    int minute[1] = {60};
-    char* station_path = "./station";
-    char* elevation_file = "output.tif";
+    int year[2] = {2024, 2024};
+    int month[2] = {2, 2};
+    int day[2] = {2, 2};
+    int hour[2] = {2, 2};
+    int minute[2] = {2, 2};
+    char* station_path = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/WXSTATIONS-2025-03-10-0934-missoula_valley/BLMM8-2025-03-10_0934-1.csv";
+    char* elevation_file = "/home/mason/Documents/Git/WindNinja/windninja/data/missoula_valley.tif";
     char* osTimeZone = "UTC";
     bool matchPointFlag = 1;
-    bool momemtumFlag = 0;
-    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
+        
+    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, osTimeZone, station_path, elevation_file, matchPointFlag, momentumFlag, papszOptions);
+
     
     if( NULL == ninjaArmy )
     {
@@ -182,5 +178,39 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
+    /* 
+     * Get the outputs
+     */
+    const double* outputSpeedGrid = NULL;
+    const double* outputDirectionGrid = NULL;
+    const char* outputGridProjection = NULL;
+    const int nIndex = 0;
+    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputSpeedGrid )
+    {
+        printf("Error in NinjaGetOutputSpeedGrid");
+    }
+    
+    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputDirectionGrid )
+    {
+        printf("Error in NinjaGetOutputDirectionGrid");
+    }
+    
+    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputGridProjection )
+    {
+        printf("Error in NinjaGetOutputGridProjection");
+    }
+    
+    /* 
+     * Clean up
+     */
+    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaDestroyRuns: err = %d\n", err);
+    }
+ 
     return NINJA_SUCCESS;
 }
