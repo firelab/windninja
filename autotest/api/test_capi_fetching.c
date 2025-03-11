@@ -77,17 +77,18 @@ int main()
     /*
      * Testing fetching station data from a geotiff file.  
      */
-    int year[1] = {2023};
-    int month[1] = {10};
-    int day[1] = {10};
-    int hour[1] = {12};
-    int minute[1] = {60};
+    int year[2] = {2024, 2024};
+    int month[2] = {2, 2};
+    int day[2] = {2, 2};
+    int hour[2] = {2, 2};
+    int minute[2] = {2, 2};
+    int size = 2;
     const char* output_path = "";
     const char* elevation_file = "data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 1;
 
-    err = NinjaFetchStation(year, month, day, hour, minute, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
+    err = NinjaFetchStation(year, month, day, hour, minute, size, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
     if (err != NINJA_SUCCESS) {
         printf("NinjaFetchStation: err = %d\n", err);
     } else {

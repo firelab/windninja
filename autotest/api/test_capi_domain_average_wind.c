@@ -51,8 +51,7 @@ int main()
     /* 
      * Set up domain average run 
      */
-
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/data/big_butte_small.tif"; 
+    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/missoula_valley.tif"; 
     double outputResolution = 100; 
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";

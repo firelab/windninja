@@ -30,8 +30,6 @@
 #include <stdio.h> //for printf
 #include <stdbool.h>
 
-// Run works successfully
-// Set functions are returning err = 2, need to check why (could be because weather initialization does not need them?)
 
 
 int main()
@@ -53,9 +51,8 @@ int main()
     /* 
      * Set up Weather Model Initialization run 
      */
-
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/output.tif"; 
-    double outputResolution = 100; 
+    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output.tif"; 
+    //double outputResolution = 100; 
     const char * initializationMethod = "wxmodel";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -72,9 +69,8 @@ int main()
     /* 
      * Create the army
      */
-    const char * forecast = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/NOMADS-HRRR-CONUS-3-KM-output.tif/20250305T2000/20250305T2000/hrrr.t20z.wrfsfcf00.grib2";
+    const char * forecast = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/NOMADS-HRRR-CONUS-3-KM-output.tif/20250310T1400/20250310T1400.zip";
     const char * osTimeZone = "UTC";
-
     ninjaArmy = NinjaMakeWeatherModelArmy(forecast, osTimeZone, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
@@ -174,14 +170,13 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-        /* 
+    /* 
      * Get the outputs
      */
     const double* outputSpeedGrid = NULL;
     const double* outputDirectionGrid = NULL;
     const char* outputGridProjection = NULL;
     const int nIndex = 0;
-    const char* units = "m";
     outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
     if( NULL == outputSpeedGrid )
     {
