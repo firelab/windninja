@@ -63,6 +63,7 @@ WN_C_START
 
 #include <stdlib.h>
 //#include <stdint.h>
+#include <stdbool.h>
 
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;
@@ -79,7 +80,7 @@ typedef int  NinjaErr;
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakePointArmy
-        ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options );
+        ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int size, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options );
 
     //TODO: add helper function to get first and last timesteps in a forecast file
     //TODO: add helper function to get list of times in a forecast file
@@ -88,7 +89,7 @@ typedef int  NinjaErr;
         ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
-        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList,  const char * elevationFile, const char * timeZone, bool fetchLatestFlag, const char * outputPath, char ** options );
+        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, const char * timeZone, bool fetchLatestFlag, const char * outputPath, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
         (NinjaArmyH * ninjaArmy, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );
