@@ -1,12 +1,14 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include <QDir>
+#include <QDirIterator>
 #include <QDateTime>
 #include <QDebug>
 #include <QFileInfo>
 #include <QFileSystemModel>
 #include <QSortFilterProxyModel>
 #include <QSplitter>
+#include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QTreeWidget>
 #include <QTextEdit>
@@ -177,6 +179,14 @@ MainWindow::MainWindow(QWidget *parent)
   windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
   connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onTreeItemClicked);
+
+  /*
+   *
+   * Downloaded Forecast explorer
+   *
+   */
+
+  populateForecastDownloads();
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -192,4 +202,49 @@ void MainWindow::onTreeItemClicked(QTreeWidgetItem *item, int column) {
   if (pageIndex >= 0) {
     ui->stackedInputPage->setCurrentIndex(pageIndex);
   }
+}
+
+// Recursive function to add files and directories correctly with Name and Date columns
+void addFilesRecursively(QStandardItem *parentItem, const QString &dirPath) {
+  QDir dir(dirPath);
+  QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+  for (const QFileInfo &entry : entries) {
+    QStandardItem *nameItem = new QStandardItem(entry.fileName());
+    QStandardItem *dateItem = new QStandardItem(entry.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+    nameItem->setEditable(false);
+    dateItem->setEditable(false);
+    parentItem->appendRow({nameItem, dateItem});
+    if (entry.isDir()) {
+      addFilesRecursively(nameItem, entry.absoluteFilePath());
+    }
+  }
+}
+
+// Function to populate forecastDownloads with .tif parent directories and all nested contents
+void MainWindow::populateForecastDownloads() {
+  QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  QDir downloadsDir(downloadsPath);
+
+  if (!downloadsDir.exists()) return;
+
+  QStandardItemModel *model = new QStandardItemModel(this);
+  model->setHorizontalHeaderLabels({"Name", "Date Modified"});
+
+  QDirIterator it(downloadsPath, QDir::Dirs | QDir::NoDotAndDotDot);
+  while (it.hasNext()) {
+    QString dirPath = it.next();
+    if (dirPath.endsWith(".tif", Qt::CaseInsensitive)) {
+      QStandardItem *parentItem = new QStandardItem(QFileInfo(dirPath).fileName());
+      parentItem->setEditable(false);
+      addFilesRecursively(parentItem, dirPath);
+      model->appendRow(parentItem);
+    }
+  }
+
+  ui->forecastDownloads->setModel(model);
+  ui->forecastDownloads->header()->setSectionResizeMode(QHeaderView::Stretch);
+
+         // Disable editing and enable double-click expansion
+  ui->forecastDownloads->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  ui->forecastDownloads->setExpandsOnDoubleClick(true);
 }

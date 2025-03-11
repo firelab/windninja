@@ -255,7 +255,7 @@
          <number>0</number>
         </property>
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+         <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
         </property>
         <property name="leftMargin">
          <number>5</number>
@@ -967,7 +967,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
                  <property name="text">
-                  <string>Meters</string>
+                  <string>Feet</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
                  </property>
                 </widget>
                </item>
@@ -983,7 +986,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
                  <property name="text">
-                  <string>Feet</string>
+                  <string>Meters</string>
                  </property>
                 </widget>
                </item>
@@ -1384,6 +1387,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                    <property name="text">
                     <string>Feet</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -1829,7 +1835,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QComboBox" name="comboBox_6">
+                  <widget class="QComboBox" name="weatherStationComboBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -1871,7 +1877,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </spacer>
                  </item>
                  <item>
-                  <widget class="QComboBox" name="comboBox_7">
+                  <widget class="QComboBox" name="weatherStationTimeComboBox">
                    <property name="maximumSize">
                     <size>
                      <width>250</width>
@@ -1911,11 +1917,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="lineWidth">
+                    <number>0</number>
+                   </property>
                    <property name="currentIndex">
                     <number>1</number>
                    </property>
                    <widget class="QWidget" name="DEM">
                     <layout class="QVBoxLayout" name="verticalLayout_10">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
                      <property name="leftMargin">
                       <number>0</number>
                      </property>
@@ -1990,10 +2002,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                       </spacer>
                      </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_3">
+                       <property name="maximumSize">
+                        <size>
+                         <width>120</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>Download Data</string>
+                       </property>
+                      </widget>
+                     </item>
                     </layout>
                    </widget>
                    <widget class="QWidget" name="stationID">
                     <layout class="QVBoxLayout" name="verticalLayout_19">
+                     <property name="spacing">
+                      <number>0</number>
+                     </property>
                      <property name="leftMargin">
                       <number>0</number>
                      </property>
@@ -2008,6 +2036,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <item>
                       <layout class="QVBoxLayout" name="verticalLayout_17">
+                       <property name="spacing">
+                        <number>0</number>
+                       </property>
                        <item>
                         <widget class="QGroupBox" name="groupBox_2">
                          <property name="sizePolicy">
@@ -2032,6 +2063,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                           <string>Input Station IDs</string>
                          </property>
                          <layout class="QVBoxLayout" name="verticalLayout_20">
+                          <property name="spacing">
+                           <number>0</number>
+                          </property>
                           <property name="leftMargin">
                            <number>0</number>
                           </property>
@@ -2120,7 +2154,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="mostRecent"/>
                    <widget class="QWidget" name="btwnTwoDates">
@@ -2175,6 +2209,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                           <property name="cursor">
                            <cursorShape>PointingHandCursor</cursorShape>
                           </property>
+                          <property name="calendarPopup">
+                           <bool>true</bool>
+                          </property>
                          </widget>
                         </item>
                        </layout>
@@ -2208,7 +2245,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_23">
                         <item>
-                         <widget class="QDateTimeEdit" name="dateTimeEdit_2"/>
+                         <widget class="QDateTimeEdit" name="dateTimeEdit_2">
+                          <property name="calendarPopup">
+                           <bool>true</bool>
+                          </property>
+                         </widget>
                         </item>
                        </layout>
                       </widget>
@@ -2268,6 +2309,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </widget>
           <widget class="QWidget" name="weatherModelPage">
            <layout class="QVBoxLayout" name="verticalLayout_24">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
             <item>
              <widget class="QCheckBox" name="usePointInit_2">
               <property name="sizePolicy">
@@ -2301,7 +2354,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="title">
                <string>Download Weather Data</string>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_25">
+              <property name="checkable">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_25" stretch="1,5">
                <property name="leftMargin">
                 <number>0</number>
                </property>
@@ -2315,27 +2371,90 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <number>0</number>
                </property>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="2,1,1">
                  <item>
-                  <widget class="QComboBox" name="comboBox_9"/>
+                  <widget class="QComboBox" name="comboBox_9">
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                  </widget>
                  </item>
                  <item>
-                  <widget class="QSpinBox" name="spinBox_65"/>
+                  <widget class="QSpinBox" name="spinBox_65">
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
+                   </property>
+                   <property name="specialValueText">
+                    <string/>
+                   </property>
+                   <property name="suffix">
+                    <string> hour(s)</string>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                  </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_2">
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
                    <property name="text">
-                    <string>PushButton</string>
+                    <string>Download Data</string>
                    </property>
                   </widget>
                  </item>
                 </layout>
                </item>
                <item>
-                <widget class="QGroupBox" name="groupBox_5">
+                <widget class="QGroupBox" name="downloadedForecastGroup">
                  <property name="title">
                   <string>Downloaded Forecasts</string>
                  </property>
+                 <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1">
+                  <property name="spacing">
+                   <number>5</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QTreeView" name="forecastDownloads">
+                    <property name="sortingEnabled">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QGroupBox" name="groupBox_5">
+                    <property name="cursor">
+                     <cursorShape>PointingHandCursor</cursorShape>
+                    </property>
+                    <property name="title">
+                     <string>Select Specific Time Steps</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </widget>
                </item>
               </layout>

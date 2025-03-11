@@ -16,6 +16,8 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
+  void populateForecastDownloads();
+  void toggleExpandCollapse(const QModelIndex &index);
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
