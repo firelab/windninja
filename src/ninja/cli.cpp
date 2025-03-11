@@ -603,11 +603,7 @@ int windNinjaCLI(int argc, char* argv[])
         const std::string* elevation_file = get_checked_elevation_file(vm); // might either be NULL or set dynamically
         std::string output_path = vm.count("output_path") ? vm["output_path"].as<std::string>() : "";
 
-#ifdef NINJAFOAM
-        ninjaArmy windsim(1, vm["momentum_flag"].as<bool>()); //-Moved to header file
-#else
-        ninjaArmy windsim(1); //-Moved to header file
-#endif
+        ninjaArmy windsim;
 
         /* Do we have to fetch an elevation file */
         
@@ -1011,16 +1007,15 @@ int windNinjaCLI(int argc, char* argv[])
                     }
 
 #ifdef NINJAFOAM
-                    windsim.makeArmy( forecastFileName,
-                                      osTimeZone,
-                                      timeList,
-                                      vm["momentum_flag"].as<bool>() );
+                    windsim.makeWeatherModelArmy( forecastFileName,
+                                                  osTimeZone,
+                                                  timeList,
+                                                  vm["momentum_flag"].as<bool>() );
 #else
-                    windsim.makeArmy( model->fetchForecast( *elevation_file,
-                                                            vm["forecast_duration"].as<int>() ),
-                                                            osTimeZone,
-                                                            timeList,
-                                                            false );
+                    windsim.makeWeatherModelArmy( forecastFileName,
+                                                  osTimeZone,
+                                                  timeList,
+                                                  false );
 #endif
                 }
                 catch (exception& e)
@@ -1039,16 +1034,16 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("forecast_filename"))   //if a forecast file already exists
             {
 #ifdef NINJAFOAM
-                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
-                                 osTimeZone,
-                                 timeList,
-                                 vm["momentum_flag"].as<bool>());
+                windsim.makeWeatherModelArmy(vm["forecast_filename"].as<std::string>(),
+                                             osTimeZone,
+                                             timeList,
+                                             vm["momentum_flag"].as<bool>());
 #else
 
-                windsim.makeArmy(vm["forecast_filename"].as<std::string>(),
-                                 osTimeZone,
-                                 timeList,
-                                 false);
+                windsim.makeWeatherModelArmy(vm["forecast_filename"].as<std::string>(),
+                                             osTimeZone,
+                                             timeList,
+                                             false);
 #endif
             }
         }
@@ -1165,7 +1160,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
 
                 //make the army for a fetched station
-                windsim.makeStationArmy(timeList,
+                windsim.makePointArmy(timeList,
                                         osTimeZone,
                                         stationPathName,
                                         *elevation_file,
@@ -1244,7 +1239,7 @@ int windNinjaCLI(int argc, char* argv[])
                         std::vector<std::string> sFiles;
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
-                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                        windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                                 *elevation_file,vm["match_points"].as<bool>(),false);
                     }
                     if(fileSubFormat==1) //not a time series
@@ -1255,7 +1250,7 @@ int windNinjaCLI(int argc, char* argv[])
                         std::vector<std::string> sFiles;
                         sFiles.push_back(vm["wx_station_filename"].as<std::string>());
                         pointInitialization::storeFileNames(sFiles);
-                        windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                        windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                                 *elevation_file,vm["match_points"].as<bool>(),false);
                     }
                 }
@@ -1264,7 +1259,7 @@ int windNinjaCLI(int argc, char* argv[])
                     wxStation::SetStationFormat(wxStation::oldFormat);
                     boost::posix_time::ptime noTime;
                     timeList.push_back(noTime);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                    windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==3) // New Format where there are multiple station files
@@ -1297,7 +1292,7 @@ int windNinjaCLI(int argc, char* argv[])
                     std::vector<std::string> sFiles;
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
                     pointInitialization::storeFileNames(sFiles);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                    windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else if (stationFormat==4) // New Format where there are multiple one step recent station files
@@ -1311,7 +1306,7 @@ int windNinjaCLI(int argc, char* argv[])
                     std::vector<std::string> sFiles;
                     sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
-                    windsim.makeStationArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
+                    windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             *elevation_file,vm["match_points"].as<bool>(),false);
                 }
                 else
@@ -1319,6 +1314,24 @@ int windNinjaCLI(int argc, char* argv[])
                     throw std::runtime_error("Problem Opening Weather Station CSV file.");
                 }
             }
+        }
+        if(vm["initialization_method"].as<std::string>() == string("domainAverageInitialization"))
+        {
+#ifdef NINJAFOAM
+                windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
+#else
+                windsim.makeDomainAverageArmy(1, false);
+#endif
+        }
+        if(vm["initialization_method"].as<std::string>() == string("griddedInitalization"))
+        {
+            //TODO: double check proper construction of gridded initialization now that we have modified the ninjaArmy 
+            //contructors and added new functions for builiding armies.
+#ifdef NINJAFOAM
+                windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
+#else
+                windsim.makeDomainAverageArmy(1, false);
+#endif
         }
 //STATION_FETCH
 
@@ -1455,6 +1468,7 @@ int windNinjaCLI(int argc, char* argv[])
                 verify_option_set(vm, "input_wind_height");
                 option_dependency(vm, "input_wind_height", "units_input_wind_height");
                 option_dependency(vm, "output_wind_height", "units_output_wind_height");
+
 
                 windsim.setInitializationMethod( i_,
                         WindNinjaInputs::domainAverageInitializationFlag);

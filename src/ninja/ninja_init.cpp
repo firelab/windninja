@@ -169,6 +169,33 @@ void NinjaCheckThreddsData( void *rc )
     CPLHTTPDestroyResult( poResult );
     return;
 }
+
+/*
+** Initialize without calling GDALAllRegister() or OGRRegisterAll()
+*   Requires GDALAllRegister and OGRRegisterAll be called previously by calling program
+*   GDAL_DATA and WINDNINJA_DATA should also be set either in OS or by calling program
+*/
+int NinjaInitializeNoRegister(const char *pszGdalData,
+                              const char *pszWindNinjaData) {
+    if (!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData),
+                                                   "gdalicon.png", NULL)),
+                         NULL)) {
+        CPLDebug("WINDNINJA", "Invalid path for GDAL_DATA: %s", pszGdalData);
+        return 2;
+    }
+    if (!CPLCheckForFile(
+            CPLStrdup(CPLFormFilename(CPLStrdup(pszWindNinjaData),
+                                      "date_time_zonespec.csv", NULL)),
+            NULL)) {
+        CPLDebug("WINDNINJA", "Invalid path for WINDNINJA_DATA: %s",
+                 pszWindNinjaData);
+        return 2;
+    }
+    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+    return 0;
+}
+
+
 /*
 ** Initialize global singletons and environments.
 */
