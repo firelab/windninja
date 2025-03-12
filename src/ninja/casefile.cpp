@@ -71,6 +71,11 @@ std::string CaseFile::parse(const std::string& type, const std::string& path) {
                 if (strcmp(type.c_str(), "file") == 0) {
                     return path.substr(found + 1); // Extract substring after the last '/'
                 }
+            } else
+            {
+                //std::cout << "couldn't parse" << std::endl;
+                //return "";
+                return path;
             }
 }
 
