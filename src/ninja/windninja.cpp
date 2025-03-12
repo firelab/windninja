@@ -115,8 +115,8 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 #endif
 
     //Get the number of elements in the arrays
-    size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
-    size_t length2 = sizeof(directionList) / sizeof(directionList[0]);
+/*     size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+    size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
 //    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
 //    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
 //    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
@@ -126,11 +126,9 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 //    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
 //
 //    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
-    if(!(length1 == length2 ))
 //    {
 //        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
-        throw std::runtime_error("speedList and directionList must be the same length!");
-//    }
+//   
 
     NinjaArmyH* army;
 
@@ -766,7 +764,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1004,7 +1002,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFlag
  *  Stability Methods
  *-----------------------------------------------------------------------------*/
 WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1451,7 +1449,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1479,7 +1477,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1508,7 +1506,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1532,7 +1530,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1610,7 +1608,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1661,7 +1659,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1711,7 +1709,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1724,7 +1722,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
-    ( NinjaArmyH * army, const int nIndex, const int flag, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -1735,6 +1733,87 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
         return NINJA_E_NULL_PTR;
     }
 
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
+    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** options )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFLineWidth
+    ( NinjaArmyH* army, const int nIndex, const float lineWidth, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFLineWidth( nIndex, lineWidth );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFBaseMap
+    ( NinjaArmyH* army, const int nIndex, const int eType, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFBaseMap( nIndex, eType );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFDEM
+    ( NinjaArmyH* army, const int nIndex, const char * demFileName, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFDEM( nIndex, std::string( demFileName ), papszOptions );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
+    ( NinjaArmyH* army, const int nIndex, const double height, const double width, const unsigned short dpi, char ** papszOptions)
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFSize( nIndex, height, width, dpi);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }   
+}
+
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
+    ( NinjaArmyH* army, const int nIndex, const double resolution, const char * units, char ** papszOptions )
+{
+    if( NULL != army && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setPDFResolution
+            ( nIndex, resolution, std::string( units ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
 }
 
 WINDNINJADLL_EXPORT const char * NinjaGetOutputPath

@@ -153,7 +153,7 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * units, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetUniAirTemp
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double temp, const char * units, char ** options );
@@ -202,7 +202,7 @@ typedef int  NinjaErr;
      *  Stability Methods
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double stability_, char ** options );
@@ -229,6 +229,7 @@ typedef int  NinjaErr;
 
     /*-----------------------------------------------------------------------------
      *  Output Methods
+     *  TODO: Fully expose pdf functions 
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * path, char ** options );
@@ -261,16 +262,16 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double percent, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelShpOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
@@ -283,24 +284,42 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double width, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const int flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const bool flag, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const double resolution, const char * units, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFLineWidth
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const float lineWidth, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFBaseMap
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const int eType, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFDEM
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const char * demFileName, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
+        ( NinjaArmyH* army, const int nIndex, const double height, const double width, const unsigned short dpi, char ** papszOptions);
 
     WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
