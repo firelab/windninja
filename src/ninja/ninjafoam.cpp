@@ -2666,14 +2666,10 @@ void NinjaFoam::WriteOutputFiles()
 	
 	
 	try{
-	    if ( writeMassMeshVtk == true ) {
-	        CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
-	        writeMassMeshVtkOutput();
-	    }
         CaseFile casefile;
         // write mass mesh if casefile is turned on - casefile always needs a vtk
-        if (writeMassMeshVtk != true && casefile.getZipOpen()) {
-            CPLDebug("NINJAFOAM", "TRY to write mass mesh vtk output for foam simulation.");
+        if (writeMassMeshVtk == true || casefile.getZipOpen()) {
+            CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
             writeMassMeshVtkOutput();
         }
 	}catch (exception& e)
@@ -3825,7 +3821,9 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     }
     
     
-    if ( writeMassMeshVtk == true ) {
+    CaseFile casefile;
+    // write mass mesh if casefile is turned on - casefile always needs a vtk
+    if (writeMassMeshVtk == true || casefile.getZipOpen()) {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
         CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
