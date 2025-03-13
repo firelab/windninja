@@ -64,8 +64,9 @@ public:
 	std::string fileName;
 	eElevDistanceUnits elevationUnits;	//these are the vertical units, ALL HORIZONTAL UNITS MUST ALWAYS BE IN METERS, INCLUDING WHEN THEY ARE READ IN!
         GDALDatasetH hDS; //in-memory dataset for DEM for API
-	bool grid_made;	
-	
+	bool grid_made;
+
+    void smooth_elevation(const int smoothDist);
 };
 
 #endif	//ELEVATION_H

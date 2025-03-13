@@ -375,7 +375,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM, FindDataPath("/data"));
         northDEMBound = srtm_northBound;
         southDEMBound = srtm_southBound;
-        currentResolution = (fetcher->GetXRes() * 111325);
+        currentResolution = fetcher->GetXRes();
         currentSuffix = "tif";
         currentSaveAsDesc = "Elevation files (*.tif)";
         break;

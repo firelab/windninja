@@ -99,8 +99,8 @@ cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam8/plat
 chmod 644 /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so &&\
 chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit 
 
-
-RUN pip3 install numpy
-
-VOLUME /data
-WORKDIR /data
+# To create a Singularity image from this Dockerfile, run the following commands:
+# 1. Build the Docker image
+#    docker build -t windninja:latest .
+# 2. Convert the Docker image to a Singularity image
+#    singularity build windninja_latest.sif docker-daemon://windninja:latest

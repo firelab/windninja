@@ -2387,12 +2387,20 @@ void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName( "GTiff" );
     char** papszOptions = NULL;
-    papszOptions = CSLAddString( papszOptions, "PROFILE=BASELINE" );
+//    papszOptions = CSLAddString( papszOptions, "PROFILE=BASELINE" );
     if( tiffDriver == NULL )
     return;
 
     poDS = tiffDriver->Create( outFilename.c_str(), get_nRows(), get_nCols(), 1,
                    GDT_Float64, papszOptions );
+
+    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                 get_yllCorner()+(get_nRows()*get_cellSize()),
+                                 0, -(get_cellSize())};
+    poDS->SetGeoTransform(adfGeoTransform);
+
+    const char* raw_prj = (const char*)prjString.c_str();
+    poDS->SetProjection(raw_prj);
 
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();

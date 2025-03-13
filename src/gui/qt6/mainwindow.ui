@@ -462,7 +462,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>10</number>
+           <number>8</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverPage">
@@ -848,7 +848,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
-                <widget class="QComboBox" name="comboBox">
+                <widget class="QComboBox" name="vegetationType">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -910,7 +910,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <item>
-                <widget class="QComboBox" name="comboBox_2">
+                <widget class="QComboBox" name="meshResType">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -943,7 +943,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                <widget class="QDoubleSpinBox" name="customMeshResValue">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -956,7 +956,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="radioButton">
+                <widget class="QRadioButton" name="meshResFeet">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -975,7 +975,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="radioButton_2">
+                <widget class="QRadioButton" name="meshResMeters">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -1025,7 +1025,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0,0,0,0" rowminimumheight="0,0">
                <item row="0" column="1">
-                <widget class="QCheckBox" name="checkBox">
+                <widget class="QCheckBox" name="showAllTimezones">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -1035,7 +1035,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item row="0" column="0">
-                <widget class="QComboBox" name="comboBox_3">
+                <widget class="QComboBox" name="timeZoneSelector">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -1048,7 +1048,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBox_2">
+                <widget class="QCheckBox" name="displayTimeZoneDetails">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -1071,7 +1071,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </spacer>
                </item>
                <item row="1" column="0" colspan="4">
-                <widget class="QTextEdit" name="textEdit">
+                <widget class="QTextEdit" name="timeZoneDetails">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -1288,7 +1288,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <number>0</number>
               </property>
               <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_13">
+               <layout class="QHBoxLayout" name="domainAvgWindLayout">
                 <property name="sizeConstraint">
                  <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
                 </property>
@@ -1961,14 +1961,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                            <number>0</number>
                           </property>
                           <item>
-                           <widget class="QSpinBox" name="spinBox_64">
+                           <widget class="QSpinBox" name="DEMbufferInput">
                             <property name="cursor">
                              <cursorShape>PointingHandCursor</cursorShape>
                             </property>
                            </widget>
                           </item>
                           <item>
-                           <widget class="QComboBox" name="comboBox_8">
+                           <widget class="QComboBox" name="DEMbufferUnits">
                             <property name="cursor">
                              <cursorShape>PointingHandCursor</cursorShape>
                             </property>
@@ -2003,7 +2003,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </spacer>
                      </item>
                      <item>
-                      <widget class="QPushButton" name="pushButton_3">
+                      <widget class="QPushButton" name="downloadDEMdata">
                        <property name="maximumSize">
                         <size>
                          <width>120</width>
@@ -2079,7 +2079,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                            <number>0</number>
                           </property>
                           <item>
-                           <widget class="QLineEdit" name="lineEdit">
+                           <widget class="QLineEdit" name="stationInputID">
                             <property name="placeholderText">
                              <string>KMSO, PNTM8</string>
                             </property>
@@ -2105,7 +2105,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </spacer>
                        </item>
                        <item>
-                        <widget class="QPushButton" name="pushButton">
+                        <widget class="QPushButton" name="downloadDEMdata_2">
                          <property name="maximumSize">
                           <size>
                            <width>120</width>
@@ -2274,7 +2274,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </item>
                <item>
-                <widget class="QCheckBox" name="checkBox_3">
+                <widget class="QCheckBox" name="writeStationKML">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -2373,14 +2373,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="2,1,1">
                  <item>
-                  <widget class="QComboBox" name="comboBox_9">
+                  <widget class="QComboBox" name="weatherDataSelector">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QSpinBox" name="spinBox_65">
+                  <widget class="QSpinBox" name="weatherDataValue">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2399,7 +2399,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="pushButton_2">
+                  <widget class="QPushButton" name="downloadWeatherData">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2439,7 +2439,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QGroupBox" name="groupBox_5">
+                   <widget class="QGroupBox" name="timeStepGroupbox">
                     <property name="cursor">
                      <cursorShape>PointingHandCursor</cursorShape>
                     </property>
