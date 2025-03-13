@@ -1596,7 +1596,7 @@ int mainWindow::checkInputFile(QString fileName)
     //get the geo-transform
     if(poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
-        int c1, c2;
+        double c1, c2;
         c1 = adfGeoTransform[1];
         c2 = adfGeoTransform[5];
         if(abs(c1) == abs(c2))
@@ -3828,13 +3828,13 @@ int mainWindow::checkGoogleItem()
     {
       if(checkSurfaceItem() != red)
     {
-      if((int)noGoogleCellSize > tree->google->googleResSpinBox->value())
+      if(noGoogleCellSize > tree->google->googleResSpinBox->value())
         {
           tree->googleItem->setIcon(0, tree->caution);
           tree->googleItem->setToolTip(0, "The resolution of the google file may be too fine.");
           status = amber;
         }
-      else if((int)GDALCellSize > tree->google->googleResSpinBox->value())
+      else if(GDALCellSize > tree->google->googleResSpinBox->value())
         {
           tree->googleItem->setIcon(0, tree->caution);
           tree->googleItem->setToolTip(0, "The output resolution is finer than the DEM resolution");
@@ -3878,7 +3878,7 @@ int mainWindow::checkFbItem()
     {
       if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
     {
-      if((int)GDALCellSize > tree->fb->fbResSpinBox->value())
+      if(GDALCellSize > tree->fb->fbResSpinBox->value())
         {
           tree->fbItem->setIcon(0, tree->caution);
           tree->fbItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
@@ -3923,7 +3923,7 @@ int mainWindow::checkShapeItem()
           status = amber;
         }
       */
-      if((int)GDALCellSize > tree->shape->shapeResSpinBox->value())
+      if(GDALCellSize > tree->shape->shapeResSpinBox->value())
         {
           tree->shapeItem->setIcon(0, tree->caution);
           tree->shapeItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
@@ -3967,7 +3967,7 @@ int mainWindow::checkPdfItem()
           status = amber;
         }
       */
-      if((int)GDALCellSize > tree->pdf->pdfResSpinBox->value())
+      if(GDALCellSize > tree->pdf->pdfResSpinBox->value())
         {
           tree->pdfItem->setIcon(0, tree->caution);
           tree->pdfItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
