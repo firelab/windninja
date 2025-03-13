@@ -118,9 +118,6 @@
 
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
-extern std::string casefilename;   
-
-
 
 class ninja
 {
@@ -135,6 +132,8 @@ public:
     inline virtual std::string identify() {return std::string("ninja");}
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
+
+    std::string casefilename;
 
     //output grids to access the final wind grids (typically used by other programs running the windninja API such as WFDSS, FlamMap, etc.
     AsciiGrid<double>AngleGrid;

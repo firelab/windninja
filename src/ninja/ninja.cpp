@@ -34,7 +34,6 @@ extern boost::local_time::tz_database globalTimeZoneDB;
 /**Ninja constructor
  * This is the default ninja constructor.
  */
- std::string casefilename = "";
 ninja::ninja()
 {
     cancel = false;
@@ -83,9 +82,8 @@ ninja::ninja()
     input.inputsRunNumber = 0;
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
     input.Com = new ninjaDefaultComHandler();
+
     casefilename = "";
-
-
 }
 
 /**Ninja destructor
@@ -2825,7 +2823,7 @@ void ninja::writeOutputFiles()
     bool VTKforcasefile = false;
     CaseFile casefile;
     if (casefile.getZipOpen()) {
-        casefile.rename(casefilename + ".ninja"); 
+        casefile.rename(casefilename);
         VTKforcasefile = true; 
         bool vtk_out_as_utm = false;
         if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
@@ -4871,7 +4869,6 @@ void ninja::set_outputFilenames(double& meshResolution,
                                 lengthUnits::eLengthUnits meshResolutionUnits)
 {
     //Set output file resolutions now
-    
     if( input.kmzResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.kmzResolution = meshResolution;
     if( input.shpResolution <= 0.0 )  //if negative, use computational mesh resolution
@@ -4884,7 +4881,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.pdfResolution = meshResolution;
 
     //Do file naming string stuff for all output files
-    std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
+    std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, case_fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
 
@@ -4892,7 +4889,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     timeOutputFacet = new boost::local_time::local_time_facet();
     //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
     //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
-    //		https://collab.firelab.org/software/projects/windninja/wiki/KnonIssues
+    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
     //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
 
     std::ostringstream timestream;
@@ -4968,18 +4965,15 @@ void ninja::set_outputFilenames(double& meshResolution,
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
-    std::ostringstream os_case;
-    os_case << rootFile << "_" << timeAppend;
+    ostringstream os, os_case, os_kmz, os_shp, os_ascii, os_pdf;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
         input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os_case << "_DA";
-
         os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_case << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
@@ -4987,18 +4981,15 @@ void ninja::set_outputFilenames(double& meshResolution,
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
-        os_case << "_PointInit";
-
         os << "_point";
+        os_case << "_point";
         os_kmz << "_point";
         os_shp << "_point";
         os_ascii << "_point";
         os_pdf   << "_point";
     }
-      else if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag )
-    {
-        os_case << "_WxModel";
-    }
+
+
     double meshResolutionTemp = meshResolution;
     double kmzResolutionTemp = input.kmzResolution;
     double shpResolutionTemp = input.shpResolution;
@@ -5012,25 +5003,16 @@ void ninja::set_outputFilenames(double& meshResolution,
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_case << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
-    os_case << "_munit" << mesh_units; 
-
-    os_case << "_kmz" << (long)(kmzResolutionTemp + 0.5) << kmz_mesh_units
-            << "_shp" << (long)(shpResolutionTemp + 0.5) << shp_mesh_units
-            << "_ascii" << (long)(velResolutionTemp + 0.5) <<  ascii_mesh_units 
-            << "_pdf" << (long)(pdfResolutionTemp + 0.5) << pdf_mesh_units;
-
-
-
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
-        os_case << "_alpha_" << input.alphaStability;
-
         os       << "_alpha_" << input.alphaStability;
+        os_case  << "_alpha_" << input.alphaStability;
         os_kmz   << "_alpha_" << input.alphaStability;
         os_shp   << "_alpha_" << input.alphaStability;
         os_ascii << "_alpha_" << input.alphaStability;
@@ -5038,9 +5020,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
-        os_case << "_non_neutral_stability";
-
         os       << "_non_neutral_stability";
+        os_case  << "_non_neutral_stability";
         os_kmz   << "_non_neutral_stability";
         os_shp   << "_non_neutral_stability";
         os_ascii << "_non_neutral_stability";
@@ -5048,14 +5029,14 @@ void ninja::set_outputFilenames(double& meshResolution,
     }
 
     fileAppend = os.str();
+    case_fileAppend = os_case.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
 
-    casefilename = os_case.str();
-    
-    
+
+    casefilename = rootFile + case_fileAppend + ".ninja";
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";

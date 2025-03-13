@@ -30,12 +30,11 @@
 #include "ninjafoam.h"
 
 const char* NinjaFoam::pszFoamPath = NULL;
- std::string casefilenamefoam = "";
 
 NinjaFoam::NinjaFoam() : ninja()
 {
     foamVersion = "";
-    casefilenamefoam = ""; 
+
     pszVrtMem = NULL;
     pszGridFilename = NULL;
     pszTurbulenceGridFilename = NULL;
@@ -73,7 +72,9 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
-    
+
+    casefilename = "";
+
     writeMassMeshVtk = false;
 }
 
@@ -2162,11 +2163,9 @@ void NinjaFoam::SetOutputResolution()
 void NinjaFoam::SetOutputFilenames()
 {
     //Do file naming string stuff for all output files
-    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
+    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, case_fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
-
-    
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -2226,24 +2225,18 @@ void NinjaFoam::SetOutputFilenames()
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
-    std::ostringstream os_case;
-    os_case << rootFile << "_" << timeAppend << "_FOAM";
+    ostringstream os, os_case, os_kmz, os_shp, os_ascii, os_pdf;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
         os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_case << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_case << "_DA";
-    }       
-    if( input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag){ 
-        os_case << "_WxModel"; 
     }
-
 
     double meshResolutionTemp = input.dem.get_cellSize();
     double kmzResolutionTemp = input.kmzResolution;
@@ -2260,30 +2253,20 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_case << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
-     
-
 
     fileAppend = os.str();
+    case_fileAppend = os_case.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
-    
-    os_case << "_munit" << mesh_units; 
 
-    os_case << "_kmz" << (long)(kmzResolutionTemp + 0.5) << kmz_mesh_units
-            << "_shp" << (long)(shpResolutionTemp + 0.5) << shp_mesh_units
-            << "_ascii" << (long)(velResolutionTemp + 0.5) <<  ascii_mesh_units 
-            << "_pdf" << (long)(pdfResolutionTemp + 0.5) << pdf_mesh_units;
-
-
-
-    // Assign final casefilenam
-    casefilenamefoam = os_case.str();
+    casefilename = rootFile + case_fileAppend + ".ninja";
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -2742,7 +2725,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
         CaseFile casefile;
         
         if (casefile.getZipOpen()) {
-            casefile.rename(casefilenamefoam);
+            casefile.rename(casefilename);
             std::string directoryPath = get_outputPath();
             std::string normfile = casefile.parse("file", massMeshVtkFilename);
             std::string directoryofVTK = casefile.parse("directory", massMeshVtkFilename);
