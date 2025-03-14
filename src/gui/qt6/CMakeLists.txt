@@ -43,6 +43,8 @@ else()
     endif()
 endif()
 
+add_dependencies(qt6_application ninja)
+
 target_link_libraries(qt6_application PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
