@@ -24,11 +24,6 @@ int main()
     printf("NinjaInit: err = %d\n", err);
     }
 
-    if(err != NINJA_SUCCESS)
-    {
-      printf("NinjaInit: err = %d\n", err);
-    }
-
 
 ```
 
