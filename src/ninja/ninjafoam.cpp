@@ -244,6 +244,12 @@ bool NinjaFoam::simulate_wind()
     bool solutionStatus = false;
 
     int nTries = 3;
+    std::string found_nTries_str = CPLGetConfigOption("SIMPLEFOAM_NTRIES", "");
+    if( found_nTries_str != "" )
+    {
+        nTries = atof(found_nTries_str.c_str());
+    }
+    CPLDebug("NINJAFOAM", "simpleFoam nTries = %d",nTries);
 
     double startRestartVal;
     double endRestartVal;
@@ -319,7 +325,15 @@ bool NinjaFoam::simulate_wind()
                 }
                 // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
                 tryIdx++;
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh...");
+                if( tryIdx <= nTries )
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh...");
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "simpleFoam tryIdx = %d",tryIdx);
+                } else
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam()...");
+                    break;
+                }
 
                 input.dem.smooth_elevation(1);
 
@@ -403,11 +417,18 @@ bool NinjaFoam::simulate_wind()
                 // no smoothing of the dem if this is an existing case
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Can't generate new mesh from smoothed elevation file "
                         "for existing case directory. Try again without using an existing case.");
-                return false;
             }
             // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
             tryIdx++;
-            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh...");
+            if( tryIdx <= nTries )
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh...");
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "simpleFoam tryIdx = %d",tryIdx);
+            } else
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput()...");
+                break;
+            }
 
             input.dem.smooth_elevation(1);
 
@@ -462,7 +483,7 @@ bool NinjaFoam::simulate_wind()
 
     } // while( solutionStatus == false && tryIdx <= nTries )
     if( solutionStatus == false ){
-        CPLError( CE_Failure, CPLE_AppDefined, "Error during simpleFoam() or other foam processes (sampling foam files). The flow solution failed.");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam() or other foam processes (sampling foam files). The flow solution failed.");
         return false;
     }
 
