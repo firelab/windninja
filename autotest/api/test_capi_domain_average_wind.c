@@ -71,7 +71,7 @@ int main()
     /* inputs specific to output 
      * Note: Outputs have default values if inputs are not specified (like resolution)
      */
-    const double outputResolution = 10.0;
+    const double outputResolution = 100.0;
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
@@ -166,40 +166,6 @@ int main()
       {
           printf("NinjaSetNumVertLayers: err = %d\n", err);
       }
-
-      /* 
-       * Sets Output Variables
-       */
-      err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-          printf("NinjaSetOutputPath: err = %d\n", err);
-      }
-
-      err = NinjaSetGoogOutFlag(ninjaArmy, i, outputFlag, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-          printf("NinjaSetGoogOutFlag: err = %d\n", err);
-      }
-
-      err = NinjaSetGoogResolution (ninjaArmy, i, outputResolution, units, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-          printf("NinjaSetGoogResolution: err = %d\n", err);
-      }
-
-      err = NinjaSetGoogSpeedScaling (ninjaArmy, i, scaling, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-          printf("NinjaSetGoogSpeedScaling: err = %d\n", err);
-      }
-
-      err = NinjaSetGoogLineWidth (ninjaArmy, i, width, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-          printf("NinjaSetGoogLineWidth: err = %d\n", err);
-      }
-
     }
 
     /* 
@@ -209,31 +175,6 @@ int main()
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
-    }
-
-    /* 
-     * Get the outputs
-     */
-    const double* outputSpeedGrid = NULL;
-    const double* outputDirectionGrid = NULL;
-    const char* outputGridProjection = NULL;
-    const int nIndex = 0;
-    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputSpeedGrid )
-    {
-        printf("Error in NinjaGetOutputSpeedGrid");
-    }
-    
-    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputDirectionGrid )
-    {
-        printf("Error in NinjaGetOutputDirectionGrid");
-    }
-    
-    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputGridProjection )
-    {
-        printf("Error in NinjaGetOutputGridProjection");
     }
     
     /* 

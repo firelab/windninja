@@ -2,9 +2,9 @@
  *
  * Project:  WindNinja
  * Purpose:  C API testing
- * Author:   Nicholas Kim <kim.n.j@wustl.edu>
+ * Author:   Mason Willman <mason.willman
  *
- * gcc -g -Wall -o api_capi_point test_capi_point_initialization_wind.c -lninja
+ * gcc -g -Wall -o test_capi_point_initialization_wind.c test_capi_point_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -34,7 +34,7 @@ int main()
 {
     /* 
      * Setting up the simulation
-    */
+     */
     NinjaArmyH* ninjaArmy = NULL; 
     const char * comType = "cli"; //communication type is always set to "cli"
     const int nCPUs = 1;
@@ -45,11 +45,11 @@ int main()
     {
       printf("NinjaInit: err = %d\n", err);
     }
-    
+
     /* 
      * Set up point initialization run 
      */
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/missoula_valley.tif"; 
+    /* inputs that can vary among ninjas in an army */
     //double outputResolution = 100; 
     const char * initializationMethod = "point";
     const char * meshChoice = "coarse";
@@ -61,34 +61,25 @@ int main()
     const char * speedUnits = "mps";
     bool momentumFlag = 0; //we're using the conservation of mass solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
-    
-    /* inputs that can vary among ninjas in an army */
-    
-    /* 
-     * Create the army
-     */
+        
     int year[2] = {2024, 2024};
     int month[2] = {2, 2};
     int day[2] = {2, 2};
     int hour[2] = {2, 2};
     int minute[2] = {2, 2};
-    char* station_path = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/WXSTATIONS-2025-03-10-0934-missoula_valley/BLMM8-2025-03-10_0934-1.csv";
-    char* elevation_file = "/home/mason/Documents/Git/WindNinja/windninja/data/missoula_valley.tif";
+    char* station_path = "data/WXSTATION"; // Will need to be changed with proper path
+    char* demFile = "data/missoula_valley.tif";
     char* osTimeZone = "UTC";
     bool matchPointFlag = 1;
+    int size = 2;
         
-    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, osTimeZone, station_path, elevation_file, matchPointFlag, momentumFlag, papszOptions);
-
-    
+    /* 
+     * Create the army
+     */
+    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, size, osTimeZone, station_path, demFile, matchPointFlag, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
         printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-    }
-
-    err = NinjaInit(papszOptions); //must be called for any simulation
-    if(err != NINJA_SUCCESS)
-    {
-      printf("NinjaInit: err = %d\n", err);
     }
     
     /* 
@@ -176,31 +167,6 @@ int main()
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
         printf("NinjaStartRuns: err = %d\n", err);
-    }
-
-    /* 
-     * Get the outputs
-     */
-    const double* outputSpeedGrid = NULL;
-    const double* outputDirectionGrid = NULL;
-    const char* outputGridProjection = NULL;
-    const int nIndex = 0;
-    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputSpeedGrid )
-    {
-        printf("Error in NinjaGetOutputSpeedGrid");
-    }
-    
-    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputDirectionGrid )
-    {
-        printf("Error in NinjaGetOutputDirectionGrid");
-    }
-    
-    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex, papszOptions);
-    if( NULL == outputGridProjection )
-    {
-        printf("Error in NinjaGetOutputGridProjection");
     }
     
     /* 
